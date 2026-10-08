@@ -9,8 +9,8 @@
 - **Branch:** `task/M0-01-kit-audit`
 - **Build log entry:** `docs/build-log/2026/2026-10-08-01-M0-01.md`
 - **Last green commit:** — (write-ahead only)
-- **Done steps:** write-ahead; plan approved; GitHub settings + OD-7; step 2 (kit verified, script fixed); step 3 (audit A1–A15); step 4 (skeleton READMEs)
-- **Next step:** step 5: write `docs/how-to/resume-interrupted-session.md` (worked example of `16` §F); update `docs/how-to/README.md`.
+- **Done steps:** write-ahead; plan approved; GitHub settings + OD-7; steps 2–5 (kit verified + script fix, audit A1–A15, skeleton READMEs, resume how-to)
+- **Next step:** step 6: `/finish-task` — reviewer subagent, CHANGELOG, board `In review`, resume point IDLE, PR.
 - **Open questions for the owner:** —
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh`
