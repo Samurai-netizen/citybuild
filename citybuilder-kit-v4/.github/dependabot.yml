@@ -1,0 +1,9 @@
+version: 2
+updates:
+  # Keeps CI actions current. Dependency updates are proposals: the owner decides (G-Dependency).
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    commit-message:
+      prefix: "ci(repo)"

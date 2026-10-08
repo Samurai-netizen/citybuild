@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docs:
+    name: docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Documentation and process checks
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            bash scripts/dev/check-docs.sh --base "origin/${{ github.base_ref }}"
+          else
+            bash scripts/dev/check-docs.sh
+          fi
+      - name: Commit message format (pull requests)
+        if: github.event_name == 'pull_request'
+        run: |
+          pattern='^(feat|fix|test|docs|refactor|perf|build|ci|chore|wip)\((M[0-9]+-[0-9]{2}|CR-[0-9]{4}(-T[0-9]+)?|repo|kit)\)!?: .{3,}$'
+          bad=0
+          while IFS= read -r subject; do
+            case "$subject" in "Merge "*|"Revert "*) continue ;; esac
+            printf '%s' "$subject" | grep -qE "$pattern" || { echo "Bad commit subject: $subject"; bad=1; }
+          done < <(git log --format=%s "origin/${{ github.base_ref }}..HEAD")
+          exit $bad
+
+  server:
+    name: server
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect server solution
+        id: detect
+        run: |
+          if [ -f server/CityBuilder.slnx ]; then echo "present=true" >> "$GITHUB_OUTPUT"; else echo "present=false" >> "$GITHUB_OUTPUT"; echo "No server solution yet (created in M0-02) - skipping."; fi
+      - uses: actions/setup-dotnet@v4
+        if: steps.detect.outputs.present == 'true'
+        with:
+          global-json-file: global.json
+      - name: Restore (locked)
+        if: steps.detect.outputs.present == 'true'
+        run: dotnet restore server/CityBuilder.slnx --locked-mode
+      - name: Format check
+        if: steps.detect.outputs.present == 'true'
+        run: dotnet format server/CityBuilder.slnx --verify-no-changes --no-restore
+      - name: Build
+        if: steps.detect.outputs.present == 'true'
+        run: dotnet build server/CityBuilder.slnx --no-restore -c Release
+      - name: Fast tests
+        if: steps.detect.outputs.present == 'true'
+        run: dotnet test server/CityBuilder.slnx --no-build -c Release --filter "Category!=Integration"
+      - name: Integration tests (Testcontainers / Docker)
+        if: steps.detect.outputs.present == 'true'
+        run: dotnet test server/CityBuilder.slnx --no-build -c Release --filter "Category=Integration"
+      - name: Generated docs are current
+        if: steps.detect.outputs.present == 'true' && hashFiles('tools/DocTools/*.csproj') != ''
+        run: dotnet run --project tools/DocTools -c Release -- check

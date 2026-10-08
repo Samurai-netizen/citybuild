@@ -1,0 +1,31 @@
+# --- secrets and local settings (never commit) ---
+.env
+*.local.json
+CLAUDE.local.md
+.claude/settings.local.json
+
+# --- .NET ---
+bin/
+obj/
+*.user
+*.suo
+TestResults/
+coverage*/
+*.trx
+
+# --- IDEs and OS ---
+.vs/
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# --- Docker volumes (local) ---
+.data/
+
+# --- tool output ---
+artifacts/
+*.log
+# Unity-specific ignores live in client/CityBuilder/.gitignore (created in M0-04).
+# Do NOT ignore *.csproj or *.sln here: the server needs them.

@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Git pre-commit hook (enabled by scripts/dev/setup-hooks.sh). Applies to every tool and every person.
+branch="$(git branch --show-current 2>/dev/null)"
+if { [ "$branch" = "main" ] || [ "$branch" = "master" ]; } && [ "${ALLOW_MAIN_COMMIT:-}" != "1" ]; then
+  echo "pre-commit: committing on '$branch' is not allowed. Create a task branch: git switch -c task/<ID>-<slug>" >&2
+  echo "(Owner-only override for repo maintenance: ALLOW_MAIN_COMMIT=1 git commit …)" >&2
+  exit 1
+fi
+
+# Never commit secrets or local settings.
+if git diff --cached --name-only | grep -qE '(^|/)\.env$|settings\.local\.json$|CLAUDE\.local\.md$|appsettings\.[A-Za-z]+\.local\.json$'; then
+  echo "pre-commit: refusing to commit local/secret files (.env, *.local.json, CLAUDE.local.md)." >&2
+  exit 1
+fi
+
+root="$(git rev-parse --show-toplevel)"
+if [ -f "$root/scripts/dev/check-docs.sh" ]; then
+  bash "$root/scripts/dev/check-docs.sh" || { echo "pre-commit: fix the documentation problems above." >&2; exit 1; }
+fi
+exit 0
