@@ -9,8 +9,8 @@
 - **Branch:** `task/M0-01-kit-audit`
 - **Build log entry:** `docs/build-log/2026/2026-10-08-01-M0-01.md`
 - **Last green commit:** — (write-ahead only)
-- **Done steps:** write-ahead; plan approved; GitHub settings + OD-7; step 2 (kit verified, `new-log-entry.sh` fixed, root plan copy deleted)
-- **Next step:** step 3: audit the kit for contradictions; list them in the build log.
+- **Done steps:** write-ahead; plan approved; GitHub settings + OD-7; step 2 (kit verified, script fixed); step 3 (audit A1–A15)
+- **Next step:** step 4: skeleton folders `shared/`, `server/`, `tools/`, `client/` with one-line READMEs.
 - **Open questions for the owner:** —
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh`
