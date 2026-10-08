@@ -163,7 +163,7 @@ Effects on others go to a mailbox that their next settle applies.
 
 1. **Install the tools:** Git (Windows: Git for Windows), GitHub CLI `gh` (then `gh auth login`), .NET 10 SDK, Docker Desktop,
    Unity Hub with Unity 6.3 LTS (+ Android Build Support), and Claude Code.
-2. **Create a private GitHub repository** and clone it. Copy the kit into the clone's root: `AGENTS.md`, `CLAUDE.md`,
+2. **Create a GitHub repository** (public, owner directive OD-7) and clone it. Copy the kit into the clone's root: `AGENTS.md`, `CLAUDE.md`,
    `README.md` … must sit at the top level, next to `.claude/`, `.github/`, `.githooks/`, `core-instructions/`, `docs/`, `scripts/`.
 3. **Enable the git hooks:** `bash scripts/dev/setup-hooks.sh`. Check: `bash scripts/dev/check-docs.sh` prints `check-docs: OK`.
 4. **First commit (owner-only override):** `git add -A && ALLOW_MAIN_COMMIT=1 git commit -m "chore(kit): add instruction kit"` → `git push`.

@@ -3,7 +3,7 @@
 The repository on GitHub is the single place where all work and all context live.
 
 ## Branches
-- `main` is protected: always green and always releasable. Nobody pushes to it directly. Changes arrive only through PRs.
+- `main` is protected (ruleset `main-protection`): always green and always releasable. Nobody pushes to it directly. Changes arrive only through PRs.
 - One branch per task: `task/<ID>-<short-slug>`, e.g. `task/M0-15-invariant-properties` or `task/CR-0007-T1-cancel-research`.
 - `rescue/<date>-<ID>` holds unexplained leftovers found during recovery (`16` §F).
 - Start every task from an up-to-date `main`. Stacking a branch on an unmerged PR needs the owner's OK.
@@ -48,14 +48,17 @@ AI coders must never bypass hooks or set `ALLOW_MAIN_COMMIT`.
 Unity tests are not in CI (they need a Unity license on the runner). They run locally via `scripts/dev/test-unity.sh`
 and their results go in the build log. Revisit in M3.
 
-## GitHub settings ([MANUAL], owner, Day 0)
-- Repository → Settings → Branches → add a rule (or ruleset) for `main`:
-  - require a pull request before merging;
+## GitHub settings (Day 0; applied by M0-01 via `gh api`)
+- Ruleset `main-protection` on the default branch (Settings → Rules → Rulesets):
+  - require a pull request before merging (0 approvals, because the owner's account opens the AI's PRs), squash only;
   - require status checks `docs` and `server` to pass;
-  - block force pushes and deletions;
-  - (optional) require linear history.
-- Settings → General → Pull Requests: allow squash merging only; automatically delete head branches.
-- Keep the repository private until the owner decides otherwise.
+  - block force pushes and deletions; require linear history.
+  - No bypass actors, so even the owner changes `main` through a PR. `ALLOW_MAIN_COMMIT` only lifts the local hook.
+- Settings → General → Pull Requests: squash merging only (title = PR title); automatically delete head branches.
+- Security: secret scanning with push protection, Dependabot alerts and security updates.
+- The repository is **public** (owner directive OD-7 in `15`). Never commit secrets, tokens or personal data;
+  local configuration stays in ignored files (`.env`, `*.local.json`).
+- Check the current state: `gh api repos/{owner}/{repo}/rules/branches/main` and `gh api repos/{owner}/{repo}`.
 
 ## Line endings and large files
 `.gitattributes` normalizes text to LF (`.ps1` and `.bat` stay CRLF) and marks binaries. Unity scenes and assets are

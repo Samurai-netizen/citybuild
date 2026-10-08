@@ -13,12 +13,13 @@ How to get from a clean machine to a running project. Every command here must wo
 | Claude Code | current | Or any AI coding tool that reads `AGENTS.md` |
 
 ## First-time setup (owner, Day 0)
-1. Create a **private** GitHub repository and clone it.
+1. Create a GitHub repository (public, owner directive OD-7) and clone it.
 2. Copy the instruction kit into the clone's root (`AGENTS.md` must sit at the top level, next to `.github/` and `.claude/`).
 3. `bash scripts/dev/setup-hooks.sh`: enables the git hooks.
 4. `bash scripts/dev/check-docs.sh` should print `check-docs: OK`.
 5. First commit on `main` (owner-only override): `ALLOW_MAIN_COMMIT=1 git commit -m "chore(kit): add instruction kit"`, then `git push`.
-6. GitHub → Settings: branch protection for `main` and squash-only merges (see `core-instructions/18-git-and-ci.md`).
+6. GitHub → Settings: the `main` ruleset, squash-only merges and security settings (`core-instructions/18-git-and-ci.md`).
+   After this step, `main` changes only through PRs, including the owner's own `chore(kit)` changes.
 7. Start Claude Code in the folder (`claude`) and run `/context` to check that `CLAUDE.md` loaded `AGENTS.md`,
    `02-principles.md` and `13-progress.md`. Accept the workspace trust prompt, so the project's permission rules apply.
 

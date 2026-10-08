@@ -9,10 +9,9 @@
 - **Branch:** `task/M0-01-kit-audit`
 - **Build log entry:** `docs/build-log/2026/2026-10-08-01-M0-01.md`
 - **Last green commit:** — (write-ahead only)
-- **Done steps:** write-ahead (branch, build log entry, resume point, board row)
-- **Next step:** owner approves the plan in the build log entry; then step 1 (inspect repo and environment).
-- **Open questions for the owner:** plan approval; OK to fix `scripts/dev/new-log-entry.sh` (fails on first entry of a day);
-  Day 0 gaps (no `main` protection, repo is public, merge settings) — see build log → Problems.
+- **Done steps:** write-ahead; plan approved; GitHub settings applied (ruleset `main-protection`, squash only, security) + OD-7 docs
+- **Next step:** step 2: fix `new-log-entry.sh`, test commit-msg and pre-commit hooks, delete root `M0-PLAN.md`.
+- **Open questions for the owner:** —
 - **Known broken / do not touch:** `new-log-entry.sh` fails when no entry exists for today's date (see build log).
 - **Verify with:** `bash scripts/dev/check-docs.sh`
 
