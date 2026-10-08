@@ -1,0 +1,1 @@
+Shared deterministic engine `CityBuilder.Simulation` (Unity package `Simulation/` + .NET project `Simulation.Build/`): created in M0-03, filled from M0-07 on (layout: `core-instructions/03-architecture.md`).
