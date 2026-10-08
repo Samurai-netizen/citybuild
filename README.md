@@ -34,4 +34,4 @@ build log, how-tos, reference). Setup: [docs/getting-started.md](docs/getting-st
 | `.claude/`, `.githooks/`, `.github/` | AI tool config, git hooks, CI and PR template |
 
 ## License
-Proprietary, all rights reserved (owner to decide before any public release).
+Proprietary, all rights reserved (owner to decide before any public release);
