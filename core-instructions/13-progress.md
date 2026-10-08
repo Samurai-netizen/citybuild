@@ -4,15 +4,16 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** AWAITING OWNER   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (next: M0-01 · Repository audit and kit verification)
-- **Branch:** —
-- **Build log entry:** —
-- **Last green commit:** —
-- **Done steps:** —
-- **Next step:** Owner completes Day 0 in `docs/plan/M0-PLAN.md` (GitHub repo, hooks, branch protection), then runs `/start-task M0-01`.
-- **Open questions for the owner:** —
-- **Known broken / do not touch:** —
+- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** M0-01 · Repository audit and kit verification `[O] [PLAN]`
+- **Branch:** `task/M0-01-kit-audit`
+- **Build log entry:** `docs/build-log/2026/2026-10-08-01-M0-01.md`
+- **Last green commit:** — (write-ahead only)
+- **Done steps:** write-ahead (branch, build log entry, resume point, board row)
+- **Next step:** owner approves the plan in the build log entry; then step 1 (inspect repo and environment).
+- **Open questions for the owner:** plan approval; OK to fix `scripts/dev/new-log-entry.sh` (fails on first entry of a day);
+  Day 0 gaps (no `main` protection, repo is public, merge settings) — see build log → Problems.
+- **Known broken / do not touch:** `new-log-entry.sh` fails when no entry exists for today's date (see build log).
 - **Verify with:** `bash scripts/dev/check-docs.sh`
 
 ## Milestone
@@ -20,7 +21,7 @@
 
 | Area | State | Notes |
 |---|---|---|
-| Repo, kit, hooks, CI | not started | |
+| Repo, kit, hooks, CI | in progress | M0-01 |
 | Shared engine: content, research, labor | not started | |
 | Shared engine: invariants, performance | not started | |
 | Server skeleton | not started | |
