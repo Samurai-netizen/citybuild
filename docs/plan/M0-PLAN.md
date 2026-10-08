@@ -168,7 +168,8 @@ Effects on others go to a mailbox that their next settle applies.
 3. **Enable the git hooks:** `bash scripts/dev/setup-hooks.sh`. Check: `bash scripts/dev/check-docs.sh` prints `check-docs: OK`.
 4. **First commit (owner-only override):** `git add -A && ALLOW_MAIN_COMMIT=1 git commit -m "chore(kit): add instruction kit"` → `git push`.
 5. **Protect `main` on GitHub** (`core-instructions/18-git-and-ci.md` → GitHub settings):
-   require a PR and the `docs` and `server` checks, block force pushes, squash-merge only, and delete branches on merge.
+   require a PR and the `docs` and `server` checks, block force pushes, squash-merge only, and delete branches on merge
+   (the full list, incl. linear history and security settings, is in `18`). After this, `main` changes only through PRs.
    Check that the **CI** workflow ran green on the first push (Actions tab).
 6. **Read and adjust the design** before any code: `core-instructions/22` (pillars + proposals), `25`, `23`.
    Edit anything you disagree with and commit it on a branch (`chore(kit): …`) via a PR. That's good practice for the flow.
@@ -243,7 +244,7 @@ The AI coder updates its row at start (`In progress`) and finish (`In review`). 
 
 | ID | Day | Task | Tags | Status |
 |---|---|---|---|---|
-| M0-01 | 1 | Repository audit and kit verification | O PLAN | In progress |
+| M0-01 | 1 | Repository audit and kit verification | O PLAN | In review |
 | M0-02 | 1 | Server solution skeleton | S | Todo |
 | M0-03 | 1 | Shared engine skeleton and architecture tests | S | Todo |
 | M0-04 | 1 | Unity project skeleton | S MANUAL first | Todo |

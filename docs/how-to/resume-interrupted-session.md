@@ -6,7 +6,8 @@ losing anything and without guessing. The rules are in `core-instructions/16-ses
 the worked example. It was written in M0-01.
 
 ## Quick start
-- **Claude Code:** start a session in the repo and run `/resume`. It does steps 1–3 below read-only and proposes the next step.
+- **Claude Code:** start a session in the repo and run `/resume`. It does steps 1–2 below read-only and proposes the next step.
+  After the owner confirms, you do step 3 and continue.
 - **Any other tool:** "Read AGENTS.md, then resume following core-instructions/16-session-protocol.md §F."
 - **A person:** follow the steps below by hand.
 

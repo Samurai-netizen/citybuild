@@ -20,13 +20,14 @@ The repository on GitHub is the single place where all work and all context live
 ## Pull requests
 - One PR per task, opened by the AI at the end of `/finish-task` with `gh pr create`.
   The title is the commit format (`feat(M0-15): …`), and the body fills `.github/pull_request_template.md`.
-- To be mergeable, the PR needs: CI green, `reviewer` findings resolved (for `[O]` tasks), and the owner's approval.
-- **The owner merges** with "Squash and merge" and deletes the branch. The AI never merges.
+- To be mergeable, the PR needs: CI green, `reviewer` findings resolved (for `[O]` tasks), and the owner's OK, which is the merge itself
+  (the ruleset requires 0 approvals, see GitHub settings).
+- **The owner merges** with "Squash and merge"; GitHub deletes the branch automatically. The AI never merges.
   The build log keeps the step-by-step history that squashing removes from `main`.
 
 ## Git hooks (any tool, local)
 Run `bash scripts/dev/setup-hooks.sh` once per clone. It sets `core.hooksPath=.githooks`.
-- `pre-commit`: blocks commits on `main` (the owner can override with `ALLOW_MAIN_COMMIT=1` for repo maintenance)
+- `pre-commit`: blocks commits on `main` (the owner can override with `ALLOW_MAIN_COMMIT=1`, local only: such a commit can't be pushed, see GitHub settings)
   and runs `scripts/dev/check-docs.sh`.
 - `commit-msg`: enforces the commit format.
 AI coders must never bypass hooks or set `ALLOW_MAIN_COMMIT`.
@@ -44,7 +45,7 @@ AI coders must never bypass hooks or set `ALLOW_MAIN_COMMIT`.
 |---|---|---|
 | `docs` | `check-docs.sh` (+ PR checks against the base branch) | Day 0 |
 | `server` | restore (locked) → `dotnet format --verify-no-changes` → build → fast tests → integration tests (Docker) | M0-02 (skips until `server/CityBuilder.slnx` exists) |
-| `docs-generated` | `dotnet run --project tools/DocTools -- check` | M0-61 (skips until DocTools exists) |
+| `server` (last step) | generated docs are current: `dotnet run --project tools/DocTools -- check` | M0-61 (skips until DocTools exists) |
 Unity tests are not in CI (they need a Unity license on the runner). They run locally via `scripts/dev/test-unity.sh`
 and their results go in the build log. Revisit in M3.
 

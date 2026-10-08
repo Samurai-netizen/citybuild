@@ -11,5 +11,5 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
-- [BL-20261008-01 · M0-01 · Repository audit and kit verification](2026/2026-10-08-01-M0-01.md) — In progress
+- [BL-20261008-01 · M0-01 · Repository audit and kit verification](2026/2026-10-08-01-M0-01.md) — Done
 - [BL-20261004-01 · KIT · Planning and instruction kit (claude.ai sessions)](2026/2026-10-04-01-KIT.md) — Done
