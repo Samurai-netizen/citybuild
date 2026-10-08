@@ -9,10 +9,10 @@
 - **Branch:** `task/M0-01-kit-audit`
 - **Build log entry:** `docs/build-log/2026/2026-10-08-01-M0-01.md`
 - **Last green commit:** — (write-ahead only)
-- **Done steps:** write-ahead; plan approved; GitHub settings applied (ruleset `main-protection`, squash only, security) + OD-7 docs
-- **Next step:** step 2: fix `new-log-entry.sh`, test commit-msg and pre-commit hooks, delete root `M0-PLAN.md`.
+- **Done steps:** write-ahead; plan approved; GitHub settings + OD-7; step 2 (kit verified, `new-log-entry.sh` fixed, root plan copy deleted)
+- **Next step:** step 3: audit the kit for contradictions; list them in the build log.
 - **Open questions for the owner:** —
-- **Known broken / do not touch:** `new-log-entry.sh` fails when no entry exists for today's date (see build log).
+- **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh`
 
 ## Milestone
