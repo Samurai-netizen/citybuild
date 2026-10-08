@@ -44,7 +44,7 @@ jobs:
         id: detect
         run: |
           if [ -f server/CityBuilder.slnx ]; then echo "present=true" >> "$GITHUB_OUTPUT"; else echo "present=false" >> "$GITHUB_OUTPUT"; echo "No server solution yet (created in M0-02) - skipping."; fi
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         if: steps.detect.outputs.present == 'true'
         with:
           global-json-file: global.json
