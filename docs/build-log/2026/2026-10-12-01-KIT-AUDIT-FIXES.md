@@ -47,7 +47,9 @@
   4. Finish: CHANGELOG line, PR title and body, resume point IDLE, `check-docs.sh --base origin/main`, push.
 - **Done:** step 1 (write-ahead, `88dca68`); step 2 (A15) — OD-8 added to `15`; A15 dropped from the open questions in `13`.
   The README is unchanged: its License line already says "Proprietary, all rights reserved (owner to decide before any public release)".
-- **Stopped at / next:** step 3 (A9).
+- **Done (cont.):** step 3 (A9) — `scripts/` added to the code paths in `scripts/dev/check-docs.sh` (§7) and
+  `.claude/hooks/stop-checkpoint.sh`; the code paths are now named in `17` §5. Verified before/after in scratch clones.
+- **Stopped at / next:** step 4 (finish).
 
 ## Decisions
 <!-- Every decision, when it is made, including small ones. Scope: local | project-wide (→ 12-decisions.md row) | architectural (→ ADR). -->
@@ -69,6 +71,9 @@
 | 14 | Do not fix the guard gaps that are not A2 (see Problems), only list them | Fix quoted flags, `git -C dir push`, `HEAD:refs/heads/main` | G-Scope; the approved A2 proposal was heredoc bodies and per-segment checks. The `ask`/`deny` rules and the GitHub ruleset on `main` remain the backstops | local |
 | 15 | A15: record the owner's answer as standing directive OD-8 in `15` (no `LICENSE` file for now; README keeps "Proprietary, all rights reserved") | Only note it in this entry | It is a rule for every future coder ("don't add a `LICENSE` file or pick a license yourself"), and `15` says standing directives go in that table. Owner input is quoted above | project-wide (`15` OD-8; no `12` row, it is a standing directive) |
 | 16 | Leave the README License line unchanged | Reword it | The owner asked to keep the general statement. Note for when the license is chosen: "before any public release" can be misread, because the repository is already public (OD-7); presumably it means a release of the product | local |
+| 17 | A9: the whole `scripts/` directory counts as code | Only `scripts/dev/`; also `.githooks/` and `.claude/hooks/` (the other process machinery) | `scripts/dev/` is the only subfolder today, but the intent is "script changes need a log entry". The hooks were not part of the question (G-Scope); they are protected, so their edits already show up as notices in every PR. The owner can extend the list | local |
+| 18 | The code-path regex stays duplicated in `check-docs.sh` and `stop-checkpoint.sh`; both edited, and the paths are now named in `17` §5 | One shared definition that both scripts read | The hook must run standalone (Git Bash, no repo scripts assumed) and two copies of one regex do not justify an abstraction (`02` rule 13). A future change must touch both places | local |
+| 19 | Verify A9 before/after in throwaway clones; no new automated test for the PR rules or the Stop hook | Add test scripts like `test-guard-bash.sh` for both | Same method as M0-01 for these two scripts; two more scripts are outside the approval. This is a gap against `02` rule 15 and is listed in Follow-ups | local |
 
 ## Owner input
 <!-- Approvals, answers and instructions from the owner, quoted, with where they were persisted. -->
@@ -89,10 +94,12 @@
   appends standing directives as soon as the owner gives them. Say if "general license" meant something else.
 
 ## Changes
-- **Code:** `.claude/hooks/guard-bash.sh` (rewritten, 112 lines), `scripts/dev/check-docs.sh` (protected-file notice regex),
-  `.claude/settings.json` (`Edit(/scripts/dev/**)` ask rule); `.DS_Store` untracked.
+- **Code:** `.claude/hooks/guard-bash.sh` (rewritten, 112 lines), `scripts/dev/check-docs.sh` (protected-file notice regex;
+  Session 2: `scripts/` counts as code), `.claude/hooks/stop-checkpoint.sh` (Session 2: same), `.claude/settings.json`
+  (`Edit(/scripts/dev/**)` ask rule); `.DS_Store` untracked.
 - **Tests:** `scripts/dev/test-guard-bash.sh` (new): 48 cases.
-- **Docs:** `CLAUDE.md` (A1), `core-instructions/15-change-control.md` (A3), `core-instructions/18-git-and-ci.md` (guard description),
+- **Docs:** `CLAUDE.md` (A1), `core-instructions/15-change-control.md` (A3; OD-8 for A15), `core-instructions/17-documentation-system.md` (A9),
+  `core-instructions/18-git-and-ci.md` (guard description),
   `core-instructions/13-progress.md`, `CHANGELOG.md`, this entry and its index line.
 
 ## Verification
@@ -113,6 +120,9 @@
 | Step 4 · live: a force push attempt written as a dry run (`--dry-run`, so nothing could be sent) | denied by the hook with the force-push message |
 | Step 5 · `bash scripts/dev/check-docs.sh --base origin/main` | `check-docs: OK`; notices for the six protected paths changed: `guard-bash.sh`, `.claude/settings.json`, `CLAUDE.md`, `15`, `check-docs.sh`, `test-guard-bash.sh` (all covered by "Owner input") |
 | Step 5 · `bash scripts/dev/test-guard-bash.sh` (final) | 48 passed, 0 failed |
+| Session 2 · A9 · `check-docs.sh --base origin/main` in throwaway clones, old (HEAD before the edit) vs new | T1 script-only change: old `OK`, **new 3 problems** (no build log entry, `13` not updated, CHANGELOG not updated). T2 the same plus log entry, `13` and CHANGELOG: new `OK`. T3 README only: old and new `OK` |
+| Session 2 · A9 · Stop hook in throwaway clones, old vs new | S1 uncommitted new script, nothing logged: old allowed, **new blocks**. S2 plus `13` and a log entry: new allows. S3 `stop_hook_active: true`: new allows. S4 uncommitted script on `main`: new blocks ("uncommitted code changes on main"). S5 README only: new allows |
+| Session 2 · `bash -n` on both scripts; `bash scripts/dev/test-guard-bash.sh` | syntax ok; 48 passed (unaffected) |
 | Environment | macOS, bash 3.2.57, BSD awk 20200816, git 2.54.0 |
 | Not verified | Git Bash on Windows, Linux (gawk/mawk, GNU grep/sed): the script uses only POSIX features and `$'...'`/`<<<` of bash 3.2, but it was run on macOS only |
 | Not run | Independent `reviewer` pass: not an `[O]` task and the owner did not ask for one, although the guard is a safety control (`16` §E.4 says "any task touching … security"; the owner can request it on this branch). No `dotnet`/Unity checks: nothing under `server/`, `shared/`, `client/` or `tools/` changed |
@@ -140,4 +150,6 @@
 | Run the guard test in CI (`.github/workflows/ci.yml`, protected) | Owner decision; or via `quality.sh` in M0-62 (which "runs everything CI runs") |
 | Close the guard gaps listed under Problems (quoted flags, `git -C dir push`, `HEAD:refs/heads/main`) | Owner decision (G-Scope); small follow-up task |
 | Local branch `task/M0-01-kit-audit` is obsolete (squash-merged; remote branch deleted) | Owner, optional: `git branch -D task/M0-01-kit-audit` (asks for confirmation) |
-| Still open from the M0-01 audit: A4, A5, A7–A15 (A9 and A15 need the owner), A18 | see the M0-01 entry → Follow-ups |
+| Automated tests for the PR rules in `check-docs.sh` and for the Stop hook (verified by hand in throwaway clones, decision 19) | Owner decision; natural place: `quality.sh` in M0-62 |
+| Pick a license and add a `LICENSE` file (OD-8); then reword the README License line | Owner, when ready |
+| Still open from the M0-01 audit: A4, A5, A7, A8, A10–A14, A18 (A9, A15 closed in Session 2) | see the M0-01 entry → Follow-ups |
