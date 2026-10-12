@@ -29,7 +29,9 @@
 - **Done (cont.):** step 2 (A1) — `CLAUDE.md` "Model and mode" reworded; the matching open-issue line removed from `13`.
 - **Done (cont.):** step 3 (A3) — `scripts/dev/**` added to the protected files in `15`, to the `ask` rules in
   `.claude/settings.json` and to the protected-file notice in `scripts/dev/check-docs.sh`.
-- **Stopped at / next:** step 4 (A2).
+- **Done (cont.):** step 4 (A2) — regression test first (old guard: 39 passed, 9 failed), new `guard-bash.sh` developed in the
+  scratchpad and installed only after 48/48 passed; guard description in `18`; CHANGELOG line.
+- **Stopped at / next:** step 5 (finish: `check-docs.sh --base origin/main`, resume point IDLE, PR).
 
 ## Decisions
 <!-- Every decision, when it is made, including small ones. Scope: local | project-wide (→ 12-decisions.md row) | architectural (→ ADR). -->
@@ -38,23 +40,35 @@
 | 1 | One branch, one build log entry and one PR for A1, A2, A3 and A16; commits typed `fix(kit)` / `chore(repo)` | Two PRs (a kit PR and a `chore(repo)` PR, as the M0-01 follow-up table suggested) | It is one owner instruction. Parallel PRs would both edit the resume point, the build log index and the CHANGELOG, so the second merge would conflict. The owner can ask for a split | local |
 | 2 | Build log id `KIT-AUDIT-FIXES`, branch `task/kit-audit-fixes`, commit id `kit` / `repo` | Reuse the id `KIT` | The `KIT` entry is merged and append-only (`check-docs.sh` rejects edits); `new-log-entry.sh KIT` would only point at it | local |
 | 3 | Edit protected files with the Edit/Write tools, not with `sed` or heredocs in Bash | `sed -i` in Bash (auto mode prefers Bash) | The `ask` rules in `.claude/settings.json` only fire for the Edit/Write tools; `CLAUDE.md` says not to work around them. The owner's approval is quoted under "Owner input", and every protected-file edit stays visible | local |
-| 4 | Write text that mentions force flags, the override variable or a hook bypass with the Write tool until A2 is fixed | Bash heredocs | `guard-bash.sh` still has the A2 false positives; the Write tool is not affected | local |
+| 4 | Write text that mentions force flags, the override variable or a hook bypass with the Write tool until A2 is fixed | Bash heredocs | `guard-bash.sh` still had the A2 false positives; the Write tool is not affected. Confirmed in this session: the old hook denied two of my own test commands that only contained such words | local |
 | 5 | A1 wording: the approved proposal sentence plus one clause saying why ("Plan Mode forbids the write-ahead's file writes, so don't use it for these tasks") | The proposal sentence alone | The audit's finding is that Plan Mode and the write-ahead conflict; a coder who reads only the first sentence could still enter Plan Mode and hit the conflict. The owner can drop the clause | local |
 | 6 | A3 is applied in all three places that encode the protected list: the list in `15`, the `ask` rules in `.claude/settings.json`, the notice regex in `check-docs.sh` | Only the list in `15` | `15` says Claude Code asks before editing protected files, so the rule must match the list; the notice makes such edits visible in every PR. The `Bash(bash scripts/dev/*)` allow rule stays, because running a script is not editing it | project-wide (protected-file list is in `15`; no `12` row, it is a list change, not a design decision) |
 | 7 | Leave A8 (golden fixtures missing from the notice regex) alone although the same line was edited | Fix it in passing | Not in the owner's approval; the fixtures do not exist until M0-11 (G-Scope) | local |
+| 8 | Test first: write `scripts/dev/test-guard-bash.sh` (48 cases, allow and deny, on a task branch and on `main`) and run it against the old guard before changing the guard | Fix the guard, then test by hand as in M0-01 | `02` rule 15: a bug fix gets a regression test. The run reproduced A2 (6 false positives) and found 3 missed denials | local |
+| 9 | Rewrite the analysis as a pipeline: decode the JSON escapes, drop here-document bodies, drop quoted text and comments, split into segments, test each segment | Only strip heredoc bodies and keep the old one-line quote stripper (the audit's minimal proposal) | The old stripper ran on the still-escaped one-line JSON string, so quotes could not span lines, and an apostrophe in a comment or heredoc text flipped its state and hid later commands (see Problems). Decoding first makes every later step line-based and correct. Same tools as before (grep, sed, awk; no jq/python), so it still runs in Git Bash | local |
+| 10 | Segment separators: `&&`, `\|\|`, `;`, `\|`, `&`, `(`, `)`, `{`, `}` and backticks; redirections (`2>&1`, `>&2`, `&>`) are neutralised first | Only `&&`, `;`, `\|\|` | A subshell such as `(git push -f)` went unseen; a redirection must not split a push from its flags | local |
+| 11 | Develop the new guard in the scratchpad, test it there (the test script takes the guard path as an argument), install it only when green | Edit the live hook in place | The hook runs on every Bash call; a syntax error exits 2, which blocks every Bash call, including the ones needed to repair it | local |
+| 12 | Add `### Fixed` to the CHANGELOG for this task | Keep it under "Added" like M0-01 decision 18 | These are fixes, and Keep a Changelog has the heading; M0-01 avoided a heading only because it had a single line | local |
+| 13 | Document the guard and its test in `18` (Claude Code guardrails), not in `AGENTS.md` | Add the command to the `AGENTS.md` list (`16` §E.5) | `AGENTS.md` is protected and the owner's approval does not cover it. One home for the fact is `18` anyway (`17` §2). Asked in Follow-ups | local |
+| 14 | Do not fix the guard gaps that are not A2 (see Problems), only list them | Fix quoted flags, `git -C dir push`, `HEAD:refs/heads/main` | G-Scope; the approved A2 proposal was heredoc bodies and per-segment checks. The `ask`/`deny` rules and the GitHub ruleset on `main` remain the backstops | local |
 
 ## Owner input
 <!-- Approvals, answers and instructions from the owner, quoted, with where they were persisted. -->
-- 2026-10-12 · "Approve A1/A2/A3 fixes, do A16" → A1, A2, A3 as proposed in the M0-01 audit table (A3: the owner's decision is
-  "yes, `scripts/dev/**` is protected"); A16 as proposed (untrack `.DS_Store`).
+- 2026-10-12 · "Approve A1/A2/A3 fixes, do A16". Read as: A1 and A2 exactly as proposed in the M0-01 audit table;
+  A3 as "yes, `scripts/dev/**` becomes a protected path" (my reading of "approve the A3 fix", since the table's proposal was
+  that decision); A16 as proposed (untrack `.DS_Store`, a `chore(repo)` change).
   Protected-file edits covered by this answer: `CLAUDE.md` (A1), `.claude/hooks/guard-bash.sh` (A2),
   `.claude/settings.json` and `core-instructions/15-change-control.md` (A3).
-  Not covered, so not touched: `AGENTS.md` (see Follow-ups), `.github/workflows/**`, A8, A9.
+  Also touched under the same answer, so the owner should look at them: `scripts/dev/check-docs.sh` (a protected path from A3 on) and the
+  new file `scripts/dev/test-guard-bash.sh`.
+  Not covered, so not touched: `AGENTS.md`, `.github/workflows/**`, A8, A9.
 
 ## Changes
-- **Code:** —
-- **Tests:** —
-- **Docs:** —
+- **Code:** `.claude/hooks/guard-bash.sh` (rewritten, 117 lines), `scripts/dev/check-docs.sh` (protected-file notice regex),
+  `.claude/settings.json` (`Edit(/scripts/dev/**)` ask rule); `.DS_Store` untracked.
+- **Tests:** `scripts/dev/test-guard-bash.sh` (new): 48 cases.
+- **Docs:** `CLAUDE.md` (A1), `core-instructions/15-change-control.md` (A3), `core-instructions/18-git-and-ci.md` (guard description),
+  `core-instructions/13-progress.md`, `CHANGELOG.md`, this entry and its index line.
 
 ## Verification
 | Command | Result |
@@ -62,11 +76,39 @@
 | Step 1 · `git rm --cached .DS_Store` | staged as `D`; no other `.DS_Store` was tracked (`git ls-files` showed only the root one) |
 | Step 1 · `ls -la .DS_Store`, `git check-ignore -v .DS_Store` | file still on disk (10244 bytes); ignored by `.gitignore:21` |
 | Step 1 · `git status --short` after the commit | empty (the Finder change no longer shows up) |
+| Step 3 · `python3 -I -c 'import json; json.load(open(".claude/settings.json"))'` | valid; 22 `ask` rules, `Edit(/scripts/dev/**)` present (`plutil -lint` cannot parse JSON) |
+| Step 3 · `bash -n scripts/dev/check-docs.sh`, `check-docs.sh --base origin/main` after the commit | syntax ok; notices list `.claude/settings.json`, `CLAUDE.md`, `15`, `scripts/dev/check-docs.sh`; `check-docs: OK` |
+| Step 4 · `bash scripts/dev/test-guard-bash.sh` on the OLD guard | **39 passed, 9 failed**: 6 false positives (push then `git switch main`; push then `rm -f`; comment, and 3 heredoc bodies mentioning a force push, the override variable, a bypass) and 3 missed denials (`(git push -f)`; push to main after a heredoc with an apostrophe; force push after a comment with an apostrophe) |
+| Step 4 · same script on the new guard in the scratchpad | **48 passed, 0 failed** |
+| Step 4 · `cmp` scratchpad candidate vs `.claude/hooks/guard-bash.sh`, `bash -n`, test script on the installed file | identical; syntax ok; 48 passed, 0 failed |
+| Step 4 · stress script (scratchpad): 137 KB command with a 2000-line heredoc, then a normal push / a forced push | 0.10 s; allowed / denied; stderr empty (BSD awk has no record-length problem here) |
+| Step 4 · 600 `echo` segments + a forced push | 0.05 s, denied |
+| Step 4 · `&&` written as `&&` in the JSON; empty input; JSON without `command` | denied; allowed silently; allowed silently |
+| Step 4 · live, through the real hook: a Bash call whose heredoc mentions a force push, the override variable and a bypass | allowed (before the fix it would have been denied) |
+| Step 4 · live: a force push attempt written as a dry run (`--dry-run`, so nothing could be sent) | denied by the hook with the force-push message |
+| Environment | macOS, bash 3.2.57, BSD awk 20200816, git 2.54.0 |
+| Not verified | Git Bash on Windows, Linux (gawk/mawk, GNU grep/sed): the script uses only POSIX features and `$'...'`/`<<<` of bash 3.2, but it was run on macOS only |
 
 ## Problems and surprises
 - Starting state: local `main` was 3 commits behind `origin/main`. PR #4 (M0-01) and the Dependabot PRs #1 and #2 were already
   merged by the owner, so the old branch `task/M0-01-kit-audit` is obsolete (its remote branch is gone). A local copy remains.
-- `.DS_Store` showed as modified at session start (Finder). It is being untracked, so the change is not committed.
+- `.DS_Store` showed as modified at session start (Finder). It is untracked now, so the change is not committed.
+- The old hook denied two of my own commands in this session because their text contained the words it looks for (A2 again);
+  I moved the stress checks into a script file in the scratchpad.
+- The old guard was worse than the audit said: besides the false positives it **missed** real violations when an apostrophe
+  appeared in a comment or in heredoc text, because that flipped its quote state and hid everything after it (a force push, a push
+  to `main`), and when a push was inside a subshell. These came out of the new tests; the rewrite fixes them.
+- Gaps that remain, as before (not part of A2, decision 14): quoted flags (`git push "--force"`) are dropped with the rest of the
+  quoted text; `git -C <dir> push` and `git --git-dir=… push` do not match `git push`; a refspec like `HEAD:refs/heads/main` is not
+  seen as a push to `main`; text inside `$(…)` within quotes is not inspected; an arithmetic expression like `$((a<<b))` can be read
+  as a here-document start and hide the lines after it. The guard is best effort; pushes to `main` and force pushes to `main`
+  are also refused by GitHub (ruleset `main-protection`).
 
 ## Follow-ups
-- —
+| Item | Owner / where |
+|---|---|
+| Add `bash scripts/dev/test-guard-bash.sh` to the `AGENTS.md` command list (protected; not covered by the approval) | Owner OK, then the next kit PR |
+| Run the guard test in CI (`.github/workflows/ci.yml`, protected) | Owner decision; or via `quality.sh` in M0-62 (which "runs everything CI runs") |
+| Close the guard gaps listed under Problems (quoted flags, `git -C dir push`, `HEAD:refs/heads/main`) | Owner decision (G-Scope); small follow-up task |
+| Local branch `task/M0-01-kit-audit` is obsolete (squash-merged; remote branch deleted) | Owner, optional: `git branch -D task/M0-01-kit-audit` (asks for confirmation) |
+| Still open from the M0-01 audit: A4, A5, A7–A15 (A9 and A15 need the owner), A18 | see the M0-01 entry → Follow-ups |

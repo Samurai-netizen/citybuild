@@ -8,10 +8,9 @@
 - **Task:** KIT-AUDIT-FIXES · owner-approved M0-01 audit fixes A1, A2, A3, A16 (maintenance, no plan task; M0-01 is merged, PR #4)
 - **Branch:** `task/kit-audit-fixes`
 - **Build log entry:** `docs/build-log/2026/2026-10-12-01-KIT-AUDIT-FIXES.md` (Session 1, Claude Code / claude-sonnet-5-5)
-- **Last green commit:** `42bbdfd` (step 2, A1; `check-docs` OK). Step 3 is committed after it.
-- **Done steps:** write-ahead; step 1 (A16); step 2 (A1); step 3 (A3)
-- **Next step:** step 4, A2: rewrite the command analysis in `.claude/hooks/guard-bash.sh`, add `scripts/dev/test-guard-bash.sh`,
-  update `18`. Then finish (step 5).
+- **Last green commit:** `2b80c86` (step 3, A3; `check-docs` OK). Step 4 is committed after it.
+- **Done steps:** write-ahead; step 1 (A16); step 2 (A1); step 3 (A3); step 4 (A2: new guard, 48/48 in `test-guard-bash.sh`)
+- **Next step:** step 5, finish per `16` §E: `check-docs.sh --base origin/main`, build log status Done, resume point IDLE, PR.
   Steps are listed in the build log. After the owner merges the PR: `/start-task M0-02` (Server solution skeleton, `[S]`).
   M0-02 sets the M0-01 board row to `Done`.
 - **Open questions for the owner:** M0-01 audit A9, A15 (build log → Follow-ups).
@@ -46,7 +45,6 @@ States: `not started` · `in progress` · `done` · `blocked (reason)`
 
 ## Open issues / tech debt
 - Unity 6.6 is installed, but the stack pins 6.3 LTS: install 6.3 before M0-04 (M0-01 audit A18).
-- `guard-bash.sh` false positives on heredoc text (A2). Workaround: write text with the file tools; run `git push` in its own call.
 - Other kit wording items with their owner tasks: M0-01 build log → Follow-ups.
 
 ## Deviations from the plan
