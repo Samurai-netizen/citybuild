@@ -54,7 +54,8 @@ check as much as possible. When a rule here and an analyzer disagree, the analyz
 
 ## Approved dependencies (anything else needs G-Dependency)
 Server: ASP.NET Core and EF Core 10 (Microsoft, incl. `Microsoft.AspNetCore.OpenApi`), `Npgsql.EntityFrameworkCore.PostgreSQL`, `Microsoft.AspNetCore.Authentication.JwtBearer`,
-`Microsoft.CodeAnalysis.BannedApiAnalyzers`. Tests: `xunit`, `Microsoft.NET.Test.Sdk`, `Microsoft.AspNetCore.Mvc.Testing`,
+`Microsoft.CodeAnalysis.BannedApiAnalyzers`. Tests: `xunit.v3.mtp-off` (xUnit v3 for VSTest; replaces `xunit`, decision 019 in `12`),
+`xunit.runner.visualstudio`, `Microsoft.NET.Test.Sdk`, `Microsoft.AspNetCore.Mvc.Testing`,
 `Testcontainers.PostgreSql`, `Microsoft.Extensions.TimeProvider.Testing`, `coverlet.collector`.
 Unity: `com.unity.nuget.newtonsoft-json`, `com.unity.inputsystem`, `com.unity.test-framework`, built-in UI Toolkit.
 

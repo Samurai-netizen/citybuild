@@ -7,7 +7,7 @@ How to get from a clean machine to a running project. Every command here must wo
 |---|---|---|
 | Git | any recent | On Windows: Git for Windows (provides Git Bash, which the scripts and hooks need) |
 | GitHub CLI `gh` | any recent | For opening PRs from the terminal; optional but recommended |
-| .NET SDK | 10.0.x | Pinned by `global.json` (created in M0-02) |
+| .NET SDK | 10.0.401 or a newer 10.0 SDK | `global.json` pins 10.0.401 (`rollForward: latestFeature`); with an older SDK, SDK commands such as `dotnet build` fail with "A compatible .NET SDK was not found" (`dotnet --list-sdks` shows what is installed) |
 | Docker Desktop | current | PostgreSQL and integration tests (Testcontainers) |
 | Unity Hub + Unity | 6.3 LTS | Android Build Support for device builds |
 | Claude Code | current | Or any AI coding tool that reads `AGENTS.md` |
@@ -28,14 +28,20 @@ How to get from a clean machine to a running project. Every command here must wo
 |---|---|---|
 | Docs and process checks | `bash scripts/dev/check-docs.sh` | Day 0 |
 | Print a task spec | `bash scripts/dev/show-task.sh M0-01` | Day 0 |
-| Build server | `dotnet build server/CityBuilder.slnx` | *(planned, M0-02)* |
-| Fast tests | `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` | *(planned, M0-02)* |
+| Build server | `dotnet build server/CityBuilder.slnx` | M0-02 |
+| Fast tests | `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` | M0-02 |
+| Format check (as CI) | `dotnet format server/CityBuilder.slnx --verify-no-changes` | M0-02 |
+| Restore exactly the locked package versions (as CI) | `dotnet restore server/CityBuilder.slnx --locked-mode` | M0-02 |
 | Database | `docker compose up -d postgres` | *(planned, M0-19)* |
-| Run API | `dotnet run --project server/src/CityBuilder.Api` | *(planned, M0-02)* |
+| Run API | `dotnet run --project server/src/CityBuilder.Api` → http://localhost:8080 (Development) | M0-02 |
+| Is the API up? | `curl http://localhost:8080/health` prints `Healthy`; OpenAPI (Development only): http://localhost:8080/openapi/v1.json | M0-02 |
 | Unity tests | `bash scripts/dev/test-unity.sh` | *(planned, M0-05)* |
 | Everything CI runs | `bash scripts/dev/quality.sh` | *(planned, M0-62)* |
 
 ## Configuration
+No custom keys yet. The API reads `server/src/CityBuilder.Api/appsettings.json` (log levels, allowed hosts), and
+`dotnet run` applies the launch profile `http` (`Properties/launchSettings.json`): http://localhost:8080 and
+`ASPNETCORE_ENVIRONMENT=Development`. Logs are JSON lines on the console.
 *(planned)* Every configuration key, with its default and where secrets come from (user-secrets / environment).
 From M0-61 this section links to the generated reference.
 
