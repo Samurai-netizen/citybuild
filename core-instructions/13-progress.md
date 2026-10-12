@@ -9,12 +9,12 @@
 - **Branch:** `task/M0-03-engine-skeleton`
 - **Build log entry:** `docs/build-log/2026/2026-10-12-03-M0-03.md` (Session 1; the 9-step plan is in it)
 - **Last green commit:** `d2e0f9d` on `main` (baseline: locked restore, format check, Release build, 6 fast tests). No code on the branch yet.
-- **Done steps:** 1 of 9 (write-ahead: branch, build log entry, resume point, board). Session 1 stopped at the owner's usage limit.
-- **Next step:** plan step 2 in the build log. Probe in the scratchpad (not the repo): `dotnet restore --locked-mode` for a
-  `netstandard2.1` project without packages, whether `dotnet format` checks sources compiled from outside the project folder,
-  and which analyzers fire under `AnalysisLevel=latest-recommended` for a `readonly struct`. Then step 3: package + csproj +
-  slnx entry + module doc in one commit (`check-docs.sh` needs the module doc with the first `.csproj` or `.asmdef`).
-  Read the M0-02 build log → Follow-ups first (two items are this task's); decision 2 in the M0-03 log says where the tests go.
+- **Done steps:** 2 of 9 (write-ahead; tooling probes: results in the build log → Verification and decisions 4–6).
+- **Next step:** plan step 3 in the build log: `shared/Simulation/package.json`, `Runtime/CityBuilder.Simulation.asmdef`,
+  `shared/Simulation.Build/CityBuilder.Simulation.csproj` (no lock file, decision 5), the `server/CityBuilder.slnx` entry and
+  `docs/modules/CityBuilder.Simulation.md` in one commit (`check-docs.sh` needs the module doc with the first `.csproj` or
+  `.asmdef`). Green with an empty assembly; check warnings-as-errors with `--no-incremental`. Then step 4 (test-first:
+  `IntegerMath`, `ItemId`, `CityBuilder.Simulation.Tests`). Decision 2 says where each dependency test goes.
 - **Open questions for the owner:** the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`
