@@ -8,11 +8,12 @@
 - **Task:** M0-02 · Server solution skeleton (`[S]`; this session: Claude Code / Opus 5.5)
 - **Branch:** `task/M0-02-server-skeleton`
 - **Build log entry:** `docs/build-log/2026/2026-10-12-02-M0-02.md` (Session 1)
-- **Last green commit:** the head of `task/M0-02-server-skeleton` (`check-docs` OK; no server code yet)
-- **Done steps:** 1 write-ahead · 2 gate questions answered (build log → Owner input)
+- **Last green commit:** the head of `task/M0-02-server-skeleton` (build 0 warnings, format check OK, `check-docs` OK; no tests yet)
+- **Done steps:** 1 write-ahead · 2 gate questions answered (build log → Owner input) · 3 SDK pin, props, `src/` projects, slnx, Api host, module docs
 - **Planned steps:** 2 gate questions (G-Dependency xUnit runner, G-Rules `AGENTS.md` marks) · 3 SDK pin, props files,
   `src/` projects, slnx, Api host · 4 test projects, lock files, CI sequence locally · 5 docs · 6 finish (`16` §E)
-- **Next step:** step 3: `global.json`, `server/Directory.Build.props` + `Directory.Packages.props`, `src/` projects, slnx, Api host.
+- **Next step:** step 4: test projects `CityBuilder.{Domain,Application}.Tests` + `CityBuilder.IntegrationTests` (xUnit v3 on VSTest:
+  `xunit.v3.mtp-off`, owner OK), lock files, then CI's server sequence locally (`.github/workflows/ci.yml`).
 - **Open questions for the owner:** the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh`

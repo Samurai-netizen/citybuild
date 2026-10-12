@@ -1,0 +1,33 @@
+<Project>
+  <!-- Build settings shared by every project under server/ (core-instructions/14-coding-standards.md). -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+
+  <!-- The project's folder relative to server/, e.g. "src/CityBuilder.Api" ("src\CityBuilder.Api" on Windows). -->
+  <PropertyGroup>
+    <ServerProjectFolder>$([MSBuild]::MakeRelative('$(MSBuildThisFileDirectory)', '$(MSBuildProjectDirectory)'))</ServerProjectFolder>
+  </PropertyGroup>
+
+  <!-- Production code: any warning fails the build. Tests under tests/ report warnings without failing. -->
+  <PropertyGroup Condition="$(ServerProjectFolder.StartsWith('src'))">
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <!-- Every project writes its XML doc file: only then does the compiler report IDE0005 (unnecessary usings) on build
+       (https://github.com/dotnet/roslyn/issues/41640). -->
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <!-- XML docs are required only in Domain and Application (14): there a missing comment (CS1591) fails the build.
+       Everywhere else CS1591 is suppressed, because those projects generate the doc file only for IDE0005 (above). -->
+  <PropertyGroup Condition="'$(MSBuildProjectName)' != 'CityBuilder.Domain' And '$(MSBuildProjectName)' != 'CityBuilder.Application'">
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,12 @@
+<Project>
+  <!-- Central package management: every NuGet version used under server/ is pinned here, and restore writes a
+       packages.lock.json per project (core-instructions/14-coding-standards.md). Only packages on the approved list
+       in 14 may be added; anything else needs G-Dependency (core-instructions/15-change-control.md). -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup Label="Api">
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
+  </ItemGroup>
+</Project>

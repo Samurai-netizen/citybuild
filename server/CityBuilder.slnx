@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CityBuilder.Api/CityBuilder.Api.csproj" />
+    <Project Path="src/CityBuilder.Application/CityBuilder.Application.csproj" />
+    <Project Path="src/CityBuilder.Domain/CityBuilder.Domain.csproj" />
+    <Project Path="src/CityBuilder.Infrastructure/CityBuilder.Infrastructure.csproj" />
+  </Folder>
+</Solution>
