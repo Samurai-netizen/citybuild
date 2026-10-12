@@ -8,3 +8,5 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
 ### Added
 - Instruction kit: specs, AI workflow (session protocol, change control, build log, documentation system), Claude Code skills,
   subagents and hooks, git hooks, CI, M0 plan with 84 tasks (KIT).
+- Kit verified on macOS; `new-log-entry.sh` fixed for the first entry of a day; GitHub `main` ruleset and security settings;
+  public-repo directive OD-7; skeleton folders; how-to for resuming an interrupted session; kit audit (M0-01).

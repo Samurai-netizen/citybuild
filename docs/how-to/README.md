@@ -13,4 +13,4 @@ creates the capability, and every later change to that area keeps it valid. The 
 | `add-command.md`: a new player command end to end | M0-29 | planned |
 | `add-ui-screen.md`: a UI Toolkit screen with a view-model | M0-45 | planned |
 | `run-balance-simulator.md`: test a content change | M0-67 | planned |
-| `resume-interrupted-session.md`: recover after an AI session ended mid-task | M0-01 | planned |
+| [`resume-interrupted-session.md`](resume-interrupted-session.md): recover after an AI session ended mid-task | M0-01 | done |

@@ -20,7 +20,7 @@ date="$(date -u +%Y-%m-%d)"
 year="${date:0:4}"
 dir="docs/build-log/$year"
 mkdir -p "$dir"
-n="$(ls "$dir"/"$date"-*.md 2>/dev/null | wc -l | tr -d ' ')"
+n="$( (ls "$dir"/"$date"-*.md 2>/dev/null || true) | wc -l | tr -d ' ')"  # ls fails on no match; pipefail must not abort
 nn="$(printf '%02d' $((n + 1)))"
 file="$dir/$date-$nn-$id.md"
 blid="BL-${date//-/}-$nn"

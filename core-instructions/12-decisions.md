@@ -53,6 +53,7 @@ Never silently reverse a decision; add a new row that supersedes it. New ids con
 | W6 | Reference docs are generated (DocTools, from M0-61) and checked in CI; module docs enforced per project | Docs that can be generated can't drift | Accepted |
 | W7 | The M0 plan lives in the repo (`docs/plan/M0-PLAN.md`) with task ids and a status board | Any coder can read the next task; no copy-paste from chat | Accepted |
 | W8 | Squash-merge PRs; the step history stays in the build log | Clean `main`, full detail where it's useful | Accepted |
+| W9 | The repository is public (OD-7); `main` is guarded by the ruleset `main-protection` (PR with 0 approvals, squash only, `docs` + `server` checks, no bypass) plus secret scanning with push protection | Owner's choice; the owner's account opens the AI's PRs, so a required approval would block every merge (M0-01) | Accepted (2026-10-08) |
 
 ## Fallbacks agreed in advance
 - **007 fallback:** if the Unity local-package integration blocks progress for more than one session, the client uses
