@@ -4,27 +4,28 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: KIT-AUDIT-FIXES · M0-01 audit fixes A1, A2, A3, A9, A15, A16; maintenance, no plan task; PR #5 open)
-- **Branch:** `task/kit-audit-fixes` (until the owner merges PR #5). M0-01 itself is merged (PR #4).
-- **Build log entry:** last: `docs/build-log/2026/2026-10-12-01-KIT-AUDIT-FIXES.md` (Sessions 1 and 2)
-- **Last green commit:** the head of `task/kit-audit-fixes` (`check-docs --base origin/main` OK; `test-guard-bash.sh` 48/48)
-- **Done steps:** all (Session 1: A16, A1, A3, A2; Session 2: A15 as OD-8, A9 as `scripts/` counts as code)
-- **Next step:** owner merges PR #5, then runs `/start-task M0-02` (Server solution skeleton, `[S]`, Sonnet 5.5).
-  M0-02 sets the M0-01 board row to `Done`.
-- **Open questions for the owner:** the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI).
+- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** M0-02 · Server solution skeleton (`[S]`; this session: Claude Code / Opus 5.5)
+- **Branch:** `task/M0-02-server-skeleton`
+- **Build log entry:** `docs/build-log/2026/2026-10-12-02-M0-02.md` (Session 1)
+- **Last green commit:** the head of `task/M0-02-server-skeleton` (`check-docs` OK; no server code yet)
+- **Done steps:** 1 write-ahead
+- **Planned steps:** 2 gate questions (G-Dependency xUnit runner, G-Rules `AGENTS.md` marks) · 3 SDK pin, props files,
+  `src/` projects, slnx, Api host · 4 test projects, lock files, CI sequence locally · 5 docs · 6 finish (`16` §E)
+- **Next step:** step 2: ask the owner the two gate questions, record the answers under "Owner input", then step 3.
+- **Open questions for the owner:** step 2 questions; the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh`
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 0 / 84
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 1 / 84
 
 | Area | State | Notes |
 |---|---|---|
-| Repo, kit, hooks, CI | done | M0-01 merged; audit fixes A1–A3, A16 in review; A9, A15, A18 open |
+| Repo, kit, hooks, CI | done | M0-01 and the audit fixes merged (PR #4, #5); A18 open |
 | Shared engine: content, research, labor | not started | |
 | Shared engine: invariants, performance | not started | |
-| Server skeleton | not started | |
+| Server skeleton | in progress | M0-02 |
 | Persistence (EF + PostgreSQL) | not started | |
 | Auth + command pipeline | not started | |
 | Commands: place / upgrade / assign workers / start research | not started | |
