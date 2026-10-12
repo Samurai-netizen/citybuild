@@ -127,7 +127,7 @@ if [ -n "$base" ]; then
   else
     changes="$(git diff --name-status "$base"...HEAD)"
     names="$(printf '%s\n' "$changes" | awk '{print $NF}')"
-    if printf '%s\n' "$names" | grep -qE '^(server/|shared/|client/CityBuilder/(Assets|Packages|ProjectSettings)/|tools/)'; then
+    if printf '%s\n' "$names" | grep -qE '^(server/|shared/|client/CityBuilder/(Assets|Packages|ProjectSettings)/|tools/|scripts/)'; then
       printf '%s\n' "$names" | grep -qE '^docs/build-log/[0-9]{4}/' || fail "Code changed but no build log entry was added or updated"
       printf '%s\n' "$names" | grep -qx 'core-instructions/13-progress.md' || fail "Code changed but core-instructions/13-progress.md was not updated"
       printf '%s\n' "$names" | grep -qx 'CHANGELOG.md' || fail "Code changed but CHANGELOG.md was not updated"
@@ -141,7 +141,7 @@ if [ -n "$base" ]; then
       esac
     done <<< "$changes"
     # protected files: allowed, but must be visible to the owner
-    protected='^(AGENTS\.md|CLAUDE\.md|core-instructions/02-principles\.md|core-instructions/15-change-control\.md|core-instructions/22-game-mechanics\.md|\.claude/settings\.json|\.claude/hooks/|\.githooks/|\.github/workflows/)'
+    protected='^(AGENTS\.md|CLAUDE\.md|core-instructions/02-principles\.md|core-instructions/15-change-control\.md|core-instructions/22-game-mechanics\.md|\.claude/settings\.json|\.claude/hooks/|\.githooks/|scripts/dev/|\.github/workflows/)'
     printf '%s\n' "$names" | grep -E "$protected" | while IFS= read -r p; do note "Protected file changed (owner approval must be recorded in the build log): $p"; done
   fi
 fi

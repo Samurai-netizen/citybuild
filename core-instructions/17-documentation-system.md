@@ -62,7 +62,8 @@ research, error codes, endpoints (OpenAPI), configuration keys, DB schema, and t
    - CR and ADR status lines are valid;
    - every project or assembly has a module doc;
    - the always-loaded files stay small;
-   - on a PR, code changes come with a build log entry, a progress update and a CHANGELOG line, and merged log entries are untouched.
+   - on a PR, code changes (`server/`, `shared/`, the Unity project, `tools/` and `scripts/`) come with a build log entry,
+     a progress update and a CHANGELOG line, and merged log entries are untouched.
 4. CI runs these checks plus the generated-docs comparison. The `reviewer` subagent checks docs against the diff.
 5. Each module doc ends with `Last updated: <task id>`, so stale docs are easy to spot.
 6. The task M0-63 and every milestone end include a full docs audit (`docs-auditor` subagent or `/docs-sync`).

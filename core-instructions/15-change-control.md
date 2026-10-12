@@ -28,7 +28,7 @@ Nothing enters the codebase without a task id or an approved change request.
 ## Protected files (owner approval needed for every edit)
 `AGENTS.md`, `CLAUDE.md`, `core-instructions/02-principles.md`, `core-instructions/15-change-control.md`,
 `core-instructions/22-game-mechanics.md`, `.claude/settings.json`, `.claude/hooks/**`, `.githooks/**`,
-`.github/workflows/**`, and the golden test fixtures `server/tests/**/Fixtures/content-golden-*.json`.
+`scripts/dev/**`, `.github/workflows/**`, and the golden test fixtures `server/tests/**/Fixtures/content-golden-*.json`.
 Claude Code asks before editing these (permission `ask` rules). Other tools: ask in chat first.
 Generated docs (`docs/reference/generated/**`) are never edited by hand; change the generator instead.
 
@@ -63,3 +63,4 @@ gives them in chat (date, short quote, where they're applied).
 | OD-5 | 2026-10-04 | Complete documentation, kept up to date with every codebase change, for both AI and people | `17`, `19`, `docs/` |
 | OD-6 | 2026-10-04 | Everything is on GitHub; different AI coders work one after another and must not depend on each other's context | `16`, `18`, `AGENTS.md` |
 | OD-7 | 2026-10-08 | "Keep the project public" — the repository stays public (derived consequence, not the owner's words: never commit secrets or personal data) | `18`, `docs/getting-started.md`, Day 0 in the plan |
+| OD-8 | 2026-10-12 | "We will decide on exact license later … we can use no license file for a little bit more time" — until the owner decides there is no `LICENSE` file and the README keeps its general line, "Proprietary, all rights reserved" (derived consequence: don't add a `LICENSE` file or pick a license on your own) | `README.md` (License) |

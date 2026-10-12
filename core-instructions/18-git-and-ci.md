@@ -37,7 +37,10 @@ AI coders must never bypass hooks or set `ALLOW_MAIN_COMMIT`.
 - **Ask:** destructive git (`reset --hard`, `clean`, `rebase`, `merge`), `gh pr merge`, `rm -rf`, dropping databases or volumes, and edits to protected files.
 - **Hooks:**
   - session start prints the repo state;
-  - a Bash guard blocks `--no-verify`, commits on `main` and pushes to `main`;
+  - a Bash guard (`.claude/hooks/guard-bash.sh`) blocks `--no-verify`, commits on `main`, pushes to `main`, force-pushes and the
+    owner's `ALLOW_MAIN_COMMIT` override. It ignores quoted text, comments and here-document bodies, and tests each command of an
+    `&&` / `;` / `|` chain on its own. It is best effort: it catches mistakes, it does not stop a determined bypass.
+    After changing it, run `bash scripts/dev/test-guard-bash.sh`;
   - a Stop hook refuses to end a turn while code changes are not checkpointed in the resume point and build log.
 
 ## CI (`.github/workflows/ci.yml`, runs on every PR and on `main`)

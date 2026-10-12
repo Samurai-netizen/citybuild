@@ -5,14 +5,14 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-01 · Repository audit and kit verification, PR open, `In review`)
-- **Branch:** — (M0-01 work is on `task/M0-01-kit-audit` until the owner merges)
-- **Build log entry:** last: `docs/build-log/2026/2026-10-08-01-M0-01.md`
-- **Last green commit:** the head of `task/M0-01-kit-audit` (docs-only task; `check-docs --base origin/main` OK)
-- **Done steps:** —
-- **Next step:** owner merges the M0-01 PR, then runs `/start-task M0-02` (Server solution skeleton, `[S]`, Sonnet 5.5).
+- **Task:** — (last completed: KIT-AUDIT-FIXES · M0-01 audit fixes A1, A2, A3, A9, A15, A16; maintenance, no plan task; PR #5 open)
+- **Branch:** `task/kit-audit-fixes` (until the owner merges PR #5). M0-01 itself is merged (PR #4).
+- **Build log entry:** last: `docs/build-log/2026/2026-10-12-01-KIT-AUDIT-FIXES.md` (Sessions 1 and 2)
+- **Last green commit:** the head of `task/kit-audit-fixes` (`check-docs --base origin/main` OK; `test-guard-bash.sh` 48/48)
+- **Done steps:** all (Session 1: A16, A1, A3, A2; Session 2: A15 as OD-8, A9 as `scripts/` counts as code)
+- **Next step:** owner merges PR #5, then runs `/start-task M0-02` (Server solution skeleton, `[S]`, Sonnet 5.5).
   M0-02 sets the M0-01 board row to `Done`.
-- **Open questions for the owner:** M0-01 audit A1, A2, A3, A9, A15 and the Dependabot PRs #1/#2 (build log → Follow-ups).
+- **Open questions for the owner:** the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh`
 
@@ -21,7 +21,7 @@
 
 | Area | State | Notes |
 |---|---|---|
-| Repo, kit, hooks, CI | done | M0-01 (in review); audit follow-ups open |
+| Repo, kit, hooks, CI | done | M0-01 merged; audit fixes A1–A3, A16 in review; A9, A15, A18 open |
 | Shared engine: content, research, labor | not started | |
 | Shared engine: invariants, performance | not started | |
 | Server skeleton | not started | |
@@ -40,13 +40,10 @@
 States: `not started` · `in progress` · `done` · `blocked (reason)`
 
 ## Commands that work right now
-- `bash scripts/dev/check-docs.sh` · `bash scripts/dev/setup-hooks.sh` · `bash scripts/dev/show-task.sh <ID>` · `bash scripts/dev/new-log-entry.sh <ID> "<title>" "<agent>"`
+- `bash scripts/dev/check-docs.sh` · `bash scripts/dev/test-guard-bash.sh` · `bash scripts/dev/setup-hooks.sh` · `bash scripts/dev/show-task.sh <ID>` · `bash scripts/dev/new-log-entry.sh <ID> "<title>" "<agent>"`
 
 ## Open issues / tech debt
 - Unity 6.6 is installed, but the stack pins 6.3 LTS: install 6.3 before M0-04 (M0-01 audit A18).
-- `.DS_Store` is tracked although ignored: untrack it in a `chore(repo)` PR (A16).
-- `CLAUDE.md` says Plan Mode for `[PLAN]` tasks, which conflicts with the write-ahead in `16` §B (A1).
-- `guard-bash.sh` false positives on heredoc text (A2). Workaround: write text with the file tools; run `git push` in its own call.
 - Other kit wording items with their owner tasks: M0-01 build log → Follow-ups.
 
 ## Deviations from the plan
