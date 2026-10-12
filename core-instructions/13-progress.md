@@ -9,11 +9,11 @@
 - **Branch:** `task/M0-02-server-skeleton`
 - **Build log entry:** `docs/build-log/2026/2026-10-12-02-M0-02.md` (Session 1)
 - **Last green commit:** the head of `task/M0-02-server-skeleton` (`check-docs` OK; no server code yet)
-- **Done steps:** 1 write-ahead
+- **Done steps:** 1 write-ahead · 2 gate questions answered (build log → Owner input)
 - **Planned steps:** 2 gate questions (G-Dependency xUnit runner, G-Rules `AGENTS.md` marks) · 3 SDK pin, props files,
   `src/` projects, slnx, Api host · 4 test projects, lock files, CI sequence locally · 5 docs · 6 finish (`16` §E)
-- **Next step:** step 2: ask the owner the two gate questions, record the answers under "Owner input", then step 3.
-- **Open questions for the owner:** step 2 questions; the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI).
+- **Next step:** step 3: `global.json`, `server/Directory.Build.props` + `Directory.Packages.props`, `src/` projects, slnx, Api host.
+- **Open questions for the owner:** the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh`
 
