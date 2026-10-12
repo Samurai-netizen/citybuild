@@ -9,9 +9,9 @@
 - **Branch:** `task/kit-audit-fixes`
 - **Build log entry:** `docs/build-log/2026/2026-10-12-01-KIT-AUDIT-FIXES.md` (Session 2, Claude Code / claude-sonnet-5-5)
 - **Last green commit:** `e2f5d18` (Session 1 finish; `check-docs --base origin/main` OK; `test-guard-bash.sh` 48/48)
-- **Done steps:** Session 1 (A16, A1, A3, A2); Session 2: write-ahead
-- **Next step:** Session 2 step 2, A15: standing directive OD-8 in `15`. Then A9 (`scripts/` counts as code in `check-docs.sh`,
-  `stop-checkpoint.sh`, `17`), finish. After the owner merges the PR: `/start-task M0-02` (Server solution skeleton, `[S]`).
+- **Done steps:** Session 1 (A16, A1, A3, A2); Session 2: write-ahead, step 2 (A15: OD-8 in `15`)
+- **Next step:** Session 2 step 3, A9: `scripts/` counts as code in `check-docs.sh`, `stop-checkpoint.sh`, `17`; verify in a
+  scratch clone. Then finish. After the owner merges the PR: `/start-task M0-02` (Server solution skeleton, `[S]`).
   M0-02 sets the M0-01 board row to `Done`.
 - **Open questions for the owner:** the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI).
 - **Known broken / do not touch:** —

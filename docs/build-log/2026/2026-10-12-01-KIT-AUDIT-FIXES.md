@@ -45,8 +45,9 @@
   3. **A9** `fix(kit)`: `scripts/` counts as code in `scripts/dev/check-docs.sh` (§7) and `.claude/hooks/stop-checkpoint.sh`;
      name the code paths in `17` §5. Verify before/after in a scratch clone (both scripts).
   4. Finish: CHANGELOG line, PR title and body, resume point IDLE, `check-docs.sh --base origin/main`, push.
-- **Done:** —
-- **Stopped at / next:** step 1.
+- **Done:** step 1 (write-ahead, `88dca68`); step 2 (A15) — OD-8 added to `15`; A15 dropped from the open questions in `13`.
+  The README is unchanged: its License line already says "Proprietary, all rights reserved (owner to decide before any public release)".
+- **Stopped at / next:** step 3 (A9).
 
 ## Decisions
 <!-- Every decision, when it is made, including small ones. Scope: local | project-wide (→ 12-decisions.md row) | architectural (→ ADR). -->
@@ -66,6 +67,8 @@
 | 12 | Add `### Fixed` to the CHANGELOG for this task | Keep it under "Added" like M0-01 decision 18 | These are fixes, and Keep a Changelog has the heading; M0-01 avoided a heading only because it had a single line | local |
 | 13 | Document the guard and its test in `18` (Claude Code guardrails), not in `AGENTS.md` | Add the command to the `AGENTS.md` list (`16` §E.5) | `AGENTS.md` is protected and the owner's approval does not cover it. One home for the fact is `18` anyway (`17` §2). Asked in Follow-ups | local |
 | 14 | Do not fix the guard gaps that are not A2 (see Problems), only list them | Fix quoted flags, `git -C dir push`, `HEAD:refs/heads/main` | G-Scope; the approved A2 proposal was heredoc bodies and per-segment checks. The `ask`/`deny` rules and the GitHub ruleset on `main` remain the backstops | local |
+| 15 | A15: record the owner's answer as standing directive OD-8 in `15` (no `LICENSE` file for now; README keeps "Proprietary, all rights reserved") | Only note it in this entry | It is a rule for every future coder ("don't add a `LICENSE` file or pick a license yourself"), and `15` says standing directives go in that table. Owner input is quoted above | project-wide (`15` OD-8; no `12` row, it is a standing directive) |
+| 16 | Leave the README License line unchanged | Reword it | The owner asked to keep the general statement. Note for when the license is chosen: "before any public release" can be misread, because the repository is already public (OD-7); presumably it means a release of the product | local |
 
 ## Owner input
 <!-- Approvals, answers and instructions from the owner, quoted, with where they were persisted. -->
