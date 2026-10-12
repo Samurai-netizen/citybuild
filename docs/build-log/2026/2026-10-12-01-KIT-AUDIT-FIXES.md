@@ -1,6 +1,6 @@
 # BL-20261012-01 · KIT-AUDIT-FIXES — Kit audit fixes: A1, A2, A3, A9, A15, A16
 
-- **Status:** In progress
+- **Status:** Done
 - **Task:** KIT-AUDIT-FIXES: owner-approved follow-ups A1, A2, A3, A16 (Session 1) and A9, A15 (Session 2) of the M0-01 kit audit
   (no plan task id; maintenance work, commits are `<type>(kit)` / `<type>(repo)`)
 - **Branch / PR:** `task/kit-audit-fixes` / PR #5
@@ -49,7 +49,9 @@
   The README is unchanged: its License line already says "Proprietary, all rights reserved (owner to decide before any public release)".
 - **Done (cont.):** step 3 (A9) — `scripts/` added to the code paths in `scripts/dev/check-docs.sh` (§7) and
   `.claude/hooks/stop-checkpoint.sh`; the code paths are now named in `17` §5. Verified before/after in scratch clones.
-- **Stopped at / next:** step 4 (finish).
+- **Done (cont.):** step 4 — CHANGELOG line, `check-docs.sh --base origin/main`, resume point IDLE, PR #5 title and body updated
+  (not merged).
+- **Stopped at / next:** task finished; waiting for the owner to merge PR #5. Next task: M0-02.
 
 ## Decisions
 <!-- Every decision, when it is made, including small ones. Scope: local | project-wide (→ 12-decisions.md row) | architectural (→ ADR). -->
@@ -123,6 +125,7 @@
 | Session 2 · A9 · `check-docs.sh --base origin/main` in throwaway clones, old (HEAD before the edit) vs new | T1 script-only change: old `OK`, **new 3 problems** (no build log entry, `13` not updated, CHANGELOG not updated). T2 the same plus log entry, `13` and CHANGELOG: new `OK`. T3 README only: old and new `OK` |
 | Session 2 · A9 · Stop hook in throwaway clones, old vs new | S1 uncommitted new script, nothing logged: old allowed, **new blocks**. S2 plus `13` and a log entry: new allows. S3 `stop_hook_active: true`: new allows. S4 uncommitted script on `main`: new blocks ("uncommitted code changes on main"). S5 README only: new allows |
 | Session 2 · `bash -n` on both scripts; `bash scripts/dev/test-guard-bash.sh` | syntax ok; 48 passed (unaffected) |
+| Session 2 · final `bash scripts/dev/check-docs.sh --base origin/main` | `check-docs: OK`; seven protected-file notices: `guard-bash.sh`, `stop-checkpoint.sh`, `.claude/settings.json`, `CLAUDE.md`, `15`, `check-docs.sh`, `test-guard-bash.sh` (all covered by "Owner input"; `15` for OD-8 under its own rule) |
 | Environment | macOS, bash 3.2.57, BSD awk 20200816, git 2.54.0 |
 | Not verified | Git Bash on Windows, Linux (gawk/mawk, GNU grep/sed): the script uses only POSIX features and `$'...'`/`<<<` of bash 3.2, but it was run on macOS only |
 | Not run | Independent `reviewer` pass: not an `[O]` task and the owner did not ask for one, although the guard is a safety control (`16` §E.4 says "any task touching … security"; the owner can request it on this branch). No `dotnet`/Unity checks: nothing under `server/`, `shared/`, `client/` or `tools/` changed |

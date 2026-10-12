@@ -4,13 +4,13 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** KIT-AUDIT-FIXES, Session 2 · owner answered A9 (approved) and A15 (no LICENSE file for now); PR #5 is still open
-- **Branch:** `task/kit-audit-fixes`
-- **Build log entry:** `docs/build-log/2026/2026-10-12-01-KIT-AUDIT-FIXES.md` (Session 2, Claude Code / claude-sonnet-5-5)
-- **Last green commit:** `e2f5d18` (Session 1 finish; `check-docs --base origin/main` OK; `test-guard-bash.sh` 48/48)
-- **Done steps:** Session 1 (A16, A1, A3, A2); Session 2: write-ahead, step 2 (A15: OD-8 in `15`), step 3 (A9: `scripts/` is code)
-- **Next step:** Session 2 step 4, finish: CHANGELOG line, PR #5 title and body, `check-docs.sh --base origin/main`, IDLE. After the owner merges the PR: `/start-task M0-02` (Server solution skeleton, `[S]`).
+- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** — (last completed: KIT-AUDIT-FIXES · M0-01 audit fixes A1, A2, A3, A9, A15, A16; maintenance, no plan task; PR #5 open)
+- **Branch:** `task/kit-audit-fixes` (until the owner merges PR #5). M0-01 itself is merged (PR #4).
+- **Build log entry:** last: `docs/build-log/2026/2026-10-12-01-KIT-AUDIT-FIXES.md` (Sessions 1 and 2)
+- **Last green commit:** the head of `task/kit-audit-fixes` (`check-docs --base origin/main` OK; `test-guard-bash.sh` 48/48)
+- **Done steps:** all (Session 1: A16, A1, A3, A2; Session 2: A15 as OD-8, A9 as `scripts/` counts as code)
+- **Next step:** owner merges PR #5, then runs `/start-task M0-02` (Server solution skeleton, `[S]`, Sonnet 5.5).
   M0-02 sets the M0-01 board row to `Done`.
 - **Open questions for the owner:** the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI).
 - **Known broken / do not touch:** —
