@@ -33,7 +33,8 @@ This section only adds what's specific to Claude Code.
 
 ## Model and mode
 - `[O]` tasks: `/model` → Opus 5.5. `[S]` tasks: Sonnet 5.5. Name the model in the build log session header.
-- `[PLAN]` tasks: work in Plan Mode until the owner approves the plan.
+- `[PLAN]` tasks: do the write-ahead (`16` §B.4), then present the plan and wait for the owner's approval before any other change.
+  Plan Mode forbids the write-ahead's file writes, so don't use it for these tasks.
 
 ## Memory
 Don't rely on auto memory or on earlier conversations. Other AI tools will continue this work.

@@ -8,9 +8,9 @@
 - **Task:** KIT-AUDIT-FIXES · owner-approved M0-01 audit fixes A1, A2, A3, A16 (maintenance, no plan task; M0-01 is merged, PR #4)
 - **Branch:** `task/kit-audit-fixes`
 - **Build log entry:** `docs/build-log/2026/2026-10-12-01-KIT-AUDIT-FIXES.md` (Session 1, Claude Code / claude-sonnet-5-5)
-- **Last green commit:** `481aff4` (A16: `.DS_Store` untracked; `check-docs` OK)
-- **Done steps:** write-ahead; step 1 (A16)
-- **Next step:** step 2, A1 (`CLAUDE.md`). Then A3 (protected list), A2 (`guard-bash.sh` + test), finish.
+- **Last green commit:** `f41931e` (step 1 checkpoint; `check-docs` OK). Step 2 is committed after it.
+- **Done steps:** write-ahead; step 1 (A16); step 2 (A1)
+- **Next step:** step 3, A3 (protected list: `15`, `.claude/settings.json`, `check-docs.sh`). Then A2 (`guard-bash.sh` + test), finish.
   Steps are listed in the build log. After the owner merges the PR: `/start-task M0-02` (Server solution skeleton, `[S]`).
   M0-02 sets the M0-01 board row to `Done`.
 - **Open questions for the owner:** M0-01 audit A9, A15 (build log → Follow-ups).
@@ -45,7 +45,6 @@ States: `not started` · `in progress` · `done` · `blocked (reason)`
 
 ## Open issues / tech debt
 - Unity 6.6 is installed, but the stack pins 6.3 LTS: install 6.3 before M0-04 (M0-01 audit A18).
-- `CLAUDE.md` says Plan Mode for `[PLAN]` tasks, which conflicts with the write-ahead in `16` §B (A1).
 - `guard-bash.sh` false positives on heredoc text (A2). Workaround: write text with the file tools; run `git push` in its own call.
 - Other kit wording items with their owner tasks: M0-01 build log → Follow-ups.
 

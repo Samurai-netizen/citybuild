@@ -26,7 +26,8 @@
   5. Finish per `16` §E: docs, CHANGELOG, resume point, `check-docs.sh --base origin/main`, PR. Never merge.
 - **Done:** write-ahead (branch, this entry, resume point).
 - **Done (cont.):** step 1 (A16) — `.DS_Store` untracked; the file stays on disk, ignored (`481aff4`).
-- **Stopped at / next:** step 2 (A1).
+- **Done (cont.):** step 2 (A1) — `CLAUDE.md` "Model and mode" reworded; the matching open-issue line removed from `13`.
+- **Stopped at / next:** step 3 (A3).
 
 ## Decisions
 <!-- Every decision, when it is made, including small ones. Scope: local | project-wide (→ 12-decisions.md row) | architectural (→ ADR). -->
@@ -36,6 +37,7 @@
 | 2 | Build log id `KIT-AUDIT-FIXES`, branch `task/kit-audit-fixes`, commit id `kit` / `repo` | Reuse the id `KIT` | The `KIT` entry is merged and append-only (`check-docs.sh` rejects edits); `new-log-entry.sh KIT` would only point at it | local |
 | 3 | Edit protected files with the Edit/Write tools, not with `sed` or heredocs in Bash | `sed -i` in Bash (auto mode prefers Bash) | The `ask` rules in `.claude/settings.json` only fire for the Edit/Write tools; `CLAUDE.md` says not to work around them. The owner's approval is quoted under "Owner input", and every protected-file edit stays visible | local |
 | 4 | Write text that mentions force flags, the override variable or a hook bypass with the Write tool until A2 is fixed | Bash heredocs | `guard-bash.sh` still has the A2 false positives; the Write tool is not affected | local |
+| 5 | A1 wording: the approved proposal sentence plus one clause saying why ("Plan Mode forbids the write-ahead's file writes, so don't use it for these tasks") | The proposal sentence alone | The audit's finding is that Plan Mode and the write-ahead conflict; a coder who reads only the first sentence could still enter Plan Mode and hit the conflict. The owner can drop the clause | local |
 
 ## Owner input
 <!-- Approvals, answers and instructions from the owner, quoted, with where they were persisted. -->
