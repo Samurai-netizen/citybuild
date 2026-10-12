@@ -1,6 +1,6 @@
 # BL-20261012-01 · KIT-AUDIT-FIXES — Kit audit fixes: A1, A2, A3, A16
 
-- **Status:** In progress
+- **Status:** Done
 - **Task:** KIT-AUDIT-FIXES: owner-approved follow-ups A1, A2, A3 and A16 of the M0-01 kit audit
   (no plan task id; maintenance work, commits are `<type>(kit)` / `<type>(repo)`)
 - **Branch / PR:** `task/kit-audit-fixes` / —
@@ -31,7 +31,8 @@
   `.claude/settings.json` and to the protected-file notice in `scripts/dev/check-docs.sh`.
 - **Done (cont.):** step 4 (A2) — regression test first (old guard: 39 passed, 9 failed), new `guard-bash.sh` developed in the
   scratchpad and installed only after 48/48 passed; guard description in `18`; CHANGELOG line.
-- **Stopped at / next:** step 5 (finish: `check-docs.sh --base origin/main`, resume point IDLE, PR).
+- **Done (cont.):** step 5 — `check-docs.sh --base origin/main`, resume point IDLE, PR opened (not merged).
+- **Stopped at / next:** task finished; waiting for the owner to merge the PR. Next task: M0-02.
 
 ## Decisions
 <!-- Every decision, when it is made, including small ones. Scope: local | project-wide (→ 12-decisions.md row) | architectural (→ ADR). -->
@@ -64,7 +65,7 @@
   Not covered, so not touched: `AGENTS.md`, `.github/workflows/**`, A8, A9.
 
 ## Changes
-- **Code:** `.claude/hooks/guard-bash.sh` (rewritten, 117 lines), `scripts/dev/check-docs.sh` (protected-file notice regex),
+- **Code:** `.claude/hooks/guard-bash.sh` (rewritten, 112 lines), `scripts/dev/check-docs.sh` (protected-file notice regex),
   `.claude/settings.json` (`Edit(/scripts/dev/**)` ask rule); `.DS_Store` untracked.
 - **Tests:** `scripts/dev/test-guard-bash.sh` (new): 48 cases.
 - **Docs:** `CLAUDE.md` (A1), `core-instructions/15-change-control.md` (A3), `core-instructions/18-git-and-ci.md` (guard description),
@@ -86,8 +87,12 @@
 | Step 4 · `&&` written as `&&` in the JSON; empty input; JSON without `command` | denied; allowed silently; allowed silently |
 | Step 4 · live, through the real hook: a Bash call whose heredoc mentions a force push, the override variable and a bypass | allowed (before the fix it would have been denied) |
 | Step 4 · live: a force push attempt written as a dry run (`--dry-run`, so nothing could be sent) | denied by the hook with the force-push message |
+| Step 5 · `bash scripts/dev/check-docs.sh --base origin/main` | `check-docs: OK`; notices for the six protected paths changed: `guard-bash.sh`, `.claude/settings.json`, `CLAUDE.md`, `15`, `check-docs.sh`, `test-guard-bash.sh` (all covered by "Owner input") |
+| Step 5 · `bash scripts/dev/test-guard-bash.sh` (final) | 48 passed, 0 failed |
 | Environment | macOS, bash 3.2.57, BSD awk 20200816, git 2.54.0 |
 | Not verified | Git Bash on Windows, Linux (gawk/mawk, GNU grep/sed): the script uses only POSIX features and `$'...'`/`<<<` of bash 3.2, but it was run on macOS only |
+| Not run | Independent `reviewer` pass: not an `[O]` task and the owner did not ask for one, although the guard is a safety control (`16` §E.4 says "any task touching … security"; the owner can request it on this branch). No `dotnet`/Unity checks: nothing under `server/`, `shared/`, `client/` or `tools/` changed |
+| Not applicable | Plan board row: this is not a plan task. The M0-01 row stays `In review` until M0-02 sets it to `Done` |
 
 ## Problems and surprises
 - Starting state: local `main` was 3 commits behind `origin/main`. PR #4 (M0-01) and the Dependabot PRs #1 and #2 were already

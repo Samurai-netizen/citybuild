@@ -4,16 +4,15 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** KIT-AUDIT-FIXES · owner-approved M0-01 audit fixes A1, A2, A3, A16 (maintenance, no plan task; M0-01 is merged, PR #4)
-- **Branch:** `task/kit-audit-fixes`
-- **Build log entry:** `docs/build-log/2026/2026-10-12-01-KIT-AUDIT-FIXES.md` (Session 1, Claude Code / claude-sonnet-5-5)
-- **Last green commit:** `2b80c86` (step 3, A3; `check-docs` OK). Step 4 is committed after it.
-- **Done steps:** write-ahead; step 1 (A16); step 2 (A1); step 3 (A3); step 4 (A2: new guard, 48/48 in `test-guard-bash.sh`)
-- **Next step:** step 5, finish per `16` §E: `check-docs.sh --base origin/main`, build log status Done, resume point IDLE, PR.
-  Steps are listed in the build log. After the owner merges the PR: `/start-task M0-02` (Server solution skeleton, `[S]`).
+- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** — (last completed: KIT-AUDIT-FIXES · M0-01 audit fixes A1, A2, A3, A16; maintenance, no plan task; PR open)
+- **Branch:** `task/kit-audit-fixes` (until the owner merges its PR). M0-01 itself is merged (PR #4).
+- **Build log entry:** last: `docs/build-log/2026/2026-10-12-01-KIT-AUDIT-FIXES.md`
+- **Last green commit:** the head of `task/kit-audit-fixes` (`check-docs --base origin/main` OK; `test-guard-bash.sh` 48/48)
+- **Done steps:** all five (A16, A1, A3, A2, finish)
+- **Next step:** owner merges the PR, then runs `/start-task M0-02` (Server solution skeleton, `[S]`, Sonnet 5.5).
   M0-02 sets the M0-01 board row to `Done`.
-- **Open questions for the owner:** M0-01 audit A9, A15 (build log → Follow-ups).
+- **Open questions for the owner:** M0-01 audit A9, A15; the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh`
 
@@ -22,7 +21,7 @@
 
 | Area | State | Notes |
 |---|---|---|
-| Repo, kit, hooks, CI | done | M0-01 (in review); audit follow-ups open |
+| Repo, kit, hooks, CI | done | M0-01 merged; audit fixes A1–A3, A16 in review; A9, A15, A18 open |
 | Shared engine: content, research, labor | not started | |
 | Shared engine: invariants, performance | not started | |
 | Server skeleton | not started | |
@@ -41,7 +40,7 @@
 States: `not started` · `in progress` · `done` · `blocked (reason)`
 
 ## Commands that work right now
-- `bash scripts/dev/check-docs.sh` · `bash scripts/dev/setup-hooks.sh` · `bash scripts/dev/show-task.sh <ID>` · `bash scripts/dev/new-log-entry.sh <ID> "<title>" "<agent>"`
+- `bash scripts/dev/check-docs.sh` · `bash scripts/dev/test-guard-bash.sh` · `bash scripts/dev/setup-hooks.sh` · `bash scripts/dev/show-task.sh <ID>` · `bash scripts/dev/new-log-entry.sh <ID> "<title>" "<agent>"`
 
 ## Open issues / tech debt
 - Unity 6.6 is installed, but the stack pins 6.3 LTS: install 6.3 before M0-04 (M0-01 audit A18).
