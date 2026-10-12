@@ -9,14 +9,14 @@
 - **Branch:** `task/M0-03-engine-skeleton`
 - **Build log entry:** `docs/build-log/2026/2026-10-12-03-M0-03.md` (Session 1; the 9-step plan is in it)
 - **Last green commit:** `d2e0f9d` on `main` (baseline: locked restore, format check, Release build, 6 fast tests). No code on the branch yet.
-- **Done steps:** 5 of 9 (write-ahead; probes; package + build project + module doc; `IntegerMath`, `ItemId` + 96 tests, mutation-checked;
-  Domain and Application reference Simulation, lock files regenerated, 102 tests green).
-- **Next step:** plan step 6 in the build log. In `server/tests/CityBuilder.Simulation.Tests`: `SimulationDependencyTests` (only BCL references,
-  `netstandard` listed, built for netstandard2.1, the check can fail) and `SimulationPackageTests` (asmdef: noEngineReferences, no references,
-  name = assembly name, autoReferenced; `package.json`: name, `unity` 6000.3, version; no `bin/` or `obj/` under `shared/Simulation`;
-  every `Runtime/**/*.cs` starts with `#nullable enable`; repository root found by walking up to `global.json`). In
-  `server/tests/CityBuilder.IntegrationTests`: `InfrastructureDependencyTests` (no `CityBuilder.Api` reference). Mutation-check them in a
-  scratch copy of the repo, not in the working tree. Then step 7 (docs), step 8 (review workflow), step 9 (finish).
+- **Done steps:** 6 of 9 (write-ahead; probes; package + build project + module doc; `IntegerMath`, `ItemId`; Domain and Application
+  reference Simulation with regenerated lock files; architecture, package and build-project tests, all mutation-checked). 121 fast tests green.
+- **Next step:** plan step 7 in the build log, docs per recipe "New project, assembly or folder area" (`19`): `docs/architecture/overview.md`
+  (add Simulation and Simulation.Tests to the projects table, drop the "(planned)" line, add a "dependency rules and where they are tested"
+  table, header "(M0-02, M0-03)"), `core-instructions/03-architecture.md` (one sentence: where the dependency tests live), the module doc
+  `CityBuilder.Simulation.md` (tests section: the three new classes; "Tests check both" no longer planned), `.claude/rules/simulation.md`
+  (name `IntegerMath.CeilDiv`), `README.md` map line (drop "from M0-03"), a `12-decisions.md` row for the shared-engine build convention
+  (build log decision 4), `CHANGELOG.md`. Then step 8 (review Workflow of read-only `reviewer` agents) and step 9 (finish, PR).
 - **Open questions for the owner:** the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`
