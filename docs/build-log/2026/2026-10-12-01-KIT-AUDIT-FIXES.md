@@ -27,7 +27,9 @@
 - **Done:** write-ahead (branch, this entry, resume point).
 - **Done (cont.):** step 1 (A16) — `.DS_Store` untracked; the file stays on disk, ignored (`481aff4`).
 - **Done (cont.):** step 2 (A1) — `CLAUDE.md` "Model and mode" reworded; the matching open-issue line removed from `13`.
-- **Stopped at / next:** step 3 (A3).
+- **Done (cont.):** step 3 (A3) — `scripts/dev/**` added to the protected files in `15`, to the `ask` rules in
+  `.claude/settings.json` and to the protected-file notice in `scripts/dev/check-docs.sh`.
+- **Stopped at / next:** step 4 (A2).
 
 ## Decisions
 <!-- Every decision, when it is made, including small ones. Scope: local | project-wide (→ 12-decisions.md row) | architectural (→ ADR). -->
@@ -38,6 +40,8 @@
 | 3 | Edit protected files with the Edit/Write tools, not with `sed` or heredocs in Bash | `sed -i` in Bash (auto mode prefers Bash) | The `ask` rules in `.claude/settings.json` only fire for the Edit/Write tools; `CLAUDE.md` says not to work around them. The owner's approval is quoted under "Owner input", and every protected-file edit stays visible | local |
 | 4 | Write text that mentions force flags, the override variable or a hook bypass with the Write tool until A2 is fixed | Bash heredocs | `guard-bash.sh` still has the A2 false positives; the Write tool is not affected | local |
 | 5 | A1 wording: the approved proposal sentence plus one clause saying why ("Plan Mode forbids the write-ahead's file writes, so don't use it for these tasks") | The proposal sentence alone | The audit's finding is that Plan Mode and the write-ahead conflict; a coder who reads only the first sentence could still enter Plan Mode and hit the conflict. The owner can drop the clause | local |
+| 6 | A3 is applied in all three places that encode the protected list: the list in `15`, the `ask` rules in `.claude/settings.json`, the notice regex in `check-docs.sh` | Only the list in `15` | `15` says Claude Code asks before editing protected files, so the rule must match the list; the notice makes such edits visible in every PR. The `Bash(bash scripts/dev/*)` allow rule stays, because running a script is not editing it | project-wide (protected-file list is in `15`; no `12` row, it is a list change, not a design decision) |
+| 7 | Leave A8 (golden fixtures missing from the notice regex) alone although the same line was edited | Fix it in passing | Not in the owner's approval; the fixtures do not exist until M0-11 (G-Scope) | local |
 
 ## Owner input
 <!-- Approvals, answers and instructions from the owner, quoted, with where they were persisted. -->

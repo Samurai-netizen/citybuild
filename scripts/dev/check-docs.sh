@@ -141,7 +141,7 @@ if [ -n "$base" ]; then
       esac
     done <<< "$changes"
     # protected files: allowed, but must be visible to the owner
-    protected='^(AGENTS\.md|CLAUDE\.md|core-instructions/02-principles\.md|core-instructions/15-change-control\.md|core-instructions/22-game-mechanics\.md|\.claude/settings\.json|\.claude/hooks/|\.githooks/|\.github/workflows/)'
+    protected='^(AGENTS\.md|CLAUDE\.md|core-instructions/02-principles\.md|core-instructions/15-change-control\.md|core-instructions/22-game-mechanics\.md|\.claude/settings\.json|\.claude/hooks/|\.githooks/|scripts/dev/|\.github/workflows/)'
     printf '%s\n' "$names" | grep -E "$protected" | while IFS= read -r p; do note "Protected file changed (owner approval must be recorded in the build log): $p"; done
   fi
 fi

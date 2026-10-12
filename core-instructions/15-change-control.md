@@ -28,7 +28,7 @@ Nothing enters the codebase without a task id or an approved change request.
 ## Protected files (owner approval needed for every edit)
 `AGENTS.md`, `CLAUDE.md`, `core-instructions/02-principles.md`, `core-instructions/15-change-control.md`,
 `core-instructions/22-game-mechanics.md`, `.claude/settings.json`, `.claude/hooks/**`, `.githooks/**`,
-`.github/workflows/**`, and the golden test fixtures `server/tests/**/Fixtures/content-golden-*.json`.
+`scripts/dev/**`, `.github/workflows/**`, and the golden test fixtures `server/tests/**/Fixtures/content-golden-*.json`.
 Claude Code asks before editing these (permission `ask` rules). Other tools: ask in chat first.
 Generated docs (`docs/reference/generated/**`) are never edited by hand; change the generator instead.
 

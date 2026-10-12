@@ -8,9 +8,10 @@
 - **Task:** KIT-AUDIT-FIXES · owner-approved M0-01 audit fixes A1, A2, A3, A16 (maintenance, no plan task; M0-01 is merged, PR #4)
 - **Branch:** `task/kit-audit-fixes`
 - **Build log entry:** `docs/build-log/2026/2026-10-12-01-KIT-AUDIT-FIXES.md` (Session 1, Claude Code / claude-sonnet-5-5)
-- **Last green commit:** `f41931e` (step 1 checkpoint; `check-docs` OK). Step 2 is committed after it.
-- **Done steps:** write-ahead; step 1 (A16); step 2 (A1)
-- **Next step:** step 3, A3 (protected list: `15`, `.claude/settings.json`, `check-docs.sh`). Then A2 (`guard-bash.sh` + test), finish.
+- **Last green commit:** `42bbdfd` (step 2, A1; `check-docs` OK). Step 3 is committed after it.
+- **Done steps:** write-ahead; step 1 (A16); step 2 (A1); step 3 (A3)
+- **Next step:** step 4, A2: rewrite the command analysis in `.claude/hooks/guard-bash.sh`, add `scripts/dev/test-guard-bash.sh`,
+  update `18`. Then finish (step 5).
   Steps are listed in the build log. After the owner merges the PR: `/start-task M0-02` (Server solution skeleton, `[S]`).
   M0-02 sets the M0-01 board row to `Done`.
 - **Open questions for the owner:** M0-01 audit A9, A15 (build log → Follow-ups).
