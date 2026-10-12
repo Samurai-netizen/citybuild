@@ -4,15 +4,16 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: KIT-AUDIT-FIXES · M0-01 audit fixes A1, A2, A3, A16; maintenance, no plan task; PR open)
-- **Branch:** `task/kit-audit-fixes` (until the owner merges its PR). M0-01 itself is merged (PR #4).
-- **Build log entry:** last: `docs/build-log/2026/2026-10-12-01-KIT-AUDIT-FIXES.md`
-- **Last green commit:** the head of `task/kit-audit-fixes` (`check-docs --base origin/main` OK; `test-guard-bash.sh` 48/48)
-- **Done steps:** all five (A16, A1, A3, A2, finish)
-- **Next step:** owner merges the PR, then runs `/start-task M0-02` (Server solution skeleton, `[S]`, Sonnet 5.5).
+- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** KIT-AUDIT-FIXES, Session 2 · owner answered A9 (approved) and A15 (no LICENSE file for now); PR #5 is still open
+- **Branch:** `task/kit-audit-fixes`
+- **Build log entry:** `docs/build-log/2026/2026-10-12-01-KIT-AUDIT-FIXES.md` (Session 2, Claude Code / claude-sonnet-5-5)
+- **Last green commit:** `e2f5d18` (Session 1 finish; `check-docs --base origin/main` OK; `test-guard-bash.sh` 48/48)
+- **Done steps:** Session 1 (A16, A1, A3, A2); Session 2: write-ahead
+- **Next step:** Session 2 step 2, A15: standing directive OD-8 in `15`. Then A9 (`scripts/` counts as code in `check-docs.sh`,
+  `stop-checkpoint.sh`, `17`), finish. After the owner merges the PR: `/start-task M0-02` (Server solution skeleton, `[S]`).
   M0-02 sets the M0-01 board row to `Done`.
-- **Open questions for the owner:** M0-01 audit A9, A15; the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI).
+- **Open questions for the owner:** the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh`
 

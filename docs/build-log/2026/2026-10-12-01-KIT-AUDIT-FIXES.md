@@ -1,9 +1,9 @@
-# BL-20261012-01 · KIT-AUDIT-FIXES — Kit audit fixes: A1, A2, A3, A16
+# BL-20261012-01 · KIT-AUDIT-FIXES — Kit audit fixes: A1, A2, A3, A9, A15, A16
 
-- **Status:** Done
-- **Task:** KIT-AUDIT-FIXES: owner-approved follow-ups A1, A2, A3 and A16 of the M0-01 kit audit
+- **Status:** In progress
+- **Task:** KIT-AUDIT-FIXES: owner-approved follow-ups A1, A2, A3, A16 (Session 1) and A9, A15 (Session 2) of the M0-01 kit audit
   (no plan task id; maintenance work, commits are `<type>(kit)` / `<type>(repo)`)
-- **Branch / PR:** `task/kit-audit-fixes` / —
+- **Branch / PR:** `task/kit-audit-fixes` / PR #5
 - **Started:** 2026-10-12 · **First agent:** Claude Code / claude-sonnet-5-5
 
 <!-- Status values: In progress | Done | Partial | Blocked. One entry per task; every session appends a section below.
@@ -34,6 +34,20 @@
 - **Done (cont.):** step 5 — `check-docs.sh --base origin/main`, resume point IDLE, PR opened (not merged).
 - **Stopped at / next:** task finished; waiting for the owner to merge the PR. Next task: M0-02.
 
+### Session 2 — 2026-10-12 · Claude Code / claude-sonnet-5-5
+- **Why:** the owner answered the two audit items left open in Session 1 (see "Owner input"). PR #5 was still open and
+  clean, so the work goes on the same branch and the PR is updated; a second PR would conflict on the resume point,
+  the index and the CHANGELOG (decision 1).
+- **Plan:**
+  1. Write-ahead: this section, the resume point IN PROGRESS, push.
+  2. **A15** `docs(kit)`: record the owner's decision as standing directive OD-8 in `15` (no LICENSE file for now,
+     the README keeps its general "Proprietary, all rights reserved" line); drop A15 from the open questions in `13`.
+  3. **A9** `fix(kit)`: `scripts/` counts as code in `scripts/dev/check-docs.sh` (§7) and `.claude/hooks/stop-checkpoint.sh`;
+     name the code paths in `17` §5. Verify before/after in a scratch clone (both scripts).
+  4. Finish: CHANGELOG line, PR title and body, resume point IDLE, `check-docs.sh --base origin/main`, push.
+- **Done:** —
+- **Stopped at / next:** step 1.
+
 ## Decisions
 <!-- Every decision, when it is made, including small ones. Scope: local | project-wide (→ 12-decisions.md row) | architectural (→ ADR). -->
 | # | Decision | Alternatives considered | Why | Scope |
@@ -62,7 +76,14 @@
   `.claude/settings.json` and `core-instructions/15-change-control.md` (A3).
   Also touched under the same answer, so the owner should look at them: `scripts/dev/check-docs.sh` (a protected path from A3 on) and the
   new file `scripts/dev/test-guard-bash.sh`.
-  Not covered, so not touched: `AGENTS.md`, `.github/workflows/**`, A8, A9.
+  Not covered, so not touched: `AGENTS.md`, `.github/workflows/**`, A8. (A9 and A15 were answered afterwards, see below.)
+- 2026-10-12 · "I approve a9. For a15, We will decide on exact license later. For now use just general license, I think that we can use no license file for a little bit more time now"
+  → **A9** approved as proposed in my reply: `scripts/` counts as code, so a script-only change needs a build log entry,
+  a resume point update and a CHANGELOG line (the Stop hook and `check-docs.sh` both enforce it). Protected-file edits covered by
+  this answer: `.claude/hooks/stop-checkpoint.sh` and `scripts/dev/check-docs.sh`.
+  → **A15**: no LICENSE file for now; the exact license is decided later by the owner. Read "just general license" as: keep the
+  README's general statement ("Proprietary, all rights reserved"). Persisted as standing directive OD-8 in `15`; `15` says the AI
+  appends standing directives as soon as the owner gives them. Say if "general license" meant something else.
 
 ## Changes
 - **Code:** `.claude/hooks/guard-bash.sh` (rewritten, 112 lines), `scripts/dev/check-docs.sh` (protected-file notice regex),
