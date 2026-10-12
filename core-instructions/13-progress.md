@@ -9,14 +9,14 @@
 - **Branch:** `task/M0-03-engine-skeleton`
 - **Build log entry:** `docs/build-log/2026/2026-10-12-03-M0-03.md` (Session 1; the 9-step plan is in it)
 - **Last green commit:** `d2e0f9d` on `main` (baseline: locked restore, format check, Release build, 6 fast tests). No code on the branch yet.
-- **Done steps:** 6 of 9 (write-ahead; probes; package + build project + module doc; `IntegerMath`, `ItemId`; Domain and Application
-  reference Simulation with regenerated lock files; architecture, package and build-project tests, all mutation-checked). 121 fast tests green.
-- **Next step:** plan step 7 in the build log, docs per recipe "New project, assembly or folder area" (`19`): `docs/architecture/overview.md`
-  (add Simulation and Simulation.Tests to the projects table, drop the "(planned)" line, add a "dependency rules and where they are tested"
-  table, header "(M0-02, M0-03)"), `core-instructions/03-architecture.md` (one sentence: where the dependency tests live), the module doc
-  `CityBuilder.Simulation.md` (tests section: the three new classes; "Tests check both" no longer planned), `.claude/rules/simulation.md`
-  (name `IntegerMath.CeilDiv`), `README.md` map line (drop "from M0-03"), a `12-decisions.md` row for the shared-engine build convention
-  (build log decision 4), `CHANGELOG.md`. Then step 8 (review Workflow of read-only `reviewer` agents) and step 9 (finish, PR).
+- **Done steps:** 7 of 9 (write-ahead; probes; package + build project + module doc; `IntegerMath`, `ItemId`; Domain and Application
+  reference Simulation with regenerated lock files; architecture, package and build-project tests, mutation-checked; docs and `12` rows
+  021–022, CHANGELOG line). 121 fast tests green. The CHANGELOG line is already in; board and resume point still say In progress.
+- **Next step:** plan step 8 in the build log: run the independent review as a Workflow of read-only `reviewer` agents over
+  `git diff origin/main...HEAD` (lenses: spec and Definition of Done; engine rules and helper correctness; build, lock files and CI;
+  test quality; docs and process), verify each finding adversarially, fix what is confirmed with a log line each. Then step 9 (finish):
+  Definition of Done, `check-docs.sh --base origin/main`, clean-clone run of CI's server sequence, build log Verification table, board
+  `In review`, resume point `IDLE`, `gh pr create`, CI result, task report.
 - **Open questions for the owner:** the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`

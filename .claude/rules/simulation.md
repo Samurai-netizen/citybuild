@@ -14,7 +14,8 @@ and Unity 6.3 (client, Mono/IL2CPP), and it must behave identically in both.
   `required`, records / `init` (unless an internal `IsExternalInit` shim exists), raw string literals.
 - Add `#nullable enable` at the top of every file.
 - Integers only: `long` for quantities, seconds and labor; `int` for ids and permille. No `float`, `double` or `decimal`.
-- Durations use one shared `CeilDiv(long a, long b)` helper (a ≥ 0, b > 0). No other division in game logic.
+- Durations use one shared helper, `IntegerMath.CeilDiv(long dividend, long divisor)` (dividend ≥ 0, divisor > 0), and labor
+  reductions use `IntegerMath.ApplyPermilleReduction`. No other division in game logic.
 - No `DateTime`, `TimeProvider`, `Random`, `Guid.NewGuid`, I/O, logging, or statics with mutable state.
 - Never iterate a `Dictionary`/`HashSet` where order affects results. Sort keys with
   `StringComparer.Ordinal`, or use arrays indexed by sorted ids.

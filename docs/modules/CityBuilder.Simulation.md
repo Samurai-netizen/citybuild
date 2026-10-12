@@ -35,7 +35,7 @@ The `.csproj` sits beside the package, not inside it: Unity imports every file o
 `.claude/rules/simulation.md` is the binding list (integers only, `CeilDiv` for durations, no `DateTime` or randomness, no iteration
 order that matters, `checked` arithmetic, results instead of exceptions for business rules). What is specific to this module:
 - **Base class library only.** The asmdef keeps `"noEngineReferences": true` and no references; the compiled assembly references
-  only `netstandard`. Tests check both *(from M0-03 step 6)*.
+  only `netstandard`. Tests check both.
 - **`netstandard2.1`, C# 9.** Unity 6.3 compiles the same files, so no file-scoped namespaces, global usings, records, `init` or
   raw string literals. Every file starts with `#nullable enable`, because Unity does not read the project file.
 - **Strict build.** The project is outside `server/`, so it repeats the settings that `server/Directory.Build.props` gives the server:
@@ -58,7 +58,11 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
 - `IntegerMathTests`: edge cases and exhaustive small ranges, and exact reference values with `BigInteger` up to `long.MaxValue`
   (tests use integers only, like the engine).
 - `ItemIdTests`: equality, ordinal ordering, `default`, hashing, use as a dictionary key.
-- The dependency and package-layout tests follow in M0-03 step 6 *(planned)*.
+- `SimulationDependencyTests`: only base class library references, built for `netstandard2.1` (plain reflection over the compiled assembly).
+- `SimulationPackageTests`: the files only Unity sees: the asmdef (`noEngineReferences`, no references, same name as the assembly,
+  auto-referenced), `package.json` (name, `unity` 6000.3, version), no `bin/` or `obj/` under `shared/Simulation`, and
+  `#nullable enable` at the top of every source. They find the repository by walking up to `global.json` (`RepositoryPaths`).
+- `SimulationBuildProjectTests`: the csproj keeps `LangVersion 9.0`, warnings as errors, the XML doc file and no `PackageReference`.
 
 That the package compiles inside Unity is proved by an EditMode test in M0-05 *(planned)*.
 

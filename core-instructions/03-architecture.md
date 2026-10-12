@@ -43,7 +43,8 @@ and every 2 minutes in the foreground. Every command response carries the full a
 - **Domain:** server-only concepts — player, ledger entry, command receipt, settlement record (later: market order, mailbox delivery).
 - **Application:** use cases (`SettleCity`, `PlaceBuilding`, `UpgradeBuilding`, `AssignWorkers`, `StartResearch`),
   ports (`ICityRepository`, `IUnitOfWork`, `IContentProvider`), and the command pipeline.
-- Architecture tests enforce this table by inspecting assembly references.
+- Architecture tests enforce this table by inspecting assembly references. Each rule is tested next to the layer it guards
+  (`*DependencyTests`); the list is in `docs/architecture/overview.md`.
 
 ## Cross-player rule (for the future market and guilds)
 A transaction locks and writes only the **acting player's** city. Anything that must reach another player

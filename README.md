@@ -26,7 +26,7 @@ build log, how-tos, reference). Setup: [docs/getting-started.md](docs/getting-st
 |---|---|
 | `core-instructions/` | Rules, design and contracts (what must be true) |
 | `docs/` | The system as built, the plan, the build log, ADRs, change requests |
-| `shared/Simulation/` | The deterministic game engine (used by server and client) *(from M0-03)* |
+| `shared/Simulation/` | The deterministic game engine (used by server and client); built by `shared/Simulation.Build/` |
 | `server/` | ASP.NET Core API, application, domain, infrastructure, tests *(from M0-02)* |
 | `client/CityBuilder/` | Unity project *(from M0-04)* |
 | `tools/` | DocTools (generated docs), BalanceSim (economy simulator) *(from M0-61, M0-67)* |
