@@ -1,0 +1,5 @@
+# Analyzer settings for test code only; everything else comes from the repository's root .editorconfig.
+
+[*.cs]
+# Test names are sentences joined by underscores, Method_Scenario_ExpectedResult (core-instructions/08-testing-strategy.md).
+dotnet_diagnostic.CA1707.severity = none

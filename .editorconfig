@@ -52,4 +52,5 @@ dotnet_naming_style.underscore_camel.capitalization = camel_case
 # Analyzer severities worth enforcing
 dotnet_diagnostic.CA2007.severity = none          # ConfigureAwait not needed in ASP.NET Core
 dotnet_diagnostic.IDE0005.severity = warning      # unnecessary usings
+dotnet_diagnostic.IDE1006.severity = warning      # naming rules above: without this line only the IDE and dotnet format report them, not the build
 dotnet_diagnostic.CS1591.severity = warning       # missing XML docs (errors in projects that set TreatWarningsAsErrors)

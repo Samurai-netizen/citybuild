@@ -34,6 +34,8 @@ From Era II this matters even more: one duplication bug floods the shared market
 | Overflow to wrap quantities | `checked` arithmetic, `long`, content validation of maxima | Overflow tests |
 | Secret leakage | Signing key from environment/user-secrets; never in Unity or the repo | Config review prompt |
 | Information leakage in errors | ProblemDetails without stack traces outside Development | Error-mapping tests |
+| Probe server internals through `/health` (no auth) | The response is the status word only: no check details, versions or exception text | `GetHealth_AppRunning_Returns200WithStatusOnly` |
+| Read the full API description in production | OpenAPI (`/openapi/v1.json`) is mapped only in Development | `Security_OpenApiDocument_InProduction_IsNotServed` |
 
 ## Future threats (design now, build with the market and guilds — see `26`)
 | Threat | Planned protection |

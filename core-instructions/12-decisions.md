@@ -40,6 +40,8 @@ Never silently reverse a decision; add a new row that supersedes it. New ids con
 | 016 | Cross-player effects go through a mailbox, applied as timed events in the receiver's settle | Avoids locking two cities; keeps settlement deterministic | Accepted (built in M2) |
 | 017 | Content items carry `era` and `tradable`; city state carries `era` | Cheap now, expensive to retrofit later | Accepted |
 | 018 | Auto-staff only on construction completion: `min(free, MaxWorkers)` | Offline-built buildings shouldn't sit idle; everything else stays the player's choice | Accepted |
+| 019 | Server tests use xUnit v3 on VSTest: `xunit.v3.mtp-off` + `xunit.runner.visualstudio` + `Microsoft.NET.Test.Sdk` | `dotnet test <slnx> --filter "Category…"` stays as in CI and `AGENTS.md`; the default `xunit.v3` package (Microsoft Testing Platform) fails under VSTest on the .NET 10 SDK; v2 is the legacy line. Moving to MTP later changes the test commands (M0-02) | Accepted (owner, 2026-10-12) |
+| 020 | Server build conventions: every project writes its XML doc file (IDE0005 runs on build), CS1591 only in Domain/Application; warnings are errors in `src/`; the build enforces the naming rules (IDE1006); CA1707 is off in tests | One analyzer verdict for build, `dotnet format` and CI; required XML docs only where `14` asks for them; test names keep `Method_Scenario_ExpectedResult` (M0-02) | Accepted |
 
 ## Workflow (AI-building process, 2026-10-04)
 

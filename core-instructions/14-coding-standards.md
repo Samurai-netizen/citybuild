@@ -28,6 +28,8 @@ check as much as possible. When a rule here and an analyzer disagree, the analyz
 ## Documentation in code
 - XML doc comments on every public type and member in `CityBuilder.Simulation`, `.Domain` and `.Application`.
   These projects set `GenerateDocumentationFile=true`, and CS1591 (missing XML comment) is an error there.
+  The other server projects write the doc file too, only so that IDE0005 runs on build; they suppress CS1591
+  (`server/Directory.Build.props`).
 - Doc comments state the contract: what it does, units (seconds, worker-seconds, permille), errors it returns, and invariants it keeps.
 - Tests are documentation too: names read as sentences (`08`).
 
@@ -51,8 +53,9 @@ check as much as possible. When a rule here and an analyzer disagree, the analyz
 `08` and `.claude/rules/tests.md` are binding. New behaviour needs new tests in the same step. Engine rules are written test-first.
 
 ## Approved dependencies (anything else needs G-Dependency)
-Server: ASP.NET Core and EF Core 10 (Microsoft), `Npgsql.EntityFrameworkCore.PostgreSQL`, `Microsoft.AspNetCore.Authentication.JwtBearer`,
-`Microsoft.CodeAnalysis.BannedApiAnalyzers`. Tests: `xunit`, `Microsoft.NET.Test.Sdk`, `Microsoft.AspNetCore.Mvc.Testing`,
+Server: ASP.NET Core and EF Core 10 (Microsoft, incl. `Microsoft.AspNetCore.OpenApi`), `Npgsql.EntityFrameworkCore.PostgreSQL`, `Microsoft.AspNetCore.Authentication.JwtBearer`,
+`Microsoft.CodeAnalysis.BannedApiAnalyzers`. Tests: `xunit.v3.mtp-off` (xUnit v3 for VSTest; replaces `xunit`, decision 019 in `12`),
+`xunit.runner.visualstudio`, `Microsoft.NET.Test.Sdk`, `Microsoft.AspNetCore.Mvc.Testing`,
 `Testcontainers.PostgreSql`, `Microsoft.Extensions.TimeProvider.Testing`, `coverlet.collector`.
 Unity: `com.unity.nuget.newtonsoft-json`, `com.unity.inputsystem`, `com.unity.test-framework`, built-in UI Toolkit.
 

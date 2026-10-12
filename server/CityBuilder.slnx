@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CityBuilder.Api/CityBuilder.Api.csproj" />
+    <Project Path="src/CityBuilder.Application/CityBuilder.Application.csproj" />
+    <Project Path="src/CityBuilder.Domain/CityBuilder.Domain.csproj" />
+    <Project Path="src/CityBuilder.Infrastructure/CityBuilder.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CityBuilder.Application.Tests/CityBuilder.Application.Tests.csproj" />
+    <Project Path="tests/CityBuilder.Domain.Tests/CityBuilder.Domain.Tests.csproj" />
+    <Project Path="tests/CityBuilder.IntegrationTests/CityBuilder.IntegrationTests.csproj" />
+  </Folder>
+</Solution>

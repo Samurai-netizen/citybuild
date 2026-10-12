@@ -62,10 +62,10 @@ bash scripts/dev/setup-hooks.sh                 # once per clone: enable .githoo
 bash scripts/dev/show-task.sh M0-15             # print a task (or CR) spec
 bash scripts/dev/new-log-entry.sh M0-15 "Title" "Claude Code / claude-opus-5-5"
 bash scripts/dev/check-docs.sh [--base origin/main]   # docs and process checks (also in pre-commit and CI)
-dotnet build server/CityBuilder.slnx                                   # [M0-02]
-dotnet test  server/CityBuilder.slnx --filter "Category!=Integration"  # [M0-02] fast suite
+dotnet build server/CityBuilder.slnx
+dotnet test  server/CityBuilder.slnx --filter "Category!=Integration"  # fast suite
 dotnet test  server/CityBuilder.slnx --filter "Category=Integration"   # [M0-21] needs Docker
-dotnet run   --project server/src/CityBuilder.Api                      # [M0-02] http://localhost:8080
+dotnet run   --project server/src/CityBuilder.Api                      # http://localhost:8080
 docker compose up -d postgres                                          # [M0-19]
 bash scripts/dev/test-unity.sh                                         # [M0-05] close the Unity Editor first
 bash scripts/dev/quality.sh                                            # [M0-62] everything CI runs, locally

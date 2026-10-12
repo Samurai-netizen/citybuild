@@ -1,0 +1,22 @@
+<Project>
+  <!-- Central package management: every NuGet version used under server/ is pinned here, and restore writes a
+       packages.lock.json per project (core-instructions/14-coding-standards.md). Only packages on the approved list
+       in 14 may be added; anything else needs G-Dependency (core-instructions/15-change-control.md). -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup Label="Api">
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
+  </ItemGroup>
+
+  <!-- xUnit v3 without Microsoft Testing Platform (xunit.v3.mtp-off) runs under VSTest, so the dotnet test commands with a
+       Category filter work as in CI. The default xunit.v3 package fails under VSTest on the .NET 10 SDK.
+       Owner approval 2026-10-12 (build log of M0-02, decision row 019 in core-instructions/12-decisions.md). -->
+  <ItemGroup Label="Tests">
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.1" />
+    <PackageVersion Include="xunit.v3.mtp-off" Version="4.0.2" />
+  </ItemGroup>
+</Project>
