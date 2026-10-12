@@ -4,15 +4,16 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-01 · Repository audit and kit verification, PR open, `In review`)
-- **Branch:** — (M0-01 work is on `task/M0-01-kit-audit` until the owner merges)
-- **Build log entry:** last: `docs/build-log/2026/2026-10-08-01-M0-01.md`
-- **Last green commit:** the head of `task/M0-01-kit-audit` (docs-only task; `check-docs --base origin/main` OK)
-- **Done steps:** —
-- **Next step:** owner merges the M0-01 PR, then runs `/start-task M0-02` (Server solution skeleton, `[S]`, Sonnet 5.5).
+- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** KIT-AUDIT-FIXES · owner-approved M0-01 audit fixes A1, A2, A3, A16 (maintenance, no plan task; M0-01 is merged, PR #4)
+- **Branch:** `task/kit-audit-fixes`
+- **Build log entry:** `docs/build-log/2026/2026-10-12-01-KIT-AUDIT-FIXES.md` (Session 1, Claude Code / claude-sonnet-5-5)
+- **Last green commit:** `2c4457b` on `main` (the branch starts there)
+- **Done steps:** write-ahead
+- **Next step:** step 1, A16: untrack `.DS_Store`. Then A1 (`CLAUDE.md`), A3 (protected list), A2 (`guard-bash.sh` + test), finish.
+  Steps are listed in the build log. After the owner merges the PR: `/start-task M0-02` (Server solution skeleton, `[S]`).
   M0-02 sets the M0-01 board row to `Done`.
-- **Open questions for the owner:** M0-01 audit A1, A2, A3, A9, A15 and the Dependabot PRs #1/#2 (build log → Follow-ups).
+- **Open questions for the owner:** M0-01 audit A9, A15 (build log → Follow-ups).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh`
 
