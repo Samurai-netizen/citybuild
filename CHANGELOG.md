@@ -10,6 +10,9 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   subagents and hooks, git hooks, CI, M0 plan with 84 tasks (KIT).
 - Kit verified on macOS; `new-log-entry.sh` fixed for the first entry of a day; GitHub `main` ruleset and security settings;
   public-repo directive OD-7; skeleton folders; how-to for resuming an interrupted session; kit audit (M0-01).
+- Server solution skeleton: .NET SDK 10.0.401 pin, `server/CityBuilder.slnx` (Api, Application, Domain, Infrastructure and three
+  xUnit v3 test projects), shared build settings, central package versions with lock files, and an Api host with `/health`,
+  ProblemDetails, OpenAPI in Development, `TimeProvider.System` and JSON console logs on http://localhost:8080 (M0-02).
 
 ### Fixed
 - Kit audit follow-ups A1, A2, A3, A9, A15, A16: `[PLAN]` tasks write ahead before the plan (no Plan Mode), the Bash guard no longer
