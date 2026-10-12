@@ -8,7 +8,7 @@
 - **Task:** — (last completed: M0-02 · Server solution skeleton; PR #6 open)
 - **Branch:** `task/M0-02-server-skeleton` (until the owner merges PR #6)
 - **Build log entry:** last: `docs/build-log/2026/2026-10-12-02-M0-02.md` (Session 1)
-- **Last green commit:** the head of `task/M0-02-server-skeleton` (CI's server sequence green locally and in a clean clone: 6 tests)
+- **Last green commit:** the head of `task/M0-02-server-skeleton` (CI green on PR #6: `docs` + `server`, 6 tests; also local and clean clone)
 - **Done steps:** all six (write-ahead, gate questions, solution + Api host, tests + lock files, docs, finish)
 - **Next step:** owner merges PR #6, then runs `/start-task M0-03` (Shared engine skeleton and architecture tests, `[S]`).
   M0-03 sets the M0-02 board row to `Done` and reads the M0-02 build log → Follow-ups first.
