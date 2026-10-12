@@ -9,13 +9,12 @@
 - **Branch:** `task/M0-03-engine-skeleton`
 - **Build log entry:** `docs/build-log/2026/2026-10-12-03-M0-03.md` (Session 1; the 9-step plan is in it)
 - **Last green commit:** `d2e0f9d` on `main` (baseline: locked restore, format check, Release build, 6 fast tests). No code on the branch yet.
-- **Done steps:** 3 of 9 (write-ahead; tooling probes → build log decisions 4–6; package + build project + slnx entry + module doc).
-- **Next step:** plan step 4 in the build log, test-first: create `server/tests/CityBuilder.Simulation.Tests` (copy the Domain.Tests
-  csproj shape, reference `..\..\..\shared\Simulation.Build\CityBuilder.Simulation.csproj`, add it to `CityBuilder.slnx`, commit its
-  `packages.lock.json`), write the `IntegerMath` tests (`CeilDiv`, `ApplyPermilleReduction`, exact for every non-negative labor,
-  guard clauses throw `ArgumentOutOfRangeException`) and the `ItemId` tests, then the code in `shared/Simulation/Runtime/`
-  (`IntegerMath.cs`, `ItemId.cs`; `#nullable enable`, braces always, XML docs on every public member incl. operators, `IComparable`
-  needs `<` `<=` `>` `>=`). Check warnings-as-errors with `--no-incremental`. Decision 2 says where each dependency test goes.
+- **Done steps:** 4 of 9 (write-ahead; probes; package + build project + module doc; `IntegerMath`, `ItemId` and 96 tests, mutation-checked).
+- **Next step:** plan step 5 in the build log: add `<ProjectReference Include="..\..\..\shared\Simulation.Build\CityBuilder.Simulation.csproj" />`
+  to `CityBuilder.Domain.csproj` and `CityBuilder.Application.csproj`, run `dotnet restore server/CityBuilder.slnx` (it rewrites the lock
+  files of every project that depends on them: Domain, Application, Infrastructure, Api and the three older test projects; commit all),
+  then `--locked-mode` must pass. Then step 6: the architecture and package tests (decision 2 in the build log says where each goes;
+  mutation-check them like step 4). Check warnings-as-errors with `--no-incremental`.
 - **Open questions for the owner:** the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`

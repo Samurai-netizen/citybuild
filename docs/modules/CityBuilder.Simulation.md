@@ -2,10 +2,10 @@
 
 **Path:** `shared/Simulation/` (the Unity package `com.citybuilder.simulation`, sources in `Runtime/`) and
 `shared/Simulation.Build/` (the .NET project) · **Kind:** Unity assembly and .NET class library (`netstandard2.1`, C# 9) ·
-**References:** the base class library only · **Referenced by:** none yet (Domain, Application and the tests follow in M0-03; the Unity assemblies from M0-04)
+**References:** the base class library only · **Referenced by:** `CityBuilder.Simulation.Tests` (Domain and Application follow in M0-03; the Unity assemblies from M0-04)
 
-> *Skeleton.* The package and the build project exist and compile, but there are no types yet. The first ones, the integer
-> helpers and `ItemId`, come in the next step of M0-03; the content model follows in M0-07 *(planned)*.
+> *Early.* Only the integer helpers and `ItemId` exist so far. The content model follows in M0-07, the city state in M0-08 and
+> `Simulator.Advance` in M0-09 *(planned)*.
 
 ## Purpose
 The deterministic simulation engine: integer-only game rules and the helpers they share (`core-instructions/04-simulation-model.md`).
@@ -28,7 +28,8 @@ The `.csproj` sits beside the package, not inside it: Unity imports every file o
 ## Key types
 | Type | Responsibility |
 |---|---|
-| — | none yet |
+| `IntegerMath` | The only division in game logic. `CeilDiv(dividend, divisor)` rounds up, for durations (`CeilDiv(labor, workers)`). `ApplyPermilleReduction(labor, permille)` is `ceil(labor × (1000 − permille) / 1000)`, exact for every non-negative labor. `PermilleScale` (1000) is the unit of every modifier. Arguments outside the contract (negative amounts, divisor ≤ 0, permille outside 0 to 1000) throw `ArgumentOutOfRangeException`: they are programmer errors, because content validation and the mutation entry points check first |
+| `ItemId` | A `readonly struct` that identifies an item (`coins`, `logs`, `planks`). Equality and ordering are ordinal, so they never depend on the machine's culture. `default(ItemId)` is the empty id: it equals only itself and sorts first. The constructor rejects null and empty text; the id's format is checked by content validation |
 
 ## Rules and invariants
 `.claude/rules/simulation.md` is the binding list (integers only, `CeilDiv` for durations, no `DateTime` or randomness, no iteration
@@ -39,7 +40,8 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
   raw string literals. Every file starts with `#nullable enable`, because Unity does not read the project file.
 - **Strict build.** The project is outside `server/`, so it repeats the settings that `server/Directory.Build.props` gives the server:
   warnings are errors, the XML doc file is written (a missing comment, CS1591, fails the build), `AnalysisLevel=latest-recommended`
-  and `EnforceCodeStyleInBuild`, so the build and `dotnet format` agree.
+  and `EnforceCodeStyleInBuild`, so the build and `dotnet format` agree. Always braces; every public member, operators included,
+  has an XML doc.
 - **No packages, no lock file.** The project has no package references; a package would need G-Dependency and would fail the
   dependency test. Locked restore passes without a lock file.
 - **No `bin/` or `obj/` inside `shared/Simulation/`.** Build output goes to `shared/Simulation.Build/`; `.gitignore` covers both names.
@@ -51,14 +53,20 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
 - Anything that needs a package or the Unity engine belongs in the server or in a Unity assembly, never here.
 
 ## Tests
-`server/tests/CityBuilder.Simulation.Tests` *(from M0-03 step 4)*, run with
-`dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`. That the package compiles inside Unity is proved by an
-EditMode test in M0-05 *(planned)*.
+`server/tests/CityBuilder.Simulation.Tests` (xUnit v3, milliseconds), run with
+`dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`:
+- `IntegerMathTests`: edge cases and exhaustive small ranges, and exact reference values with `BigInteger` up to `long.MaxValue`
+  (tests use integers only, like the engine).
+- `ItemIdTests`: equality, ordinal ordering, `default`, hashing, use as a dictionary key.
+- The dependency and package-layout tests follow in M0-03 step 6 *(planned)*.
+
+That the package compiles inside Unity is proved by an EditMode test in M0-05 *(planned)*.
 
 ## Known limitations
-- No types yet (skeleton).
 - No `.meta` files: Unity writes them on the first import of this mutable local package (M0-04), and they are committed then (`09`).
 - The .NET build is a close proxy for Unity's compiler (same language version and API level), not the same compiler. Unity-side
   compilation is first checked in M0-05.
+- `ItemId.GetHashCode` is the runtime's string hash, which differs between processes. That is fine only because no engine code may
+  depend on `Dictionary` or `HashSet` order (`04` §9).
 
 Last updated: M0-03
