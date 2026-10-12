@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Compiles the Unity package's sources with the .NET SDK, so the server and its tests run exactly the code Unity compiles.
+       The project sits beside the package, not inside it: Unity imports every file of a package folder, including bin/ and obj/
+       (core-instructions/03-architecture.md). It is outside server/, so it inherits nothing from server/Directory.Build.props and
+       repeats the settings that matter: netstandard2.1 and C# 9 are what Unity 6.3 compiles (.claude/rules/simulation.md).
+       Nullable annotations come from "#nullable enable" at the top of every source file, because Unity does not read this file.
+       The engine references only the base class library: no packages, so no lock file (build log of M0-03, decision 5). -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="../Simulation/Runtime/**/*.cs" />
+  </ItemGroup>
+
+</Project>

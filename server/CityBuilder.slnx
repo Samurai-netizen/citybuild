@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/shared/">
+    <Project Path="../shared/Simulation.Build/CityBuilder.Simulation.csproj" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/CityBuilder.Api/CityBuilder.Api.csproj" />
     <Project Path="src/CityBuilder.Application/CityBuilder.Application.csproj" />
