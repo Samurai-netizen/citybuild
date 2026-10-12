@@ -25,7 +25,8 @@
      `scripts/dev/test-guard-bash.sh`; update the guard description in `18`.
   5. Finish per `16` §E: docs, CHANGELOG, resume point, `check-docs.sh --base origin/main`, PR. Never merge.
 - **Done:** write-ahead (branch, this entry, resume point).
-- **Stopped at / next:** step 1.
+- **Done (cont.):** step 1 (A16) — `.DS_Store` untracked; the file stays on disk, ignored (`481aff4`).
+- **Stopped at / next:** step 2 (A1).
 
 ## Decisions
 <!-- Every decision, when it is made, including small ones. Scope: local | project-wide (→ 12-decisions.md row) | architectural (→ ADR). -->
@@ -52,7 +53,9 @@
 ## Verification
 | Command | Result |
 |---|---|
-| | |
+| Step 1 · `git rm --cached .DS_Store` | staged as `D`; no other `.DS_Store` was tracked (`git ls-files` showed only the root one) |
+| Step 1 · `ls -la .DS_Store`, `git check-ignore -v .DS_Store` | file still on disk (10244 bytes); ignored by `.gitignore:21` |
+| Step 1 · `git status --short` after the commit | empty (the Finder change no longer shows up) |
 
 ## Problems and surprises
 - Starting state: local `main` was 3 commits behind `origin/main`. PR #4 (M0-01) and the Dependabot PRs #1 and #2 were already
