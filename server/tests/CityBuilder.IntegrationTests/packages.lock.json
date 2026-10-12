@@ -437,11 +437,15 @@
       "citybuilder.application": {
         "type": "Project",
         "dependencies": {
-          "CityBuilder.Domain": "[1.0.0, )"
+          "CityBuilder.Domain": "[1.0.0, )",
+          "CityBuilder.Simulation": "[1.0.0, )"
         }
       },
       "citybuilder.domain": {
-        "type": "Project"
+        "type": "Project",
+        "dependencies": {
+          "CityBuilder.Simulation": "[1.0.0, )"
+        }
       },
       "citybuilder.infrastructure": {
         "type": "Project",
@@ -449,6 +453,9 @@
           "CityBuilder.Application": "[1.0.0, )",
           "CityBuilder.Domain": "[1.0.0, )"
         }
+      },
+      "citybuilder.simulation": {
+        "type": "Project"
       },
       "Microsoft.AspNetCore.OpenApi": {
         "type": "CentralTransitive",

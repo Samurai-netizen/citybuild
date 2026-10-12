@@ -3,6 +3,12 @@
   "dependencies": {
     "net10.0": {
       "citybuilder.domain": {
+        "type": "Project",
+        "dependencies": {
+          "CityBuilder.Simulation": "[1.0.0, )"
+        }
+      },
+      "citybuilder.simulation": {
         "type": "Project"
       }
     }

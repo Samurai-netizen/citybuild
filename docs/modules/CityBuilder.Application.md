@@ -1,7 +1,7 @@
 # CityBuilder.Application
 
 **Path:** `server/src/CityBuilder.Application/` · **Kind:** .NET class library (`net10.0`) ·
-**References:** `CityBuilder.Domain` (`CityBuilder.Simulation` from M0-03) ·
+**References:** `CityBuilder.Domain`, `CityBuilder.Simulation` ·
 **Referenced by:** `CityBuilder.Api`, `CityBuilder.Infrastructure`, `CityBuilder.Application.Tests`
 
 > *Skeleton.* The project builds but has no types yet. The first port, `IContentProvider`, arrives in M0-07
@@ -37,4 +37,4 @@ checks the dependency rule. Run: `dotnet test server/CityBuilder.slnx --filter "
 ## Known limitations
 - No types yet (skeleton).
 
-Last updated: M0-02
+Last updated: M0-03

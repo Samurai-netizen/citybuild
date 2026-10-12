@@ -9,12 +9,14 @@
 - **Branch:** `task/M0-03-engine-skeleton`
 - **Build log entry:** `docs/build-log/2026/2026-10-12-03-M0-03.md` (Session 1; the 9-step plan is in it)
 - **Last green commit:** `d2e0f9d` on `main` (baseline: locked restore, format check, Release build, 6 fast tests). No code on the branch yet.
-- **Done steps:** 4 of 9 (write-ahead; probes; package + build project + module doc; `IntegerMath`, `ItemId` and 96 tests, mutation-checked).
-- **Next step:** plan step 5 in the build log: add `<ProjectReference Include="..\..\..\shared\Simulation.Build\CityBuilder.Simulation.csproj" />`
-  to `CityBuilder.Domain.csproj` and `CityBuilder.Application.csproj`, run `dotnet restore server/CityBuilder.slnx` (it rewrites the lock
-  files of every project that depends on them: Domain, Application, Infrastructure, Api and the three older test projects; commit all),
-  then `--locked-mode` must pass. Then step 6: the architecture and package tests (decision 2 in the build log says where each goes;
-  mutation-check them like step 4). Check warnings-as-errors with `--no-incremental`.
+- **Done steps:** 5 of 9 (write-ahead; probes; package + build project + module doc; `IntegerMath`, `ItemId` + 96 tests, mutation-checked;
+  Domain and Application reference Simulation, lock files regenerated, 102 tests green).
+- **Next step:** plan step 6 in the build log. In `server/tests/CityBuilder.Simulation.Tests`: `SimulationDependencyTests` (only BCL references,
+  `netstandard` listed, built for netstandard2.1, the check can fail) and `SimulationPackageTests` (asmdef: noEngineReferences, no references,
+  name = assembly name, autoReferenced; `package.json`: name, `unity` 6000.3, version; no `bin/` or `obj/` under `shared/Simulation`;
+  every `Runtime/**/*.cs` starts with `#nullable enable`; repository root found by walking up to `global.json`). In
+  `server/tests/CityBuilder.IntegrationTests`: `InfrastructureDependencyTests` (no `CityBuilder.Api` reference). Mutation-check them in a
+  scratch copy of the repo, not in the working tree. Then step 7 (docs), step 8 (review workflow), step 9 (finish).
 - **Open questions for the owner:** the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`

@@ -1,7 +1,7 @@
 # CityBuilder.Domain
 
 **Path:** `server/src/CityBuilder.Domain/` · **Kind:** .NET class library (`net10.0`) ·
-**References:** none yet (`CityBuilder.Simulation` from M0-03) ·
+**References:** `CityBuilder.Simulation` ·
 **Referenced by:** `CityBuilder.Application`, `CityBuilder.Infrastructure`, `CityBuilder.Domain.Tests`
 
 > *Skeleton.* The project builds but has no types yet. The first ones arrive with persistence and the command
@@ -35,4 +35,4 @@ Run: `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`.
 ## Known limitations
 - No types yet (skeleton).
 
-Last updated: M0-02
+Last updated: M0-03

@@ -2,7 +2,7 @@
 
 **Path:** `shared/Simulation/` (the Unity package `com.citybuilder.simulation`, sources in `Runtime/`) and
 `shared/Simulation.Build/` (the .NET project) · **Kind:** Unity assembly and .NET class library (`netstandard2.1`, C# 9) ·
-**References:** the base class library only · **Referenced by:** `CityBuilder.Simulation.Tests` (Domain and Application follow in M0-03; the Unity assemblies from M0-04)
+**References:** the base class library only · **Referenced by:** `CityBuilder.Domain`, `CityBuilder.Application` (Infrastructure and Api get it through them), `CityBuilder.Simulation.Tests`; the Unity assemblies from M0-04
 
 > *Early.* Only the integer helpers and `ItemId` exist so far. The content model follows in M0-07, the city state in M0-08 and
 > `Simulator.Advance` in M0-09 *(planned)*.
