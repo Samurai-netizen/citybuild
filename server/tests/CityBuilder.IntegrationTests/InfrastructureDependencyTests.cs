@@ -15,7 +15,9 @@ public sealed class InfrastructureDependencyTests
 
         string[] names = infrastructure.GetReferencedAssemblies().Select(reference => reference.Name ?? string.Empty).ToArray();
 
-        // Every assembly references at least the runtime, so an empty list would mean the check looked at nothing.
+        // Placeholder until Infrastructure has its first type (M0-19): then bind with typeof(thatType).Assembly instead of the name.
+        // NotEmpty only shows that reflection returned data (every assembly references the runtime); it does not prove which assembly
+        // was inspected. A project reference to Api is a cycle that MSBuild rejects, so today this guards file or reflection-based references.
         Assert.NotEmpty(names);
         Assert.DoesNotContain("CityBuilder.Api", names);
     }

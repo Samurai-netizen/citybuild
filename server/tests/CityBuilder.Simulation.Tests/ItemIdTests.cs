@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace CityBuilder.Simulation.Tests;
 
 /// <summary>The identity of an item: text equality and ordering that never depend on the machine's culture.</summary>
@@ -24,13 +26,23 @@ public sealed class ItemIdTests
     }
 
     [Fact]
-    public void Value_ReturnsTheTextTheIdWasCreatedWith()
+    public void Constructor_TextWithSurroundingWhitespace_KeepsTheTextAsGiven()
+    {
+        // Ids are equal when their text matches character by character, so the constructor must not trim or normalize.
+        ItemId padded = IdOf(" logs ");
+
+        Assert.Equal(" logs ", padded.Value);
+        Assert.False(padded == IdOf("logs"));
+    }
+
+    [Fact]
+    public void Value_IdWithText_ReturnsThatText()
     {
         Assert.Equal("trading_post", IdOf("trading_post").Value);
     }
 
     [Fact]
-    public void ToString_ReturnsTheText()
+    public void ToString_IdWithText_ReturnsThatText()
     {
         Assert.Equal("planks", IdOf("planks").ToString());
     }
@@ -58,11 +70,30 @@ public sealed class ItemIdTests
         Assert.True(lower != capitalized);
     }
 
-    [Fact]
-    public void Equals_DifferentText_IsNotEqual()
+    [Theory]
+    [InlineData("café", "café")] // é as one character, and as e followed by a combining accent
+    [InlineData("logs", "lo­gs")] // the same word with an invisible soft hyphen inside
+    public void Equals_TextsThatCulturesTreatAsEqual_AreNotEqual(string first, string second)
     {
-        Assert.False(IdOf("logs") == IdOf("planks"));
-        Assert.True(IdOf("logs") != IdOf("planks"));
+        // A culture-aware comparison calls these pairs equal; an ordinal one, which the engine requires, does not.
+        ItemId left = IdOf(first);
+        ItemId right = IdOf(second);
+
+        Assert.False(left.Equals(right));
+        Assert.True(left != right);
+        Assert.NotEqual(0, left.CompareTo(right));
+    }
+
+    [Fact]
+    public void Equals_DifferentText_IsNotEqualInEveryForm()
+    {
+        ItemId logs = IdOf("logs");
+        ItemId planks = IdOf("planks");
+
+        Assert.False(logs.Equals(planks));
+        Assert.False(logs.Equals((object)planks));
+        Assert.False(logs == planks);
+        Assert.True(logs != planks);
     }
 
     [Fact]
@@ -123,7 +154,7 @@ public sealed class ItemIdTests
     }
 
     [Fact]
-    public void RelationalOperators_FollowCompareTo()
+    public void RelationalOperators_SmallerEqualAndLargerIds_FollowCompareTo()
     {
         ItemId smaller = IdOf("coins");
         ItemId larger = IdOf("logs");
@@ -154,7 +185,7 @@ public sealed class ItemIdTests
     }
 
     [Fact]
-    public void DictionaryKey_FindsAnIdBuiltFromAnotherString()
+    public void DictionaryKey_IdBuiltFromAnotherString_IsFound()
     {
         var stock = new Dictionary<ItemId, long> { [IdOf("logs")] = 30L, [IdOf("planks")] = 5L };
 
@@ -163,9 +194,33 @@ public sealed class ItemIdTests
     }
 
     [Fact]
-    public void ItemId_IsDeclaredAsAReadonlyStruct()
+    public void ItemId_Declaration_IsAReadonlyStruct()
     {
         Assert.True(typeof(ItemId).IsValueType);
         Assert.Contains(typeof(ItemId).GetCustomAttributes(false), attribute => attribute.GetType().Name == "IsReadOnlyAttribute");
+    }
+
+    [Fact]
+    public void ItemId_Interfaces_IncludeEquatableAndComparableOfItself()
+    {
+        // Without IEquatable<ItemId>, every dictionary lookup would box the id and go through Equals(object).
+        Assert.True(typeof(IEquatable<ItemId>).IsAssignableFrom(typeof(ItemId)));
+        Assert.True(typeof(IComparable<ItemId>).IsAssignableFrom(typeof(ItemId)));
+    }
+
+    [Fact]
+    public void InvariantCulture_Comparison_DiffersFromOrdinal()
+    {
+        // Precondition of the ordinal tests above. They can only tell an ordinal comparison from a culture-aware one when this machine has
+        // culture data. Under invariant globalization (no ICU) the two are identical and those tests would pass for a culture-aware
+        // implementation too, so this test fails loudly instead.
+        CompareInfo cultureAware = CultureInfo.InvariantCulture.CompareInfo;
+
+        Assert.True(
+            cultureAware.Compare("B", "a", CompareOptions.None) > 0,
+            "No culture data: culture-aware comparison equals ordinal here, so the ordinal tests cannot detect a culture-aware ItemId.");
+        Assert.True(
+            cultureAware.Compare("café", "café", CompareOptions.None) == 0,
+            "No culture data: canonically equivalent texts are not equal here, so the ordinal tests cannot detect a culture-aware ItemId.");
     }
 }

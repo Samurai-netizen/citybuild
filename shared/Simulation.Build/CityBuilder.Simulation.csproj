@@ -20,4 +20,12 @@
     <Compile Include="../Simulation/Runtime/**/*.cs" />
   </ItemGroup>
 
+  <!-- Checks the settings after every import has been evaluated. A Directory.Build.targets file or a -p: override on the command line
+       would change them behind the tests' back: a text check of this file cannot see that, and C# 10 syntax would then pass the .NET
+       build and break Unity (build log of M0-03, decision 16). -->
+  <Target Name="GuardUnityCompatibleBuild" BeforeTargets="CoreCompile">
+    <Error Condition="'$(TargetFramework)' != 'netstandard2.1' Or '$(LangVersion)' != '9.0' Or '$(TreatWarningsAsErrors)' != 'true'"
+           Text="CityBuilder.Simulation must build as netstandard2.1, C# 9.0 and with warnings as errors, because Unity compiles the same sources (.claude/rules/simulation.md)." />
+  </Target>
+
 </Project>

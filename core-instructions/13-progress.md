@@ -8,17 +8,18 @@
 - **Task:** M0-03 · Shared engine skeleton and architecture tests (`[S]`, Sonnet 5.5)
 - **Branch:** `task/M0-03-engine-skeleton`
 - **Build log entry:** `docs/build-log/2026/2026-10-12-03-M0-03.md` (Session 1; the 9-step plan is in it)
-- **Last green commit:** `d2e0f9d` on `main` (baseline: locked restore, format check, Release build, 6 fast tests). No code on the branch yet.
-- **Done steps:** 7 of 9 (write-ahead; probes; package + build project + module doc; `IntegerMath`, `ItemId`; Domain and Application
-  reference Simulation with regenerated lock files; architecture, package and build-project tests, mutation-checked; docs and `12` rows
-  021–022, CHANGELOG line). 121 fast tests green. The CHANGELOG line is already in; board and resume point still say In progress.
-- **Next step:** plan step 8 in the build log: run the independent review as a Workflow of read-only `reviewer` agents over
-  `git diff origin/main...HEAD` (lenses: spec and Definition of Done; engine rules and helper correctness; build, lock files and CI;
-  test quality; docs and process), verify each finding adversarially, fix what is confirmed with a log line each. Then step 9 (finish):
-  Definition of Done, `check-docs.sh --base origin/main`, clean-clone run of CI's server sequence, build log Verification table, board
-  `In review`, resume point `IDLE`, `gh pr create`, CI result, task report.
+- **Last green commit:** the head of `task/M0-03-engine-skeleton` (the commit that acts on the independent review). CI's server sequence
+  passes locally on it: locked restore, format, `build --no-incremental -c Release` with 0 warnings, 152 fast tests.
+- **Done steps:** 8 of 9 (write-ahead; probes; package + build project + module doc; `IntegerMath`, `ItemId`; Domain and Application
+  reference Simulation with regenerated lock files; architecture, package and build-project tests; docs, `12` rows 021–022, CHANGELOG;
+  the independent review, Workflow `wf_c76eeb51-eee` with nine agents, and every confirmed finding fixed; 32 mutations all detected).
+- **Next step:** plan step 9 (finish, `16` §E): fill the build log's Changes and Verification sections (the commands and results are in the
+  Done lines), put the PR size into decision 25, set the board row to `In review` and the resume point to `IDLE`, run CI's server
+  sequence in a clean clone of the final head and `check-docs.sh --base origin/main`, open the PR with `gh pr create` and
+  `.github/pull_request_template.md`, record the CI result in the build log, and give the task report (`11`).
 - **Open questions for the owner:** the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI).
-- **Known broken / do not touch:** —
+- **Known broken / do not touch:** `client/CityBuilder/` is the owner's untracked Unity project (6000.3.25f1, the manual step of M0-04). Commit nothing
+  under `client/` in M0-03. Its generated paths are excluded in this clone's `.git/info/exclude` only (build log decision 24).
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`
 
 ## Milestone
@@ -50,7 +51,8 @@ States: `not started` · `in progress` · `done` · `blocked (reason)`
   `dotnet format server/CityBuilder.slnx --verify-no-changes` · `dotnet run --project server/src/CityBuilder.Api` (http://localhost:8080)
 
 ## Open issues / tech debt
-- Unity 6.6 is installed, but the stack pins 6.3 LTS: install 6.3 before M0-04 (M0-01 audit A18).
+- Unity 6.3 LTS now exists: the owner's project in `client/CityBuilder` is 6000.3.25f1, so the audit item A18 (Unity 6.6 installed, the
+  stack pins 6.3) can be closed in M0-04.
 - Other kit wording items with their owner tasks: M0-01 build log → Follow-ups.
 
 ## Deviations from the plan

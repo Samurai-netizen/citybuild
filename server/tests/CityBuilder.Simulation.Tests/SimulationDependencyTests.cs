@@ -9,27 +9,23 @@ public sealed class SimulationDependencyTests
     private static readonly Assembly _simulation = typeof(ItemId).Assembly;
 
     [Fact]
-    public void GetReferencedAssemblies_OfSimulation_AreAllPartOfTheBaseClassLibrary()
+    public void GetReferencedAssemblies_OfSimulation_AreExactlyNetStandard()
     {
-        Assert.Empty(NonBaseClassLibraryReferences(_simulation));
+        // The engine is built for netstandard2.1 (see Assembly_IsBuiltForNetStandard21), where every base class library type resolves to
+        // the netstandard facade. Any other name, System.* included, is a package or a file reference that Unity's .NET Standard 2.1
+        // profile does not provide, so there is no allow-list by name prefix.
+        Assert.Equal(["netstandard"], ReferencedAssemblyNames(_simulation));
     }
 
     [Fact]
-    public void GetReferencedAssemblies_OfSimulation_IncludeNetStandard()
+    public void ReferencedAssemblyNames_OfThisTestAssembly_IncludeSystemRuntimeAndTheSimulationAssembly()
     {
-        // Keeps the check above from passing on an empty list: the engine is compiled against the netstandard facade.
-        string[] names = _simulation.GetReferencedAssemblies().Select(reference => reference.Name ?? string.Empty).ToArray();
+        // Keeps the check above from comparing against a list that is empty or filtered: this net10.0 assembly references System.Runtime
+        // and the engine, and both must show up.
+        string[] names = ReferencedAssemblyNames(typeof(SimulationDependencyTests).Assembly);
 
-        Assert.Contains("netstandard", names);
-    }
-
-    [Fact]
-    public void NonBaseClassLibraryReferences_OfThisTestAssembly_IncludeTheSimulationAssembly()
-    {
-        // Keeps the check from using a filter that accepts everything: this assembly references Simulation, which is no part of the BCL.
-        string[] outside = NonBaseClassLibraryReferences(typeof(SimulationDependencyTests).Assembly);
-
-        Assert.Contains("CityBuilder.Simulation", outside);
+        Assert.Contains("System.Runtime", names);
+        Assert.Contains("CityBuilder.Simulation", names);
     }
 
     [Fact]
@@ -41,13 +37,9 @@ public sealed class SimulationDependencyTests
         Assert.Equal(".NETStandard,Version=v2.1", target.FrameworkName);
     }
 
-    private static string[] NonBaseClassLibraryReferences(Assembly assembly) =>
+    private static string[] ReferencedAssemblyNames(Assembly assembly) =>
         assembly.GetReferencedAssemblies()
             .Select(reference => reference.Name ?? string.Empty)
-            .Where(name => !IsBaseClassLibrary(name))
+            .Order(StringComparer.Ordinal)
             .ToArray();
-
-    // A netstandard2.1 assembly reaches the base class library through the netstandard facade; other builds use mscorlib or System.*.
-    private static bool IsBaseClassLibrary(string assemblyName) =>
-        assemblyName is "netstandard" or "mscorlib" or "System" || assemblyName.StartsWith("System.", StringComparison.Ordinal);
 }

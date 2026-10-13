@@ -28,41 +28,47 @@ The `.csproj` sits beside the package, not inside it: Unity imports every file o
 ## Key types
 | Type | Responsibility |
 |---|---|
-| `IntegerMath` | The only division in game logic. `CeilDiv(dividend, divisor)` rounds up, for durations (`CeilDiv(labor, workers)`). `ApplyPermilleReduction(labor, permille)` is `ceil(labor × (1000 − permille) / 1000)`, exact for every non-negative labor. `PermilleScale` (1000) is the unit of every modifier. Arguments outside the contract (negative amounts, divisor ≤ 0, permille outside 0 to 1000) throw `ArgumentOutOfRangeException`: they are programmer errors, because content validation and the mutation entry points check first |
-| `ItemId` | A `readonly struct` that identifies an item (`coins`, `logs`, `planks`). Equality and ordering are ordinal, so they never depend on the machine's culture. `default(ItemId)` is the empty id: it equals only itself and sorts first. The constructor rejects null and empty text; the id's format is checked by content validation |
+| `IntegerMath` | The only division in game logic. `CeilDiv(dividend, divisor)` rounds up, for durations (`CeilDiv(labor, workers)`). `ApplyPermilleReduction(labor, permille)` is `ceil(labor × (1000 − permille) / 1000)`, exact for every non-negative labor, and positive labor never rounds down to zero. `PermilleScale` (1000) is the unit of every modifier. Arguments outside the contract (negative amounts, divisor ≤ 0, permille outside 0 to 1000) throw `ArgumentOutOfRangeException` naming the first bad argument: they are programmer errors, because the callers check inputs first (content validation, M0-07 *(planned)*, and the mutation entry points) |
+| `ItemId` | A `readonly struct` that identifies an item (`coins`, `logs`, `planks`). Equality and ordering are ordinal, so they never depend on the machine's culture. `default(ItemId)` is the empty id: it equals only itself and sorts first. The constructor rejects null and empty text and keeps the text as given; the id's format is checked by content validation (M0-07, *planned*) |
 
 ## Rules and invariants
 `.claude/rules/simulation.md` is the binding list (integers only, `CeilDiv` for durations, no `DateTime` or randomness, no iteration
 order that matters, `checked` arithmetic, results instead of exceptions for business rules). What is specific to this module:
-- **Base class library only.** The asmdef keeps `"noEngineReferences": true` and no references; the compiled assembly references
-  only `netstandard`. Tests check both.
+- **Base class library only.** The asmdef keeps `"noEngineReferences": true`, no references and no platform or define restrictions; the
+  compiled assembly references exactly `netstandard`. Tests check both.
 - **`netstandard2.1`, C# 9.** Unity 6.3 compiles the same files, so no file-scoped namespaces, global usings, records, `init` or
   raw string literals. Every file starts with `#nullable enable`, because Unity does not read the project file.
 - **Strict build.** The project is outside `server/`, so it repeats the settings that `server/Directory.Build.props` gives the server:
   warnings are errors, the XML doc file is written (a missing comment, CS1591, fails the build), `AnalysisLevel=latest-recommended`
   and `EnforceCodeStyleInBuild`, so the build and `dotnet format` agree. Always braces; every public member, operators included,
-  has an XML doc.
-- **No packages, no lock file.** The project has no package references; a package would need G-Dependency and would fail the
-  dependency test. Locked restore passes without a lock file.
-- **No `bin/` or `obj/` inside `shared/Simulation/`.** Build output goes to `shared/Simulation.Build/`; `.gitignore` covers both names.
+  has an XML doc. The target `GuardUnityCompatibleBuild` fails the build when the *evaluated* target framework, language version or
+  warnings-as-errors setting differ, which a `Directory.Build.targets` file or a `-p:` override on the command line would otherwise change
+  without any test noticing.
+- **No packages, no lock file.** The project has no `PackageReference`, `Reference`, `ProjectReference` or `FrameworkReference`; a package
+  would need G-Dependency. Locked restore passes without a lock file.
+- **No `bin/` or `obj/` inside `shared/Simulation/`**, and nothing else that is not a source or package metadata. Build output goes to
+  `shared/Simulation.Build/`; `.gitignore` covers both names.
 
 ## How to extend
 - A new engine rule or effect type: recipe "New engine rule or effect type" in `core-instructions/19-change-recipes.md`;
-  mutation rules go to `Runtime/Rules/`.
-- One public type per file, named after it, with XML docs and `#nullable enable` at the top. Both builds pick the file up.
+  mutation rules go to `Runtime/Rules/`. A subfolder needs no asmdef: a second asmdef would split the Unity assembly (a test fails).
+- One public type per file, named after it, with XML docs and `#nullable enable` on the first line. Both builds pick the file up.
 - Anything that needs a package or the Unity engine belongs in the server or in a Unity assembly, never here.
 
 ## Tests
 `server/tests/CityBuilder.Simulation.Tests` (xUnit v3, milliseconds), run with
 `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`:
-- `IntegerMathTests`: edge cases and exhaustive small ranges, and exact reference values with `BigInteger` up to `long.MaxValue`
-  (tests use integers only, like the engine).
-- `ItemIdTests`: equality, ordinal ordering, `default`, hashing, use as a dictionary key.
-- `SimulationDependencyTests`: only base class library references, built for `netstandard2.1` (plain reflection over the compiled assembly).
-- `SimulationPackageTests`: the files only Unity sees: the asmdef (`noEngineReferences`, no references, same name as the assembly,
-  auto-referenced), `package.json` (name, `unity` 6000.3, version), no `bin/` or `obj/` under `shared/Simulation`, and
-  `#nullable enable` at the top of every source. They find the repository by walking up to `global.json` (`RepositoryPaths`).
-- `SimulationBuildProjectTests`: the csproj keeps `LangVersion 9.0`, warnings as errors, the XML doc file and no `PackageReference`.
+- `CeilDivTests`, `ApplyPermilleReductionTests`: edge cases, exhaustive small ranges, and exact reference values with `BigInteger` up to
+  `long.MaxValue` (tests use integers only, like the engine). Each bad argument is tried with several partners.
+- `ItemIdTests`: equality (also for texts that a culture treats as equal), ordinal ordering, `default`, hashing, use as a dictionary
+  key. One test fails loudly where the machine has no culture data, because the ordinal tests could not tell the difference there.
+- `SimulationDependencyTests`: the compiled assembly references exactly `netstandard` and is built for `netstandard2.1`.
+- `SimulationPackageTests`: the files only Unity sees. The asmdef (`noEngineReferences`, no references, no platform or define
+  restrictions, same name as the assembly, auto-referenced, the only asmdef, no asmref), `package.json` (name, `unity` 6000.3,
+  version), only sources and package metadata in the folder, no `bin/` or `obj/`, and `#nullable enable` on the first line of every
+  source. They find the repository by walking up to `global.json` (`RepositoryPaths`).
+- `SimulationBuildProjectTests`: the csproj keeps `LangVersion 9.0`, warnings as errors, the XML doc file, the analysis settings, no
+  warning suppression, the one `Compile` glob, no references, and the guard target.
 
 That the package compiles inside Unity is proved by an EditMode test in M0-05 *(planned)*.
 
@@ -70,6 +76,8 @@ That the package compiles inside Unity is proved by an EditMode test in M0-05 *(
 - No `.meta` files: Unity writes them on the first import of this mutable local package (M0-04), and they are committed then (`09`).
 - The .NET build is a close proxy for Unity's compiler (same language version and API level), not the same compiler. Unity-side
   compilation is first checked in M0-05.
+- The package may hold only `.cs`, `.asmdef`, `.meta`, `.md` files and `package.json`. A new kind of file (for example images under
+  `Documentation~/`) needs a change to `SimulationPackageTests`.
 - `ItemId.GetHashCode` is the runtime's string hash, which differs between processes. That is fine only because no engine code may
   depend on `Dictionary` or `HashSet` order (`04` §9).
 

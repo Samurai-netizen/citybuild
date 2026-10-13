@@ -8,13 +8,16 @@ namespace CityBuilder.Simulation.Tests;
 /// </summary>
 public sealed class SimulationPackageTests
 {
+    // What a Unity package of sources may hold. Anything else (a dll, a pdb, a restore cache, a project file) is build output or clutter.
+    private static readonly string[] _allowedExtensions = [".cs", ".asmdef", ".meta", ".md"];
+
     private static readonly string _packageFolder = Path.Combine(RepositoryPaths.Root, "shared", "Simulation");
     private static readonly string _runtimeFolder = Path.Combine(_packageFolder, "Runtime");
 
     // ----- Runtime/CityBuilder.Simulation.asmdef -----
 
     [Fact]
-    public void Asmdef_KeepsNoEngineReferences()
+    public void Asmdef_NoEngineReferences_IsTrue()
     {
         JsonObject asmdef = ReadAsmdef();
 
@@ -22,7 +25,7 @@ public sealed class SimulationPackageTests
     }
 
     [Fact]
-    public void Asmdef_ReferencesNoOtherAssemblyAndNoPrecompiledLibrary()
+    public void Asmdef_AssemblyAndLibraryReferences_AreAbsent()
     {
         JsonObject asmdef = ReadAsmdef();
 
@@ -32,7 +35,20 @@ public sealed class SimulationPackageTests
     }
 
     [Fact]
-    public void Asmdef_IsNamedLikeTheDotNetAssemblyAndRootNamespace()
+    public void Asmdef_PlatformAndDefineRestrictions_AreAbsent()
+    {
+        // The engine must compile into every Unity build target. A platform filter or a define constraint would drop it from some or all
+        // of them while the .NET build, which ignores the asmdef, stays green.
+        JsonObject asmdef = ReadAsmdef();
+
+        Assert.Empty(ArrayOf(asmdef, "includePlatforms"));
+        Assert.Empty(ArrayOf(asmdef, "excludePlatforms"));
+        Assert.Empty(ArrayOf(asmdef, "defineConstraints"));
+        Assert.Empty(ArrayOf(asmdef, "versionDefines"));
+    }
+
+    [Fact]
+    public void Asmdef_Name_MatchesTheDotNetAssemblyAndRootNamespace()
     {
         JsonObject asmdef = ReadAsmdef();
 
@@ -41,37 +57,51 @@ public sealed class SimulationPackageTests
     }
 
     [Fact]
-    public void Asmdef_IsAutoReferenced()
+    public void Asmdef_AutoReferenced_IsTrue()
     {
         JsonObject asmdef = ReadAsmdef();
 
         Assert.True(BoolOf(asmdef, "autoReferenced") == true);
     }
 
+    [Fact]
+    public void PackageFolder_AssemblyDefinitions_AreTheRuntimeAsmdefOnly()
+    {
+        // A second asmdef (for example under Runtime/Rules/) would split the engine into two Unity assemblies, and an asmref would add
+        // sources to another one, while the .NET project still compiles one assembly from all of them.
+        string[] asmdefs = Directory.GetFiles(_packageFolder, "*.asmdef", SearchOption.AllDirectories)
+            .Select(path => Path.GetRelativePath(_packageFolder, path).Replace('\\', '/'))
+            .ToArray();
+
+        Assert.Equal(["Runtime/CityBuilder.Simulation.asmdef"], asmdefs);
+        Assert.Empty(Directory.GetFiles(_packageFolder, "*.asmref", SearchOption.AllDirectories));
+    }
+
     // ----- package.json -----
 
     [Fact]
-    public void PackageJson_NamesThePackage()
+    public void PackageJson_Name_IsTheCityBuilderSimulationPackage()
     {
         Assert.Equal("com.citybuilder.simulation", (string?)ReadPackageJson()["name"]);
     }
 
     [Fact]
-    public void PackageJson_RequiresUnity63()
+    public void PackageJson_UnityField_RequiresUnity63()
     {
         Assert.Equal("6000.3", (string?)ReadPackageJson()["unity"]);
     }
 
     [Fact]
-    public void PackageJson_HasASemanticVersion()
+    public void PackageJson_Version_IsSemantic()
     {
-        Assert.Matches(@"^\d+\.\d+\.\d+$", (string?)ReadPackageJson()["version"] ?? string.Empty);
+        // ASCII digits and \z on purpose: \d matches any Unicode digit and $ also matches before a final newline.
+        Assert.Matches(@"^[0-9]+\.[0-9]+\.[0-9]+\z", (string?)ReadPackageJson()["version"] ?? string.Empty);
     }
 
     // ----- layout -----
 
     [Fact]
-    public void PackageFolder_ContainsNoBinOrObjFolders()
+    public void PackageFolder_BuildOutputFolders_AreAbsent()
     {
         // Unity imports every file of a package folder, so build output must stay in shared/Simulation.Build.
         string[] buildOutput = Directory.EnumerateDirectories(_packageFolder, "*", SearchOption.AllDirectories)
@@ -82,14 +112,25 @@ public sealed class SimulationPackageTests
     }
 
     [Fact]
-    public void RuntimeSources_AreFound()
+    public void PackageFolder_Files_AreSourcesAndPackageMetadataOnly()
+    {
+        string[] unexpected = Directory.EnumerateFiles(_packageFolder, "*", SearchOption.AllDirectories)
+            .Where(path => !IsPackageFile(path))
+            .Select(path => Path.GetRelativePath(_packageFolder, path))
+            .ToArray();
+
+        Assert.Empty(unexpected);
+    }
+
+    [Fact]
+    public void RuntimeSources_Folder_ContainsSourceFiles()
     {
         // Keeps the check below from passing on an empty list (a wrong path would find nothing).
         Assert.NotEmpty(RuntimeSources());
     }
 
     [Fact]
-    public void RuntimeSources_StartWithNullableEnable()
+    public void RuntimeSources_FirstLine_IsNullableEnable()
     {
         // Unity does not read the csproj, so the directive in each file is the only thing that turns nullable annotations on there.
         string[] withoutDirective = RuntimeSources()
@@ -122,4 +163,8 @@ public sealed class SimulationPackageTests
     private static string[] RuntimeSources() => Directory.GetFiles(_runtimeFolder, "*.cs", SearchOption.AllDirectories);
 
     private static bool IsNamed(string path, string name) => string.Equals(Path.GetFileName(path), name, StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsPackageFile(string path) =>
+        string.Equals(Path.GetFileName(path), "package.json", StringComparison.Ordinal)
+        || _allowedExtensions.Contains(Path.GetExtension(path), StringComparer.OrdinalIgnoreCase);
 }

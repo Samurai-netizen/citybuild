@@ -20,7 +20,8 @@ namespace CityBuilder.Simulation
         /// <param name="divisor">The amount to divide by, for example the number of workers. It must be greater than zero.</param>
         /// <returns>The quotient rounded up. It never overflows, because it is at most <paramref name="dividend"/>.</returns>
         /// <exception cref="ArgumentOutOfRangeException">
-        /// <paramref name="dividend"/> is negative, or <paramref name="divisor"/> is zero or negative.
+        /// <paramref name="dividend"/> is negative, or <paramref name="divisor"/> is zero or negative. If both are out of range,
+        /// the exception names the dividend.
         /// </exception>
         public static long CeilDiv(long dividend, long divisor)
         {
@@ -46,12 +47,17 @@ namespace CityBuilder.Simulation
         /// </summary>
         /// <param name="labor">Labor in worker-seconds. It must not be negative.</param>
         /// <param name="permille">
-        /// The reduction in permille, from 0 (none) to <see cref="PermilleScale"/> (all of it). Content validation keeps the sum of
-        /// the reductions of one building type far below that.
+        /// The reduction in permille, from 0 (none) to <see cref="PermilleScale"/> (all of it). Content validation (M0-07, planned) caps
+        /// the sum of the reductions of one building type at the rule <c>MaxLaborReductionPermille</c> (500 in the M0 content).
         /// </param>
-        /// <returns>The reduced labor in worker-seconds. It is never more than <paramref name="labor"/>.</returns>
+        /// <returns>
+        /// The reduced labor in worker-seconds. It is never more than <paramref name="labor"/>, and it is zero only when
+        /// <paramref name="labor"/> is zero or <paramref name="permille"/> is <see cref="PermilleScale"/>: positive labor with a smaller
+        /// reduction stays at least 1, so a cycle never becomes free by rounding.
+        /// </returns>
         /// <exception cref="ArgumentOutOfRangeException">
-        /// <paramref name="labor"/> is negative, or <paramref name="permille"/> is outside 0 to <see cref="PermilleScale"/>.
+        /// <paramref name="labor"/> is negative, or <paramref name="permille"/> is outside 0 to <see cref="PermilleScale"/>. If both are
+        /// out of range, the exception names the labor.
         /// </exception>
         public static long ApplyPermilleReduction(long labor, int permille)
         {
@@ -62,13 +68,14 @@ namespace CityBuilder.Simulation
 
             if (permille < 0 || permille > PermilleScale)
             {
-                throw new ArgumentOutOfRangeException(nameof(permille), permille, "The reduction must be between 0 and 1000 permille.");
+                throw new ArgumentOutOfRangeException(nameof(permille), permille, $"The reduction must be between 0 and {PermilleScale} permille.");
             }
 
             long remainingPermille = PermilleScale - permille;
 
             // labor = wholeThousands × 1000 + rest. The whole thousands scale to a whole number already, so only the small rest
-            // needs rounding up. The sum equals the ceiling of the full product, and no step comes near the limits of long.
+            // needs rounding up. The sum is exactly ceil(labor × remainingPermille / 1000), which is at most labor, so it fits in a long:
+            // labor = long.MaxValue with no reduction ends exactly on long.MaxValue. Both products are smaller than that sum or tiny.
             long wholeThousands = labor / PermilleScale;
             long rest = labor % PermilleScale;
             return checked((wholeThousands * remainingPermille) + CeilDiv(rest * remainingPermille, PermilleScale));

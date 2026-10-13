@@ -35,20 +35,22 @@ outside `server/`, so it repeats the settings it needs (see its module doc).
 *(planned)* The Unity assemblies (M0-04 on).
 
 ## Dependency rules and where they are tested
-The dependency table in `core-instructions/03-architecture.md` is enforced by tests that read the references of the compiled
-assemblies (plain reflection, no extra packages). Each rule is tested next to the layer it guards:
+These cells of the dependency table in `core-instructions/03-architecture.md` are enforced by tests that read the references of the
+compiled assemblies (plain reflection, no extra packages), each next to the layer it guards:
 
 | Rule | Test |
 |---|---|
-| Simulation references only the base class library, and is built for `netstandard2.1` | `CityBuilder.Simulation.Tests` → `SimulationDependencyTests` |
-| Simulation's Unity side stays engine-free: asmdef without engine or other references, `package.json`, no `bin/` or `obj/` in the package, `#nullable enable` in every source | `CityBuilder.Simulation.Tests` → `SimulationPackageTests` |
-| The engine's build project keeps C# 9, warnings as errors, the XML doc file and no packages | `CityBuilder.Simulation.Tests` → `SimulationBuildProjectTests` |
+| Simulation references exactly `netstandard` (the base class library) and is built for `netstandard2.1` | `CityBuilder.Simulation.Tests` → `SimulationDependencyTests` |
+| Simulation's Unity side stays engine-free: asmdef without engine, other or platform references, `package.json`, only sources and package metadata in the package folder, no `bin/` or `obj/`, `#nullable enable` in every source | `CityBuilder.Simulation.Tests` → `SimulationPackageTests` |
+| The engine's build project keeps C# 9, warnings as errors, the XML doc file and no references (the build itself checks the evaluated values: `GuardUnityCompatibleBuild`) | `CityBuilder.Simulation.Tests` → `SimulationBuildProjectTests` |
 | Domain references no ASP.NET Core or EF Core | `CityBuilder.Domain.Tests` → `DomainDependencyTests` |
 | Application references no ASP.NET Core or EF Core | `CityBuilder.Application.Tests` → `ApplicationDependencyTests` |
 | Infrastructure doesn't reference Api | `CityBuilder.IntegrationTests` → `InfrastructureDependencyTests` |
 
-An assembly records a reference only when some code uses it, so these tests catch dependencies that code uses, not project
-references that nothing uses. M0-65 extends them (hosting types only in Api, no float fields in the engine, and more).
+**Not tested yet:** Infrastructure's "no ASP.NET endpoint types", and Api referencing only Application and Infrastructure. M0-65
+extends the tests (hosting types only in Api, no float fields in the engine, and more). An assembly records a reference only when some
+code uses it, so these tests catch dependencies that code uses, not project references that nothing uses. The two M0-02 tests use a
+short deny-list of name prefixes (ASP.NET Core, EF Core); M0-65 can widen it.
 
 ## Request lifecycle
 *(planned)* A sequence diagram of one command, from tap to snapshot, as implemented.
