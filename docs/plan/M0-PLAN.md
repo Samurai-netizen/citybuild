@@ -245,8 +245,8 @@ The AI coder updates its row at start (`In progress`) and finish (`In review`). 
 | ID | Day | Task | Tags | Status |
 |---|---|---|---|---|
 | M0-01 | 1 | Repository audit and kit verification | O PLAN | Done |
-| M0-02 | 1 | Server solution skeleton | S | In review |
-| M0-03 | 1 | Shared engine skeleton and architecture tests | S | Todo |
+| M0-02 | 1 | Server solution skeleton | S | Done |
+| M0-03 | 1 | Shared engine skeleton and architecture tests | S | In review |
 | M0-04 | 1 | Unity project skeleton | S MANUAL first | Todo |
 | M0-05 | 1 | Unity test foundation | S | Todo |
 | M0-06 | 1 | Day 1 checkpoint | O | Todo |

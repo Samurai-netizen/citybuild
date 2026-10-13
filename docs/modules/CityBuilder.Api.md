@@ -39,7 +39,8 @@ The contract is `core-instructions/05-api-contract.md`. The game endpoints (`/ap
 
 ## Tests
 `server/tests/CityBuilder.IntegrationTests` starts the app in memory with `WebApplicationFactory<Program>`; no Docker needed.
-They cover the health endpoint, OpenAPI only in Development, and the registered clock.
+They cover the health endpoint, OpenAPI only in Development, and the registered clock. The project also holds
+`InfrastructureDependencyTests`, a reflection check on the Infrastructure assembly that does not start the app.
 Run them with the fast suite: `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`.
 
 ## Known limitations
@@ -48,4 +49,4 @@ Run them with the fast suite: `dotnet test server/CityBuilder.slnx --filter "Cat
 - `/health` is not in the OpenAPI document: health-check endpoints carry no API description.
 - No authentication, rate limits or request correlation yet *(planned, M0-25, M0-34, M0-35)*.
 
-Last updated: M0-02
+Last updated: M0-03

@@ -1,0 +1,7 @@
+{
+  "name": "com.citybuilder.simulation",
+  "version": "0.1.0",
+  "displayName": "CityBuilder Simulation",
+  "description": "The deterministic, integer-only city simulation shared by the server (authority) and the Unity client (display only).",
+  "unity": "6000.3"
+}

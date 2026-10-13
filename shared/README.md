@@ -1,1 +1,1 @@
-Shared deterministic engine `CityBuilder.Simulation` (Unity package `Simulation/` + .NET project `Simulation.Build/`): created in M0-03, filled from M0-07 on (layout: `core-instructions/03-architecture.md`).
+Shared deterministic engine `CityBuilder.Simulation`: the Unity package `Simulation/` and the .NET project `Simulation.Build/` compile the same sources (`Simulation/Runtime/`). Module doc: [CityBuilder.Simulation.md](../docs/modules/CityBuilder.Simulation.md). Layout: `core-instructions/03-architecture.md`.

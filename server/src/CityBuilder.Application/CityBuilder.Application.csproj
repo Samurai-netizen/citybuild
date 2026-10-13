@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CityBuilder.Domain\CityBuilder.Domain.csproj" />
+    <ProjectReference Include="..\..\..\shared\Simulation.Build\CityBuilder.Simulation.csproj" />
   </ItemGroup>
 
 </Project>

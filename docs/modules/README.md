@@ -13,3 +13,4 @@ Modules are added by the tasks that create them (M0-02, M0-03, M0-04, M0-61, M0-
 | `CityBuilder.Application` | .NET project, `server/src/` (use cases, ports; skeleton) | [CityBuilder.Application.md](CityBuilder.Application.md) |
 | `CityBuilder.Domain` | .NET project, `server/src/` (server-only concepts; skeleton) | [CityBuilder.Domain.md](CityBuilder.Domain.md) |
 | `CityBuilder.Infrastructure` | .NET project, `server/src/` (port implementations; skeleton) | [CityBuilder.Infrastructure.md](CityBuilder.Infrastructure.md) |
+| `CityBuilder.Simulation` | Unity package `shared/Simulation/` + .NET project `shared/Simulation.Build/` (the deterministic engine; integer helpers and `ItemId` so far) | [CityBuilder.Simulation.md](CityBuilder.Simulation.md) |

@@ -5,10 +5,17 @@
       "citybuilder.application": {
         "type": "Project",
         "dependencies": {
-          "CityBuilder.Domain": "[1.0.0, )"
+          "CityBuilder.Domain": "[1.0.0, )",
+          "CityBuilder.Simulation": "[1.0.0, )"
         }
       },
       "citybuilder.domain": {
+        "type": "Project",
+        "dependencies": {
+          "CityBuilder.Simulation": "[1.0.0, )"
+        }
+      },
+      "citybuilder.simulation": {
         "type": "Project"
       }
     }

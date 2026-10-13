@@ -97,7 +97,8 @@ Every mutation is followed by a zero-length advance, so the returned state is al
 **Builders busy** = count of `Constructing` + `Upgrading`. **Refunds may exceed storage caps**: caps only limit production.
 
 ## 9. Determinism rules (shared code)
-- Integers only (`long` quantities, seconds and labor; `int` ids and permille). No `float`, `double` or `decimal`.
+- Integers only (`long` quantities, seconds and labor; `int` building instance ids and permille). Content ids are typed structs over
+  text, compared ordinally, such as `ItemId` (decision 022 in `12`). No `float`, `double` or `decimal`.
 - Divisions that produce durations use ceiling division on non-negative integers. Nothing else divides.
 - Never depend on `Dictionary`/`HashSet` enumeration order. Iterate sorted ids or arrays.
 - No `DateTime`, no randomness, no static mutable state, no I/O inside the engine.
