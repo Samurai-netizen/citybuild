@@ -6,15 +6,18 @@ It never decides outcomes.
 ## Project settings (set once, Day 1 — [MANUAL] where noted)
 - Unity **6.3 LTS**, project at `client/CityBuilder/`, Universal 3D template. [MANUAL: create in Unity Hub]
 - Asset serialization: **Force Text**; Version control: **Visible Meta Files**. Commit every `.meta`.
-- Active Input Handling: Input System. Scripting backend for device builds: IL2CPP.
+- Active Input Handling: Input System (package **1.20.0**, the version the editor bundles: 1.12.0 does not compile on 6000.3, decision 023).
+  Scripting backend for device builds: IL2CPP.
 - Player → "Allow downloads over HTTP": *Allowed in Development Builds* (needed for `http://localhost`).
 - `client/CityBuilder/.gitignore` (inside the Unity folder only — the root must not ignore server
-  `.csproj` files): `Library/ Temp/ Logs/ obj/ Build/ Builds/ UserSettings/ *.csproj *.sln`.
+  `.csproj` files): `Library/ Temp/ Logs/ obj/ Build/ Builds/ UserSettings/ *.csproj *.sln *.slnx`.
 
 ## AI-friendly Unity rules (Claude cannot use the Editor GUI)
-1. **Minimal scenes.** `Bootstrap.unity` contains one `GameRoot` GameObject. Everything else is
+1. **Minimal scenes.** `Bootstrap.unity` is empty: `GameBootstrap` creates the one `GameRoot` GameObject when a scene
+   named `Bootstrap` loads (a `GameRoot` already in the scene is kept). Everything else is
    created from code at runtime. Avoid hand-editing scene or prefab YAML.
-2. **UI Toolkit** (UXML + USS text files) for all screens and HUD — readable and diffable.
+2. **UI Toolkit** (UXML + USS text files) for all screens and HUD — readable and diffable. The UXML, USS and
+   `PanelSettings` that code loads by name live in `Assets/_Project/Resources/UI/` (decision 024).
 3. **Placeholder art from primitives** (`GameObject.CreatePrimitive`) and simple materials in M0.
    No prefabs are required for the MVP; if one is needed, create it with an editor script.
 4. When a step needs the Editor (creating the project, assigning a scene to Build Settings,
@@ -27,7 +30,7 @@ It never decides outcomes.
 | `CityBuilder.Simulation` | `shared/Simulation/Runtime` (local package, `noEngineReferences: true`) | — |
 | `CityBuilder.Client.Core` | `Assets/_Project/Core` | Simulation |
 | `CityBuilder.Client.Net` | `Assets/_Project/Net` | Core, Newtonsoft |
-| `CityBuilder.Client.Presentation` | `Assets/_Project/Presentation` | Core, Net, UnityEngine.UIElements, Input System |
+| `CityBuilder.Client.Presentation` | `Assets/_Project/Presentation` | Core, Net, Input System (UI Toolkit is an engine module: no entry) |
 | `CityBuilder.Client.Tests.EditMode` / `.PlayMode` | `Assets/_Project/Tests/…` | as needed |
 
 Local package line in `Packages/manifest.json`:
@@ -35,6 +38,7 @@ Local package line in `Packages/manifest.json`:
 
 ## Runtime structure
 - **Composition root:** `GameRoot` builds services by hand (no DI framework, no singletons, no static mutable state).
+  `GameBootstrap` (a `sceneLoaded` handler registered before the first scene) creates it when the `Bootstrap` scene loads.
 - **Core:** `ClientCityStore` holds the last snapshot + receive time; raises `SnapshotChanged`.
   Ignores snapshots whose `stateVersion` is lower than the current one (out-of-order responses).
 - **Display prediction:** `DisplayClock` = `snapshot.clock + secondsSinceReceived × rules.timeScale`

@@ -9,7 +9,7 @@ How to get from a clean machine to a running project. Every command here must wo
 | GitHub CLI `gh` | any recent | For opening PRs from the terminal; optional but recommended |
 | .NET SDK | 10.0.401 or a newer 10.0 SDK | `global.json` pins 10.0.401 (`rollForward: latestFeature`); with an older SDK, SDK commands such as `dotnet build` fail with "A compatible .NET SDK was not found" (`dotnet --list-sdks` shows what is installed) |
 | Docker Desktop | current | PostgreSQL and integration tests (Testcontainers) |
-| Unity Hub + Unity | 6.3 LTS | Android Build Support for device builds |
+| Unity Hub + Unity | 6.3 LTS; the project is on 6000.3.25f1 (`client/CityBuilder/ProjectSettings/ProjectVersion.txt`) | Android Build Support for device builds |
 | Claude Code | current | Or any AI coding tool that reads `AGENTS.md` |
 
 ## First-time setup (owner, Day 0)
@@ -35,6 +35,8 @@ How to get from a clean machine to a running project. Every command here must wo
 | Database | `docker compose up -d postgres` | *(planned, M0-19)* |
 | Run API | `dotnet run --project server/src/CityBuilder.Api` → http://localhost:8080 (Development) | M0-02 |
 | Is the API up? | `curl http://localhost:8080/health` prints `Healthy`; OpenAPI (Development only): http://localhost:8080/openapi/v1.json | M0-02 |
+| Open the Unity project | Unity Hub → Add → `client/CityBuilder` (editor 6000.3.25f1); details and the Bootstrap scene steps: `client/README.md` | M0-04 |
+| Does the Unity project compile? (Editor closed) | `<UNITY> -batchmode -quit -projectPath client/CityBuilder -logFile -`, exit code 0 and no `error CS` (`client/README.md`) | M0-04 |
 | Unity tests | `bash scripts/dev/test-unity.sh` | *(planned, M0-05)* |
 | Everything CI runs | `bash scripts/dev/quality.sh` | *(planned, M0-62)* |
 

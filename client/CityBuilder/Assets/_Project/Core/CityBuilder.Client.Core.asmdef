@@ -1,0 +1,16 @@
+{
+  "name": "CityBuilder.Client.Core",
+  "rootNamespace": "CityBuilder.Client.Core",
+  "references": [
+    "CityBuilder.Simulation"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

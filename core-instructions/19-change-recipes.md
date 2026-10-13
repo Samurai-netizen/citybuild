@@ -43,7 +43,8 @@ Paths are the M0 layout (`03`). "Module doc" means `docs/modules/<Project>.md`.
 - Docs: generated configuration reference (until M0-61: `docs/getting-started.md` → Configuration).
 
 ## New client screen or view
-- Code: `client/CityBuilder/Assets/_Project/Presentation/<Feature>/` (view-model class + UXML + USS + thin MonoBehaviour).
+- Code: `client/CityBuilder/Assets/_Project/Presentation/<Feature>/` (view-model class + thin MonoBehaviour); its UXML and USS go to
+  `client/CityBuilder/Assets/_Project/Resources/UI/`, where `Resources.Load` finds them (decision 024).
 - Tests: EditMode view-model tests; PlayMode only if there's scene behaviour.
 - Docs: `09` (screen list), module doc `CityBuilder.Client.Presentation.md`, `21` only if the design changed (G-Design).
 
