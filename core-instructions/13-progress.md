@@ -5,7 +5,7 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-04 · Unity project skeleton; PR open)
+- **Task:** — (last completed: M0-04 · Unity project skeleton; PR #8 open)
 - **Branch:** `task/M0-04-unity-skeleton` (until the owner merges the PR)
 - **Build log entry:** last: `docs/build-log/2026/2026-10-13-01-M0-04.md` (Session 1)
 - **Last green commit:** the head of `task/M0-04-unity-skeleton` (CI's server sequence run locally: format, Release build 0 warnings, 170 fast
