@@ -8,14 +8,16 @@
 - **Task:** M0-04 · Unity project skeleton (`[S]`, MANUAL first; the owner's manual steps 1–5 are done, one deviation: decision 1)
 - **Branch:** `task/M0-04-unity-skeleton` (M0-03 is merged: PR #7)
 - **Build log entry:** `docs/build-log/2026/2026-10-13-01-M0-04.md` (Session 1, Claude Code / claude-sonnet-5-5)
-- **Last green commit:** the head of this branch after step 3 (headless import exit 0; engine tests 145 passed; `check-docs` OK)
+- **Last green commit:** the head of this branch after step 4 (headless import exit 0, no compiler errors; engine tests 145 passed; `check-docs` OK)
 - **Plan (7 steps, details in the build log):** 1 write-ahead · 2 adopt the owner's project (`.gitignore`, PanelSettings rename) ·
   3 manifest, folders, five asmdefs, headless import for `.meta` files · 4 `GameRoot`, bootstrap, "Not connected" label, scratch verification ·
   5 docs and [MANUAL] steps · 6 independent review (Workflow) · 7 finish and PR
-- **Done steps:** 1, 2, 3 (Input System bumped to 1.14.2 because 1.12.0 does not compile on 6000.3.25f1: decision 023)
-- **Next step:** step 4: `Presentation/Bootstrap/GameRoot.cs` + `GameBootstrap.cs` (spawns GameRoot on `sceneLoaded` for the scene named
-  `Bootstrap`), `Resources/UI/ConnectionStatus.uxml` + `.uss`; headless import for `.meta` files; verify in a scratch copy outside the repo.
-  Unity 6000.3.25f1 is at `/Applications/Unity/Hub/Editor/6000.3.25f1`; the Editor must stay closed while a headless run uses the project.
+- **Done steps:** 1, 2, 3 (Input System bumped to 1.14.2 because 1.12.0 does not compile on 6000.3.25f1: decision 023), 4 (`GameRoot`,
+  `GameBootstrap`, UXML/USS label; verified in a scratch copy: one GameRoot, label "Not connected", 0 warnings; decision 024)
+- **Next step:** step 5: remaining docs (`docs/architecture/overview.md`, `docs/getting-started.md`, `03` layout line, CHANGELOG), then
+  step 6 (independent review with a Workflow of read-only reviewers) and step 7 (finish, PR). Owner action still open: the [MANUAL]
+  Bootstrap scene (`client/README.md`); M0-05 needs it. Unity is at `/Applications/Unity/Hub/Editor/6000.3.25f1`; keep the Editor closed
+  while a headless run uses the project.
 - **Open questions for the owner:** the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`
