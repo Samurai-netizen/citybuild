@@ -4,22 +4,20 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** M0-03 · Shared engine skeleton and architecture tests (`[S]`, Sonnet 5.5)
-- **Branch:** `task/M0-03-engine-skeleton`
-- **Build log entry:** `docs/build-log/2026/2026-10-12-03-M0-03.md` (Session 1; the 9-step plan is in it)
-- **Last green commit:** the head of `task/M0-03-engine-skeleton` (the commit that acts on the independent review). CI's server sequence
-  passes locally on it: locked restore, format, `build --no-incremental -c Release` with 0 warnings, 152 fast tests.
-- **Done steps:** 8 of 9 (write-ahead; probes; package + build project + module doc; `IntegerMath`, `ItemId`; Domain and Application
-  reference Simulation with regenerated lock files; architecture, package and build-project tests; docs, `12` rows 021–022, CHANGELOG;
-  the independent review, Workflow `wf_c76eeb51-eee` with nine agents, and every confirmed finding fixed; 32 mutations all detected).
-- **Next step:** plan step 9 (finish, `16` §E): fill the build log's Changes and Verification sections (the commands and results are in the
-  Done lines), put the PR size into decision 25, set the board row to `In review` and the resume point to `IDLE`, run CI's server
-  sequence in a clean clone of the final head and `check-docs.sh --base origin/main`, open the PR with `gh pr create` and
-  `.github/pull_request_template.md`, record the CI result in the build log, and give the task report (`11`).
+- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** — (last completed: M0-03 · Shared engine skeleton and architecture tests; PR open)
+- **Branch:** `task/M0-03-engine-skeleton` (until the owner merges the PR)
+- **Build log entry:** last: `docs/build-log/2026/2026-10-12-03-M0-03.md` (Session 1)
+- **Last green commit:** the head of `task/M0-03-engine-skeleton` (clean clone at `cb63262`: CI's server sequence, 152 fast tests;
+  the GitHub CI result is in the build log)
+- **Done steps:** all nine (write-ahead, probes, package and build project, helpers and tests, references, architecture tests, docs,
+  the independent review with its fixes, finish)
+- **Next step:** the owner merges the PR, then runs `/start-task M0-04` (Unity project skeleton, `[S]`, MANUAL first). The owner's Unity
+  project already exists, untracked, in `client/CityBuilder/` (6000.3.25f1): M0-04 commits it, adds `client/CityBuilder/.gitignore`
+  (also for `*.slnx`), and removes the lines that the M0-03 session added to this clone's `.git/info/exclude` (build log decision 24).
+  M0-04 sets the M0-03 board row to `Done` and reads the M0-03 build log → Follow-ups first.
 - **Open questions for the owner:** the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI).
-- **Known broken / do not touch:** `client/CityBuilder/` is the owner's untracked Unity project (6000.3.25f1, the manual step of M0-04). Commit nothing
-  under `client/` in M0-03. Its generated paths are excluded in this clone's `.git/info/exclude` only (build log decision 24).
+- **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`
 
 ## Milestone
@@ -27,8 +25,8 @@
 
 | Area | State | Notes |
 |---|---|---|
-| Repo, kit, hooks, CI | done | M0-01 and the audit fixes merged (PR #4, #5); A18 open |
-| Shared engine: content, research, labor | in progress | M0-03 (skeleton, helpers, architecture tests) started; content model is M0-07 |
+| Repo, kit, hooks, CI | done | M0-01 and the audit fixes merged (PR #4, #5); A18 can be closed in M0-04 |
+| Shared engine: content, research, labor | in progress | M0-03 (package, build project, helpers, architecture tests) in review; the content model is M0-07 |
 | Shared engine: invariants, performance | not started | |
 | Server skeleton | done | M0-02 merged (PR #6) |
 | Persistence (EF + PostgreSQL) | not started | |

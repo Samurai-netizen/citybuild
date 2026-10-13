@@ -11,7 +11,7 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
-- [BL-20261012-03 · M0-03 · Shared engine skeleton and architecture tests](2026/2026-10-12-03-M0-03.md) — In progress
+- [BL-20261012-03 · M0-03 · Shared engine skeleton and architecture tests](2026/2026-10-12-03-M0-03.md) — Done
 - [BL-20261012-02 · M0-02 · Server solution skeleton](2026/2026-10-12-02-M0-02.md) — Done
 - [BL-20261012-01 · KIT-AUDIT-FIXES · Kit audit fixes: A1, A2, A3, A9, A15, A16](2026/2026-10-12-01-KIT-AUDIT-FIXES.md) — Done
 - [BL-20261008-01 · M0-01 · Repository audit and kit verification](2026/2026-10-08-01-M0-01.md) — Done
