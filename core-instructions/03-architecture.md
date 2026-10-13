@@ -73,7 +73,7 @@ CityBuilder/
 │   └── tests/ CityBuilder.Simulation.Tests · .Domain.Tests · .Application.Tests · .IntegrationTests
 ├── tools/DocTools/              # generates docs/reference/generated (M0-61)
 ├── tools/BalanceSim/            # headless economy simulator (M0-67)
-├── client/CityBuilder/          # Unity project
+├── client/CityBuilder/          # Unity project: Assets/_Project/{Core,Net,Presentation,Resources/UI,Tests}
 ├── docker-compose.yml
 └── scripts/dev/                 # check-docs, show-task, new-log-entry, setup-hooks, test-unity, quality
 ```

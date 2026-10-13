@@ -14,10 +14,11 @@
   5 docs and [MANUAL] steps · 6 independent review (Workflow) · 7 finish and PR
 - **Done steps:** 1, 2, 3 (Input System bumped to 1.14.2 because 1.12.0 does not compile on 6000.3.25f1: decision 023), 4 (`GameRoot`,
   `GameBootstrap`, UXML/USS label; verified in a scratch copy: one GameRoot, label "Not connected", 0 warnings; decision 024)
-- **Next step:** step 5: remaining docs (`docs/architecture/overview.md`, `docs/getting-started.md`, `03` layout line, CHANGELOG), then
-  step 6 (independent review with a Workflow of read-only reviewers) and step 7 (finish, PR). Owner action still open: the [MANUAL]
-  Bootstrap scene (`client/README.md`); M0-05 needs it. Unity is at `/Applications/Unity/Hub/Editor/6000.3.25f1`; keep the Editor closed
-  while a headless run uses the project.
+  5 (docs: overview, getting-started, `03` layout, CHANGELOG)
+- **Next step:** step 6 (independent review with a Workflow of read-only reviewers over the branch diff, findings verified, fixes logged),
+  then step 7 (finish: `check-docs.sh --base origin/main`, fast tests, board `In review`, resume point `IDLE`, PR, report). Owner action
+  still open: the [MANUAL] Bootstrap scene (`client/README.md`); M0-05 needs it. Unity is at `/Applications/Unity/Hub/Editor/6000.3.25f1`;
+  keep the Editor closed while a headless run uses the project.
 - **Open questions for the owner:** the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`
