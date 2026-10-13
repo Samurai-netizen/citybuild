@@ -5,11 +5,11 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-03 · Shared engine skeleton and architecture tests; PR open)
-- **Branch:** `task/M0-03-engine-skeleton` (until the owner merges the PR)
+- **Task:** — (last completed: M0-03 · Shared engine skeleton and architecture tests; PR #7 open, CI green)
+- **Branch:** `task/M0-03-engine-skeleton` (until the owner merges PR #7)
 - **Build log entry:** last: `docs/build-log/2026/2026-10-12-03-M0-03.md` (Session 1)
-- **Last green commit:** the head of `task/M0-03-engine-skeleton` (clean clone at `cb63262`: CI's server sequence, 152 fast tests;
-  the GitHub CI result is in the build log)
+- **Last green commit:** the head of `task/M0-03-engine-skeleton` (CI green on PR #7: `docs` and `server`, 152 fast tests; also a clean clone
+  at `cb63262`)
 - **Done steps:** all nine (write-ahead, probes, package and build project, helpers and tests, references, architecture tests, docs,
   the independent review with its fixes, finish)
 - **Next step:** the owner merges the PR, then runs `/start-task M0-04` (Unity project skeleton, `[S]`, MANUAL first). The owner's Unity
