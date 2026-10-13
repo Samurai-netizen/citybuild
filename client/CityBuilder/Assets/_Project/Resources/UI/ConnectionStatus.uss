@@ -1,4 +1,4 @@
-/* The connection status label: top left, readable on any background. M0-04 shows "Not connected"; M0-38 and M0-41 change the text. */
+/* The connection status label: top left, readable on any background. M0-04 shows "Not connected"; M0-38 changes the text. */
 .connection-status {
   position: absolute;
   left: 16px;

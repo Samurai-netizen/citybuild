@@ -37,7 +37,7 @@ and every 2 minutes in the foreground. Every command response carries the full a
 | `CityBuilder.Application` | Domain, Simulation | ASP.NET, EF Core |
 | `CityBuilder.Infrastructure` | Application, Domain, Simulation, EF Core, Npgsql | ASP.NET endpoint types |
 | `CityBuilder.Api` | Application, Infrastructure (composition root only) | — |
-| Unity `CityBuilder.Client.*` | Simulation package, Newtonsoft | server projects |
+| Unity `CityBuilder.Client.*` | Simulation package; Newtonsoft (`Client.Net` only); Input System (`Client.Presentation` only); the test runner (test assemblies only). Per assembly: `09` | server projects |
 
 - **Simulation:** content definitions (items, buildings, recipes, research, eras), city state, the `Simulator`, and pure mutation rules.
 - **Domain:** server-only concepts — player, ledger entry, command receipt, settlement record (later: market order, mailbox delivery).

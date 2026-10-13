@@ -52,8 +52,9 @@ flowchart LR
   C --> P[Client.Presentation]
   N --> P
 ```
-At runtime one scene exists, `Bootstrap` (created by hand, [MANUAL]; it stays empty). `GameBootstrap` creates the `GameRoot` composition root
-when that scene loads, and `GameRoot` shows the UI Toolkit label "Not connected" (UXML and USS from `Assets/_Project/Resources/UI/`).
+The runtime scene is `Bootstrap`: the owner creates it by hand ([MANUAL], `client/README.md`), it stays empty, and it is **not in the repository yet**
+(until then the build list holds only the template's `SampleScene`, which gets no `GameRoot`). When the scene loads, `GameBootstrap` creates the
+`GameRoot` composition root, and `GameRoot` shows the UI Toolkit label "Not connected" (UXML and USS from `Assets/_Project/Resources/UI/`).
 There is no networking yet *(planned, M0-37)*.
 
 ## Dependency rules and where they are tested
@@ -65,12 +66,13 @@ compiled assemblies (plain reflection, no extra packages), each next to the laye
 | Simulation references exactly `netstandard` (the base class library) and is built for `netstandard2.1` | `CityBuilder.Simulation.Tests` → `SimulationDependencyTests` |
 | Simulation's Unity side stays engine-free: asmdef without engine, other or platform references, `package.json`, only sources and package metadata in the package folder, no `bin/` or `obj/`, `#nullable enable` in every source | `CityBuilder.Simulation.Tests` → `SimulationPackageTests` |
 | The engine's build project keeps C# 9, warnings as errors, the XML doc file and no references (the build itself checks the evaluated values: `GuardUnityCompatibleBuild`) | `CityBuilder.Simulation.Tests` → `SimulationBuildProjectTests` |
+| The Unity client keeps the references of `09`: Core → Simulation, Net → Core, Presentation → Core, Net and the Input System; no server project or test assembly is referenced; only Net sees a precompiled DLL (Newtonsoft); the test assemblies are set up for the test runner; the manifest points at the shared package and names Newtonsoft and the Input System | `CityBuilder.Simulation.Tests` → `ClientAssemblyTests` (reads the asmdefs and `manifest.json`) |
 | Domain references no ASP.NET Core or EF Core | `CityBuilder.Domain.Tests` → `DomainDependencyTests` |
 | Application references no ASP.NET Core or EF Core | `CityBuilder.Application.Tests` → `ApplicationDependencyTests` |
 | Infrastructure doesn't reference Api | `CityBuilder.IntegrationTests` → `InfrastructureDependencyTests` |
 
-**Not tested yet:** the references of the Unity assemblies (nothing reads the asmdef files of the client; the compile check is a headless
-import, `client/README.md`), Infrastructure's "no ASP.NET endpoint types", and Api referencing only Application and Infrastructure. M0-65
+**Not tested yet:** that the Unity assemblies compile (a headless import checks that by hand, `client/README.md`; the first EditMode test comes in
+M0-05), Infrastructure's "no ASP.NET endpoint types", and Api referencing only Application and Infrastructure. M0-65
 extends the tests (hosting types only in Api, no float fields in the engine, and more). An assembly records a reference only when some
 code uses it, so these tests catch dependencies that code uses, not project references that nothing uses. The two M0-02 tests use a
 short deny-list of name prefixes (ASP.NET Core, EF Core); M0-65 can widen it.

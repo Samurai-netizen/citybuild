@@ -17,9 +17,9 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   `IntegerMath` (`CeilDiv`, `ApplyPermilleReduction`) and `ItemId`, the `CityBuilder.Simulation.Tests` project, Domain and Application
   reference the engine, and tests for the dependency rules, the Unity package files and the build project settings (M0-03).
 - Unity client skeleton: the owner's Unity 6000.3.25f1 project committed with its `.gitignore`; the local package `com.citybuilder.simulation`,
-  Newtonsoft and Input System 1.14.2 (1.12.0 does not compile on 6000.3) in the manifest; the five asmdefs and the `.meta` files (also for
+  Newtonsoft 3.2.2 and Input System 1.20.0, the editor's own versions (1.12.0 does not compile on 6000.3), in the manifest; the five asmdefs and the `.meta` files (also for
   `shared/Simulation`); `GameRoot` with a bootstrap that creates it when the `Bootstrap` scene loads, and a UI Toolkit "Not connected" label;
-  module docs, `client/README.md` with the [MANUAL] steps for the Bootstrap scene (M0-04).
+  module docs, tests for the client asmdefs and manifest (`ClientAssemblyTests`), `client/README.md` with the [MANUAL] steps for the Bootstrap scene (M0-04).
 
 ### Fixed
 - Kit audit follow-ups A1, A2, A3, A9, A15, A16: `[PLAN]` tasks write ahead before the plan (no Plan Mode), the Bash guard no longer

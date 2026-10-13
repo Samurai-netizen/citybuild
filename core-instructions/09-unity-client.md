@@ -6,8 +6,8 @@ It never decides outcomes.
 ## Project settings (set once, Day 1 — [MANUAL] where noted)
 - Unity **6.3 LTS**, project at `client/CityBuilder/`, Universal 3D template. [MANUAL: create in Unity Hub]
 - Asset serialization: **Force Text**; Version control: **Visible Meta Files**. Commit every `.meta`.
-- Active Input Handling: Input System (package **1.14.2**: 1.12.0 does not compile on 6000.3, decision 023). Scripting backend for
-  device builds: IL2CPP.
+- Active Input Handling: Input System (package **1.20.0**, the version the editor bundles: 1.12.0 does not compile on 6000.3, decision 023).
+  Scripting backend for device builds: IL2CPP.
 - Player → "Allow downloads over HTTP": *Allowed in Development Builds* (needed for `http://localhost`).
 - `client/CityBuilder/.gitignore` (inside the Unity folder only — the root must not ignore server
   `.csproj` files): `Library/ Temp/ Logs/ obj/ Build/ Builds/ UserSettings/ *.csproj *.sln *.slnx`.

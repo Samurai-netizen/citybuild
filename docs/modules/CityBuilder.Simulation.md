@@ -2,7 +2,7 @@
 
 **Path:** `shared/Simulation/` (the Unity package `com.citybuilder.simulation`, sources in `Runtime/`) and
 `shared/Simulation.Build/` (the .NET project) · **Kind:** Unity assembly and .NET class library (`netstandard2.1`, C# 9) ·
-**References:** the base class library only · **Referenced by:** `CityBuilder.Domain`, `CityBuilder.Application` (Infrastructure and Api get it through them), `CityBuilder.Simulation.Tests`; the Unity assemblies from M0-04
+**References:** the base class library only · **Referenced by:** `CityBuilder.Domain`, `CityBuilder.Application` (Infrastructure and Api get it through them), `CityBuilder.Simulation.Tests`; in Unity `CityBuilder.Client.Core` and the two client test assemblies (`CityBuilder.Client.Net` and `.Presentation` reach it through Core)
 
 > *Early.* Only the integer helpers and `ItemId` exist so far. The content model follows in M0-07, the city state in M0-08 and
 > `Simulator.Advance` in M0-09 *(planned)*.
@@ -70,15 +70,17 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
 - `SimulationBuildProjectTests`: the csproj keeps `LangVersion 9.0`, warnings as errors, the XML doc file, the analysis settings, no
   warning suppression, the one `Compile` glob, no references, and the guard target.
 
-That the package compiles inside Unity is proved by an EditMode test in M0-05 *(planned)*.
+That the package compiles inside Unity was checked by M0-04's headless import of the Unity project (`client/README.md`); an EditMode test that
+calls it comes in M0-05 *(planned)*. `ClientAssemblyTests` is in this test project, too, but guards the Unity client's asmdefs and manifest, not
+the engine (see `docs/architecture/overview.md`).
 
 ## Known limitations
-- No `.meta` files: Unity writes them on the first import of this mutable local package (M0-04), and they are committed then (`09`).
-- The .NET build is a close proxy for Unity's compiler (same language version and API level), not the same compiler. Unity-side
-  compilation is first checked in M0-05.
+- The `.meta` files that Unity writes for this mutable local package are committed (M0-04, `09`); a new source file needs its `.meta` file in the
+  same commit.
+- The .NET build is a close proxy for Unity's compiler (same language version and API level), not the same compiler. The Unity-side compile check is the headless import; the first EditMode test follows in M0-05.
 - The package may hold only `.cs`, `.asmdef`, `.meta`, `.md` files and `package.json`. A new kind of file (for example images under
   `Documentation~/`) needs a change to `SimulationPackageTests`.
 - `ItemId.GetHashCode` is the runtime's string hash, which differs between processes. That is fine only because no engine code may
   depend on `Dictionary` or `HashSet` order (`04` §9).
 
-Last updated: M0-03
+Last updated: M0-04

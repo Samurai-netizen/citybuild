@@ -19,7 +19,9 @@ structure). It is **not** responsible for talking to the server (`CityBuilder.Cl
 | — | none yet. Planned: `ClientCityStore`, `DisplayClock`, `DisplayCity` (M0-39) |
 
 ## Rules and invariants
-- References only `CityBuilder.Simulation` (`03` dependency table). The asmdef is not auto-referenced, so other assemblies must name it.
+- References only `CityBuilder.Simulation` (`03` dependency table). The asmdef is not auto-referenced, so other assemblies must name it,
+  and `overrideReferences` is on with no precompiled DLL listed, so Core cannot see Newtonsoft or any other package DLL by accident.
+  `ClientAssemblyTests` (`server/tests/CityBuilder.Simulation.Tests`) checks all of this.
 - Keeps engine references on purpose: `ClientCityStore` reads `Time.realtimeSinceStartupAsDouble` (M0-39). Everything else here should
   still be plain C# that EditMode tests can run without a scene.
 - No singletons and no static mutable state; `GameRoot` builds the objects by hand (`.claude/rules/unity.md`).

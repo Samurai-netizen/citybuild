@@ -18,7 +18,7 @@ client/CityBuilder/
 │   ├── Resources/UI/    PanelSettings.asset, UXML and USS the code loads by name
 │   └── Tests/EditMode · Tests/PlayMode                    test assemblies (no tests yet, M0-05)
 ├── Assets/Scenes/       Bootstrap.unity is created by hand (below)
-├── Packages/manifest.json   the local package com.citybuilder.simulation -> ../../shared/Simulation, Newtonsoft, Input System 1.14.2
+├── Packages/manifest.json   "com.citybuilder.simulation": "file:../../../shared/Simulation" (relative to Packages/), Newtonsoft 3.2.2, Input System 1.20.0
 └── ProjectSettings/     Force Text, Visible Meta Files, Input System, HTTP allowed in development builds
 ```
 Commit every `.meta` file. `client/CityBuilder/.gitignore` covers the generated folders.
@@ -36,7 +36,7 @@ Claude cannot use the Editor GUI, and a scene file is never hand-edited. The sce
 `GameRoot` when a scene named exactly `Bootstrap` loads.
 1. Open the project in the Editor and wait until the Console is quiet.
 2. **File → New Scene.** Pick the template named *Empty* if the list has one. Otherwise pick *Basic*, click **Create**, then select
-   every object in the Hierarchy (Main Camera, Directional Light, Global Volume) and delete them. The Hierarchy must be empty.
+   every object in the Hierarchy (Main Camera, Directional Light and any Volume object the template added) and delete them. The Hierarchy must be empty.
 3. **File → Save As…** → folder `Assets/Scenes`, name **`Bootstrap`** (exactly; the name triggers the bootstrap) → Save.
 4. **File → Build Profiles** (older Editors: **Build Settings**) → **Scene List**. With Bootstrap open click **Add Open Scenes**, drag
    `Scenes/Bootstrap` to the top so its number is **0**, and untick `Scenes/SampleScene` (the template's sample).
@@ -44,8 +44,15 @@ Claude cannot use the Editor GUI, and a scene file is never hand-edited. The sce
    `GameRoot` with one child `UI`; no red messages in the Console (the yellow "no scripts" warnings above are expected). The Game
    view may print "No cameras rendering": that is
    expected, the scene has no camera until M0-43, and the UI overlay does not need one. Press Play again to stop.
-6. **File → Save**, close the Editor. Commit `Assets/Scenes/Bootstrap.unity`, `Assets/Scenes/Bootstrap.unity.meta` and
-   `ProjectSettings/EditorBuildSettings.asset` yourself, or tell the next AI coder that the scene exists and it commits them.
+6. **File → Save**, close the Editor. Then either commit the files yourself on the task branch, before you merge the PR (the message
+   must look like `type(ID): text`):
+   ```
+   git switch task/M0-04-unity-skeleton
+   git add client/CityBuilder/Assets/Scenes client/CityBuilder/ProjectSettings/EditorBuildSettings.asset
+   git commit -m "chore(M0-04): add the Bootstrap scene"
+   git push
+   ```
+   or tell the next AI coder that the scene exists, and it commits `Bootstrap.unity`, its `.meta` file and `EditorBuildSettings.asset`.
 7. If the label does not show, copy the first red Console message into the chat. Do not edit the scene or the scripts by hand.
 
 Last updated: M0-04

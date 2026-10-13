@@ -5,7 +5,7 @@
 **Referenced by:** `CityBuilder.Client.Tests.EditMode`, `CityBuilder.Client.Tests.PlayMode`
 
 > *Early.* Only the composition root, its bootstrap and the "Not connected" label exist. The screens come with the later client tasks
-> *(planned, M0-12 on)*.
+> *(planned, M0-38 on)*.
 
 ## Purpose
 Everything the player sees and touches: the composition root, scene objects created from code, UI Toolkit screens and input. It renders
@@ -19,13 +19,15 @@ for balances or for any decision: it only displays server state.
 | `GameBootstrap` (`Bootstrap/`) | `internal static`. Registers a `SceneManager.sceneLoaded` handler before the first scene loads (`RuntimeInitializeOnLoadMethod`, `BeforeSceneLoad`); when the scene named `Bootstrap` loads, it creates one `GameRoot` in that scene. A `GameRoot` already in the scene (a root or any descendant) is kept and nothing is added. It holds no field |
 
 Assets the types load by name sit in `Assets/_Project/Resources/UI/`, not in this folder, because a `GameRoot` made from code has no scene
-field to assign them to: `PanelSettings.asset` (the owner's, with the default runtime theme), `ConnectionStatus.uxml` and
+field to assign them to: `PanelSettings.asset` (the owner's; its theme is `Assets/UI Toolkit/UnityThemes/UnityDefaultRuntimeTheme.tss`, which must stay), `ConnectionStatus.uxml` and
 `ConnectionStatus.uss` (the label, name `connection-status`, class `connection-status`).
 
 ## Rules and invariants
-- References Core, Net and the Input System package (`03` and `09`); the asmdef is not auto-referenced.
+- References Core, Net and the Input System package (`03` and `09`); the asmdef is not auto-referenced, and `overrideReferences` is on
+  with no precompiled DLL listed, so it cannot use Newtonsoft (only Net does). `ClientAssemblyTests` checks the references.
 - Views never call the API client; they use services that `GameRoot` builds by hand (no DI framework, no singletons, no static mutable
-  state, no `FindObjectOfType` at runtime). The only static code is the registration method that Unity's attribute requires.
+  state, no `FindObjectOfType` at runtime). `GameBootstrap` is the only static class: it has no field, and its registration method is the
+  one that Unity's attribute requires.
 - The scene that triggers the bootstrap is named exactly `Bootstrap` (`GameBootstrap.BootstrapSceneName`); any other scene gets nothing.
 - Screens are UI Toolkit (UXML + USS) loaded from `Resources/UI`; scene objects are created from code. `.unity` and `.prefab` YAML is
   never hand-edited (`.claude/rules/unity.md`).
