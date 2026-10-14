@@ -13,7 +13,7 @@ namespace CityBuilder.Simulation
     {
         private readonly string? _value;
 
-        /// <summary>Creates the id with the given text. The content loader (M0-07, planned) checks ids and reports bad ones before it creates them.</summary>
+        /// <summary>Creates the id with the given text. The content factory checks the text of every id and reports bad ones before it creates them.</summary>
         /// <param name="value">The id text, for example <c>planks</c>. It must not be null or empty.</param>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> is null.</exception>
         /// <exception cref="ArgumentException"><paramref name="value"/> is empty.</exception>

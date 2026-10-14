@@ -19,13 +19,14 @@ Use these names in code, docs and UI text. Consistent words keep Claude and the 
 | Segment | Period during which a cycle's worker count is constant | `SegmentStartedAt` |
 | Frozen cycle | A producing cycle with 0 workers (no progress) | `PhaseEndsAt == null` |
 | Building type | Content definition (cost, recipes, max workers per level, unlock) | `BuildingTypeId`, `BuildingDefinition` |
+| Building kind | What a building type does: a house provides workers, a producer runs a recipe | `BuildingKind` (`House`, `Producer`) |
 | Building | A placed instance in a city, with a per-city integer id | `Building`, `BuildingId` |
 | Phase | `Constructing`, `Upgrading`, `Idle`, `Producing` | `BuildingPhase` |
 | Stall reason | Why a building makes no progress (derived) | `StallReason` |
 | Builder slot | Capacity for simultaneous constructions/upgrades | `BuilderSlots` |
 | Research | A node in an era's tree: cost, duration, prerequisites, effects | `ResearchId`, `ResearchDefinition` |
 | Research slot | Capacity for simultaneous research (1 in M0) | `ResearchSlots` |
-| Effect | What completed research changes | `UnlockBuilding`, `LaborReduction`, `StorageCapBonus` |
+| Effect | What completed research changes | `UnlockBuildingEffect`, `LaborReductionEffect`, `StorageCapBonusEffect` |
 | Era | Time period of a city (1 = Early Middle Ages) | `Era`, `EraId` |
 | Major / minor mechanic | Era-gated system vs research-gated addition (`25`) | — |
 | Trading Post | NPC merchants that buy goods for coins; the coin faucet | `trading_post` |
@@ -35,7 +36,8 @@ Use these names in code, docs and UI text. Consistent words keep Claude and the 
 | Dormant tail | Part of a settlement after the production cap: timers run, no new cycles | — |
 | Settlement report | What happened during a settle | `SettlementReport` |
 | Zero-length advance | `Advance(city, 0)`: start eligible cycles at the current clock | — |
-| Content | All game definitions loaded from JSON | `GameContent`, `contentVersion` |
+| Content | All game definitions loaded from JSON: as read, and validated (only the factory makes the latter) | `GameContentData`, `GameContent`, `GameContentFactory`, `contentVersion` |
+| Content error | One problem found when content loads: a stable code, the path in the JSON, a message (`04` §14) | `ContentError`, `ContentErrorCode` |
 | Command | A state-changing player intent | `PlaceBuilding`, `UpgradeBuilding`, `AssignWorkers`, `StartResearch` |
 | Request id | Client UUID for idempotent retries | `RequestId` |
 | Receipt | Stored response of a successful command | `CommandReceipt` |

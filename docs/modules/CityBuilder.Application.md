@@ -4,7 +4,7 @@
 **References:** `CityBuilder.Domain`, `CityBuilder.Simulation` ·
 **Referenced by:** `CityBuilder.Api`, `CityBuilder.Infrastructure`, `CityBuilder.Application.Tests`
 
-> *Skeleton.* The project builds but has no types yet. The first port, `IContentProvider`, arrives in M0-07
+> *Skeleton.* The project builds but has no types yet. The first port, `IContentProvider`, arrives in M0-07b
 > *(planned)*; the use cases and the command pipeline follow from M0-20.
 
 ## Purpose
@@ -37,4 +37,4 @@ checks the dependency rule. Run: `dotnet test server/CityBuilder.slnx --filter "
 ## Known limitations
 - No types yet (skeleton).
 
-Last updated: M0-03
+Last updated: M0-07a

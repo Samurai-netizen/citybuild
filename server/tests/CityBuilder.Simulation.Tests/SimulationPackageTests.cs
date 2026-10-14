@@ -123,6 +123,44 @@ public sealed class SimulationPackageTests
     }
 
     [Fact]
+    public void PackageFolder_EveryFileAndFolder_HasItsMetaFile()
+    {
+        // The .meta files of this mutable local package are committed (M0-04). Without one, Unity creates it with a new GUID on every
+        // machine that opens the project, and the asset's identity differs between clones.
+        string[] withoutMeta = PackageEntries()
+            .Where(path => !path.EndsWith(".meta", StringComparison.Ordinal) && !File.Exists(path + ".meta"))
+            .Select(path => Path.GetRelativePath(_packageFolder, path))
+            .ToArray();
+
+        Assert.Empty(withoutMeta);
+    }
+
+    [Fact]
+    public void PackageFolder_EveryMetaFile_BelongsToAFileOrFolder()
+    {
+        string[] orphans = Directory.EnumerateFiles(_packageFolder, "*.meta", SearchOption.AllDirectories)
+            .Where(meta => !File.Exists(meta[..^".meta".Length]) && !Directory.Exists(meta[..^".meta".Length]))
+            .Select(path => Path.GetRelativePath(_packageFolder, path))
+            .ToArray();
+
+        Assert.Empty(orphans);
+    }
+
+    [Fact]
+    public void PackageFolder_MetaFileGuids_AreUniqueAndWellFormed()
+    {
+        // Unity identifies an asset by the GUID in its .meta file; a copied .meta file would give two assets the same identity.
+        string[] guids = Directory.EnumerateFiles(_packageFolder, "*.meta", SearchOption.AllDirectories)
+            .Select(meta => File.ReadLines(meta).FirstOrDefault(line => line.StartsWith("guid: ", StringComparison.Ordinal)) ?? meta)
+            .Select(line => line["guid: ".Length..])
+            .ToArray();
+
+        Assert.NotEmpty(guids);
+        Assert.All(guids, guid => Assert.Matches("^[0-9a-f]{32}\\z", guid));
+        Assert.Equal(guids.Length, guids.Distinct(StringComparer.Ordinal).Count());
+    }
+
+    [Fact]
     public void RuntimeSources_Folder_ContainsSourceFiles()
     {
         // Keeps the check below from passing on an empty list (a wrong path would find nothing).
@@ -161,6 +199,10 @@ public sealed class SimulationPackageTests
     private static JsonArray ArrayOf(JsonObject json, string propertyName) => json[propertyName]?.AsArray() ?? [];
 
     private static string[] RuntimeSources() => Directory.GetFiles(_runtimeFolder, "*.cs", SearchOption.AllDirectories);
+
+    // Every file and folder below the package root. The root itself has no .meta file: it is the package, not an asset in it.
+    private static IEnumerable<string> PackageEntries() =>
+        Directory.EnumerateFileSystemEntries(_packageFolder, "*", SearchOption.AllDirectories);
 
     private static bool IsNamed(string path, string name) => string.Equals(Path.GetFileName(path), name, StringComparison.OrdinalIgnoreCase);
 

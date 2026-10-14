@@ -21,6 +21,8 @@ and Unity 6.3 (client, Mono/IL2CPP), and it must behave identically in both.
 - Never iterate a `Dictionary`/`HashSet` where order affects results. Sort keys with
   `StringComparer.Ordinal`, or use arrays indexed by sorted ids.
 - `checked` arithmetic on quantities and labor. Validate inputs at the boundary (content loader, mutation entry points).
+- Content enters the engine only as a `GameContent` made by `GameContentFactory`, so engine code may rely on the content rules of `04` §14 and
+  never takes the `*Data` classes. A new content rule gets an error code, a failing test case and a line in `04` §14.
 - Mutations return a result object (`Ok` or an error code); they never throw for business rules.
 - Event sources in `Advance` (research timer, building timers, later mailbox deliveries) are gathered generically,
   so new sources are additive.

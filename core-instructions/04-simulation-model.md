@@ -133,3 +133,18 @@ Market fills, expired-order returns and other cross-player transfers will arrive
 (`26-open-market.md`). The settle passes them in as timed events (`t = max(tradeTime, T0)`), processed
 before building completions, and ignoring storage caps. Keep the event sources in `Advance` a list,
 not hard-coded, so this is an additive change.
+
+## 14. Content rules (checked when content loads)
+Content becomes a `GameContent` only through `GameContentFactory`, and the engine relies on every rule below. The factory checks the shape
+first (required values present, ids `[a-z][a-z0-9_]*` of at most 64 characters, known kinds and effect types, no value where none belongs,
+quantities, durations and labor ≤ 10¹²), then every rule, and lists every error with a stable code (`docs/modules/CityBuilder.Simulation.md`).
+1. Recipe and bonus amounts, labor, durations, base caps, grid size and slots > 0; cost and starting amounts ≥ 0; an effect's permille
+   1..1000; `MaxLaborReductionPermille` 0..1000; exactly one research slot (§5).
+2. Ids are unique per kind; era numbers are 1..n; every reference (era, item, building type, research node) exists.
+3. Levels are 1..max. A house level provides ≥ 1 worker, takes none and has no recipe; a producer level has ≥ 1 worker slot, provides none
+   and has a recipe with an output. Max workers and workers provided never drop from one level to the next (invariant 9 holds during upgrades).
+4. Every capped item has exactly one base cap, an uncapped item none. A storage bonus targets a capped item, a labor reduction a producer.
+5. A building type that is not available at the start is unlocked by exactly one research node; one that is available, by none.
+6. The research graph has no cycle, and every prerequisite is in the same era or an earlier one.
+7. Σ labor reductions of one building type ≤ `MaxLaborReductionPermille`, and with all of them applied every level's shortest cycle,
+   `CeilDiv(effective labor, MaxWorkers)`, is ≥ `MinCycleSeconds`.

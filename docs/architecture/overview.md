@@ -1,13 +1,13 @@
 # Architecture Overview (as built)
 
-> This page describes the system **as it exists** at the end of Day 1 (M0-01 to M0-06): the server solution skeleton, the shared engine
-> skeleton and the Unity client skeleton with its tests. Parts that are not built yet are marked *(planned, M0-NN)*. M0-63 completes the page.
+> This page describes the system **as it exists** after M0-07a: the server solution skeleton, the shared engine with its content model, and
+> the Unity client skeleton with its tests. Parts that are not built yet are marked *(planned, M0-NN)*. M0-63 completes the page.
 > The intended architecture is `core-instructions/03-architecture.md`; the decisions behind it are in [ADRs](../adr/README.md).
 
 ## System
 Today the API host answers `GET /health` (and serves its OpenAPI document in Development). The Unity client starts the `Bootstrap` scene
-and shows "Not connected". The engine holds its integer helpers and the first content id type. There is no database, no game content,
-no game endpoint and no networking yet. Dashed parts in the diagram are planned.
+and shows "Not connected". The engine holds its integer helpers, the content ids and the validated content model; nothing loads the content file yet
+*(planned, M0-07b)*. There is no database, no city state, no game endpoint and no networking yet. Dashed parts in the diagram are planned.
 
 ```mermaid
 flowchart LR
@@ -17,7 +17,7 @@ flowchart LR
     CORE["Client.Core<br/>AppInfo"]
   end
   subgraph sharedside["shared"]
-    SIM["CityBuilder.Simulation<br/>IntegerMath, ItemId"]
+    SIM["CityBuilder.Simulation<br/>IntegerMath, content ids,<br/>GameContentFactory, GameContent"]
   end
   subgraph serverside["server - CityBuilder.slnx"]
     API["CityBuilder.Api<br/>health, OpenAPI in Development"]
@@ -54,13 +54,13 @@ decision 020 and `core-instructions/14-coding-standards.md` (checked by a probe 
 | Project | Path | References | Packages | Holds today | Doc |
 |---|---|---|---|---|---|
 | `CityBuilder.Api` | `server/src/` | Application, Infrastructure | `Microsoft.AspNetCore.OpenApi` | `Program.cs`: JSON console logs, ProblemDetails, health check, `TimeProvider.System`, OpenAPI in Development | [module](../modules/CityBuilder.Api.md) |
-| `CityBuilder.Application` | `server/src/` | Domain, Simulation | — | nothing yet *(planned: ports M0-07 and M0-20, pipeline M0-26)* | [module](../modules/CityBuilder.Application.md) |
+| `CityBuilder.Application` | `server/src/` | Domain, Simulation | — | nothing yet *(planned: ports M0-07b and M0-20, pipeline M0-26)* | [module](../modules/CityBuilder.Application.md) |
 | `CityBuilder.Domain` | `server/src/` | Simulation | — | nothing yet *(planned, M0-19 on)* | [module](../modules/CityBuilder.Domain.md) |
-| `CityBuilder.Infrastructure` | `server/src/` | Application, Domain | — *(EF Core and Npgsql planned, M0-19)* | nothing yet *(planned: content loader M0-07, persistence M0-19)* | [module](../modules/CityBuilder.Infrastructure.md) |
-| `CityBuilder.Simulation` | `shared/Simulation.Build/` (.NET) and `shared/Simulation/` (Unity package) | the base class library only | — | `IntegerMath` (`CeilDiv`, `ApplyPermilleReduction`), `ItemId` | [module](../modules/CityBuilder.Simulation.md) |
+| `CityBuilder.Infrastructure` | `server/src/` | Application, Domain | — *(EF Core and Npgsql planned, M0-19)* | nothing yet *(planned: content loader M0-07b, persistence M0-19)* | [module](../modules/CityBuilder.Infrastructure.md) |
+| `CityBuilder.Simulation` | `shared/Simulation.Build/` (.NET) and `shared/Simulation/` (Unity package) | the base class library only | — | `IntegerMath` (`CeilDiv`, `ApplyPermilleReduction`); `ItemId`, `BuildingTypeId`, `ResearchId`, `EraId`; the content model (`Content/`: `*Data` → `GameContentFactory` → `GameContent`, `04` §14) | [module](../modules/CityBuilder.Simulation.md) |
 | `CityBuilder.Domain.Tests` | `server/tests/` | Domain | xUnit v3 (`xunit.v3.mtp-off`, runner, test SDK; decision 019) | 1 test | the Domain module doc → Tests |
 | `CityBuilder.Application.Tests` | `server/tests/` | Application | the same | 1 test | the Application module doc → Tests |
-| `CityBuilder.Simulation.Tests` | `server/tests/` | Simulation | the same | 166 tests: engine helpers, `ItemId`, and the architecture tests below | the Simulation module doc → Tests |
+| `CityBuilder.Simulation.Tests` | `server/tests/` | Simulation | the same | 431 tests: engine helpers, content ids, content model and validation, and the architecture tests below | the Simulation module doc → Tests |
 | `CityBuilder.IntegrationTests` | `server/tests/` | Api | the same, plus `Microsoft.AspNetCore.Mvc.Testing` | 5 in-memory tests (no Docker); none in the `Integration` category yet *(planned, M0-21)* | the Api module doc → Tests |
 
 ### Unity client
