@@ -11,6 +11,7 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
+- [BL-20261014-01 · M0-04-FOLLOWUP · Bootstrap scene and removal of the AI packages](2026/2026-10-14-01-M0-04-FOLLOWUP.md) — In progress
 - [BL-20261013-01 · M0-04 · Unity project skeleton](2026/2026-10-13-01-M0-04.md) — Done
 - [BL-20261012-03 · M0-03 · Shared engine skeleton and architecture tests](2026/2026-10-12-03-M0-03.md) — Done
 - [BL-20261012-02 · M0-02 · Server solution skeleton](2026/2026-10-12-02-M0-02.md) — Done

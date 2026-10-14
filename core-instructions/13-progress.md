@@ -4,17 +4,18 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-04 · Unity project skeleton; PR #8 open)
-- **Branch:** `task/M0-04-unity-skeleton` (until the owner merges the PR)
-- **Build log entry:** last: `docs/build-log/2026/2026-10-13-01-M0-04.md` (Session 1)
-- **Last green commit:** the head of `task/M0-04-unity-skeleton` (CI's server sequence run locally: format, Release build 0 warnings, 170 fast
-  tests; `check-docs --base origin/main` OK; headless Unity import exit 0)
-- **Done steps:** all seven (write-ahead, the owner's project adopted, manifest + five asmdefs + `.meta` files, `GameRoot` + bootstrap + label,
-  docs, the independent review with its fixes, finish)
-- **Next step:** the owner merges the PR. Before M0-05 the owner does the [MANUAL] Bootstrap scene (`client/README.md`) and decides about the
-  pre-release AI packages. Then `/start-task M0-05` (Unity test foundation, `[S]`): it sets the M0-04 board row to `Done`, and reads the M0-04
-  build log → Follow-ups first (`AppInfo` is defined nowhere; the scratch scenarios to commit as PlayMode tests; the scene).
+- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** M0-04-FOLLOWUP · the owner's two requests after PR #8 (merged): commit the Bootstrap scene the owner made, and remove the three
+  pre-release AI packages (the owner's G-Dependency decision). No plan row; commits use the scope `M0-04`
+- **Branch:** `task/M0-04-scene-and-packages` (based on `origin/main` = `22a7a9b`)
+- **Build log entry:** `docs/build-log/2026/2026-10-14-01-M0-04-FOLLOWUP.md` (Session 1, Claude Code / claude-sonnet-5-5); the M0-04 entry is
+  merged and append-only, so it is not touched
+- **Last green commit:** `main` at `22a7a9b` (M0-04 merged; CI green on PR #8)
+- **Plan (6 steps, details in the build log):** 1 write-ahead · 2 commit the owner's scene · 3 remove the AI packages and what they left in
+  settings · 4 verify on the real scene in a scratch copy · 5 docs · 6 review, finish, PR
+- **Done steps:** 1 in progress
+- **Next step:** commit the write-ahead, then step 2. The owner's uncommitted scene files are in the working tree (do not discard them).
+  Unity is at `/Applications/Unity/Hub/Editor/6000.3.25f1`; the Editor must stay closed while a headless run uses the project.
 - **Open questions for the owner:** (1) the pre-release AI packages in the Unity manifest (`ai.assistant`, `ai.inference`, `pipeline`): not on
   `14`'s list, recommend removing; (2) the [MANUAL] Bootstrap scene (`client/README.md`), needed before M0-05; (3) the two KIT-AUDIT-FIXES
   follow-ups (`AGENTS.md` command line, guard test in CI).
@@ -22,7 +23,7 @@
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 3 / 84
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 4 / 84
 
 | Area | State | Notes |
 |---|---|---|
@@ -33,7 +34,7 @@
 | Persistence (EF + PostgreSQL) | not started | |
 | Auth + command pipeline | not started | |
 | Commands: place / upgrade / assign workers / start research | not started | |
-| Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) in review; the Unity tests are M0-05, networking M0-37 |
+| Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) merged (PR #8); the Unity tests are M0-05, networking M0-37 |
 | Unity city view + placement | not started | |
 | Inspector, worker stepper, research screen, HUD | not started | |
 | Resilience (limits, retries, logging) | not started | |
