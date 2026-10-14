@@ -4,7 +4,7 @@
 **References:** `CityBuilder.Application`, `CityBuilder.Domain` (`CityBuilder.Simulation` comes with them; EF Core and Npgsql from M0-19) ·
 **Referenced by:** `CityBuilder.Api`
 
-> *Skeleton.* The project builds but has no types yet. The content JSON loader arrives in M0-07 and EF Core
+> *Skeleton.* The project builds but has no types yet. The content JSON loader arrives in M0-07b and EF Core
 > persistence in M0-19 *(planned)*.
 
 ## Purpose
@@ -39,4 +39,4 @@ real PostgreSQL *(planned, M0-21)*; the mapping round-trip tests come with M0-20
 ## Known limitations
 - No types yet (skeleton).
 
-Last updated: M0-03
+Last updated: M0-07a

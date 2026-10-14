@@ -4,14 +4,14 @@
 `shared/Simulation.Build/` (the .NET project) · **Kind:** Unity assembly and .NET class library (`netstandard2.1`, C# 9) ·
 **References:** the base class library only · **Referenced by:** `CityBuilder.Domain`, `CityBuilder.Application` (Infrastructure and Api get it through them), `CityBuilder.Simulation.Tests`; in Unity `CityBuilder.Client.Core` and the two client test assemblies (`CityBuilder.Client.Net` and `.Presentation` reach it through Core)
 
-> *Early.* Only the integer helpers and `ItemId` exist so far. The content model follows in M0-07, the city state in M0-08 and
-> `Simulator.Advance` in M0-09 *(planned)*.
+> *Growing.* The integer helpers, the content ids and the content model with its validation exist (M0-07a). Loading the content JSON on
+> the server follows in M0-07b, the city state in M0-08 and `Simulator.Advance` in M0-09 *(planned)*.
 
 ## Purpose
 The deterministic simulation engine: integer-only game rules and the helpers they share (`core-instructions/04-simulation-model.md`).
 The server runs it as the authority; the Unity client runs the same code for display only and snaps to every server snapshot.
-It is **not** responsible for persistence, HTTP, clocks (`TimeProvider`), randomness, logging or anything that touches the Unity
-engine. None of those may appear here.
+It is **not** responsible for persistence, HTTP, clocks (`TimeProvider`), randomness, logging, reading files or JSON, or anything that touches
+the Unity engine. None of those may appear here.
 
 ## One source tree, two builds
 ```mermaid
@@ -25,15 +25,44 @@ The `.csproj` sits beside the package, not inside it: Unity imports every file o
 (`core-instructions/03-architecture.md`). The project compiles `../Simulation/Runtime/**/*.cs` and turns the default globbing off
 (`EnableDefaultCompileItems=false`), so a new source file needs no project edit.
 
+## Content: data in, validated content out
+```mermaid
+flowchart LR
+  J["JSON (server file, later GET /content)"] -->|"any JSON library"| D["GameContentData<br/>(Content.Data: settable, all optional)"]
+  D --> F["GameContentFactory.Create"]
+  F --> SH{"shape phase<br/>missing · ids · kinds · bounds"}
+  SH -- errors --> R1["GameContentResult: every shape error"]
+  SH -- ok --> RU{"rule phase<br/>values · buildings · references · unlocks · research · labor"}
+  RU -- errors --> R2["GameContentResult: every rule error"]
+  RU -- ok --> G["GameContentResult.Content: GameContent"]
+```
+The engine accepts content only as a `GameContent`, and only the factory makes one, so every definition the engine sees has passed every rule
+of `04` → Content rules. Bad data is never an exception: the result lists each error with a stable `ContentErrorCode`, a path in the JSON's
+own names (`buildings[sawmill].levels[2].recipe.labor`) and a message. A broken value gives one error: later rules skip what earlier ones
+reported. The JSON format is the shape of the `*Data` classes in camelCase; the worked example is `docs/how-to/add-building-or-item.md`
+*(planned, M0-07b)*. Design decisions: build log `docs/build-log/2026/2026-10-14-05-M0-07a.md`, decisions 2–8 and 11–31.
+
 ## Key types
 | Type | Responsibility |
 |---|---|
-| `IntegerMath` | The only division in game logic. `CeilDiv(dividend, divisor)` rounds up, for durations (`CeilDiv(labor, workers)`). `ApplyPermilleReduction(labor, permille)` is `ceil(labor × (1000 − permille) / 1000)`, exact for every non-negative labor, and positive labor never rounds down to zero. `PermilleScale` (1000) is the unit of every modifier. Arguments outside the contract (negative amounts, divisor ≤ 0, permille outside 0 to 1000) throw `ArgumentOutOfRangeException` naming the first bad argument: they are programmer errors, because the callers check inputs first (content validation, M0-07 *(planned)*, and the mutation entry points) |
-| `ItemId` | A `readonly struct` that identifies an item (`coins`, `logs`, `planks`). Equality and ordering are ordinal, so they never depend on the machine's culture. `default(ItemId)` is the empty id: it equals only itself and sorts first. The constructor rejects null and empty text and keeps the text as given; the id's format is checked by content validation (M0-07, *planned*) |
+| `IntegerMath` | The only division in game logic. `CeilDiv(dividend, divisor)` rounds up, for durations (`CeilDiv(labor, workers)`). `ApplyPermilleReduction(labor, permille)` is `ceil(labor × (1000 − permille) / 1000)`, exact for every non-negative labor, and positive labor never rounds down to zero. `PermilleScale` (1000) is the unit of every modifier. Arguments outside the contract (negative amounts, divisor ≤ 0, permille outside 0 to 1000) throw `ArgumentOutOfRangeException` naming the first bad argument: they are programmer errors, because the callers check inputs first (content validation and the mutation entry points) |
+| `ItemId`, `BuildingTypeId`, `ResearchId` | `readonly struct`s that identify an item, a building type and a research node. Equality and ordering are ordinal, so they never depend on the machine's culture. `default` is the empty id: it equals only itself and sorts first. The constructor rejects null and empty text and keeps the text as given; the factory checks the format (a lowercase letter, then lowercase letters, digits or `_`, at most 64 characters) before it creates one |
+| `EraId` | The text id of an era (`early_medieval`): equality only, no order, because eras are ordered by number (decision 022). Everything else names an era by its number |
+| `GameContentFactory` | `Create(GameContentData)` → `GameContentResult`; `MaxQuantity` (10^12) bounds every quantity, cost, cap, duration and labor value, so sums of content numbers can't overflow a `long` |
+| `GameContentResult`, `ContentError`, `ContentErrorCode` | Either `Content` or every error (code, path, message; `ToString()` gives all three on one line), in a fixed order: shape errors, or rule errors rule by rule in file order |
+| `GameContent` | `ContentVersion`, `Rules`, `StartingCity`, and the sorted lists `Eras` (by number), `Items`, `Buildings`, `Research` (by id), with `TryGetEra/Item/Building/Research`. Immutable; lists are read-only collections |
+| `GameRules` | Grid size, builder and research slots (research exactly 1 in M0), `BaseStorageCaps` (exactly the capped items) with `TryGetBaseStorageCap`, `MaxOfflineProductionSeconds`, `MinCycleSeconds`, `MaxLaborReductionPermille` |
+| `StartingCityDefinition` | The era and the stock of a new city |
+| `EraDefinition`, `ItemDefinition` | An era (number 1..n, id, name); an item (id, name, era, `IsCapped`, `IsTradable`) |
+| `BuildingDefinition`, `BuildingKind`, `BuildingLevelDefinition`, `RecipeDefinition` | A building type: `House` or `Producer`, cost, build seconds, `IsAvailableAtStart` or `UnlockedByResearch` (filled from the research effect, the only place the unlock is stated), levels 1..`MaxLevel` with `GetLevel(n)`. A level has `MaxWorkers` (producers, ≥ 1), `WorkersProvided` (houses, ≥ 1), neither smaller than on the level below, a `Recipe` (producers only: inputs, outputs, labor) and the cost and seconds to upgrade to it (none on level 1) |
+| `ResearchDefinition`, `ResearchEffect` | A node: era, cost, duration, sorted prerequisites (no cycle, none from a later era), effects in file order. The effect types are a closed set: `UnlockBuildingEffect`, `LaborReductionEffect` (permille, producers only), `StorageCapBonusEffect` (amount, capped items only) |
+| `ItemQuantity` | One line of a cost, recipe, cap list or inventory; lists are sorted by item id and name each item once |
+| `Content.Data.*Data` | The content as read: `GameContentData` and nine classes below it, plain settable properties, every value nullable, no checks. Any JSON library can fill them |
 
 ## Rules and invariants
 `.claude/rules/simulation.md` is the binding list (integers only, `CeilDiv` for durations, no `DateTime` or randomness, no iteration
 order that matters, `checked` arithmetic, results instead of exceptions for business rules). What is specific to this module:
+- **Content comes in only as `GameContent`.** Engine code takes it, never the `*Data` classes, and may rely on every content rule of `04`.
 - **Base class library only.** The asmdef keeps `"noEngineReferences": true`, no references and no platform or define restrictions; the
   compiled assembly references exactly `netstandard`. Tests check both.
 - **`netstandard2.1`, C# 9.** Unity 6.3 compiles the same files, so no file-scoped namespaces, global usings, records, `init` or
@@ -50,9 +79,13 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
   `shared/Simulation.Build/`; `.gitignore` covers both names.
 
 ## How to extend
-- A new engine rule or effect type: recipe "New engine rule or effect type" in `core-instructions/19-change-recipes.md`;
-  mutation rules go to `Runtime/Rules/`. A subfolder needs no asmdef: a second asmdef would split the Unity assembly (a test fails).
-- One public type per file, named after it, with XML docs and `#nullable enable` on the first line. Both builds pick the file up.
+- A new content rule: a check in the matching `Runtime/Content/*Rules.cs` class (or a new one, called from `GameContentFactory`), a
+  `ContentErrorCode` value with its XML doc, a failing case in the matching test class, and the list in `04` → Content rules.
+- A new engine rule or effect type: recipe "New engine rule or effect type" in `core-instructions/19-change-recipes.md`; a new effect type
+  also needs its `*Effect` class, its fields in `ResearchEffectData` and its case in `ContentReader`. Mutation rules go to `Runtime/Rules/`.
+  A subfolder needs no asmdef: a second asmdef would split the Unity assembly (a test fails).
+- One public type per file, named after it, with XML docs and `#nullable enable` on the first line, and its `.meta` file (below). Both builds
+  pick the file up.
 - Anything that needs a package or the Unity engine belongs in the server or in a Unity assembly, never here.
 
 ## Tests
@@ -60,28 +93,36 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
 `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`:
 - `CeilDivTests`, `ApplyPermilleReductionTests`: edge cases, exhaustive small ranges, and exact reference values with `BigInteger` up to
   `long.MaxValue` (tests use integers only, like the engine). Each bad argument is tried with several partners.
-- `ItemIdTests`: equality (also for texts that a culture treats as equal), ordinal ordering, `default`, hashing, use as a dictionary
-  key. One test fails loudly where the machine has no culture data, because the ordinal tests could not tell the difference there.
+- `ItemIdTests`; `BuildingTypeIdTests`, `ResearchIdTests` and `EraIdTests` on the shared contracts `ContentIdEqualityContract` and
+  `ContentIdOrderContract`: equality (also for texts that a culture treats as equal), ordinal ordering, `default`, hashing, use as a
+  dictionary key; `EraId` has no order. One test fails loudly where the machine has no culture data.
+- `Content/`: `ContentFixture.Valid()` is a small synthetic content in code with its own numbers; each test changes one value
+  (`ValidWith`) and `ContentAssert` checks the exact errors. `GameContentFactoryTests` (what valid data becomes), `ContentShapeTests`,
+  `ContentValueRuleTests`, `ContentBuildingRuleTests`, `ContentReferenceRuleTests`, `ContentResearchRuleTests`: at least one failing case
+  per rule and error code, named after the error path.
 - `SimulationDependencyTests`: the compiled assembly references exactly `netstandard` and is built for `netstandard2.1`.
 - `SimulationPackageTests`: the files only Unity sees. The asmdef (`noEngineReferences`, no references, no platform or define
   restrictions, same name as the assembly, auto-referenced, the only asmdef, no asmref), `package.json` (name, `unity` 6000.3,
-  version), only sources and package metadata in the folder, no `bin/` or `obj/`, and `#nullable enable` on the first line of every
-  source. They find the repository by walking up to `global.json` (`RepositoryPaths`).
+  version), only sources and package metadata in the folder, no `bin/` or `obj/`, `#nullable enable` on the first line of every
+  source, a `.meta` file for every file and folder, no orphaned `.meta` file, unique GUIDs. They find the repository by walking up to
+  `global.json` (`RepositoryPaths`).
 - `SimulationBuildProjectTests`: the csproj keeps `LangVersion 9.0`, warnings as errors, the XML doc file, the analysis settings, no
   warning suppression, the one `Compile` glob, no references, and the guard target.
 
-That the package compiles inside Unity is checked by M0-04's headless import of the Unity project (`client/README.md`) and by the EditMode test
-`SimulationInUnityTests` (`client/CityBuilder/Assets/_Project/Tests/EditMode`, M0-05), which calls `IntegerMath.CeilDiv` from the package; run it
-with `scripts/dev/test-unity.sh`. `ClientAssemblyTests` is in this test project, too, but guards the Unity client's asmdefs and manifest, not
-the engine (see `docs/architecture/overview.md`).
+That the package compiles inside Unity is checked by M0-04's headless import of the Unity project (`client/README.md`) and by the EditMode tests
+`SimulationInUnityTests` (M0-05, `IntegerMath`) and `ContentInUnityTests` (M0-07a, the content factory on Unity's runtime) in
+`client/CityBuilder/Assets/_Project/Tests/EditMode`; run them with `scripts/dev/test-unity.sh`. `ClientAssemblyTests` is in this test project,
+too, but guards the Unity client's asmdefs and manifest, not the engine (see `docs/architecture/overview.md`).
 
 ## Known limitations
-- The `.meta` files that Unity writes for this mutable local package are committed (M0-04, `09`); a new source file needs its `.meta` file in the
-  same commit.
+- The `.meta` files that Unity writes for this mutable local package are committed (M0-04, `09`); a new source file or folder needs its `.meta`
+  file in the same commit (`SimulationPackageTests` fails otherwise). Without the Editor, write it in Unity's format (see an existing one) with a
+  new GUID; the headless import then confirms it.
 - The .NET build is a close proxy for Unity's compiler (same language version and API level), not the same compiler. The Unity-side compile check is the headless import and `scripts/dev/test-unity.sh` (local only: CI has no Unity license).
 - The package may hold only `.cs`, `.asmdef`, `.meta`, `.md` files and `package.json`. A new kind of file (for example images under
   `Documentation~/`) needs a change to `SimulationPackageTests`.
-- `ItemId.GetHashCode` is the runtime's string hash, which differs between processes. That is fine only because no engine code may
+- The id types' `GetHashCode` is the runtime's string hash, which differs between processes. That is fine only because no engine code may
   depend on `Dictionary` or `HashSet` order (`04` §9).
+- Content error messages are English text for content authors; only `ContentErrorCode` and `Path` are stable.
 
-Last updated: M0-05
+Last updated: M0-07a

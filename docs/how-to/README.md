@@ -6,7 +6,7 @@ creates the capability, and every later change to that area keeps it valid. The 
 
 | Guide (file) | Written in | Status |
 |---|---|---|
-| `add-building-or-item.md`: content-only change | M0-07 | planned |
+| `add-building-or-item.md`: content-only change | M0-07b | planned |
 | `add-research-effect.md`: a new effect type in the engine | M0-09 | planned |
 | `debug-determinism-failure.md`: from a failing seed to a rule test | M0-15 | planned |
 | `add-migration.md`: change the database schema | M0-19 | planned |
