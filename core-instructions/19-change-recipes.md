@@ -5,7 +5,7 @@ exactly these places. If your change fits no recipe, that's a sign it needs a CR
 Paths are the M0 layout (`03`). "Module doc" means `docs/modules/<Project>.md`.
 
 ## Content-only change (numbers, a new item, building or research that uses existing effect types)
-- Code: `server/content/*.json` only. Bump `contentVersion`.
+- Code: `server/content/*.json` only. Bump `contentVersion`. Worked example: `docs/how-to/add-building-or-item.md`.
 - Tests: content validation passes; balance simulator run (from M0-67); golden tests untouched (they use frozen content).
 - Docs: `23` (during M0), regenerated `docs/reference/generated/content.md`, balance note in the build log, `CHANGELOG`.
 

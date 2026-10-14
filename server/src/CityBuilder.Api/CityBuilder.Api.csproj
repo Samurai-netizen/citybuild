@@ -4,6 +4,12 @@
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
   </ItemGroup>
 
+  <!-- The content files (core-instructions/03-architecture.md, content pipeline) go to content/ next to the app; the configuration key
+       Content:FilePath names the one the server loads. Projects that reference Api (the tests) get the copy too. -->
+  <ItemGroup>
+    <None Include="..\..\content\*.json" Link="content\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\CityBuilder.Application\CityBuilder.Application.csproj" />
     <ProjectReference Include="..\CityBuilder.Infrastructure\CityBuilder.Infrastructure.csproj" />

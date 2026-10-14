@@ -5,14 +5,13 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-07a · Content model with research and eras: the engine; PR #14 open, the owner merges it)
-- **Branch:** `task/M0-07a-content-model` (from `main` = `23f7464`) until the owner merges
-- **Build log entry:** last: `docs/build-log/2026/2026-10-14-05-M0-07a.md` (Done; decisions 1–8 hold the approved design of M0-07b too)
-- **Last green commit:** the head of `task/M0-07a-content-model` (0 warnings, format clean, fast suite 438 passed; Unity EditMode 8/8,
-  PlayMode 6/6; `check-docs --base origin/main` OK)
-- **Done steps:** all of M0-07a (write-ahead and split; ids; data, definitions, shape phase; the four rule steps; Unity; docs; finish)
-- **Next step:** the owner merges the PR; then `/model` → Opus 5.5 and `/start-task M0-07b` (JSON file and server loading, `[O]`; its design
-  is decided in the M0-07a build log, decisions 4 and 8).
+- **Task:** — (last completed: M0-07b · Content model with research and eras: JSON file and server loading; PR #15 open, the owner merges it)
+- **Branch:** `task/M0-07b-content-loading` (from `main` = `3c98331`) until the owner merges
+- **Build log entry:** last: `docs/build-log/2026/2026-10-14-06-M0-07b.md` (Done)
+- **Last green commit:** the head of `task/M0-07b-content-loading` (0 warnings, format clean, fast suite 458 passed;
+  `check-docs --base origin/main` OK)
+- **Done steps:** all of M0-07b (write-ahead; content file and loader; loader errors; startup; docs; finish)
+- **Next step:** the owner merges the PR; then `/model` → Opus 5.5 and `/start-task M0-08` (city state and mutations, `[O]`).
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
@@ -20,12 +19,12 @@
   `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 6 / 85 (M0-07a in review)
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 7 / 85 (M0-07b in review)
 
 | Area | State | Notes |
 |---|---|---|
 | Repo, kit, hooks, CI | done | M0-01 and the audit fixes merged (PR #4, #5); A18 can be closed in M0-04 |
-| Shared engine: content, research, labor | in progress | M0-03 merged (PR #7); the content model and its validation are M0-07a (in review); the JSON file and server loading are M0-07b |
+| Shared engine: content, research, labor | in progress | M0-03 merged (PR #7); the content model and its validation (M0-07a) merged (PR #14); the JSON file and server loading are M0-07b (in review) |
 | Shared engine: invariants, performance | not started | |
 | Server skeleton | done | M0-02 merged (PR #6) |
 | Persistence (EF + PostgreSQL) | not started | |
@@ -48,7 +47,8 @@ All run in M0-06 (details and the "since" task: `docs/getting-started.md` → Ru
   `bash scripts/dev/new-log-entry.sh <ID> "<title>" "<tool / model>"` · `bash scripts/dev/test-guard-bash.sh` (after changing the Bash guard)
 - **Server:** `dotnet restore server/CityBuilder.slnx --locked-mode` · `dotnet format server/CityBuilder.slnx --verify-no-changes` ·
   `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` ·
-  `dotnet run --project server/src/CityBuilder.Api`, then `curl http://localhost:8080/health` → `Healthy`
+  `dotnet run --project server/src/CityBuilder.Api` (loads `server/content/mvp-content.json`; another file: `-- --Content:FilePath=<file>`),
+  then `curl http://localhost:8080/health` → `Healthy`
 - **Unity (Editor closed):** `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (`.ps1` on Windows, never run yet) · compile check
   `<UNITY> -batchmode -quit -projectPath client/CityBuilder -logFile -` (exit 0, no `error CS`; `client/README.md`)
 - **Not yet:** integration tests (the filter finds none until M0-21) · `docker compose` (M0-19) · DocTools (M0-61) · `quality.sh` (M0-62) ·

@@ -1,13 +1,14 @@
 # Architecture Overview (as built)
 
-> This page describes the system **as it exists** after M0-07a: the server solution skeleton, the shared engine with its content model, and
-> the Unity client skeleton with its tests. Parts that are not built yet are marked *(planned, M0-NN)*. M0-63 completes the page.
+> This page describes the system **as it exists** after M0-07b: the server solution skeleton that loads the game content at startup, the
+> shared engine with its content model, and the Unity client skeleton with its tests. Parts that are not built yet are marked *(planned, M0-NN)*. M0-63 completes the page.
 > The intended architecture is `core-instructions/03-architecture.md`; the decisions behind it are in [ADRs](../adr/README.md).
 
 ## System
-Today the API host answers `GET /health` (and serves its OpenAPI document in Development). The Unity client starts the `Bootstrap` scene
-and shows "Not connected". The engine holds its integer helpers, the content ids and the validated content model; nothing loads the content file yet
-*(planned, M0-07b)*. There is no database, no city state, no game endpoint and no networking yet. Dashed parts in the diagram are planned.
+Today the API host loads `server/content/mvp-content.json` at startup and refuses to start if it is invalid, then answers `GET /health` (and
+serves its OpenAPI document in Development). The Unity client starts the `Bootstrap` scene and shows "Not connected". The engine holds its
+integer helpers, the content ids and the validated content model. There is no database, no city state, no game endpoint and no networking yet.
+Dashed parts in the diagram are planned.
 
 ```mermaid
 flowchart LR
@@ -20,12 +21,13 @@ flowchart LR
     SIM["CityBuilder.Simulation<br/>IntegerMath, content ids,<br/>GameContentFactory, GameContent"]
   end
   subgraph serverside["server - CityBuilder.slnx"]
-    API["CityBuilder.Api<br/>health, OpenAPI in Development"]
-    INF["CityBuilder.Infrastructure<br/>no types yet"]
-    APP["CityBuilder.Application<br/>no types yet"]
+    API["CityBuilder.Api<br/>health, OpenAPI in Development,<br/>content at startup"]
+    INF["CityBuilder.Infrastructure<br/>ContentFileLoader, ContentProvider"]
+    APP["CityBuilder.Application<br/>IContentProvider"]
     DOM["CityBuilder.Domain<br/>no types yet"]
   end
   DB[("PostgreSQL 18")]
+  FILE[/"server/content/mvp-content.json"/]
   PRES --> CORE
   PRES --> NET
   NET --> CORE
@@ -39,10 +41,11 @@ flowchart LR
   DOM --> SIM
   NET -.->|"HTTPS JSON, planned M0-37"| API
   INF -.->|"EF Core, planned M0-19"| DB
+  INF -->|"reads at startup"| FILE
   classDef planned stroke-dasharray: 4 4
   class DB planned
 ```
-A solid arrow means "references" (a project or assembly reference). The engine has no references; Unity and the server compile the very
+A solid arrow between projects means "references" (a project or assembly reference); the arrow to the content file means "reads". The engine has no references; Unity and the server compile the very
 same C# files of it (decision 007 in `core-instructions/12-decisions.md`).
 
 ## Projects and assemblies
@@ -53,15 +56,15 @@ decision 020 and `core-instructions/14-coding-standards.md` (checked by a probe 
 
 | Project | Path | References | Packages | Holds today | Doc |
 |---|---|---|---|---|---|
-| `CityBuilder.Api` | `server/src/` | Application, Infrastructure | `Microsoft.AspNetCore.OpenApi` | `Program.cs`: JSON console logs, ProblemDetails, health check, `TimeProvider.System`, OpenAPI in Development | [module](../modules/CityBuilder.Api.md) |
-| `CityBuilder.Application` | `server/src/` | Domain, Simulation | — | nothing yet *(planned: ports M0-07b and M0-20, pipeline M0-26)* | [module](../modules/CityBuilder.Application.md) |
+| `CityBuilder.Api` | `server/src/` | Application, Infrastructure | `Microsoft.AspNetCore.OpenApi` | `Program.cs`: JSON console logs, ProblemDetails, health check, `TimeProvider.System`, OpenAPI in Development, the content loaded before any request (`Content:FilePath`, `ContentOptions`, `ContentLog`); the build copies `server/content/*.json` to `content/` | [module](../modules/CityBuilder.Api.md) |
+| `CityBuilder.Application` | `server/src/` | Domain, Simulation | — | `IContentProvider` *(planned: more ports M0-20, pipeline M0-26)* | [module](../modules/CityBuilder.Application.md) |
 | `CityBuilder.Domain` | `server/src/` | Simulation | — | nothing yet *(planned, M0-19 on)* | [module](../modules/CityBuilder.Domain.md) |
-| `CityBuilder.Infrastructure` | `server/src/` | Application, Domain | — *(EF Core and Npgsql planned, M0-19)* | nothing yet *(planned: content loader M0-07b, persistence M0-19)* | [module](../modules/CityBuilder.Infrastructure.md) |
+| `CityBuilder.Infrastructure` | `server/src/` | Application, Domain | — *(EF Core and Npgsql planned, M0-19)* | the content loader: `ContentFileLoader`, `ContentLoadException`, `ContentProvider` *(planned: persistence M0-19)* | [module](../modules/CityBuilder.Infrastructure.md) |
 | `CityBuilder.Simulation` | `shared/Simulation.Build/` (.NET) and `shared/Simulation/` (Unity package) | the base class library only | — | `IntegerMath` (`CeilDiv`, `ApplyPermilleReduction`); `ItemId`, `BuildingTypeId`, `ResearchId`, `EraId`; the content model (`Content/`: `*Data` → `GameContentFactory` → `GameContent`, `04` §14) | [module](../modules/CityBuilder.Simulation.md) |
 | `CityBuilder.Domain.Tests` | `server/tests/` | Domain | xUnit v3 (`xunit.v3.mtp-off`, runner, test SDK; decision 019) | 1 test | the Domain module doc → Tests |
 | `CityBuilder.Application.Tests` | `server/tests/` | Application | the same | 1 test | the Application module doc → Tests |
 | `CityBuilder.Simulation.Tests` | `server/tests/` | Simulation | the same | 431 tests: engine helpers, content ids, content model and validation, and the architecture tests below | the Simulation module doc → Tests |
-| `CityBuilder.IntegrationTests` | `server/tests/` | Api | the same, plus `Microsoft.AspNetCore.Mvc.Testing` | 5 in-memory tests (no Docker); none in the `Integration` category yet *(planned, M0-21)* | the Api module doc → Tests |
+| `CityBuilder.IntegrationTests` | `server/tests/` | Api | the same, plus `Microsoft.AspNetCore.Mvc.Testing` | 24 in-memory tests (no Docker): the API host, the content loader and the content startup; none in the `Integration` category yet *(planned, M0-21)* | the Api module doc → Tests |
 
 ### Unity client
 The Unity project is `client/CityBuilder/` (Unity 6000.3.25f1, URP; `client/README.md`). It consumes the engine as the local package
@@ -97,12 +100,13 @@ compiled assemblies (plain reflection, no extra packages), each next to the laye
 **Not tested here:** that the Unity assemblies compile (the .NET tests cannot say; `scripts/dev/test-unity.sh` and the headless import in
 `client/README.md` check it locally, Unity is not in CI), Infrastructure's "no ASP.NET endpoint types", and Api referencing only Application and Infrastructure. M0-65
 extends the tests (hosting types only in Api, no float fields in the engine, and more). An assembly records a reference only when some
-code uses it, so these tests catch dependencies that code uses, not project references that nothing uses; Domain, Application and
-Infrastructure have no types yet, so their tests can only start to bite with the first type. The two M0-02 tests use a
+code uses it, so these tests catch dependencies that code uses, not project references that nothing uses. Application and Infrastructure
+tests take the assembly from their first type (`IContentProvider`, `ContentFileLoader`); Domain has no type yet, so its test can only start
+to bite with the first one. The two M0-02 tests use a
 short deny-list of name prefixes (ASP.NET Core, EF Core); M0-65 can widen it.
 
 ## Request lifecycle
 *(planned, M0-63)* A sequence diagram of one command, from tap to snapshot, as implemented (the pipeline is M0-26). The intended steps are
 in `03` → Request lifecycle.
 
-Last updated: M0-06
+Last updated: M0-07b

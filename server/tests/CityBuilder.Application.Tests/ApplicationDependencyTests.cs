@@ -1,4 +1,5 @@
 using System.Reflection;
+using CityBuilder.Application.Content;
 
 namespace CityBuilder.Application.Tests;
 
@@ -11,7 +12,8 @@ public sealed class ApplicationDependencyTests
     [Fact]
     public void GetReferencedAssemblies_OfApplication_ContainNoAspNetCoreOrEntityFrameworkCore()
     {
-        Assembly application = Assembly.Load(new AssemblyName("CityBuilder.Application"));
+        // Bound to a type, so the test inspects the assembly the build produced and fails to compile if the type moves away.
+        Assembly application = typeof(IContentProvider).Assembly;
 
         string[] forbidden = application.GetReferencedAssemblies()
             .Select(reference => reference.Name ?? string.Empty)

@@ -38,6 +38,10 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   turns plain `*Data` input into a `GameContent` or lists every error with a code and a JSON path (`04` §14); tests for every rule, a Unity
   test of the factory on Unity's runtime, and package tests for the `.meta` files. M0-07 is split into M0-07a and M0-07b; split tasks carry a
   letter in commit ids (M0-07a).
+- Content file and server loading: `server/content/mvp-content.json` (the numbers of `23`, version `mvp-1`), copied next to the app; the
+  port `IContentProvider`; a strict System.Text.Json loader (unknown fields, repeated keys and numbers as text rejected); the server loads
+  the content from `Content:FilePath` before it accepts requests and refuses to start with every error listed; the how-to
+  `add-building-or-item.md` (M0-07b).
 
 ### Fixed
 - Kit audit follow-ups A1, A2, A3, A9, A15, A16: `[PLAN]` tasks write ahead before the plan (no Plan Mode), the Bash guard no longer

@@ -37,16 +37,23 @@ How to get from a clean machine to a running project. Every command here must wo
 | Database | `docker compose up -d postgres` | *(planned, M0-19)* |
 | Run API | `dotnet run --project server/src/CityBuilder.Api` → http://localhost:8080 (Development) | M0-02 |
 | Is the API up? | `curl http://localhost:8080/health` prints `Healthy`; OpenAPI (Development only): http://localhost:8080/openapi/v1.json | M0-02 |
+| Run the API with another content file (a draft) | `dotnet run --project server/src/CityBuilder.Api -- --Content:FilePath=/path/to/draft.json` | M0-07b |
 | Open the Unity project | Unity Hub → Add → `client/CityBuilder` (editor 6000.3.25f1); details and the Bootstrap scene steps: `client/README.md` | M0-04 |
 | Does the Unity project compile? (Editor closed) | `<UNITY> -batchmode -quit -projectPath client/CityBuilder -logFile -`, exit code 0 and no `error CS` (`client/README.md`) | M0-04 |
 | Unity tests (Editor closed; set `UNITY_EDITOR` first, `client/README.md` → Run the tests) | `bash scripts/dev/test-unity.sh` (Windows: `pwsh scripts/dev/test-unity.ps1`) | M0-05 |
 | Everything CI runs | `bash scripts/dev/quality.sh` | *(planned, M0-62)* |
 
 ## Configuration
-No custom keys yet. The API reads `server/src/CityBuilder.Api/appsettings.json` (log levels, allowed hosts), and
-`dotnet run` applies the launch profile `http` (`Properties/launchSettings.json`): http://localhost:8080 and
-`ASPNETCORE_ENVIRONMENT=Development`. Logs are JSON lines on the console.
-*(planned)* Every configuration key, with its default and where secrets come from (user-secrets / environment).
+The API reads `server/src/CityBuilder.Api/appsettings.json`, and `dotnet run` applies the launch profile `http`
+(`Properties/launchSettings.json`): http://localhost:8080 and `ASPNETCORE_ENVIRONMENT=Development`. Logs are JSON lines on the console.
+Any key can be overridden with an environment variable (`:` becomes `__`) or a command-line argument (`-- --Key=value` after `dotnet run`).
+
+| Key | Default | Meaning |
+|---|---|---|
+| `Content:FilePath` | `content/mvp-content.json` | The content file the server loads at startup, absolute or relative to the app's base directory (the build copies `server/content/*.json` to `content/` there). Required; a blank value or invalid content stops the start with every error listed (`docs/how-to/add-building-or-item.md`) |
+| `Logging:LogLevel:*`, `AllowedHosts` | as in `appsettings.json` | ASP.NET Core's own keys |
+
+No key holds a secret yet; secrets will come from user-secrets or the environment, never a committed file *(planned, M0-25)*.
 From M0-61 this section links to the generated reference.
 
 ## Troubleshooting
