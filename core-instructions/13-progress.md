@@ -8,11 +8,11 @@
 - **Task:** M0-06 · Day 1 checkpoint (`[O]`, Opus 5.5)
 - **Branch:** `task/M0-06-day1-checkpoint` (from `main` = `1b46a92`)
 - **Build log entry:** `docs/build-log/2026/2026-10-14-04-M0-06.md` (Session 1)
-- **Last green commit:** `main` = `1b46a92` (build 0 warnings; fast suite 173 passed; CI green on `main`)
+- **Last green commit:** the branch head (build 0 warnings; `dotnet format` clean; fast suite 173 passed; `check-docs` OK)
 - **Steps:** 1 write-ahead · 2 review of M0-01…M0-05 (small fixes only) · 3 ADR-0001…0004 + index · 4 architecture overview ·
   5 commands (`13`, `getting-started.md`, `AGENTS.md` marks: ask first) · 6 all tests, finish, PR
-- **Done steps:** —
-- **Next step:** step 1 (write-ahead commit), then step 2 (the review). No agents (build log decision 1).
+- **Done steps:** 1, 2 (findings table and fixes in the build log), 3
+- **Next step:** step 4, the first full `docs/architecture/overview.md`. No agents (build log decision 1).
 - **Open questions for the owner:** the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI); [MANUAL] run `test-unity.ps1` once on
   Windows (never executed).
 - **Known broken / do not touch:** —
