@@ -8,9 +8,9 @@
 - **Task:** M0-07a · Content model with research and eras: the engine (`[O]` `[PLAN]`, plan approved). M0-07b follows in its own PR
 - **Branch:** `task/M0-07a-content-model` (from `main` = `23f7464`)
 - **Build log entry:** `docs/build-log/2026/2026-10-14-05-M0-07a.md` (Session 1; decisions 1–8 hold the approved design of both parts)
-- **Last green commit:** `main` = `23f7464` (fast suite 173 passed); this branch has the write-ahead and the split so far
-- **Done steps:** 1 (write-ahead, plan approved, split into M0-07a/M0-07b). Planned steps: build log entry → Session 1 → Plan (2–6, 8, 9 in part)
-- **Next step:** step 2: typed ids `BuildingTypeId`, `ResearchId` (like `ItemId`) and `EraId` (equality only), with tests and `.meta` files.
+- **Last green commit:** the head of this branch (step 2: 0 warnings, format clean, fast suite 234 passed)
+- **Done steps:** 1 (write-ahead, plan approved, split into M0-07a/M0-07b), 2 (typed ids). Planned steps: build log entry → Session 1 → Plan
+- **Next step:** step 3: `*Data` input classes, definitions, `GameContent`, `ContentError`, and the factory's shape phase (tests first).
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
