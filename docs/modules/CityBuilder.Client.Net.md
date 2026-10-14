@@ -1,7 +1,7 @@
 # CityBuilder.Client.Net
 
 **Path:** `client/CityBuilder/Assets/_Project/Net/` · **Kind:** Unity assembly (`CityBuilder.Client.Net.asmdef`, C# 9) ·
-**References:** `CityBuilder.Client.Core` and the precompiled `Newtonsoft.Json.dll` of the package `com.unity.nuget.newtonsoft-json` 3.2.2 ·
+**References:** `CityBuilder.Client.Core`, the precompiled `Newtonsoft.Json.dll` of the package `com.unity.nuget.newtonsoft-json` 3.2.2, and the engine module `UnityWebRequest` (`com.unity.modules.unitywebrequest`, named in the manifest) ·
 **Referenced by:** `CityBuilder.Client.Presentation`, `CityBuilder.Client.Tests.EditMode`, `CityBuilder.Client.Tests.PlayMode`
 
 > *Skeleton.* No networking exists yet and none may be added before M0-37 (Unity warns that the assembly "has no scripts associated with

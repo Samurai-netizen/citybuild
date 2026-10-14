@@ -5,24 +5,22 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-04 · Unity project skeleton; PR #8 open)
-- **Branch:** `task/M0-04-unity-skeleton` (until the owner merges the PR)
-- **Build log entry:** last: `docs/build-log/2026/2026-10-13-01-M0-04.md` (Session 1)
-- **Last green commit:** the head of `task/M0-04-unity-skeleton` (CI's server sequence run locally: format, Release build 0 warnings, 170 fast
-  tests; `check-docs --base origin/main` OK; headless Unity import exit 0)
-- **Done steps:** all seven (write-ahead, the owner's project adopted, manifest + five asmdefs + `.meta` files, `GameRoot` + bootstrap + label,
-  docs, the independent review with its fixes, finish)
-- **Next step:** the owner merges the PR. Before M0-05 the owner does the [MANUAL] Bootstrap scene (`client/README.md`) and decides about the
-  pre-release AI packages. Then `/start-task M0-05` (Unity test foundation, `[S]`): it sets the M0-04 board row to `Done`, and reads the M0-04
-  build log → Follow-ups first (`AppInfo` is defined nowhere; the scratch scenarios to commit as PlayMode tests; the scene).
-- **Open questions for the owner:** (1) the pre-release AI packages in the Unity manifest (`ai.assistant`, `ai.inference`, `pipeline`): not on
-  `14`'s list, recommend removing; (2) the [MANUAL] Bootstrap scene (`client/README.md`), needed before M0-05; (3) the two KIT-AUDIT-FIXES
-  follow-ups (`AGENTS.md` command line, guard test in CI).
+- **Task:** — (last completed: M0-04-FOLLOWUP · the owner's Bootstrap scene and removal of the pre-release AI packages; PR #9 open; M0-04 itself is merged, PR #8)
+- **Branch:** `task/M0-04-scene-and-packages` (until the owner merges its PR)
+- **Build log entry:** last: `docs/build-log/2026/2026-10-14-01-M0-04-FOLLOWUP.md` (Session 1)
+- **Last green commit:** the head of `task/M0-04-scene-and-packages` (CI's server sequence run locally: 173 fast tests, format, Release build 0 warnings;
+  `check-docs --base origin/main` OK; headless Unity import exit 0; PlayMode run on the real scene passed)
+- **Done steps:** all six (write-ahead, the scene, the package removal, verification on the real scene, docs, review by hand, finish)
+- **Next step:** the owner merges the PR; then `/start-task M0-05` (Unity test foundation, `[S]`). It reads the M0-04 entry → Follow-ups (`AppInfo` is
+  defined nowhere; the scratch scenarios to commit as PlayMode tests) and the follow-up entry's Follow-ups. The Bootstrap scene exists now.
+- **Open questions for the owner:** (1) does "Don't use agents" apply to every task from now on? If yes, it becomes a standing directive in `15` and
+  the `reviewer` step in `16`/`11` changes (protected files); until then it applies to this task only. (2) the two KIT-AUDIT-FIXES follow-ups
+  (`AGENTS.md` command line, guard test in CI). (The AI packages and the Bootstrap scene are decided and done in this follow-up.)
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 3 / 84
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 4 / 84
 
 | Area | State | Notes |
 |---|---|---|
@@ -33,7 +31,7 @@
 | Persistence (EF + PostgreSQL) | not started | |
 | Auth + command pipeline | not started | |
 | Commands: place / upgrade / assign workers / start research | not started | |
-| Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) in review; the Unity tests are M0-05, networking M0-37 |
+| Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) merged (PR #8); the Unity tests are M0-05, networking M0-37 |
 | Unity city view + placement | not started | |
 | Inspector, worker stepper, research screen, HUD | not started | |
 | Resilience (limits, retries, logging) | not started | |

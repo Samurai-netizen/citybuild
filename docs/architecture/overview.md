@@ -52,8 +52,8 @@ flowchart LR
   C --> P[Client.Presentation]
   N --> P
 ```
-The runtime scene is `Bootstrap`: the owner creates it by hand ([MANUAL], `client/README.md`), it stays empty, and it is **not in the repository yet**
-(until then the build list holds only the template's `SampleScene`, which gets no `GameRoot`). When the scene loads, `GameBootstrap` creates the
+The runtime scene is `Bootstrap`: the owner made it by hand ([MANUAL], `client/README.md`), it stays empty and is scene 0 of the build list
+(the template's `SampleScene` is unticked and would get no `GameRoot`). When the scene loads, `GameBootstrap` creates the
 `GameRoot` composition root, and `GameRoot` shows the UI Toolkit label "Not connected" (UXML and USS from `Assets/_Project/Resources/UI/`).
 There is no networking yet *(planned, M0-37)*.
 

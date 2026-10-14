@@ -159,13 +159,27 @@ public sealed class ClientAssemblyTests
     }
 
     [Fact]
-    public void Manifest_Dependencies_IncludeNewtonsoftAndInputSystem()
+    public void Manifest_Dependencies_IncludeNewtonsoftInputSystemAndWebRequests()
     {
-        // Both are named directly, not left to arrive as another package's dependency: the asmdefs use them (09).
+        // The asmdefs use Newtonsoft and the Input System, so both are named directly, not left to arrive as another package's dependency.
+        // ApiClient (M0-37) is built on UnityWebRequest, a built-in module: a module is enabled only when the manifest or a dependency asks
+        // for it, and the AI packages that had enabled it by accident are gone (decision 025). A compile error in M0-04's check showed this.
         JsonObject dependencies = ReadManifestDependencies();
 
         Assert.NotNull(dependencies["com.unity.nuget.newtonsoft-json"]);
         Assert.NotNull(dependencies["com.unity.inputsystem"]);
+        Assert.NotNull(dependencies["com.unity.modules.unitywebrequest"]);
+    }
+
+    [Theory]
+    [InlineData("com.unity.ai.assistant")]
+    [InlineData("com.unity.ai.inference")]
+    [InlineData("com.unity.pipeline")]
+    public void Manifest_RemovedPreReleasePackages_AreAbsent(string package)
+    {
+        // The owner removed these in M0-04 (G-Dependency, decision 025). They were in the owner's new project without being asked for, so they can come back with a re-created project; a package
+        // that is not on the approved list in core-instructions/14 needs the owner's yes first.
+        Assert.Null(ReadManifestDependencies()[package]);
     }
 
     // ----- helpers -----

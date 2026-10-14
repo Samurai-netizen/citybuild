@@ -41,11 +41,12 @@ Services that `GameRoot` composes are added in `GameRoot` itself, not through a 
 ## Tests
 `Assets/_Project/Tests/EditMode` (view-model tests) and `Assets/_Project/Tests/PlayMode` (scene behaviour). Both assemblies exist and have
 no tests yet; M0-05 adds the first ones, among them "the Bootstrap scene gets exactly one `GameRoot`". M0-04 checked that behaviour in a
-throw-away copy of the project (headless PlayMode run: one `GameRoot`, one `UIDocument`, the label text, no warnings or errors, a rendered
+throw-away copy of the project, on a generated scene and again on the owner's real `Bootstrap.unity` (headless PlayMode run: one `GameRoot`, one `UIDocument`, the label text, no warnings or errors, a rendered
 picture of the label, no spawn in another scene, a reload keeps one root, a pre-placed root is kept); that test code is not in the repository.
 
 ## Known limitations
-- `Assets/Scenes/Bootstrap.unity` is created by hand ([MANUAL], `client/README.md`); until it exists nothing runs. Its Game view has no
+- `Assets/Scenes/Bootstrap.unity` is made by hand ([MANUAL], `client/README.md`; the owner did it on 2026-10-14) and is empty; it is scene 0 of
+  the build list. A scene that is not named exactly `Bootstrap` runs nothing. Its Game view has no
   camera until M0-43, so the Editor may print "No cameras rendering"; the UI Toolkit overlay does not need one.
 - The label has a fixed top-left position; safe-area padding and touch-target sizes come with M0-59.
 
