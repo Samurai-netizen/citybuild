@@ -8,12 +8,14 @@
 - **Task:** M0-05 · Unity test foundation (`[S]`, Claude Code / claude-sonnet-5-5)
 - **Branch:** `task/M0-05-unity-test-foundation` (from `main` = `663a714`)
 - **Build log entry:** `docs/build-log/2026/2026-10-14-03-M0-05.md` (Session 1)
-- **Last green commit:** the head of `task/M0-05-unity-test-foundation` (EditMode 6 of 6, PlayMode 6 of 6, server fast suite 173 passed)
-- **Done steps:** 1 write-ahead; 2 `AppInfo` in `Client.Core` + EditMode tests (6 of 6, run by hand); 3 PlayMode tests `BootstrapSceneTests` on the real
-  Bootstrap scene (6 of 6, run by hand) (planned: 4 `test-unity.sh` / `.ps1` and a real run, 5 docs, 6 mutation checks, self-review, finish)
-- **Next step:** step 4: `scripts/dev/test-unity.sh` and `.ps1` (protected folder: the task asks for them): `UNITY_EDITOR` check, EditMode then
-  PlayMode, summary from the NUnit XML, non-zero exit on a failure, on 0 tests run and on a missing result file; run the `.sh` for real, plus negative
-  checks. `pwsh` is not installed here: say so for the `.ps1`. **Agents: only after the owner approves a proposal (OD-9).**
+- **Last green commit:** the head of `task/M0-05-unity-test-foundation` (`test-unity.sh`: EditMode 6 of 6, PlayMode 6 of 6; server fast suite 173 passed)
+- **Done steps:** 1 write-ahead; 2 `AppInfo` + EditMode tests (6 of 6); 3 PlayMode `BootstrapSceneTests` (6 of 6); 4 `scripts/dev/test-unity.sh` and `.ps1`
+  (`.sh` run for real: 12 of 12, exit 0; every failure branch driven by a Unity stand-in; 7 of 7 mutations killed in a scratch clone; `.ps1` **not run**,
+  no `pwsh` here) (planned: 5 docs, 6 self-review and finish)
+- **Next step:** step 5, docs: module docs (Core: `AppInfo`, Presentation, Net text, tests sections), `client/README.md` (the script is no longer
+  planned, tests exist), `docs/getting-started.md`, `docs/architecture/overview.md`, `09`, `08` if it says "planned", `AGENTS.md` (remove the
+  `[M0-05]` mark; protected: the permission prompt asks the owner), CHANGELOG, decision rows only if project-wide (none so far), the build log's
+  Changes / Verification / Follow-ups. **Agents: only after the owner approves a proposal (OD-9).**
 - **Open questions for the owner:** the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`
