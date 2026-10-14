@@ -4,14 +4,15 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** AWAITING OWNER   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** M0-07a · Content model with research and eras: the engine (`[O]` `[PLAN]`, plan approved). M0-07b follows in its own PR
-- **Branch:** `task/M0-07a-content-model` (from `main` = `23f7464`)
-- **Build log entry:** `docs/build-log/2026/2026-10-14-05-M0-07a.md` (Session 1; decisions 1–8 hold the approved design of both parts)
-- **Last green commit:** the head of this branch (step 8: 0 warnings, format clean, fast suite 437 passed; Unity EditMode 8/8, PlayMode 6/6)
-- **Done steps:** 1 (write-ahead, plan approved, split into M0-07a/M0-07b), 2 (typed ids), 3 (data, definitions, shape phase), 4 (value and building rules), 5 (reference and unlock rules), 6 (research and labor rules; step 7 is M0-07b), 8 (Unity), 9 (engine docs). Planned steps: build log entry → Session 1 → Plan
-- **Next step:** the owner runs `/finish-task M0-07a` (only the owner can start that skill): Definition of Done, line-by-line self-review,
-  CHANGELOG, board `In review`, PR. Other tools: `16` §E by hand.
+- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** — (last completed: M0-07a · Content model with research and eras: the engine; PR open, the owner merges it)
+- **Branch:** `task/M0-07a-content-model` (from `main` = `23f7464`) until the owner merges
+- **Build log entry:** last: `docs/build-log/2026/2026-10-14-05-M0-07a.md` (Done; decisions 1–8 hold the approved design of M0-07b too)
+- **Last green commit:** the head of `task/M0-07a-content-model` (0 warnings, format clean, fast suite 438 passed; Unity EditMode 8/8,
+  PlayMode 6/6; `check-docs --base origin/main` OK)
+- **Done steps:** all of M0-07a (write-ahead and split; ids; data, definitions, shape phase; the four rule steps; Unity; docs; finish)
+- **Next step:** the owner merges the PR; then `/model` → Opus 5.5 and `/start-task M0-07b` (JSON file and server loading, `[O]`; its design
+  is decided in the M0-07a build log, decisions 4 and 8).
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
@@ -19,12 +20,12 @@
   `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 6 / 85
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 6 / 85 (M0-07a in review)
 
 | Area | State | Notes |
 |---|---|---|
 | Repo, kit, hooks, CI | done | M0-01 and the audit fixes merged (PR #4, #5); A18 can be closed in M0-04 |
-| Shared engine: content, research, labor | in progress | M0-03 (package, build project, helpers, architecture tests) merged (PR #7); the content model is M0-07a (engine) and M0-07b (JSON, server loading) |
+| Shared engine: content, research, labor | in progress | M0-03 merged (PR #7); the content model and its validation are M0-07a (in review); the JSON file and server loading are M0-07b |
 | Shared engine: invariants, performance | not started | |
 | Server skeleton | done | M0-02 merged (PR #6) |
 | Persistence (EF + PostgreSQL) | not started | |

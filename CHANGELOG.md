@@ -33,6 +33,11 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   idempotency); the first full as-built architecture overview; the verified command lists in `13`, `getting-started.md` and `AGENTS.md`
   (format check, Bash guard self-test); clearer failures in `ClientAssemblyTests` when the Unity manifest is broken;
   `test-guard-bash.sh` committed as executable, so `setup-hooks.sh` leaves a fresh clone clean (M0-06).
+- Content model in the engine: the ids `BuildingTypeId`, `ResearchId` and `EraId`; immutable definitions of eras, items, building types
+  (houses and producers, levels, recipes), research (prerequisites, the three effect types) and the global rules; `GameContentFactory`, which
+  turns plain `*Data` input into a `GameContent` or lists every error with a code and a JSON path (`04` §14); tests for every rule, a Unity
+  test of the factory on Unity's runtime, and package tests for the `.meta` files. M0-07 is split into M0-07a and M0-07b; split tasks carry a
+  letter in commit ids (M0-07a).
 
 ### Fixed
 - Kit audit follow-ups A1, A2, A3, A9, A15, A16: `[PLAN]` tasks write ahead before the plan (no Plan Mode), the Bash guard no longer
