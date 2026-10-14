@@ -57,7 +57,8 @@ Server: ASP.NET Core and EF Core 10 (Microsoft, incl. `Microsoft.AspNetCore.Open
 `Microsoft.CodeAnalysis.BannedApiAnalyzers`. Tests: `xunit.v3.mtp-off` (xUnit v3 for VSTest; replaces `xunit`, decision 019 in `12`),
 `xunit.runner.visualstudio`, `Microsoft.NET.Test.Sdk`, `Microsoft.AspNetCore.Mvc.Testing`,
 `Testcontainers.PostgreSql`, `Microsoft.Extensions.TimeProvider.Testing`, `coverlet.collector`.
-Unity: `com.unity.nuget.newtonsoft-json`, `com.unity.inputsystem`, `com.unity.test-framework`, built-in UI Toolkit.
+Unity: `com.unity.nuget.newtonsoft-json`, `com.unity.inputsystem`, `com.unity.test-framework`, built-in UI Toolkit and the built-in module
+`com.unity.modules.unitywebrequest`. A package that the Unity Hub, the Editor or Package Manager adds on its own is not approved by that (decision 025).
 
 ## Formatting and analysis (enforced)
 `.editorconfig` at the repo root plus `dotnet format --verify-no-changes` in CI. `TreatWarningsAsErrors` in `src/`.

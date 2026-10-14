@@ -17,11 +17,18 @@ client/CityBuilder/
 │   ├── Presentation/    CityBuilder.Client.Presentation   GameRoot, bootstrap, screens
 │   ├── Resources/UI/    PanelSettings.asset, UXML and USS the code loads by name
 │   └── Tests/EditMode · Tests/PlayMode                    test assemblies (no tests yet, M0-05)
-├── Assets/Scenes/       Bootstrap.unity is created by hand (below)
-├── Packages/manifest.json   "com.citybuilder.simulation": "file:../../../shared/Simulation" (relative to Packages/), Newtonsoft 3.2.2, Input System 1.20.0
+├── Assets/Scenes/       Bootstrap.unity (made by hand, scene 0 in the build list; steps below); SampleScene is the template's, unticked
+├── Packages/manifest.json   "com.citybuilder.simulation": "file:../../../shared/Simulation" (relative to Packages/), Newtonsoft 3.2.2, Input System 1.20.0, the module com.unity.modules.unitywebrequest
 └── ProjectSettings/     Force Text, Visible Meta Files, Input System, HTTP allowed in development builds
 ```
 Commit every `.meta` file. `client/CityBuilder/.gitignore` covers the generated folders.
+
+## Packages
+Only what `core-instructions/14` approves, plus the template's own packages. The Unity Hub or Editor may add packages on its own (it added three
+pre-release AI packages once; they were removed on 2026-10-14, decision 025): that is not an approval, and `ClientAssemblyTests` fails if one of
+those three returns. A built-in module (`com.unity.modules.*`) is enabled only when the manifest or a dependency asks for it: the manifest
+names `com.unity.modules.unitywebrequest` for `ApiClient` (M0-37). If code stops compiling with "type or namespace does not exist" for an
+engine type, add the module that holds it to the manifest, then run the headless check below.
 
 ## Check that it compiles without the Editor GUI
 Close the Editor first (a project can be open once). `<UNITY>` is `/Applications/Unity/Hub/Editor/6000.3.25f1/Unity.app/Contents/MacOS/Unity`
@@ -31,7 +38,7 @@ on macOS:
 ```
 Exit code 0 and no `error CS` in the log means it compiles. `scripts/dev/test-unity.sh` *(planned, M0-05)* wraps this and the tests.
 
-## [MANUAL] Create the Bootstrap scene (the owner, once; M0-05 needs it)
+## [MANUAL] Create the Bootstrap scene (done by the owner on 2026-10-14; kept for re-creating it)
 Claude cannot use the Editor GUI, and a scene file is never hand-edited. The scene stays **empty**: `GameBootstrap` creates the one
 `GameRoot` when a scene named exactly `Bootstrap` loads.
 1. Open the project in the Editor and wait until the Console is quiet.

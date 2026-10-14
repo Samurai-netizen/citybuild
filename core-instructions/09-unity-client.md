@@ -8,6 +8,8 @@ It never decides outcomes.
 - Asset serialization: **Force Text**; Version control: **Visible Meta Files**. Commit every `.meta`.
 - Active Input Handling: Input System (package **1.20.0**, the version the editor bundles: 1.12.0 does not compile on 6000.3, decision 023).
   Scripting backend for device builds: IL2CPP.
+- Built-in modules are enabled only when the manifest or a dependency asks for them: the manifest names `com.unity.modules.unitywebrequest`
+  (`ApiClient` is built on `UnityWebRequest`). No pre-release or experimental package (decision 025).
 - Player → "Allow downloads over HTTP": *Allowed in Development Builds* (needed for `http://localhost`).
 - `client/CityBuilder/.gitignore` (inside the Unity folder only — the root must not ignore server
   `.csproj` files): `Library/ Temp/ Logs/ obj/ Build/ Builds/ UserSettings/ *.csproj *.sln *.slnx`.

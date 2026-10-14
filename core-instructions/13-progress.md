@@ -13,13 +13,13 @@
 - **Last green commit:** `main` at `22a7a9b` (M0-04 merged; CI green on PR #8)
 - **Plan (6 steps, details in the build log):** 1 write-ahead · 2 commit the owner's scene · 3 remove the AI packages and what they left in
   settings · 4 verify on the real scene in a scratch copy · 5 docs · 6 review, finish, PR
-- **Done steps:** 1 write-ahead · 2 the owner's scene committed · 3 AI packages removed and their leftovers undone (headless import exit 0, stable)
-- **Next step:** step 4: verify on the real scene in a scratch copy (PlayMode run; also that the built-in modules `unitywebrequest`,
-  `imageconversion`, `screencapture`, which the lock no longer lists, still compile), then docs, review, finish, PR.
-  Unity is at `/Applications/Unity/Hub/Editor/6000.3.25f1`; the Editor must stay closed while a headless run uses the project.
-- **Open questions for the owner:** (1) the pre-release AI packages in the Unity manifest (`ai.assistant`, `ai.inference`, `pipeline`): not on
-  `14`'s list, recommend removing; (2) the [MANUAL] Bootstrap scene (`client/README.md`), needed before M0-05; (3) the two KIT-AUDIT-FIXES
-  follow-ups (`AGENTS.md` command line, guard test in CI).
+- **Done steps:** 1 write-ahead · 2 the owner's scene committed · 3 AI packages removed, their leftovers undone · 4 verified on the real scene in a
+  scratch copy (a compile probe found that the removal had disabled `UnityWebRequest`; the manifest now names the module) · 5 docs, decision
+  row 025, guard tests (21)
+- **Next step:** step 6: independent review (small Workflow), fix what is confirmed, then finish: `check-docs.sh --base origin/main`, the server
+  sequence, resume point `IDLE`, PR, report. Unity is at `/Applications/Unity/Hub/Editor/6000.3.25f1`; keep the Editor closed during headless runs.
+- **Open questions for the owner:** the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI). (The AI packages and the
+  Bootstrap scene are decided and done in this follow-up.)
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`
 
