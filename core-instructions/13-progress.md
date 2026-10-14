@@ -4,15 +4,16 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-04-FOLLOWUP · the owner's Bootstrap scene and removal of the pre-release AI packages; PR #9 open; M0-04 itself is merged, PR #8)
-- **Branch:** `task/M0-04-scene-and-packages` (until the owner merges its PR)
-- **Build log entry:** last: `docs/build-log/2026/2026-10-14-01-M0-04-FOLLOWUP.md` (Session 1)
-- **Last green commit:** the head of `task/M0-04-scene-and-packages` (CI's server sequence run locally: 173 fast tests, format, Release build 0 warnings;
-  `check-docs --base origin/main` OK; headless Unity import exit 0; PlayMode run on the real scene passed)
-- **Done steps:** all six (write-ahead, the scene, the package removal, verification on the real scene, docs, review by hand, finish)
-- **Next step:** the owner merges the PR; then `/start-task M0-05` (Unity test foundation, `[S]`). It reads the M0-04 entry → Follow-ups (`AppInfo` is
-  defined nowhere; the scratch scenarios to commit as PlayMode tests) and the follow-up entry's Follow-ups. The Bootstrap scene exists now.
+- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** KIT-AGENT-RULE · write down the owner's standing rule about agents (`15` OD-9) and remove what contradicts it. Process change, no plan row,
+  commits use the scope `kit`. PR #9 (M0-04-FOLLOWUP: scene and AI packages) is still open and is this branch's base
+- **Branch:** `task/kit-agent-rule` (stacked on `task/M0-04-scene-and-packages`)
+- **Build log entry:** `docs/build-log/2026/2026-10-14-02-KIT-AGENT-RULE.md` (Session 1, Claude Code / claude-sonnet-5-5)
+- **Last green commit:** `d150875` (tip of PR #9's branch; CI green)
+- **Plan (4 steps, details in the build log):** 1 write-ahead · 2 the rule in `15`, `02`, `CLAUDE.md` · 3 everything that contradicts it (`16`, `11`, `17`,
+  `18`, skills, PR template, plan legend, `reviewer.md` model) · 4 decision row W10, CHANGELOG, finish, PR
+- **Done steps:** 1 in progress
+- **Next step:** commit the write-ahead, then step 2. No agent, no Workflow in this task.
 - **Open questions for the owner:** (1) does "Don't use agents" apply to every task from now on? If yes, it becomes a standing directive in `15` and
   the `reviewer` step in `16`/`11` changes (protected files); until then it applies to this task only. (2) the two KIT-AUDIT-FIXES follow-ups
   (`AGENTS.md` command line, guard test in CI). (The AI packages and the Bootstrap scene are decided and done in this follow-up.)
