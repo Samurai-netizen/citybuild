@@ -5,7 +5,7 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-06 · Day 1 checkpoint; PR open, the owner merges it)
+- **Task:** — (last completed: M0-06 · Day 1 checkpoint; PR #13 open, the owner merges it)
 - **Branch:** `task/M0-06-day1-checkpoint` (from `main` = `1b46a92`) until the owner merges
 - **Build log entry:** last: `docs/build-log/2026/2026-10-14-04-M0-06.md` (Session 1)
 - **Last green commit:** the head of `task/M0-06-day1-checkpoint` (server: format clean, 0 warnings, fast suite 173 passed; Unity: EditMode 6 of 6,
