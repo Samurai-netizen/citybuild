@@ -13,8 +13,9 @@
 - **Last green commit:** `main` at `22a7a9b` (M0-04 merged; CI green on PR #8)
 - **Plan (6 steps, details in the build log):** 1 write-ahead · 2 commit the owner's scene · 3 remove the AI packages and what they left in
   settings · 4 verify on the real scene in a scratch copy · 5 docs · 6 review, finish, PR
-- **Done steps:** 1 in progress
-- **Next step:** commit the write-ahead, then step 2. The owner's uncommitted scene files are in the working tree (do not discard them).
+- **Done steps:** 1 write-ahead · 2 the owner's scene committed · 3 AI packages removed and their leftovers undone (headless import exit 0, stable)
+- **Next step:** step 4: verify on the real scene in a scratch copy (PlayMode run; also that the built-in modules `unitywebrequest`,
+  `imageconversion`, `screencapture`, which the lock no longer lists, still compile), then docs, review, finish, PR.
   Unity is at `/Applications/Unity/Hub/Editor/6000.3.25f1`; the Editor must stay closed while a headless run uses the project.
 - **Open questions for the owner:** (1) the pre-release AI packages in the Unity manifest (`ai.assistant`, `ai.inference`, `pipeline`): not on
   `14`'s list, recommend removing; (2) the [MANUAL] Bootstrap scene (`client/README.md`), needed before M0-05; (3) the two KIT-AUDIT-FIXES
