@@ -128,7 +128,7 @@ public sealed class CityQueriesTests
     {
         Assert.Throws<ArgumentException>(() => CityQueries.EffectiveLabor(City(), TestContent, new BuildingTypeId("hut"), 1));
         Assert.Throws<ArgumentException>(() => CityQueries.EffectiveLabor(City(), TestContent, new BuildingTypeId("castle"), 1));
-        Assert.Throws<ArgumentOutOfRangeException>(() => CityQueries.EffectiveLabor(City(), TestContent, new BuildingTypeId("workshop"), 2));
+        Assert.Throws<ArgumentOutOfRangeException>(() => CityQueries.EffectiveLabor(City(), TestContent, new BuildingTypeId("workshop"), 3));
     }
 
     [Fact]

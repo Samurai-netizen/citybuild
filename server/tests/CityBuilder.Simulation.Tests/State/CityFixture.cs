@@ -1,4 +1,5 @@
 using CityBuilder.Simulation.Content;
+using CityBuilder.Simulation.Content.Data;
 using CityBuilder.Simulation.State;
 using CityBuilder.Simulation.Tests.Content;
 
@@ -10,8 +11,23 @@ namespace CityBuilder.Simulation.Tests.State;
 /// </summary>
 internal static class CityFixture
 {
-    /// <summary>The valid fixture content: a 6 × 5 grid, two builders, a house <c>hut</c>, producers <c>lumber_camp</c> and (locked) <c>workshop</c>.</summary>
-    public static GameContent TestContent { get; } = ContentAssert.Valid(ContentFixture.Valid());
+    /// <summary>
+    /// The valid fixture content (a 6 × 5 grid, two builders, a house <c>hut</c>, producers <c>lumber_camp</c> and, locked, <c>workshop</c>)
+    /// with two additions for the rules: the workshop gets a level 2, so an upgrade can refund a cycle's inputs, and the lumber camp's level 2
+    /// takes 4 workers, for the spec's example of 3 workers becoming 4.
+    /// </summary>
+    public static GameContent TestContent { get; } = ContentAssert.Valid(ContentFixture.ValidWith(data =>
+    {
+        ContentFixture.Level(data, "lumber_camp", 2).MaxWorkers = 4;
+        ContentFixture.Building(data, "workshop").Levels!.Add(new BuildingLevelData
+        {
+            Level = 2,
+            MaxWorkers = 3,
+            Recipe = new RecipeData { Inputs = new() { ["wood"] = 2 }, Outputs = new() { ["boards"] = 1 }, Labor = 90 },
+            UpgradeCost = new() { ["gold"] = 30, ["wood"] = 1 },
+            UpgradeSeconds = 15,
+        });
+    }));
 
     /// <summary>
     /// A city at <paramref name="clock"/> (default 1000) in era 1. The next building id defaults to one above the highest id; the inventory

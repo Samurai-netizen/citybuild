@@ -5,7 +5,7 @@ namespace CityBuilder.Simulation.State
 {
     /// <summary>
     /// A building placed in a city (<c>core-instructions/04-simulation-model.md</c>, sections 3 and 4). Times are city-clock seconds and labor
-    /// is in worker-seconds. Only the engine changes a building, through <c>CityRules</c> (and <c>Simulator.Advance</c> from
+    /// is in worker-seconds. Only the engine changes a building, through <see cref="Rules.CityRules"/> (and <c>Simulator.Advance</c> from
     /// M0-09); everything else reads it. The fields a phase doesn't use are 0, and <see cref="PhaseEndsAt"/> is null (<see cref="BuildingPhase"/>).
     /// </summary>
     public sealed class Building
