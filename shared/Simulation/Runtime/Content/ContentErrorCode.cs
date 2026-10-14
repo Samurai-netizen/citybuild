@@ -51,7 +51,7 @@ namespace CityBuilder.Simulation.Content
         /// <summary>A level has fewer max workers or provides fewer workers than the level below it.</summary>
         WorkersDecrease,
 
-        /// <summary>A capped item has no base storage cap or more than one, or an uncapped item has one.</summary>
+        /// <summary>A capped item has no base storage cap, or an uncapped item has one.</summary>
         StorageCapMismatch,
 
         /// <summary>An effect targets the wrong kind of thing: a labor reduction on a house, or a storage bonus on an uncapped item.</summary>

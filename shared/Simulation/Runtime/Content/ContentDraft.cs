@@ -69,6 +69,15 @@ namespace CityBuilder.Simulation.Content
 
         public Dictionary<ResearchId, ResearchDefinition> ResearchById { get; } = new Dictionary<ResearchId, ResearchDefinition>();
 
+        /// <summary>Whether this is the first item with its id (a later one is a duplicate, reported once and left out of other checks).</summary>
+        public bool IsFirst(ItemDefinition item) => ReferenceEquals(ItemsById[item.Id], item);
+
+        /// <summary>Whether this is the first building type with its id.</summary>
+        public bool IsFirst(BuildingDefinition building) => ReferenceEquals(BuildingsById[building.Id], building);
+
+        /// <summary>Whether this is the first research node with its id.</summary>
+        public bool IsFirst(ResearchDefinition node) => ReferenceEquals(ResearchById[node.Id], node);
+
         /// <summary>The validated content. Call it only when no rule reported an error.</summary>
         public GameContent ToContent() => new GameContent(ContentVersion, Rules, StartingCity, Eras, Items, Buildings, Research);
     }

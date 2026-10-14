@@ -40,6 +40,8 @@ namespace CityBuilder.Simulation.Content
 
             ValueRules.Check(draft, errors);
             BuildingRules.Check(draft, errors);
+            ReferenceRules.Check(draft, errors);
+            UnlockRules.Check(draft, errors);
             return errors.Count == 0 ? GameContentResult.Valid(draft.ToContent()) : GameContentResult.Invalid(errors.ToReadOnlyList());
         }
     }

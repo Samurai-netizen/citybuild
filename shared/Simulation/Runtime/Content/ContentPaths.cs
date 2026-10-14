@@ -20,6 +20,10 @@ namespace CityBuilder.Simulation.Content
 
         public static string Research(ResearchDefinition node) => "research[" + node.Id.Value + "]";
 
+        /// <summary>A prerequisite by its id (the list is sorted, so a position would not match the file).</summary>
+        public static string Prerequisite(ResearchDefinition node, ResearchId prerequisite) =>
+            Research(node) + ".prerequisites[" + prerequisite.Value + "]";
+
         /// <summary>An effect by its position in the node's list, which is the file's order (the shape phase skipped nothing).</summary>
         public static string Effect(ResearchDefinition node, int index) =>
             Research(node) + ".effects[#" + index.ToString(CultureInfo.InvariantCulture) + "]";
