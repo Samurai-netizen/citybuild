@@ -1,4 +1,5 @@
 using System.Reflection;
+using CityBuilder.Infrastructure.Content;
 
 namespace CityBuilder.IntegrationTests;
 
@@ -11,13 +12,13 @@ public sealed class InfrastructureDependencyTests
     [Fact]
     public void GetReferencedAssemblies_OfInfrastructure_DoNotIncludeApi()
     {
-        Assembly infrastructure = Assembly.Load(new AssemblyName("CityBuilder.Infrastructure"));
+        Assembly infrastructure = typeof(ContentFileLoader).Assembly;
 
         string[] names = infrastructure.GetReferencedAssemblies().Select(reference => reference.Name ?? string.Empty).ToArray();
 
-        // Placeholder until Infrastructure has its first type (M0-19): then bind with typeof(thatType).Assembly instead of the name.
-        // NotEmpty only shows that reflection returned data (every assembly references the runtime); it does not prove which assembly
-        // was inspected. A project reference to Api is a cycle that MSBuild rejects, so today this guards file or reflection-based references.
+        // Bound to Infrastructure's first type (M0-07b), so the inspected assembly is the one the build produced. NotEmpty shows that
+        // reflection returned data (every assembly references the runtime). A project reference to Api is a cycle that MSBuild rejects, so
+        // this guards file or reflection-based references.
         Assert.NotEmpty(names);
         Assert.DoesNotContain("CityBuilder.Api", names);
     }
