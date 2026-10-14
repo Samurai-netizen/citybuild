@@ -9,11 +9,11 @@
 - **Branch:** `task/M0-07-content-model` (from `main` = `23f7464`)
 - **Build log entry:** `docs/build-log/2026/2026-10-14-05-M0-07.md` (Session 1)
 - **Last green commit:** `main` = `23f7464` (fast suite 173 passed); this branch has only the write-ahead so far
-- **Done steps:** 1 (write-ahead). Planned steps 2–10: build log entry → Session 1 → Plan
-- **Next step:** the owner approves the plan (or redirects); record it under "Owner input", then step 2 (typed ids `BuildingTypeId`, `ResearchId`,
-  `EraId` with tests and `.meta` files). No code before the approval.
-- **Open questions for the owner:** the M0-07 plan (in chat); guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once
-  on Windows (never executed); the template sample content (M0-04 follow-up).
+- **Done steps:** 1 (write-ahead). Plan approved with two PRs (build log → Owner input). Planned steps 2–10: build log entry → Session 1 → Plan
+- **Next step:** the owner picks the id of part (b) (JSON file, server loading, how-to); then the board split and step 2 (typed ids
+  `BuildingTypeId`, `ResearchId`, `EraId` with tests and `.meta` files).
+- **Open questions for the owner:** the id of M0-07 part (b) (in chat); guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run
+  `test-unity.ps1` once on Windows (never executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` ·
   `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
