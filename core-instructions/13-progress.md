@@ -4,27 +4,26 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** AWAITING OWNER   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** M0-07 · Content model with research and eras (`[O]` `[PLAN]`)
-- **Branch:** `task/M0-07-content-model` (from `main` = `23f7464`)
-- **Build log entry:** `docs/build-log/2026/2026-10-14-05-M0-07.md` (Session 1)
-- **Last green commit:** `main` = `23f7464` (fast suite 173 passed); this branch has only the write-ahead so far
-- **Done steps:** 1 (write-ahead). Plan approved with two PRs (build log → Owner input). Planned steps 2–10: build log entry → Session 1 → Plan
-- **Next step:** the owner picks the id of part (b) (JSON file, server loading, how-to); then the board split and step 2 (typed ids
-  `BuildingTypeId`, `ResearchId`, `EraId` with tests and `.meta` files).
-- **Open questions for the owner:** the id of M0-07 part (b) (in chat); guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run
-  `test-unity.ps1` once on Windows (never executed); the template sample content (M0-04 follow-up).
+- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** M0-07a · Content model with research and eras: the engine (`[O]` `[PLAN]`, plan approved). M0-07b follows in its own PR
+- **Branch:** `task/M0-07a-content-model` (from `main` = `23f7464`)
+- **Build log entry:** `docs/build-log/2026/2026-10-14-05-M0-07a.md` (Session 1; decisions 1–8 hold the approved design of both parts)
+- **Last green commit:** `main` = `23f7464` (fast suite 173 passed); this branch has the write-ahead and the split so far
+- **Done steps:** 1 (write-ahead, plan approved, split into M0-07a/M0-07b). Planned steps: build log entry → Session 1 → Plan (2–6, 8, 9 in part)
+- **Next step:** step 2: typed ids `BuildingTypeId`, `ResearchId` (like `ItemId`) and `EraId` (equality only), with tests and `.meta` files.
+- **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
+  executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` ·
   `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 5 / 84
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 6 / 85
 
 | Area | State | Notes |
 |---|---|---|
 | Repo, kit, hooks, CI | done | M0-01 and the audit fixes merged (PR #4, #5); A18 can be closed in M0-04 |
-| Shared engine: content, research, labor | in progress | M0-03 (package, build project, helpers, architecture tests) merged (PR #7); the content model is M0-07 |
+| Shared engine: content, research, labor | in progress | M0-03 (package, build project, helpers, architecture tests) merged (PR #7); the content model is M0-07a (engine) and M0-07b (JSON, server loading) |
 | Shared engine: invariants, performance | not started | |
 | Server skeleton | done | M0-02 merged (PR #6) |
 | Persistence (EF + PostgreSQL) | not started | |
@@ -59,4 +58,5 @@ All run in M0-06 (details and the "since" task: `docs/getting-started.md` → Ru
 - Other kit wording items with their owner tasks: M0-01 build log → Follow-ups.
 
 ## Deviations from the plan
-- none yet (record the reason and link the decision row in `12-decisions.md`)
+- M0-07 is split into M0-07a (engine) and M0-07b (JSON file, server loading), one PR each: the owner's choice in the plan approval
+  (build log BL-20261014-05, decision 1). Split plan tasks carry a letter; the commit id pattern allows it (`18`).

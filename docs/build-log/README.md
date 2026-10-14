@@ -11,7 +11,7 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
-- [BL-20261014-05 · M0-07 · Content model with research and eras](2026/2026-10-14-05-M0-07.md) — In progress
+- [BL-20261014-05 · M0-07a · Content model with research and eras: the engine](2026/2026-10-14-05-M0-07a.md) — In progress
 - [BL-20261014-04 · M0-06 · Day 1 checkpoint](2026/2026-10-14-04-M0-06.md) — Done
 - [BL-20261014-03 · M0-05 · Unity test foundation](2026/2026-10-14-03-M0-05.md) — Done
 - [BL-20261014-02 · KIT-AGENT-APPROVAL · Standing rule: ask the owner before using agents](2026/2026-10-14-02-KIT-AGENT-APPROVAL.md) — Done

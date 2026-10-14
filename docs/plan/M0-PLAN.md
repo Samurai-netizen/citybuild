@@ -2,7 +2,7 @@
 
 **Unity 6.3 LTS · .NET 10 · PostgreSQL 18.6 · AI coders (Claude Code: Opus 5.5 + Sonnet 5.5, or others)**
 
-This is the plan for milestone M0. It has 84 tasks (`M0-01` … `M0-84`), grouped into 14 working days plus a Day 0 setup.
+This is the plan for milestone M0. It has 85 tasks (`M0-01` … `M0-84`, with M0-07 split into M0-07a and M0-07b), grouped into 14 working days plus a Day 0 setup.
 It lives in the repository so that **any AI coder can read the next task** without depending on earlier chats.
 - Start a task: `/start-task M0-NN` (Claude Code), or "Read AGENTS.md, then start task M0-NN" (any tool).
 - Print one task's spec: `bash scripts/dev/show-task.sh M0-NN`.
@@ -91,7 +91,7 @@ After 14 days (realistically 16–20) you have a clean, tested, extensible spine
 - [ ] Determinism, split invariance, timer invariance, conservation, attack and concurrency suites pass.
 - [ ] A clean clone can be set up from the README, and a development build reaches the city screen.
 - [ ] **Process:** every task has a build log entry with its decisions; every project or assembly has a current module doc;
-      generated reference docs are current; CI is green on `main`; the board shows all 84 tasks `Done` or `Skipped` (with a reason).
+      generated reference docs are current; CI is green on `main`; the board shows all 85 tasks `Done` or `Skipped` (with a reason).
 
 ---
 
@@ -230,7 +230,7 @@ If a task conflicts with the design files (`21`–`26`), the files win. Report t
 | 14 | Triage, freeze review, invariant gaps | Dev build, final audit, M0 close-out | Runnable MVP |
 
 **Realism check:** the labor model and research make Days 2, 6 and 9 heavier, and the workflow (logs, docs, PRs) adds
-10–15 %. 84 tasks in 14 days means 4–8 focused hours a day; **17–21 days is the realistic outcome**. Cut in this order if you fall behind:
+10–15 %. 85 tasks in 14 days means 4–8 focused hours a day; **17–21 days is the realistic outcome**. Cut in this order if you fall behind:
 - Day 10 polish (M0-57–M0-59);
 - M0-71;
 - display prediction (use the decision-007 fallback in `12`);
@@ -250,7 +250,8 @@ The AI coder updates its row at start (`In progress`) and finish (`In review`). 
 | M0-04 | 1 | Unity project skeleton | S MANUAL first | Done |
 | M0-05 | 1 | Unity test foundation | S | Done |
 | M0-06 | 1 | Day 1 checkpoint | O | Done |
-| M0-07 | 2 | Content model with research and eras | O PLAN | In progress |
+| M0-07a | 2 | Content model with research and eras: the engine | O PLAN | In progress |
+| M0-07b | 2 | Content model with research and eras: JSON file and server loading | O | Todo |
 | M0-08 | 2 | City state and mutations | O | Todo |
 | M0-09 | 2 | Simulator.Advance | O PLAN | Todo |
 | M0-10 | 2 | Engine rule tests | O | Todo |
@@ -466,10 +467,14 @@ Run all server tests; run Unity tests if possible.
 
 ### DAY 2 — Simulation engine I: content, workers, research
 
-#### M0-07 — Content model with research and eras · [O] [PLAN]
+M0-07 was split by the owner on 2026-10-14 into M0-07a (the engine) and M0-07b (the JSON file and server loading), one PR each.
+The plan for both was approved in M0-07a; its build log entry (`docs/build-log/2026/2026-10-14-05-M0-07a.md`, decisions 1–8) holds the design
+that M0-07b builds on. The spec text below is the original, divided between the two parts.
+
+#### M0-07a — Content model with research and eras: the engine · [O] [PLAN]
 ```text
 Read core-instructions/04-simulation-model.md, 23-mvp-content.md, 25-eras-and-research.md (effect types),
-24-economy-design.md (last section) and 19 (recipes "Content-only" and "New engine rule").
+24-economy-design.md (last section) and 19 (recipe "New engine rule").
 
 1. In shared/Simulation, immutable content types: ItemDefinition (id, era, capped, tradable),
    RecipeDefinition (inputs, outputs, Labor), BuildingLevelDefinition (MaxWorkers, WorkersProvided, recipe or none,
@@ -485,11 +490,21 @@ Read core-instructions/04-simulation-model.md, 23-mvp-content.md, 25-eras-and-re
    Σ labor reductions per building type ≤ MaxLaborReductionPermille;
    with ALL reductions applied, CeilDiv(labor, MaxWorkers at max level) ≥ MinCycleSeconds;
    every non-start building is unlocked by exactly one research node.
-3. server/content/mvp-content.json with exactly the numbers from 23-mvp-content.md.
-4. Infrastructure: JSON loader (System.Text.Json) → GameContent factory; IContentProvider in Application;
+3. Tests: one failing fixture per validation rule.
+4. Update the module doc.
+No city state yet.
+```
+
+#### M0-07b — Content model with research and eras: JSON file and server loading · [O]
+```text
+Read the M0-07a build log entry (decisions), 23-mvp-content.md and 19 (recipe "Content-only").
+Builds on M0-07a's GameContentFactory; the format is decided there (decisions 4 and 8).
+
+1. server/content/mvp-content.json with exactly the numbers from 23-mvp-content.md.
+2. Infrastructure: JSON loader (System.Text.Json) → GameContent factory; IContentProvider in Application;
    load at startup and fail fast listing all validation errors.
-5. Tests: the real mvp-content.json loads; one failing fixture per validation rule.
-6. Write docs/how-to/add-building-or-item.md (a worked content-only change) and update the module doc.
+3. Tests: the real mvp-content.json loads.
+4. Write docs/how-to/add-building-or-item.md (a worked content-only change) and update the module docs.
 No city state yet.
 ```
 
