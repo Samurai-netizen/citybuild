@@ -4,22 +4,18 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** M0-04-FOLLOWUP · the owner's two requests after PR #8 (merged): commit the Bootstrap scene the owner made, and remove the three
-  pre-release AI packages (the owner's G-Dependency decision). No plan row; commits use the scope `M0-04`
-- **Branch:** `task/M0-04-scene-and-packages` (based on `origin/main` = `22a7a9b`)
-- **Build log entry:** `docs/build-log/2026/2026-10-14-01-M0-04-FOLLOWUP.md` (Session 1, Claude Code / claude-sonnet-5-5); the M0-04 entry is
-  merged and append-only, so it is not touched
-- **Last green commit:** `main` at `22a7a9b` (M0-04 merged; CI green on PR #8)
-- **Plan (6 steps, details in the build log):** 1 write-ahead · 2 commit the owner's scene · 3 remove the AI packages and what they left in
-  settings · 4 verify on the real scene in a scratch copy · 5 docs · 6 review, finish, PR
-- **Done steps:** 1 write-ahead · 2 the owner's scene committed · 3 AI packages removed, their leftovers undone · 4 verified on the real scene in a
-  scratch copy (a compile probe found that the removal had disabled `UnityWebRequest`; the manifest now names the module) · 5 docs, decision
-  row 025, guard tests (21)
-- **Next step:** step 6: independent review (small Workflow), fix what is confirmed, then finish: `check-docs.sh --base origin/main`, the server
-  sequence, resume point `IDLE`, PR, report. Unity is at `/Applications/Unity/Hub/Editor/6000.3.25f1`; keep the Editor closed during headless runs.
-- **Open questions for the owner:** the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI). (The AI packages and the
-  Bootstrap scene are decided and done in this follow-up.)
+- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** — (last completed: M0-04-FOLLOWUP · the owner's Bootstrap scene and removal of the pre-release AI packages; M0-04 itself is merged, PR #8)
+- **Branch:** `task/M0-04-scene-and-packages` (until the owner merges its PR)
+- **Build log entry:** last: `docs/build-log/2026/2026-10-14-01-M0-04-FOLLOWUP.md` (Session 1)
+- **Last green commit:** the head of `task/M0-04-scene-and-packages` (CI's server sequence run locally: 173 fast tests, format, Release build 0 warnings;
+  `check-docs --base origin/main` OK; headless Unity import exit 0; PlayMode run on the real scene passed)
+- **Done steps:** all six (write-ahead, the scene, the package removal, verification on the real scene, docs, review by hand, finish)
+- **Next step:** the owner merges the PR; then `/start-task M0-05` (Unity test foundation, `[S]`). It reads the M0-04 entry → Follow-ups (`AppInfo` is
+  defined nowhere; the scratch scenarios to commit as PlayMode tests) and the follow-up entry's Follow-ups. The Bootstrap scene exists now.
+- **Open questions for the owner:** (1) does "Don't use agents" apply to every task from now on? If yes, it becomes a standing directive in `15` and
+  the `reviewer` step in `16`/`11` changes (protected files); until then it applies to this task only. (2) the two KIT-AUDIT-FIXES follow-ups
+  (`AGENTS.md` command line, guard test in CI). (The AI packages and the Bootstrap scene are decided and done in this follow-up.)
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`
 

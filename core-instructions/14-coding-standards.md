@@ -58,7 +58,7 @@ Server: ASP.NET Core and EF Core 10 (Microsoft, incl. `Microsoft.AspNetCore.Open
 `xunit.runner.visualstudio`, `Microsoft.NET.Test.Sdk`, `Microsoft.AspNetCore.Mvc.Testing`,
 `Testcontainers.PostgreSql`, `Microsoft.Extensions.TimeProvider.Testing`, `coverlet.collector`.
 Unity: `com.unity.nuget.newtonsoft-json`, `com.unity.inputsystem`, `com.unity.test-framework`, built-in UI Toolkit and the built-in module
-`com.unity.modules.unitywebrequest`. A package that the Unity Hub, the Editor or Package Manager adds on its own is not approved by that (decision 025).
+`com.unity.modules.unitywebrequest`. A package that arrives without anyone asking for it (a new project, the Hub, the Editor, Package Manager) is not approved by that (decision 025).
 
 ## Formatting and analysis (enforced)
 `.editorconfig` at the repo root plus `dotnet format --verify-no-changes` in CI. `TreatWarningsAsErrors` in `src/`.

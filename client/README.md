@@ -24,8 +24,8 @@ client/CityBuilder/
 Commit every `.meta` file. `client/CityBuilder/.gitignore` covers the generated folders.
 
 ## Packages
-Only what `core-instructions/14` approves, plus the template's own packages. The Unity Hub or Editor may add packages on its own (it added three
-pre-release AI packages once; they were removed on 2026-10-14, decision 025): that is not an approval, and `ClientAssemblyTests` fails if one of
+Only what `core-instructions/14` approves, plus the template's own packages. A new project can arrive with packages nobody asked for (three
+pre-release AI packages were in ours and are not in the editor's own template; the owner had them removed on 2026-10-14, decision 025): that is not an approval, and `ClientAssemblyTests` fails if one of
 those three returns. A built-in module (`com.unity.modules.*`) is enabled only when the manifest or a dependency asks for it: the manifest
 names `com.unity.modules.unitywebrequest` for `ApiClient` (M0-37). If code stops compiling with "type or namespace does not exist" for an
 engine type, add the module that holds it to the manifest, then run the headless check below.

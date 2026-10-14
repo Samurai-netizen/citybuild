@@ -177,7 +177,7 @@ public sealed class ClientAssemblyTests
     [InlineData("com.unity.pipeline")]
     public void Manifest_RemovedPreReleasePackages_AreAbsent(string package)
     {
-        // The owner removed these in M0-04 (G-Dependency, decision 025). The Unity Hub or Editor can add them again by itself; a package
+        // The owner removed these in M0-04 (G-Dependency, decision 025). They were in the owner's new project without being asked for, so they can come back with a re-created project; a package
         // that is not on the approved list in core-instructions/14 needs the owner's yes first.
         Assert.Null(ReadManifestDependencies()[package]);
     }
