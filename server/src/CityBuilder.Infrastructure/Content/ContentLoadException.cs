@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace CityBuilder.Infrastructure.Content;
 
 /// <summary>
@@ -27,7 +29,13 @@ public sealed class ContentLoadException : Exception
     {
         ArgumentNullException.ThrowIfNull(filePath);
         ArgumentNullException.ThrowIfNull(errors);
-        string count = errors.Count == 1 ? "1 error" : errors.Count + " errors";
+        if (errors.Count == 0)
+        {
+            throw new ArgumentException("A content load fails with at least one error.", nameof(errors));
+        }
+
+        // Invariant culture, like the engine's error messages, so the startup report reads the same on every machine.
+        string count = errors.Count == 1 ? "1 error" : string.Create(CultureInfo.InvariantCulture, $"{errors.Count} errors");
         return $"The content file '{filePath}' can't be loaded ({count}):" + string.Concat(errors.Select(error => Environment.NewLine + "  - " + error));
     }
 }

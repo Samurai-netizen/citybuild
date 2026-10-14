@@ -164,6 +164,13 @@ public sealed class ContentFileLoaderTests : IDisposable
         Assert.Throws<ArgumentException>(() => ContentFileLoader.Load(string.Empty));
     }
 
+    [Fact]
+    public void ContentLoadException_NoErrors_ThrowsArgumentException()
+    {
+        // A failed load always says why: an empty list is a programmer error.
+        Assert.Throws<ArgumentException>("errors", () => new ContentLoadException("content.json", []));
+    }
+
     private static string AssertSingleJsonError(ContentLoadException exception)
     {
         string error = Assert.Single(exception.Errors);

@@ -251,7 +251,7 @@ The AI coder updates its row at start (`In progress`) and finish (`In review`). 
 | M0-05 | 1 | Unity test foundation | S | Done |
 | M0-06 | 1 | Day 1 checkpoint | O | Done |
 | M0-07a | 2 | Content model with research and eras: the engine | O PLAN | Done |
-| M0-07b | 2 | Content model with research and eras: JSON file and server loading | O | In progress |
+| M0-07b | 2 | Content model with research and eras: JSON file and server loading | O | In review |
 | M0-08 | 2 | City state and mutations | O | Todo |
 | M0-09 | 2 | Simulator.Advance | O PLAN | Todo |
 | M0-10 | 2 | Engine rule tests | O | Todo |
