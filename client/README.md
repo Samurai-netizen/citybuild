@@ -5,8 +5,8 @@ The Unity project is `client/CityBuilder/` (Unity **6000.3.25f1**, 6.3 LTS, Univ
 
 ## Open it
 Unity Hub → **Add** → `client/CityBuilder` → editor 6000.3.25f1. The first import takes a few minutes. The Console should show no red
-errors. Yellow "Assembly for Assembly Definition File … will not be compiled, because it has no scripts associated with it" warnings
-for `Core`, `Net` and the two test assemblies are expected until those assemblies get their first scripts (M0-05, M0-37, M0-39).
+errors. A yellow "Assembly for Assembly Definition File … will not be compiled, because it has no scripts associated with it" warning
+for `Net` is expected until that assembly gets its first script (M0-37).
 
 ## Layout
 ```
@@ -16,7 +16,7 @@ client/CityBuilder/
 │   ├── Net/             CityBuilder.Client.Net            API client, DTOs (skeleton)
 │   ├── Presentation/    CityBuilder.Client.Presentation   GameRoot, bootstrap, screens
 │   ├── Resources/UI/    PanelSettings.asset, UXML and USS the code loads by name
-│   └── Tests/EditMode · Tests/PlayMode                    test assemblies (no tests yet, M0-05)
+│   └── Tests/EditMode · Tests/PlayMode                    test assemblies (AppInfo, engine-in-Unity and Bootstrap scene tests, M0-05)
 ├── Assets/Scenes/       Bootstrap.unity (made by hand, scene 0 in the build list; steps below); SampleScene is the template's, unticked
 ├── Packages/manifest.json   "com.citybuilder.simulation": "file:../../../shared/Simulation" (relative to Packages/), Newtonsoft 3.2.2, Input System 1.20.0, the module com.unity.modules.unitywebrequest
 └── ProjectSettings/     Force Text, Visible Meta Files, Input System, HTTP allowed in development builds
@@ -36,7 +36,20 @@ on macOS:
 ```
 <UNITY> -batchmode -quit -projectPath client/CityBuilder -logFile -
 ```
-Exit code 0 and no `error CS` in the log means it compiles. `scripts/dev/test-unity.sh` *(planned, M0-05)* wraps this and the tests.
+Exit code 0 and no `error CS` in the log means it compiles.
+
+## Run the tests
+Close the Editor first. Point `UNITY_EDITOR` at the Unity program of the project's editor (6000.3.25f1; the `Unity.app` folder also works on
+macOS), then run the script. It runs EditMode, then PlayMode, headless, and prints one line per run:
+```
+export UNITY_EDITOR=/Applications/Unity/Hub/Editor/6000.3.25f1/Unity.app/Contents/MacOS/Unity   # macOS; add it to ~/.zshrc to keep it
+bash scripts/dev/test-unity.sh
+```
+Windows (PowerShell): `$env:UNITY_EDITOR = 'C:\Program Files\Unity\Hub\Editor\6000.3.25f1\Editor\Unity.exe'`, then
+`pwsh scripts/dev/test-unity.ps1`. Exit code 0: every test passed. 1: a test failed, no test ran, or Unity failed (a compile error, a project that
+is already open). 2: the setup is wrong (`UNITY_EDITOR` unset or not an executable). The result files (NUnit XML) and Unity's logs are in
+`client/CityBuilder/Logs/test-unity/` (git ignores the folder). The run takes about 25 seconds. Unity tests are not in CI (no license on
+the runner): paste the summary into the build log's Verification table.
 
 ## [MANUAL] Create the Bootstrap scene (done by the owner on 2026-10-14; kept for re-creating it)
 Claude cannot use the Editor GUI, and a scene file is never hand-edited. The scene stays **empty**: `GameBootstrap` creates the one
@@ -62,4 +75,4 @@ Claude cannot use the Editor GUI, and a scene file is never hand-edited. The sce
    or tell the next AI coder that the scene exists, and it commits `Bootstrap.unity`, its `.meta` file and `EditorBuildSettings.asset`.
 7. If the label does not show, copy the first red Console message into the chat. Do not edit the scene or the scripts by hand.
 
-Last updated: M0-04
+Last updated: M0-05

@@ -67,7 +67,7 @@ dotnet test  server/CityBuilder.slnx --filter "Category!=Integration"  # fast su
 dotnet test  server/CityBuilder.slnx --filter "Category=Integration"   # [M0-21] needs Docker
 dotnet run   --project server/src/CityBuilder.Api                      # http://localhost:8080
 docker compose up -d postgres                                          # [M0-19]
-bash scripts/dev/test-unity.sh                                         # [M0-05] close the Unity Editor first
+bash scripts/dev/test-unity.sh                                         # needs UNITY_EDITOR; close the Unity Editor first
 bash scripts/dev/quality.sh                                            # [M0-62] everything CI runs, locally
 dotnet run --project tools/DocTools -- generate                        # [M0-61] regenerate reference docs
 dotnet run --project tools/BalanceSim -- --help                        # [M0-67]

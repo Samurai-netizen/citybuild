@@ -75,7 +75,8 @@ No file-scoped namespaces, no global usings, no `required`, no records or `init`
 
 ## Running tests from the CLI
 `Unity -batchmode -projectPath client/CityBuilder -runTests -testPlatform EditMode -testResults <file>`
-The Editor must be closed for that project (project lock). Wrap this in `scripts/dev/test-unity.*`.
+The Editor must be closed for that project (project lock). `scripts/dev/test-unity.sh` (and `.ps1`) wraps this for EditMode then PlayMode: it reads the
+Unity program from `UNITY_EDITOR`, prints a summary and exits non-zero on a failure or when no test ran (`client/README.md` → Run the tests).
 
 ## Device testing
 Android device → server on your PC: use the PC's LAN IP or `adb reverse tcp:8080 tcp:8080`.

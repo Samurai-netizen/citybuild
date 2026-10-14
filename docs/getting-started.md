@@ -37,7 +37,7 @@ How to get from a clean machine to a running project. Every command here must wo
 | Is the API up? | `curl http://localhost:8080/health` prints `Healthy`; OpenAPI (Development only): http://localhost:8080/openapi/v1.json | M0-02 |
 | Open the Unity project | Unity Hub → Add → `client/CityBuilder` (editor 6000.3.25f1); details and the Bootstrap scene steps: `client/README.md` | M0-04 |
 | Does the Unity project compile? (Editor closed) | `<UNITY> -batchmode -quit -projectPath client/CityBuilder -logFile -`, exit code 0 and no `error CS` (`client/README.md`) | M0-04 |
-| Unity tests | `bash scripts/dev/test-unity.sh` | *(planned, M0-05)* |
+| Unity tests (Editor closed; set `UNITY_EDITOR` first, `client/README.md` → Run the tests) | `bash scripts/dev/test-unity.sh` (Windows: `pwsh scripts/dev/test-unity.ps1`) | M0-05 |
 | Everything CI runs | `bash scripts/dev/quality.sh` | *(planned, M0-62)* |
 
 ## Configuration
