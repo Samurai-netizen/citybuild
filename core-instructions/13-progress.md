@@ -4,13 +4,14 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **State:** AWAITING OWNER   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M0-07a · Content model with research and eras: the engine (`[O]` `[PLAN]`, plan approved). M0-07b follows in its own PR
 - **Branch:** `task/M0-07a-content-model` (from `main` = `23f7464`)
 - **Build log entry:** `docs/build-log/2026/2026-10-14-05-M0-07a.md` (Session 1; decisions 1–8 hold the approved design of both parts)
 - **Last green commit:** the head of this branch (step 8: 0 warnings, format clean, fast suite 437 passed; Unity EditMode 8/8, PlayMode 6/6)
 - **Done steps:** 1 (write-ahead, plan approved, split into M0-07a/M0-07b), 2 (typed ids), 3 (data, definitions, shape phase), 4 (value and building rules), 5 (reference and unlock rules), 6 (research and labor rules; step 7 is M0-07b), 8 (Unity), 9 (engine docs). Planned steps: build log entry → Session 1 → Plan
-- **Next step:** step 10: finish (Definition of Done, `check-docs --base origin/main`, line-by-line self-review, CHANGELOG, board `In review`, PR).
+- **Next step:** the owner runs `/finish-task M0-07a` (only the owner can start that skill): Definition of Done, line-by-line self-review,
+  CHANGELOG, board `In review`, PR. Other tools: `16` §E by hand.
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
