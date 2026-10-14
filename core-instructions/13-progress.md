@@ -5,7 +5,7 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-07a · Content model with research and eras: the engine; PR open, the owner merges it)
+- **Task:** — (last completed: M0-07a · Content model with research and eras: the engine; PR #14 open, the owner merges it)
 - **Branch:** `task/M0-07a-content-model` (from `main` = `23f7464`) until the owner merges
 - **Build log entry:** last: `docs/build-log/2026/2026-10-14-05-M0-07a.md` (Done; decisions 1–8 hold the approved design of M0-07b too)
 - **Last green commit:** the head of `task/M0-07a-content-model` (0 warnings, format clean, fast suite 438 passed; Unity EditMode 8/8,
