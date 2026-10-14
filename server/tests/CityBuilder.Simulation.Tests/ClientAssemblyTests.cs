@@ -151,9 +151,11 @@ public sealed class ClientAssemblyTests
     {
         // Unity resolves a file: path relative to the Packages folder; it must land on shared/Simulation, where package.json is.
         string? dependency = (string?)ReadManifestDependencies()["com.citybuilder.simulation"];
-        string resolved = Path.GetFullPath(Path.Combine(_unityProject, "Packages", dependency!["file:".Length..]));
 
         Assert.Equal(_simulationPackagePath, dependency);
+
+        // Not null: the assertion above has just shown that it is the file: path.
+        string resolved = Path.GetFullPath(Path.Combine(_unityProject, "Packages", dependency!["file:".Length..]));
         Assert.Equal(Path.Combine(RepositoryPaths.Root, "shared", "Simulation"), resolved);
         Assert.True(File.Exists(Path.Combine(resolved, "package.json")));
     }
@@ -193,8 +195,13 @@ public sealed class ClientAssemblyTests
     private static JsonObject ReadAsmdef(string folder, string name) =>
         ReadJsonObject(Path.Combine(_projectFolder, folder, name + ".asmdef"));
 
-    private static JsonObject ReadManifestDependencies() =>
-        ReadJsonObject(Path.Combine(_unityProject, "Packages", "manifest.json"))["dependencies"]!.AsObject();
+    private static JsonObject ReadManifestDependencies()
+    {
+        JsonNode? dependencies = ReadJsonObject(Path.Combine(_unityProject, "Packages", "manifest.json"))["dependencies"];
+
+        Assert.NotNull(dependencies);
+        return dependencies.AsObject();
+    }
 
     private static JsonObject ReadJsonObject(string path)
     {
@@ -206,7 +213,8 @@ public sealed class ClientAssemblyTests
 
     private static bool? BoolOf(JsonObject json, string propertyName) => (bool?)json[propertyName];
 
-    // Unity treats a missing array as an empty one.
+    // Unity treats a missing array as an empty one. The "!" only silences the compiler: a null entry comes out as null and then fails
+    // the comparison it takes part in, and a non-string entry throws.
     private static string[] Strings(JsonObject json, string propertyName) =>
         (json[propertyName]?.AsArray() ?? []).Select(node => (string)node!).ToArray();
 }

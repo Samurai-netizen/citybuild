@@ -1,57 +1,80 @@
 # Architecture Overview (as built)
 
-> *Partly built.* This page describes the system **as it exists**: so far the server solution skeleton (M0-02), the shared engine
-> skeleton (M0-03) and the Unity client skeleton (M0-04). M0-06 writes the first full version and M0-63 completes it. The intended
-> architecture is `core-instructions/03-architecture.md`.
+> This page describes the system **as it exists** at the end of Day 1 (M0-01 to M0-06): the server solution skeleton, the shared engine
+> skeleton and the Unity client skeleton with its tests. Parts that are not built yet are marked *(planned, M0-NN)*. M0-63 completes the page.
+> The intended architecture is `core-instructions/03-architecture.md`; the decisions behind it are in [ADRs](../adr/README.md).
 
 ## System
+Today the API host answers `GET /health` (and serves its OpenAPI document in Development). The Unity client starts the `Bootstrap` scene
+and shows "Not connected". The engine holds its integer helpers and the first content id type. There is no database, no game content,
+no game endpoint and no networking yet. Dashed parts in the diagram are planned.
 
 ```mermaid
 flowchart LR
-  U[Unity client] -- HTTPS JSON --> A[ASP.NET Core API]
-  A --> AP[Application: use cases, pipeline]
-  AP --> S[Simulation engine - shared]
-  AP --> I[Infrastructure: EF Core]
-  I --> P[(PostgreSQL 18)]
-  U -. display prediction .-> S
+  subgraph clientside["client/CityBuilder - Unity 6000.3.25f1"]
+    PRES["Client.Presentation<br/>GameBootstrap, GameRoot"]
+    NET["Client.Net<br/>no scripts yet"]
+    CORE["Client.Core<br/>AppInfo"]
+  end
+  subgraph sharedside["shared"]
+    SIM["CityBuilder.Simulation<br/>IntegerMath, ItemId"]
+  end
+  subgraph serverside["server - CityBuilder.slnx"]
+    API["CityBuilder.Api<br/>health, OpenAPI in Development"]
+    INF["CityBuilder.Infrastructure<br/>no types yet"]
+    APP["CityBuilder.Application<br/>no types yet"]
+    DOM["CityBuilder.Domain<br/>no types yet"]
+  end
+  DB[("PostgreSQL 18")]
+  PRES --> CORE
+  PRES --> NET
+  NET --> CORE
+  CORE --> SIM
+  API --> APP
+  API --> INF
+  INF --> APP
+  INF --> DOM
+  APP --> DOM
+  APP --> SIM
+  DOM --> SIM
+  NET -.->|"HTTPS JSON, planned M0-37"| API
+  INF -.->|"EF Core, planned M0-19"| DB
+  classDef planned stroke-dasharray: 4 4
+  class DB planned
 ```
+A solid arrow means "references" (a project or assembly reference). The engine has no references; Unity and the server compile the very
+same C# files of it (decision 007 in `core-instructions/12-decisions.md`).
 
 ## Projects and assemblies
 Solution: `server/CityBuilder.slnx` (it also builds the shared engine project). Build settings for the server projects:
 `server/Directory.Build.props`; package versions: `server/Directory.Packages.props`; SDK: `global.json`. The engine project sits
-outside `server/`, so it repeats the settings it needs (see its module doc).
+outside `server/`, so it repeats the settings it needs (decision 021). Which projects treat warnings as errors and require XML docs:
+decision 020 and `core-instructions/14-coding-standards.md` (checked by a probe build in M0-06, see its build log entry).
 
-| Project | Path | References | Doc |
-|---|---|---|---|
-| `CityBuilder.Api` | `server/src/` | Application, Infrastructure | [module](../modules/CityBuilder.Api.md) |
-| `CityBuilder.Application` | `server/src/` | Domain, Simulation | [module](../modules/CityBuilder.Application.md) |
-| `CityBuilder.Domain` | `server/src/` | Simulation | [module](../modules/CityBuilder.Domain.md) |
-| `CityBuilder.Infrastructure` | `server/src/` | Application, Domain | [module](../modules/CityBuilder.Infrastructure.md) |
-| `CityBuilder.Simulation` | `shared/Simulation.Build/` (.NET) and `shared/Simulation/` (Unity package) | the base class library only | [module](../modules/CityBuilder.Simulation.md) |
-| `CityBuilder.Domain.Tests` | `server/tests/` | Domain | the Domain module doc → Tests |
-| `CityBuilder.Application.Tests` | `server/tests/` | Application | the Application module doc → Tests |
-| `CityBuilder.Simulation.Tests` | `server/tests/` | Simulation | the Simulation module doc → Tests |
-| `CityBuilder.IntegrationTests` | `server/tests/` | Api | the Api module doc → Tests |
+| Project | Path | References | Packages | Holds today | Doc |
+|---|---|---|---|---|---|
+| `CityBuilder.Api` | `server/src/` | Application, Infrastructure | `Microsoft.AspNetCore.OpenApi` | `Program.cs`: JSON console logs, ProblemDetails, health check, `TimeProvider.System`, OpenAPI in Development | [module](../modules/CityBuilder.Api.md) |
+| `CityBuilder.Application` | `server/src/` | Domain, Simulation | — | nothing yet *(planned: ports M0-07 and M0-20, pipeline M0-26)* | [module](../modules/CityBuilder.Application.md) |
+| `CityBuilder.Domain` | `server/src/` | Simulation | — | nothing yet *(planned, M0-19 on)* | [module](../modules/CityBuilder.Domain.md) |
+| `CityBuilder.Infrastructure` | `server/src/` | Application, Domain | — *(EF Core and Npgsql planned, M0-19)* | nothing yet *(planned: content loader M0-07, persistence M0-19)* | [module](../modules/CityBuilder.Infrastructure.md) |
+| `CityBuilder.Simulation` | `shared/Simulation.Build/` (.NET) and `shared/Simulation/` (Unity package) | the base class library only | — | `IntegerMath` (`CeilDiv`, `ApplyPermilleReduction`), `ItemId` | [module](../modules/CityBuilder.Simulation.md) |
+| `CityBuilder.Domain.Tests` | `server/tests/` | Domain | xUnit v3 (`xunit.v3.mtp-off`, runner, test SDK; decision 019) | 1 test | the Domain module doc → Tests |
+| `CityBuilder.Application.Tests` | `server/tests/` | Application | the same | 1 test | the Application module doc → Tests |
+| `CityBuilder.Simulation.Tests` | `server/tests/` | Simulation | the same | 166 tests: engine helpers, `ItemId`, and the architecture tests below | the Simulation module doc → Tests |
+| `CityBuilder.IntegrationTests` | `server/tests/` | Api | the same, plus `Microsoft.AspNetCore.Mvc.Testing` | 5 in-memory tests (no Docker); none in the `Integration` category yet *(planned, M0-21)* | the Api module doc → Tests |
 
 ### Unity client
 The Unity project is `client/CityBuilder/` (Unity 6000.3.25f1, URP; `client/README.md`). It consumes the engine as the local package
 `com.citybuilder.simulation` (`"file:../../../shared/Simulation"` in `Packages/manifest.json`), so the client runs the very same C# files as the
 server, for display only.
 
-| Assembly | Path under `client/CityBuilder/Assets/_Project/` | References | Doc |
-|---|---|---|---|
-| `CityBuilder.Client.Core` | `Core/` | Simulation | [module](../modules/CityBuilder.Client.Core.md) |
-| `CityBuilder.Client.Net` | `Net/` | Core, Newtonsoft (precompiled DLL) | [module](../modules/CityBuilder.Client.Net.md) |
-| `CityBuilder.Client.Presentation` | `Presentation/` | Core, Net, Input System | [module](../modules/CityBuilder.Client.Presentation.md) |
-| `CityBuilder.Client.Tests.EditMode` / `.PlayMode` | `Tests/EditMode`, `Tests/PlayMode` | the four runtime assemblies and the test runner | `AppInfoTests`, `SimulationInUnityTests` (EditMode), `BootstrapSceneTests` (PlayMode); run by `scripts/dev/test-unity.sh` (M0-05) |
+| Assembly | Path under `client/CityBuilder/Assets/_Project/` | References | Holds today | Doc |
+|---|---|---|---|---|
+| `CityBuilder.Client.Core` | `Core/` | Simulation | `AppInfo` (the build version) | [module](../modules/CityBuilder.Client.Core.md) |
+| `CityBuilder.Client.Net` | `Net/` | Core, Newtonsoft (precompiled DLL) | no scripts *(planned, M0-37)* | [module](../modules/CityBuilder.Client.Net.md) |
+| `CityBuilder.Client.Presentation` | `Presentation/` | Core, Net, Input System | `GameBootstrap`, `GameRoot`; UXML and USS in `Resources/UI/` | [module](../modules/CityBuilder.Client.Presentation.md) |
+| `CityBuilder.Client.Tests.EditMode` / `.PlayMode` | `Tests/EditMode`, `Tests/PlayMode` | the four runtime assemblies, the test runner and NUnit | `AppInfoTests`, `SimulationInUnityTests` (EditMode), `BootstrapSceneTests` (PlayMode); run by `scripts/dev/test-unity.sh` (M0-05) | the Core and Presentation module docs → Tests |
 
-```mermaid
-flowchart LR
-  S[CityBuilder.Simulation<br/>local package] --> C[Client.Core]
-  C --> N[Client.Net]
-  C --> P[Client.Presentation]
-  N --> P
-```
 The runtime scene is `Bootstrap`: the owner made it by hand ([MANUAL], `client/README.md`), it stays empty and is scene 0 of the build list
 (the template's `SampleScene` is unticked and would get no `GameRoot`). When the scene loads, `GameBootstrap` creates the
 `GameRoot` composition root, and `GameRoot` shows the UI Toolkit label "Not connected" (UXML and USS from `Assets/_Project/Resources/UI/`).
@@ -74,10 +97,12 @@ compiled assemblies (plain reflection, no extra packages), each next to the laye
 **Not tested here:** that the Unity assemblies compile (the .NET tests cannot say; `scripts/dev/test-unity.sh` and the headless import in
 `client/README.md` check it locally, Unity is not in CI), Infrastructure's "no ASP.NET endpoint types", and Api referencing only Application and Infrastructure. M0-65
 extends the tests (hosting types only in Api, no float fields in the engine, and more). An assembly records a reference only when some
-code uses it, so these tests catch dependencies that code uses, not project references that nothing uses. The two M0-02 tests use a
+code uses it, so these tests catch dependencies that code uses, not project references that nothing uses; Domain, Application and
+Infrastructure have no types yet, so their tests can only start to bite with the first type. The two M0-02 tests use a
 short deny-list of name prefixes (ASP.NET Core, EF Core); M0-65 can widen it.
 
 ## Request lifecycle
-*(planned)* A sequence diagram of one command, from tap to snapshot, as implemented.
+*(planned, M0-63)* A sequence diagram of one command, from tap to snapshot, as implemented (the pipeline is M0-26). The intended steps are
+in `03` → Request lifecycle.
 
-Last updated: M0-05
+Last updated: M0-06

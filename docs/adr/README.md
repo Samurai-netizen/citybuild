@@ -7,4 +7,10 @@ ADRs are written by the tasks that make or confirm the decision (M0-06, M0-18, M
 ## Index
 | ADR | Title | Status |
 |---|---|---|
-| — | none yet (M0-06 writes the first four) | |
+| [ADR-0001](ADR-0001-server-authoritative.md) | The server is the authority; the client only proposes (decision 001) | Accepted |
+| [ADR-0002](ADR-0002-postgresql-only.md) | PostgreSQL is the only source of truth; no Redis in M0 (decision 002) | Accepted |
+| [ADR-0003](ADR-0003-command-endpoints.md) | One HTTP endpoint per command; no realtime channel (decision 003) | Accepted |
+| [ADR-0004](ADR-0004-idempotency.md) | Idempotent commands through `(playerId, requestId)` receipts (decision 004) | Accepted |
+
+Planned: ADR-0005 to ADR-0008 (settle on access, production cap, shared engine, labor model) in M0-18, ADR-0009 (row lock on the own
+city) in M0-24.
