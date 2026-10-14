@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using CityBuilder.Simulation.Content;
@@ -38,7 +39,7 @@ public static class ContentFileLoader
         }
         catch (JsonException exception)
         {
-            throw new ContentLoadException(path, ["The file is not valid content JSON: " + exception.Message], exception);
+            throw new ContentLoadException(path, ["The file is not valid content JSON: " + DescribeWithPlace(exception)], exception);
         }
 
         if (data is null)
@@ -53,6 +54,20 @@ public static class ContentFileLoader
         }
 
         throw new ContentLoadException(path, result.Errors.Select(error => error.ToString()).ToArray());
+    }
+
+    // Most System.Text.Json messages end with "Path: … | LineNumber: … | BytePositionInLine: …", but some leave the place out (an unknown
+    // field, for example). Those get it from the exception's properties, in the same format; line and position count from 0, as there.
+    private static string DescribeWithPlace(JsonException exception)
+    {
+        if (exception.Path is null || exception.Message.Contains("Path: ", StringComparison.Ordinal))
+        {
+            return exception.Message;
+        }
+
+        return string.Create(
+            CultureInfo.InvariantCulture,
+            $"{exception.Message} Path: {exception.Path} | LineNumber: {exception.LineNumber} | BytePositionInLine: {exception.BytePositionInLine}.");
     }
 
     private static JsonSerializerOptions CreateOptions()

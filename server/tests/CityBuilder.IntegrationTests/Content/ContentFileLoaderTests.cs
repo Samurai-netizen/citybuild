@@ -67,7 +67,10 @@ public sealed class ContentFileLoaderTests : IDisposable
 
         ContentLoadException exception = Assert.Throws<ContentLoadException>(() => ContentFileLoader.Load(path));
 
-        Assert.Contains("'colour'", AssertSingleJsonError(exception), StringComparison.Ordinal);
+        string error = AssertSingleJsonError(exception);
+        Assert.Contains("'colour'", error, StringComparison.Ordinal);
+        // System.Text.Json leaves the place out of this message; the loader adds it, so a typo says where it is.
+        Assert.Contains("Path: $.buildings[0].colour | LineNumber: ", error, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -165,6 +168,8 @@ public sealed class ContentFileLoaderTests : IDisposable
     {
         string error = Assert.Single(exception.Errors);
         Assert.StartsWith("The file is not valid content JSON:", error, StringComparison.Ordinal);
+        // Every JSON error says where it is, once (System.Text.Json's own suffix or the loader's).
+        Assert.Single(error.Split("Path: $"), part => part.Contains("| LineNumber: ", StringComparison.Ordinal));
         Assert.IsAssignableFrom<System.Text.Json.JsonException>(exception.InnerException);
         return error;
     }
