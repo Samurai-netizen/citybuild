@@ -2,7 +2,7 @@
 
 - **Status:** Done
 - **Task:** KIT-AGENT-APPROVAL — write down the owner's standing rule about agents (a process change like `KIT-AUDIT-FIXES`: no plan row, commits use the scope `kit`)
-- **Branch / PR:** `task/kit-agent-approval` / —
+- **Branch / PR:** `task/kit-agent-approval` / PR #11
 - **Started:** 2026-10-14 · **First agent:** Claude Code / claude-sonnet-5-5
 
 <!-- Status values: In progress | Done | Partial | Blocked. One entry per task; every session appends a section below.

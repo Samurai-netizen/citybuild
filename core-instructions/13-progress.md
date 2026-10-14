@@ -5,7 +5,7 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: KIT-AGENT-APPROVAL · the owner's standing rule: ask before using agents, `15` OD-9; PR open)
+- **Task:** — (last completed: KIT-AGENT-APPROVAL · the owner's standing rule: ask before using agents, `15` OD-9; PR #11 open)
 - **Branch:** `task/kit-agent-approval` (from `main` = `16ae20a`) until the owner merges
 - **Build log entry:** last: `docs/build-log/2026/2026-10-14-02-KIT-AGENT-APPROVAL.md` (Session 1)
 - **Last green commit:** the head of `task/kit-agent-approval` (`check-docs --base origin/main` OK; process documents and one settings file only)
