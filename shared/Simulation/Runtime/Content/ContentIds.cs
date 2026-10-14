@@ -1,4 +1,5 @@
 #nullable enable
+using System.Globalization;
 
 namespace CityBuilder.Simulation.Content
 {
@@ -9,8 +10,9 @@ namespace CityBuilder.Simulation.Content
         public const int MaxLength = 64;
 
         /// <summary>The rule in words, for error messages.</summary>
-        public const string FormatDescription =
-            "an id starts with a lowercase letter and has only lowercase letters, digits and '_', at most 64 characters";
+        public static readonly string FormatDescription =
+            "an id starts with a lowercase letter and has only lowercase letters, digits and '_', at most "
+            + MaxLength.ToString(CultureInfo.InvariantCulture) + " characters";
 
         /// <summary>Whether the text has the id format. Only ASCII counts, so the check is the same on every machine.</summary>
         public static bool IsValid(string text)

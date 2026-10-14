@@ -11,6 +11,8 @@ namespace CityBuilder.Simulation.Tests.Content;
 /// </summary>
 public sealed class ContentResearchRuleTests
 {
+    // "!" in these tests reaches into the valid fixture, which sets every value it touches (ContentFixture.Valid).
+
     [Fact]
     public void Create_TwoNodesRequiringEachOther_ReportsResearchCycle()
     {

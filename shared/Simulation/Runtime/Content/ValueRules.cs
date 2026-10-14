@@ -10,6 +10,9 @@ namespace CityBuilder.Simulation.Content
     /// </summary>
     internal static class ValueRules
     {
+        // The M0 engine holds one active research (core-instructions/04-simulation-model.md, section 5); more slots are a later minor mechanic.
+        private const int _supportedResearchSlots = 1;
+
         public static void Check(ContentDraft draft, ContentErrorList errors)
         {
             CheckRules(draft.Rules, errors);
@@ -31,12 +34,12 @@ namespace CityBuilder.Simulation.Content
             Positive(rules.GridHeight, "rules.gridHeight", errors);
             Positive(rules.BuilderSlots, "rules.builderSlots", errors);
             Positive(rules.ResearchSlots, "rules.researchSlots", errors);
-            if (rules.ResearchSlots > 1)
+            if (rules.ResearchSlots > _supportedResearchSlots)
             {
                 errors.Add(
                     ContentErrorCode.ValueTooLarge,
                     "rules.researchSlots",
-                    FormattableString.Invariant($"The engine holds one active research in M0, so researchSlots must be 1, but is {rules.ResearchSlots}."));
+                    FormattableString.Invariant($"The engine holds one active research in M0, so researchSlots must be {_supportedResearchSlots}, but is {rules.ResearchSlots}."));
             }
 
             Positive(rules.MaxOfflineProductionSeconds, "rules.maxOfflineProductionSeconds", errors);

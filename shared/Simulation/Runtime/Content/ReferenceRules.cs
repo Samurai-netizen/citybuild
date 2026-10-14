@@ -29,12 +29,14 @@ namespace CityBuilder.Simulation.Content
             var eraNumbers = new HashSet<int>();
             foreach (EraDefinition era in draft.Eras)
             {
-                if (!eraIds.Add(era.Id))
+                // Both sets learn every era. A copy that repeats the id and the number is one mistake, so the id is reported, not both.
+                bool idIsTaken = !eraIds.Add(era.Id);
+                bool numberIsTaken = !eraNumbers.Add(era.Number);
+                if (idIsTaken)
                 {
                     Duplicate(ContentPaths.Era(era), "era id " + era.Id.Value, errors);
                 }
-
-                if (!eraNumbers.Add(era.Number))
+                else if (numberIsTaken)
                 {
                     Duplicate(ContentPaths.Era(era) + ".number", "era number " + Format(era.Number), errors);
                 }

@@ -20,6 +20,7 @@ namespace CityBuilder.Client.Tests.EditMode
             GameContentResult result = GameContentFactory.Create(SmallContent());
 
             Assert.That(result.IsValid, Is.True, string.Join("\n", result.Errors.Select(error => error.ToString())));
+            // IsValid was asserted just above, so Content is set; and TryGetBuilding returned true, so hut is set.
             Assert.That(result.Content!.Items.Select(item => item.Id.Value), Is.EqualTo(new[] { "gold", "wood" }));
             Assert.That(result.Content.TryGetBuilding(new BuildingTypeId("hut"), out BuildingDefinition? hut), Is.True);
             Assert.That(hut!.GetLevel(1).WorkersProvided, Is.EqualTo(2));
@@ -28,6 +29,7 @@ namespace CityBuilder.Client.Tests.EditMode
         [Test]
         public void Create_TwoRuleErrors_ReportsBothInOrder()
         {
+            // SmallContent sets every value that "!" reaches here.
             GameContentData data = SmallContent();
             data.Rules!.GridWidth = 0;
             data.Buildings![0]!.Cost!["gold"] = -1;

@@ -10,6 +10,8 @@ namespace CityBuilder.Simulation.Tests.Content;
 /// </summary>
 public sealed class ContentBuildingRuleTests
 {
+    // "!" in these tests reaches into the valid fixture, which sets every value it touches (ContentFixture.Valid).
+
     private static readonly Dictionary<string, Action<GameContentData>> _levelsNotContiguous = new()
     {
         ["gap"] = data => Level(data, "hut", 2).Level = 3,

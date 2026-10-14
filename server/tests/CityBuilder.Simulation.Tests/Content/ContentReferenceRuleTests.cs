@@ -11,6 +11,8 @@ namespace CityBuilder.Simulation.Tests.Content;
 /// </summary>
 public sealed class ContentReferenceRuleTests
 {
+    // "!" in these tests reaches into the valid fixture, which sets every value it touches (ContentFixture.Valid).
+
     private static readonly Dictionary<string, Action<GameContentData>> _duplicates = new()
     {
         ["eras[first_era]"] = data => Era(data, 2).Id = "first_era",
@@ -118,6 +120,15 @@ public sealed class ContentReferenceRuleTests
     [MemberData(nameof(UnlockMismatchPaths))]
     public void Create_LockedTypeNotUnlockedExactlyOnce_ReportsUnlockMismatch(string path) =>
         ContentAssert.SingleError(ValidWith(_unlockMismatches[path]), ContentErrorCode.UnlockMismatch, path);
+
+    [Fact]
+    public void Create_ExactCopyOfAnEra_ReportsOneDuplicateIdForTheCopy()
+    {
+        // The copy repeats both the id and the number; it is one mistake, so it gives one error.
+        GameContentData data = ValidWith(data => data.Eras!.Add(new EraData { Number = 1, Id = "first_era", Name = "First Era" }));
+
+        ContentAssert.SingleError(data, ContentErrorCode.DuplicateId, "eras[first_era]");
+    }
 
     [Fact]
     public void Create_SameIdForAnItemAndABuildingType_IsAccepted()

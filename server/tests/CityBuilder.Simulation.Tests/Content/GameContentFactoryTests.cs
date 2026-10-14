@@ -7,6 +7,8 @@ namespace CityBuilder.Simulation.Tests.Content;
 /// <summary>What the factory builds from valid data: every value carried over, sorted lists, lookups and derived values.</summary>
 public sealed class GameContentFactoryTests
 {
+    // "!" in these tests reaches into the valid fixture, which sets every value it touches (ContentFixture.Valid).
+
     [Fact]
     public void Create_NullData_Throws()
     {

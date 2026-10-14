@@ -10,6 +10,8 @@ namespace CityBuilder.Simulation.Tests.Content;
 /// </summary>
 public sealed class ContentValueRuleTests
 {
+    // "!" in these tests reaches into the valid fixture, which sets every value it touches (ContentFixture.Valid).
+
     private static readonly Dictionary<string, Action<GameContentData>> _notPositive = new()
     {
         ["rules.gridWidth"] = data => RulesOf(data).GridWidth = 0,

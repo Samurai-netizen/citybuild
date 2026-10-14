@@ -10,6 +10,8 @@ namespace CityBuilder.Simulation.Tests.Content;
 /// </summary>
 public sealed class ContentShapeTests
 {
+    // "!" in these tests reaches into the valid fixture, which sets every value it touches (ContentFixture.Valid).
+
     private static readonly Dictionary<string, Action<GameContentData>> _missingValues = new()
     {
         ["contentVersion"] = data => data.ContentVersion = null,
