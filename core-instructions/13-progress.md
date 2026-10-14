@@ -5,7 +5,7 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: KIT-AGENT-RULE · the owner's standing rule about agents, `15` OD-9; PR open against `main`; PR #9, M0-04-FOLLOWUP, is merged)
+- **Task:** — (last completed: KIT-AGENT-RULE · the owner's standing rule about agents, `15` OD-9; PR #10 open against `main`; PR #9, M0-04-FOLLOWUP, is merged)
 - **Branch:** `task/kit-agent-rule` (`main` merged in after PR #9) until the owner merges
 - **Build log entry:** last: `docs/build-log/2026/2026-10-14-02-KIT-AGENT-RULE.md` (Session 1)
 - **Last green commit:** the head of `task/kit-agent-rule` (`check-docs --base origin/main` OK; process documents only, no code changed)

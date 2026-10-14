@@ -2,7 +2,7 @@
 
 - **Status:** Done
 - **Task:** KIT-AGENT-RULE — write down the owner's standing rule about agents (a process change, like `KIT-AUDIT-FIXES`: no plan row, commits use the scope `kit`)
-- **Branch / PR:** `task/kit-agent-rule` (started on top of PR #9's branch, because both change the resume point, the changelog and the log index; PR #9 was merged while this task ran and `origin/main` was merged into this branch) / PR to `main`
+- **Branch / PR:** `task/kit-agent-rule` (started on top of PR #9's branch, because both change the resume point, the changelog and the log index; PR #9 was merged while this task ran and `origin/main` was merged into this branch) / PR #10
 - **Started:** 2026-10-14 · **First agent:** Claude Code / claude-sonnet-5-5
 
 <!-- Status values: In progress | Done | Partial | Blocked. One entry per task; every session appends a section below.
