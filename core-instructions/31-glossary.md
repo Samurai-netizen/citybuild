@@ -36,7 +36,7 @@ Use these names in code, docs and UI text. Consistent words keep Claude and the 
 | Dormant tail | Part of a settlement after the production cap: timers run, no new cycles | — |
 | Settlement report | What happened during a settle | `SettlementReport` |
 | Zero-length advance | `Advance(city, 0)`: start eligible cycles at the current clock | — |
-| Content | All game definitions loaded from JSON: as read, and validated (only the factory makes the latter) | `GameContentData`, `GameContent`, `GameContentFactory`, `contentVersion` |
+| Content | All game definitions loaded from JSON: as read, and validated (only the factory makes the latter) | `GameContentData`, `GameContent`, `GameContentFactory`, `contentVersion`; on the server `IContentProvider`, `ContentFileLoader`, `Content:FilePath` |
 | Content error | One problem found when content loads: a stable code, the path in the JSON, a message (`04` §14) | `ContentError`, `ContentErrorCode` |
 | Command | A state-changing player intent | `PlaceBuilding`, `UpgradeBuilding`, `AssignWorkers`, `StartResearch` |
 | Request id | Client UUID for idempotent retries | `RequestId` |

@@ -10,9 +10,9 @@
 - **Build log entry:** `docs/build-log/2026/2026-10-14-06-M0-07b.md` (plan: Session 1, steps 1–6)
 - **Last green commit:** the head of the branch (0 warnings, format clean, fast suite 457 passed)
 - **Done steps:** 1 (write-ahead); 2 (`mvp-content.json`, `IContentProvider`, `ContentFileLoader`, the real file loads); 3 (loader error
-  tests, dependency tests bound to types); 4 (startup: `Content:FilePath`, load before requests, fail fast, startup tests)
-- **Next step:** 5: docs: `docs/how-to/add-building-or-item.md`, module docs Application/Infrastructure/Api, `getting-started` →
-  Configuration and Run, `23` (the JSON is the source now), `overview.md`, how-to index, `12` row(s). Then 6 finish.
+  tests, dependency tests bound to types); 4 (startup: `Content:FilePath`, load before requests, fail fast); 5 (docs, how-to)
+- **Next step:** 6: `/finish-task`: Definition of Done, `check-docs --base origin/main`, line-by-line self-review (incl. the JSON against
+  `23`), CHANGELOG, board `In review`, PR, report.
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —

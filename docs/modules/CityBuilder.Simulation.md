@@ -4,8 +4,8 @@
 `shared/Simulation.Build/` (the .NET project) · **Kind:** Unity assembly and .NET class library (`netstandard2.1`, C# 9) ·
 **References:** the base class library only · **Referenced by:** `CityBuilder.Domain`, `CityBuilder.Application` (Infrastructure and Api get it through them), `CityBuilder.Simulation.Tests`; in Unity `CityBuilder.Client.Core` and the two client test assemblies (`CityBuilder.Client.Net` and `.Presentation` reach it through Core)
 
-> *Growing.* The integer helpers, the content ids and the content model with its validation exist (M0-07a). Loading the content JSON on
-> the server follows in M0-07b, the city state in M0-08 and `Simulator.Advance` in M0-09 *(planned)*.
+> *Growing.* The integer helpers, the content ids and the content model with its validation exist (M0-07a); the server loads the content
+> JSON through it (M0-07b, `docs/modules/CityBuilder.Infrastructure.md`). The city state follows in M0-08 and `Simulator.Advance` in M0-09 *(planned)*.
 
 ## Purpose
 The deterministic simulation engine: integer-only game rules and the helpers they share (`core-instructions/04-simulation-model.md`).
@@ -39,8 +39,7 @@ flowchart LR
 The engine accepts content only as a `GameContent`, and only the factory makes one, so every definition the engine sees has passed every rule
 of `04` → Content rules. Bad data is never an exception: the result lists each error with a stable `ContentErrorCode`, a path in the JSON's
 own names (`buildings[sawmill].levels[2].recipe.labor`) and a message. A broken value gives one error: later rules skip what earlier ones
-reported. The JSON format is the shape of the `*Data` classes in camelCase; the worked example is `docs/how-to/add-building-or-item.md`
-*(planned, M0-07b)*. Design decisions: build log `docs/build-log/2026/2026-10-14-05-M0-07a.md`, decisions 2–8 and 11–31.
+reported. The JSON format is the shape of the `*Data` classes in camelCase; the worked example is `docs/how-to/add-building-or-item.md`. Design decisions: build log `docs/build-log/2026/2026-10-14-05-M0-07a.md`, decisions 2–8 and 11–31.
 
 ## Key types
 | Type | Responsibility |
@@ -125,4 +124,4 @@ too, but guards the Unity client's asmdefs and manifest, not the engine (see `do
   depend on `Dictionary` or `HashSet` order (`04` §9).
 - Content error messages are English text for content authors; only `ContentErrorCode` and `Path` are stable.
 
-Last updated: M0-07a
+Last updated: M0-07b

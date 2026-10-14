@@ -1,8 +1,8 @@
 # MVP Content (M0) — exact numbers
 
 > These are the design numbers for the 14-day MVP: a small slice of **Era I (Early Middle Ages)**.
-> On Day 2 they are copied into `server/content/mvp-content.json`, and **from then on the JSON is the
-> source of truth**. Update this file in the same commit whenever the JSON changes.
+> M0-07b copied them into `server/content/mvp-content.json` (content version `mvp-1`), and **from then on the JSON is the
+> source of truth**. Update this file in the same commit whenever the JSON changes (`docs/how-to/add-building-or-item.md`).
 > Every number is a placeholder until the balance simulator (Day 12) validates it.
 > M0 research times are short so the slice can be played in one sitting. Real Era I research takes 10 min–4 h (`25`).
 
