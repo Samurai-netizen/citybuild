@@ -5,7 +5,7 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-05 · Unity test foundation; PR open, the owner merges it)
+- **Task:** — (last completed: M0-05 · Unity test foundation; PR #12 open, the owner merges it)
 - **Branch:** `task/M0-05-unity-test-foundation` (from `main` = `663a714`) until the owner merges
 - **Build log entry:** last: `docs/build-log/2026/2026-10-14-03-M0-05.md` (Session 1)
 - **Last green commit:** the head of `task/M0-05-unity-test-foundation` (`test-unity.sh`: EditMode 6 of 6, PlayMode 6 of 6; server fast suite 173 passed;
