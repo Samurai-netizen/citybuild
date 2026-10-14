@@ -11,11 +11,10 @@
 - **Last green commit:** the branch head (build 0 warnings; `dotnet format` clean; fast suite 173 passed; `check-docs` OK)
 - **Steps:** 1 write-ahead · 2 review of M0-01…M0-05 (small fixes only) · 3 ADR-0001…0004 + index · 4 architecture overview ·
   5 commands (`13`, `getting-started.md`, `AGENTS.md` marks: ask first) · 6 all tests, finish, PR
-- **Done steps:** 1, 2 (findings table and fixes in the build log), 3, 4
-- **Next step:** step 5: "Commands that work right now" below, `docs/getting-started.md`, then ask the owner about the `AGENTS.md` marks
-  (protected). No agents (build log decision 1).
-- **Open questions for the owner:** the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI); [MANUAL] run `test-unity.ps1` once on
-  Windows (never executed).
+- **Done steps:** 1, 2 (findings table and fixes in the build log), 3, 4, 5 except `AGENTS.md`
+- **Next step:** apply the owner's answer on `AGENTS.md` (build log decision 16), then step 6: Unity tests, self-review, finish, PR. No agents.
+- **Open questions for the owner:** `AGENTS.md`: add the format check and `test-guard-bash.sh` lines? (asked in chat; covers the KIT-AUDIT-FIXES
+  command-line follow-up); guard test in CI (KIT-AUDIT-FIXES); [MANUAL] run `test-unity.ps1` once on Windows (never executed).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` ·
   `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
@@ -44,11 +43,16 @@
 States: `not started` · `in progress` · `done` · `blocked (reason)`
 
 ## Commands that work right now
-- `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (`client/README.md` → Run the tests; `.ps1` for Windows, not yet run by anyone) ·
-  `bash scripts/dev/check-docs.sh` · `bash scripts/dev/test-guard-bash.sh` · `bash scripts/dev/setup-hooks.sh` · `bash scripts/dev/show-task.sh <ID>` · `bash scripts/dev/new-log-entry.sh <ID> "<title>" "<agent>"`
-- `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` ·
-  `dotnet format server/CityBuilder.slnx --verify-no-changes` · `dotnet run --project server/src/CityBuilder.Api` (http://localhost:8080)
-- Unity compile check, Editor closed: `<UNITY> -batchmode -quit -projectPath client/CityBuilder -logFile -` (`client/README.md`; exit 0, no `error CS`)
+All run in M0-06 (details and the "since" task: `docs/getting-started.md` → Run).
+- **Process:** `bash scripts/dev/setup-hooks.sh` · `bash scripts/dev/check-docs.sh [--base origin/main]` · `bash scripts/dev/show-task.sh <ID>` ·
+  `bash scripts/dev/new-log-entry.sh <ID> "<title>" "<tool / model>"` · `bash scripts/dev/test-guard-bash.sh` (after changing the Bash guard)
+- **Server:** `dotnet restore server/CityBuilder.slnx --locked-mode` · `dotnet format server/CityBuilder.slnx --verify-no-changes` ·
+  `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` ·
+  `dotnet run --project server/src/CityBuilder.Api`, then `curl http://localhost:8080/health` → `Healthy`
+- **Unity (Editor closed):** `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (`.ps1` on Windows, never run yet) · compile check
+  `<UNITY> -batchmode -quit -projectPath client/CityBuilder -logFile -` (exit 0, no `error CS`; `client/README.md`)
+- **Not yet:** integration tests (the filter finds none until M0-21) · `docker compose` (M0-19) · DocTools (M0-61) · `quality.sh` (M0-62) ·
+  BalanceSim (M0-67)
 
 ## Open issues / tech debt
 - Audit item A18 (Unity 6.6 installed, the stack pins 6.3) is closed: the project is 6000.3.25f1 (M0-04).
