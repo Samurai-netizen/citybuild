@@ -11,10 +11,9 @@
 - **Last green commit:** the branch head (build 0 warnings; `dotnet format` clean; fast suite 173 passed; `check-docs` OK)
 - **Steps:** 1 write-ahead · 2 review of M0-01…M0-05 (small fixes only) · 3 ADR-0001…0004 + index · 4 architecture overview ·
   5 commands (`13`, `getting-started.md`, `AGENTS.md` marks: ask first) · 6 all tests, finish, PR
-- **Done steps:** 1, 2 (findings table and fixes in the build log), 3, 4, 5 except `AGENTS.md`
-- **Next step:** apply the owner's answer on `AGENTS.md` (build log decision 16), then step 6: Unity tests, self-review, finish, PR. No agents.
-- **Open questions for the owner:** `AGENTS.md`: add the format check and `test-guard-bash.sh` lines? (asked in chat; covers the KIT-AUDIT-FIXES
-  command-line follow-up); guard test in CI (KIT-AUDIT-FIXES); [MANUAL] run `test-unity.ps1` once on Windows (never executed).
+- **Done steps:** 1, 2 (findings table and fixes in the build log), 3, 4, 5 (`AGENTS.md`: two lines, approved by the owner)
+- **Next step:** step 6: Unity tests (`test-unity.sh`), self-review, finish, PR. No agents.
+- **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never executed).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` ·
   `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)

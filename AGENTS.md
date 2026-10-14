@@ -62,7 +62,9 @@ bash scripts/dev/setup-hooks.sh                 # once per clone: enable .githoo
 bash scripts/dev/show-task.sh M0-15             # print a task (or CR) spec
 bash scripts/dev/new-log-entry.sh M0-15 "Title" "Claude Code / claude-opus-5-5"
 bash scripts/dev/check-docs.sh [--base origin/main]   # docs and process checks (also in pre-commit and CI)
+bash scripts/dev/test-guard-bash.sh             # after changing .claude/hooks/guard-bash.sh
 dotnet build server/CityBuilder.slnx
+dotnet format server/CityBuilder.slnx --verify-no-changes   # as CI; part of Done
 dotnet test  server/CityBuilder.slnx --filter "Category!=Integration"  # fast suite
 dotnet test  server/CityBuilder.slnx --filter "Category=Integration"   # [M0-21] needs Docker
 dotnet run   --project server/src/CityBuilder.Api                      # http://localhost:8080
