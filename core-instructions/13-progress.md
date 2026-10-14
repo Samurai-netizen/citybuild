@@ -12,8 +12,10 @@
 - **Steps:** 1 write-ahead · 2 review of M0-01…M0-05 (small fixes only) · 3 ADR-0001…0004 + index · 4 architecture overview ·
   5 commands (`13`, `getting-started.md`, `AGENTS.md` marks: ask first) · 6 all tests, finish, PR
 - **Done steps:** 1, 2 (findings table and fixes in the build log), 3, 4, 5 (`AGENTS.md`: two lines, approved by the owner)
-- **Next step:** step 6: Unity tests (`test-unity.sh`), self-review, finish, PR. No agents.
-- **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never executed).
+- **Next step:** step 6 is half done (Unity 12 of 12, CI sequence green, self-review). Apply the owner's answer on the mode of
+  `test-guard-bash.sh` (build log decision 17), then finish: board `In review`, log `Done`, resume point `IDLE`, PR. No agents.
+- **Open questions for the owner:** commit `scripts/dev/test-guard-bash.sh` as executable (`100755`)? (asked in chat); guard test in CI
+  (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never executed).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` ·
   `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
