@@ -23,6 +23,8 @@
       "Bash(docker compose down -v *)",
       "Bash(docker volume rm *)",
       "Bash(dotnet ef database drop *)",
+      "Agent",
+      "Workflow",
       "Edit(/AGENTS.md)",
       "Edit(/CLAUDE.md)",
       "Edit(/core-instructions/02-principles.md)",

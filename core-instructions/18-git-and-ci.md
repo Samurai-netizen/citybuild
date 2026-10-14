@@ -20,7 +20,7 @@ The repository on GitHub is the single place where all work and all context live
 ## Pull requests
 - One PR per task, opened by the AI at the end of `/finish-task` with `gh pr create`.
   The title is the commit format (`feat(M0-15): …`), and the body fills `.github/pull_request_template.md`.
-- To be mergeable, the PR needs: CI green, `reviewer` findings resolved (for `[O]` tasks), and the owner's OK, which is the merge itself
+- To be mergeable, the PR needs: CI green, review findings resolved (the self-review of `16` §E, for `[O]` tasks), and the owner's OK, which is the merge itself
   (the ruleset requires 0 approvals, see GitHub settings).
 - **The owner merges** with "Squash and merge"; GitHub deletes the branch automatically. The AI never merges.
   The build log keeps the step-by-step history that squashing removes from `main`.

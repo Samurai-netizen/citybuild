@@ -42,3 +42,7 @@ These rules apply to every task and every AI coder. If a request conflicts with 
 
 ## Honest reporting
 26. Report what was actually run and passed, and name what you couldn't verify. Never claim "cheat-proof".
+
+## Agents
+27. **Agents only with the owner's approval, every time.** Default: none. Before starting any agent or Workflow, send the owner a proposal with
+    options (no agents / small / big …: why, how many and why, which model) and wait for the answer. Owner directive OD-9, details in `15`.

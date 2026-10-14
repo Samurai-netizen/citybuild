@@ -18,7 +18,8 @@ flowchart LR
 Roles:
 - **Owner:** decides what gets built, approves plans, CRs and PRs, merges, and does [MANUAL] steps.
 - **AI coder:** builds through the session protocol (`16`).
-- **Reviewer:** a fresh-context subagent or session that checks the work.
+- **Reviewer:** the AI coder reviews its own branch; a fresh session that the owner starts is the independent option. An agent only after the
+  owner approved a proposal (OD-9, `15`).
 - **CI:** the final mechanical gate.
 
 ## Who reads what
@@ -52,7 +53,8 @@ Roles:
 - [ ] `scripts/dev/check-docs.sh --base origin/main` passes; generated docs are current (from M0-61).
 - [ ] Build log entry complete: sessions, every decision, owner input, verification, follow-ups.
 - [ ] Resume point `IDLE`, plan board row updated, `CHANGELOG` line added, decision rows and ADRs added if needed.
-- [ ] Reviewer pass done for `[O]` tasks, with blocking findings fixed.
+- [ ] Self-review done (line by line for `[O]` tasks and for engine, persistence or security changes), with blocking findings fixed; any agent used was
+  approved by the owner in advance and is recorded in the build log (OD-9).
 - [ ] Branch pushed, PR opened with the template filled, and the report given to the owner.
 
 ## Task report format (the final message of every task)
@@ -74,6 +76,8 @@ Roles:
   debugging non-obvious failures, CR impact analysis.
 - **Sonnet 5.5 `[S]`:** scaffolding, DTOs, UI Toolkit screens, logging, docs, straightforward tests.
 - If a Sonnet task fails twice on the same problem, switch to Opus rather than retrying a third time.
+- **Agents (OD-9, `15`):** none unless the owner approved a proposal first; the proposal names each agent's model. This is about agents, not the
+  model of the main session.
 
 ## Instruction hygiene
 - Always-loaded files stay small: `AGENTS.md` ≤ 150, `CLAUDE.md` ≤ 80, `02` ≤ 70, `13` ≤ 80 lines (check-docs enforces this).
