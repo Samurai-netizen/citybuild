@@ -4,14 +4,14 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: KIT-AGENT-APPROVAL · the owner's standing rule: ask before using agents, `15` OD-9; PR #11 open)
-- **Branch:** `task/kit-agent-approval` (from `main` = `16ae20a`) until the owner merges
-- **Build log entry:** last: `docs/build-log/2026/2026-10-14-02-KIT-AGENT-APPROVAL.md` (Session 1)
-- **Last green commit:** the head of `task/kit-agent-approval` (`check-docs --base origin/main` OK; process documents and one settings file only)
-- **Done steps:** all five (write-ahead; the rule in `15`, `02`, `CLAUDE.md`; everything that started agents on its own; the `ask` rules; W10, CHANGELOG, finish)
-- **Next step:** the owner merges the PR; then `/start-task M0-05` (Unity test foundation, `[S]`). It reads the M0-04 entry → Follow-ups (`AppInfo` is
-  defined nowhere; the scratch scenarios to commit as PlayMode tests) and the M0-04-FOLLOWUP entry → Follow-ups. **Agents: only after the owner
+- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** M0-05 · Unity test foundation (`[S]`, Claude Code / claude-sonnet-5-5)
+- **Branch:** `task/M0-05-unity-test-foundation` (from `main` = `663a714`)
+- **Build log entry:** `docs/build-log/2026/2026-10-14-03-M0-05.md` (Session 1)
+- **Last green commit:** `663a714` (`main`); nothing of this task is committed yet
+- **Done steps:** none (planned: 1 write-ahead, 2 `AppInfo` + EditMode tests, 3 PlayMode tests, 4 `test-unity.sh` / `.ps1` and a real run,
+  5 docs, 6 mutation checks, self-review, finish)
+- **Next step:** commit and push the write-ahead, then step 2 (`AppInfo` in `Client.Core`, the EditMode tests). **Agents: only after the owner
   approves a proposal (OD-9).**
 - **Open questions for the owner:** the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI).
 - **Known broken / do not touch:** —
