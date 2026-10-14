@@ -5,7 +5,7 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-04-FOLLOWUP · the owner's Bootstrap scene and removal of the pre-release AI packages; M0-04 itself is merged, PR #8)
+- **Task:** — (last completed: M0-04-FOLLOWUP · the owner's Bootstrap scene and removal of the pre-release AI packages; PR #9 open; M0-04 itself is merged, PR #8)
 - **Branch:** `task/M0-04-scene-and-packages` (until the owner merges its PR)
 - **Build log entry:** last: `docs/build-log/2026/2026-10-14-01-M0-04-FOLLOWUP.md` (Session 1)
 - **Last green commit:** the head of `task/M0-04-scene-and-packages` (CI's server sequence run locally: 173 fast tests, format, Release build 0 warnings;
