@@ -2,7 +2,7 @@
 
 - **Status:** Done
 - **Task:** KIT-AGENT-RULE — write down the owner's standing rule about agents (a process change, like `KIT-AUDIT-FIXES`: no plan row, commits use the scope `kit`)
-- **Branch / PR:** `task/kit-agent-rule` (stacked on `task/M0-04-scene-and-packages`, PR #9, because both change the resume point, the changelog and the log index) / —
+- **Branch / PR:** `task/kit-agent-rule` (started on top of PR #9's branch, because both change the resume point, the changelog and the log index; PR #9 was merged while this task ran and `origin/main` was merged into this branch) / PR to `main`
 - **Started:** 2026-10-14 · **First agent:** Claude Code / claude-sonnet-5-5
 
 <!-- Status values: In progress | Done | Partial | Blocked. One entry per task; every session appends a section below.
@@ -34,7 +34,10 @@
   model guidance), `17` (two places), `18` (merge condition), `/finish-task` step 5, `/docs-sync` step 2, the PR template, the legend of the plan's task
   specs, `reviewer.md` (`model: sonnet`, description) and `docs-auditor.md` (description). `git grep` for "subagent" and "reviewer" finds only
   the agent definitions themselves and text that points to OD-9. Step 4: decision row W10, the CHANGELOG line, `check-docs.sh --base origin/main`, PR.
-- **Stopped at / next:** the owner merges PR #9 and then this PR (or this one into #9's branch first). No code, no tests: process documents only.
+- **Done (cont.):** PR #9 was merged during this task (squash `16ae20a`, its branch deleted). `origin/main` has the same tree as #9's tip, so it was merged
+  into this branch with `git merge -X ours origin/main` (no force-push, which the settings deny): the merge changed no file (`git diff` against my
+  tip is empty) and the diff against `main` is exactly this task's 18 files. CI skips `Merge …` subjects.
+- **Stopped at / next:** the owner merges the PR. No code, no tests: process documents only.
 
 ## Decisions
 <!-- Every decision, when it is made, including small ones. Scope: local | project-wide (→ 12-decisions.md row) | architectural (→ ADR). -->

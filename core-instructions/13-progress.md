@@ -5,12 +5,12 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: KIT-AGENT-RULE · the owner's standing rule about agents, `15` OD-9; PR open, stacked on PR #9; M0-04-FOLLOWUP is PR #9)
-- **Branch:** `task/kit-agent-rule` (base: `task/M0-04-scene-and-packages`) until the owner merges
+- **Task:** — (last completed: KIT-AGENT-RULE · the owner's standing rule about agents, `15` OD-9; PR open against `main`; PR #9, M0-04-FOLLOWUP, is merged)
+- **Branch:** `task/kit-agent-rule` (`main` merged in after PR #9) until the owner merges
 - **Build log entry:** last: `docs/build-log/2026/2026-10-14-02-KIT-AGENT-RULE.md` (Session 1)
 - **Last green commit:** the head of `task/kit-agent-rule` (`check-docs --base origin/main` OK; process documents only, no code changed)
 - **Done steps:** all four (write-ahead; the rule in `15`, `02`, `CLAUDE.md`; everything that contradicted it; W10, CHANGELOG, finish)
-- **Next step:** the owner merges PR #9 and the PR of this branch (or this one into #9's branch first); then `/start-task M0-05` (Unity test foundation,
+- **Next step:** the owner merges the PR of this branch; then `/start-task M0-05` (Unity test foundation,
   `[S]`). It reads the M0-04 entry → Follow-ups, the M0-04-FOLLOWUP entry → Follow-ups. **No agents** (OD-9): self-review only.
 - **Open questions for the owner:** (1) is the reading of OD-9 right (agents only, not the main session's model; one agent per whole task; the coder decides
   what "really necessary" means)? Decision 2 of the KIT-AGENT-RULE entry. (2) the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI).
