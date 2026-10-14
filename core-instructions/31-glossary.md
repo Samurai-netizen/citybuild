@@ -5,9 +5,9 @@ Use these names in code, docs and UI text. Consistent words keep Claude and the 
 | Term | Meaning | Code name |
 |---|---|---|
 | Item | Any countable good, including coins | `ItemId` |
-| Stock | Quantity of an item the city holds | `Inventory[item]` |
-| Storage cap | Max stock that production may fill for a capped item (base + research bonuses) | `StorageCap` |
-| Reserved | Output quantity promised to running cycles (derived) | `Reserved` |
+| Stock | Quantity of an item the city holds | `CityState.Inventory`, `GetQuantity(item)` |
+| Storage cap | Max stock that production may fill for a capped item (base + research bonuses) | `GameRules.BaseStorageCaps`, `CityQueries.TryGetEffectiveCap` |
+| Reserved | Output quantity promised to running cycles (derived) | `CityQueries.Reserved` |
 | Recipe | Inputs → outputs with a labor cost, per building type and level | `Recipe` |
 | Labor | Worker-seconds one cycle needs | `Labor`, `CycleLabor`, `LaborRemaining` |
 | Cycle | One run of a recipe | — |
@@ -20,7 +20,7 @@ Use these names in code, docs and UI text. Consistent words keep Claude and the 
 | Frozen cycle | A producing cycle with 0 workers (no progress) | `PhaseEndsAt == null` |
 | Building type | Content definition (cost, recipes, max workers per level, unlock) | `BuildingTypeId`, `BuildingDefinition` |
 | Building kind | What a building type does: a house provides workers, a producer runs a recipe | `BuildingKind` (`House`, `Producer`) |
-| Building | A placed instance in a city, with a per-city integer id | `Building`, `BuildingId` |
+| Building | A placed instance in a city, with a per-city integer id | `Building`, `Building.Id` (`buildingId` in the API) |
 | Phase | `Constructing`, `Upgrading`, `Idle`, `Producing` | `BuildingPhase` |
 | Stall reason | Why a building makes no progress (derived) | `StallReason` |
 | Builder slot | Capacity for simultaneous constructions/upgrades | `BuilderSlots` |
@@ -30,7 +30,8 @@ Use these names in code, docs and UI text. Consistent words keep Claude and the 
 | Era | Time period of a city (1 = Early Middle Ages) | `Era`, `EraId` |
 | Major / minor mechanic | Era-gated system vs research-gated addition (`25`) | — |
 | Trading Post | NPC merchants that buy goods for coins; the coin faucet | `trading_post` |
-| City clock | Per-city simulation time in integer seconds | `City.Clock` |
+| City state | Everything stored about one city: clock, era, stock, buildings, research; derived values are computed, never stored | `CityState`, `CityFactory`, `CityQueries` |
+| City clock | Per-city simulation time in integer seconds | `CityState.Clock` |
 | Settle | Advance a city from its last settlement to now | `SettleCity`, `Simulator.Advance` |
 | Production cap | Max seconds per settlement during which cycles may start | `Rules.MaxOfflineProductionSeconds` |
 | Dormant tail | Part of a settlement after the production cap: timers run, no new cycles | — |
@@ -39,6 +40,7 @@ Use these names in code, docs and UI text. Consistent words keep Claude and the 
 | Content | All game definitions loaded from JSON: as read, and validated (only the factory makes the latter) | `GameContentData`, `GameContent`, `GameContentFactory`, `contentVersion`; on the server `IContentProvider`, `ContentFileLoader`, `Content:FilePath` |
 | Content error | One problem found when content loads: a stable code, the path in the JSON, a message (`04` §14) | `ContentError`, `ContentErrorCode` |
 | Command | A state-changing player intent | `PlaceBuilding`, `UpgradeBuilding`, `AssignWorkers`, `StartResearch` |
+| Mutation | The engine's rule for one command, applied at the city clock: `Ok`, or rejected with a code and no change (`04` §8) | `CityRules`, `MutationResult`, `MutationErrorCode` |
 | Request id | Client UUID for idempotent retries | `RequestId` |
 | Receipt | Stored response of a successful command | `CommandReceipt` |
 | Ledger entry | Audit row for one item change | `LedgerEntry` |
