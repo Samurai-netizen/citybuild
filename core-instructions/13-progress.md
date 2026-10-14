@@ -8,10 +8,10 @@
 - **Task:** M0-07b · Content model with research and eras: JSON file and server loading (`[O]`; design: M0-07a build log, decisions 4 and 8)
 - **Branch:** `task/M0-07b-content-loading` (from `main` = `3c98331`)
 - **Build log entry:** `docs/build-log/2026/2026-10-14-06-M0-07b.md` (plan: Session 1, steps 1–6)
-- **Last green commit:** `main` = `3c98331` (fast suite 438 passed)
-- **Done steps:** 1 (write-ahead)
-- **Next step:** 2: `server/content/mvp-content.json` (the numbers of `23`), copied to the Api output; `IContentProvider`; the JSON loader;
-  test that the real file loads. Then 3 loader errors, 4 startup, 5 docs, 6 finish.
+- **Last green commit:** the head of the branch (0 warnings, format clean, fast suite 439 passed)
+- **Done steps:** 1 (write-ahead); 2 (`mvp-content.json`, `IContentProvider`, `ContentFileLoader`, the real file loads)
+- **Next step:** 3: loader error tests (unreadable, malformed, wrong type, unknown field, repeated key, every rule error listed); bind
+  `ApplicationDependencyTests` and `InfrastructureDependencyTests` to their first types. Then 4 startup, 5 docs, 6 finish.
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
