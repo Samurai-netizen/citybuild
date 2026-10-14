@@ -5,7 +5,7 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-07b · Content model with research and eras: JSON file and server loading; PR open, the owner merges it)
+- **Task:** — (last completed: M0-07b · Content model with research and eras: JSON file and server loading; PR #15 open, the owner merges it)
 - **Branch:** `task/M0-07b-content-loading` (from `main` = `3c98331`) until the owner merges
 - **Build log entry:** last: `docs/build-log/2026/2026-10-14-06-M0-07b.md` (Done)
 - **Last green commit:** the head of `task/M0-07b-content-loading` (0 warnings, format clean, fast suite 458 passed;
