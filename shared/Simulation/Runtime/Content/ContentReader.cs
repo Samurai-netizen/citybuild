@@ -115,7 +115,7 @@ namespace CityBuilder.Simulation.Content
             var prerequisites = new List<ResearchId>();
             for (int index = 0; texts is not null && index < texts.Count; index++)
             {
-                ResearchId? prerequisite = _fields.RequireId(texts[index], path + "[#" + index + "]", text => new ResearchId(text));
+                ResearchId? prerequisite = _fields.RequireId(texts[index], path + "[#" + index.ToString(CultureInfo.InvariantCulture) + "]", text => new ResearchId(text));
                 if (prerequisite.HasValue)
                 {
                     prerequisites.Add(prerequisite.Value);

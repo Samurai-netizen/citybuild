@@ -125,27 +125,27 @@ public sealed class ContentShapeTests
     [Theory]
     [MemberData(nameof(MissingValuePaths))]
     public void Create_RequiredValueMissing_ReportsMissingValueAtItsPath(string path) =>
-        ContentAssert.SingleError(Broken(_missingValues[path]), ContentErrorCode.MissingValue, path);
+        ContentAssert.SingleError(ValidWith(_missingValues[path]), ContentErrorCode.MissingValue, path);
 
     [Theory]
     [MemberData(nameof(InvalidIdPaths))]
     public void Create_IdTextWithoutTheIdFormat_ReportsInvalidIdAtItsPath(string path) =>
-        ContentAssert.SingleError(Broken(_invalidIds[path]), ContentErrorCode.InvalidId, path);
+        ContentAssert.SingleError(ValidWith(_invalidIds[path]), ContentErrorCode.InvalidId, path);
 
     [Theory]
     [MemberData(nameof(InvalidValuePaths))]
     public void Create_TextOutsideItsFixedSet_ReportsInvalidValueAtItsPath(string path) =>
-        ContentAssert.SingleError(Broken(_invalidValues[path]), ContentErrorCode.InvalidValue, path);
+        ContentAssert.SingleError(ValidWith(_invalidValues[path]), ContentErrorCode.InvalidValue, path);
 
     [Theory]
     [MemberData(nameof(UnexpectedValuePaths))]
     public void Create_ValueWhereNoneIsAllowed_ReportsUnexpectedValueAtItsPath(string path) =>
-        ContentAssert.SingleError(Broken(_unexpectedValues[path]), ContentErrorCode.UnexpectedValue, path);
+        ContentAssert.SingleError(ValidWith(_unexpectedValues[path]), ContentErrorCode.UnexpectedValue, path);
 
     [Theory]
     [MemberData(nameof(ValueTooLargePaths))]
     public void Create_NumberAboveMaxQuantity_ReportsValueTooLargeAtItsPath(string path) =>
-        ContentAssert.SingleError(Broken(_valuesTooLarge[path]), ContentErrorCode.ValueTooLarge, path);
+        ContentAssert.SingleError(ValidWith(_valuesTooLarge[path]), ContentErrorCode.ValueTooLarge, path);
 
     [Fact]
     public void Create_NumbersExactlyAtMaxQuantity_AreAccepted()
@@ -218,13 +218,6 @@ public sealed class ContentShapeTests
         ContentError error = Assert.Single(GameContentFactory.Create(data).Errors);
 
         Assert.Equal("MissingValue at rules.gridWidth: " + error.Message, error.ToString());
-    }
-
-    private static GameContentData Broken(Action<GameContentData> breakIt)
-    {
-        GameContentData data = Valid();
-        breakIt(data);
-        return data;
     }
 
     // Keeps the content valid when an item gets another id: every map key and effect that names it follows.

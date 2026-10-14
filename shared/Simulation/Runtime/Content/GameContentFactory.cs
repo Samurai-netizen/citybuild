@@ -38,7 +38,9 @@ namespace CityBuilder.Simulation.Content
                 return GameContentResult.Invalid(errors.ToReadOnlyList());
             }
 
-            return GameContentResult.Valid(draft.ToContent());
+            ValueRules.Check(draft, errors);
+            BuildingRules.Check(draft, errors);
+            return errors.Count == 0 ? GameContentResult.Valid(draft.ToContent()) : GameContentResult.Invalid(errors.ToReadOnlyList());
         }
     }
 }

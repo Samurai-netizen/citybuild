@@ -101,6 +101,14 @@ internal static class ContentFixture
         ],
     };
 
+    /// <summary>The valid fixture with one change applied: the way each rule test breaks exactly one value.</summary>
+    public static GameContentData ValidWith(Action<GameContentData> change)
+    {
+        GameContentData data = Valid();
+        change(data);
+        return data;
+    }
+
     // The fixture is built fresh each time, so every test may change any of it; these shortcuts reach into it without null checks.
     public static GameRulesData RulesOf(GameContentData data) => data.Rules!;
 

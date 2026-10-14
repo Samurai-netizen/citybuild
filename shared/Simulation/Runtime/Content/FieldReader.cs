@@ -1,6 +1,7 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace CityBuilder.Simulation.Content
@@ -138,12 +139,12 @@ namespace CityBuilder.Simulation.Content
                 TData? element = list[index];
                 if (element is null)
                 {
-                    Missing(path + "[#" + index + "]");
+                    Missing(path + "[#" + index.ToString(CultureInfo.InvariantCulture) + "]");
                     continue;
                 }
 
                 string? elementName = name(element);
-                string elementPath = path + "[" + (string.IsNullOrEmpty(elementName) ? "#" + index : elementName) + "]";
+                string elementPath = path + "[" + (string.IsNullOrEmpty(elementName) ? "#" + index.ToString(CultureInfo.InvariantCulture) : elementName) + "]";
                 TDefinition? definition = read(element, elementPath);
                 if (definition is not null)
                 {
@@ -172,7 +173,7 @@ namespace CityBuilder.Simulation.Content
         {
             if (value > GameContentFactory.MaxQuantity)
             {
-                _errors.Add(ContentErrorCode.ValueTooLarge, path, $"Must be at most {GameContentFactory.MaxQuantity}, but is {value}.");
+                _errors.Add(ContentErrorCode.ValueTooLarge, path, FormattableString.Invariant($"Must be at most {GameContentFactory.MaxQuantity}, but is {value}."));
             }
 
             return value;
