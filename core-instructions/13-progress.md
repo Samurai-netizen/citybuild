@@ -8,11 +8,12 @@
 - **Task:** M0-05 · Unity test foundation (`[S]`, Claude Code / claude-sonnet-5-5)
 - **Branch:** `task/M0-05-unity-test-foundation` (from `main` = `663a714`)
 - **Build log entry:** `docs/build-log/2026/2026-10-14-03-M0-05.md` (Session 1)
-- **Last green commit:** `663a714` (`main`); nothing of this task is committed yet
-- **Done steps:** none (planned: 1 write-ahead, 2 `AppInfo` + EditMode tests, 3 PlayMode tests, 4 `test-unity.sh` / `.ps1` and a real run,
-  5 docs, 6 mutation checks, self-review, finish)
-- **Next step:** commit and push the write-ahead, then step 2 (`AppInfo` in `Client.Core`, the EditMode tests). **Agents: only after the owner
-  approves a proposal (OD-9).**
+- **Last green commit:** the head of `task/M0-05-unity-test-foundation` (EditMode 6 of 6, server fast suite 173 passed)
+- **Done steps:** 1 write-ahead; 2 `AppInfo` in `Client.Core` + EditMode tests (`SimulationPackageTests`, `AppInfoTests`; run by hand, 6 of 6)
+  (planned: 3 PlayMode tests, 4 `test-unity.sh` / `.ps1` and a real run, 5 docs, 6 mutation checks, self-review, finish)
+- **Next step:** step 3: PlayMode tests on the real `Bootstrap` scene in `Tests/PlayMode` (one `GameRoot`, no error logged, label "Not connected",
+  reload keeps one root). Run by hand: `<UNITY> -batchmode -projectPath client/CityBuilder -runTests -testPlatform PlayMode -testResults <file>`
+  (Editor closed; `<UNITY>` in `client/README.md`). **Agents: only after the owner approves a proposal (OD-9).**
 - **Open questions for the owner:** the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`
