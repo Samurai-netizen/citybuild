@@ -8,9 +8,10 @@
 - **Task:** M0-07a · Content model with research and eras: the engine (`[O]` `[PLAN]`, plan approved). M0-07b follows in its own PR
 - **Branch:** `task/M0-07a-content-model` (from `main` = `23f7464`)
 - **Build log entry:** `docs/build-log/2026/2026-10-14-05-M0-07a.md` (Session 1; decisions 1–8 hold the approved design of both parts)
-- **Last green commit:** the head of this branch (step 5: 0 warnings, format clean, Simulation tests 418 passed)
-- **Done steps:** 1 (write-ahead, plan approved, split into M0-07a/M0-07b), 2 (typed ids), 3 (data, definitions, shape phase), 4 (value and building rules), 5 (reference and unlock rules). Planned steps: build log entry → Session 1 → Plan
-- **Next step:** step 6: research graph (cycles, prerequisite eras) and labor rules (reduction sum, minimum cycle); tests first.
+- **Last green commit:** the head of this branch (step 6: 0 warnings, format clean, Simulation tests 430 passed)
+- **Done steps:** 1 (write-ahead, plan approved, split into M0-07a/M0-07b), 2 (typed ids), 3 (data, definitions, shape phase), 4 (value and building rules), 5 (reference and unlock rules), 6 (research and labor rules; step 7 is M0-07b). Planned steps: build log entry → Session 1 → Plan
+- **Next step:** step 8: Unity headless import (Editor closed; the hand-written `.meta` files must stay unchanged, no `error CS`), then
+  `UNITY_EDITOR=/Applications/Unity/Hub/Editor/6000.3.25f1/Unity.app bash scripts/dev/test-unity.sh`.
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —

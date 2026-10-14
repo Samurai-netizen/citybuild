@@ -47,7 +47,7 @@ namespace CityBuilder.Simulation
         /// </summary>
         /// <param name="labor">Labor in worker-seconds. It must not be negative.</param>
         /// <param name="permille">
-        /// The reduction in permille, from 0 (none) to <see cref="PermilleScale"/> (all of it). Content validation (M0-07, planned) caps
+        /// The reduction in permille, from 0 (none) to <see cref="PermilleScale"/> (all of it). Content validation (<see cref="Content.GameContentFactory"/>) caps
         /// the sum of the reductions of one building type at the rule <c>MaxLaborReductionPermille</c> (500 in the M0 content).
         /// </param>
         /// <returns>
