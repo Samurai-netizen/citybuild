@@ -248,8 +248,8 @@ The AI coder updates its row at start (`In progress`) and finish (`In review`). 
 | M0-02 | 1 | Server solution skeleton | S | Done |
 | M0-03 | 1 | Shared engine skeleton and architecture tests | S | Done |
 | M0-04 | 1 | Unity project skeleton | S MANUAL first | Done |
-| M0-05 | 1 | Unity test foundation | S | In review |
-| M0-06 | 1 | Day 1 checkpoint | O | Todo |
+| M0-05 | 1 | Unity test foundation | S | Done |
+| M0-06 | 1 | Day 1 checkpoint | O | In progress |
 | M0-07 | 2 | Content model with research and eras | O PLAN | Todo |
 | M0-08 | 2 | City state and mutations | O | Todo |
 | M0-09 | 2 | Simulator.Advance | O PLAN | Todo |

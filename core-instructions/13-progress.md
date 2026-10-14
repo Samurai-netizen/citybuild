@@ -4,15 +4,15 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-05 · Unity test foundation; PR #12 open, the owner merges it)
-- **Branch:** `task/M0-05-unity-test-foundation` (from `main` = `663a714`) until the owner merges
-- **Build log entry:** last: `docs/build-log/2026/2026-10-14-03-M0-05.md` (Session 1)
-- **Last green commit:** the head of `task/M0-05-unity-test-foundation` (`test-unity.sh`: EditMode 6 of 6, PlayMode 6 of 6; server fast suite 173 passed;
-  `check-docs --base origin/main` OK)
-- **Done steps:** all six (write-ahead; `AppInfo` + EditMode tests; PlayMode `BootstrapSceneTests`; `test-unity.sh` / `.ps1`; docs; self-review and finish)
-- **Next step:** the owner merges the PR; then `/model` → Opus 5.5 and `/start-task M0-06` (Day 1 checkpoint, `[O]`). M0-06's text offers the `reviewer`
-  subagent: only after the owner approves an OD-9 proposal. M0-06 also fills "Commands that work right now" and the `AGENTS.md` marks (protected: ask).
+- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** M0-06 · Day 1 checkpoint (`[O]`, Opus 5.5)
+- **Branch:** `task/M0-06-day1-checkpoint` (from `main` = `1b46a92`)
+- **Build log entry:** `docs/build-log/2026/2026-10-14-04-M0-06.md` (Session 1)
+- **Last green commit:** `main` = `1b46a92` (build 0 warnings; fast suite 173 passed; CI green on `main`)
+- **Steps:** 1 write-ahead · 2 review of M0-01…M0-05 (small fixes only) · 3 ADR-0001…0004 + index · 4 architecture overview ·
+  5 commands (`13`, `getting-started.md`, `AGENTS.md` marks: ask first) · 6 all tests, finish, PR
+- **Done steps:** —
+- **Next step:** step 1 (write-ahead commit), then step 2 (the review). No agents (build log decision 1).
 - **Open questions for the owner:** the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI); [MANUAL] run `test-unity.ps1` once on
   Windows (never executed).
 - **Known broken / do not touch:** —
@@ -20,7 +20,7 @@
   `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 4 / 84
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 5 / 84
 
 | Area | State | Notes |
 |---|---|---|
@@ -31,7 +31,7 @@
 | Persistence (EF + PostgreSQL) | not started | |
 | Auth + command pipeline | not started | |
 | Commands: place / upgrade / assign workers / start research | not started | |
-| Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) merged (PR #8); M0-05 (Unity tests, `test-unity.sh`) in review; networking is M0-37 |
+| Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) and M0-05 (Unity tests, `test-unity.sh`) merged (PR #8, #12); networking is M0-37 |
 | Unity city view + placement | not started | |
 | Inspector, worker stepper, research screen, HUD | not started | |
 | Resilience (limits, retries, logging) | not started | |

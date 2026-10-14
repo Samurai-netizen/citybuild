@@ -11,6 +11,7 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
+- [BL-20261014-04 · M0-06 · Day 1 checkpoint](2026/2026-10-14-04-M0-06.md) — In progress
 - [BL-20261014-03 · M0-05 · Unity test foundation](2026/2026-10-14-03-M0-05.md) — Done
 - [BL-20261014-02 · KIT-AGENT-APPROVAL · Standing rule: ask the owner before using agents](2026/2026-10-14-02-KIT-AGENT-APPROVAL.md) — Done
 - [BL-20261014-01 · M0-04-FOLLOWUP · Bootstrap scene and removal of the AI packages](2026/2026-10-14-01-M0-04-FOLLOWUP.md) — Done
