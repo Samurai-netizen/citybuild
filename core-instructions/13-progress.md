@@ -4,18 +4,17 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-04-FOLLOWUP · the owner's Bootstrap scene and removal of the pre-release AI packages; PR #9 open; M0-04 itself is merged, PR #8)
-- **Branch:** `task/M0-04-scene-and-packages` (until the owner merges its PR)
-- **Build log entry:** last: `docs/build-log/2026/2026-10-14-01-M0-04-FOLLOWUP.md` (Session 1)
-- **Last green commit:** the head of `task/M0-04-scene-and-packages` (CI's server sequence run locally: 173 fast tests, format, Release build 0 warnings;
-  `check-docs --base origin/main` OK; headless Unity import exit 0; PlayMode run on the real scene passed)
-- **Done steps:** all six (write-ahead, the scene, the package removal, verification on the real scene, docs, review by hand, finish)
-- **Next step:** the owner merges the PR; then `/start-task M0-05` (Unity test foundation, `[S]`). It reads the M0-04 entry → Follow-ups (`AppInfo` is
-  defined nowhere; the scratch scenarios to commit as PlayMode tests) and the follow-up entry's Follow-ups. The Bootstrap scene exists now.
-- **Open questions for the owner:** (1) does "Don't use agents" apply to every task from now on? If yes, it becomes a standing directive in `15` and
-  the `reviewer` step in `16`/`11` changes (protected files); until then it applies to this task only. (2) the two KIT-AUDIT-FIXES follow-ups
-  (`AGENTS.md` command line, guard test in CI). (The AI packages and the Bootstrap scene are decided and done in this follow-up.)
+- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** KIT-AGENT-APPROVAL · write down the owner's standing rule: ask the owner, with options, every time before using agents (`15` OD-9). Process
+  change, no plan row, commits use the scope `kit`. The earlier version of the rule (PR #10, closed) never reached `main`
+- **Branch:** `task/kit-agent-approval` (from `origin/main` = `16ae20a`)
+- **Build log entry:** `docs/build-log/2026/2026-10-14-02-KIT-AGENT-APPROVAL.md` (Session 1, Claude Code / claude-sonnet-5-5)
+- **Last green commit:** `main` at `16ae20a` (M0-04 and its follow-up merged; CI green)
+- **Plan (5 steps, details in the build log):** 1 write-ahead · 2 the rule in `15`, `02`, `CLAUDE.md` · 3 what told the coder to start agents on its own ·
+  4 `ask` rules for `Agent` and `Workflow` in `.claude/settings.json` · 5 decision row W10, CHANGELOG, finish, PR
+- **Done steps:** 1 in progress
+- **Next step:** commit the write-ahead, then step 2. **No agent, no Workflow in this task** (OD-9: the owner approves each use first).
+- **Open questions for the owner:** the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`
 
