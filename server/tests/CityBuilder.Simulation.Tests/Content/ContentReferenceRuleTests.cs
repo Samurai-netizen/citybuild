@@ -148,14 +148,25 @@ public sealed class ContentReferenceRuleTests
     private static BuildingData Copy(BuildingData building) =>
         new()
         {
-            Id = building.Id, Name = building.Name, Kind = building.Kind, Era = building.Era, AvailableAtStart = building.AvailableAtStart,
-            Cost = building.Cost, BuildSeconds = building.BuildSeconds, Levels = building.Levels,
+            Id = building.Id,
+            Name = building.Name,
+            Kind = building.Kind,
+            Era = building.Era,
+            AvailableAtStart = building.AvailableAtStart,
+            Cost = building.Cost,
+            BuildSeconds = building.BuildSeconds,
+            Levels = building.Levels,
         };
 
     private static ResearchData Copy(ResearchData node) =>
         new()
         {
-            Id = node.Id, Name = node.Name, Era = node.Era, Cost = node.Cost, DurationSeconds = node.DurationSeconds,
-            Prerequisites = node.Prerequisites, Effects = node.Effects,
+            Id = node.Id,
+            Name = node.Name,
+            Era = node.Era,
+            Cost = node.Cost,
+            DurationSeconds = node.DurationSeconds,
+            Prerequisites = node.Prerequisites,
+            Effects = node.Effects,
         };
 }
