@@ -4,8 +4,8 @@
 **References:** `CityBuilder.Simulation` (the local package `com.citybuilder.simulation`) ·
 **Referenced by:** `CityBuilder.Client.Net`, `CityBuilder.Client.Presentation`, `CityBuilder.Client.Tests.EditMode`, `CityBuilder.Client.Tests.PlayMode`
 
-> *Skeleton.* The assembly exists and is wired into the dependency chain, but has no types yet (Unity warns that it "has no scripts
-> associated with it" until the first one arrives). The city store and the display clock come with M0-39 *(planned)*.
+> *Skeleton.* The assembly exists and is wired into the dependency chain, and holds one small type, `AppInfo`. The city store and the display
+> clock come with M0-39 *(planned)*.
 
 ## Purpose
 The client's state that is not about pixels or HTTP: the last authoritative snapshot and when it was received, the display clock, and
@@ -16,7 +16,8 @@ structure). It is **not** responsible for talking to the server (`CityBuilder.Cl
 ## Key types
 | Type | Responsibility |
 |---|---|
-| — | none yet. Planned: `ClientCityStore`, `DisplayClock`, `DisplayCity` (M0-39) |
+| `AppInfo` | static, read-only facts about this build. `Version` is `Application.version`, the "Version" field of Project Settings → Player (`bundleVersion`, `0.1.0` today); M0-58 sends it to the server |
+| — | planned: `ClientCityStore`, `DisplayClock`, `DisplayCity` (M0-39) |
 
 ## Rules and invariants
 - References only `CityBuilder.Simulation` (`03` dependency table). The asmdef is not auto-referenced, so other assemblies must name it,
@@ -33,10 +34,12 @@ A new client-side state type goes here as one class per file with its namespace 
 folder area follows the recipe "New project, assembly or folder area" in `core-instructions/19-change-recipes.md`.
 
 ## Tests
-`Assets/_Project/Tests/EditMode` (`CityBuilder.Client.Tests.EditMode`). The assembly exists and has no tests yet: M0-05 adds the first
-ones and `scripts/dev/test-unity.sh` *(planned, M0-05)*.
+`Assets/_Project/Tests/EditMode` (`CityBuilder.Client.Tests.EditMode`), run with `scripts/dev/test-unity.sh` (`client/README.md` → Run the tests):
+- `AppInfoTests`: `Version` is the bundle version of the Player Settings (`PlayerSettings.bundleVersion`) and is not blank.
+- `SimulationInUnityTests`: `IntegerMath.CeilDiv` called from the local package `com.citybuilder.simulation` rounds up. It proves that the engine
+  compiles and runs inside Unity; the engine's rules are tested in `server/tests/CityBuilder.Simulation.Tests`.
 
 ## Known limitations
-- No types yet (skeleton).
+- Only `AppInfo` exists (skeleton).
 
-Last updated: M0-04
+Last updated: M0-05

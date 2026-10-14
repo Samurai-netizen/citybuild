@@ -9,13 +9,13 @@
 - **Branch:** `task/M0-05-unity-test-foundation` (from `main` = `663a714`)
 - **Build log entry:** `docs/build-log/2026/2026-10-14-03-M0-05.md` (Session 1)
 - **Last green commit:** the head of `task/M0-05-unity-test-foundation` (`test-unity.sh`: EditMode 6 of 6, PlayMode 6 of 6; server fast suite 173 passed)
-- **Done steps:** 1 write-ahead; 2 `AppInfo` + EditMode tests (6 of 6); 3 PlayMode `BootstrapSceneTests` (6 of 6); 4 `scripts/dev/test-unity.sh` and `.ps1`
-  (`.sh` run for real: 12 of 12, exit 0; every failure branch driven by a Unity stand-in; 7 of 7 mutations killed in a scratch clone; `.ps1` **not run**,
-  no `pwsh` here) (planned: 5 docs, 6 self-review and finish)
-- **Next step:** step 5, docs: module docs (Core: `AppInfo`, Presentation, Net text, tests sections), `client/README.md` (the script is no longer
-  planned, tests exist), `docs/getting-started.md`, `docs/architecture/overview.md`, `09`, `08` if it says "planned", `AGENTS.md` (remove the
-  `[M0-05]` mark; protected: the permission prompt asks the owner), CHANGELOG, decision rows only if project-wide (none so far), the build log's
-  Changes / Verification / Follow-ups. **Agents: only after the owner approves a proposal (OD-9).**
+- **Done steps:** 1 write-ahead; 2 `AppInfo` + EditMode tests; 3 PlayMode `BootstrapSceneTests`; 4 `scripts/dev/test-unity.sh` and `.ps1` (`.sh` run for real,
+  every failure branch driven by a Unity stand-in, 7 of 7 mutations killed in a scratch clone; `.ps1` **not run**, no `pwsh` here); 5 docs (module docs,
+  `client/README.md`, getting-started, overview, `08`, `09`, `AGENTS.md`, CHANGELOG). `test-unity.sh` after the last code change: 12 of 12.
+  (planned: 6 self-review and finish)
+- **Next step:** step 6, finish (`/finish-task`, by hand per OD-9): Definition of Done line by line, self-review of the diff, build log (Changes,
+  Verification, Follow-ups, status Done), board row `In review`, resume point `IDLE`, the Milestone table row, `check-docs.sh --base origin/main`,
+  the CI server sequence, PR, task report. **Agents: only after the owner approves a proposal (OD-9).**
 - **Open questions for the owner:** the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`
@@ -44,7 +44,8 @@
 States: `not started` · `in progress` · `done` · `blocked (reason)`
 
 ## Commands that work right now
-- `bash scripts/dev/check-docs.sh` · `bash scripts/dev/test-guard-bash.sh` · `bash scripts/dev/setup-hooks.sh` · `bash scripts/dev/show-task.sh <ID>` · `bash scripts/dev/new-log-entry.sh <ID> "<title>" "<agent>"`
+- `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (`client/README.md` → Run the tests; `.ps1` for Windows, not yet run by anyone) ·
+  `bash scripts/dev/check-docs.sh` · `bash scripts/dev/test-guard-bash.sh` · `bash scripts/dev/setup-hooks.sh` · `bash scripts/dev/show-task.sh <ID>` · `bash scripts/dev/new-log-entry.sh <ID> "<title>" "<agent>"`
 - `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` ·
   `dotnet format server/CityBuilder.slnx --verify-no-changes` · `dotnet run --project server/src/CityBuilder.Api` (http://localhost:8080)
 - Unity compile check, Editor closed: `<UNITY> -batchmode -quit -projectPath client/CityBuilder -logFile -` (`client/README.md`; exit 0, no `error CS`)

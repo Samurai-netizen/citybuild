@@ -7,7 +7,7 @@ namespace CityBuilder.Client.Tests.EditMode
     /// Proves that the local package <c>com.citybuilder.simulation</c> (<c>shared/Simulation</c>) compiles inside Unity and that its
     /// code runs here. The rules of the engine are tested in the server test projects; this only checks the wiring.
     /// </summary>
-    public sealed class SimulationPackageTests
+    public sealed class SimulationInUnityTests
     {
         [TestCase(180L, 4L, 45L)] // divides evenly: 180 worker-seconds of labor with 4 workers
         [TestCase(181L, 4L, 46L)] // a remainder rounds up, so a cycle never finishes early

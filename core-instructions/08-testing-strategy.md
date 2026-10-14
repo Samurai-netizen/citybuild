@@ -43,7 +43,7 @@ Security tests name the property they protect: `Security_ClientCannotSetCost_…
 ```
 dotnet test server/CityBuilder.slnx --filter "Category!=Integration"   # fast, no Docker
 dotnet test server/CityBuilder.slnx --filter "Category=Integration"    # needs Docker
-scripts/dev/test-unity.sh   (or .ps1)                                  # Unity batchmode; the Editor must be closed
+UNITY_EDITOR=<Unity program> scripts/dev/test-unity.sh  (or .ps1)     # Unity batchmode; the Editor must be closed
 ```
 
 ## Where tests run

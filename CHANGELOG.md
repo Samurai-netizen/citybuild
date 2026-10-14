@@ -25,6 +25,10 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
 - Standing owner directive OD-9: no agent or Workflow starts without the owner's approval of a proposal with options (no agents / small / big: why, how
   many, which model); the coder reviews its own branch by default; `ask` permission rules for the `Agent` and `Workflow` tools back it up; the agent
   definitions default to Sonnet (`15`, `02` rule 27, `CLAUDE.md`, `11`, `16`, `17`, `18`, skills, PR template, `.claude/settings.json`) (KIT-AGENT-APPROVAL).
+- Unity test foundation: `AppInfo.Version` in `Client.Core`; EditMode tests for the engine inside Unity (`CeilDiv` through the local package) and
+  `AppInfo`; PlayMode tests on the real Bootstrap scene (build list, one `GameRoot`, no error logged, the label, a reload); and
+  `scripts/dev/test-unity.sh` and `.ps1`, which run both platforms headless from `UNITY_EDITOR`, print a summary and fail on a failed test,
+  a run with no tests or a missing result (M0-05).
 
 ### Fixed
 - Kit audit follow-ups A1, A2, A3, A9, A15, A16: `[PLAN]` tasks write ahead before the plan (no Plan Mode), the Bash guard no longer

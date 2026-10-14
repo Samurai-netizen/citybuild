@@ -43,7 +43,7 @@ server, for display only.
 | `CityBuilder.Client.Core` | `Core/` | Simulation | [module](../modules/CityBuilder.Client.Core.md) |
 | `CityBuilder.Client.Net` | `Net/` | Core, Newtonsoft (precompiled DLL) | [module](../modules/CityBuilder.Client.Net.md) |
 | `CityBuilder.Client.Presentation` | `Presentation/` | Core, Net, Input System | [module](../modules/CityBuilder.Client.Presentation.md) |
-| `CityBuilder.Client.Tests.EditMode` / `.PlayMode` | `Tests/EditMode`, `Tests/PlayMode` | the four runtime assemblies and the test runner | no tests yet (M0-05) |
+| `CityBuilder.Client.Tests.EditMode` / `.PlayMode` | `Tests/EditMode`, `Tests/PlayMode` | the four runtime assemblies and the test runner | `AppInfoTests`, `SimulationInUnityTests` (EditMode), `BootstrapSceneTests` (PlayMode); run by `scripts/dev/test-unity.sh` (M0-05) |
 
 ```mermaid
 flowchart LR
@@ -71,8 +71,8 @@ compiled assemblies (plain reflection, no extra packages), each next to the laye
 | Application references no ASP.NET Core or EF Core | `CityBuilder.Application.Tests` → `ApplicationDependencyTests` |
 | Infrastructure doesn't reference Api | `CityBuilder.IntegrationTests` → `InfrastructureDependencyTests` |
 
-**Not tested yet:** that the Unity assemblies compile (a headless import checks that by hand, `client/README.md`; the first EditMode test comes in
-M0-05), Infrastructure's "no ASP.NET endpoint types", and Api referencing only Application and Infrastructure. M0-65
+**Not tested here:** that the Unity assemblies compile (the .NET tests cannot say; `scripts/dev/test-unity.sh` and the headless import in
+`client/README.md` check it locally, Unity is not in CI), Infrastructure's "no ASP.NET endpoint types", and Api referencing only Application and Infrastructure. M0-65
 extends the tests (hosting types only in Api, no float fields in the engine, and more). An assembly records a reference only when some
 code uses it, so these tests catch dependencies that code uses, not project references that nothing uses. The two M0-02 tests use a
 short deny-list of name prefixes (ASP.NET Core, EF Core); M0-65 can widen it.
@@ -80,4 +80,4 @@ short deny-list of name prefixes (ASP.NET Core, EF Core); M0-65 can widen it.
 ## Request lifecycle
 *(planned)* A sequence diagram of one command, from tap to snapshot, as implemented.
 
-Last updated: M0-04
+Last updated: M0-05

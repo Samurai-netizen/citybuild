@@ -70,17 +70,18 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
 - `SimulationBuildProjectTests`: the csproj keeps `LangVersion 9.0`, warnings as errors, the XML doc file, the analysis settings, no
   warning suppression, the one `Compile` glob, no references, and the guard target.
 
-That the package compiles inside Unity was checked by M0-04's headless import of the Unity project (`client/README.md`); an EditMode test that
-calls it comes in M0-05 *(planned)*. `ClientAssemblyTests` is in this test project, too, but guards the Unity client's asmdefs and manifest, not
+That the package compiles inside Unity is checked by M0-04's headless import of the Unity project (`client/README.md`) and by the EditMode test
+`SimulationInUnityTests` (`client/CityBuilder/Assets/_Project/Tests/EditMode`, M0-05), which calls `IntegerMath.CeilDiv` from the package; run it
+with `scripts/dev/test-unity.sh`. `ClientAssemblyTests` is in this test project, too, but guards the Unity client's asmdefs and manifest, not
 the engine (see `docs/architecture/overview.md`).
 
 ## Known limitations
 - The `.meta` files that Unity writes for this mutable local package are committed (M0-04, `09`); a new source file needs its `.meta` file in the
   same commit.
-- The .NET build is a close proxy for Unity's compiler (same language version and API level), not the same compiler. The Unity-side compile check is the headless import; the first EditMode test follows in M0-05.
+- The .NET build is a close proxy for Unity's compiler (same language version and API level), not the same compiler. The Unity-side compile check is the headless import and `scripts/dev/test-unity.sh` (local only: CI has no Unity license).
 - The package may hold only `.cs`, `.asmdef`, `.meta`, `.md` files and `package.json`. A new kind of file (for example images under
   `Documentation~/`) needs a change to `SimulationPackageTests`.
 - `ItemId.GetHashCode` is the runtime's string hash, which differs between processes. That is fine only because no engine code may
   depend on `Dictionary` or `HashSet` order (`04` §9).
 
-Last updated: M0-04
+Last updated: M0-05
