@@ -1,6 +1,6 @@
 ---
 name: docs-auditor
-description: Read-only audit of documentation against the actual code - finds stale, missing or contradictory docs. Use in /docs-sync, at milestone ends, and in task M0-63. Never edits files.
+description: Read-only audit of documentation against the actual code - finds stale, missing or contradictory docs. Use ONLY after the owner approved a proposal that includes it (owner directive OD-9 in core-instructions/15); normally /docs-sync is done by hand. Never edits files.
 tools: Read, Grep, Glob, Bash
 model: sonnet
 ---

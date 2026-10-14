@@ -16,7 +16,7 @@
 - [ ] `check-docs.sh --base origin/main` passes; generated docs current (from M0-61)
 - [ ] Build log entry complete (decisions, owner input, verification)
 - [ ] Resume point, plan board, CHANGELOG updated
-- [ ] Reviewer pass (for [O] tasks) with blocking findings fixed
+- [ ] Self-review done (line by line for [O] tasks), blocking findings fixed; any agent used was approved by the owner in advance (OD-9) and is in the build log
 
 ## Build log entry
 <!-- docs/build-log/YYYY/YYYY-MM-DD-NN-ID.md -->

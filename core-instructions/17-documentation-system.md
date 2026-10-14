@@ -64,9 +64,9 @@ research, error codes, endpoints (OpenAPI), configuration keys, DB schema, and t
    - the always-loaded files stay small;
    - on a PR, code changes (`server/`, `shared/`, the Unity project, `tools/` and `scripts/`) come with a build log entry,
      a progress update and a CHANGELOG line, and merged log entries are untouched.
-4. CI runs these checks plus the generated-docs comparison. The `reviewer` subagent checks docs against the diff.
+4. CI runs these checks plus the generated-docs comparison. The coder checks the docs against the diff (an agent only after the owner approved it, OD-9).
 5. Each module doc ends with `Last updated: <task id>`, so stale docs are easy to spot.
-6. The task M0-63 and every milestone end include a full docs audit (`docs-auditor` subagent or `/docs-sync`).
+6. The task M0-63 and every milestone end include a full docs audit (`/docs-sync`, done by hand; the `docs-auditor` agent only after the owner approved it, OD-9).
 
 ## 6. Writing style
 - Short sentences, present tense, concrete examples. Write for a newcomer who is smart but has no context.

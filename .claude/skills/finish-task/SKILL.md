@@ -1,6 +1,6 @@
 ---
 name: finish-task
-description: Complete the current task - Definition of Done, docs per change recipe, checks, independent review, build log, PR, and the task report.
+description: Complete the current task - Definition of Done, docs per change recipe, checks, self-review, build log, PR, and the task report.
 disable-model-invocation: true
 ---
 
@@ -14,8 +14,10 @@ disable-model-invocation: true
 3. Once `tools/DocTools` exists, run `dotnet run --project tools/DocTools -- generate`.
 4. Run `bash scripts/dev/check-docs.sh --base origin/main` and the quality script (`bash scripts/dev/quality.sh` once it exists).
    Fix everything they report.
-5. **Independent review:** for `[O]` tasks, or any task touching the engine, persistence or security,
-   use the `reviewer` subagent on this branch. Fix blocking findings, and log them and the fixes in the build log.
+5. **Review:** review your own branch diff against the task spec, the Definition of Done and the recipe, line by line for `[O]` tasks and for any
+   task touching the engine, persistence or security. Fix blocking findings, and log them and the fixes in the build log.
+   **Don't start an agent on your own** (owner directive OD-9, `core-instructions/15`): if you think one would help, ask the owner first with a
+   proposal (no agents / small / big, why, how many, which model) and wait for the answer.
 6. Finalize:
    - build log entry: status Done, verification table (commands + results), follow-ups;
    - resume point: state IDLE, last completed = this task, next task id;

@@ -4,16 +4,15 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** KIT-AGENT-APPROVAL · write down the owner's standing rule: ask the owner, with options, every time before using agents (`15` OD-9). Process
-  change, no plan row, commits use the scope `kit`. The earlier version of the rule (PR #10, closed) never reached `main`
-- **Branch:** `task/kit-agent-approval` (from `origin/main` = `16ae20a`)
-- **Build log entry:** `docs/build-log/2026/2026-10-14-02-KIT-AGENT-APPROVAL.md` (Session 1, Claude Code / claude-sonnet-5-5)
-- **Last green commit:** `main` at `16ae20a` (M0-04 and its follow-up merged; CI green)
-- **Plan (5 steps, details in the build log):** 1 write-ahead · 2 the rule in `15`, `02`, `CLAUDE.md` · 3 what told the coder to start agents on its own ·
-  4 `ask` rules for `Agent` and `Workflow` in `.claude/settings.json` · 5 decision row W10, CHANGELOG, finish, PR
-- **Done steps:** 1 in progress
-- **Next step:** commit the write-ahead, then step 2. **No agent, no Workflow in this task** (OD-9: the owner approves each use first).
+- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** — (last completed: KIT-AGENT-APPROVAL · the owner's standing rule: ask before using agents, `15` OD-9; PR open)
+- **Branch:** `task/kit-agent-approval` (from `main` = `16ae20a`) until the owner merges
+- **Build log entry:** last: `docs/build-log/2026/2026-10-14-02-KIT-AGENT-APPROVAL.md` (Session 1)
+- **Last green commit:** the head of `task/kit-agent-approval` (`check-docs --base origin/main` OK; process documents and one settings file only)
+- **Done steps:** all five (write-ahead; the rule in `15`, `02`, `CLAUDE.md`; everything that started agents on its own; the `ask` rules; W10, CHANGELOG, finish)
+- **Next step:** the owner merges the PR; then `/start-task M0-05` (Unity test foundation, `[S]`). It reads the M0-04 entry → Follow-ups (`AppInfo` is
+  defined nowhere; the scratch scenarios to commit as PlayMode tests) and the M0-04-FOLLOWUP entry → Follow-ups. **Agents: only after the owner
+  approves a proposal (OD-9).**
 - **Open questions for the owner:** the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`

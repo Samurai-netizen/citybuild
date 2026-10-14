@@ -64,3 +64,26 @@ gives them in chat (date, short quote, where they're applied).
 | OD-6 | 2026-10-04 | Everything is on GitHub; different AI coders work one after another and must not depend on each other's context | `16`, `18`, `AGENTS.md` |
 | OD-7 | 2026-10-08 | "Keep the project public" — the repository stays public (derived consequence, not the owner's words: never commit secrets or personal data) | `18`, `docs/getting-started.md`, Day 0 in the plan |
 | OD-8 | 2026-10-12 | "We will decide on exact license later … we can use no license file for a little bit more time" — until the owner decides there is no `LICENSE` file and the README keeps its general line, "Proprietary, all rights reserved" (derived consequence: don't add a `LICENSE` file or pick a license on your own) | `README.md` (License) |
+| OD-9 | 2026-10-14 | "I want you to ask me each time when you want to use agents. You should specify why you need to use agents, how much of them and why. Make a couple of proposals and explain each option: no agents, small use of agents, big use of agents and so on. I will approve the plan each time". The model of every agent is named in the proposal. Rules of use below | `02` rule 27, `CLAUDE.md`, `11`, `16` §E, `17`, `18`, the skills, `.claude/agents/`, `.claude/settings.json`, the PR template |
+
+### OD-9 in practice
+- **"Agents"** are subagents (the `Agent` tool), Workflows and any other multi-agent run. A session setting that asks for them (for example
+  "ultracode") is never an approval.
+- **Default: none.** The coder does the work, the checks and the review itself: a self-review of the branch diff against the task spec, the
+  Definition of Done (`11`) and the checks of `16` §E. The owner can also start a fresh session as the independent reviewer.
+- **Before any agent starts, ask the owner and wait.** Ask in chat (Claude Code: `AskUserQuestion`, one question, the options as the answers). Silence is
+  not approval. The proposal contains:
+  1. **Why** agents would help here: what the coder cannot do or check well in one context, or what they would speed up, and what the coder does
+     without them.
+  2. **Options**, at least **A. No agents** (what the coder does instead, and what that risks missing), **B. Small** (for example one read-only
+     agent) and **C. Big** (several agents or a Workflow, with how their findings are checked); more options where they make sense.
+  3. For every agent in an option: its **job**, its **model**, **how many** and **why that many**, what it may read or change (read-only unless the
+     proposal says otherwise), a rough size, and what it will not catch.
+  4. A **recommendation** and the reason for it.
+- **Approval covers exactly what the owner picked:** those agents, that number, that model, that purpose. Another agent, another purpose or a retry
+  with more agents is a new proposal.
+- **Record before starting:** the proposal and the owner's answer go into the build log (Owner input, and a decision row). The task report names
+  the agents used and what they found. The coder stays responsible for their output and checks it.
+- **Enforcement:** `ask` rules for the `Agent` and `Workflow` tools in `.claude/settings.json` show a permission prompt at every start. The prompt
+  backs the rule up; it is not the proposal and does not replace it.
+- **Scope:** this concerns agents only, not the model of the main session (`11`, `CLAUDE.md`).

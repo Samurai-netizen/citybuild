@@ -61,8 +61,9 @@ This protocol is tool-agnostic. Claude Code has skills for each part (`/resume`,
 1. Go through the Definition of Done (`11-workflow.md`) and the change recipe for this kind of change (`19-change-recipes.md`).
 2. Update the docs per the recipe. Regenerate the generated docs once `tools/DocTools` exists (from M0-61).
 3. Run `bash scripts/dev/check-docs.sh --base origin/main` and the quality script (once it exists), and fix everything.
-4. Independent review: for `[O]` tasks (and any task touching the engine, persistence or security), run the
-   `reviewer` subagent (Claude Code) or ask a fresh session to review. Fix blocking findings and log them.
+4. Review your own branch against the task spec, the Definition of Done (`11-workflow.md`) and the recipe: line by line for `[O]` tasks and any
+   task touching the engine, persistence or security. Fix blocking findings and log them. Don't start an agent for this on your own: it needs
+   the owner's approval of a proposal (OD-9, `15`). The owner can also start a fresh session as the independent reviewer.
 5. Finalize:
    - build log status `Done`, plus verification results and follow-ups;
    - resume point `IDLE`, with the last completed task and the next task;
