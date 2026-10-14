@@ -31,7 +31,8 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   a run with no tests or a missing result (M0-05).
 - Day 1 checkpoint: review of M0-01 to M0-05; ADR-0001 to ADR-0004 (server authority, PostgreSQL only, one endpoint per command,
   idempotency); the first full as-built architecture overview; the verified command lists in `13`, `getting-started.md` and `AGENTS.md`
-  (format check, Bash guard self-test); clearer failures in `ClientAssemblyTests` when the Unity manifest is broken (M0-06).
+  (format check, Bash guard self-test); clearer failures in `ClientAssemblyTests` when the Unity manifest is broken;
+  `test-guard-bash.sh` committed as executable, so `setup-hooks.sh` leaves a fresh clone clean (M0-06).
 
 ### Fixed
 - Kit audit follow-ups A1, A2, A3, A9, A15, A16: `[PLAN]` tasks write ahead before the plan (no Plan Mode), the Bash guard no longer
