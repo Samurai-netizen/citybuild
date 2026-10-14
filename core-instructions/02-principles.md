@@ -42,3 +42,7 @@ These rules apply to every task and every AI coder. If a request conflicts with 
 
 ## Honest reporting
 26. Report what was actually run and passed, and name what you couldn't verify. Never claim "cheat-proof".
+
+## Agents
+27. **No agents** (subagents, Workflows, multi-agent runs) unless really necessary. Then **one per task at most**, on Sonnet 5.5 or an equivalent
+    model, with the reason logged first. You do the review yourself. Owner directive OD-9, details in `15`.

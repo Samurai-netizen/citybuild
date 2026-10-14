@@ -22,6 +22,8 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   module docs, tests for the client asmdefs and manifest (`ClientAssemblyTests`), `client/README.md` with the [MANUAL] steps for the Bootstrap scene (M0-04).
 - The owner's `Bootstrap` scene (scene 0 of the build list); the three pre-release AI packages are removed from the Unity manifest and the manifest names
   the `UnityWebRequest` module, which they had been enabling (M0-04, owner request after PR #8).
+- Standing owner directive OD-9: no agents (subagents, Workflows) unless really necessary, then one per task on Sonnet 5.5 or equivalent; the
+  `reviewer` step becomes a self-review and the agent definitions run on Sonnet (`15`, `02` rule 27, `CLAUDE.md`, `11`, `16`, `17`, `18`, skills, PR template) (KIT-AGENT-RULE).
 
 ### Fixed
 - Kit audit follow-ups A1, A2, A3, A9, A15, A16: `[PLAN]` tasks write ahead before the plan (no Plan Mode), the Bash guard no longer

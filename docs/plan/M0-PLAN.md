@@ -335,6 +335,8 @@ The AI coder updates its row at start (`In progress`) and finish (`In review`). 
 
 Tags: **[O]** strongest model (Opus 5.5) · **[S]** standard model (Sonnet 5.5) · **[PLAN]** owner approves the plan before code ·
 **[MANUAL]** human step. Each task depends on the previous one unless it says otherwise. Every task implicitly follows §6.
+**Agents:** wherever a task below names a subagent (`reviewer`, `docs-auditor`), the owner's standing directive OD-9 (`core-instructions/15`) applies:
+do the work yourself; at most one Sonnet agent per task, and only if it is really necessary.
 
 ---
 

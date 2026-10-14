@@ -64,3 +64,14 @@ gives them in chat (date, short quote, where they're applied).
 | OD-6 | 2026-10-04 | Everything is on GitHub; different AI coders work one after another and must not depend on each other's context | `16`, `18`, `AGENTS.md` |
 | OD-7 | 2026-10-08 | "Keep the project public" — the repository stays public (derived consequence, not the owner's words: never commit secrets or personal data) | `18`, `docs/getting-started.md`, Day 0 in the plan |
 | OD-8 | 2026-10-12 | "We will decide on exact license later … we can use no license file for a little bit more time" — until the owner decides there is no `LICENSE` file and the README keeps its general line, "Proprietary, all rights reserved" (derived consequence: don't add a `LICENSE` file or pick a license on your own) | `README.md` (License) |
+| OD-9 | 2026-10-14 | "Do not use agents until it is really nesessary, and even in that case, use only Sonnet 5.5 model or equivalent, and not more than 1 agent per task" (first said as "Don't use agents"). Rules of use below | `02` rule 27, `11`, `16` §E, `17`, `18`, `CLAUDE.md`, the skills, `.claude/agents/`, the PR template |
+
+### OD-9 in practice
+- **"Agents"** are subagents, Workflows and any other multi-agent run, also when a session setting (for example "ultracode") asks for one.
+- **Default: none.** The coder does the work, the checks and the review itself: a self-review of the branch diff against the task spec, the
+  Definition of Done (`11`) and the checks of `16` §E. The owner can always start a fresh session as the independent reviewer.
+- **"Really necessary"** means the owner asked for an agent, or the work cannot be done or checked inside one context. The coder decides, writes
+  the reason in the build log **before** starting the agent, and names the agent in the task report.
+- **If one is necessary:** at most **one** agent for the whole task (all its sessions), on **Sonnet 5.5 or an equivalent** standard-tier model of
+  the tool in use, never an Opus-class one, and never a Workflow of several agents.
+- **Scope:** this limits agents only. The model of the main session stays as `11` and `CLAUDE.md` say (the owner picks it with `/model`).

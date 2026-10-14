@@ -61,6 +61,7 @@ Never silently reverse a decision; add a new row that supersedes it. New ids con
 | W7 | The M0 plan lives in the repo (`docs/plan/M0-PLAN.md`) with task ids and a status board | Any coder can read the next task; no copy-paste from chat | Accepted |
 | W8 | Squash-merge PRs; the step history stays in the build log | Clean `main`, full detail where it's useful | Accepted |
 | W9 | The repository is public (OD-7); `main` is guarded by the ruleset `main-protection` (PR with 0 approvals, squash only, `docs` + `server` checks, no bypass) plus secret scanning with push protection | Owner's choice; the owner's account opens the AI's PRs, so a required approval would block every merge (M0-01) | Accepted (2026-10-08) |
+| W10 | No agents (subagents, Workflows, multi-agent runs) unless really necessary; then at most one per task, on Sonnet 5.5 or an equivalent model, with the reason logged first (`15` OD-9, `02` rule 27). The `reviewer` step of `/finish-task` becomes a self-review, `/docs-sync` is done by hand, and `.claude/agents/reviewer.md` runs on Sonnet instead of Opus | The owner's instruction of 2026-10-14; the owner gave no reason. It limits agents only, not the model of the main session (the coder's reading of the instruction; the owner may correct it) | Accepted (owner, 2026-10-14) |
 
 ## Fallbacks agreed in advance
 - **007 fallback:** if the Unity local-package integration blocks progress for more than one session, the client uses

@@ -4,19 +4,16 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** KIT-AGENT-RULE · write down the owner's standing rule about agents (`15` OD-9) and remove what contradicts it. Process change, no plan row,
-  commits use the scope `kit`. PR #9 (M0-04-FOLLOWUP: scene and AI packages) is still open and is this branch's base
-- **Branch:** `task/kit-agent-rule` (stacked on `task/M0-04-scene-and-packages`)
-- **Build log entry:** `docs/build-log/2026/2026-10-14-02-KIT-AGENT-RULE.md` (Session 1, Claude Code / claude-sonnet-5-5)
-- **Last green commit:** `d150875` (tip of PR #9's branch; CI green)
-- **Plan (4 steps, details in the build log):** 1 write-ahead · 2 the rule in `15`, `02`, `CLAUDE.md` · 3 everything that contradicts it (`16`, `11`, `17`,
-  `18`, skills, PR template, plan legend, `reviewer.md` model) · 4 decision row W10, CHANGELOG, finish, PR
-- **Done steps:** 1 in progress
-- **Next step:** commit the write-ahead, then step 2. No agent, no Workflow in this task.
-- **Open questions for the owner:** (1) does "Don't use agents" apply to every task from now on? If yes, it becomes a standing directive in `15` and
-  the `reviewer` step in `16`/`11` changes (protected files); until then it applies to this task only. (2) the two KIT-AUDIT-FIXES follow-ups
-  (`AGENTS.md` command line, guard test in CI). (The AI packages and the Bootstrap scene are decided and done in this follow-up.)
+- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** — (last completed: KIT-AGENT-RULE · the owner's standing rule about agents, `15` OD-9; PR open, stacked on PR #9; M0-04-FOLLOWUP is PR #9)
+- **Branch:** `task/kit-agent-rule` (base: `task/M0-04-scene-and-packages`) until the owner merges
+- **Build log entry:** last: `docs/build-log/2026/2026-10-14-02-KIT-AGENT-RULE.md` (Session 1)
+- **Last green commit:** the head of `task/kit-agent-rule` (`check-docs --base origin/main` OK; process documents only, no code changed)
+- **Done steps:** all four (write-ahead; the rule in `15`, `02`, `CLAUDE.md`; everything that contradicted it; W10, CHANGELOG, finish)
+- **Next step:** the owner merges PR #9 and the PR of this branch (or this one into #9's branch first); then `/start-task M0-05` (Unity test foundation,
+  `[S]`). It reads the M0-04 entry → Follow-ups, the M0-04-FOLLOWUP entry → Follow-ups. **No agents** (OD-9): self-review only.
+- **Open questions for the owner:** (1) is the reading of OD-9 right (agents only, not the main session's model; one agent per whole task; the coder decides
+  what "really necessary" means)? Decision 2 of the KIT-AGENT-RULE entry. (2) the two KIT-AUDIT-FIXES follow-ups (`AGENTS.md` command line, guard test in CI).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`
 

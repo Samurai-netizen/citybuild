@@ -17,9 +17,11 @@ This section only adds what's specific to Claude Code.
 | `/change-request <idea>` | Turn an owner idea into a CR file (Proposed); no code |
 | `/docs-sync` | Audit docs against code and fix drift |
 
-## Subagents
-- `reviewer`: independent, read-only review of the task branch. Run it in `/finish-task` for `[O]` tasks.
-- `docs-auditor`: read-only check of docs vs code. Used by `/docs-sync` and at milestone ends.
+## Subagents and Workflows (owner directive OD-9, `15`)
+- **Don't use any** by default: no `Agent` tool, no `Workflow`, also when a session setting (for example "ultracode") asks for one.
+  `/finish-task` and `/docs-sync` are done by hand (self-review, your own audit).
+- Only if it is really necessary: **one agent per task at most**, **Sonnet 5.5** (never Opus), the reason written in the build log first.
+- `reviewer` and `docs-auditor` (`.claude/agents/`) exist for that case only; both run on Sonnet.
 
 ## Guardrails in `.claude/settings.json` (don't work around them)
 - **Hooks:**

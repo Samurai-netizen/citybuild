@@ -5,7 +5,8 @@ description: Audit documentation against the code and fix drift - module docs, a
 
 ## Do this (`core-instructions/17-documentation-system.md`)
 1. Run `bash scripts/dev/check-docs.sh`. Once DocTools exists, also run `dotnet run --project tools/DocTools -- check`.
-2. Use the `docs-auditor` subagent to compare `docs/` and `core-instructions/` with the code. It reports; it doesn't edit.
+2. Compare `docs/` and `core-instructions/` with the code yourself (read, grep). Don't start an agent (owner directive OD-9, `core-instructions/15`)
+   unless it is really necessary: then one `docs-auditor` agent at most for the whole task, on Sonnet, with the reason written in the build log first.
 3. Fix each confirmed finding in the doc that owns the fact (`17` §2). If the **code** is wrong and the spec right,
    don't change the code here: log it as a follow-up or a CR.
 4. Regenerate generated docs. Update `Last updated:` lines.
