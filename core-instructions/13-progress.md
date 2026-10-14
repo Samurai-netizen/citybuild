@@ -4,17 +4,16 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-06 · Day 1 checkpoint; PR #13 open, the owner merges it)
-- **Branch:** `task/M0-06-day1-checkpoint` (from `main` = `1b46a92`) until the owner merges
-- **Build log entry:** last: `docs/build-log/2026/2026-10-14-04-M0-06.md` (Session 1)
-- **Last green commit:** the head of `task/M0-06-day1-checkpoint` (server: format clean, 0 warnings, fast suite 173 passed; Unity: EditMode 6 of 6,
-  PlayMode 6 of 6; `check-docs --base origin/main` OK)
-- **Done steps:** all six (write-ahead; review with two fixes; ADR-0001…0004; architecture overview; commands; tests and finish)
-- **Next step:** the owner merges the PR; then `/model` → Opus 5.5 and `/start-task M0-07` (content model with research and eras, `[O]` `[PLAN]`:
-  write-ahead, then the plan for the owner's approval before any code).
-- **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never executed);
-  the template sample content (M0-04 follow-up).
+- **State:** AWAITING OWNER   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** M0-07 · Content model with research and eras (`[O]` `[PLAN]`)
+- **Branch:** `task/M0-07-content-model` (from `main` = `23f7464`)
+- **Build log entry:** `docs/build-log/2026/2026-10-14-05-M0-07.md` (Session 1)
+- **Last green commit:** `main` = `23f7464` (fast suite 173 passed); this branch has only the write-ahead so far
+- **Done steps:** 1 (write-ahead). Planned steps 2–10: build log entry → Session 1 → Plan
+- **Next step:** the owner approves the plan (or redirects); record it under "Owner input", then step 2 (typed ids `BuildingTypeId`, `ResearchId`,
+  `EraId` with tests and `.meta` files). No code before the approval.
+- **Open questions for the owner:** the M0-07 plan (in chat); guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once
+  on Windows (never executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` ·
   `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
