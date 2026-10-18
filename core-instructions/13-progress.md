@@ -4,14 +4,14 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** AWAITING OWNER   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M0-09 · Simulator.Advance (`[O]` `[PLAN]`)
 - **Branch:** `task/M0-09-simulator-advance` (from `main` = `16140b5`)
 - **Build log entry:** `docs/build-log/2026/2026-10-18-01-M0-09.md`
 - **Last green commit:** `main` = `16140b5` (0 errors, fast suite 608 passed)
 - **Done steps:** 1 (write-ahead). Planned: 2 state transitions + stall reasons · 3 report + loop + timers · 4 production · 5 Unity ·
   6 docs, then finish (details in the build log entry → Plan)
-- **Next step:** the owner approves the plan (build log → Plan, "Design proposed with the plan"); then step 2. No code before the approval.
+- **Next step:** step 2 (state transitions and stall reasons). The owner approved the plan (build log → Owner input).
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
