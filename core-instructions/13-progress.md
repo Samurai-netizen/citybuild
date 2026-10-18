@@ -5,7 +5,7 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-08 · City state and mutations; PR open, the owner merges it)
+- **Task:** — (last completed: M0-08 · City state and mutations; PR #16 open, the owner merges it)
 - **Branch:** `task/M0-08-city-state` (from `main` = `f4b97b3`) until the owner merges
 - **Build log entry:** last: `docs/build-log/2026/2026-10-14-07-M0-08.md` (Done)
 - **Last green commit:** the head of `task/M0-08-city-state` (0 warnings, format clean, fast suite 608 passed; Unity EditMode 11/11,
