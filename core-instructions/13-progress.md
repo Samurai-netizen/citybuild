@@ -4,14 +4,14 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-08 · City state and mutations; PR #16 open, the owner merges it)
-- **Branch:** `task/M0-08-city-state` (from `main` = `f4b97b3`) until the owner merges
-- **Build log entry:** last: `docs/build-log/2026/2026-10-14-07-M0-08.md` (Done)
-- **Last green commit:** the head of `task/M0-08-city-state` (0 warnings, format clean, fast suite 608 passed; Unity EditMode 11/11,
-  PlayMode 6/6; `check-docs --base origin/main` OK)
-- **Done steps:** all of M0-08 (state, queries, four mutations, Unity check, docs; era checks for OD-10; finish)
-- **Next step:** the owner merges the PR; then `/model` → Opus 5.5 and `/start-task M0-09` (`Simulator.Advance`, `[O]` `[PLAN]`).
+- **State:** AWAITING OWNER   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** M0-09 · Simulator.Advance (`[O]` `[PLAN]`)
+- **Branch:** `task/M0-09-simulator-advance` (from `main` = `16140b5`)
+- **Build log entry:** `docs/build-log/2026/2026-10-18-01-M0-09.md`
+- **Last green commit:** `main` = `16140b5` (0 errors, fast suite 608 passed)
+- **Done steps:** 1 (write-ahead). Planned: 2 state transitions + stall reasons · 3 report + loop + timers · 4 production · 5 Unity ·
+  6 docs, then finish (details in the build log entry → Plan)
+- **Next step:** the owner approves the plan (build log → Plan, "Design proposed with the plan"); then step 2. No code before the approval.
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
@@ -19,12 +19,12 @@
   `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 8 / 85 (M0-08 in review)
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 9 / 85 (M0-09 in progress)
 
 | Area | State | Notes |
 |---|---|---|
 | Repo, kit, hooks, CI | done | M0-01 and the audit fixes merged (PR #4, #5); A18 can be closed in M0-04 |
-| Shared engine: content, research, labor | in progress | M0-03 merged (PR #7); the content model and its validation (M0-07a) merged (PR #14); the JSON file and server loading (M0-07b) merged (PR #15); city state and mutations are M0-08 (in review) |
+| Shared engine: content, research, labor | in progress | M0-03 merged (PR #7); the content model and its validation (M0-07a) merged (PR #14); the JSON file and server loading (M0-07b) merged (PR #15); city state and mutations (M0-08) merged (PR #16); `Simulator.Advance` is M0-09 (in progress) |
 | Shared engine: invariants, performance | not started | |
 | Server skeleton | done | M0-02 merged (PR #6) |
 | Persistence (EF + PostgreSQL) | not started | |
