@@ -5,8 +5,8 @@ namespace CityBuilder.Simulation.State
 {
     /// <summary>
     /// A building placed in a city (<c>core-instructions/04-simulation-model.md</c>, sections 3 and 4). Times are city-clock seconds and labor
-    /// is in worker-seconds. Only the engine changes a building, through <see cref="Rules.CityRules"/> (and <c>Simulator.Advance</c> from
-    /// M0-09); everything else reads it. The fields a phase doesn't use are 0, and <see cref="PhaseEndsAt"/> is null (<see cref="BuildingPhase"/>).
+    /// is in worker-seconds. Only the engine changes a building, through <see cref="Rules.CityRules"/> and <see cref="Settlement.Simulator"/>;
+    /// everything else reads it. The fields a phase doesn't use are 0, and <see cref="PhaseEndsAt"/> is null (<see cref="BuildingPhase"/>).
     /// </summary>
     public sealed class Building
     {
@@ -150,6 +150,67 @@ namespace CityBuilder.Simulation.State
             }
 
             AssignedWorkers = workers;
+        }
+
+        /// <summary>
+        /// Starts a production cycle at <paramref name="startedAt"/> with the assigned workers (at least 1): <paramref name="labor"/> worker-seconds
+        /// to do, ending after <c>CeilDiv(labor, workers)</c> seconds (<c>04</c> section 6). The caller takes the inputs and checks the start rule.
+        /// </summary>
+        internal void StartCycle(long startedAt, long labor)
+        {
+            RequirePhase(BuildingPhase.Idle);
+            if (AssignedWorkers < 1 || labor < 1)
+            {
+                throw new InvalidOperationException(FormattableString.Invariant($"Building {Id}: a cycle needs at least 1 worker and 1 labor."));
+            }
+
+            Phase = BuildingPhase.Producing;
+            PhaseStartedAt = startedAt;
+            CycleLabor = labor;
+            LaborRemaining = labor;
+            SegmentStartedAt = startedAt;
+            PhaseEndsAt = checked(startedAt + IntegerMath.CeilDiv(labor, AssignedWorkers));
+        }
+
+        /// <summary>Ends construction: the building is idle with <paramref name="workers"/> assigned (auto-staffing, <c>04</c> section 3).</summary>
+        internal void CompleteConstruction(int workers)
+        {
+            RequirePhase(BuildingPhase.Constructing);
+            if (workers < 0)
+            {
+                // Free workers below 0 break invariant 9: the city was restored with more workers assigned than its houses provide.
+                throw new InvalidOperationException(FormattableString.Invariant($"Building {Id}: auto-staffing found {workers} free workers."));
+            }
+
+            ClearPhaseFields();
+            Phase = BuildingPhase.Idle;
+            AssignedWorkers = workers;
+        }
+
+        /// <summary>Ends the upgrade: the building reaches its target level and is idle. The workers stay assigned.</summary>
+        internal void CompleteUpgrade()
+        {
+            RequirePhase(BuildingPhase.Upgrading);
+            int targetLevel = TargetLevel;
+            ClearPhaseFields();
+            Phase = BuildingPhase.Idle;
+            Level = targetLevel;
+        }
+
+        /// <summary>Ends the running cycle: the building is idle. The caller moves the outputs from reserved to stock.</summary>
+        internal void CompleteCycle()
+        {
+            RequirePhase(BuildingPhase.Producing);
+            ClearPhaseFields();
+            Phase = BuildingPhase.Idle;
+        }
+
+        private void RequirePhase(BuildingPhase phase)
+        {
+            if (Phase != phase)
+            {
+                throw new InvalidOperationException(FormattableString.Invariant($"Building {Id} is {Phase}, not {phase}."));
+            }
         }
 
         private void ClearPhaseFields()

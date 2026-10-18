@@ -7,8 +7,8 @@ namespace CityBuilder.Simulation.Rules
 {
     /// <summary>
     /// The player's mutations of a city (<c>core-instructions/04-simulation-model.md</c>, section 8). Each runs at the city's clock, after the
-    /// caller has settled the city to now; the caller then runs a zero-length advance (M0-09), so the returned state is canonical. Each checks in
-    /// the order of section 8 and returns the first failure; a rejected mutation changes nothing.
+    /// caller has settled the city to now; the caller then runs a zero-length advance (<see cref="Settlement.Simulator.Advance"/> with 0), so
+    /// the returned state is canonical. Each checks in the order of section 8 and returns the first failure; a rejected mutation changes nothing.
     /// </summary>
     public static class CityRules
     {

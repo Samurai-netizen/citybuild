@@ -11,6 +11,7 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
+- [BL-20261018-01 · M0-09 · Simulator.Advance](2026/2026-10-18-01-M0-09.md) — Done
 - [BL-20261014-07 · M0-08 · City state and mutations](2026/2026-10-14-07-M0-08.md) — Done
 - [BL-20261014-06 · M0-07b · Content model with research and eras: JSON file and server loading](2026/2026-10-14-06-M0-07b.md) — Done
 - [BL-20261014-05 · M0-07a · Content model with research and eras: the engine](2026/2026-10-14-05-M0-07a.md) — In progress

@@ -46,7 +46,8 @@ A settlement covers the window `[T0, T0 + elapsed]`.
 
 Fields a phase doesn't use are 0 (`PhaseEndsAt` null), and `Producing` keeps the cycle's start in `PhaseStartedAt`, so equal situations are equal field by field.
 **Stall reason** (derived, never stored), shown to players. The first match wins:
-`NoRecipe` (houses) · `NoWorkers` (idle or frozen cycle) · `MissingInput:item` · `StorageFull:item`.
+`NoRecipe` (houses) · `NoWorkers` (idle or frozen cycle) · `MissingInput:item` · `StorageFull:item`. The item is the first in recipe order
+(ordinal ids). Constructing and upgrading buildings, cycles running with workers and idle producers that can start have none.
 
 ## 5. Research
 - One research slot in M0. `StartResearch` pays the full cost up front and sets `ResearchEndsAt = clock + Duration`.
@@ -85,6 +86,8 @@ Advance(city, content, elapsedSeconds) -> SettlementReport
 
 `Advance(city, 0)` (a **zero-length advance**) only runs `StartEligible` at the current clock.
 Every mutation is followed by a zero-length advance, so the returned state is always canonical.
+The event sources (research timer, building timers, later the mailbox of §13) are a list in the order of §6; `next` is the earliest of them.
+A timer due before the clock means an invalid city: `Advance` throws before it changes anything.
 
 ## 8. Mutations (all happen at `city.Clock`, after settling)
 
@@ -123,8 +126,9 @@ frozen cycle counts as running (its inputs are refunded). Workers on a house are
 13. Locked buildings are never placed, and research prerequisites are always respected.
 
 ## 11. Settlement report
-Returned with every settled snapshot: `elapsedSeconds`, `productionSeconds` (= `min(elapsed, cap)`),
-`produced{item:qty}`, `consumed{item:qty}`, `completedBuildings[id]`, `completedResearch[id]`, `eraChanged`.
+Returned with every settled snapshot: `elapsedSeconds` (the simulated seconds, ≥ 0), `productionSeconds` (= `min(elapsed, cap)`),
+`produced{item:qty}` (outputs of completed cycles), `consumed{item:qty}` (inputs of started cycles), `completedBuildings[id]` (constructions
+and upgrades), `completedResearch[id]`, `eraChanged` (false until the era transition, M2). Ids ascending, items in ordinal order.
 It is persisted as aggregated ledger entries (one per item and direction per settlement).
 
 ## 12. Performance budget

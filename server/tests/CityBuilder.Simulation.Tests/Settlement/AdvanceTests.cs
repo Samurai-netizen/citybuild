@@ -1,0 +1,111 @@
+using CityBuilder.Simulation.Settlement;
+using CityBuilder.Simulation.State;
+using CityBuilder.Simulation.Tests.State;
+using static CityBuilder.Simulation.Tests.State.CityFixture;
+
+namespace CityBuilder.Simulation.Tests.Settlement;
+
+/// <summary>
+/// The loop of <c>Simulator.Advance</c> (<c>04</c> sections 2, 7 and 11): the clock, the window, the target time and bad input. The fixture's
+/// production cap is 3600 s; a hut takes 5 s to build.
+/// </summary>
+public sealed class AdvanceTests
+{
+    [Fact]
+    public void Advance_NothingRunning_MovesTheClockByTheFullElapsedTime()
+    {
+        CityState city = City(clock: 1000);
+
+        SettlementReport report = Simulator.Advance(city, TestContent, 50);
+
+        Assert.Equal(1050, city.Clock);
+        Assert.Equal((50L, 50L), (report.ElapsedSeconds, report.ProductionSeconds));
+        Assert.Empty(report.Produced);
+        Assert.Empty(report.Consumed);
+        Assert.Empty(report.CompletedBuildings);
+        Assert.Empty(report.CompletedResearch);
+        Assert.False(report.EraChanged);
+    }
+
+    [Fact]
+    public void Advance_ElapsedBeyondTheProductionCap_ReportsTheCapAsProductionSeconds()
+    {
+        CityState city = City(clock: 1000);
+
+        SettlementReport report = Simulator.Advance(city, TestContent, 10_000);
+
+        Assert.Equal(11_000, city.Clock);
+        Assert.Equal((10_000L, 3600L), (report.ElapsedSeconds, report.ProductionSeconds));
+    }
+
+    [Fact]
+    public void Advance_ZeroElapsed_KeepsTheClock()
+    {
+        CityState city = City(clock: 1000, buildings: [Constructing(1, "hut", 0, 0, startedAt: 998, endsAt: 1003)]);
+
+        SettlementReport report = Simulator.Advance(city, TestContent, 0);
+
+        Assert.Equal(1000, city.Clock);
+        Assert.Equal((0L, 0L), (report.ElapsedSeconds, report.ProductionSeconds));
+        Assert.Equal(BuildingPhase.Constructing, city.Buildings[0].Phase);
+    }
+
+    [Fact]
+    public void Advance_NegativeElapsed_CountsAsZero()
+    {
+        CityState city = City(clock: 1000, buildings: [Constructing(1, "hut", 0, 0, startedAt: 998, endsAt: 1003)]);
+        string before = CityDump.Describe(city);
+
+        SettlementReport report = Simulator.Advance(city, TestContent, -5);
+
+        Assert.Equal(before, CityDump.Describe(city));
+        Assert.Equal((0L, 0L), (report.ElapsedSeconds, report.ProductionSeconds));
+    }
+
+    [Fact]
+    public void Advance_TimerExactlyAtTheTarget_CompletesIt()
+    {
+        CityState city = City(clock: 1000, buildings: [Constructing(1, "hut", 0, 0, startedAt: 998, endsAt: 1005)]);
+
+        SettlementReport report = Simulator.Advance(city, TestContent, 5);
+
+        Assert.Equal(BuildingPhase.Idle, city.Buildings[0].Phase);
+        Assert.Equal([1], report.CompletedBuildings);
+        Assert.Equal(1005, city.Clock);
+    }
+
+    [Fact]
+    public void Advance_TimerOneSecondAfterTheTarget_KeepsItRunning()
+    {
+        CityState city = City(clock: 1000, buildings: [Constructing(1, "hut", 0, 0, startedAt: 998, endsAt: 1005)]);
+
+        SettlementReport report = Simulator.Advance(city, TestContent, 4);
+
+        Assert.Equal("building 1 hut (0,0) L1 w=0 Constructing 998..1005 target=0 labor=0/0@0", CityDump.BuildingLine(city, 1));
+        Assert.Empty(report.CompletedBuildings);
+        Assert.Equal(1004, city.Clock);
+    }
+
+    public static TheoryData<string> TimersBeforeTheClock => new() { "construction", "research" };
+
+    [Theory]
+    [MemberData(nameof(TimersBeforeTheClock))]
+    public void Advance_TimerDueBeforeTheClock_ThrowsAndChangesNothing(string timer)
+    {
+        CityState city = timer == "construction"
+            ? City(clock: 1000, buildings: [Constructing(1, "hut", 0, 0, startedAt: 990, endsAt: 999)])
+            : City(clock: 1000, activeResearch: new ActiveResearch(new ResearchId("carpentry"), 800, 900));
+        string before = CityDump.Describe(city);
+
+        Assert.Throws<InvalidOperationException>(() => Simulator.Advance(city, TestContent, 10));
+        Assert.Equal(before, CityDump.Describe(city));
+    }
+
+    [Fact]
+    public void Advance_NullCityOrContent_Throws()
+    {
+        // The nulls are deliberate: they are programmer errors, not business rules.
+        Assert.Throws<ArgumentNullException>("city", () => Simulator.Advance(null!, TestContent, 1));
+        Assert.Throws<ArgumentNullException>("content", () => Simulator.Advance(City(), null!, 1));
+    }
+}

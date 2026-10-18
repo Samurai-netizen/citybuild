@@ -6,7 +6,7 @@
 
 > *Growing.* The integer helpers, the content ids and the content model with its validation exist (M0-07a); the server loads the content
 > JSON through it (M0-07b, `docs/modules/CityBuilder.Infrastructure.md`). The city state, its derived queries and the four player mutations exist
-> (M0-08); `Simulator.Advance` follows in M0-09 *(planned)*.
+> (M0-08), and `Simulator.Advance` settles a city (M0-09). The settlement window, invariants and performance follow in M0-13 to M0-16 *(planned)*.
 
 ## Purpose
 The deterministic simulation engine: integer-only game rules and the helpers they share (`core-instructions/04-simulation-model.md`).
@@ -55,6 +55,20 @@ A mutation runs at the city's clock after the caller has settled the city, check
 or returns the first failure and changes nothing. The public constructors restore a city or a building with every field (database, tests) and
 reject values that can't form one. Decisions: build log `docs/build-log/2026/2026-10-14-07-M0-08.md`, decisions 2–16.
 
+## Settlement: `Simulator.Advance`
+```mermaid
+flowchart LR
+  A["Advance(city, content, elapsed)"] --> S["start eligible cycles at t<br/>(only while t ≤ T0 + cap)"]
+  S --> N{"next due time of the<br/>event sources ≤ target?"}
+  N -- "yes: t = next" --> C["complete what is due at t:<br/>research, then buildings by id"]
+  C --> S
+  N -- no --> K["clock = target"] --> R[SettlementReport]
+```
+The loop of `04` §7. The event sources are an internal list (`IEventSource`: `ResearchTimerSource`, then `BuildingTimerSource`) whose order
+is the order within a second; the mailbox of `04` §13 will be one more source. Research effects are derived from `CompletedResearch`, so a
+completed node counts from that second; running cycles keep their labor. The start rule and the stall reason share the checks in
+`CityQueries`. There is no era transition until M2. Decisions: build log `docs/build-log/2026/2026-10-18-01-M0-09.md`, decisions 3–19.
+
 ## Key types
 | Type | Responsibility |
 |---|---|
@@ -78,6 +92,9 @@ reject values that can't form one. Decisions: build log `docs/build-log/2026/202
 | `State.CityQueries` | `WorkersProvided` (completed houses only), `WorkersAssigned`, `FreeWorkers`, `BuildersBusy`, `Reserved(item)` (outputs of producing buildings, frozen ones included), `TryGetEffectiveCap(item)` (base + bonuses; false when uncapped), `EffectiveLabor(type, level)` (reductions of completed research), `IsUnlocked(type)` (of the city's era or earlier, and available at the start or unlocked by completed research; OD-10). Worker sums are `long`. A city that names a type or research the content doesn't know makes them throw `InvalidOperationException` |
 | `Rules.CityRules` | `PlaceBuilding`, `UpgradeBuilding` (cost checked before the refund of a running or frozen cycle; refunds may exceed caps), `AssignWorkers` (absolute count; the labor segment update keeps progress, 0 freezes), `StartResearch` (cost paid up front; same era, prerequisites done) |
 | `Rules.MutationResult`, `Rules.MutationErrorCode` | `Ok` or `Rejected(code)`; the codes are those of `05` that the engine decides, each doc names its API code. The server's error catalogue (M0-34) maps them to API codes and HTTP statuses |
+| `State.StallReason`, `State.StallKind` | `StallReason.Of(city, content, building)`: null, or the first of `NoRecipe`, `NoWorkers`, `MissingInput`, `StorageFull` with its item; `ToString` is the API text (`MissingInput:logs`). None while constructing or upgrading |
+| `Settlement.Simulator` | `Advance(city, content, elapsedSeconds)`: the event loop of `04` §7, changing the city in place. Elapsed below 0 counts as 0; a timer due before the clock throws `InvalidOperationException` before anything changes |
+| `Settlement.SettlementReport` | `ElapsedSeconds`, `ProductionSeconds` (`min(elapsed, cap)`), `Produced` and `Consumed` (production only, per item in ordinal order), `CompletedBuildings` (constructions and upgrades, ascending), `CompletedResearch` (ordinal), `EraChanged` (false until M2) |
 
 ## Rules and invariants
 `.claude/rules/simulation.md` is the binding list (integers only, `CeilDiv` for durations, no `DateTime` or randomness, no iteration
@@ -104,7 +121,9 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
 - A new content rule: a check in the matching `Runtime/Content/*Rules.cs` class (or a new one, called from `GameContentFactory`), a
   `ContentErrorCode` value with its XML doc, a failing case in the matching test class, and the list in `04` → Content rules.
 - A new engine rule or effect type: recipe "New engine rule or effect type" in `core-instructions/19-change-recipes.md`; a new effect type
-  also needs its `*Effect` class, its fields in `ResearchEffectData` and its case in `ContentReader`.
+  end to end, with a worked example: `docs/how-to/add-research-effect.md`.
+- A new event source (mailbox deliveries, `04` §13): a class implementing `IEventSource` in `Runtime/Settlement/`, inserted into `Simulator`'s
+  list at its place in the order within a second. After `CompleteDue(t)` it has nothing due at or before `t`, or the loop can't move on.
 - A new mutation (recipe "New command" in `19`): a method in `Runtime/Rules/CityRules.cs` (a class of its own once that file passes ~300
   lines) that checks in the order of `04` §8 before it changes anything, state changes as internal transitions of `CityState` or `Building`,
   new codes in `MutationErrorCode` (and the server's catalogue), and a test per success path and code in `Rules/` with `RulesAssert.Rejected`.
@@ -125,8 +144,11 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
   (`ValidWith`) and `ContentAssert` checks the exact errors. `GameContentFactoryTests` (what valid data becomes), `ContentShapeTests`,
   `ContentValueRuleTests`, `ContentBuildingRuleTests`, `ContentReferenceRuleTests`, `ContentResearchRuleTests`, `ContentEraRuleTests`: at least one failing case
   per rule and error code, named after the error path.
-- `State/` (`Building`, `CityState`, `CityFactory`, `CityQueries` tests) and `Rules/` (one class per mutation: every success path, every
-  error code, the check order where failures overlap). `CityFixture` builds cities and one building per phase over `ContentFixture` (plus a
+- `State/` (`Building`, `CityState`, `CityFactory`, `CityQueries`, `StallReason` tests) and `Rules/` (one class per mutation: every success
+  path, every error code, the check order where failures overlap).
+- `Settlement/`: `AdvanceTests` (clock, window, target, bad input), `AdvanceTimerTests` (research, construction with auto-staffing, the
+  order within a second, upgrades, the dormant tail), `AdvanceProductionTests` (cycles, a chain, research and the next cycle, rounding, caps
+  with reservations, the production cap). `CityFixture` builds cities and one building per phase over `ContentFixture` (plus a
   workshop level 2 and 4 workers on lumber camp level 2); `RulesAssert.Rejected` checks that a rejection leaves the `CityDump` unchanged.
 - `SimulationDependencyTests`: the compiled assembly references exactly `netstandard` and is built for `netstandard2.1`.
 - `SimulationPackageTests`: the files only Unity sees. The asmdef (`noEngineReferences`, no references, no platform or define
@@ -138,8 +160,8 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
   warning suppression, the one `Compile` glob, no references, and the guard target.
 
 That the package compiles inside Unity is checked by M0-04's headless import of the Unity project (`client/README.md`) and by the EditMode tests
-`SimulationInUnityTests` (M0-05, `IntegerMath`), `ContentInUnityTests` (M0-07a, the content factory on Unity's runtime) and `CityRulesInUnityTests`
-(M0-08, a placement, a rejection and the labor segment update) in
+`SimulationInUnityTests` (M0-05, `IntegerMath`), `ContentInUnityTests` (M0-07a, the content factory on Unity's runtime), `CityRulesInUnityTests`
+(M0-08, a placement, a rejection and the labor segment update) and `SimulatorInUnityTests` (M0-09, advances and stall reasons) in
 `client/CityBuilder/Assets/_Project/Tests/EditMode`; run them with `scripts/dev/test-unity.sh`. `ClientAssemblyTests` is in this test project,
 too, but guards the Unity client's asmdefs and manifest, not the engine (see `docs/architecture/overview.md`).
 
@@ -154,4 +176,4 @@ too, but guards the Unity client's asmdefs and manifest, not the engine (see `do
   depend on `Dictionary` or `HashSet` order (`04` §9).
 - Content error messages are English text for content authors; only `ContentErrorCode` and `Path` are stable.
 
-Last updated: M0-08
+Last updated: M0-09

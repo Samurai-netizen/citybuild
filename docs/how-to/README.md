@@ -7,7 +7,7 @@ creates the capability, and every later change to that area keeps it valid. The 
 | Guide (file) | Written in | Status |
 |---|---|---|
 | [`add-building-or-item.md`](add-building-or-item.md): content-only change, with a worked example | M0-07b | done |
-| `add-research-effect.md`: a new effect type in the engine | M0-09 | planned |
+| [`add-research-effect.md`](add-research-effect.md): a new effect type in the engine, with a worked example | M0-09 | done |
 | `debug-determinism-failure.md`: from a failing seed to a rule test | M0-15 | planned |
 | `add-migration.md`: change the database schema | M0-19 | planned |
 | `add-command.md`: a new player command end to end | M0-29 | planned |

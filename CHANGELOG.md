@@ -45,6 +45,9 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
 - City state and mutations in the engine: `CityState`, `Building`, `CityFactory.CreateStarterCity`, the derived `CityQueries` (workers,
   builders, reserved, effective caps and labor, unlocks), and `CityRules` PlaceBuilding, UpgradeBuilding, AssignWorkers and StartResearch
   with `MutationResult`; era checks for placement and for item use in content (owner directive OD-10) (M0-08).
+- Settlement in the engine: `Simulator.Advance` (research and building timers as event sources, auto-staffing, the start rule with research
+  labor, the production cap and dormant tail) with a sorted `SettlementReport`, derived stall reasons (`StallReason`), and the how-to
+  `add-research-effect.md` (M0-09).
 
 ### Fixed
 - Kit audit follow-ups A1, A2, A3, A9, A15, A16: `[PLAN]` tasks write ahead before the plan (no Plan Mode), the Bash guard no longer
