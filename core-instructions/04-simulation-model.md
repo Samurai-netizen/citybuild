@@ -44,6 +44,7 @@ A settlement covers the window `[T0, T0 + elapsed]`.
 | `Idle` | Ready, not producing | — |
 | `Producing` | Inputs consumed, outputs reserved | `CycleLabor`, `LaborRemaining`, `SegmentStartedAt`, `PhaseEndsAt` (null if frozen) |
 
+Fields a phase doesn't use are 0 (`PhaseEndsAt` null), and `Producing` keeps the cycle's start in `PhaseStartedAt`, so equal situations are equal field by field.
 **Stall reason** (derived, never stored), shown to players. The first match wins:
 `NoRecipe` (houses) · `NoWorkers` (idle or frozen cycle) · `MissingInput:item` · `StorageFull:item`.
 
@@ -89,12 +90,14 @@ Every mutation is followed by a zero-length advance, so the returned state is al
 
 | Mutation | Checks (error code) | Effect |
 |---|---|---|
-| PlaceBuilding | type known (`UNKNOWN_BUILDING_TYPE`), unlocked (`BUILDING_LOCKED`), in bounds (`OUT_OF_BOUNDS`), tile free (`TILE_OCCUPIED`), free builder (`NO_FREE_BUILDER`), cost (`INSUFFICIENT_RESOURCE`) | pay cost, `Id = NextBuildingId++`, `Constructing` |
+| PlaceBuilding | type known (`UNKNOWN_BUILDING_TYPE`), of the city's era or earlier and unlocked (`BUILDING_LOCKED`), in bounds (`OUT_OF_BOUNDS`), tile free (`TILE_OCCUPIED`), free builder (`NO_FREE_BUILDER`), cost (`INSUFFICIENT_RESOURCE`) | pay cost, `Id = NextBuildingId++`, `Constructing` |
 | UpgradeBuilding | exists (`BUILDING_NOT_FOUND`), Idle/Producing (`BUILDING_BUSY`), level < max (`MAX_LEVEL`), free builder, cost (checked **before** the refund) | refund the running cycle's inputs, release reservation, pay, `Upgrading` |
 | AssignWorkers | exists, has a recipe (`INVALID_ARGUMENT`), not Constructing (`BUILDING_BUSY`), `0 ≤ n ≤ MaxWorkers` (`WORKER_LIMIT`), enough free workers (`INSUFFICIENT_WORKERS`) | set `n`, labor segment update (§3) |
 | StartResearch | known (`UNKNOWN_RESEARCH`), not done (`RESEARCH_COMPLETED`), slot free (`RESEARCH_IN_PROGRESS`), prerequisites + current era (`RESEARCH_LOCKED`), cost | pay, start timer |
 
 **Builders busy** = count of `Constructing` + `Upgrading`. **Refunds may exceed storage caps**: caps only limit production.
+Checks run in the listed order; the first failure is returned and changes nothing. "Current era" means the node's era equals the city's, and a
+frozen cycle counts as running (its inputs are refunded). Workers on a house are `INVALID_ARGUMENT`, also while it is constructing.
 
 ## 9. Determinism rules (shared code)
 - Integers only (`long` quantities, seconds and labor; `int` building instance ids and permille). Content ids are typed structs over
@@ -148,3 +151,5 @@ quantities, durations and labor ≤ 10¹²), then every rule, and lists every er
 6. The research graph has no cycle, and every prerequisite is in the same era or an earlier one.
 7. Σ labor reductions of one building type ≤ `MaxLaborReductionPermille`, and with all of them applied every level's shortest cycle,
    `CeilDiv(effective labor, MaxWorkers)`, is ≥ `MinCycleSeconds`.
+8. Every item in a cost, a recipe or the starting inventory belongs to the era of what uses it (building type, research node, starting city)
+   or an earlier one (OD-10).

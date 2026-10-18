@@ -5,7 +5,8 @@
 **References:** the base class library only · **Referenced by:** `CityBuilder.Domain`, `CityBuilder.Application` (Infrastructure and Api get it through them), `CityBuilder.Simulation.Tests`; in Unity `CityBuilder.Client.Core` and the two client test assemblies (`CityBuilder.Client.Net` and `.Presentation` reach it through Core)
 
 > *Growing.* The integer helpers, the content ids and the content model with its validation exist (M0-07a); the server loads the content
-> JSON through it (M0-07b, `docs/modules/CityBuilder.Infrastructure.md`). The city state follows in M0-08 and `Simulator.Advance` in M0-09 *(planned)*.
+> JSON through it (M0-07b, `docs/modules/CityBuilder.Infrastructure.md`). The city state, its derived queries and the four player mutations exist
+> (M0-08); `Simulator.Advance` follows in M0-09 *(planned)*.
 
 ## Purpose
 The deterministic simulation engine: integer-only game rules and the helpers they share (`core-instructions/04-simulation-model.md`).
@@ -41,6 +42,19 @@ of `04` → Content rules. Bad data is never an exception: the result lists each
 own names (`buildings[sawmill].levels[2].recipe.labor`) and a message. A broken value gives one error: later rules skip what earlier ones
 reported. The JSON format is the shape of the `*Data` classes in camelCase; the worked example is `docs/how-to/add-building-or-item.md`. Design decisions: build log `docs/build-log/2026/2026-10-14-05-M0-07a.md`, decisions 2–8 and 11–31.
 
+## City state and mutations
+```mermaid
+flowchart LR
+  F["CityFactory.CreateStarterCity(content)"] --> C["CityState<br/>clock, era, stock, buildings, research"]
+  C --> Q["CityQueries (derived, never stored)<br/>workers, builders, reserved, caps, labor, unlocks"]
+  R["CityRules.PlaceBuilding / UpgradeBuilding /<br/>AssignWorkers / StartResearch"] -->|"Ok: changes C in place"| C
+  R -->|"reads"| Q
+  R --> M["MutationResult: Ok or a MutationErrorCode"]
+```
+A mutation runs at the city's clock after the caller has settled the city, checks in the order of `04` §8, and either applies all its effects
+or returns the first failure and changes nothing. The public constructors restore a city or a building with every field (database, tests) and
+reject values that can't form one. Decisions: build log `docs/build-log/2026/2026-10-14-07-M0-08.md`, decisions 2–16.
+
 ## Key types
 | Type | Responsibility |
 |---|---|
@@ -57,11 +71,20 @@ reported. The JSON format is the shape of the `*Data` classes in camelCase; the 
 | `ResearchDefinition`, `ResearchEffect` | A node: era, cost, duration, sorted prerequisites (no cycle, none from a later era), effects in file order. The effect types are a closed set: `UnlockBuildingEffect`, `LaborReductionEffect` (permille, producers only), `StorageCapBonusEffect` (amount, capped items only) |
 | `ItemQuantity` | One line of a cost, recipe, cap list or inventory; lists are sorted by item id and name each item once |
 | `Content.Data.*Data` | The content as read: `GameContentData` and nine classes below it, plain settable properties, every value nullable, no checks. Any JSON library can fill them |
+| `State.CityState` | `Clock`, `Era`, `NextBuildingId`, `Inventory` (ordinal item order, only quantities above 0; `GetQuantity` gives 0 for the rest), `Buildings` (by id; `TryGetBuilding`), `CompletedResearch` (ordinal order; `HasCompletedResearch`), `ActiveResearch` or null. Read-only views; the restoring constructor checks ranges, unique ids and tiles, ids below `NextBuildingId`, the running research not completed |
+| `State.Building`, `State.BuildingPhase` | A placed building: id, type, tile, level, assigned workers, phase and its timer fields (`PhaseStartedAt`, `PhaseEndsAt`, `TargetLevel`, `CycleLabor`, `LaborRemaining`, `SegmentStartedAt`). Fields a phase doesn't use are 0 and `PhaseEndsAt` is null (`BuildingPhase` lists them per phase); the constructor rejects anything else |
+| `State.ActiveResearch` | The running research: id, `StartedAt`, `EndsAt` |
+| `State.CityFactory` | `CreateStarterCity(content)`: the content's starting era and stock, clock 0, nothing built or researched, next id 1 |
+| `State.CityQueries` | `WorkersProvided` (completed houses only), `WorkersAssigned`, `FreeWorkers`, `BuildersBusy`, `Reserved(item)` (outputs of producing buildings, frozen ones included), `TryGetEffectiveCap(item)` (base + bonuses; false when uncapped), `EffectiveLabor(type, level)` (reductions of completed research), `IsUnlocked(type)` (of the city's era or earlier, and available at the start or unlocked by completed research; OD-10). Worker sums are `long`. A city that names a type or research the content doesn't know makes them throw `InvalidOperationException` |
+| `Rules.CityRules` | `PlaceBuilding`, `UpgradeBuilding` (cost checked before the refund of a running or frozen cycle; refunds may exceed caps), `AssignWorkers` (absolute count; the labor segment update keeps progress, 0 freezes), `StartResearch` (cost paid up front; same era, prerequisites done) |
+| `Rules.MutationResult`, `Rules.MutationErrorCode` | `Ok` or `Rejected(code)`; the codes are those of `05` that the engine decides, each doc names its API code. The server's error catalogue (M0-34) maps them to API codes and HTTP statuses |
 
 ## Rules and invariants
 `.claude/rules/simulation.md` is the binding list (integers only, `CeilDiv` for durations, no `DateTime` or randomness, no iteration
 order that matters, `checked` arithmetic, results instead of exceptions for business rules). What is specific to this module:
 - **Content comes in only as `GameContent`.** Engine code takes it, never the `*Data` classes, and may rely on every content rule of `04`.
+- **The city changes only through the engine**, and a rejected mutation changes nothing. Derived values (workers, reservations, caps, labor,
+  unlocks) are never stored. Fields a phase doesn't use are 0, so two equal situations are equal field by field.
 - **Base class library only.** The asmdef keeps `"noEngineReferences": true`, no references and no platform or define restrictions; the
   compiled assembly references exactly `netstandard`. Tests check both.
 - **`netstandard2.1`, C# 9.** Unity 6.3 compiles the same files, so no file-scoped namespaces, global usings, records, `init` or
@@ -81,7 +104,10 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
 - A new content rule: a check in the matching `Runtime/Content/*Rules.cs` class (or a new one, called from `GameContentFactory`), a
   `ContentErrorCode` value with its XML doc, a failing case in the matching test class, and the list in `04` → Content rules.
 - A new engine rule or effect type: recipe "New engine rule or effect type" in `core-instructions/19-change-recipes.md`; a new effect type
-  also needs its `*Effect` class, its fields in `ResearchEffectData` and its case in `ContentReader`. Mutation rules go to `Runtime/Rules/`.
+  also needs its `*Effect` class, its fields in `ResearchEffectData` and its case in `ContentReader`.
+- A new mutation (recipe "New command" in `19`): a method in `Runtime/Rules/CityRules.cs` (a class of its own once that file passes ~300
+  lines) that checks in the order of `04` §8 before it changes anything, state changes as internal transitions of `CityState` or `Building`,
+  new codes in `MutationErrorCode` (and the server's catalogue), and a test per success path and code in `Rules/` with `RulesAssert.Rejected`.
   A subfolder needs no asmdef: a second asmdef would split the Unity assembly (a test fails).
 - One public type per file, named after it, with XML docs and `#nullable enable` on the first line, and its `.meta` file (below). Both builds
   pick the file up.
@@ -97,8 +123,11 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
   dictionary key; `EraId` has no order. One test fails loudly where the machine has no culture data.
 - `Content/`: `ContentFixture.Valid()` is a small synthetic content in code with its own numbers; each test changes one value
   (`ValidWith`) and `ContentAssert` checks the exact errors. `GameContentFactoryTests` (what valid data becomes), `ContentShapeTests`,
-  `ContentValueRuleTests`, `ContentBuildingRuleTests`, `ContentReferenceRuleTests`, `ContentResearchRuleTests`: at least one failing case
+  `ContentValueRuleTests`, `ContentBuildingRuleTests`, `ContentReferenceRuleTests`, `ContentResearchRuleTests`, `ContentEraRuleTests`: at least one failing case
   per rule and error code, named after the error path.
+- `State/` (`Building`, `CityState`, `CityFactory`, `CityQueries` tests) and `Rules/` (one class per mutation: every success path, every
+  error code, the check order where failures overlap). `CityFixture` builds cities and one building per phase over `ContentFixture` (plus a
+  workshop level 2 and 4 workers on lumber camp level 2); `RulesAssert.Rejected` checks that a rejection leaves the `CityDump` unchanged.
 - `SimulationDependencyTests`: the compiled assembly references exactly `netstandard` and is built for `netstandard2.1`.
 - `SimulationPackageTests`: the files only Unity sees. The asmdef (`noEngineReferences`, no references, no platform or define
   restrictions, same name as the assembly, auto-referenced, the only asmdef, no asmref), `package.json` (name, `unity` 6000.3,
@@ -109,7 +138,8 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
   warning suppression, the one `Compile` glob, no references, and the guard target.
 
 That the package compiles inside Unity is checked by M0-04's headless import of the Unity project (`client/README.md`) and by the EditMode tests
-`SimulationInUnityTests` (M0-05, `IntegerMath`) and `ContentInUnityTests` (M0-07a, the content factory on Unity's runtime) in
+`SimulationInUnityTests` (M0-05, `IntegerMath`), `ContentInUnityTests` (M0-07a, the content factory on Unity's runtime) and `CityRulesInUnityTests`
+(M0-08, a placement, a rejection and the labor segment update) in
 `client/CityBuilder/Assets/_Project/Tests/EditMode`; run them with `scripts/dev/test-unity.sh`. `ClientAssemblyTests` is in this test project,
 too, but guards the Unity client's asmdefs and manifest, not the engine (see `docs/architecture/overview.md`).
 
@@ -124,4 +154,4 @@ too, but guards the Unity client's asmdefs and manifest, not the engine (see `do
   depend on `Dictionary` or `HashSet` order (`04` §9).
 - Content error messages are English text for content authors; only `ContentErrorCode` and `Path` are stable.
 
-Last updated: M0-07b
+Last updated: M0-08
