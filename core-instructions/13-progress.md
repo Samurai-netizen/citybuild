@@ -4,15 +4,14 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** M0-09 · Simulator.Advance (`[O]` `[PLAN]`)
-- **Branch:** `task/M0-09-simulator-advance` (from `main` = `16140b5`)
-- **Build log entry:** `docs/build-log/2026/2026-10-18-01-M0-09.md`
-- **Last green commit:** the head of the branch, step 6 (0 warnings, format clean, fast suite 660 passed; Unity EditMode 13/13, PlayMode 6/6)
-- **Done steps:** 1 (write-ahead; the owner approved the plan), 2 (state transitions, `StallReason`), 3 (`Simulator.Advance` loop, report,
-  event sources, timer completions), 4 (production starts, the loop of `04` §7), 5 (Unity import and `SimulatorInUnityTests`), 6 (docs)
-- **Next step:** `/finish-task`: Definition of Done (`11`), recipe check (`19`), `check-docs.sh --base origin/main`, line-by-line self-review of
-  the diff (engine task), build log Done + verification, resume point IDLE, board `In review`, PR, task report.
+- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** — (last completed: M0-09 · Simulator.Advance; its PR is open, the owner merges it)
+- **Branch:** `task/M0-09-simulator-advance` (from `main` = `16140b5`) until the owner merges
+- **Build log entry:** last: `docs/build-log/2026/2026-10-18-01-M0-09.md` (Done)
+- **Last green commit:** the head of `task/M0-09-simulator-advance` (0 warnings, format clean, fast suite 660 passed; Unity EditMode 13/13,
+  PlayMode 6/6; `check-docs --base origin/main` OK)
+- **Done steps:** all of M0-09 (transitions and stall reasons, the `Advance` loop and timers, production, Unity check, docs, finish)
+- **Next step:** the owner merges the PR; then `/model` → Opus 5.5 and `/start-task M0-10` (engine rule tests, `[O]`).
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
@@ -20,12 +19,12 @@
   `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 9 / 85 (M0-09 in progress)
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 9 / 85 (M0-09 in review)
 
 | Area | State | Notes |
 |---|---|---|
 | Repo, kit, hooks, CI | done | M0-01 and the audit fixes merged (PR #4, #5); A18 can be closed in M0-04 |
-| Shared engine: content, research, labor | in progress | M0-03 merged (PR #7); the content model and its validation (M0-07a) merged (PR #14); the JSON file and server loading (M0-07b) merged (PR #15); city state and mutations (M0-08) merged (PR #16); `Simulator.Advance` is M0-09 (in progress) |
+| Shared engine: content, research, labor | in progress | M0-03 merged (PR #7); the content model and its validation (M0-07a) merged (PR #14); the JSON file and server loading (M0-07b) merged (PR #15); city state and mutations (M0-08) merged (PR #16); `Simulator.Advance` is M0-09 (in review) |
 | Shared engine: invariants, performance | not started | |
 | Server skeleton | done | M0-02 merged (PR #6) |
 | Persistence (EF + PostgreSQL) | not started | |

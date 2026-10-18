@@ -220,7 +220,8 @@ namespace CityBuilder.Simulation.State
             ActiveResearch running = ActiveResearch ?? throw new InvalidOperationException("No research is running.");
             int index = _completedResearch.BinarySearch(running.Id);
 
-            // The constructor and StartResearch keep a running node out of the completed list, so the search misses and gives the insert point.
+            // The constructor rejects a running node that is also completed, and CityRules.StartResearch never starts a completed one, so the
+            // search misses and gives the insert point.
             _completedResearch.Insert(~index, running.Id);
             ActiveResearch = null;
             return running.Id;

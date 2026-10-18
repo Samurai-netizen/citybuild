@@ -79,12 +79,13 @@ public sealed class AdvanceTimerTests
     [Fact]
     public void Advance_HouseConstructionCompletes_ProvidesWorkersAndTakesNone()
     {
-        CityState city = City(clock: 1000, buildings: [Constructing(1, "hut", 0, 0, startedAt: 995, endsAt: 1005)]);
+        // The first hut's 3 workers are free when the second one completes; a house's level takes none.
+        CityState city = City(clock: 1000, buildings: [Idle(1, "hut", 0, 0), Constructing(2, "hut", 1, 0, startedAt: 995, endsAt: 1005)]);
 
         Simulator.Advance(city, TestContent, 10);
 
-        Assert.Equal("building 1 hut (0,0) L1 w=0 Idle 0..null target=0 labor=0/0@0", CityDump.BuildingLine(city, 1));
-        Assert.Equal(3, CityQueries.WorkersProvided(city, TestContent));
+        Assert.Equal("building 2 hut (1,0) L1 w=0 Idle 0..null target=0 labor=0/0@0", CityDump.BuildingLine(city, 2));
+        Assert.Equal(6, CityQueries.FreeWorkers(city, TestContent));
     }
 
     public static TheoryData<int, int, int> SameSecondCompletions => new()
