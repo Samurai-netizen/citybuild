@@ -152,6 +152,13 @@ public sealed class CityQueriesTests
     }
 
     [Fact]
+    public void IsUnlocked_TypeOfALaterEraAvailableAtStart_IsFalseUntilThatEra()
+    {
+        Assert.False(CityQueries.IsUnlocked(City(era: 1), TestContent, new BuildingTypeId("manor")));
+        Assert.True(CityQueries.IsUnlocked(City(era: 2), TestContent, new BuildingTypeId("manor")));
+    }
+
+    [Fact]
     public void IsUnlocked_UnknownType_IsFalse()
     {
         Assert.False(CityQueries.IsUnlocked(City(), TestContent, new BuildingTypeId("castle")));

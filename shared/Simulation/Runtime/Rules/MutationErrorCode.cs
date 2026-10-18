@@ -15,7 +15,10 @@ namespace CityBuilder.Simulation.Rules
         /// <summary><c>UNKNOWN_BUILDING_TYPE</c>: the building type is not in the content.</summary>
         UnknownBuildingType,
 
-        /// <summary><c>BUILDING_LOCKED</c>: the building type is not available at the start, and the research that unlocks it is not completed.</summary>
+        /// <summary>
+        /// <c>BUILDING_LOCKED</c>: the building type belongs to a later era than the city's, or it is not available at the start and the research
+        /// that unlocks it is not completed.
+        /// </summary>
         BuildingLocked,
 
         /// <summary><c>OUT_OF_BOUNDS</c>: the tile is outside the grid.</summary>

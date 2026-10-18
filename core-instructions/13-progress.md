@@ -8,10 +8,10 @@
 - **Task:** M0-08 · City state and mutations (`[O]`, one PR: the owner's choice)
 - **Branch:** `task/M0-08-city-state` (from `main` = `f4b97b3`)
 - **Build log entry:** `docs/build-log/2026/2026-10-14-07-M0-08.md`
-- **Last green commit:** the head of `task/M0-08-city-state` (0 warnings, format clean, fast suite 592 passed)
+- **Last green commit:** the head of `task/M0-08-city-state` (0 warnings, format clean, fast suite 606 passed)
 - **Steps:** 1 write-ahead · 2 state types and `CityFactory` · 3 derived queries · 4 `MutationResult`, PlaceBuilding, StartResearch ·
   5 UpgradeBuilding, AssignWorkers · 6 Unity import and EditMode test · 7 docs and finish
-- **Done steps:** 1, 2 + 3 (state types, `CityFactory`, `CityQueries`, tests; one commit), 4 (`MutationResult`, PlaceBuilding, StartResearch), 5 (UpgradeBuilding, AssignWorkers), 6 (Unity import clean; EditMode 11/11, PlayMode 6/6), 7 (docs)
+- **Done steps:** 1, 2 + 3 (state types, `CityFactory`, `CityQueries`, tests; one commit), 4 (`MutationResult`, PlaceBuilding, StartResearch), 5 (UpgradeBuilding, AssignWorkers), 6 (Unity import clean; EditMode 11/11, PlayMode 6/6), 7 (docs); session 2: era checks (owner, OD-10)
 - **Next step:** `/finish-task` (Definition of Done, line-by-line self-review, CHANGELOG, board `In review`, PR, report)
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).

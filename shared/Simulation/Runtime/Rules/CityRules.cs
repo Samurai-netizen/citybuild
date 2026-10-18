@@ -22,8 +22,8 @@ namespace CityBuilder.Simulation.Rules
         /// <param name="x">The tile column.</param>
         /// <param name="y">The tile row.</param>
         /// <returns>
-        /// Ok, or the first failed check: <see cref="MutationErrorCode.UnknownBuildingType"/>, <see cref="MutationErrorCode.BuildingLocked"/>,
-        /// <see cref="MutationErrorCode.OutOfBounds"/>, <see cref="MutationErrorCode.TileOccupied"/>, <see cref="MutationErrorCode.NoFreeBuilder"/>,
+        /// Ok, or the first failed check: <see cref="MutationErrorCode.UnknownBuildingType"/>, <see cref="MutationErrorCode.BuildingLocked"/>
+        /// (a later era than the city's, or not unlocked yet), <see cref="MutationErrorCode.OutOfBounds"/>, <see cref="MutationErrorCode.TileOccupied"/>, <see cref="MutationErrorCode.NoFreeBuilder"/>,
         /// <see cref="MutationErrorCode.InsufficientResource"/>.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="city"/> or <paramref name="content"/> is null.</exception>

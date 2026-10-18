@@ -13,8 +13,9 @@ internal static class CityFixture
 {
     /// <summary>
     /// The valid fixture content (a 6 × 5 grid, two builders, a house <c>hut</c>, producers <c>lumber_camp</c> and, locked, <c>workshop</c>)
-    /// with two additions for the rules: the workshop gets a level 2, so an upgrade can refund a cycle's inputs, and the lumber camp's level 2
-    /// takes 4 workers, for the spec's example of 3 workers becoming 4.
+    /// with three additions for the rules: the workshop gets a level 2, so an upgrade can refund a cycle's inputs; the lumber camp's level 2
+    /// takes 4 workers, for the spec's example of 3 workers becoming 4; and <c>manor</c>, an era-2 house available at the start (10 gold,
+    /// 5 s), for the era check of placement.
     /// </summary>
     public static GameContent TestContent { get; } = ContentAssert.Valid(ContentFixture.ValidWith(data =>
     {
@@ -26,6 +27,17 @@ internal static class CityFixture
             Recipe = new RecipeData { Inputs = new() { ["wood"] = 2 }, Outputs = new() { ["boards"] = 1 }, Labor = 90 },
             UpgradeCost = new() { ["gold"] = 30, ["wood"] = 1 },
             UpgradeSeconds = 15,
+        });
+        data.Buildings!.Add(new BuildingData
+        {
+            Id = "manor",
+            Name = "Manor",
+            Kind = "house",
+            Era = 2,
+            AvailableAtStart = true,
+            Cost = new() { ["gold"] = 10 },
+            BuildSeconds = 5,
+            Levels = [new BuildingLevelData { Level = 1, WorkersProvided = 4 }],
         });
     }));
 

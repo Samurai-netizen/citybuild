@@ -75,7 +75,7 @@ reject values that can't form one. Decisions: build log `docs/build-log/2026/202
 | `State.Building`, `State.BuildingPhase` | A placed building: id, type, tile, level, assigned workers, phase and its timer fields (`PhaseStartedAt`, `PhaseEndsAt`, `TargetLevel`, `CycleLabor`, `LaborRemaining`, `SegmentStartedAt`). Fields a phase doesn't use are 0 and `PhaseEndsAt` is null (`BuildingPhase` lists them per phase); the constructor rejects anything else |
 | `State.ActiveResearch` | The running research: id, `StartedAt`, `EndsAt` |
 | `State.CityFactory` | `CreateStarterCity(content)`: the content's starting era and stock, clock 0, nothing built or researched, next id 1 |
-| `State.CityQueries` | `WorkersProvided` (completed houses only), `WorkersAssigned`, `FreeWorkers`, `BuildersBusy`, `Reserved(item)` (outputs of producing buildings, frozen ones included), `TryGetEffectiveCap(item)` (base + bonuses; false when uncapped), `EffectiveLabor(type, level)` (reductions of completed research), `IsUnlocked(type)`. Worker sums are `long`. A city that names a type or research the content doesn't know makes them throw `InvalidOperationException` |
+| `State.CityQueries` | `WorkersProvided` (completed houses only), `WorkersAssigned`, `FreeWorkers`, `BuildersBusy`, `Reserved(item)` (outputs of producing buildings, frozen ones included), `TryGetEffectiveCap(item)` (base + bonuses; false when uncapped), `EffectiveLabor(type, level)` (reductions of completed research), `IsUnlocked(type)` (of the city's era or earlier, and available at the start or unlocked by completed research; OD-10). Worker sums are `long`. A city that names a type or research the content doesn't know makes them throw `InvalidOperationException` |
 | `Rules.CityRules` | `PlaceBuilding`, `UpgradeBuilding` (cost checked before the refund of a running or frozen cycle; refunds may exceed caps), `AssignWorkers` (absolute count; the labor segment update keeps progress, 0 freezes), `StartResearch` (cost paid up front; same era, prerequisites done) |
 | `Rules.MutationResult`, `Rules.MutationErrorCode` | `Ok` or `Rejected(code)`; the codes are those of `05` that the engine decides, each doc names its API code. The server's error catalogue (M0-34) maps them to API codes and HTTP statuses |
 
@@ -123,7 +123,7 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
   dictionary key; `EraId` has no order. One test fails loudly where the machine has no culture data.
 - `Content/`: `ContentFixture.Valid()` is a small synthetic content in code with its own numbers; each test changes one value
   (`ValidWith`) and `ContentAssert` checks the exact errors. `GameContentFactoryTests` (what valid data becomes), `ContentShapeTests`,
-  `ContentValueRuleTests`, `ContentBuildingRuleTests`, `ContentReferenceRuleTests`, `ContentResearchRuleTests`: at least one failing case
+  `ContentValueRuleTests`, `ContentBuildingRuleTests`, `ContentReferenceRuleTests`, `ContentResearchRuleTests`, `ContentEraRuleTests`: at least one failing case
   per rule and error code, named after the error path.
 - `State/` (`Building`, `CityState`, `CityFactory`, `CityQueries` tests) and `Rules/` (one class per mutation: every success path, every
   error code, the check order where failures overlap). `CityFixture` builds cities and one building per phase over `ContentFixture` (plus a

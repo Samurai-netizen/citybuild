@@ -59,6 +59,8 @@ When unsure, treat it as major and put it in the next era. The game stays simple
 - It triggers at the exact clock time the era's last research completes (inside `Advance`, so it is deterministic).
 - `city.Era` increments, the next tree becomes available, and the era's major mechanics unlock with a short guided intro.
 - Existing buildings keep working. New buildings use the new era's look. There are no resets or prestige.
+- **Nothing of a later era is usable early** (owner, OD-10): a building type of a later era can't be placed, research of another era can't
+  start, and content may use an item only in its own era or a later one. Every new era-related feature gets the same check.
 - The player gets a one-time "era charter" grant of goods for the new era, so the first new building isn't a wait.
 
 ## Research UX (see `21-game-vision.md`)

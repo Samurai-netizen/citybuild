@@ -169,15 +169,16 @@ namespace CityBuilder.Simulation.State
         }
 
         /// <summary>
-        /// Whether the city may place a building type: it is available at the start, or the research that unlocks it is completed.
+        /// Whether the city may place a building type: the type belongs to the city's era or an earlier one (owner directive OD-10), and it is
+        /// available at the start or the research that unlocks it is completed.
         /// </summary>
         /// <param name="city">The city.</param>
         /// <param name="content">The game content.</param>
         /// <param name="type">The building type.</param>
-        /// <returns>True when the type may be placed; false for a type the content doesn't know.</returns>
+        /// <returns>True when the type may be placed; false for a type of a later era or one the content doesn't know.</returns>
         public static bool IsUnlocked(CityState city, GameContent content, BuildingTypeId type)
         {
-            if (!content.TryGetBuilding(type, out BuildingDefinition? definition))
+            if (!content.TryGetBuilding(type, out BuildingDefinition? definition) || definition.Era > city.Era)
             {
                 return false;
             }

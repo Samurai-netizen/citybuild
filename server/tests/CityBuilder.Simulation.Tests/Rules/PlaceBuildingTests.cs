@@ -7,7 +7,8 @@ namespace CityBuilder.Simulation.Tests.Rules;
 
 /// <summary>
 /// <c>CityRules.PlaceBuilding</c> (<c>04</c> section 8). Fixture numbers: the grid is 6 × 5 with two builders; a hut costs 10 gold and builds
-/// in 5 s; a lumber camp costs 20 gold and builds in 10 s; a workshop (unlocked by carpentry) costs 40 gold and 10 wood and builds in 20 s.
+/// in 5 s; a lumber camp costs 20 gold and builds in 10 s; a workshop (unlocked by carpentry) costs 40 gold and 10 wood and builds in 20 s;
+/// a manor is a house of era 2.
 /// </summary>
 public sealed class PlaceBuildingTests
 {
@@ -50,6 +51,23 @@ public sealed class PlaceBuildingTests
         Building workshop = Assert.Single(city.Buildings);
         Assert.Equal(("workshop", BuildingPhase.Constructing, (long?)1020), (workshop.TypeId.Value, workshop.Phase, workshop.PhaseEndsAt));
     }
+
+    [Fact]
+    public void PlaceBuilding_TypeOfALaterEra_IsRejectedAsLocked() =>
+        RulesAssert.Rejected(MutationErrorCode.BuildingLocked, City(era: 1, inventory: [("gold", 100)]), city => Place(city, "manor", 0, 0));
+
+    [Fact]
+    public void PlaceBuilding_TypeOfTheCitysEra_IsPlaced()
+    {
+        CityState city = City(era: 2, inventory: [("gold", 10)]);
+
+        RulesAssert.Ok(Place(city, "manor", 0, 0));
+
+        Assert.Equal("manor", Assert.Single(city.Buildings).TypeId.Value);
+    }
+
+    [Fact]
+    public void PlaceBuilding_TypeOfAnEarlierEra_IsPlaced() => RulesAssert.Ok(Place(City(era: 2, inventory: [("gold", 10)]), "hut", 0, 0));
 
     [Fact]
     public void PlaceBuilding_OneBuilderBusy_UsesTheSecond()

@@ -66,6 +66,12 @@ namespace CityBuilder.Simulation.Content
         /// <summary>A prerequisite belongs to a later era than the research node that needs it.</summary>
         PrerequisiteInLaterEra,
 
+        /// <summary>
+        /// An item in a cost, a recipe or the starting inventory belongs to a later era than what uses it (the building type, the research node,
+        /// the starting city).
+        /// </summary>
+        ItemInLaterEra,
+
         /// <summary>The labor reductions of one building type add up to more than <see cref="GameRules.MaxLaborReductionPermille"/>.</summary>
         LaborReductionTooHigh,
 

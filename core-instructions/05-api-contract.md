@@ -63,7 +63,7 @@ There is no "claim" command, because production and research complete on their o
 | `AUTHENTICATION_REQUIRED` | 401 | Missing, invalid or expired token |
 | `INVALID_ARGUMENT` | 400 | Malformed JSON, unknown or missing field, bad GUID, body too large, workers on a building without a recipe |
 | `UNKNOWN_BUILDING_TYPE` | 422 | Type id not in content |
-| `BUILDING_LOCKED` | 422 | Type not unlocked by research yet |
+| `BUILDING_LOCKED` | 422 | Type of a later era than the city's, or not unlocked by research yet |
 | `OUT_OF_BOUNDS` | 422 | Coordinates outside the grid |
 | `TILE_OCCUPIED` | 409 | Tile already has a building |
 | `INSUFFICIENT_RESOURCE` | 422 | Cost not affordable |
