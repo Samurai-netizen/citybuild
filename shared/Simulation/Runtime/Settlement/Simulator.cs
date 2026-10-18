@@ -1,5 +1,6 @@
 #nullable enable
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.State;
@@ -19,9 +20,11 @@ namespace CityBuilder.Simulation.Settlement
             Array.AsReadOnly(new IEventSource[] { new ResearchTimerSource(), new BuildingTimerSource() });
 
         /// <summary>
-        /// Advances the city by <paramref name="elapsedSeconds"/>: moves from event to event in time order (research completion, then building
-        /// completions in ascending id order), and sets the clock to the end of the window. Timers run for the whole window. The clock always
-        /// moves by the full elapsed time.
+        /// Advances the city by <paramref name="elapsedSeconds"/> (<c>04</c> section 7). At the clock and at every event time up to the target,
+        /// in this order: the research that is due completes, then the buildings that are due complete in ascending id order, then idle
+        /// producers start cycles in ascending id order, but only while the time is within <see cref="GameRules.MaxOfflineProductionSeconds"/>
+        /// of the start (the dormant tail). Timers run for the whole window, and the clock always moves by the full elapsed time. A zero-length
+        /// advance only starts the cycles that can start at the clock; every mutation is followed by one.
         /// </summary>
         /// <param name="city">The city; it changes in place.</param>
         /// <param name="content">The game content the city was built with.</param>
@@ -47,30 +50,72 @@ namespace CityBuilder.Simulation.Settlement
             long start = city.Clock;
             long elapsed = Math.Max(elapsedSeconds, 0);
             long target = checked(start + elapsed);
-            long? next = NextDueAt(city);
-            if (next < start)
+            long productionUntil = checked(start + content.Rules.MaxOfflineProductionSeconds);
+            long? firstDueAt = NextDueAt(city);
+            if (firstDueAt < start)
             {
                 throw new InvalidOperationException(
-                    FormattableString.Invariant($"A timer of the city is due at {next}, before its clock {start}: the city is not valid."));
+                    FormattableString.Invariant($"A timer of the city is due at {firstDueAt}, before its clock {start}: the city is not valid."));
             }
 
             var report = new SettlementReportBuilder();
+            long time = start;
 
             // Every event a source completes is gone afterwards, and every new timer ends at least 1 second later (durations and labor are at
             // least 1, content rule 1), so each pass moves on in time and the loop ends.
-            while (next.HasValue && next.Value <= target)
+            while (true)
             {
-                long time = next.Value;
+                if (time <= productionUntil)
+                {
+                    StartEligible(city, content, time, report);
+                }
+
+                long? next = NextDueAt(city);
+                if (!next.HasValue || next.Value > target)
+                {
+                    break;
+                }
+
+                time = next.Value;
                 for (int index = 0; index < _eventSources.Count; index++)
                 {
                     _eventSources[index].CompleteDue(city, content, time, report);
                 }
-
-                next = NextDueAt(city);
             }
 
             city.AdvanceClockTo(target);
             return report.Build(elapsed, Math.Min(elapsed, content.Rules.MaxOfflineProductionSeconds));
+        }
+
+        /// <summary>
+        /// The start rule (<c>04</c> section 6), in ascending id order, each start fully applied before the next, so a lower id gets scarce
+        /// inputs and output space first: an idle producer with at least 1 worker, every input in stock and room for every capped output
+        /// (stock + reserved + quantity ≤ cap) takes its inputs and starts a cycle with the labor of now (research reductions included).
+        /// </summary>
+        private static void StartEligible(CityState city, GameContent content, long time, SettlementReportBuilder report)
+        {
+            IReadOnlyList<Building> buildings = city.Buildings;
+            for (int index = 0; index < buildings.Count; index++)
+            {
+                Building building = buildings[index];
+                if (building.Phase != BuildingPhase.Idle || building.AssignedWorkers < 1)
+                {
+                    continue;
+                }
+
+                RecipeDefinition? recipe = CityQueries.DefinitionOf(content, building.TypeId).GetLevel(building.Level).Recipe;
+                if (recipe is null
+                    || CityQueries.TryFindMissingInput(city, recipe, out _)
+                    || CityQueries.TryFindFullOutput(city, content, recipe, out _))
+                {
+                    continue;
+                }
+
+                // The outputs are reserved by the Producing phase itself: reservations are derived, never stored.
+                city.RemoveItems(recipe.Inputs);
+                report.AddConsumed(recipe.Inputs);
+                building.StartCycle(time, CityQueries.EffectiveLabor(city, content, building.TypeId, building.Level));
+            }
         }
 
         private static long? NextDueAt(CityState city)

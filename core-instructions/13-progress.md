@@ -8,12 +8,12 @@
 - **Task:** M0-09 · Simulator.Advance (`[O]` `[PLAN]`)
 - **Branch:** `task/M0-09-simulator-advance` (from `main` = `16140b5`)
 - **Build log entry:** `docs/build-log/2026/2026-10-18-01-M0-09.md`
-- **Last green commit:** the head of the branch, step 3 (0 warnings, format clean, fast suite 648 passed)
+- **Last green commit:** the head of the branch, step 4 (0 warnings, format clean, fast suite 660 passed)
 - **Done steps:** 1 (write-ahead; the owner approved the plan), 2 (state transitions, `StallReason`), 3 (`Simulator.Advance` loop, report,
-  event sources, timer completions). Planned: 4 production · 5 Unity · 6 docs, then finish (details in the build log entry → Plan)
-- **Next step:** step 4: in `Settlement/Simulator.cs` add the start rule (`StartEligible` at each time while `t ≤ productionUntil`, ascending
-  id: idle, ≥ 1 worker, `CityQueries.TryFindMissingInput` / `TryFindFullOutput` false → take inputs, `StartCycle(t, EffectiveLabor)`, report
-  consumed) and make the loop exactly `04` §7; tests in `Settlement/AdvanceProductionTests.cs` (task's list).
+  event sources, timer completions), 4 (production starts, the loop of `04` §7). Planned: 5 Unity · 6 docs, then finish (build log → Plan)
+- **Next step:** step 5: Unity headless import (`client/README.md`; the new `Settlement/` folder and files have hand-written `.meta` files),
+  then an EditMode test `SimulatorInUnityTests` in `client/CityBuilder/Assets/_Project/Tests/EditMode` (like `CityRulesInUnityTests`) and
+  `UNITY_EDITOR=… bash scripts/dev/test-unity.sh` with the Editor closed.
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
