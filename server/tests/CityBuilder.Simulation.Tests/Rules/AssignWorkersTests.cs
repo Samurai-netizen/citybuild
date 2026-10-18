@@ -19,7 +19,7 @@ public sealed class AssignWorkersTests
 
         RulesAssert.Ok(Assign(city, 3, 4));
 
-        Assert.Equal("building 3 lumber_camp (2,0) L2 w=4 Producing 1000..1050 target=0 labor=180/120@1020", LineOf(city, 3));
+        Assert.Equal("building 3 lumber_camp (2,0) L2 w=4 Producing 1000..1050 target=0 labor=180/120@1020", CityDump.BuildingLine(city, 3));
     }
 
     [Fact]
@@ -29,7 +29,7 @@ public sealed class AssignWorkersTests
 
         RulesAssert.Ok(Assign(city, 3, 0));
 
-        Assert.Equal("building 3 lumber_camp (2,0) L2 w=0 Producing 1000..null target=0 labor=180/120@1020", LineOf(city, 3));
+        Assert.Equal("building 3 lumber_camp (2,0) L2 w=0 Producing 1000..null target=0 labor=180/120@1020", CityDump.BuildingLine(city, 3));
         Assert.Equal(1, CityQueries.Reserved(city, TestContent, new ItemId("wood")));
     }
 
@@ -41,7 +41,7 @@ public sealed class AssignWorkersTests
 
         RulesAssert.Ok(Assign(city, 3, 3));
 
-        Assert.Equal("building 3 lumber_camp (2,0) L2 w=3 Producing 1000..1060 target=0 labor=180/120@1020", LineOf(city, 3));
+        Assert.Equal("building 3 lumber_camp (2,0) L2 w=3 Producing 1000..1060 target=0 labor=180/120@1020", CityDump.BuildingLine(city, 3));
     }
 
     [Fact]
@@ -63,7 +63,7 @@ public sealed class AssignWorkersTests
 
         RulesAssert.Ok(Assign(city, 3, 3));
 
-        Assert.Equal("building 3 lumber_camp (2,0) L2 w=3 Producing 1000..1034 target=0 labor=180/97@1001", LineOf(city, 3));
+        Assert.Equal("building 3 lumber_camp (2,0) L2 w=3 Producing 1000..1034 target=0 labor=180/97@1001", CityDump.BuildingLine(city, 3));
     }
 
     [Fact]
@@ -73,7 +73,7 @@ public sealed class AssignWorkersTests
 
         RulesAssert.Ok(Assign(city, 3, 4));
 
-        Assert.Equal("building 3 lumber_camp (2,0) L2 w=4 Idle 0..null target=0 labor=0/0@0", LineOf(city, 3));
+        Assert.Equal("building 3 lumber_camp (2,0) L2 w=4 Idle 0..null target=0 labor=0/0@0", CityDump.BuildingLine(city, 3));
         Assert.Equal(2, CityQueries.FreeWorkers(city, TestContent));
     }
 
@@ -84,7 +84,7 @@ public sealed class AssignWorkersTests
 
         RulesAssert.Ok(Assign(city, 3, 2));
 
-        Assert.Equal("building 3 lumber_camp (2,0) L1 w=2 Upgrading 1010..1022 target=2 labor=0/0@0", LineOf(city, 3));
+        Assert.Equal("building 3 lumber_camp (2,0) L1 w=2 Upgrading 1010..1022 target=2 labor=0/0@0", CityDump.BuildingLine(city, 3));
     }
 
     [Fact]
@@ -176,9 +176,6 @@ public sealed class AssignWorkersTests
     /// <summary>Two completed huts (6 workers) and the given building 3.</summary>
     private static CityState TwoHutsAnd(Building third, long clock) =>
         City(clock: clock, buildings: [Idle(1, "hut", 0, 0), Idle(2, "hut", 1, 0), third]);
-
-    private static string LineOf(CityState city, int buildingId) =>
-        CityDump.Describe(city).Split('\n').Single(line => line.StartsWith($"building {buildingId} ", StringComparison.Ordinal));
 
     private static MutationResult Assign(CityState city, int buildingId, int workers) => CityRules.AssignWorkers(city, TestContent, buildingId, workers);
 }

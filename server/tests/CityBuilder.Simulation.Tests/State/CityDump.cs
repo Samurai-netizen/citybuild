@@ -34,5 +34,9 @@ internal static class CityDump
         return text.ToString();
     }
 
+    /// <summary>The line of <see cref="Describe"/> for one building.</summary>
+    public static string BuildingLine(CityState city, int buildingId) =>
+        Describe(city).Split('\n').Single(line => line.StartsWith($"building {buildingId} ", StringComparison.Ordinal));
+
     private static string Time(long? time) => time.HasValue ? time.Value.ToString(CultureInfo.InvariantCulture) : "null";
 }

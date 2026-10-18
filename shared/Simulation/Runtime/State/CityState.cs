@@ -11,7 +11,7 @@ namespace CityBuilder.Simulation.State
     /// Everything that is stored about one city (<c>core-instructions/04-simulation-model.md</c>, sections 3 to 5): its clock, era, stock,
     /// buildings and research. Values derived from it and the content (workers, builders, reservations, caps, labor, unlocks) are never stored;
     /// <see cref="CityQueries"/> computes them. Only the engine changes a city, through <see cref="Rules.CityRules"/> and
-    /// <c>Settlement.Simulator</c>. Every list is sorted, so iterating it is deterministic.
+    /// <see cref="Settlement.Simulator"/>. Every list is sorted, so iterating it is deterministic.
     /// </summary>
     public sealed class CityState
     {

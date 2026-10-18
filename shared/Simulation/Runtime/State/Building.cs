@@ -5,7 +5,7 @@ namespace CityBuilder.Simulation.State
 {
     /// <summary>
     /// A building placed in a city (<c>core-instructions/04-simulation-model.md</c>, sections 3 and 4). Times are city-clock seconds and labor
-    /// is in worker-seconds. Only the engine changes a building, through <see cref="Rules.CityRules"/> and <c>Settlement.Simulator</c>;
+    /// is in worker-seconds. Only the engine changes a building, through <see cref="Rules.CityRules"/> and <see cref="Settlement.Simulator"/>;
     /// everything else reads it. The fields a phase doesn't use are 0, and <see cref="PhaseEndsAt"/> is null (<see cref="BuildingPhase"/>).
     /// </summary>
     public sealed class Building
@@ -176,6 +176,12 @@ namespace CityBuilder.Simulation.State
         internal void CompleteConstruction(int workers)
         {
             RequirePhase(BuildingPhase.Constructing);
+            if (workers < 0)
+            {
+                // Free workers below 0 break invariant 9: the city was restored with more workers assigned than its houses provide.
+                throw new InvalidOperationException(FormattableString.Invariant($"Building {Id}: auto-staffing found {workers} free workers."));
+            }
+
             ClearPhaseFields();
             Phase = BuildingPhase.Idle;
             AssignedWorkers = workers;
