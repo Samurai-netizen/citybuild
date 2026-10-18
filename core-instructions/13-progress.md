@@ -8,12 +8,13 @@
 - **Task:** M0-09 · Simulator.Advance (`[O]` `[PLAN]`)
 - **Branch:** `task/M0-09-simulator-advance` (from `main` = `16140b5`)
 - **Build log entry:** `docs/build-log/2026/2026-10-18-01-M0-09.md`
-- **Last green commit:** the head of the branch, step 4 (0 warnings, format clean, fast suite 660 passed)
+- **Last green commit:** the head of the branch, step 5 (0 warnings, format clean, fast suite 660 passed; Unity EditMode 13/13, PlayMode 6/6)
 - **Done steps:** 1 (write-ahead; the owner approved the plan), 2 (state transitions, `StallReason`), 3 (`Simulator.Advance` loop, report,
-  event sources, timer completions), 4 (production starts, the loop of `04` §7). Planned: 5 Unity · 6 docs, then finish (build log → Plan)
-- **Next step:** step 5: Unity headless import (`client/README.md`; the new `Settlement/` folder and files have hand-written `.meta` files),
-  then an EditMode test `SimulatorInUnityTests` in `client/CityBuilder/Assets/_Project/Tests/EditMode` (like `CityRulesInUnityTests`) and
-  `UNITY_EDITOR=… bash scripts/dev/test-unity.sh` with the Editor closed.
+  event sources, timer completions), 4 (production starts, the loop of `04` §7), 5 (Unity import and `SimulatorInUnityTests`).
+  Planned: 6 docs, then finish (build log → Plan)
+- **Next step:** step 6, docs per recipe "New engine rule or effect type" (`19`): new `docs/how-to/add-research-effect.md` (+ how-to index),
+  module doc `CityBuilder.Simulation.md` (Settlement section, types, tests), `04` (§4 stall reasons, §7 report and bad input, §11), `31`,
+  `docs/architecture/overview.md`, `12` row (decisions 4, 5, 6). Then `/finish-task`.
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
