@@ -19,6 +19,7 @@ internal static class CityFixture
     /// </summary>
     public static GameContent TestContent { get; } = ContentAssert.Valid(ContentFixture.ValidWith(data =>
     {
+        // "!" reaches into the valid fixture, which sets the building list and every building's levels (ContentFixture.Valid).
         ContentFixture.Level(data, "lumber_camp", 2).MaxWorkers = 4;
         ContentFixture.Building(data, "workshop").Levels!.Add(new BuildingLevelData
         {

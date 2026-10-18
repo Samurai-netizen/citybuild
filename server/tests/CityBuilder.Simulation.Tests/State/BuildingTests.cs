@@ -48,6 +48,8 @@ public sealed class BuildingTests
         ["producing with negative labor left"] = () => Producing(1, "lumber_camp", 0, 0, 1, 1, 10, 40, laborRemaining: -1, segmentStartedAt: 10, endsAt: 10),
         ["producing segment before the cycle"] = () => Producing(1, "lumber_camp", 0, 0, 1, 1, 10, 40, 40, segmentStartedAt: 9, endsAt: 50),
         ["producing ends before the segment"] = () => Producing(1, "lumber_camp", 0, 0, 1, 1, 10, 40, 40, segmentStartedAt: 20, endsAt: 19),
+        ["producing with workers but no end"] = () => Producing(1, "lumber_camp", 0, 0, 1, 2, 10, 40, 40, segmentStartedAt: 10, endsAt: null),
+        ["producing with no workers but an end"] = () => Producing(1, "lumber_camp", 0, 0, 1, 0, 10, 40, 40, segmentStartedAt: 10, endsAt: 30),
         ["producing with a target level"] = () => new Building(1, new BuildingTypeId("lumber_camp"), 0, 0, 1, 1, BuildingPhase.Producing, 10, 50, 2, 40, 40, 10),
     };
 

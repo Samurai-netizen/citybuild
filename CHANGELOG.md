@@ -42,6 +42,9 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   port `IContentProvider`; a strict System.Text.Json loader (unknown fields, repeated keys and numbers as text rejected); the server loads
   the content from `Content:FilePath` before it accepts requests and refuses to start with every error listed; the how-to
   `add-building-or-item.md` (M0-07b).
+- City state and mutations in the engine: `CityState`, `Building`, `CityFactory.CreateStarterCity`, the derived `CityQueries` (workers,
+  builders, reserved, effective caps and labor, unlocks), and `CityRules` PlaceBuilding, UpgradeBuilding, AssignWorkers and StartResearch
+  with `MutationResult`; era checks for placement and for item use in content (owner directive OD-10) (M0-08).
 
 ### Fixed
 - Kit audit follow-ups A1, A2, A3, A9, A15, A16: `[PLAN]` tasks write ahead before the plan (no Plan Mode), the Bash guard no longer

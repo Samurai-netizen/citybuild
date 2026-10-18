@@ -22,7 +22,10 @@ namespace CityBuilder.Simulation.State
         /// <param name="assignedWorkers">The workers assigned, at least 0, and 0 while constructing.</param>
         /// <param name="phase">What the building is doing.</param>
         /// <param name="phaseStartedAt">When the phase (or, while producing, the cycle) started; 0 when idle.</param>
-        /// <param name="phaseEndsAt">When the phase ends: set while constructing or upgrading, null when idle or frozen, never before the start.</param>
+        /// <param name="phaseEndsAt">
+        /// When the phase ends: set while constructing or upgrading and while producing with workers; null when idle or frozen (producing with
+        /// 0 workers); never before the start.
+        /// </param>
         /// <param name="targetLevel">The level an upgrade reaches, <paramref name="level"/> + 1, while upgrading; otherwise 0.</param>
         /// <param name="cycleLabor">The running cycle's labor, at least 1, while producing; otherwise 0.</param>
         /// <param name="laborRemaining">The labor left at <paramref name="segmentStartedAt"/>, 0 to <paramref name="cycleLabor"/>, while producing; otherwise 0.</param>
@@ -183,9 +186,10 @@ namespace CityBuilder.Simulation.State
                 case BuildingPhase.Producing:
                     return TargetLevel == 0 && CycleLabor >= 1 && LaborRemaining >= 0 && LaborRemaining <= CycleLabor
                         && SegmentStartedAt >= PhaseStartedAt && (PhaseEndsAt == null || PhaseEndsAt >= SegmentStartedAt)
+                        && (PhaseEndsAt == null) == (AssignedWorkers == 0)
                         ? null
                         : "a producing building has labor of at least 1, the remaining labor within it, a segment not before the cycle's start, "
-                          + "an end not before the segment, and no target level.";
+                          + "an end not before the segment exactly when it has workers (no end means frozen), and no target level.";
                 default:
                     return "the phase is not one of the defined phases.";
             }
