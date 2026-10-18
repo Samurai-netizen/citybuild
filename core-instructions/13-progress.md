@@ -5,7 +5,7 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-09 · Simulator.Advance; its PR is open, the owner merges it)
+- **Task:** — (last completed: M0-09 · Simulator.Advance; PR #17 open, the owner merges it)
 - **Branch:** `task/M0-09-simulator-advance` (from `main` = `16140b5`) until the owner merges
 - **Build log entry:** last: `docs/build-log/2026/2026-10-18-01-M0-09.md` (Done)
 - **Last green commit:** the head of `task/M0-09-simulator-advance` (0 warnings, format clean, fast suite 660 passed; Unity EditMode 13/13,
