@@ -2,7 +2,7 @@
 
 A content-only change edits game data and no code: numbers, or a new item, building type or research node that uses the existing effect types
 (`unlockBuilding`, `laborReduction`, `storageCapBonus`). The checklist is recipe "Content-only change" in `core-instructions/19-change-recipes.md`.
-A new effect type or a new rule needs engine code instead: recipe "New engine rule or effect type" and `add-research-effect.md` *(planned, M0-09)*.
+A new effect type or a new rule needs engine code instead: recipe "New engine rule or effect type" and [`add-research-effect.md`](add-research-effect.md).
 
 ## What you change
 | What | Where |

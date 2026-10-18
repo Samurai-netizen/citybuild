@@ -1,14 +1,14 @@
 # Architecture Overview (as built)
 
-> This page describes the system **as it exists** after M0-08: the server solution skeleton that loads the game content at startup, the
-> shared engine with its content model, city state and mutations, and the Unity client skeleton with its tests. Parts that are not built yet are marked *(planned, M0-NN)*. M0-63 completes the page.
+> This page describes the system **as it exists** after M0-09: the server solution skeleton that loads the game content at startup, the
+> shared engine with its content model, city state, mutations and settlement (`Simulator.Advance`), and the Unity client skeleton with its tests. Parts that are not built yet are marked *(planned, M0-NN)*. M0-63 completes the page.
 > The intended architecture is `core-instructions/03-architecture.md`; the decisions behind it are in [ADRs](../adr/README.md).
 
 ## System
 Today the API host loads `server/content/mvp-content.json` at startup and refuses to start if it is invalid, then answers `GET /health` (and
 serves its OpenAPI document in Development). The Unity client starts the `Bootstrap` scene and shows "Not connected". The engine holds its
-integer helpers, the content ids, the validated content model, and the city state with its four mutations (`CityRules`), which nothing calls
-yet; `Simulator.Advance` is M0-09. There is no database, no game endpoint and no networking yet.
+integer helpers, the content ids, the validated content model, the city state with its four mutations (`CityRules`) and the settlement
+(`Simulator.Advance`), which nothing on the server calls yet *(planned, M0-13 and M0-23)*. There is no database, no game endpoint and no networking yet.
 Dashed parts in the diagram are planned.
 
 ```mermaid
@@ -19,7 +19,7 @@ flowchart LR
     CORE["Client.Core<br/>AppInfo"]
   end
   subgraph sharedside["shared"]
-    SIM["CityBuilder.Simulation<br/>IntegerMath, content ids,<br/>GameContentFactory, GameContent,<br/>CityState, CityQueries, CityRules"]
+    SIM["CityBuilder.Simulation<br/>IntegerMath, content ids,<br/>GameContentFactory, GameContent,<br/>CityState, CityQueries, CityRules,<br/>Simulator, SettlementReport"]
   end
   subgraph serverside["server - CityBuilder.slnx"]
     API["CityBuilder.Api<br/>health, OpenAPI in Development,<br/>content at startup"]
@@ -61,10 +61,10 @@ decision 020 and `core-instructions/14-coding-standards.md` (checked by a probe 
 | `CityBuilder.Application` | `server/src/` | Domain, Simulation | — | `IContentProvider` *(planned: more ports M0-20, pipeline M0-26)* | [module](../modules/CityBuilder.Application.md) |
 | `CityBuilder.Domain` | `server/src/` | Simulation | — | nothing yet *(planned, M0-19 on)* | [module](../modules/CityBuilder.Domain.md) |
 | `CityBuilder.Infrastructure` | `server/src/` | Application, Domain | — *(EF Core and Npgsql planned, M0-19)* | the content loader: `ContentFileLoader`, `ContentLoadException`, `ContentProvider` *(planned: persistence M0-19)* | [module](../modules/CityBuilder.Infrastructure.md) |
-| `CityBuilder.Simulation` | `shared/Simulation.Build/` (.NET) and `shared/Simulation/` (Unity package) | the base class library only | — | `IntegerMath` (`CeilDiv`, `ApplyPermilleReduction`); `ItemId`, `BuildingTypeId`, `ResearchId`, `EraId`; the content model (`Content/`: `*Data` → `GameContentFactory` → `GameContent`, `04` §14); the city state (`State/`: `CityState`, `Building`, `CityFactory`, `CityQueries`) and the mutations (`Rules/`: `CityRules`, `MutationResult`, `04` §8) | [module](../modules/CityBuilder.Simulation.md) |
+| `CityBuilder.Simulation` | `shared/Simulation.Build/` (.NET) and `shared/Simulation/` (Unity package) | the base class library only | — | `IntegerMath` (`CeilDiv`, `ApplyPermilleReduction`); `ItemId`, `BuildingTypeId`, `ResearchId`, `EraId`; the content model (`Content/`: `*Data` → `GameContentFactory` → `GameContent`, `04` §14); the city state (`State/`: `CityState`, `Building`, `CityFactory`, `CityQueries`, `StallReason`), the mutations (`Rules/`: `CityRules`, `MutationResult`, `04` §8) and the settlement (`Settlement/`: `Simulator.Advance`, `SettlementReport`, `04` §7) | [module](../modules/CityBuilder.Simulation.md) |
 | `CityBuilder.Domain.Tests` | `server/tests/` | Domain | xUnit v3 (`xunit.v3.mtp-off`, runner, test SDK; decision 019) | 1 test | the Domain module doc → Tests |
 | `CityBuilder.Application.Tests` | `server/tests/` | Application | the same | 1 test | the Application module doc → Tests |
-| `CityBuilder.Simulation.Tests` | `server/tests/` | Simulation | the same | 565 tests: engine helpers, content ids, content model and validation, city state, queries and mutations, and the architecture tests below | the Simulation module doc → Tests |
+| `CityBuilder.Simulation.Tests` | `server/tests/` | Simulation | the same | 633 tests: engine helpers, content ids, content model and validation, city state, queries, stall reasons, mutations and `Simulator.Advance`, and the architecture tests below | the Simulation module doc → Tests |
 | `CityBuilder.IntegrationTests` | `server/tests/` | Api | the same, plus `Microsoft.AspNetCore.Mvc.Testing` | 25 in-memory tests (no Docker): the API host, the content loader and the content startup; none in the `Integration` category yet *(planned, M0-21)* | the Api module doc → Tests |
 
 ### Unity client
@@ -77,7 +77,7 @@ server, for display only.
 | `CityBuilder.Client.Core` | `Core/` | Simulation | `AppInfo` (the build version) | [module](../modules/CityBuilder.Client.Core.md) |
 | `CityBuilder.Client.Net` | `Net/` | Core, Newtonsoft (precompiled DLL) | no scripts *(planned, M0-37)* | [module](../modules/CityBuilder.Client.Net.md) |
 | `CityBuilder.Client.Presentation` | `Presentation/` | Core, Net, Input System | `GameBootstrap`, `GameRoot`; UXML and USS in `Resources/UI/` | [module](../modules/CityBuilder.Client.Presentation.md) |
-| `CityBuilder.Client.Tests.EditMode` / `.PlayMode` | `Tests/EditMode`, `Tests/PlayMode` | the four runtime assemblies, the test runner and NUnit | `AppInfoTests`, `SimulationInUnityTests`, `ContentInUnityTests`, `CityRulesInUnityTests` (EditMode), `BootstrapSceneTests` (PlayMode); run by `scripts/dev/test-unity.sh` (M0-05) | the Core and Presentation module docs → Tests |
+| `CityBuilder.Client.Tests.EditMode` / `.PlayMode` | `Tests/EditMode`, `Tests/PlayMode` | the four runtime assemblies, the test runner and NUnit | `AppInfoTests`, `SimulationInUnityTests`, `ContentInUnityTests`, `CityRulesInUnityTests`, `SimulatorInUnityTests` (EditMode), `BootstrapSceneTests` (PlayMode); run by `scripts/dev/test-unity.sh` (M0-05) | the Core and Presentation module docs → Tests |
 
 The runtime scene is `Bootstrap`: the owner made it by hand ([MANUAL], `client/README.md`), it stays empty and is scene 0 of the build list
 (the template's `SampleScene` is unticked and would get no `GameRoot`). When the scene loads, `GameBootstrap` creates the
@@ -110,4 +110,4 @@ short deny-list of name prefixes (ASP.NET Core, EF Core); M0-65 can widen it.
 *(planned, M0-63)* A sequence diagram of one command, from tap to snapshot, as implemented (the pipeline is M0-26). The intended steps are
 in `03` → Request lifecycle.
 
-Last updated: M0-08
+Last updated: M0-09

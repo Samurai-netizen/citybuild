@@ -22,7 +22,7 @@ Use these names in code, docs and UI text. Consistent words keep Claude and the 
 | Building kind | What a building type does: a house provides workers, a producer runs a recipe | `BuildingKind` (`House`, `Producer`) |
 | Building | A placed instance in a city, with a per-city integer id | `Building`, `Building.Id` (`buildingId` in the API) |
 | Phase | `Constructing`, `Upgrading`, `Idle`, `Producing` | `BuildingPhase` |
-| Stall reason | Why a building makes no progress (derived) | `StallReason` |
+| Stall reason | Why a building makes no progress (derived) | `StallReason`, `StallKind`, `StallReason.Of` |
 | Builder slot | Capacity for simultaneous constructions/upgrades | `BuilderSlots` |
 | Research | A node in an era's tree: cost, duration, prerequisites, effects | `ResearchId`, `ResearchDefinition` |
 | Research slot | Capacity for simultaneous research (1 in M0) | `ResearchSlots` |
@@ -33,10 +33,11 @@ Use these names in code, docs and UI text. Consistent words keep Claude and the 
 | City state | Everything stored about one city: clock, era, stock, buildings, research; derived values are computed, never stored | `CityState`, `CityFactory`, `CityQueries` |
 | City clock | Per-city simulation time in integer seconds | `CityState.Clock` |
 | Settle | Advance a city from its last settlement to now | `SettleCity`, `Simulator.Advance` |
+| Event source | One kind of timed event the advance processes, in a fixed order within a second: research timer, building timers, later the mailbox | `IEventSource` |
 | Production cap | Max seconds per settlement during which cycles may start | `Rules.MaxOfflineProductionSeconds` |
 | Dormant tail | Part of a settlement after the production cap: timers run, no new cycles | — |
 | Settlement report | What happened during a settle | `SettlementReport` |
-| Zero-length advance | `Advance(city, 0)`: start eligible cycles at the current clock | — |
+| Zero-length advance | `Advance(city, 0)`: start eligible cycles at the current clock | `Simulator.Advance(city, content, 0)` |
 | Content | All game definitions loaded from JSON: as read, and validated (only the factory makes the latter) | `GameContentData`, `GameContent`, `GameContentFactory`, `contentVersion`; on the server `IContentProvider`, `ContentFileLoader`, `Content:FilePath` |
 | Content error | One problem found when content loads: a stable code, the path in the JSON, a message (`04` §14) | `ContentError`, `ContentErrorCode` |
 | Command | A state-changing player intent | `PlaceBuilding`, `UpgradeBuilding`, `AssignWorkers`, `StartResearch` |
