@@ -1,5 +1,6 @@
 #nullable enable
 using System;
+using System.Collections.Generic;
 using CityBuilder.Simulation.Content;
 
 namespace CityBuilder.Simulation.State
@@ -185,6 +186,45 @@ namespace CityBuilder.Simulation.State
 
             ResearchId? unlockedBy = definition.UnlockedByResearch;
             return definition.IsAvailableAtStart || (unlockedBy.HasValue && city.HasCompletedResearch(unlockedBy.Value));
+        }
+
+        /// <summary>The first input of the recipe, in recipe (ordinal item) order, of which the stock holds less than the cycle needs.</summary>
+        internal static bool TryFindMissingInput(CityState city, RecipeDefinition recipe, out ItemId item)
+        {
+            IReadOnlyList<ItemQuantity> inputs = recipe.Inputs;
+            for (int index = 0; index < inputs.Count; index++)
+            {
+                if (city.GetQuantity(inputs[index].Item) < inputs[index].Quantity)
+                {
+                    item = inputs[index].Item;
+                    return true;
+                }
+            }
+
+            item = default;
+            return false;
+        }
+
+        /// <summary>
+        /// The first capped output of the recipe, in recipe (ordinal item) order, that doesn't fit a new cycle: stock + reserved + the cycle's
+        /// quantity is above the effective cap (<c>04</c> section 6). Uncapped outputs always fit.
+        /// </summary>
+        internal static bool TryFindFullOutput(CityState city, GameContent content, RecipeDefinition recipe, out ItemId item)
+        {
+            IReadOnlyList<ItemQuantity> outputs = recipe.Outputs;
+            for (int index = 0; index < outputs.Count; index++)
+            {
+                ItemId output = outputs[index].Item;
+                if (TryGetEffectiveCap(city, content, output, out long cap)
+                    && checked(city.GetQuantity(output) + Reserved(city, content, output) + outputs[index].Quantity) > cap)
+                {
+                    item = output;
+                    return true;
+                }
+            }
+
+            item = default;
+            return false;
         }
 
         /// <summary>The definition of a building type the city uses.</summary>

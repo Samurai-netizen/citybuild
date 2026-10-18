@@ -10,8 +10,8 @@ namespace CityBuilder.Simulation.State
     /// <summary>
     /// Everything that is stored about one city (<c>core-instructions/04-simulation-model.md</c>, sections 3 to 5): its clock, era, stock,
     /// buildings and research. Values derived from it and the content (workers, builders, reservations, caps, labor, unlocks) are never stored;
-    /// <see cref="CityQueries"/> computes them. Only the engine changes a city, through <see cref="Rules.CityRules"/> (and
-    /// <c>Simulator.Advance</c> from M0-09). Every list is sorted, so iterating it is deterministic.
+    /// <see cref="CityQueries"/> computes them. Only the engine changes a city, through <see cref="Rules.CityRules"/> and
+    /// <c>Settlement.Simulator</c>. Every list is sorted, so iterating it is deterministic.
     /// </summary>
     public sealed class CityState
     {
@@ -77,7 +77,7 @@ namespace CityBuilder.Simulation.State
         }
 
         /// <summary>The city clock in seconds: how much game time the city has lived. It never decreases.</summary>
-        public long Clock { get; }
+        public long Clock { get; private set; }
 
         /// <summary>The number of the era the city is in.</summary>
         public int Era { get; }
@@ -209,6 +209,32 @@ namespace CityBuilder.Simulation.State
             }
 
             ActiveResearch = new ActiveResearch(id, Clock, endsAt);
+        }
+
+        /// <summary>
+        /// Completes the running research: the node joins <see cref="CompletedResearch"/> and the slot is free. Its effects are derived from
+        /// the completed list (<see cref="CityQueries"/>), so they apply from this moment on.
+        /// </summary>
+        internal ResearchId CompleteResearch()
+        {
+            ActiveResearch running = ActiveResearch ?? throw new InvalidOperationException("No research is running.");
+            int index = _completedResearch.BinarySearch(running.Id);
+
+            // The constructor and StartResearch keep a running node out of the completed list, so the search misses and gives the insert point.
+            _completedResearch.Insert(~index, running.Id);
+            ActiveResearch = null;
+            return running.Id;
+        }
+
+        /// <summary>Moves the clock forward to <paramref name="clock"/>. The clock never decreases (<c>04</c> invariant 7).</summary>
+        internal void AdvanceClockTo(long clock)
+        {
+            if (clock < Clock)
+            {
+                throw new InvalidOperationException(FormattableString.Invariant($"The clock can't move back from {Clock} to {clock}."));
+            }
+
+            Clock = clock;
         }
 
         private static List<Building> SortedBuildings(IEnumerable<Building> buildings, int nextBuildingId)

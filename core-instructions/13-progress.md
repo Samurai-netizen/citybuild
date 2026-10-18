@@ -8,10 +8,12 @@
 - **Task:** M0-09 · Simulator.Advance (`[O]` `[PLAN]`)
 - **Branch:** `task/M0-09-simulator-advance` (from `main` = `16140b5`)
 - **Build log entry:** `docs/build-log/2026/2026-10-18-01-M0-09.md`
-- **Last green commit:** `main` = `16140b5` (0 errors, fast suite 608 passed)
-- **Done steps:** 1 (write-ahead). Planned: 2 state transitions + stall reasons · 3 report + loop + timers · 4 production · 5 Unity ·
-  6 docs, then finish (details in the build log entry → Plan)
-- **Next step:** step 2 (state transitions and stall reasons). The owner approved the plan (build log → Owner input).
+- **Last green commit:** the head of the branch, step 2 (0 warnings, format clean, fast suite 625 passed)
+- **Done steps:** 1 (write-ahead; the owner approved the plan), 2 (state transitions, `StallReason`). Planned: 3 report + loop + timers ·
+  4 production · 5 Unity · 6 docs, then finish (details in the build log entry → Plan)
+- **Next step:** step 3: `Runtime/Settlement/` with `SettlementReport`, the internal event sources (research timer, then building timers)
+  and `Simulator.Advance` (`04` §7) completing research, construction (auto-staffing) and upgrades; tests in `Settlement/SimulatorTests.cs`.
+  Then replace the `<c>Settlement.Simulator</c>` placeholders in `Building` and `CityState` with `<see cref>` (decision 12).
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
