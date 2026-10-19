@@ -10,10 +10,9 @@
 - **Build log entry:** `docs/build-log/2026/2026-10-19-08-M0-18.md` (plan: 8 steps)
 - **Last green commit:** `main` = `fac266e` (baseline: 0 warnings; fast suite green: Simulation 872, Application 14, Domain 1,
   IntegrationTests 25)
-- **Done steps:** 1 (write-ahead)
-- **Next step:** step 2: compare `04` §1–§15 line by line with `shared/Simulation/Runtime/` and record every statement in the entry's
-  findings list (matches · spec vague → reword `04` · code wrong → test first, then fix); then steps 3–8 (fixes, ADR-0005 to ADR-0008,
-  docs, finish).
+- **Done steps:** 1 (write-ahead); 2 (comparison: the engine follows `04` everywhere; nine wording findings V1–V9 in the entry, no code fix)
+- **Next step:** step 3: `04` wording for V1–V9 (V4 also in `.claude/rules/simulation.md`, decision row 036); then steps 4–7 (ADR-0005 to
+  ADR-0008) and 8 (docs, full suite counts, finish).
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
