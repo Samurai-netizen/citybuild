@@ -1,4 +1,5 @@
 using System.Globalization;
+using CityBuilder.Simulation.Settlement;
 using CityBuilder.Simulation.State;
 
 namespace CityBuilder.Simulation.Tests.Properties;
@@ -17,6 +18,26 @@ internal static class StructuralEquality
 
     /// <summary>The first field in which <paramref name="actual"/> differs from <paramref name="expected"/>, or null when they are equal.</summary>
     public static string? FirstDifference(ReportTotals expected, ReportTotals actual) => FirstDifference(expected.Fields(), actual.Fields());
+
+    /// <summary>The first report, by position, that differs, with its first differing field; or null when the lists are equal.</summary>
+    public static string? FirstDifference(IReadOnlyList<SettlementReport> expected, IReadOnlyList<SettlementReport> actual)
+    {
+        if (expected.Count != actual.Count)
+        {
+            return $"report count: expected {Text(expected.Count)}, actual {Text(actual.Count)}";
+        }
+
+        for (int index = 0; index < expected.Count; index++)
+        {
+            string? difference = FirstDifference(ReportTotals.Sum(expected[index]), ReportTotals.Sum(actual[index]));
+            if (difference is not null)
+            {
+                return $"report {Text(index + 1)} {difference}";
+            }
+        }
+
+        return null;
+    }
 
     /// <summary>Every stored value of <paramref name="city"/>, as a path and a value, in the order of the class summary.</summary>
     public static IReadOnlyList<(string Path, string Value)> Fields(CityState city)
