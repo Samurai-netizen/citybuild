@@ -59,6 +59,21 @@ public sealed class StartRuleTests
     }
 
     [Fact]
+    public void StartRule_HigherIdStartFreesRoomForALowerId_BothStartInTheSameSecond()
+    {
+        // CR-0001: wood is at its cap of 100, so camp 2 is skipped (100 + 1 > 100); then workshop 3 starts and takes 2 wood. The pass repeats
+        // and camp 2 starts in the same second instead of waiting, idle without a stall reason, for the next event.
+        CityState city = City(clock: 1000, inventory: [("wood", 100)], completedResearch: ["carpentry"], buildings:
+            [Idle(1, "hut", 0, 0), Idle(2, "lumber_camp", 1, 0, workers: 2), Idle(3, "workshop", 2, 0, workers: 1)]);
+
+        Simulator.Advance(city, TestContent, 0);
+
+        Assert.Equal("building 2 lumber_camp (1,0) L1 w=2 Producing 1000..1020 target=0 labor=40/40@1000", CityDump.BuildingLine(city, 2));
+        Assert.Equal("building 3 workshop (2,0) L1 w=1 Producing 1000..1090 target=0 labor=90/90@1000", CityDump.BuildingLine(city, 3));
+        Assert.Equal(98, city.GetQuantity(_wood));
+    }
+
+    [Fact]
     public void Construction_InputsInStock_BlocksProductionUntilItCompletes()
     {
         CityState city = City(clock: 1000, inventory: [("wood", 4)], completedResearch: ["carpentry"], buildings:

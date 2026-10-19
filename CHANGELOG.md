@@ -67,3 +67,8 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   clock behind elapses nothing and keeps the second), and a `SettleCity` use case skeleton in Application (`Cities/`: `ICityRepository`,
   `CityAggregate`) that floors the `TimeProvider` to whole seconds and runs `Simulator.Advance`, tested with `FakeTimeProvider`
   (`Microsoft.Extensions.TimeProvider.Testing` 10.10.0) and an in-memory repository (M0-13).
+- Property test harness: a seeded random city generator (SplitMix64; commands only through `CityRules`, gaps up to four production caps;
+  replayable, printable operation lists), a structural equality helper that names the first differing field, and properties over 500 seeds
+  on two frozen contents: determinism, split invariance and timer invariance. Split invariance found an engine bug, now fixed (CR-0001):
+  one start pass could leave a lower-id producer idle when a later start freed room under a cap in the same second; the start pass now
+  repeats until nothing starts (`04` §6) (M0-14).

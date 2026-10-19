@@ -11,6 +11,7 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
+- [BL-20261019-04 · M0-14 · Property test harness](2026/2026-10-19-04-M0-14.md) — In progress
 - [BL-20261019-03 · M0-13 · Settlement window and production cap](2026/2026-10-19-03-M0-13.md) — In progress
 - [BL-20261019-02 · M0-12 · Engine review](2026/2026-10-19-02-M0-12.md) — In progress
 - [BL-20261019-01 · M0-11 · Golden scenario #1](2026/2026-10-19-01-M0-11.md) — Done

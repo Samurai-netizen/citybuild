@@ -22,8 +22,8 @@ namespace CityBuilder.Simulation.Settlement
         /// <summary>
         /// Advances the city by <paramref name="elapsedSeconds"/> (<c>04</c> section 7). At the clock and at every event time up to the target,
         /// in this order: the research that is due completes, then the buildings that are due complete in ascending id order, then idle
-        /// producers start cycles in ascending id order, but only while the time is within <see cref="GameRules.MaxOfflineProductionSeconds"/>
-        /// of the start (the dormant tail). Timers run for the whole window, and the clock always moves by the full elapsed time. A zero-length
+        /// producers start cycles in ascending id order, pass after pass until one starts nothing, but only while the time is within
+        /// <see cref="GameRules.MaxOfflineProductionSeconds"/> of the start (the dormant tail). Timers run for the whole window, and the clock always moves by the full elapsed time. A zero-length
         /// advance only starts the cycles that can start at the clock; every mutation is followed by one.
         /// </summary>
         /// <param name="city">The city; it changes in place.</param>
@@ -90,12 +90,26 @@ namespace CityBuilder.Simulation.Settlement
         }
 
         /// <summary>
-        /// The start rule (<c>04</c> section 6), in ascending id order, each start fully applied before the next, so a lower id gets scarce
-        /// inputs and output space first: an idle producer with at least 1 worker, every input in stock and room for every capped output
-        /// (stock + reserved + quantity ≤ cap) takes its inputs and starts a cycle with the labor of now (research reductions included).
+        /// The start rule (<c>04</c> section 6): passes in ascending id order until a pass starts nothing. A start takes inputs, which can make
+        /// room under a cap for a lower id that the pass has already skipped (CR-0001); the next pass starts it in the same second. Each pass
+        /// starts at least one building or ends the loop, and a building starts at most once (it is then producing), so the loop ends.
         /// </summary>
         private static void StartEligible(CityState city, GameContent content, long time, SettlementReportBuilder report)
         {
+            while (StartPass(city, content, time, report))
+            {
+            }
+        }
+
+        /// <summary>
+        /// One pass of the start rule in ascending id order, each start fully applied before the next, so a lower id gets scarce inputs and
+        /// output space first: an idle producer with at least 1 worker, every input in stock and room for every capped output
+        /// (stock + reserved + quantity ≤ cap) takes its inputs and starts a cycle with the labor of now (research reductions included).
+        /// Returns whether any building started.
+        /// </summary>
+        private static bool StartPass(CityState city, GameContent content, long time, SettlementReportBuilder report)
+        {
+            bool started = false;
             IReadOnlyList<Building> buildings = city.Buildings;
             for (int index = 0; index < buildings.Count; index++)
             {
@@ -117,7 +131,10 @@ namespace CityBuilder.Simulation.Settlement
                 city.RemoveItems(recipe.Inputs);
                 report.AddConsumed(recipe.Inputs);
                 building.StartCycle(time, CityQueries.EffectiveLabor(city, content, building.TypeId, building.Level));
+                started = true;
             }
+
+            return started;
         }
 
         private static long? NextDueAt(CityState city)
