@@ -57,6 +57,15 @@ internal static class CityGenerator
         };
     }
 
+    /// <summary>A random command (no time passing), chosen in the same proportions as the generator's commands.</summary>
+    public static CityOperation.Command? RandomCommand(SeededRandom random, CityState city, GameContent content) => random.Between(1, 65) switch
+    {
+        <= 20 => PlaceBuilding(random, city, content),
+        <= 40 => AssignWorkers(random, city, content),
+        <= 50 => UpgradeBuilding(random, city),
+        _ => StartResearch(random, city, content),
+    };
+
     // Time passes in a third of the attempts; the rest are commands, placing and assigning workers more often than upgrading and research.
     private static CityOperation? Next(SeededRandom random, CityState city, GameContent content) => random.Between(1, 100) switch
     {
