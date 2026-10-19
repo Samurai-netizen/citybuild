@@ -8,12 +8,13 @@
 - **Task:** M0-14 · Property test harness (`[O]`, Claude Code / claude-opus-5-5)
 - **Branch:** `task/M0-14-property-harness` (from `main` = `b183438`)
 - **Build log entry:** `docs/build-log/2026/2026-10-19-04-M0-14.md`
-- **Last green commit:** the head of the branch (Simulation tests 713 passed, format clean)
+- **Last green commit:** the head of the branch (Simulation tests 722 passed, format clean)
 - **Steps:** 1 write-ahead · 2 structural equality helper · 3 seeded generator + coverage test · 4 determinism property ·
   5 split and timer invariance properties · 6 docs and finish (details in the build log Plan)
-- **Done steps:** 1, 2 (`Properties/StructuralEquality`, `ReportTotals`, 12 tests)
-- **Next step:** step 3: `Properties/` seeded city generator (`System.Random(seed)`, operations only through `CityRules` and
-  `Simulator.Advance`, a replayable and printable operation list) and a coverage test over the seeds.
+- **Done steps:** 1, 2 (`StructuralEquality`, `ReportTotals`), 3 (`SeededRandom`, `CityOperation`, `CityHistory`, `CityGenerator`,
+  `PropertyContent`, coverage test), all in `server/tests/CityBuilder.Simulation.Tests/Properties/`
+- **Next step:** step 4: property 1 (determinism) in `Properties/`, over both `PropertyContent.Names` and seeds 0..499: generate twice and
+  replay → same operations, every report and the city equal; the failure prints `CityHistory.Describe()`.
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
