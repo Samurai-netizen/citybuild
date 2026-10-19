@@ -10,8 +10,8 @@
 - **Build log entry:** `docs/build-log/2026/2026-10-18-02-M0-10.md` (plan: steps 1–6)
 - **Last green commit:** the head of the branch (0 warnings, format clean, fast suite 692 passed: Simulation 665)
 - **Done steps:** 1 (write-ahead), 2 (fixture, `EngineRules/Commands`, `CycleRuleTests`, `StartRuleTests`), 3 (`WorkerRuleTests`),
-  4 (`ResearchRuleTests`, `UpgradeRuleTests`)
-- **Next step:** step 5: mutation check by hand (break each rule in `shared/Simulation`, see a rule test fail, restore; `git diff` empty).
+  4 (`ResearchRuleTests`, `UpgradeRuleTests`), 5 (mutation check: 27 of 28 caught; auto-staffing test strengthened; no engine bug)
+- **Next step:** step 6: docs (module doc → Tests and fixture, overview count, `CHANGELOG`), then finish (`16` §E by hand).
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
