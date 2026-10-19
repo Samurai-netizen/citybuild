@@ -48,7 +48,7 @@ public sealed class StartRuleTests
     public void ScarceInputs_TwoProducersCanStart_TheLowerIdTakesThem()
     {
         // Wood for one cycle. The city is given workshop 3 before workshop 2; the ids decide, not the order of the list.
-        CityState city = City(clock: 1000, inventory: [("wood", 3)], buildings:
+        CityState city = City(clock: 1000, inventory: [("wood", 3)], completedResearch: ["carpentry"], buildings:
             [Idle(3, "workshop", 2, 0, workers: 1), Idle(2, "workshop", 1, 0, workers: 1), Idle(1, "hut", 0, 0)]);
 
         Simulator.Advance(city, TestContent, 0);
@@ -61,7 +61,7 @@ public sealed class StartRuleTests
     [Fact]
     public void Construction_InputsInStock_BlocksProductionUntilItCompletes()
     {
-        CityState city = City(clock: 1000, inventory: [("wood", 4)], buildings:
+        CityState city = City(clock: 1000, inventory: [("wood", 4)], completedResearch: ["carpentry"], buildings:
             [Idle(1, "hut", 0, 0), Constructing(2, "workshop", 1, 0, startedAt: 990, endsAt: 1010)]);
 
         Simulator.Advance(city, TestContent, 9);
@@ -117,6 +117,6 @@ public sealed class StartRuleTests
         Building[] buildings = otherCycleRuns
             ? [hut, workshop, Producing(3, "workshop", 2, 0, 1, workers: 1, cycleStartedAt: 990, cycleLabor: 90, laborRemaining: 90, segmentStartedAt: 990, endsAt: 1080)]
             : [hut, workshop];
-        return City(clock: 1000, inventory: [("wood", wood), ("boards", boards)], buildings: buildings);
+        return City(clock: 1000, inventory: [("wood", wood), ("boards", boards)], completedResearch: ["carpentry"], buildings: buildings);
     }
 }

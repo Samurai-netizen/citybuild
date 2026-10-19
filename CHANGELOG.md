@@ -48,6 +48,9 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
 - Settlement in the engine: `Simulator.Advance` (research and building timers as event sources, auto-staffing, the start rule with research
   labor, the production cap and dormant tail) with a sorted `SettlementReport`, derived stall reasons (`StallReason`), and the how-to
   `add-research-effect.md` (M0-09).
+- Engine rule tests: one test per rule of `04` in `EngineRules/` (cycles, starts, workers, research, upgrades), played out through commands
+  and advances on the test fixture, which gains a 180-labor workshop level and a producer of an uncapped item; a mutation check shows that
+  each test fails when its rule is broken (M0-10).
 
 ### Fixed
 - Kit audit follow-ups A1, A2, A3, A9, A15, A16: `[PLAN]` tasks write ahead before the plan (no Plan Mode), the Bash guard no longer

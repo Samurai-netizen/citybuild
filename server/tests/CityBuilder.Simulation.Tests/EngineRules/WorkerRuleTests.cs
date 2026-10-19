@@ -9,13 +9,14 @@ namespace CityBuilder.Simulation.Tests.EngineRules;
 
 /// <summary>
 /// Workers and labor (<c>04</c> section 3): a cycle keeps its progress when its workers change, 0 workers freeze it, only a completed
-/// construction staffs a building automatically, and a house provides workers once it is built. Fixture numbers: a hut provides 3 workers;
-/// a lumber camp makes 1 wood from 40 labor with up to 2 workers (4 at level 2) and costs 20 gold; a workshop's level 2 makes 1 boards from
-/// 2 wood with 180 labor and up to 6 workers; the wood cap is 100.
+/// construction staffs a building automatically, and a house provides workers once it is built. Fixture numbers: a hut provides 3 workers
+/// and builds in 5 s; a lumber camp makes 1 wood from 40 labor with up to 2 workers (4 at level 2), costs 20 gold, builds in 10 s and
+/// upgrades in 12 s; a workshop's level 2 makes 1 boards from 2 wood with 180 labor and up to 6 workers; the wood cap is 100.
 /// </summary>
 public sealed class WorkerRuleTests
 {
     private static readonly ItemId _wood = new("wood");
+    private static readonly ItemId _boards = new("boards");
 
     [Fact]
     public void Reassigning_MidCycle_KeepsTheProgress()
@@ -29,9 +30,9 @@ public sealed class WorkerRuleTests
 
         Assert.Equal("building 3 workshop (2,0) L2 w=4 Producing 1000..1050 target=0 labor=180/120@1020", CityDump.BuildingLine(city, 3));
         Simulator.Advance(city, TestContent, 29);
-        Assert.Equal(0, city.GetQuantity(new ItemId("boards")));
+        Assert.Equal(0, city.GetQuantity(_boards));
         Simulator.Advance(city, TestContent, 1);
-        Assert.Equal(1, city.GetQuantity(new ItemId("boards")));
+        Assert.Equal(1, city.GetQuantity(_boards));
     }
 
     [Fact]
@@ -53,7 +54,7 @@ public sealed class WorkerRuleTests
     }
 
     [Fact]
-    public void ReaddingWorkers_FrozenCycle_ResumesWhereItStopped()
+    public void ReAddingWorkers_FrozenCycle_ResumesWhereItStopped()
     {
         // 10 s with 2 workers do 20 of the 40 labor; the cycle then stands frozen for 500 s.
         CityState city = City(clock: 1000, buildings: [Idle(1, "hut", 0, 0), Idle(2, "lumber_camp", 1, 0, workers: 2)]);

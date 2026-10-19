@@ -66,5 +66,5 @@ public sealed class CycleRuleTests
 
     /// <summary>A hut and an idle level-1 workshop with 2 workers at 1000: 45 s cycles.</summary>
     private static CityState WorkshopCity(long wood) =>
-        City(clock: 1000, inventory: [("wood", wood)], buildings: [Idle(1, "hut", 0, 0), Idle(2, "workshop", 1, 0, workers: 2)]);
+        City(clock: 1000, inventory: [("wood", wood)], completedResearch: ["carpentry"], buildings: [Idle(1, "hut", 0, 0), Idle(2, "workshop", 1, 0, workers: 2)]);
 }
