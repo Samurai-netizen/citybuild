@@ -11,6 +11,7 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
+- [BL-20261019-02 · M0-12 · Engine review](2026/2026-10-19-02-M0-12.md) — In progress
 - [BL-20261019-01 · M0-11 · Golden scenario #1](2026/2026-10-19-01-M0-11.md) — Done
 - [BL-20261018-02 · M0-10 · Engine rule tests](2026/2026-10-18-02-M0-10.md) — Done
 - [BL-20261018-01 · M0-09 · Simulator.Advance](2026/2026-10-18-01-M0-09.md) — Done

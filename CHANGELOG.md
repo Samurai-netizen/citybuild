@@ -59,3 +59,7 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   reads here-documents, comments or quoted text and checks each command on its own (new `scripts/dev/test-guard-bash.sh`),
   `scripts/dev/**` is a protected path, `scripts/` counts as code for the PR checks and the Stop hook, `.DS_Store` is untracked,
   and the license question is parked: no `LICENSE` file for now, directive OD-8 (KIT-AUDIT-FIXES).
+- Engine review: `Simulator.Advance` allocates nothing per event (index loops; the stock and report totals in a sorted `ItemTotals`
+  instead of a `SortedDictionary`, whose lookups box the id key), a timer due exactly at the clock completes before cycles start (`04` §7,
+  decision 033), a restored producing building's end must match its labor, labor subtraction is `checked`; `04` §4 and §8 say which
+  buildings have no stall reason and which level's worker limit applies while upgrading (decision 034) (M0-12).

@@ -24,7 +24,7 @@ namespace CityBuilder.Simulation.State
         /// <param name="phaseStartedAt">When the phase (or, while producing, the cycle) started; 0 when idle.</param>
         /// <param name="phaseEndsAt">
         /// When the phase ends: set while constructing or upgrading and while producing with workers; null when idle or frozen (producing with
-        /// 0 workers); never before the start.
+        /// 0 workers); never before the start. While producing it is exactly <c>segmentStartedAt + CeilDiv(laborRemaining, assignedWorkers)</c>.
         /// </param>
         /// <param name="targetLevel">The level an upgrade reaches, <paramref name="level"/> + 1, while upgrading; otherwise 0.</param>
         /// <param name="cycleLabor">The running cycle's labor, at least 1, while producing; otherwise 0.</param>
@@ -144,7 +144,7 @@ namespace CityBuilder.Simulation.State
                 }
 
                 long laborDone = checked((now - SegmentStartedAt) * AssignedWorkers);
-                LaborRemaining = Math.Max(0, LaborRemaining - laborDone);
+                LaborRemaining = Math.Max(0, checked(LaborRemaining - laborDone));
                 SegmentStartedAt = now;
                 PhaseEndsAt = workers == 0 ? (long?)null : checked(now + IntegerMath.CeilDiv(LaborRemaining, workers));
             }
@@ -246,16 +246,23 @@ namespace CityBuilder.Simulation.State
                         : "an idle building has no start, end, target level or cycle.";
                 case BuildingPhase.Producing:
                     return TargetLevel == 0 && CycleLabor >= 1 && LaborRemaining >= 0 && LaborRemaining <= CycleLabor
-                        && SegmentStartedAt >= PhaseStartedAt && (PhaseEndsAt == null || PhaseEndsAt >= SegmentStartedAt)
-                        && (PhaseEndsAt == null) == (AssignedWorkers == 0)
+                        && SegmentStartedAt >= PhaseStartedAt && (PhaseEndsAt == null) == (AssignedWorkers == 0) && EndsWhenTheLaborIsDone()
                         ? null
                         : "a producing building has labor of at least 1, the remaining labor within it, a segment not before the cycle's start, "
-                          + "an end not before the segment exactly when it has workers (no end means frozen), and no target level.";
+                          + "an end exactly when it has workers (no end means frozen), the end its labor and workers give, and no target level.";
                 default:
                     return "the phase is not one of the defined phases.";
             }
         }
 
         private bool HasNoCycle() => CycleLabor == 0 && LaborRemaining == 0 && SegmentStartedAt == 0;
+
+        // The end of a running cycle is SegmentStartedAt + CeilDiv(LaborRemaining, AssignedWorkers) (04 section 3), the only value StartCycle and
+        // AssignWorkers give it; a restored building with another end would finish its labor early or late. Frozen cycles have no end. The
+        // difference is compared, so huge values can't overflow; the remaining labor is checked first, so CeilDiv gets no negative dividend.
+        private bool EndsWhenTheLaborIsDone() =>
+            PhaseEndsAt == null
+            || (LaborRemaining >= 0 && PhaseEndsAt >= SegmentStartedAt
+                && PhaseEndsAt.Value - SegmentStartedAt == IntegerMath.CeilDiv(LaborRemaining, AssignedWorkers));
     }
 }

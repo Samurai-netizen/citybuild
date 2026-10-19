@@ -7,7 +7,7 @@
 > *Growing.* The integer helpers, the content ids and the content model with its validation exist (M0-07a); the server loads the content
 > JSON through it (M0-07b, `docs/modules/CityBuilder.Infrastructure.md`). The city state, its derived queries and the four player mutations exist
 > (M0-08), and `Simulator.Advance` settles a city (M0-09); the rules of `04` §2, §3, §5, §6 and the upgrade of §8 have a rule test each
-> (M0-10), and golden scenario #1 of `23` passes on a frozen copy of the content (M0-11). The settlement window, invariants and performance follow in M0-13 to M0-16 *(planned)*.
+> (M0-10), golden scenario #1 of `23` passes on a frozen copy of the content (M0-11), and the engine review fixed its four findings (M0-12). The settlement window, invariants and performance follow in M0-13 to M0-16 *(planned)*.
 
 ## Purpose
 The deterministic simulation engine: integer-only game rules and the helpers they share (`core-instructions/04-simulation-model.md`).
@@ -59,13 +59,13 @@ reject values that can't form one. Decisions: build log `docs/build-log/2026/202
 ## Settlement: `Simulator.Advance`
 ```mermaid
 flowchart LR
-  A["Advance(city, content, elapsed)"] --> S["start eligible cycles at t<br/>(only while t ≤ T0 + cap)"]
+  A["Advance(city, content, elapsed)<br/>t = T0"] --> C["complete what is due at t:<br/>research, then buildings by id"]
+  C --> S["start eligible cycles at t<br/>(only while t ≤ T0 + cap)"]
   S --> N{"next due time of the<br/>event sources ≤ target?"}
-  N -- "yes: t = next" --> C["complete what is due at t:<br/>research, then buildings by id"]
-  C --> S
+  N -- "yes: t = next" --> C
   N -- no --> K["clock = target"] --> R[SettlementReport]
 ```
-The loop of `04` §7. The event sources are an internal list (`IEventSource`: `ResearchTimerSource`, then `BuildingTimerSource`) whose order
+The loop of `04` §7: completions come before starts at every time, the clock included (a restored city may have a timer due there; M0-12). The event sources are an internal list (`IEventSource`: `ResearchTimerSource`, then `BuildingTimerSource`) whose order
 is the order within a second; the mailbox of `04` §13 will be one more source. Research effects are derived from `CompletedResearch`, so a
 completed node counts from that second; running cycles keep their labor. The start rule and the stall reason share the checks in
 `CityQueries`. There is no era transition until M2. Decisions: build log `docs/build-log/2026/2026-10-18-01-M0-09.md`, decisions 3–19.
@@ -87,19 +87,22 @@ completed node counts from that second; running cycles keep their labor. The sta
 | `ItemQuantity` | One line of a cost, recipe, cap list or inventory; lists are sorted by item id and name each item once |
 | `Content.Data.*Data` | The content as read: `GameContentData` and nine classes below it, plain settable properties, every value nullable, no checks. Any JSON library can fill them |
 | `State.CityState` | `Clock`, `Era`, `NextBuildingId`, `Inventory` (ordinal item order, only quantities above 0; `GetQuantity` gives 0 for the rest), `Buildings` (by id; `TryGetBuilding`), `CompletedResearch` (ordinal order; `HasCompletedResearch`), `ActiveResearch` or null. Read-only views; the restoring constructor checks ranges, unique ids and tiles, ids below `NextBuildingId`, the running research not completed |
-| `State.Building`, `State.BuildingPhase` | A placed building: id, type, tile, level, assigned workers, phase and its timer fields (`PhaseStartedAt`, `PhaseEndsAt`, `TargetLevel`, `CycleLabor`, `LaborRemaining`, `SegmentStartedAt`). Fields a phase doesn't use are 0 and `PhaseEndsAt` is null (`BuildingPhase` lists them per phase); the constructor rejects anything else |
+| `State.Building`, `State.BuildingPhase` | A placed building: id, type, tile, level, assigned workers, phase and its timer fields (`PhaseStartedAt`, `PhaseEndsAt`, `TargetLevel`, `CycleLabor`, `LaborRemaining`, `SegmentStartedAt`). Fields a phase doesn't use are 0 and `PhaseEndsAt` is null (`BuildingPhase` lists them per phase), and a producing building's end is exactly `SegmentStartedAt + CeilDiv(LaborRemaining, AssignedWorkers)`; the constructor rejects anything else |
 | `State.ActiveResearch` | The running research: id, `StartedAt`, `EndsAt` |
 | `State.CityFactory` | `CreateStarterCity(content)`: the content's starting era and stock, clock 0, nothing built or researched, next id 1 |
 | `State.CityQueries` | `WorkersProvided` (completed houses only), `WorkersAssigned`, `FreeWorkers`, `BuildersBusy`, `Reserved(item)` (outputs of producing buildings, frozen ones included), `TryGetEffectiveCap(item)` (base + bonuses; false when uncapped), `EffectiveLabor(type, level)` (reductions of completed research), `IsUnlocked(type)` (of the city's era or earlier, and available at the start or unlocked by completed research; OD-10). Worker sums are `long`. A city that names a type or research the content doesn't know makes them throw `InvalidOperationException` |
 | `Rules.CityRules` | `PlaceBuilding`, `UpgradeBuilding` (cost checked before the refund of a running or frozen cycle; refunds may exceed caps), `AssignWorkers` (absolute count; the labor segment update keeps progress, 0 freezes), `StartResearch` (cost paid up front; same era, prerequisites done) |
 | `Rules.MutationResult`, `Rules.MutationErrorCode` | `Ok` or `Rejected(code)`; the codes are those of `05` that the engine decides, each doc names its API code. The server's error catalogue (M0-34) maps them to API codes and HTTP statuses |
 | `State.StallReason`, `State.StallKind` | `StallReason.Of(city, content, building)`: null, or the first of `NoRecipe`, `NoWorkers`, `MissingInput`, `StorageFull` with its item; `ToString` is the API text (`MissingInput:logs`). None while constructing or upgrading |
-| `Settlement.Simulator` | `Advance(city, content, elapsedSeconds)`: the event loop of `04` §7, changing the city in place. Elapsed below 0 counts as 0; a timer due before the clock throws `InvalidOperationException` before anything changes |
+| `Settlement.Simulator` | `Advance(city, content, elapsedSeconds)`: the event loop of `04` §7, changing the city in place. Elapsed below 0 counts as 0; a timer due at the clock completes first; one due before the clock throws `InvalidOperationException` before anything changes. Allocates nothing per event |
 | `Settlement.SettlementReport` | `ElapsedSeconds`, `ProductionSeconds` (`min(elapsed, cap)`), `Produced` and `Consumed` (production only, per item in ordinal order), `CompletedBuildings` (constructions and upgrades, ascending), `CompletedResearch` (ordinal), `EraChanged` (false until M2) |
 
 ## Rules and invariants
 `.claude/rules/simulation.md` is the binding list (integers only, `CeilDiv` for durations, no `DateTime` or randomness, no iteration
 order that matters, `checked` arithmetic, results instead of exceptions for business rules). What is specific to this module:
+- **`Advance` allocates nothing per event** (it can process ~200k): index loops over the `IReadOnlyList`s (a `foreach` over an interface
+  boxes its enumerator), no LINQ, and no `SortedDictionary` with an id key (its lookups box the struct key on .NET). The stock and the
+  report totals are the internal `State.ItemTotals`, a sorted table with binary search. `Settlement/AdvanceAllocationTests` guards it.
 - **Content comes in only as `GameContent`.** Engine code takes it, never the `*Data` classes, and may rely on every content rule of `04`.
 - **The city changes only through the engine**, and a rejected mutation changes nothing. Derived values (workers, reservations, caps, labor,
   unlocks) are never stored. Fields a phase doesn't use are 0, so two equal situations are equal field by field.
@@ -147,7 +150,7 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
   per rule and error code, named after the error path.
 - `State/` (`Building`, `CityState`, `CityFactory`, `CityQueries`, `StallReason` tests) and `Rules/` (one class per mutation: every success
   path, every error code, the check order where failures overlap).
-- `Settlement/`: `AdvanceTests` (clock, window, target, bad input), `AdvanceTimerTests` (research, construction with auto-staffing, the
+- `Settlement/`: `AdvanceTests` (clock, window, target, a timer at the clock, bad input), `AdvanceAllocationTests` (eight hours of the golden city allocate no more than two minutes), `AdvanceTimerTests` (research, construction with auto-staffing, the
   order within a second, upgrades, the dormant tail), `AdvanceProductionTests` (cycles, a chain, research and the next cycle, rounding, caps
   with reservations, the production cap). `CityFixture` builds cities and one building per phase over `ContentFixture` (plus a
   workshop level 2 with 180 labor and 6 workers, 4 workers on lumber camp level 2, the era-2 house `manor` and `mint`, a producer of the
@@ -186,4 +189,4 @@ too, but guards the Unity client's asmdefs and manifest, not the engine (see `do
   depend on `Dictionary` or `HashSet` order (`04` §9).
 - Content error messages are English text for content authors; only `ContentErrorCode` and `Path` are stable.
 
-Last updated: M0-11
+Last updated: M0-12

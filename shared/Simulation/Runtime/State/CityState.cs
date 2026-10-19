@@ -1,7 +1,6 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using CityBuilder.Simulation.Content;
 
@@ -15,7 +14,7 @@ namespace CityBuilder.Simulation.State
     /// </summary>
     public sealed class CityState
     {
-        private readonly SortedDictionary<ItemId, long> _inventory = new SortedDictionary<ItemId, long>();
+        private readonly ItemTotals _inventory = new ItemTotals();
         private readonly List<Building> _buildings;
         private readonly List<ResearchId> _completedResearch;
 
@@ -63,15 +62,12 @@ namespace CityBuilder.Simulation.State
                     throw new ArgumentException(FormattableString.Invariant($"Item {stock.Key}: listed twice or below 0."), nameof(inventory));
                 }
 
-                if (stock.Value > 0)
-                {
-                    _inventory.Add(stock.Key, stock.Value);
-                }
+                _inventory.Set(stock.Key, stock.Value);
             }
 
             _buildings = SortedBuildings(buildings, nextBuildingId);
             _completedResearch = SortedResearch(completedResearch, activeResearch);
-            Inventory = new ReadOnlyDictionary<ItemId, long>(_inventory);
+            Inventory = _inventory;
             Buildings = _buildings.AsReadOnly();
             CompletedResearch = _completedResearch.AsReadOnly();
         }
@@ -100,7 +96,7 @@ namespace CityBuilder.Simulation.State
         /// <summary>How many of an item the city has.</summary>
         /// <param name="item">The item.</param>
         /// <returns>The quantity, 0 when the city has none.</returns>
-        public long GetQuantity(ItemId item) => _inventory.TryGetValue(item, out long quantity) ? quantity : 0;
+        public long GetQuantity(ItemId item) => _inventory.Get(item);
 
         /// <summary>Whether the city has completed a research node.</summary>
         /// <param name="id">The research node.</param>
@@ -143,8 +139,9 @@ namespace CityBuilder.Simulation.State
         /// <summary>Whether the city has at least every amount in the list.</summary>
         internal bool HasItems(IReadOnlyList<ItemQuantity> amounts)
         {
-            foreach (ItemQuantity amount in amounts)
+            for (int index = 0; index < amounts.Count; index++)
             {
+                ItemQuantity amount = amounts[index];
                 if (GetQuantity(amount.Item) < amount.Quantity)
                 {
                     return false;
@@ -157,13 +154,10 @@ namespace CityBuilder.Simulation.State
         /// <summary>Adds every amount in the list. Storage caps don't apply: they limit production only (<c>04</c> section 8).</summary>
         internal void AddItems(IReadOnlyList<ItemQuantity> amounts)
         {
-            foreach (ItemQuantity amount in amounts)
+            for (int index = 0; index < amounts.Count; index++)
             {
-                long quantity = checked(GetQuantity(amount.Item) + amount.Quantity);
-                if (quantity > 0)
-                {
-                    _inventory[amount.Item] = quantity;
-                }
+                ItemQuantity amount = amounts[index];
+                _inventory.Set(amount.Item, checked(GetQuantity(amount.Item) + amount.Quantity));
             }
         }
 
@@ -175,17 +169,10 @@ namespace CityBuilder.Simulation.State
                 throw new InvalidOperationException("The city can't pay these amounts; the caller must check them first.");
             }
 
-            foreach (ItemQuantity amount in amounts)
+            for (int index = 0; index < amounts.Count; index++)
             {
-                long quantity = GetQuantity(amount.Item) - amount.Quantity;
-                if (quantity > 0)
-                {
-                    _inventory[amount.Item] = quantity;
-                }
-                else
-                {
-                    _inventory.Remove(amount.Item);
-                }
+                ItemQuantity amount = amounts[index];
+                _inventory.Set(amount.Item, checked(GetQuantity(amount.Item) - amount.Quantity));
             }
         }
 
