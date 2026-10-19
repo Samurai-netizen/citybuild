@@ -17,7 +17,25 @@ public sealed class InvariantPropertyTests(ITestOutputHelper output)
 
     [Theory]
     [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
+    public void Observe_EveryStep_ProductionKeepsStockPlusReservedWithinTheCap(string contentName) => Holds(contentName, Invariant.StorageCap);
+
+    [Theory]
+    [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
     public void Observe_EveryStep_MovesTheClockByTheRequestedTimeOnly(string contentName) => Holds(contentName, Invariant.ClockNeverDecreases);
+
+    [Theory]
+    [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
+    public void Observe_EveryStep_ProducesNothingBeforeConstructionOrDuringAnUpgrade(string contentName) =>
+        Holds(contentName, Invariant.NoProductionWhileBuilding);
+
+    [Theory]
+    [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
+    public void Observe_EveryStep_AssignsNoMoreWorkersThanProvidedOrAllowed(string contentName) => Holds(contentName, Invariant.WorkerLimits);
+
+    [Theory]
+    [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
+    public void Observe_EveryStep_KeepsBuildersWithinTheSlotsAndOneResearch(string contentName) =>
+        Holds(contentName, Invariant.BuilderAndResearchSlots);
 
     [Theory]
     [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
@@ -29,6 +47,14 @@ public sealed class InvariantPropertyTests(ITestOutputHelper output)
         observation.AssertAtLeast("steps that spent", 1000);
         observation.AssertAtLeast("steps that refunded", 100);
         observation.AssertAtLeast("steps asked to go back in time", PropertyContent.Seeds);
+        observation.AssertAtLeast("steps ending with an item exactly at its cap", 1000);
+        observation.AssertAtLeast("steps ending with an item above its cap", 20);
+        observation.AssertAtLeast("cycles completed", 10_000);
+        observation.AssertAtLeast("cycles started when a construction or upgrade completed", 100);
+        observation.AssertAtLeast("steps with every worker assigned", 1000);
+        observation.AssertAtLeast("buildings at their worker limit", 1000);
+        observation.AssertAtLeast("steps with every builder busy", 50);
+        observation.AssertAtLeast("research starts", 100);
     }
 
     private static void Holds(string contentName, Invariant invariant) => InvariantObservation.For(contentName).AssertHolds(invariant);
