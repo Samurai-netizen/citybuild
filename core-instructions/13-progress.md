@@ -10,9 +10,9 @@
 - **Build log entry:** `docs/build-log/2026/2026-10-19-05-M0-15.md` (plan: 7 steps, decisions 1–5)
 - **Last green commit:** the branch head (fast suite 802 passed: Simulation 762, Application 14; format clean)
 - **Done steps:** 1 (write-ahead; M0-14, CR-0001 `Done`), 2 (`MutationResult.Spent`/`Refunded`), 3 (observer: stepped replay, dormant
-  tail model, branches; invariants 4, 5, 7), 4 (invariants 6, 8, 9, 10), 5 (11 `LaborLedger`, 12, 13), 6 (eleven planted bugs, each caught)
-- **Next step:** 7: write `docs/how-to/debug-determinism-failure.md` (failing seed → replay → shrink → rule test), mark it done in
-  `docs/how-to/README.md`, module doc Tests → `Properties/` (observer, invariants), `08` if needed, `CHANGELOG`; then `/finish-task`.
+  tail model, branches; invariants 4, 5, 7), 4 (6, 8, 9, 10), 5 (11 `LaborLedger`, 12, 13), 6 (eleven planted bugs, each caught), 7 (how-to
+  `debug-determinism-failure.md`, module doc, `08`, `CHANGELOG`)
+- **Next step:** finish (`/finish-task`): own line-by-line review (`[O]`, engine touched), Unity EditMode/PlayMode, PR.
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —

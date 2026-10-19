@@ -177,7 +177,16 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
   reports add up), `TimerInvariancePropertyTests` (any split up to four caps: each timer completes in the piece holding its end second, and
   the timer side of the city matches). `CityGeneratorTests` holds floors on what the seeds reach (every command, upgrades, research, locked
   buildings, chains, frozen cycles, gaps beyond the cap) so a weaker generator fails. A failing seed is replayed by hand with
-  `CityGenerator.Generate(PropertyContent.Named(name), seed)`.
+  `CityGenerator.Generate(PropertyContent.Named(name), seed)`; `docs/how-to/debug-determinism-failure.md` goes on to a rule test.
+- `Properties/` invariants 4–13 (M0-15): `InvariantObserver` replays each seed's history step by step: a command is a step (`Mutate`,
+  then the zero-length advance); an advance within the cap is cut at every next timer, so each start and completion ends a step; an
+  advance beyond the cap runs whole, and a copy stepped to the window's end plus the test model `DormantTail` must give the same city.
+  After 5 % of the steps a branch leaves on a copy (`CityCopy`, through the restore constructors) with an aimed command (mostly a worker
+  change or an upgrade of a running cycle) and a short advance. `InvariantChecks` checks every step with its own sums (reservations, caps,
+  workers, effective labor), never the engine's queries: conservation with the mutation's `Spent` and `Refunded`, stock ≥ 0, the cap,
+  the clock, production only from cycles that ended, workers, builders and research, labor (`LaborLedger` counts worker-seconds per
+  cycle), no start after the window, unlocks and prerequisites. `InvariantObservation` runs all seeds once per content (about 3 s) and
+  `InvariantPropertyTests` has one test per invariant and content, plus floors on what the checks exercised (printed in the test output).
 - `SimulationDependencyTests`: the compiled assembly references exactly `netstandard` and is built for `netstandard2.1`.
 - `SimulationPackageTests`: the files only Unity sees. The asmdef (`noEngineReferences`, no references, no platform or define
   restrictions, same name as the assembly, auto-referenced, the only asmdef, no asmref), `package.json` (name, `unity` 6000.3,

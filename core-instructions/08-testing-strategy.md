@@ -24,6 +24,7 @@ Mark integration tests with `[Trait("Category", "Integration")]` so the fast sui
 - **Property tests:** seeded random cities and random elapsed splits (fixed seeds, ≥ 500 cases each), covering
   determinism, split invariance, timer invariance, conservation, non-negativity, caps, worker limits, labor accounting,
   builder/research slots, and no starts after the cap. Print the seed and the operation list on failure.
+  From a failing seed to a rule test: `docs/how-to/debug-determinism-failure.md`.
 - **Performance budget:** the worst-case city over the full production cap stays within budget, with the event count asserted.
 
 ## Time
