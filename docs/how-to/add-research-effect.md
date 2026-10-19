@@ -49,17 +49,21 @@ types. Unknown types and stray values are already errors, so a typo in a content
 public static long BuilderSlots(CityState city, GameContent content)
 {
     long slots = content.Rules.BuilderSlots;
-    foreach (ResearchId completed in city.CompletedResearch)
+    IReadOnlyList<ResearchId> completed = city.CompletedResearch;
+    for (int index = 0; index < completed.Count; index++)
     {
-        foreach (ResearchEffect effect in ResearchOf(content, completed).Effects)
+        IReadOnlyList<ResearchEffect> effects = ResearchOf(content, completed[index]).Effects;
+        for (int effectIndex = 0; effectIndex < effects.Count; effectIndex++)
         {
-            if (effect is BuilderSlotBonusEffect bonus) { slots = checked(slots + bonus.Amount); }
+            if (effects[effectIndex] is BuilderSlotBonusEffect bonus) { slots = checked(slots + bonus.Amount); }
         }
     }
 
     return slots;
 }
 ```
+Index loops, not `foreach`: `Advance` may run the query at every event, and a `foreach` over an `IReadOnlyList` allocates
+(`docs/modules/CityBuilder.Simulation.md` → Rules and invariants).
 Here `CityRules.HasFreeBuilder` reads `content.Rules.BuilderSlots` and changes to the query; the snapshot's `builders.slots` (`05`) shows it.
 Switch on the effect **type**, never on a research id or an era number (`.claude/rules/simulation.md`).
 

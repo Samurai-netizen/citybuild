@@ -15,8 +15,9 @@ namespace CityBuilder.Simulation.Settlement
         long? NextDueAt(CityState city);
 
         /// <summary>
-        /// Completes every event of this source that is due at <paramref name="time"/>, the earliest due time of all sources. Afterwards none
-        /// of its events may be due at or before <paramref name="time"/>, or the advance would not move on.
+        /// Completes every event of this source that is due at <paramref name="time"/>: the clock at the start of the advance (usually nothing
+        /// is due then), or the earliest due time of all sources. Afterwards none of its events may be due at or before <paramref name="time"/>,
+        /// or the advance would not move on.
         /// </summary>
         void CompleteDue(CityState city, GameContent content, long time, SettlementReportBuilder report);
     }

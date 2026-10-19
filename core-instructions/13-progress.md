@@ -4,15 +4,14 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** M0-12 · Engine review (`[O]`)
-- **Branch:** `task/M0-12-engine-review` (from `main` = `2440a1a`)
-- **Build log entry:** `docs/build-log/2026/2026-10-19-02-M0-12.md` (In progress)
-- **Last green commit:** the head of the branch (0 warnings, format clean, Simulation tests 692)
-- **Planned steps:** 1 write-ahead · 2 mechanical sweep (findings table in the log) · 3 line-by-line read against `04` · 4 fixes test-first ·
-  5 spec wording + decision rows · 6 docs and finish
-- **Done steps:** 1, 2, 3 (findings F1–F4 in the build log); step 4: F1 fixed (allocation-free `Advance`), F2 fixed (timer at the clock completes first), F3 fixed (a restored cycle's end must match its labor), F4 fixed (`checked`); 5 spec wording (decisions 033, 034); 6 docs
-- **Next step:** finish (`16` §E): self-review, Definition of Done, PR.
+- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** — (last completed: M0-12 · Engine review; PR open, the owner merges it)
+- **Branch:** `task/M0-12-engine-review` (from `main` = `2440a1a`) until the owner merges
+- **Build log entry:** last: `docs/build-log/2026/2026-10-19-02-M0-12.md` (Done)
+- **Last green commit:** the head of `task/M0-12-engine-review` (0 warnings, format clean, fast suite 719 passed: Simulation 692;
+  `check-docs --base origin/main` OK; Unity EditMode 13/13, PlayMode 6/6)
+- **Done steps:** all of M0-12 (sweep, read against `04`, F1–F4 fixed, `04` wording with decisions 033 and 034, docs, finish)
+- **Next step:** the owner merges the PR; then `/model` → Opus 5.5 and `/start-task M0-13` (settlement window and production cap, `[O]`).
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
@@ -20,12 +19,12 @@
   `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 11 / 85 (M0-12 in progress)
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 11 / 85 (M0-12 in review)
 
 | Area | State | Notes |
 |---|---|---|
 | Repo, kit, hooks, CI | done | M0-01 and the audit fixes merged (PR #4, #5); A18 can be closed in M0-04 |
-| Shared engine: content, research, labor | in progress | M0-03 merged (PR #7); the content model and its validation (M0-07a) merged (PR #14); the JSON file and server loading (M0-07b) merged (PR #15); city state and mutations (M0-08) merged (PR #16); `Simulator.Advance` (M0-09) merged (PR #17); rule tests (M0-10) merged (PR #18); golden scenario #1 (M0-11) merged (PR #19); engine review is M0-12 (in progress) |
+| Shared engine: content, research, labor | in progress | M0-03 merged (PR #7); the content model and its validation (M0-07a) merged (PR #14); the JSON file and server loading (M0-07b) merged (PR #15); city state and mutations (M0-08) merged (PR #16); `Simulator.Advance` (M0-09) merged (PR #17); rule tests (M0-10) merged (PR #18); golden scenario #1 (M0-11) merged (PR #19); engine review is M0-12 (in review) |
 | Shared engine: invariants, performance | not started | |
 | Server skeleton | done | M0-02 merged (PR #6) |
 | Persistence (EF + PostgreSQL) | not started | |
