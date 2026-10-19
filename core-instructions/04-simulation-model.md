@@ -32,7 +32,8 @@ A settlement covers the window `[T0, T0 + elapsed]`.
 - With `w` workers, a cycle takes `ceil(remainingLabor / w)` seconds. More workers → faster. `w = 0` → frozen.
 - **Changing workers keeps progress:** at time `t`, `done = (t − SegmentStartedAt) × wOld`,
   `LaborRemaining = max(0, LaborRemaining − done)`, `SegmentStartedAt = t`,
-  `PhaseEndsAt = t + ceil(LaborRemaining / wNew)`, or `null` (frozen) if `wNew = 0`.
+  `PhaseEndsAt = t + ceil(LaborRemaining / wNew)`, or `null` (frozen) if `wNew = 0`. This runs on every assignment to a producing
+  building: the same count again starts a new segment but never moves the end.
 - **Auto-staffing:** when construction completes, the building gets `min(free, MaxWorkers)` workers.
   Nothing else is assigned automatically. Assigning 0 workers is how a player pauses a building.
 - Houses have no recipe and take no workers. During an upgrade, workers stay assigned but do nothing.

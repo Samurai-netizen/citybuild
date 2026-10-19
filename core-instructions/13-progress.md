@@ -11,10 +11,10 @@
 - **Last green commit:** `main` = `fac266e` (baseline: 0 warnings; fast suite green: Simulation 872, Application 14, Domain 1,
   IntegrationTests 25)
 - **Done steps:** 1 (write-ahead); 2 (comparison: the engine follows `04` everywhere; nine wording findings V1–V9 in the entry, no code fix);
-  3 (`04` wording for V1–V9, the division rule in `.claude/rules/simulation.md`, decision row 036); 4–6 (ADR-0005, ADR-0006, ADR-0007,
-  indexed and linked; ADR-0001 links ADR-0007)
-- **Next step:** step 7: `docs/adr/ADR-0008-labor-model.md` (decision G4: progress-preserving reassignment, no double use of workers),
-  index row, `12` link; then step 8 (module doc, `CHANGELOG`, full Simulation suite counts, finish).
+  3 (`04` wording for V1–V9, the division rule in `.claude/rules/simulation.md`, decision row 036); 4–7 (ADR-0005 to ADR-0008, indexed
+  and linked; ADR-0001 links ADR-0007; V10 same-count `AssignWorkers` worded in `04` §3, M0-08 decision 14 stands)
+- **Next step:** step 8: module doc (`Last updated: M0-18` where touched), `CHANGELOG`, full Simulation suite with counts in the entry,
+  then finish (`16` §E: format, fast suite, `check-docs --base origin/main`, Unity compile for the two comment-only engine files, self-review, PR).
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —

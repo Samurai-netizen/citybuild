@@ -11,7 +11,7 @@ Never silently reverse a decision; add a new row that supersedes it. New ids con
 | G1 | Medieval start; research moves the city through eras; major mechanics only on era entry | Owner's vision; simple start, depth later | Accepted (owner) |
 | G2 | No XP, player levels or city levels; progress = research + building levels + land | Owner's vision | Accepted (owner) |
 | G3 | Workers are assigned per building; speed ∝ workers; level raises the worker limit | Owner's vision | Accepted (owner) |
-| G4 | Labor model: recipes cost worker-seconds; reassigning keeps progress; 0 workers = paused | Makes G3 exact and exploit-free (no double use of workers) | Accepted |
+| G4 | Labor model: recipes cost worker-seconds; reassigning keeps progress; 0 workers = paused | Makes G3 exact and exploit-free (no double use of workers) | Accepted · [ADR-0008](../docs/adr/ADR-0008-labor-model.md) |
 | G5 | Era transition when every research node of the era is complete | Owner's vision; guarded by the "no node > ¼ era length" rule | Accepted (owner) |
 | G6 | Open market arrives with Era II, not at the start | Rule G1 (it's a major mechanic); keeps day 1 simple; raises the cost of alt farms | Accepted, owner may revisit |
 | G7 | NPC Trading Post is the only coin faucet and the market price floor | A player market moves coins but can't create them | Accepted |
