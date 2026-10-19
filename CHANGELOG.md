@@ -83,3 +83,7 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
 - Display helpers in `shared/Simulation/Runtime/Display/` (display only, `04` §15): `PerHour` for a worker count, `NetPerHour` and
   `SecondsUntilFull` of an item, `ProgressPermille`, `SecondsUntilNextEvent` and `ResearchProgressPermille`, all integers rounded down (rates in
   thousandths per hour); `IntegerMath.FloorDiv` (M0-17).
+- Spec sync and ADRs: `04` compared line by line with the engine; no rule differs, and ten places now say exactly what the engine does
+  (every request ends with a zero-length advance, the era transition is planned, `ActiveResearch.EndsAt`, the allowed divisions as decision
+  036, what each mutation pays and for how long, labor accounting, a same-count worker assignment). New ADRs: ADR-0005 settle on access,
+  ADR-0006 production cap and dormant tail, ADR-0007 shared engine (with its fallback), ADR-0008 labor model (M0-18).

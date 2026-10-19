@@ -8,7 +8,8 @@
 Today the API host loads `server/content/mvp-content.json` at startup and refuses to start if it is invalid, then answers `GET /health` (and
 serves its OpenAPI document in Development). The Unity client starts the `Bootstrap` scene and shows "Not connected". The engine holds its
 integer helpers, the content ids, the validated content model, the city state with its four mutations (`CityRules`) and the settlement
-(`Simulator.Advance`), which nothing on the server calls yet *(planned, M0-13 and M0-23)*. There is no database, no game endpoint and no networking yet.
+(`Simulator.Advance`), which the server's `SettleCity` skeleton calls (M0-13; settle on access, [ADR-0005](../adr/ADR-0005-settle-on-access.md)),
+with the full settle *(planned, M0-23)*. There is no database, no game endpoint and no networking yet.
 Dashed parts in the diagram are planned.
 
 ```mermaid
@@ -47,7 +48,7 @@ flowchart LR
   class DB planned
 ```
 A solid arrow between projects means "references" (a project or assembly reference); the arrow to the content file means "reads". The engine has no references; Unity and the server compile the very
-same C# files of it (decision 007 in `core-instructions/12-decisions.md`).
+same C# files of it (decision 007, [ADR-0007](../adr/ADR-0007-shared-engine.md)).
 
 ## Projects and assemblies
 Solution: `server/CityBuilder.slnx` (it also builds the shared engine project). Build settings for the server projects:
@@ -64,7 +65,7 @@ decision 020 and `core-instructions/14-coding-standards.md` (checked by a probe 
 | `CityBuilder.Simulation` | `shared/Simulation.Build/` (.NET) and `shared/Simulation/` (Unity package) | the base class library only | — | `IntegerMath` (`CeilDiv`, `ApplyPermilleReduction`); `ItemId`, `BuildingTypeId`, `ResearchId`, `EraId`; the content model (`Content/`: `*Data` → `GameContentFactory` → `GameContent`, `04` §14); the city state (`State/`: `CityState`, `Building`, `CityFactory`, `CityQueries`, `StallReason`), the mutations (`Rules/`: `CityRules`, `MutationResult`, `04` §8) and the settlement (`Settlement/`: `Simulator.Advance`, `SettlementReport`, `04` §7; `SettlementWindow`, `04` §1) | [module](../modules/CityBuilder.Simulation.md) |
 | `CityBuilder.Domain.Tests` | `server/tests/` | Domain | xUnit v3 (`xunit.v3.mtp-off`, runner, test SDK; decision 019) | 1 test | the Domain module doc → Tests |
 | `CityBuilder.Application.Tests` | `server/tests/` | Application | the same, plus `Microsoft.Extensions.TimeProvider.Testing` (`FakeTimeProvider`) | 14 tests: the dependency rule and `SettleCity` with a fake clock and repository | the Application module doc → Tests |
-| `CityBuilder.Simulation.Tests` | `server/tests/` | Simulation | the same | 701 tests: engine helpers, content ids, content model and validation, city state, queries, stall reasons, mutations, `Simulator.Advance`, the settlement window, a rule test per engine rule, golden scenario #1, and the architecture tests below | the Simulation module doc → Tests |
+| `CityBuilder.Simulation.Tests` | `server/tests/` | Simulation | the same | 872 tests: engine helpers, content ids, content model and validation, city state, queries, stall reasons, mutations, `Simulator.Advance`, the settlement window, a rule test per engine rule, golden scenario #1, the property tests, the performance budget, the display helpers, and the architecture tests below | the Simulation module doc → Tests |
 | `CityBuilder.IntegrationTests` | `server/tests/` | Api | the same, plus `Microsoft.AspNetCore.Mvc.Testing` | 25 in-memory tests (no Docker): the API host, the content loader and the content startup; none in the `Integration` category yet *(planned, M0-21)* | the Api module doc → Tests |
 
 ### Unity client
