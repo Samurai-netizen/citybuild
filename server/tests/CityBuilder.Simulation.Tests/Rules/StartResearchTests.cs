@@ -29,6 +29,14 @@ public sealed class StartResearchTests
     }
 
     [Fact]
+    public void StartResearch_ValidNode_NamesTheCostAsSpentAndNothingRefunded()
+    {
+        CityState city = City(inventory: [("boards", 5), ("gold", 70)], completedResearch: ["carpentry"]);
+
+        RulesAssert.Moved(Start(city, "better_saws"), spent: "boards=5 gold=60", refunded: "");
+    }
+
+    [Fact]
     public void StartResearch_PrerequisiteCompleted_PaysEveryItemOfTheCost()
     {
         CityState city = City(clock: 2000, inventory: [("boards", 5), ("gold", 60)], completedResearch: ["carpentry"]);

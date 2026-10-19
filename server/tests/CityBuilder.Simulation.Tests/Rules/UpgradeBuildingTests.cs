@@ -77,6 +77,24 @@ public sealed class UpgradeBuildingTests
     }
 
     [Fact]
+    public void UpgradeBuilding_IdleBuilding_NamesTheCostAsSpentAndNothingRefunded()
+    {
+        CityState city = City(inventory: [("gold", 20), ("wood", 5)], buildings: [Idle(1, "hut", 0, 0)]);
+
+        RulesAssert.Moved(Upgrade(city, 1), spent: "gold=20 wood=5", refunded: "");
+    }
+
+    [Theory]
+    [InlineData(1035L, 2)]
+    [InlineData(null, 0)]
+    public void UpgradeBuilding_RunningOrFrozenCycle_NamesTheCycleInputsAsRefunded(long? endsAt, int workers)
+    {
+        CityState city = City(inventory: [("gold", 30), ("wood", 1)], buildings: [Idle(1, "hut", 0, 0), WorkshopProducing(endsAt, workers)]);
+
+        RulesAssert.Moved(Upgrade(city, 2), spent: "gold=30 wood=1", refunded: "wood=2");
+    }
+
+    [Fact]
     public void UpgradeBuilding_RefundAboveTheCap_KeepsAllOfIt()
     {
         CityState city = City(inventory: [("gold", 30), ("wood", 100)], buildings: [WorkshopProducing(endsAt: 1035)]);

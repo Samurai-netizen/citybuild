@@ -72,3 +72,7 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   on two frozen contents: determinism, split invariance and timer invariance. Split invariance found an engine bug, now fixed (CR-0001):
   one start pass could leave a lower-id producer idle when a later start freed room under a cap in the same second; the start pass now
   repeats until nothing starts (`04` §6) (M0-14).
+- Invariant properties 4–13 of `04` §10 over 500 seeds on both contents, one test each: a step-by-step replay (every timer second, the
+  dormant tail against a test model, branches with commands mid-cycle) checks conservation, stock, caps, clock, production, workers,
+  builders and research, labor per cycle, no starts after the cap, unlocks and prerequisites; `MutationResult` now names what a mutation
+  spent and refunded; how-to `debug-determinism-failure.md` (M0-15).

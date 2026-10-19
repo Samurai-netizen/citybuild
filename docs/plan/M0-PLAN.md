@@ -258,8 +258,8 @@ The AI coder updates its row at start (`In progress`) and finish (`In review`). 
 | M0-11 | 2 | Golden scenario #1 | O | Done |
 | M0-12 | 2 | Engine review | O | Done |
 | M0-13 | 3 | Settlement window and production cap | O | Done |
-| M0-14 | 3 | Property test harness | O | In review |
-| M0-15 | 3 | Invariant properties | O | Todo |
+| M0-14 | 3 | Property test harness | O | Done |
+| M0-15 | 3 | Invariant properties | O | In review |
 | M0-16 | 3 | Performance budget | O | Todo |
 | M0-17 | 3 | Display helpers | S | Todo |
 | M0-18 | 3 | Spec sync and ADRs | O | Todo |

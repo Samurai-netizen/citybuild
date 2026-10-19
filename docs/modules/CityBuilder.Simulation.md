@@ -52,7 +52,7 @@ flowchart LR
   C --> Q["CityQueries (derived, never stored)<br/>workers, builders, reserved, caps, labor, unlocks"]
   R["CityRules.PlaceBuilding / UpgradeBuilding /<br/>AssignWorkers / StartResearch"] -->|"Ok: changes C in place"| C
   R -->|"reads"| Q
-  R --> M["MutationResult: Ok or a MutationErrorCode"]
+  R --> M["MutationResult: Ok (spent, refunded)<br/>or a MutationErrorCode"]
 ```
 A mutation runs at the city's clock after the caller has settled the city, checks in the order of `04` §8, and either applies all its effects
 or returns the first failure and changes nothing. The public constructors restore a city or a building with every field (database, tests) and
@@ -95,7 +95,7 @@ property of M0-14). The start rule and the stall reason share the checks in `Cit
 | `State.CityFactory` | `CreateStarterCity(content)`: the content's starting era and stock, clock 0, nothing built or researched, next id 1 |
 | `State.CityQueries` | `WorkersProvided` (completed houses only), `WorkersAssigned`, `FreeWorkers`, `BuildersBusy`, `Reserved(item)` (outputs of producing buildings, frozen ones included), `TryGetEffectiveCap(item)` (base + bonuses; false when uncapped), `EffectiveLabor(type, level)` (reductions of completed research), `IsUnlocked(type)` (of the city's era or earlier, and available at the start or unlocked by completed research; OD-10). Worker sums are `long`. A city that names a type or research the content doesn't know makes them throw `InvalidOperationException` |
 | `Rules.CityRules` | `PlaceBuilding`, `UpgradeBuilding` (cost checked before the refund of a running or frozen cycle; refunds may exceed caps), `AssignWorkers` (absolute count; the labor segment update keeps progress, 0 freezes), `StartResearch` (cost paid up front; same era, prerequisites done) |
-| `Rules.MutationResult`, `Rules.MutationErrorCode` | `Ok` or `Rejected(code)`; the codes are those of `05` that the engine decides, each doc names its API code. The server's error catalogue (M0-34) maps them to API codes and HTTP statuses |
+| `Rules.MutationResult`, `Rules.MutationErrorCode` | `Ok` or `Rejected(code)`; an applied mutation names what it paid (`Spent`, the cost lines) and gave back (`Refunded`, an interrupted cycle's inputs), for the `COST_*` and `REFUND_*` ledger rows (`06`; M0-15); the codes are those of `05` that the engine decides, each doc names its API code. The server's error catalogue (M0-34) maps them to API codes and HTTP statuses |
 | `State.StallReason`, `State.StallKind` | `StallReason.Of(city, content, building)`: null, or the first of `NoRecipe`, `NoWorkers`, `MissingInput`, `StorageFull` with its item; `ToString` is the API text (`MissingInput:logs`). None while constructing or upgrading |
 | `Settlement.Simulator` | `Advance(city, content, elapsedSeconds)`: the event loop of `04` §7, changing the city in place. Elapsed below 0 counts as 0; a timer due at the clock completes first; one due before the clock throws `InvalidOperationException` before anything changes. Allocates nothing per event |
 | `Settlement.SettlementReport` | `ElapsedSeconds`, `ProductionSeconds` (`min(elapsed, cap)`), `Produced` and `Consumed` (production only, per item in ordinal order), `CompletedBuildings` (constructions and upgrades, ascending), `CompletedResearch` (ordinal), `EraChanged` (false until M2) |
@@ -153,12 +153,12 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
   `ContentValueRuleTests`, `ContentBuildingRuleTests`, `ContentReferenceRuleTests`, `ContentResearchRuleTests`, `ContentEraRuleTests`: at least one failing case
   per rule and error code, named after the error path.
 - `State/` (`Building`, `CityState`, `CityFactory`, `CityQueries`, `StallReason` tests) and `Rules/` (one class per mutation: every success
-  path, every error code, the check order where failures overlap).
+  path, every error code, the check order where failures overlap, the items each names as spent and refunded).
 - `Settlement/`: `SettlementWindowTests` (same second, later, behind, successive windows, overflow), `AdvanceTests` (clock, window, target, a timer at the clock, bad input), `AdvanceAllocationTests` (eight hours of the golden city allocate no more than two minutes), `AdvanceTimerTests` (research, construction with auto-staffing, the
   order within a second, upgrades, the dormant tail), `AdvanceProductionTests` (cycles, a chain, research and the next cycle, rounding, caps
   with reservations, the production cap). `CityFixture` builds cities and one building per phase over `ContentFixture` (plus a
   workshop level 2 with 180 labor and 6 workers, 4 workers on lumber camp level 2, the era-2 house `manor` and `mint`, a producer of the
-  uncapped gold); `RulesAssert.Rejected` checks that a rejection leaves the `CityDump` unchanged.
+  uncapped gold); `RulesAssert.Rejected` checks that a rejection names nothing spent or refunded and leaves the `CityDump` unchanged.
 - `EngineRules/`: one test per rule of `04` §2, §3, §5, §6 and the upgrade of §8, named after it (`Duration_CycleStarts_IsTheLaborCeilDivTheWorkers`),
   in a class per area (`CycleRuleTests`, `StartRuleTests`, `WorkerRuleTests`, `ResearchRuleTests`, `UpgradeRuleTests`). A rule is played out
   through advances and commands (`Commands`: the mutation, then a zero-length advance); the M0-10 build log lists which broken rule each test catches.
@@ -177,7 +177,16 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
   reports add up), `TimerInvariancePropertyTests` (any split up to four caps: each timer completes in the piece holding its end second, and
   the timer side of the city matches). `CityGeneratorTests` holds floors on what the seeds reach (every command, upgrades, research, locked
   buildings, chains, frozen cycles, gaps beyond the cap) so a weaker generator fails. A failing seed is replayed by hand with
-  `CityGenerator.Generate(PropertyContent.Named(name), seed)`.
+  `CityGenerator.Generate(PropertyContent.Named(name), seed)`; `docs/how-to/debug-determinism-failure.md` goes on to a rule test.
+- `Properties/` invariants 4–13 (M0-15): `InvariantObserver` replays each seed's history step by step: a command is a step (`Mutate`,
+  then the zero-length advance); an advance within the cap is cut at every next timer, so each start and completion ends a step; an
+  advance beyond the cap runs whole, and a copy stepped to the window's end plus the test model `DormantTail` must give the same city.
+  After 5 % of the steps a branch leaves on a copy (`CityCopy`, through the restore constructors) with an aimed command (mostly a worker
+  change or an upgrade of a running cycle) and a short advance. `InvariantChecks` checks every step with its own sums (reservations, caps,
+  workers, effective labor), never the engine's queries: conservation with the mutation's `Spent` and `Refunded`, stock ≥ 0, the cap,
+  the clock, production only from cycles that ended, workers, builders and research, labor (`LaborLedger` counts worker-seconds per
+  cycle), no start after the window, unlocks and prerequisites. `InvariantObservation` runs all seeds once per content (a few seconds) and
+  `InvariantPropertyTests` has one test per invariant and content, plus floors on what the checks exercised (printed in the test output).
 - `SimulationDependencyTests`: the compiled assembly references exactly `netstandard` and is built for `netstandard2.1`.
 - `SimulationPackageTests`: the files only Unity sees. The asmdef (`noEngineReferences`, no references, no platform or define
   restrictions, same name as the assembly, auto-referenced, the only asmdef, no asmref), `package.json` (name, `unity` 6000.3,
@@ -204,4 +213,4 @@ too, but guards the Unity client's asmdefs and manifest, not the engine (see `do
   depend on `Dictionary` or `HashSet` order (`04` §9).
 - Content error messages are English text for content authors; only `ContentErrorCode` and `Path` are stable.
 
-Last updated: M0-14
+Last updated: M0-15

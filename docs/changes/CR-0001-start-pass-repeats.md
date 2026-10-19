@@ -1,6 +1,6 @@
 # CR-0001 — A start frees cap room: the start pass repeats until nothing starts
 
-- **Status:** In progress
+- **Status:** Done
 - **Type:** Bug
 - **Requested by:** owner · **Date:** 2026-10-19
 - **Milestone / era:** M0 / Era I
@@ -57,7 +57,7 @@ one pass more than the number of starts. Nothing changes for players except that
 ## Tasks (filled in after approval)
 | ID | Title | Model | Status |
 |---|---|---|---|
-| CR-0001-T1 | Rule test, fix and spec, inside M0-14's branch and PR (owner's choice) | O | In progress |
+| CR-0001-T1 | Rule test, fix and spec, inside M0-14's branch and PR (owner's choice) | O | Done |
 
 ## Owner approval
 - Approved on: 2026-10-19 — asked whether to fix it in M0-14's PR, a separate CR task first, or only write the CR, the owner chose

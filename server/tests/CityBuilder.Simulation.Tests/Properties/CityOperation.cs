@@ -19,41 +19,45 @@ internal abstract record CityOperation
     /// </summary>
     public abstract SettlementReport? TryApply(CityState city, GameContent content);
 
-    private static SettlementReport? Command(CityState city, GameContent content, MutationResult result) =>
-        result.IsOk ? Simulator.Advance(city, content, 0) : null;
+    /// <summary>A player's command: the mutation alone (<see cref="Mutate"/>), then, when it was applied, a zero-length advance.</summary>
+    public abstract record Command : CityOperation
+    {
+        public sealed override SettlementReport? TryApply(CityState city, GameContent content) =>
+            Mutate(city, content).IsOk ? Simulator.Advance(city, content, 0) : null;
+
+        /// <summary>Runs only the mutation through <see cref="CityRules"/>, without the zero-length advance that follows it.</summary>
+        public abstract MutationResult Mutate(CityState city, GameContent content);
+    }
 
     /// <summary>Places a building of <paramref name="Type"/> on the tile.</summary>
-    public sealed record PlaceBuilding(string Type, int X, int Y) : CityOperation
+    public sealed record PlaceBuilding(string Type, int X, int Y) : Command
     {
-        public override SettlementReport? TryApply(CityState city, GameContent content) =>
-            Command(city, content, CityRules.PlaceBuilding(city, content, new BuildingTypeId(Type), X, Y));
+        public override MutationResult Mutate(CityState city, GameContent content) =>
+            CityRules.PlaceBuilding(city, content, new BuildingTypeId(Type), X, Y);
 
         public override string ToString() => string.Create(CultureInfo.InvariantCulture, $"PlaceBuilding {Type} ({X},{Y})");
     }
 
     /// <summary>Upgrades the building to its next level.</summary>
-    public sealed record UpgradeBuilding(int BuildingId) : CityOperation
+    public sealed record UpgradeBuilding(int BuildingId) : Command
     {
-        public override SettlementReport? TryApply(CityState city, GameContent content) =>
-            Command(city, content, CityRules.UpgradeBuilding(city, content, BuildingId));
+        public override MutationResult Mutate(CityState city, GameContent content) => CityRules.UpgradeBuilding(city, content, BuildingId);
 
         public override string ToString() => string.Create(CultureInfo.InvariantCulture, $"UpgradeBuilding {BuildingId}");
     }
 
     /// <summary>Sets the building's workers.</summary>
-    public sealed record AssignWorkers(int BuildingId, int Workers) : CityOperation
+    public sealed record AssignWorkers(int BuildingId, int Workers) : Command
     {
-        public override SettlementReport? TryApply(CityState city, GameContent content) =>
-            Command(city, content, CityRules.AssignWorkers(city, content, BuildingId, Workers));
+        public override MutationResult Mutate(CityState city, GameContent content) => CityRules.AssignWorkers(city, content, BuildingId, Workers);
 
         public override string ToString() => string.Create(CultureInfo.InvariantCulture, $"AssignWorkers {BuildingId} {Workers}");
     }
 
     /// <summary>Starts researching the node.</summary>
-    public sealed record StartResearch(string ResearchId) : CityOperation
+    public sealed record StartResearch(string ResearchId) : Command
     {
-        public override SettlementReport? TryApply(CityState city, GameContent content) =>
-            Command(city, content, CityRules.StartResearch(city, content, new ResearchId(ResearchId)));
+        public override MutationResult Mutate(CityState city, GameContent content) => CityRules.StartResearch(city, content, new ResearchId(ResearchId));
 
         public override string ToString() => $"StartResearch {ResearchId}";
     }
