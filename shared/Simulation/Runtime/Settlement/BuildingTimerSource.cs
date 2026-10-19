@@ -37,7 +37,7 @@ namespace CityBuilder.Simulation.Settlement
                 if (building.PhaseEndsAt != time)
                 {
                     throw new InvalidOperationException(
-                        FormattableString.Invariant($"Building {building.Id} ends at {building.PhaseEndsAt}, but its timer in the queue at {time}."));
+                        FormattableString.Invariant($"Building {building.Id} ends at {building.PhaseEndsAt}, but the timer queue had it due at {time}."));
                 }
 
                 Complete(city, content, building, report, _reservations);

@@ -10,8 +10,9 @@ namespace CityBuilder.Simulation.Tests.Performance;
 /// The performance budget of <c>04</c> section 12: the worst-case city (<see cref="WorstCaseCity"/>) advanced by the full 8-hour production
 /// cap, then by 7 days (8 hours of production and a dormant tail with only timers). The exact counts prove that every cycle ran, so a run
 /// can't be fast by stalling early. The timing asserts a generous limit for CI and prints what it measured; the target on a dev machine
-/// is 50 ms.
+/// is 50 ms. They run in the collection <see cref="RunsAlone"/>.
 /// </summary>
+[Collection(nameof(RunsAlone))]
 public sealed class PerformanceBudgetTests(ITestOutputHelper output)
 {
     private const long _eightHours = 8 * 3600;
