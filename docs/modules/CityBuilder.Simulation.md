@@ -208,9 +208,10 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
   a 2-day research. `PerformanceBudgetTests` checks that shape, the exact counts of an 8 h advance (2,880 completions and starts per producer,
   184,320 completions) and of a 7-day one after it (2,881 completions, 2,880 starts, the research in the tail, all idle at the end), and
   times both advances: the median of 5 runs after a warm-up must stay within 500 ms; the test output prints median, min and max.
-  Measured on an Apple A18 Pro (Mac17,5), .NET SDK 10.0.401, per advance (8 h / 7 d, median): **Release 38 / 42 ms** (CI runs Release; target
-  50 ms), Release without dynamic PGO (`DOTNET_TieredCompilation=0`, closer to Unity's runtimes) 67 ms, Debug 179 / 168 ms. Before M0-16:
-  Release 144 ms, Debug 605 ms (build log `docs/build-log/2026/2026-10-19-06-M0-16.md`). `Content/ContentFile` reads a fixture file as the
+  The tests run in the collection `RunsAlone`, after the parallel tests (beside the property suite a run took up to 427 ms).
+  Measured on an Apple A18 Pro (Mac17,5), .NET SDK 10.0.401, per advance (8 h / 7 d, median of 5): **Release 37 / 37 ms** alone (CI runs
+  Release; target 50 ms), 45–52 ms right after the parallel suite; Release without dynamic PGO (`DOTNET_TieredCompilation=0`, closer to
+  Unity's runtimes) 67 ms; Debug 161 / 161 ms. Before M0-16: Release 144 ms, Debug 605 ms (build log `docs/build-log/2026/2026-10-19-06-M0-16.md`). `Content/ContentFile` reads a fixture file as the
   server does, for the golden and the performance contents.
 - `SimulationDependencyTests`: the compiled assembly references exactly `netstandard` and is built for `netstandard2.1`.
 - `SimulationPackageTests`: the files only Unity sees. The asmdef (`noEngineReferences`, no references, no platform or define

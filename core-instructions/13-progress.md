@@ -4,14 +4,16 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** M0-16 · Performance budget (`[O]`, Opus 5.5)
-- **Branch:** `task/M0-16-performance-budget` (from `main` = `b783bbf`)
-- **Build log entry:** `docs/build-log/2026/2026-10-19-06-M0-16.md` (plan: steps 1–5)
-- **Last green commit:** the head of the branch (fast suite: Simulation 765, Application 14; format clean)
-- **Done steps:** 1 (write-ahead), 2 (worst-case city, exact counts), 3 (timing test), 4a (`Reservations`), 4b (ablation), 4c (start pass
-  repeats only when it can start something), 4d (`BuildingTimerQueue`), 5 (docs): Release ~38–42 ms median (target 50), no-PGO 67, Debug ~170–180
-- **Next step:** finish (`16` §E): DoD, own line-by-line review, Unity EditMode/PlayMode, PR. Step 5 (docs) is done.
+- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** — (last completed: M0-16 · Performance budget; PR open, the owner merges it)
+- **Branch:** `task/M0-16-performance-budget` (from `main` = `b783bbf`) until the owner merges
+- **Build log entry:** last: `docs/build-log/2026/2026-10-19-06-M0-16.md` (Done)
+- **Last green commit:** the head of `task/M0-16-performance-budget` (0 warnings, format clean, fast suite 806 passed: Simulation 766,
+  Application 14; `check-docs --base origin/main` OK; Unity EditMode 13/13, PlayMode 6/6)
+- **Done steps:** all of M0-16 (worst-case city and exact counts; timing test, median ≤ 500 ms, run alone; per-advance `Reservations` and
+  `BuildingTimerQueue`, the start pass repeats only when it can start something: Release 144 → 37 ms per advance)
+- **Next step:** the owner merges the PR; then `/model` → Sonnet 5.5 and `/start-task M0-17` (display helpers, `[S]`); its start commit
+  sets M0-16 to `Done`.
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
@@ -19,13 +21,13 @@
   `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 15 / 85 (M0-16 in progress)
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 15 / 85 (M0-16 in review)
 
 | Area | State | Notes |
 |---|---|---|
 | Repo, kit, hooks, CI | done | M0-01 and the audit fixes merged (PR #4, #5); A18 can be closed in M0-04 |
 | Shared engine: content, research, labor | done | M0-03 merged (PR #7); the content model and its validation (M0-07a) merged (PR #14); the JSON file and server loading (M0-07b) merged (PR #15); city state and mutations (M0-08) merged (PR #16); `Simulator.Advance` (M0-09) merged (PR #17); rule tests (M0-10) merged (PR #18); golden scenario #1 (M0-11) merged (PR #19); engine review (M0-12) merged (PR #20) |
-| Shared engine: invariants, performance | in progress | settlement window and production cap (M0-13) merged (PR #21); property test harness (M0-14, with engine fix CR-0001) merged (PR #22); invariant properties (M0-15) merged (PR #23); performance budget M0-16 in progress |
+| Shared engine: invariants, performance | in progress | settlement window and production cap (M0-13) merged (PR #21); property test harness (M0-14, with engine fix CR-0001) merged (PR #22); invariant properties (M0-15) merged (PR #23); performance budget M0-16 in review (worst case ~37 ms per advance in Release) |
 | Server skeleton | done | M0-02 merged (PR #6) |
 | Persistence (EF + PostgreSQL) | not started | |
 | Auth + command pipeline | not started | |
