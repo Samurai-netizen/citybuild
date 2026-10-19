@@ -10,7 +10,7 @@
 > (M0-10), golden scenario #1 of `23` passes on a frozen copy of the content (M0-11), and the engine review fixed its four findings (M0-12). `SettlementWindow` turns the server seconds into the elapsed time of a settle (M0-13);
 > seeded property tests check determinism, split invariance and timer invariance, and the first of them found that the start pass must repeat
 > (M0-14, CR-0001); invariants 4–13 of `04` §10 hold over the same seeds (M0-15), and the worst case of `04` §12 settles 8 hours in about
-> 40 ms (M0-16, numbers under Tests).
+> 40 ms (M0-16, numbers under Tests). The display helpers for the client's screens (`Display/`, `04` §15) exist (M0-17).
 
 ## Purpose
 The deterministic simulation engine: integer-only game rules and the helpers they share (`core-instructions/04-simulation-model.md`).
@@ -85,7 +85,7 @@ Decisions: build log `docs/build-log/2026/2026-10-19-06-M0-16.md`, decisions 8, 
 ## Key types
 | Type | Responsibility |
 |---|---|
-| `IntegerMath` | The only division in game logic. `CeilDiv(dividend, divisor)` rounds up, for durations (`CeilDiv(labor, workers)`). `ApplyPermilleReduction(labor, permille)` is `ceil(labor × (1000 − permille) / 1000)`, exact for every non-negative labor, and positive labor never rounds down to zero. `PermilleScale` (1000) is the unit of every modifier. Arguments outside the contract (negative amounts, divisor ≤ 0, permille outside 0 to 1000) throw `ArgumentOutOfRangeException` naming the first bad argument: they are programmer errors, because the callers check inputs first (content validation and the mutation entry points) |
+| `IntegerMath` | The only division in game logic. `CeilDiv(dividend, divisor)` rounds up, for durations (`CeilDiv(labor, workers)`). `ApplyPermilleReduction(labor, permille)` is `ceil(labor × (1000 − permille) / 1000)`, exact for every non-negative labor, and positive labor never rounds down to zero. `FloorDiv(dividend, divisor)` rounds down, for display values only (rates, progress). `PermilleScale` (1000) is the unit of every modifier. Arguments outside the contract (negative amounts, divisor ≤ 0, permille outside 0 to 1000) throw `ArgumentOutOfRangeException` naming the first bad argument: they are programmer errors, because the callers check inputs first (content validation and the mutation entry points) |
 | `ItemId`, `BuildingTypeId`, `ResearchId` | `readonly struct`s that identify an item, a building type and a research node. Equality and ordering are ordinal, so they never depend on the machine's culture. `default` is the empty id: it equals only itself and sorts first. The constructor rejects null and empty text and keeps the text as given; the factory checks the format (a lowercase letter, then lowercase letters, digits or `_`, at most 64 characters) before it creates one |
 | `EraId` | The text id of an era (`early_medieval`): equality only, no order, because eras are ordered by number (decision 022). Everything else names an era by its number |
 | `GameContentFactory` | `Create(GameContentData)` → `GameContentResult`; `MaxQuantity` (10^12) bounds every quantity, cost, cap, duration and labor value, so sums of content numbers can't overflow a `long` |
@@ -106,6 +106,8 @@ Decisions: build log `docs/build-log/2026/2026-10-19-06-M0-16.md`, decisions 8, 
 | `Rules.CityRules` | `PlaceBuilding`, `UpgradeBuilding` (cost checked before the refund of a running or frozen cycle; refunds may exceed caps), `AssignWorkers` (absolute count; the labor segment update keeps progress, 0 freezes), `StartResearch` (cost paid up front; same era, prerequisites done) |
 | `Rules.MutationResult`, `Rules.MutationErrorCode` | `Ok` or `Rejected(code)`; an applied mutation names what it paid (`Spent`, the cost lines) and gave back (`Refunded`, an interrupted cycle's inputs), for the `COST_*` and `REFUND_*` ledger rows (`06`; M0-15); the codes are those of `05` that the engine decides, each doc names its API code. The server's error catalogue (M0-34) maps them to API codes and HTTP statuses |
 | `State.StallReason`, `State.StallKind` | `StallReason.Of(city, content, building)`: null, or the first of `NoRecipe`, `NoWorkers`, `MissingInput`, `StorageFull` with its item; `ToString` is the API text (`MissingInput:logs`). None while constructing or upgrading |
+| `Display.ProductionDisplay`, `Display.ItemRate`, `Display.ProductionRates` | Display only, never authority (`04` §15). `PerHour(city, content, building, workers)` → inputs and outputs per hour at a staffing; `NetPerHour(city, content, item)` → outputs minus inputs of the buildings that have workers and run or could start; `SecondsUntilFull(city, content, item)` → seconds until a capped stock reaches its cap, null when uncapped or net ≤ 0. Rates are `ItemRate.MilliPerHour`, thousandths of an item per hour, rounded down (a producer slower than 1 per hour still shows a rate); a recipe line of up to 10¹² per cycle fits a `long`, and sums are `checked` |
+| `Display.ProgressDisplay` | `ProgressPermille(building, clock)` (running cycle: worker-seconds done out of `CycleLabor`, so a frozen cycle stays put; construction and upgrade: seconds of the phase), `SecondsUntilNextEvent(building, clock)` (null when idle or frozen), `ResearchProgressPermille(city, clock)`. Permille is 0..1000, 0 when nothing runs, 1000 once the end has passed; the caller picks the clock, so a client can run ahead of its snapshot |
 | `Settlement.Simulator` | `Advance(city, content, elapsedSeconds)`: the event loop of `04` §7, changing the city in place. Elapsed below 0 counts as 0; a timer due at the clock completes first; one due before the clock throws `InvalidOperationException` before anything changes. Allocates nothing per event |
 | `Settlement.BuildingTimerQueue`, `Settlement.Reservations` (internal) | One advance's building timers as a min-heap by (end, building index) and its reserved quantities per item; made from the city at the start of the advance, updated by starts and completions, never stored |
 | `Settlement.SettlementReport` | `ElapsedSeconds`, `ProductionSeconds` (`min(elapsed, cap)`), `Produced` and `Consumed` (production only, per item in ordinal order), `CompletedBuildings` (constructions and upgrades, ascending), `CompletedResearch` (ordinal), `EraChanged` (false until M2) |
@@ -158,7 +160,7 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
 ## Tests
 `server/tests/CityBuilder.Simulation.Tests` (xUnit v3, milliseconds), run with
 `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`:
-- `CeilDivTests`, `ApplyPermilleReductionTests`: edge cases, exhaustive small ranges, and exact reference values with `BigInteger` up to
+- `CeilDivTests`, `FloorDivTests`, `ApplyPermilleReductionTests`: edge cases, exhaustive small ranges, and exact reference values with `BigInteger` up to
   `long.MaxValue` (tests use integers only, like the engine). Each bad argument is tried with several partners.
 - `ItemIdTests`; `BuildingTypeIdTests`, `ResearchIdTests` and `EraIdTests` on the shared contracts `ContentIdEqualityContract` and
   `ContentIdOrderContract`: equality (also for texts that a culture treats as equal), ordinal ordering, `default`, hashing, use as a
@@ -169,6 +171,10 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
   per rule and error code, named after the error path.
 - `State/` (`Building`, `CityState`, `CityFactory`, `CityQueries`, `StallReason` tests) and `Rules/` (one class per mutation: every success
   path, every error code, the check order where failures overlap, the items each names as spent and refunded).
+- `Display/` (`PerHourTests`, `NetPerHourTests`, `SecondsUntilFullTests`, `ProgressPermilleTests`, `SecondsUntilNextEventTests`,
+  `ResearchProgressPermilleTests`): rates at every staffing and with completed research, rounding, frozen cycles and buildings without workers
+  contributing 0, stalled and constructing buildings contributing 0, caps with bonuses, the clock before the start and after the end, a far-away
+  clock without overflow, and null arguments.
 - `Settlement/`: `SettlementWindowTests` (same second, later, behind, successive windows, overflow), `AdvanceTests` (clock, window, target, a timer at the clock, bad input), `AdvanceAllocationTests` (eight hours of the golden city allocate no more than two minutes), `AdvanceTimerTests` (research, construction with auto-staffing, the
   order within a second, upgrades, the dormant tail), `AdvanceProductionTests` (cycles, a chain, research and the next cycle, rounding, caps
   with reservations, the production cap). `CityFixture` builds cities and one building per phase over `ContentFixture` (plus a
@@ -239,4 +245,4 @@ too, but guards the Unity client's asmdefs and manifest, not the engine (see `do
   depend on `Dictionary` or `HashSet` order (`04` §9).
 - Content error messages are English text for content authors; only `ContentErrorCode` and `Path` are stable.
 
-Last updated: M0-16
+Last updated: M0-17

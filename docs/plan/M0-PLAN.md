@@ -260,8 +260,8 @@ The AI coder updates its row at start (`In progress`) and finish (`In review`). 
 | M0-13 | 3 | Settlement window and production cap | O | Done |
 | M0-14 | 3 | Property test harness | O | Done |
 | M0-15 | 3 | Invariant properties | O | Done |
-| M0-16 | 3 | Performance budget | O | In review |
-| M0-17 | 3 | Display helpers | S | Todo |
+| M0-16 | 3 | Performance budget | O | Done |
+| M0-17 | 3 | Display helpers | S | In review |
 | M0-18 | 3 | Spec sync and ADRs | O | Todo |
 | M0-19 | 4 | EF Core model, migrations, Docker | O PLAN | Todo |
 | M0-20 | 4 | Repository and mapping | O | Todo |

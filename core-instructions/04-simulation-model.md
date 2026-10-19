@@ -163,3 +163,13 @@ quantities, durations and labor ≤ 10¹²), then every rule, and lists every er
    `CeilDiv(effective labor, MaxWorkers)`, is ≥ `MinCycleSeconds`.
 8. Every item in a cost, a recipe or the starting inventory belongs to the era of what uses it (building type, research node, starting city)
    or an earlier one (OD-10).
+
+## 15. Display helpers (not authority)
+`shared/Simulation/Runtime/Display/` holds pure estimates for the player's screens. The server never calls them, and nothing they return
+is sent or stored. All values are integers, rounded down: seconds, permille (0..1000), or rates in thousandths of an item per hour.
+- `PerHour(city, content, building, workers)`: the inputs and outputs per hour at a staffing, from `CeilDiv(effective labor, workers)`; 0 with no workers.
+- `NetPerHour(city, content, item)`: outputs minus inputs of the buildings able to run: with workers, and producing, or idle and
+  able to start (no stall reason). Frozen cycles, houses, buildings without workers, constructing or upgrading ones, and stalled ones give 0.
+- `SecondsUntilFull(city, content, item)`: seconds until a capped item's stock reaches its cap at the net rate; null when uncapped or net ≤ 0.
+- `ProgressPermille(building, clock)`, `SecondsUntilNextEvent(building, clock)`, `ResearchProgressPermille(city, clock)`: the bar and the
+  countdown of a job at a clock the caller chooses (the client runs ahead of its snapshot, `09`); the countdown is null when nothing is scheduled.

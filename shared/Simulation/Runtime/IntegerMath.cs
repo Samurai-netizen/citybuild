@@ -42,6 +42,33 @@ namespace CityBuilder.Simulation
         }
 
         /// <summary>
+        /// Divides and rounds down: the largest whole number <c>q</c> with <c>q × divisor ≤ dividend</c>. Only display helpers use it
+        /// (rates and progress shown to players), where a value may be a little low but never promises more than will happen. Authority
+        /// code rounds durations up with <see cref="CeilDiv"/>.
+        /// </summary>
+        /// <param name="dividend">The amount to divide. It must not be negative.</param>
+        /// <param name="divisor">The amount to divide by. It must be greater than zero.</param>
+        /// <returns>The quotient rounded down. It never overflows, because it is at most <paramref name="dividend"/>.</returns>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// <paramref name="dividend"/> is negative, or <paramref name="divisor"/> is zero or negative. If both are out of range,
+        /// the exception names the dividend.
+        /// </exception>
+        public static long FloorDiv(long dividend, long divisor)
+        {
+            if (dividend < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(dividend), dividend, "The dividend must not be negative.");
+            }
+
+            if (divisor <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(divisor), divisor, "The divisor must be greater than zero.");
+            }
+
+            return dividend / divisor;
+        }
+
+        /// <summary>
         /// Takes a reduction in permille off an amount of labor and rounds up: <c>ceil(labor × (1000 − permille) / 1000)</c>.
         /// The result is exact for every non-negative <paramref name="labor"/>, because the full product is never formed.
         /// </summary>

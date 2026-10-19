@@ -45,7 +45,8 @@ Local package line in `Packages/manifest.json`:
   Ignores snapshots whose `stateVersion` is lower than the current one (out-of-order responses).
 - **Display prediction:** `DisplayClock` = `snapshot.clock + secondsSinceReceived × rules.timeScale`
   (`timeScale` is 1 except on Development servers using `DevTimeScale`). For counters and
-  progress bars, run `Simulator.Advance` on a **copy** of the snapshot. Never send predicted values anywhere.
+  progress bars, run `Simulator.Advance` on a **copy** of the snapshot, and use the `Simulation.Display` helpers (`04` §15) for rates,
+  bars and countdowns. Never send predicted values anywhere.
 - **Net:** `ApiClient` (UnityWebRequest wrapped in `Awaitable`/`Task`), timeouts, cancellation via
   `destroyCancellationToken`, ProblemDetails parsing into `ApiError { Code, Status, Detail }`.
 - **Commands:** `CommandSender` creates the `requestId` once per player intent and reuses it on retry.
