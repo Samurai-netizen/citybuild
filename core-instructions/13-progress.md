@@ -8,12 +8,12 @@
 - **Task:** M0-13 · Settlement window and production cap (`[O]`, Claude Code / claude-opus-5-5)
 - **Branch:** `task/M0-13-settlement-window` (from `main` = `433a665`)
 - **Build log entry:** `docs/build-log/2026/2026-10-19-03-M0-13.md` (In progress)
-- **Last green commit:** the head of the branch (Simulation tests 701 passed, format clean)
+- **Last green commit:** the head of the branch (fast suite 740 passed: Simulation 701, Application 13; 0 warnings, format clean)
 - **Steps:** 1 write-ahead · 2 `SettlementWindow` (engine, test-first) · 3 Application `ICityRepository` / `CityAggregate` / `SettleCity`
   · 4 `FakeTimeProvider` tests of the spec list · 5 docs and finish
-- **Done steps:** 1, 2 (`SettlementWindow` and its tests; Simulation 701 passed)
-- **Next step:** step 3: `server/src/CityBuilder.Application/Cities/` (`ICityRepository`, `CityAggregate`, `SettleCity`), `FakeTimeProvider`
-  package 10.10.0 in `Application.Tests`, in-memory fake repository; the decisions so far are in the build log.
+- **Done steps:** 1, 2 (`SettlementWindow`), 3 and 4 (`Application/Cities/`: `SettleCity` and its `FakeTimeProvider` tests)
+- **Next step:** step 5: docs per `19` (module docs Simulation and Application, architecture overview, `04` §1, glossary, `CHANGELOG`),
+  then `/finish-task`.
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
