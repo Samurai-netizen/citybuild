@@ -8,10 +8,10 @@
 - **Task:** M0-16 · Performance budget (`[O]`, Opus 5.5)
 - **Branch:** `task/M0-16-performance-budget` (from `main` = `b783bbf`)
 - **Build log entry:** `docs/build-log/2026/2026-10-19-06-M0-16.md` (plan: steps 1–5)
-- **Last green commit:** `main` = `b783bbf` (fast suite 802 passed: Simulation 762, Application 14)
-- **Done steps:** 1 (write-ahead)
-- **Next step:** 2: worst-case content file `Fixtures/content-performance.json` and a city built through `CityRules` with the 64
-  producers' cycles spread over all ten seconds; exact event counts for 8 h, then 7 days.
+- **Last green commit:** the head of the branch (fast suite: Simulation 765, Application 14; format clean)
+- **Done steps:** 1 (write-ahead), 2 (worst-case content, `Performance/WorstCaseCity`, exact counts for 8 h then 7 d)
+- **Next step:** 4: profile and optimize the event loop (measured: ~144 ms Release, ~605 ms Debug per advance; target 50 ms), then
+  commit the timing test (step 3; the full version is described in the build log, decision 6).
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
