@@ -8,11 +8,11 @@
 - **Task:** M0-12 · Engine review (`[O]`)
 - **Branch:** `task/M0-12-engine-review` (from `main` = `2440a1a`)
 - **Build log entry:** `docs/build-log/2026/2026-10-19-02-M0-12.md` (In progress)
-- **Last green commit:** `main` = `2440a1a` (fast suite 713 passed: Simulation 686)
+- **Last green commit:** the head of the branch (0 warnings, format clean, Simulation tests 688)
 - **Planned steps:** 1 write-ahead · 2 mechanical sweep (findings table in the log) · 3 line-by-line read against `04` · 4 fixes test-first ·
   5 spec wording + decision rows · 6 docs and finish
-- **Done steps:** 1
-- **Next step:** step 2, the mechanical sweep of `shared/Simulation/Runtime/`.
+- **Done steps:** 1, 2, 3 (findings F1–F4 in the build log); step 4: F1 fixed (allocation-free `Advance`)
+- **Next step:** F2 test-first (timer due at the clock completes before starts), then F3, F4, spec wording (step 5).
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —

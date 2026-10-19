@@ -33,6 +33,20 @@ public sealed class CityStateTests
     }
 
     [Fact]
+    public void Inventory_ReadAsADictionary_GivesTheStockInItemOrder()
+    {
+        CityState city = City(inventory: [("wood", 7), ("gold", 30)]);
+        IReadOnlyDictionary<ItemId, long> stock = city.Inventory;
+
+        Assert.Equal((2, 30L, true, false), (stock.Count, stock[new ItemId("gold")], stock.ContainsKey(new ItemId("wood")), stock.ContainsKey(new ItemId("boards"))));
+        Assert.Equal(["gold", "wood"], stock.Keys.Select(item => item.Value));
+        Assert.Equal([30L, 7L], stock.Values);
+        Assert.False(stock.TryGetValue(new ItemId("boards"), out long none));
+        Assert.Equal(0, none);
+        Assert.Throws<KeyNotFoundException>(() => stock[new ItemId("boards")]);
+    }
+
+    [Fact]
     public void Constructor_CompletedResearchInAnyOrder_SortsItInOrdinalOrder()
     {
         CityState city = City(completedResearch: ["carpentry", "better_saws"]);
@@ -69,7 +83,8 @@ public sealed class CityStateTests
     {
         CityState city = City(inventory: [("gold", 5)], buildings: [Idle(1, "hut", 0, 0)], completedResearch: ["carpentry"]);
 
-        Assert.Throws<NotSupportedException>(() => ((IDictionary<ItemId, long>)city.Inventory).Clear());
+        // The stock has no writable interface at all, so there is nothing to cast it back to (M0-12).
+        Assert.False(city.Inventory is ICollection<KeyValuePair<ItemId, long>> || city.Inventory is System.Collections.IDictionary);
         Assert.Throws<NotSupportedException>(() => ((IList<Building>)city.Buildings).Clear());
         Assert.Throws<NotSupportedException>(() => ((IList<ResearchId>)city.CompletedResearch).Clear());
     }

@@ -22,8 +22,10 @@ namespace CityBuilder.Simulation.State
         public static long WorkersProvided(CityState city, GameContent content)
         {
             long provided = 0;
-            foreach (Building building in city.Buildings)
+            IReadOnlyList<Building> buildings = city.Buildings;
+            for (int index = 0; index < buildings.Count; index++)
             {
+                Building building = buildings[index];
                 if (building.Phase != BuildingPhase.Constructing)
                 {
                     // Producers provide 0 workers at every level (content rule 3), so summing every completed building counts the houses only.
@@ -40,9 +42,10 @@ namespace CityBuilder.Simulation.State
         public static long WorkersAssigned(CityState city)
         {
             long assigned = 0;
-            foreach (Building building in city.Buildings)
+            IReadOnlyList<Building> buildings = city.Buildings;
+            for (int index = 0; index < buildings.Count; index++)
             {
-                assigned = checked(assigned + building.AssignedWorkers);
+                assigned = checked(assigned + buildings[index].AssignedWorkers);
             }
 
             return assigned;
@@ -60,9 +63,11 @@ namespace CityBuilder.Simulation.State
         public static int BuildersBusy(CityState city)
         {
             int busy = 0;
-            foreach (Building building in city.Buildings)
+            IReadOnlyList<Building> buildings = city.Buildings;
+            for (int index = 0; index < buildings.Count; index++)
             {
-                if (building.Phase == BuildingPhase.Constructing || building.Phase == BuildingPhase.Upgrading)
+                BuildingPhase phase = buildings[index].Phase;
+                if (phase == BuildingPhase.Constructing || phase == BuildingPhase.Upgrading)
                 {
                     busy++;
                 }
@@ -82,19 +87,21 @@ namespace CityBuilder.Simulation.State
         public static long Reserved(CityState city, GameContent content, ItemId item)
         {
             long reserved = 0;
-            foreach (Building building in city.Buildings)
+            IReadOnlyList<Building> buildings = city.Buildings;
+            for (int index = 0; index < buildings.Count; index++)
             {
+                Building building = buildings[index];
                 if (building.Phase != BuildingPhase.Producing)
                 {
                     continue;
                 }
 
-                RecipeDefinition recipe = RecipeOf(content, building.TypeId, building.Level);
-                foreach (ItemQuantity output in recipe.Outputs)
+                IReadOnlyList<ItemQuantity> outputs = RecipeOf(content, building.TypeId, building.Level).Outputs;
+                for (int outputIndex = 0; outputIndex < outputs.Count; outputIndex++)
                 {
-                    if (output.Item == item)
+                    if (outputs[outputIndex].Item == item)
                     {
-                        reserved = checked(reserved + output.Quantity);
+                        reserved = checked(reserved + outputs[outputIndex].Quantity);
                     }
                 }
             }
@@ -115,11 +122,13 @@ namespace CityBuilder.Simulation.State
                 return false;
             }
 
-            foreach (ResearchId completed in city.CompletedResearch)
+            IReadOnlyList<ResearchId> completed = city.CompletedResearch;
+            for (int index = 0; index < completed.Count; index++)
             {
-                foreach (ResearchEffect effect in ResearchOf(content, completed).Effects)
+                IReadOnlyList<ResearchEffect> effects = ResearchOf(content, completed[index]).Effects;
+                for (int effectIndex = 0; effectIndex < effects.Count; effectIndex++)
                 {
-                    if (effect is StorageCapBonusEffect bonus && bonus.Item == item)
+                    if (effects[effectIndex] is StorageCapBonusEffect bonus && bonus.Item == item)
                     {
                         cap = checked(cap + bonus.Amount);
                     }
@@ -154,11 +163,13 @@ namespace CityBuilder.Simulation.State
             }
 
             int reductionPermille = 0;
-            foreach (ResearchId completed in city.CompletedResearch)
+            IReadOnlyList<ResearchId> completed = city.CompletedResearch;
+            for (int index = 0; index < completed.Count; index++)
             {
-                foreach (ResearchEffect effect in ResearchOf(content, completed).Effects)
+                IReadOnlyList<ResearchEffect> effects = ResearchOf(content, completed[index]).Effects;
+                for (int effectIndex = 0; effectIndex < effects.Count; effectIndex++)
                 {
-                    if (effect is LaborReductionEffect reduction && reduction.Building == type)
+                    if (effects[effectIndex] is LaborReductionEffect reduction && reduction.Building == type)
                     {
                         reductionPermille = checked(reductionPermille + reduction.Permille);
                     }

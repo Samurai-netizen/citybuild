@@ -1,15 +1,18 @@
 #nullable enable
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using CityBuilder.Simulation.Content;
+using CityBuilder.Simulation.State;
 
 namespace CityBuilder.Simulation.Settlement
 {
-    /// <summary>Collects what happens during one advance and makes the <see cref="SettlementReport"/>. One per advance; not reused.</summary>
+    /// <summary>
+    /// Collects what happens during one advance and makes the <see cref="SettlementReport"/>. One per advance; not reused, so the report keeps
+    /// its totals.
+    /// </summary>
     internal sealed class SettlementReportBuilder
     {
-        private readonly SortedDictionary<ItemId, long> _produced = new SortedDictionary<ItemId, long>();
-        private readonly SortedDictionary<ItemId, long> _consumed = new SortedDictionary<ItemId, long>();
+        private readonly ItemTotals _produced = new ItemTotals();
+        private readonly ItemTotals _consumed = new ItemTotals();
         private readonly List<int> _completedBuildings = new List<int>();
         private readonly List<ResearchId> _completedResearch = new List<ResearchId>();
 
@@ -36,20 +39,19 @@ namespace CityBuilder.Simulation.Settlement
             return new SettlementReport(
                 elapsedSeconds,
                 productionSeconds,
-                new ReadOnlyDictionary<ItemId, long>(_produced),
-                new ReadOnlyDictionary<ItemId, long>(_consumed),
+                _produced,
+                _consumed,
                 _completedBuildings.AsReadOnly(),
                 _completedResearch.AsReadOnly(),
                 eraChanged: false);
         }
 
-        private static void Add(SortedDictionary<ItemId, long> totals, IReadOnlyList<ItemQuantity> amounts)
+        private static void Add(ItemTotals totals, IReadOnlyList<ItemQuantity> amounts)
         {
             for (int index = 0; index < amounts.Count; index++)
             {
                 ItemQuantity amount = amounts[index];
-                totals.TryGetValue(amount.Item, out long total);
-                totals[amount.Item] = checked(total + amount.Quantity);
+                totals.Set(amount.Item, checked(totals.Get(amount.Item) + amount.Quantity));
             }
         }
     }
