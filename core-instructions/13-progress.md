@@ -4,16 +4,13 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-14 · Property test harness, with the engine fix CR-0001; PR open, the owner merges it)
-- **Branch:** `task/M0-14-property-harness` (from `main` = `b183438`) until the owner merges
-- **Build log entry:** last: `docs/build-log/2026/2026-10-19-04-M0-14.md` (Done)
-- **Last green commit:** the head of `task/M0-14-property-harness` (0 warnings, format clean, fast suite 774 passed: Simulation 734,
-  Application 14; `check-docs --base origin/main` OK; Unity EditMode 13/13, PlayMode 6/6)
-- **Done steps:** all of M0-14 (seeded generator, structural equality, determinism, split and timer invariance over 500 seeds × 2
-  contents) and CR-0001-T1 (start pass repeats until nothing starts; owner's choice to fix it in this PR)
-- **Next step:** the owner merges the PR; then `/model` → Opus 5.5 and `/start-task M0-15` (invariant properties, `[O]`); its start
-  commit sets M0-14 and CR-0001 (file, index, task row) to `Done`.
+- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** M0-15 · Invariant properties (`[O]`, Claude Code / claude-opus-5-5)
+- **Branch:** `task/M0-15-invariant-properties` (from `main` = `ac07a3b`)
+- **Build log entry:** `docs/build-log/2026/2026-10-19-05-M0-15.md` (plan: 7 steps, decisions 1–5)
+- **Last green commit:** `main` = `ac07a3b` (fast suite 774 passed: Simulation 734, Application 14)
+- **Done steps:** 1 (write-ahead; M0-14 and CR-0001 set to `Done`)
+- **Next step:** 2: `MutationResult.Spent` and `Refunded`, rule tests first (decision 1).
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
@@ -21,13 +18,13 @@
   `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 13 / 85 (M0-14 in review)
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 14 / 85 (M0-15 in progress)
 
 | Area | State | Notes |
 |---|---|---|
 | Repo, kit, hooks, CI | done | M0-01 and the audit fixes merged (PR #4, #5); A18 can be closed in M0-04 |
 | Shared engine: content, research, labor | done | M0-03 merged (PR #7); the content model and its validation (M0-07a) merged (PR #14); the JSON file and server loading (M0-07b) merged (PR #15); city state and mutations (M0-08) merged (PR #16); `Simulator.Advance` (M0-09) merged (PR #17); rule tests (M0-10) merged (PR #18); golden scenario #1 (M0-11) merged (PR #19); engine review (M0-12) merged (PR #20) |
-| Shared engine: invariants, performance | in progress | settlement window and production cap (M0-13) merged (PR #21); property test harness M0-14 in review (with engine fix CR-0001); invariant properties M0-15 next |
+| Shared engine: invariants, performance | in progress | settlement window and production cap (M0-13) merged (PR #21); property test harness (M0-14, with engine fix CR-0001) merged (PR #22); invariant properties M0-15 in progress |
 | Server skeleton | done | M0-02 merged (PR #6) |
 | Persistence (EF + PostgreSQL) | not started | |
 | Auth + command pipeline | not started | |
