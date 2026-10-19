@@ -10,9 +10,9 @@
 - **Build log entry:** `docs/build-log/2026/2026-10-19-01-M0-11.md` (In progress; plan and the hand check of the table are there)
 - **Last green commit:** the head of the branch (0 warnings, format clean, fast suite 713 passed: Simulation 686)
 - **Done steps:** 1 write-ahead · 2 frozen content `Fixtures/content-golden-v1.json`, `Golden/` runner and one case per table row (all pass;
-  the table and the engine agree) · 3 split check (one advance per gap vs 1-second steps, identical cities)
-- **Next step:** step 4: docs per `19` (module doc `docs/modules/CityBuilder.Simulation.md` → Tests, the test count in
-  `docs/architecture/overview.md`, `CHANGELOG.md`), then `/finish-task`.
+  the table and the engine agree) · 3 split check (one advance per gap vs 1-second steps, identical cities) · 4 docs (module doc, overview,
+  `CHANGELOG`, how-to `add-building-or-item.md`)
+- **Next step:** finish (`16` §E): the owner runs `/finish-task` (self-review line by line, Definition of Done, PR).
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —

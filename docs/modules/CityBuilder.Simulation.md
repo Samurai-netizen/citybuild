@@ -7,7 +7,7 @@
 > *Growing.* The integer helpers, the content ids and the content model with its validation exist (M0-07a); the server loads the content
 > JSON through it (M0-07b, `docs/modules/CityBuilder.Infrastructure.md`). The city state, its derived queries and the four player mutations exist
 > (M0-08), and `Simulator.Advance` settles a city (M0-09); the rules of `04` §2, §3, §5, §6 and the upgrade of §8 have a rule test each
-> (M0-10). The settlement window, invariants and performance follow in M0-13 to M0-16 *(planned)*.
+> (M0-10), and golden scenario #1 of `23` passes on a frozen copy of the content (M0-11). The settlement window, invariants and performance follow in M0-13 to M0-16 *(planned)*.
 
 ## Purpose
 The deterministic simulation engine: integer-only game rules and the helpers they share (`core-instructions/04-simulation-model.md`).
@@ -155,6 +155,11 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
 - `EngineRules/`: one test per rule of `04` §2, §3, §5, §6 and the upgrade of §8, named after it (`Duration_CycleStarts_IsTheLaborCeilDivTheWorkers`),
   in a class per area (`CycleRuleTests`, `StartRuleTests`, `WorkerRuleTests`, `ResearchRuleTests`, `UpgradeRuleTests`). A rule is played out
   through advances and commands (`Commands`: the mutation, then a zero-length advance); the M0-10 build log lists which broken rule each test catches.
+- `Golden/`: golden scenario #1, the first-session table of `23`. `GoldenContent` reads `Fixtures/content-golden-v1.json`, a frozen copy of
+  `mvp-content.json` that is never edited (a content change that should reach a golden scenario gets a new file and hand-checked numbers);
+  `GoldenScenario1` runs the script as the server runs commands, up to any time and with any largest step; `GoldenScenario1Tests` checks
+  every table row (stock, free workers, each building's phase and stall reason, research) and that one advance per action gap gives the
+  same city as one-second steps.
 - `SimulationDependencyTests`: the compiled assembly references exactly `netstandard` and is built for `netstandard2.1`.
 - `SimulationPackageTests`: the files only Unity sees. The asmdef (`noEngineReferences`, no references, no platform or define
   restrictions, same name as the assembly, auto-referenced, the only asmdef, no asmref), `package.json` (name, `unity` 6000.3,
@@ -181,4 +186,4 @@ too, but guards the Unity client's asmdefs and manifest, not the engine (see `do
   depend on `Dictionary` or `HashSet` order (`04` §9).
 - Content error messages are English text for content authors; only `ContentErrorCode` and `Path` are stable.
 
-Last updated: M0-10
+Last updated: M0-11

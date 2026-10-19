@@ -51,6 +51,8 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
 - Engine rule tests: one test per rule of `04` in `EngineRules/` (cycles, starts, workers, research, upgrades), played out through commands
   and advances on the test fixture, which gains a 180-labor workshop level and a producer of an uncapped item; a mutation check shows that
   each test fails when its rule is broken (M0-10).
+- Golden scenario #1: the first-session table of `23` as tests on a frozen copy of the content (`Fixtures/content-golden-v1.json`), every
+  row checked (stock, free workers, phases, stall reasons, research), and one advance per action gap equal to one-second steps (M0-11).
 
 ### Fixed
 - Kit audit follow-ups A1, A2, A3, A9, A15, A16: `[PLAN]` tasks write ahead before the plan (no Plan Mode), the Bash guard no longer
