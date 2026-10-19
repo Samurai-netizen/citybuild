@@ -9,9 +9,10 @@
 - **Branch:** `task/M0-16-performance-budget` (from `main` = `b783bbf`)
 - **Build log entry:** `docs/build-log/2026/2026-10-19-06-M0-16.md` (plan: steps 1–5)
 - **Last green commit:** the head of the branch (fast suite: Simulation 765, Application 14; format clean)
-- **Done steps:** 1 (write-ahead), 2 (worst-case city, exact counts), 3 (timing test), 4a (`Settlement/Reservations`: 144 → ~52 ms Release)
-- **Next step:** 4b: ablate what remains (scans of all buildings per event time, content lookups), then optimize it (target < 50 ms
-  Release, with margin); property suite stays green.
+- **Done steps:** 1 (write-ahead), 2 (worst-case city, exact counts), 3 (timing test), 4a (`Settlement/Reservations`), 4b (ablation
+  without PGO: four building scans per event time are ~half the cost), 4c (repeat start pass only when it can start something):
+  Release ~46–47 ms median, no-PGO 84 ms
+- **Next step:** 4d: priority queue for the building timers (replaces the completion and next-due scans); property suite stays green.
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —

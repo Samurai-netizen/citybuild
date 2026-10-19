@@ -92,8 +92,9 @@ namespace CityBuilder.Simulation.Settlement
 
         /// <summary>
         /// The start rule (<c>04</c> section 6): passes in ascending id order until a pass starts nothing. A start takes inputs, which can make
-        /// room under a cap for a lower id that the pass has already skipped (CR-0001); the next pass starts it in the same second. Each pass
-        /// starts at least one building or ends the loop, and a building starts at most once (it is then producing), so the loop ends.
+        /// room under a cap for a lower id that the pass has already skipped (CR-0001); the next pass starts it in the same second. A pass
+        /// that could start nothing is not run (see <see cref="StartPass"/>). Each pass that runs again has started at least one building,
+        /// and a building starts at most once (it is then producing), so the loop ends.
         /// </summary>
         private static void StartEligible(CityState city, GameContent content, long time, SettlementReportBuilder report, Reservations reservations)
         {
@@ -106,11 +107,14 @@ namespace CityBuilder.Simulation.Settlement
         /// One pass of the start rule in ascending id order, each start fully applied before the next, so a lower id gets scarce inputs and
         /// output space first: an idle producer with at least 1 worker, every input in stock and room for every capped output
         /// (stock + reserved + quantity ≤ cap) takes its inputs and starts a cycle with the labor of now (research reductions included).
-        /// Returns whether any building started.
+        /// Returns whether another pass could start anything: only when a building was skipped for a full output and a later start took
+        /// inputs. Nothing else a start does helps a skipped building: phases, workers, recipes and caps stay as they are, stock only falls
+        /// (a missing input stays missing) and reservations only grow. Without that, the next pass would start nothing, so it is not run.
         /// </summary>
         private static bool StartPass(CityState city, GameContent content, long time, SettlementReportBuilder report, Reservations reservations)
         {
-            bool started = false;
+            bool skippedForFullOutput = false;
+            bool passAgain = false;
             IReadOnlyList<Building> buildings = city.Buildings;
             for (int index = 0; index < buildings.Count; index++)
             {
@@ -121,10 +125,14 @@ namespace CityBuilder.Simulation.Settlement
                 }
 
                 RecipeDefinition? recipe = CityQueries.DefinitionOf(content, building.TypeId).GetLevel(building.Level).Recipe;
-                if (recipe is null
-                    || CityQueries.TryFindMissingInput(city, recipe, out _)
-                    || !OutputsFit(city, content, recipe, reservations))
+                if (recipe is null || CityQueries.TryFindMissingInput(city, recipe, out _))
                 {
+                    continue;
+                }
+
+                if (!OutputsFit(city, content, recipe, reservations))
+                {
+                    skippedForFullOutput = true;
                     continue;
                 }
 
@@ -134,10 +142,10 @@ namespace CityBuilder.Simulation.Settlement
                 report.AddConsumed(recipe.Inputs);
                 reservations.Add(recipe.Outputs);
                 building.StartCycle(time, CityQueries.EffectiveLabor(city, content, building.TypeId, building.Level));
-                started = true;
+                passAgain = passAgain || (skippedForFullOutput && recipe.Inputs.Count > 0);
             }
 
-            return started;
+            return passAgain;
         }
 
         // The output check of the start rule, CityQueries.TryFindFullOutput with the reservations of this advance.
