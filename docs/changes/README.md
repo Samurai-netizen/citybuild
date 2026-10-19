@@ -16,4 +16,4 @@ as a CR. That's how the owner keeps control over what gets built (`core-instruct
 ## Index
 | CR | Title | Type | Status |
 |---|---|---|---|
-| — | none yet | | |
+| [CR-0001](CR-0001-start-pass-repeats.md) | A start frees cap room: the start pass repeats until nothing starts | Bug | In progress |

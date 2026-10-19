@@ -8,7 +8,8 @@
 > JSON through it (M0-07b, `docs/modules/CityBuilder.Infrastructure.md`). The city state, its derived queries and the four player mutations exist
 > (M0-08), and `Simulator.Advance` settles a city (M0-09); the rules of `04` §2, §3, §5, §6 and the upgrade of §8 have a rule test each
 > (M0-10), golden scenario #1 of `23` passes on a frozen copy of the content (M0-11), and the engine review fixed its four findings (M0-12). `SettlementWindow` turns the server seconds into the elapsed time of a settle (M0-13);
-> invariants and performance follow in M0-14 to M0-16 *(planned)*.
+> seeded property tests check determinism, split invariance and timer invariance, and the first of them found that the start pass must repeat
+> (M0-14, CR-0001); the other invariants and the performance budget follow in M0-15 and M0-16 *(planned)*.
 
 ## Purpose
 The deterministic simulation engine: integer-only game rules and the helpers they share (`core-instructions/04-simulation-model.md`).
@@ -61,15 +62,16 @@ reject values that can't form one. Decisions: build log `docs/build-log/2026/202
 ```mermaid
 flowchart LR
   A["Advance(city, content, elapsed)<br/>t = T0"] --> C["complete what is due at t:<br/>research, then buildings by id"]
-  C --> S["start eligible cycles at t<br/>(only while t ≤ T0 + cap)"]
+  C --> S["start eligible cycles at t, in passes by id<br/>until one starts nothing (only while t ≤ T0 + cap)"]
   S --> N{"next due time of the<br/>event sources ≤ target?"}
   N -- "yes: t = next" --> C
   N -- no --> K["clock = target"] --> R[SettlementReport]
 ```
 The loop of `04` §7: completions come before starts at every time, the clock included (a restored city may have a timer due there; M0-12). The event sources are an internal list (`IEventSource`: `ResearchTimerSource`, then `BuildingTimerSource`) whose order
 is the order within a second; the mailbox of `04` §13 will be one more source. Research effects are derived from `CompletedResearch`, so a
-completed node counts from that second; running cycles keep their labor. The start rule and the stall reason share the checks in
-`CityQueries`. There is no era transition until M2. Decisions: build log `docs/build-log/2026/2026-10-18-01-M0-09.md`, decisions 3–19.
+completed node counts from that second; running cycles keep their labor. The start step repeats its pass by ascending id until a pass starts
+nothing: a start takes inputs, and that can make room under a cap for a lower id already passed (CR-0001, found by the split invariance
+property of M0-14). The start rule and the stall reason share the checks in `CityQueries`. There is no era transition until M2. Decisions: build log `docs/build-log/2026/2026-10-18-01-M0-09.md`, decisions 3–19.
 
 ## Key types
 | Type | Responsibility |
@@ -165,6 +167,17 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
   `GoldenScenario1` runs the script as the server runs commands, up to any time and with any largest step; `GoldenScenario1Tests` checks
   every table row (stock, free workers, each building's phase and stall reason, research) and that one advance per action gap gives the
   same city as one-second steps.
+- `Properties/` (M0-14): seeded property tests over two frozen contents (golden-v1 and the rule fixture), seeds 0 to 499 each.
+  `CityGenerator` makes a random city from a seed: aimed random commands (`CityOperation`: place, upgrade, assign workers, start research,
+  each through `CityRules` and a zero-length advance) and gaps from 0 s to four production caps. It keeps the accepted operations as a
+  `CityHistory` that can be replayed, copied at any point and printed. `SeededRandom` is SplitMix64 (the same numbers on every runtime).
+  `StructuralEquality` names the first differing field of two cities or `ReportTotals` (the sum of reports). `PropertyCheck` runs a property
+  over the seeds and fails with the property, content, seed, difference and operation list. Properties: `DeterminismPropertyTests` (same
+  seed twice, and a replay, give the same operations, reports and city), `SplitInvariancePropertyTests` (a + b ≤ cap: the same city, and the
+  reports add up), `TimerInvariancePropertyTests` (any split up to four caps: each timer completes in the piece holding its end second, and
+  the timer side of the city matches). `CityGeneratorTests` holds floors on what the seeds reach (every command, upgrades, research, locked
+  buildings, chains, frozen cycles, gaps beyond the cap) so a weaker generator fails. A failing seed is replayed by hand with
+  `CityGenerator.Generate(PropertyContent.Named(name), seed)`.
 - `SimulationDependencyTests`: the compiled assembly references exactly `netstandard` and is built for `netstandard2.1`.
 - `SimulationPackageTests`: the files only Unity sees. The asmdef (`noEngineReferences`, no references, no platform or define
   restrictions, same name as the assembly, auto-referenced, the only asmdef, no asmref), `package.json` (name, `unity` 6000.3,
@@ -191,4 +204,4 @@ too, but guards the Unity client's asmdefs and manifest, not the engine (see `do
   depend on `Dictionary` or `HashSet` order (`04` §9).
 - Content error messages are English text for content authors; only `ContentErrorCode` and `Path` are stable.
 
-Last updated: M0-13
+Last updated: M0-14

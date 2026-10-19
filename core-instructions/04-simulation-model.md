@@ -68,7 +68,8 @@ On start: subtract inputs, reserve outputs, `CycleLabor = LaborRemaining = effec
 **Completion rule** at `t == PhaseEndsAt`: `Producing` → outputs move from reserved to stock, then `Idle`.
 `Constructing` → `Idle` plus auto-staffing. `Upgrading` → `Level = TargetLevel`, then `Idle`.
 **Ordering at the same `t`:** (1) research completion → (2) building completions in ascending `Id` →
-(3) starts in ascending `Id`. Each step is fully applied before the next one. This order is visible to players.
+(3) starts in ascending `Id`, in passes until a pass starts nothing (a start takes inputs, which can make room under a cap for a lower `Id`
+already passed; CR-0001). Each step is fully applied before the next one. This order is visible to players.
 
 ## 7. The algorithm
 
@@ -79,7 +80,7 @@ Advance(city, content, elapsedSeconds) -> SettlementReport
   t = T0
   loop:
     CompleteDue(city, t)                                   # research, then buildings by Id
-    if t <= productionUntil: StartEligible(city, t)        # ascending Id
+    if t <= productionUntil: StartEligible(city, t)        # ascending Id, repeated until nothing starts
     next = min(city.ResearchEndsAt, non-null PhaseEndsAt of all buildings)
     if next is none or next > target: break
     t = next

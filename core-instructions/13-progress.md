@@ -4,24 +4,23 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** AWAITING OWNER   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M0-14 · Property test harness (`[O]`, Claude Code / claude-opus-5-5)
 - **Branch:** `task/M0-14-property-harness` (from `main` = `b183438`)
 - **Build log entry:** `docs/build-log/2026/2026-10-19-04-M0-14.md`
-- **Last green commit:** `18822ba` (Simulation tests 729 passed); the head is `wip` (731 of 733: the 2 split invariance cases fail)
+- **Last green commit:** the head of the branch (fast suite 774: Simulation 734; format clean; Unity EditMode 13/13, PlayMode 6/6)
 - **Steps:** 1 write-ahead · 2 structural equality helper · 3 seeded generator + coverage test · 4 determinism property ·
   5 split and timer invariance properties · 6 docs and finish (details in the build log Plan)
 - **Done steps:** 1, 2 (`StructuralEquality`, `ReportTotals`), 3 (`SeededRandom`, `CityOperation`, `CityHistory`, `CityGenerator`,
   `PropertyContent`, coverage test), 4 (`PropertyCheck` seed runner, `DeterminismPropertyTests`), all in
   `server/tests/CityBuilder.Simulation.Tests/Properties/`
-  · 5 written: timer invariance green; **split invariance red: it found an engine bug** (build log P1: the single start pass leaves a
-  lower-id producer idle when a later start frees cap room in the same second)
-- **Next step:** the owner decides how P1 is fixed (`Bug` CR by `15`). Then: CR file, a failing rule test, the fix (the start pass repeats
-  until nothing starts), `04` §6/§7 wording; then step 6 (docs and finish).
-- **Open questions for the owner:** how to fix engine bug P1 (asked 2026-10-19); guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
+  · 5 (split and timer invariance) · CR-0001-T1 (the property found an engine bug; the owner chose to fix it in this PR: the start
+  pass repeats until nothing starts, rule test first, `04` §6/§7, module doc)
+- **Next step:** step 6: `CHANGELOG` line, own review line by line (`[O]`, engine changed), `check-docs --base origin/main`, finish
+  (`16` §E): build log Done, resume point IDLE, board `In review`, CR-0001 stays `In progress` until the merge (the next task sets `Done`).
+- **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
-- **Known broken / do not touch:** `SplitInvariancePropertyTests` fails on both contents (engine bug P1, not a test error); everything else
-  is green
+- **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` ·
   `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
