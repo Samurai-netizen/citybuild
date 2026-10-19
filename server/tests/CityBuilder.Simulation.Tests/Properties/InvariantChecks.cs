@@ -39,7 +39,7 @@ internal sealed class InvariantChecks
         Report(Invariant.NoNegativeStock, step, NoNegativeStock(step.After));
         Report(Invariant.StorageCap, step, StorageCap(step));
         Report(Invariant.ClockNeverDecreases, step, Clock(step));
-        Report(Invariant.NoProductionWhileBuilding, step, Production(step) ?? Building(step));
+        Report(Invariant.NoProductionWhileBuilding, step, Production(step) ?? BusyBuildings(step));
         Report(Invariant.WorkerLimits, step, Workers(step.After));
         Report(Invariant.BuilderAndResearchSlots, step, Slots(step));
         Report(Invariant.LaborAccounting, step, _labor.Check(step, _count));
@@ -60,8 +60,8 @@ internal sealed class InvariantChecks
     {
         Dictionary<ItemId, long> spent = Quantities(step.Mutation?.Spent ?? []);
         Dictionary<ItemId, long> refunded = Quantities(step.Mutation?.Refunded ?? []);
-        CountIf(spent.Count > 0, "steps that spent");
-        CountIf(refunded.Count > 0, "steps that refunded");
+        CountIf(spent.Values.Any(quantity => quantity > 0), "steps that spent");
+        CountIf(refunded.Values.Any(quantity => quantity > 0), "steps that refunded");
         IEnumerable<ItemId> items = step.Before.Inventory.Keys.Concat(step.After.Inventory.Keys).Concat(step.Produced.Keys)
             .Concat(step.Consumed.Keys).Concat(spent.Keys).Concat(refunded.Keys).Distinct().Order();
         foreach (ItemId item in items)
@@ -152,7 +152,7 @@ internal sealed class InvariantChecks
 
     // 8, second half: a construction or upgrade not due yet goes on unchanged; a cycle starts only after the construction or upgrade before
     // it ended (an upgrade at the new level); constructing and upgrading buildings hold no cycle.
-    private string? Building(InvariantStep step)
+    private string? BusyBuildings(InvariantStep step)
     {
         foreach (Building after in step.After.Buildings)
         {

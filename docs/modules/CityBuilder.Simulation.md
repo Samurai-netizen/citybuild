@@ -185,7 +185,7 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
   change or an upgrade of a running cycle) and a short advance. `InvariantChecks` checks every step with its own sums (reservations, caps,
   workers, effective labor), never the engine's queries: conservation with the mutation's `Spent` and `Refunded`, stock ≥ 0, the cap,
   the clock, production only from cycles that ended, workers, builders and research, labor (`LaborLedger` counts worker-seconds per
-  cycle), no start after the window, unlocks and prerequisites. `InvariantObservation` runs all seeds once per content (about 3 s) and
+  cycle), no start after the window, unlocks and prerequisites. `InvariantObservation` runs all seeds once per content (a few seconds) and
   `InvariantPropertyTests` has one test per invariant and content, plus floors on what the checks exercised (printed in the test output).
 - `SimulationDependencyTests`: the compiled assembly references exactly `netstandard` and is built for `netstandard2.1`.
 - `SimulationPackageTests`: the files only Unity sees. The asmdef (`noEngineReferences`, no references, no platform or define

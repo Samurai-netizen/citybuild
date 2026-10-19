@@ -83,7 +83,7 @@ internal sealed class LaborLedger
         if (after.CycleLabor != cycle.Labor || after.PhaseEndsAt != endsAt)
         {
             return $"after {cycle.Work} of {cycle.Labor} worker-seconds with {after.AssignedWorkers} workers the cycle must end at "
-                + $"{endsAt?.ToString() ?? "never"}; the building says labor {after.CycleLabor}, ends at {after.PhaseEndsAt?.ToString() ?? "never"}";
+                + $"{End(endsAt)}; the building says labor {after.CycleLabor}, ends at {End(after.PhaseEndsAt)}";
         }
 
         if (after.AssignedWorkers == 0)
@@ -133,8 +133,8 @@ internal sealed class LaborLedger
         long? endsAt = after.AssignedWorkers > 0 ? after.PhaseStartedAt + CeilDiv(labor, after.AssignedWorkers) : null;
         return after.PhaseStartedAt == step.After.Clock && after.CycleLabor == labor && after.PhaseEndsAt == endsAt
             ? null
-            : $"a new cycle must start at {step.After.Clock} with labor {labor} and end at {endsAt?.ToString() ?? "never"}; it started at "
-                + $"{after.PhaseStartedAt} with labor {after.CycleLabor} and ends at {after.PhaseEndsAt?.ToString() ?? "never"}";
+            : $"a new cycle must start at {step.After.Clock} with labor {labor} and end at {End(endsAt)}; it started at "
+                + $"{after.PhaseStartedAt} with labor {after.CycleLabor} and ends at {End(after.PhaseEndsAt)}";
     }
 
     // The recipe's labor less the reductions of the completed research, rounded up (04 section 3).
@@ -148,6 +148,8 @@ internal sealed class LaborLedger
             .Sum(reduction => (long)reduction.Permille);
         return CeilDiv(labor * (1000 - permille), 1000);
     }
+
+    private static string End(long? endsAt) => endsAt.HasValue ? StructuralEquality.Text(endsAt.Value) : "never";
 
     private static long CeilDiv(long dividend, long divisor) => (dividend + divisor - 1) / divisor;
 
