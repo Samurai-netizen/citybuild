@@ -21,7 +21,7 @@ The details are binding rules in `core-instructions/02-principles.md` (rules 1 t
   lifecycle).
 - No endpoint sets state directly (`give-coins`, `set-level`, `finish-research`), not even for debugging.
 - Game numbers live in server content (`server/content/*.json`), which the client downloads and renders.
-- The client runs the shared engine **for display only** and snaps to every server snapshot (decision 007; ADR-0007, planned in M0-18).
+- The client runs the shared engine **for display only** and snaps to every server snapshot (decision 007, [ADR-0007](ADR-0007-shared-engine.md)).
 
 ## Alternatives considered
 | Option | Pros | Cons | Why not |
