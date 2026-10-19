@@ -20,18 +20,20 @@ A settlement covers the window `[T0, T0 + elapsed]`.
   even if the player was away for a week.
 - **Production cycles may start only while `t ≤ T0 + Rules.MaxOfflineProductionSeconds`** (8 h in M0).
   After that the city is *dormant*: running cycles finish, no new cycle starts.
-- The next request opens a new window, and its closing zero-length advance restarts production immediately.
+- The next request opens a new window, and a zero-length advance (§7) restarts production immediately.
 - Why: this bounds simulation cost and gives players a reason to check in, while never delaying research.
 
 ## 3. Workers and labor
-- Completed Houses provide workers (per level). `free = provided − Σ assigned`.
+- Completed Houses provide workers (per level; an upgrading house those of its current level until the upgrade completes).
+  `free = provided − Σ assigned`.
 - Every producer level has `MaxWorkers`. `0 ≤ assigned ≤ MaxWorkers`. Placing a building never needs workers.
 - A recipe costs **labor** in worker-seconds per cycle. Effective labor =
-  `ceil(Labor × (1000 − Σ reductions‰) / 1000)`, where the reductions come from completed research.
+  `ceil(Labor × (1000 − Σ reductions‰) / 1000)`, summing the `LaborReduction`s of the building's type in completed research.
 - With `w` workers, a cycle takes `ceil(remainingLabor / w)` seconds. More workers → faster. `w = 0` → frozen.
 - **Changing workers keeps progress:** at time `t`, `done = (t − SegmentStartedAt) × wOld`,
   `LaborRemaining = max(0, LaborRemaining − done)`, `SegmentStartedAt = t`,
-  `PhaseEndsAt = t + ceil(LaborRemaining / wNew)`, or `null` (frozen) if `wNew = 0`.
+  `PhaseEndsAt = t + ceil(LaborRemaining / wNew)`, or `null` (frozen) if `wNew = 0`. This runs on every assignment to a producing
+  building: the same count again starts a new segment but never moves the end.
 - **Auto-staffing:** when construction completes, the building gets `min(free, MaxWorkers)` workers.
   Nothing else is assigned automatically. Assigning 0 workers is how a player pauses a building.
 - Houses have no recipe and take no workers. During an upgrade, workers stay assigned but do nothing.
@@ -52,17 +54,17 @@ and idle producers that can start have none. For every other building the first 
 (ordinal ids).
 
 ## 5. Research
-- One research slot in M0. `StartResearch` pays the full cost up front and sets `ResearchEndsAt = clock + Duration`.
+- One research slot in M0. `StartResearch` pays the full cost up front and sets `ActiveResearch.EndsAt = clock + Duration`.
   Research needs no workers.
 - On completion, the node is added to `CompletedResearch` and its effects apply at that moment:
   `UnlockBuilding(type)`, `LaborReduction(type, ‰)`, `StorageCapBonus(item, +n)` (M0 set; more types in `25`).
-- Effects apply to cycles that start after completion. Running cycles keep their labor.
-- **Era transition** (designed, not in M0 content): when every research node of the current era is
-  completed, `Era += 1` at that moment.
+- A cycle that starts from that second on uses the effects (completion comes before starts, §6). Running cycles keep their labor.
+- **Era transition** *(planned: built with Era II, `25`)*: when every research node of the current era is completed, `Era += 1` at that
+  moment. The M0 engine never changes `Era`, and the report's `eraChanged` is always false (decision 031).
 
 ## 6. Rules
 **Start rule:** a producer starts a cycle at time `t` if it is `Idle`, has `w ≥ 1`, production is allowed
-at `t` (§2), every input is in stock, and every capped output fits (`stock + reserved + qty ≤ cap`).
+at `t` (§2), every input is in stock, and every capped output fits (`stock + reserved + qty ≤` the effective cap: base plus research bonuses).
 On start: subtract inputs, reserve outputs, `CycleLabor = LaborRemaining = effective labor`,
 `SegmentStartedAt = t`, `PhaseEndsAt = t + ceil(labor / w)`.
 **Completion rule** at `t == PhaseEndsAt`: `Producing` → outputs move from reserved to stock, then `Idle`.
@@ -81,14 +83,15 @@ Advance(city, content, elapsedSeconds) -> SettlementReport
   loop:
     CompleteDue(city, t)                                   # research, then buildings by Id
     if t <= productionUntil: StartEligible(city, t)        # ascending Id, repeated until nothing starts
-    next = min(city.ResearchEndsAt, non-null PhaseEndsAt of all buildings)
+    next = min(city.ActiveResearch?.EndsAt, non-null PhaseEndsAt of all buildings)
     if next is none or next > target: break
     t = next
   city.Clock = target
 ```
 
 `Advance(city, 0)` (a **zero-length advance**) only runs `StartEligible` at the current clock (and completes a timer due exactly there).
-Every mutation is followed by a zero-length advance, so the returned state is always canonical.
+Every city request ends with one, after its mutation if it has one (`03`, request lifecycle step 7; the caller runs it, not the mutation), so
+the state it stores and returns is canonical: another zero-length advance would change nothing.
 The event sources (research timer, building timers, later the mailbox of §13) are a list in the order of §6; `next` is the earliest of them.
 A timer due at the clock completes first, in the order of §6 (a canonical city has none: every timer ends ≥ 1 s after it is set, but a
 restored city may). A timer due before the clock means an invalid city: `Advance` throws before it changes anything.
@@ -97,10 +100,10 @@ restored city may). A timer due before the clock means an invalid city: `Advance
 
 | Mutation | Checks (error code) | Effect |
 |---|---|---|
-| PlaceBuilding | type known (`UNKNOWN_BUILDING_TYPE`), of the city's era or earlier and unlocked (`BUILDING_LOCKED`), in bounds (`OUT_OF_BOUNDS`), tile free (`TILE_OCCUPIED`), free builder (`NO_FREE_BUILDER`), cost (`INSUFFICIENT_RESOURCE`) | pay cost, `Id = NextBuildingId++`, `Constructing` |
-| UpgradeBuilding | exists (`BUILDING_NOT_FOUND`), Idle/Producing (`BUILDING_BUSY`), level < max (`MAX_LEVEL`), free builder, cost (checked **before** the refund) | refund the running cycle's inputs, release reservation, pay, `Upgrading` |
-| AssignWorkers | exists, has a recipe (`INVALID_ARGUMENT`), not Constructing (`BUILDING_BUSY`), `0 ≤ n ≤ MaxWorkers` of the current level, also while upgrading (`WORKER_LIMIT`), enough free workers (`INSUFFICIENT_WORKERS`) | set `n`, labor segment update (§3) |
-| StartResearch | known (`UNKNOWN_RESEARCH`), not done (`RESEARCH_COMPLETED`), slot free (`RESEARCH_IN_PROGRESS`), prerequisites + current era (`RESEARCH_LOCKED`), cost | pay, start timer |
+| PlaceBuilding | type known (`UNKNOWN_BUILDING_TYPE`), of the city's era or earlier and unlocked (`BUILDING_LOCKED`), in bounds (`OUT_OF_BOUNDS`), tile free (`TILE_OCCUPIED`), free builder (`NO_FREE_BUILDER`), the type's cost (`INSUFFICIENT_RESOURCE`) | pay it, `Id = NextBuildingId++`, `Constructing` for the type's build seconds |
+| UpgradeBuilding | exists (`BUILDING_NOT_FOUND`), Idle/Producing (`BUILDING_BUSY`), level < max (`MAX_LEVEL`), free builder (`NO_FREE_BUILDER`), the next level's upgrade cost (`INSUFFICIENT_RESOURCE`, checked **before** the refund) | refund the running cycle's inputs, release reservation, pay, `Upgrading` to `TargetLevel = Level + 1` for that level's upgrade seconds |
+| AssignWorkers | exists (`BUILDING_NOT_FOUND`), has a recipe (`INVALID_ARGUMENT`), not Constructing (`BUILDING_BUSY`), `0 ≤ n ≤ MaxWorkers` of the current level, also while upgrading (`WORKER_LIMIT`), the increase `n − assigned` ≤ free (`INSUFFICIENT_WORKERS`) | set `n`, labor segment update (§3) |
+| StartResearch | known (`UNKNOWN_RESEARCH`), not done (`RESEARCH_COMPLETED`), slot free (`RESEARCH_IN_PROGRESS`), prerequisites + current era (`RESEARCH_LOCKED`), cost (`INSUFFICIENT_RESOURCE`) | pay, start timer (§5) |
 
 **Builders busy** = count of `Constructing` + `Upgrading`. **Refunds may exceed storage caps**: caps only limit production.
 Checks run in the listed order; the first failure is returned and changes nothing. An applied mutation names what it paid and
@@ -110,7 +113,8 @@ frozen cycle counts as running (its inputs are refunded). Workers on a house are
 ## 9. Determinism rules (shared code)
 - Integers only (`long` quantities, seconds and labor; `int` building instance ids and permille). Content ids are typed structs over
   text, compared ordinally, such as `ItemId` (decision 022 in `12`). No `float`, `double` or `decimal`.
-- Divisions that produce durations use ceiling division on non-negative integers. Nothing else divides.
+- Game values are divided only through `IntegerMath`, on non-negative integers: durations round up (`CeilDiv`), labor reductions use
+  `ApplyPermilleReduction`, display estimates round down (`FloorDiv`, §15). Index arithmetic (a midpoint, a heap parent) is not game logic.
 - Never depend on `Dictionary`/`HashSet` enumeration order. Iterate sorted ids or arrays.
 - No `DateTime`, no randomness, no static mutable state, no I/O inside the engine.
 - Use `checked` arithmetic. Overflow is a bug, not a wrap.
@@ -126,7 +130,7 @@ frozen cycle counts as running (its inputs are refunded). Workers on a house are
 8. Nothing is produced before construction completes, and nothing during an upgrade.
 9. `Σ assigned ≤ provided`, and `assigned ≤ MaxWorkers` for every building.
 10. Busy builders ≤ builder slots. At most one research is active.
-11. Labor accounting: a cycle completes exactly when the cumulative worker-seconds reach its labor.
+11. Labor accounting: a cycle completes at the first second at which the worker-seconds put into it, over every worker change, reach its labor.
 12. No cycle starts after `productionUntil`.
 13. Locked buildings are never placed, and research prerequisites are always respected.
 

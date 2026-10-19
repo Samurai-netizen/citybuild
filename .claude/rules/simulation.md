@@ -15,8 +15,9 @@ and Unity 6.3 (client, Mono/IL2CPP), and it must behave identically in both.
 - Add `#nullable enable` at the top of every file.
 - Integers only: `long` for quantities, seconds and labor; `int` for building instance ids and permille. Content ids are typed
   structs over text with ordinal comparison, such as `ItemId` (decision 022 in `12`). No `float`, `double` or `decimal`.
-- Durations use one shared helper, `IntegerMath.CeilDiv(long dividend, long divisor)` (dividend ≥ 0, divisor > 0), and labor
-  reductions use `IntegerMath.ApplyPermilleReduction`. No other division in game logic.
+- Durations use one shared helper, `IntegerMath.CeilDiv(long dividend, long divisor)` (dividend ≥ 0, divisor > 0), labor
+  reductions use `IntegerMath.ApplyPermilleReduction`, and display estimates (`Display/`, never authority) round down with
+  `IntegerMath.FloorDiv`. No other division of game values; index arithmetic (a midpoint, a heap parent) is not game logic.
 - No `DateTime`, `TimeProvider`, `Random`, `Guid.NewGuid`, I/O, logging, or statics with mutable state.
 - Never iterate a `Dictionary`/`HashSet` where order affects results. Sort keys with
   `StringComparer.Ordinal`, or use arrays indexed by sorted ids.

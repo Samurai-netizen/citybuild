@@ -14,7 +14,8 @@
 
 ## Purpose
 The deterministic simulation engine: integer-only game rules and the helpers they share (`core-instructions/04-simulation-model.md`).
-The server runs it as the authority; the Unity client runs the same code for display only and snaps to every server snapshot.
+The server runs it as the authority; the Unity client runs the same code for display only and snaps to every server snapshot
+([ADR-0007](../adr/ADR-0007-shared-engine.md)).
 It is **not** responsible for persistence, HTTP, clocks (`TimeProvider`), randomness, logging, reading files or JSON, or anything that touches
 the Unity engine. None of those may appear here.
 
@@ -56,8 +57,9 @@ flowchart LR
   R --> M["MutationResult: Ok (spent, refunded)<br/>or a MutationErrorCode"]
 ```
 A mutation runs at the city's clock after the caller has settled the city, checks in the order of `04` §8, and either applies all its effects
-or returns the first failure and changes nothing. The public constructors restore a city or a building with every field (database, tests) and
-reject values that can't form one. Decisions: build log `docs/build-log/2026/2026-10-14-07-M0-08.md`, decisions 2–16.
+or returns the first failure and changes nothing; the caller then runs a zero-length advance (`04` §7). A worker change keeps a running
+cycle's progress (the labor model, [ADR-0008](../adr/ADR-0008-labor-model.md)). The public constructors restore a city or a building with every
+field (database, tests) and reject values that can't form one. Decisions: build log `docs/build-log/2026/2026-10-14-07-M0-08.md`, decisions 2–16.
 
 ## Settlement: `Simulator.Advance`
 ```mermaid
@@ -68,6 +70,8 @@ flowchart LR
   N -- "yes: t = next" --> C
   N -- no --> K["clock = target"] --> R[SettlementReport]
 ```
+The server runs it whenever a request touches a city ([ADR-0005](../adr/ADR-0005-settle-on-access.md)); cycles start only within the
+production cap of each window, while timers run on ([ADR-0006](../adr/ADR-0006-production-cap-dormant-tail.md)).
 The loop of `04` §7: completions come before starts at every time, the clock included (a restored city may have a timer due there; M0-12). The event sources are an internal list, made for each advance (`IEventSource`: `ResearchTimerSource`, then `BuildingTimerSource`), whose order
 is the order within a second; the mailbox of `04` §13 will be one more source. Research effects are derived from `CompletedResearch`, so a
 completed node counts from that second; running cycles keep their labor. The start step repeats its pass by ascending id until a pass starts
@@ -245,4 +249,4 @@ too, but guards the Unity client's asmdefs and manifest, not the engine (see `do
   depend on `Dictionary` or `HashSet` order (`04` §9).
 - Content error messages are English text for content authors; only `ContentErrorCode` and `Path` are stable.
 
-Last updated: M0-17
+Last updated: M0-18
