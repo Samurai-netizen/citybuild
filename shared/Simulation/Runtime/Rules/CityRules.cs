@@ -1,5 +1,6 @@
 #nullable enable
 using System;
+using System.Collections.Generic;
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.State;
 
@@ -9,6 +10,7 @@ namespace CityBuilder.Simulation.Rules
     /// The player's mutations of a city (<c>core-instructions/04-simulation-model.md</c>, section 8). Each runs at the city's clock, after the
     /// caller has settled the city to now; the caller then runs a zero-length advance (<see cref="Settlement.Simulator.Advance"/> with 0), so
     /// the returned state is canonical. Each checks in the order of section 8 and returns the first failure; a rejected mutation changes nothing.
+    /// An applied one names the cost it paid and the inputs it refunded (<see cref="MutationResult.Spent"/>, <see cref="MutationResult.Refunded"/>).
     /// </summary>
     public static class CityRules
     {
@@ -62,7 +64,7 @@ namespace CityBuilder.Simulation.Rules
 
             city.RemoveItems(definition.Cost);
             city.AddBuilding(typeId, x, y, checked(city.Clock + definition.BuildSeconds));
-            return MutationResult.Ok;
+            return MutationResult.Applied(definition.Cost);
         }
 
         /// <summary>
@@ -109,15 +111,17 @@ namespace CityBuilder.Simulation.Rules
                 return MutationResult.Rejected(MutationErrorCode.InsufficientResource);
             }
 
+            IReadOnlyList<ItemQuantity>? refunded = null;
             if (building.Phase == BuildingPhase.Producing)
             {
                 // Leaving the Producing phase releases the reservation, which is derived from the phase and never stored.
-                city.AddItems(CityQueries.RecipeOf(content, building.TypeId, building.Level).Inputs);
+                refunded = CityQueries.RecipeOf(content, building.TypeId, building.Level).Inputs;
+                city.AddItems(refunded);
             }
 
             city.RemoveItems(nextLevel.UpgradeCost);
             building.StartUpgrade(city.Clock, checked(city.Clock + nextLevel.UpgradeSeconds));
-            return MutationResult.Ok;
+            return MutationResult.Applied(nextLevel.UpgradeCost, refunded);
         }
 
         /// <summary>
@@ -214,7 +218,7 @@ namespace CityBuilder.Simulation.Rules
 
             city.RemoveItems(node.Cost);
             city.StartResearch(researchId, checked(city.Clock + node.DurationSeconds));
-            return MutationResult.Ok;
+            return MutationResult.Applied(node.Cost);
         }
 
         private static void RequireArguments(CityState city, GameContent content)

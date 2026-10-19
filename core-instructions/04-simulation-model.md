@@ -103,7 +103,8 @@ restored city may). A timer due before the clock means an invalid city: `Advance
 | StartResearch | known (`UNKNOWN_RESEARCH`), not done (`RESEARCH_COMPLETED`), slot free (`RESEARCH_IN_PROGRESS`), prerequisites + current era (`RESEARCH_LOCKED`), cost | pay, start timer |
 
 **Builders busy** = count of `Constructing` + `Upgrading`. **Refunds may exceed storage caps**: caps only limit production.
-Checks run in the listed order; the first failure is returned and changes nothing. "Current era" means the node's era equals the city's, and a
+Checks run in the listed order; the first failure is returned and changes nothing. An applied mutation names what it paid and
+refunded (the ledger rows of `06`). "Current era" means the node's era equals the city's, and a
 frozen cycle counts as running (its inputs are refunded). Workers on a house are `INVALID_ARGUMENT`, also while it is constructing.
 
 ## 9. Determinism rules (shared code)

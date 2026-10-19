@@ -32,6 +32,14 @@ public sealed class PlaceBuildingTests
     }
 
     [Fact]
+    public void PlaceBuilding_ValidPlacement_NamesTheCostAsSpentAndNothingRefunded()
+    {
+        CityState city = City(inventory: [("gold", 50), ("wood", 12)], completedResearch: ["carpentry"]);
+
+        RulesAssert.Moved(Place(city, "workshop", 0, 0), spent: "gold=40 wood=10", refunded: "");
+    }
+
+    [Fact]
     public void PlaceBuilding_StockExactlyTheCost_LeavesNoneOfTheItem()
     {
         CityState city = City(inventory: [("gold", 40), ("wood", 10)], completedResearch: ["carpentry"]);

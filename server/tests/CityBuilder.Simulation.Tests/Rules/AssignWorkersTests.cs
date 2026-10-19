@@ -23,6 +23,14 @@ public sealed class AssignWorkersTests
     }
 
     [Fact]
+    public void AssignWorkers_MidCycle_NamesNothingSpentOrRefunded()
+    {
+        CityState city = TwoHutsAnd(LumberCampProducing(workers: 3, laborRemaining: 180, segmentStartedAt: 1000, endsAt: 1060), clock: 1020);
+
+        RulesAssert.Moved(Assign(city, 3, 1), spent: "", refunded: "");
+    }
+
+    [Fact]
     public void AssignWorkers_ZeroWorkersMidCycle_FreezesTheCycleAndKeepsItsReservation()
     {
         CityState city = TwoHutsAnd(LumberCampProducing(workers: 3, laborRemaining: 180, segmentStartedAt: 1000, endsAt: 1060), clock: 1020);

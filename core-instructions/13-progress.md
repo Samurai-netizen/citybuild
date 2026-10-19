@@ -8,9 +8,9 @@
 - **Task:** M0-15 · Invariant properties (`[O]`, Claude Code / claude-opus-5-5)
 - **Branch:** `task/M0-15-invariant-properties` (from `main` = `ac07a3b`)
 - **Build log entry:** `docs/build-log/2026/2026-10-19-05-M0-15.md` (plan: 7 steps, decisions 1–5)
-- **Last green commit:** `main` = `ac07a3b` (fast suite 774 passed: Simulation 734, Application 14)
-- **Done steps:** 1 (write-ahead; M0-14 and CR-0001 set to `Done`)
-- **Next step:** 2: `MutationResult.Spent` and `Refunded`, rule tests first (decision 1).
+- **Last green commit:** the branch head (fast suite 780 passed: Simulation 740, Application 14; format clean)
+- **Done steps:** 1 (write-ahead; M0-14 and CR-0001 set to `Done`), 2 (`MutationResult.Spent`/`Refunded`, rule tests)
+- **Next step:** 3: the invariant observer in `Simulation.Tests/Properties/` (stepped replay, decisions 2–5), invariants 4, 5, 7 first.
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
