@@ -26,7 +26,7 @@ Never silently reverse a decision; add a new row that supersedes it. New ids con
 | 002 | PostgreSQL is the only source of truth; no Redis in M0 | One critical dependency is enough until measurements say otherwise | Accepted · [ADR-0002](../docs/adr/ADR-0002-postgresql-only.md) |
 | 003 | One HTTP endpoint per command; no realtime channel | Async genre; polling every 2 min is enough | Accepted · [ADR-0003](../docs/adr/ADR-0003-command-endpoints.md) |
 | 004 | Idempotency via `(playerId, requestId)` receipts + payload hash; successes only | Safe retries on flaky mobile networks | Accepted · [ADR-0004](../docs/adr/ADR-0004-idempotency.md) |
-| 005 | Deterministic discrete-event simulation, settled lazily on every city access (`GET /city` included) | No background ticking per city; exact offline progress; one code path | Accepted |
+| 005 | Deterministic discrete-event simulation, settled lazily on every city access (`GET /city` included) | No background ticking per city; exact offline progress; one code path | Accepted · [ADR-0005](../docs/adr/ADR-0005-settle-on-access.md) |
 | 006 | Integer city clock always advances fully; only production is capped per absence (dormant tail) | Long research must finish while away; cost stays bounded; replaces the earlier "pause the whole city" cap | Accepted (rev. 2026-10-04) |
 | 007 | A shared engine (netstandard2.1, C# 9) is used by the server (authority) and the client (display only) | Progress bars and counters match the server without extra endpoints | Accepted; fallback below |
 | 008 | Every write takes `SELECT … FOR UPDATE` on the acting player's city only, plus a `state_version` guard | Simplest correct serialization; no cross-city deadlocks | Accepted |
