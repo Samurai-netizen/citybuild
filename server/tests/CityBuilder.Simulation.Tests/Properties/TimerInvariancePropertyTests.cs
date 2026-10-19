@@ -132,7 +132,7 @@ public sealed class TimerInvariancePropertyTests
             bool busy = building.Phase is BuildingPhase.Constructing or BuildingPhase.Upgrading;
             fields.Add(($"building {building.Id} level", StructuralEquality.Text(building.Level)));
             fields.Add(($"building {building.Id} assignedWorkers", StructuralEquality.Text(building.AssignedWorkers)));
-            fields.Add(($"building {building.Id} timer", busy ? $"{building.Phase} until {building.PhaseEndsAt}" : "none"));
+            fields.Add(($"building {building.Id} timer", busy ? $"{building.Phase} until {StructuralEquality.Text(building.PhaseEndsAt ?? 0)}" : "none"));
         }
 
         return [.. fields, .. StructuralEquality.Fields(city).Where(field => field.Path is "completedResearch" or "activeResearch")];

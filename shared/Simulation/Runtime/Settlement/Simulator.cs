@@ -22,8 +22,8 @@ namespace CityBuilder.Simulation.Settlement
         /// <summary>
         /// Advances the city by <paramref name="elapsedSeconds"/> (<c>04</c> section 7). At the clock and at every event time up to the target,
         /// in this order: the research that is due completes, then the buildings that are due complete in ascending id order, then idle
-        /// producers start cycles in ascending id order, but only while the time is within <see cref="GameRules.MaxOfflineProductionSeconds"/>
-        /// of the start (the dormant tail). Timers run for the whole window, and the clock always moves by the full elapsed time. A zero-length
+        /// producers start cycles in ascending id order, pass after pass until one starts nothing, but only while the time is within
+        /// <see cref="GameRules.MaxOfflineProductionSeconds"/> of the start (the dormant tail). Timers run for the whole window, and the clock always moves by the full elapsed time. A zero-length
         /// advance only starts the cycles that can start at the clock; every mutation is followed by one.
         /// </summary>
         /// <param name="city">The city; it changes in place.</param>
