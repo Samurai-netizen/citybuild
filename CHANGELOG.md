@@ -80,3 +80,6 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   8 h, then 7 days, with exact event counts and a timed test (median of 5 runs ≤ 500 ms; printed). An advance went from 144 ms to about
   40 ms (Release): per-advance reservations instead of a scan per capped output, a heap of building timers instead of two scans per event
   time, and a repeat start pass only when it can start something; no behaviour change, property suite green (M0-16).
+- Display helpers in `shared/Simulation/Runtime/Display/` (display only, `04` §15): `PerHour` for a worker count, `NetPerHour` and
+  `SecondsUntilFull` of an item, `ProgressPermille`, `SecondsUntilNextEvent` and `ResearchProgressPermille`, all integers rounded down (rates in
+  thousandths per hour); `IntegerMath.FloorDiv` (M0-17).
