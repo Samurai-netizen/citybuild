@@ -8,9 +8,10 @@
 - **Task:** M0-10 · Engine rule tests (`[O]`)
 - **Branch:** `task/M0-10-engine-rule-tests` (from `main` = `328dbba`)
 - **Build log entry:** `docs/build-log/2026/2026-10-18-02-M0-10.md` (plan: steps 1–6)
-- **Last green commit:** the head of the branch (0 warnings, format clean, fast suite 682 passed: Simulation 655)
-- **Done steps:** 1 (write-ahead), 2 (fixture, `EngineRules/Commands`, `CycleRuleTests`, `StartRuleTests`), 3 (`WorkerRuleTests`)
-- **Next step:** step 4: `EngineRules/ResearchRuleTests` and `UpgradeRuleTests`.
+- **Last green commit:** the head of the branch (0 warnings, format clean, fast suite 692 passed: Simulation 665)
+- **Done steps:** 1 (write-ahead), 2 (fixture, `EngineRules/Commands`, `CycleRuleTests`, `StartRuleTests`), 3 (`WorkerRuleTests`),
+  4 (`ResearchRuleTests`, `UpgradeRuleTests`)
+- **Next step:** step 5: mutation check by hand (break each rule in `shared/Simulation`, see a rule test fail, restore; `git diff` empty).
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
