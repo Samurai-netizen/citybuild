@@ -1,0 +1,154 @@
+{
+  "contentVersion": "mvp-1",
+  "rules": {
+    "gridWidth": 8,
+    "gridHeight": 8,
+    "builderSlots": 2,
+    "researchSlots": 1,
+    "baseStorageCaps": { "logs": 500, "planks": 500 },
+    "maxOfflineProductionSeconds": 28800,
+    "minCycleSeconds": 10,
+    "maxLaborReductionPermille": 500
+  },
+  "startingCity": {
+    "era": 1,
+    "inventory": { "coins": 700, "logs": 40, "planks": 10 }
+  },
+  "eras": [
+    { "number": 1, "id": "early_medieval", "name": "Early Middle Ages" }
+  ],
+  "items": [
+    { "id": "coins", "name": "Coins", "era": 1, "capped": false, "tradable": false },
+    { "id": "logs", "name": "Logs", "era": 1, "capped": true, "tradable": true },
+    { "id": "planks", "name": "Planks", "era": 1, "capped": true, "tradable": true }
+  ],
+  "buildings": [
+    {
+      "id": "house",
+      "name": "Cottage",
+      "kind": "house",
+      "era": 1,
+      "availableAtStart": true,
+      "cost": { "coins": 50 },
+      "buildSeconds": 30,
+      "levels": [
+        { "level": 1, "workersProvided": 4 },
+        { "level": 2, "workersProvided": 6, "upgradeCost": { "coins": 120, "logs": 30 }, "upgradeSeconds": 90 }
+      ]
+    },
+    {
+      "id": "woodcutter",
+      "name": "Woodcutter's Hut",
+      "kind": "producer",
+      "era": 1,
+      "availableAtStart": true,
+      "cost": { "coins": 80 },
+      "buildSeconds": 60,
+      "levels": [
+        {
+          "level": 1,
+          "maxWorkers": 2,
+          "recipe": { "outputs": { "logs": 1 }, "labor": 60 }
+        },
+        {
+          "level": 2,
+          "maxWorkers": 4,
+          "recipe": { "outputs": { "logs": 1 }, "labor": 60 },
+          "upgradeCost": { "coins": 150, "planks": 20 },
+          "upgradeSeconds": 120
+        }
+      ]
+    },
+    {
+      "id": "sawmill",
+      "name": "Sawmill",
+      "kind": "producer",
+      "era": 1,
+      "availableAtStart": true,
+      "cost": { "coins": 150, "logs": 30 },
+      "buildSeconds": 120,
+      "levels": [
+        {
+          "level": 1,
+          "maxWorkers": 3,
+          "recipe": { "inputs": { "logs": 2 }, "outputs": { "planks": 1 }, "labor": 180 }
+        },
+        {
+          "level": 2,
+          "maxWorkers": 6,
+          "recipe": { "inputs": { "logs": 2 }, "outputs": { "planks": 1 }, "labor": 180 },
+          "upgradeCost": { "coins": 250, "planks": 30 },
+          "upgradeSeconds": 180
+        }
+      ]
+    },
+    {
+      "id": "trading_post",
+      "name": "Trading Post",
+      "kind": "producer",
+      "era": 1,
+      "availableAtStart": false,
+      "cost": { "coins": 200, "planks": 20 },
+      "buildSeconds": 180,
+      "levels": [
+        {
+          "level": 1,
+          "maxWorkers": 2,
+          "recipe": { "inputs": { "planks": 2 }, "outputs": { "coins": 10 }, "labor": 120 }
+        },
+        {
+          "level": 2,
+          "maxWorkers": 4,
+          "recipe": { "inputs": { "planks": 2 }, "outputs": { "coins": 10 }, "labor": 120 },
+          "upgradeCost": { "coins": 400, "planks": 40 },
+          "upgradeSeconds": 300
+        }
+      ]
+    }
+  ],
+  "research": [
+    {
+      "id": "trade_charter",
+      "name": "Trade Charter",
+      "era": 1,
+      "cost": { "coins": 150 },
+      "durationSeconds": 600,
+      "effects": [
+        { "type": "unlockBuilding", "building": "trading_post" }
+      ]
+    },
+    {
+      "id": "sharp_axes",
+      "name": "Sharpened Axes",
+      "era": 1,
+      "cost": { "coins": 250 },
+      "durationSeconds": 1800,
+      "effects": [
+        { "type": "laborReduction", "building": "woodcutter", "permille": 200 }
+      ]
+    },
+    {
+      "id": "frame_saw",
+      "name": "Frame Saw",
+      "era": 1,
+      "cost": { "coins": 400, "planks": 30 },
+      "durationSeconds": 3600,
+      "prerequisites": ["sharp_axes"],
+      "effects": [
+        { "type": "laborReduction", "building": "sawmill", "permille": 200 }
+      ]
+    },
+    {
+      "id": "storehouses",
+      "name": "Storehouses",
+      "era": 1,
+      "cost": { "coins": 300, "logs": 50 },
+      "durationSeconds": 2700,
+      "prerequisites": ["trade_charter"],
+      "effects": [
+        { "type": "storageCapBonus", "item": "logs", "amount": 250 },
+        { "type": "storageCapBonus", "item": "planks", "amount": 250 }
+      ]
+    }
+  ]
+}

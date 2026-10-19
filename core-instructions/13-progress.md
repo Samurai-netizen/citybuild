@@ -8,10 +8,11 @@
 - **Task:** M0-11 · Golden scenario #1 (`[O]`, Claude Code / claude-opus-5-5)
 - **Branch:** `task/M0-11-golden-scenario-1` (from `main` = `a0b802a`)
 - **Build log entry:** `docs/build-log/2026/2026-10-19-01-M0-11.md` (In progress; plan and the hand check of the table are there)
-- **Last green commit:** `main` = `a0b802a` (0 errors, fast suite 692 passed: Simulation 665)
-- **Done steps:** 1 write-ahead
-- **Next step:** step 2: copy `mvp-content.json` to `Fixtures/content-golden-v1.json`, loader, scenario runner, one test case per table row.
-  Then 3 split check (one advance per action gap vs 1-second advances), 4 docs and finish.
+- **Last green commit:** the head of the branch (0 warnings, format clean, fast suite 703 passed: Simulation 676)
+- **Done steps:** 1 write-ahead · 2 frozen content `Fixtures/content-golden-v1.json`, `Golden/` runner and one case per table row (all pass;
+  the table and the engine agree)
+- **Next step:** step 3: in `Golden/GoldenScenario1Tests`, one theory over the checkpoint times: `GoldenScenario1.After(t, OneAdvancePerGap)`
+  and `After(t, 1)` give identical `CityDump.Describe` texts. Then 4 docs and finish.
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
