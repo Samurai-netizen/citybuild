@@ -74,8 +74,11 @@ internal static class StructuralEquality
     /// <summary>A number as invariant text.</summary>
     public static string Text(long value) => value.ToString(CultureInfo.InvariantCulture);
 
-    // Walks the expected fields in order, then the fields only the actual side has, so the first difference is the earliest one in that order.
-    private static string? FirstDifference(IReadOnlyList<(string Path, string Value)> expected, IReadOnlyList<(string Path, string Value)> actual)
+    /// <summary>
+    /// The first field in which <paramref name="actual"/> differs from <paramref name="expected"/>, or null: the expected fields in order, then
+    /// the fields only the actual side has, so the first difference is the earliest one in that order.
+    /// </summary>
+    public static string? FirstDifference(IReadOnlyList<(string Path, string Value)> expected, IReadOnlyList<(string Path, string Value)> actual)
     {
         Dictionary<string, string> actualByPath = actual.ToDictionary(field => field.Path, field => field.Value, StringComparer.Ordinal);
         foreach ((string path, string value) in expected)

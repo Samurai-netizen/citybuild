@@ -54,7 +54,10 @@ internal sealed class CityHistory
     }
 
     /// <summary>A new copy of the city: the operations replayed on a new starting city.</summary>
-    public CityState Copy(GameContent content) => Replay(content, Seed, Operations).City;
+    public CityState Copy(GameContent content) => CopyAfter(content, Operations.Count);
+
+    /// <summary>A new copy of the city as it was after the first <paramref name="count"/> operations.</summary>
+    public CityState CopyAfter(GameContent content, int count) => Replay(content, Seed, [.. Operations.Take(count)]).City;
 
     /// <summary>The seed and the numbered operation list, for a failure message.</summary>
     public string Describe()
