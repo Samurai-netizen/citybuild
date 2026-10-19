@@ -4,8 +4,8 @@ using System;
 namespace CityBuilder.Simulation
 {
     /// <summary>
-    /// The integer helpers that game logic uses for every division. Durations round up, so a cycle never finishes early, and
-    /// nothing in the engine divides in any other way (<c>core-instructions/04-simulation-model.md</c>, section 9).
+    /// The integer helpers that game logic uses for every division. Durations round up, so a cycle never finishes early, display
+    /// estimates round down, and no game value is divided in any other way (<c>core-instructions/04-simulation-model.md</c>, section 9).
     /// </summary>
     public static class IntegerMath
     {
