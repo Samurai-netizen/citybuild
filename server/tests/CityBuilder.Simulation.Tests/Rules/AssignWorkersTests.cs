@@ -88,6 +88,12 @@ public sealed class AssignWorkersTests
     }
 
     [Fact]
+    public void AssignWorkers_UpgradingAboveTheCurrentLevelsLimit_IsRejected() =>
+        // Level 1 takes up to 2 workers, level 2 up to 3: the new limit applies when the upgrade completes (04 section 8).
+        RulesAssert.Rejected(MutationErrorCode.WorkerLimit,
+            TwoHutsAnd(Upgrading(3, "lumber_camp", 2, 0, level: 1, workers: 1, startedAt: 1010, endsAt: 1022), clock: 1020), city => Assign(city, 3, 3));
+
+    [Fact]
     public void AssignWorkers_FewerWorkersWithNoneFree_IsAllowed()
     {
         // One hut (3 workers), all of them on the camp: lowering the count needs no free worker.

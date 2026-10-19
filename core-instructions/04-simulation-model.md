@@ -45,9 +45,10 @@ A settlement covers the window `[T0, T0 + elapsed]`.
 | `Producing` | Inputs consumed, outputs reserved | `CycleLabor`, `LaborRemaining`, `SegmentStartedAt`, `PhaseEndsAt` (null if frozen) |
 
 Fields a phase doesn't use are 0 (`PhaseEndsAt` null), and `Producing` keeps the cycle's start in `PhaseStartedAt`, so equal situations are equal field by field.
-**Stall reason** (derived, never stored), shown to players. The first match wins:
+**Stall reason** (derived, never stored), shown to players. Constructing and upgrading buildings (houses too), cycles running with workers
+and idle producers that can start have none. For every other building the first match wins:
 `NoRecipe` (houses) · `NoWorkers` (idle or frozen cycle) · `MissingInput:item` · `StorageFull:item`. The item is the first in recipe order
-(ordinal ids). Constructing and upgrading buildings, cycles running with workers and idle producers that can start have none.
+(ordinal ids).
 
 ## 5. Research
 - One research slot in M0. `StartResearch` pays the full cost up front and sets `ResearchEndsAt = clock + Duration`.
@@ -96,7 +97,7 @@ restored city may). A timer due before the clock means an invalid city: `Advance
 |---|---|---|
 | PlaceBuilding | type known (`UNKNOWN_BUILDING_TYPE`), of the city's era or earlier and unlocked (`BUILDING_LOCKED`), in bounds (`OUT_OF_BOUNDS`), tile free (`TILE_OCCUPIED`), free builder (`NO_FREE_BUILDER`), cost (`INSUFFICIENT_RESOURCE`) | pay cost, `Id = NextBuildingId++`, `Constructing` |
 | UpgradeBuilding | exists (`BUILDING_NOT_FOUND`), Idle/Producing (`BUILDING_BUSY`), level < max (`MAX_LEVEL`), free builder, cost (checked **before** the refund) | refund the running cycle's inputs, release reservation, pay, `Upgrading` |
-| AssignWorkers | exists, has a recipe (`INVALID_ARGUMENT`), not Constructing (`BUILDING_BUSY`), `0 ≤ n ≤ MaxWorkers` (`WORKER_LIMIT`), enough free workers (`INSUFFICIENT_WORKERS`) | set `n`, labor segment update (§3) |
+| AssignWorkers | exists, has a recipe (`INVALID_ARGUMENT`), not Constructing (`BUILDING_BUSY`), `0 ≤ n ≤ MaxWorkers` of the current level, also while upgrading (`WORKER_LIMIT`), enough free workers (`INSUFFICIENT_WORKERS`) | set `n`, labor segment update (§3) |
 | StartResearch | known (`UNKNOWN_RESEARCH`), not done (`RESEARCH_COMPLETED`), slot free (`RESEARCH_IN_PROGRESS`), prerequisites + current era (`RESEARCH_LOCKED`), cost | pay, start timer |
 
 **Builders busy** = count of `Constructing` + `Upgrading`. **Refunds may exceed storage caps**: caps only limit production.
