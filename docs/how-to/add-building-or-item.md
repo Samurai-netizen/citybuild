@@ -14,7 +14,9 @@ A new effect type or a new rule needs engine code instead: recipe "New engine ru
 | Generated reference | `docs/reference/generated/content.md`, regenerated *(planned, M0-61)* |
 | Balance check | the balance simulator, `run-balance-simulator.md` *(planned, M0-67)* |
 
-Golden scenario tests use a frozen copy of the content, so they don't change with balancing (`.claude/rules/tests.md`).
+Golden scenario tests use a frozen copy of the content (`server/tests/CityBuilder.Simulation.Tests/Fixtures/content-golden-v1.json`), so
+they don't change with balancing (`.claude/rules/tests.md`). Never edit that copy; a content change that should reach a golden scenario
+gets a new copy and hand-checked numbers.
 
 ## The format in short
 - The file is the engine's `GameContentData` in camelCase. Each field, whether it is required and its unit is in the doc comments of the
