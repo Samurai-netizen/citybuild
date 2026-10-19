@@ -18,7 +18,8 @@
 A settlement window `[T0, T0 + elapsed]` always moves the city clock by the full elapsed time, and every timer (construction, upgrade,
 research) completes at its own second. **New production cycles start only while `t ≤ T0 + Rules.MaxOfflineProductionSeconds`**; after that
 the city is *dormant*: running cycles finish and deliver, a construction that completes still gets its workers, nothing new starts. The
-zero-length advance that ends every request opens a new window at once, so production restarts when the player returns (`04` §2, §7).
+next request opens a new window, and its zero-length advance restarts production at once, so production resumes when the player returns
+(`04` §2, §7).
 - The cap is content (`maxOfflineProductionSeconds`: 28,800 s = 8 h in M0, > 0 by content rule 1), not code. A research effect that raises it
   is planned (`OfflineProductionBonus`, `25`).
 - It counts from the start of each window, which is the last request, so it limits the gap between check-ins, not the production per day.

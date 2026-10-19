@@ -18,8 +18,8 @@ display clock, snapping to every new snapshot and never sending a predicted valu
 - **One source, two builds:** Unity reads `shared/Simulation/` (`package.json`, an asmdef with `noEngineReferences: true`) through
   `"com.citybuilder.simulation": "file:../../../shared/Simulation"`; .NET builds the same files from `shared/Simulation.Build/`, a sibling
   folder, because Unity imports everything inside a package folder, `bin/` and `obj/` too (`03`).
-- **The common subset:** `netstandard2.1` and C# 9, no packages, `#nullable enable` in every file (decision 021); the build fails on any
-  other setting (`GuardUnityCompatibleBuild`).
+- **The common subset:** `netstandard2.1` and C# 9, no packages, `#nullable enable` in every file (decision 021); the build fails if the
+  target framework, the language version or warnings-as-errors change (`GuardUnityCompatibleBuild`).
 - **Determinism on every runtime:** integers only, ordinal ids, no `Dictionary` order, no clock, randomness, I/O or mutable statics
   (`04` §9). Display estimates are helpers of their own (`Display/`, `04` §15) that the server never calls.
 - **The fallback** (agreed in advance, `12`): if the Unity local-package integration blocks progress for more than one session, the client
@@ -29,7 +29,7 @@ display clock, snapping to every new snapshot and never sending a predicted valu
 ## Alternatives considered
 | Option | Pros | Cons | Why not |
 |---|---|---|---|
-| The client shows only snapshot values and polls (the fallback as the plan) | No engine on the client | Counters and stalls change only every 2 minutes; rates and countdowns need extra fields or endpoints | Keeps the fallback's place; the shared engine costs little more |
+| The client shows only snapshot values and polls (the fallback as the plan) | No engine on the client | Counters and stalls change only every 2 minutes; rates and countdowns need extra fields or endpoints | It stays the fallback; the shared engine costs little more |
 | A second, simpler implementation on the client | Free choice of language features | Every rule twice; the copies drift, and the display disagrees with the server exactly where players look | Drift is a bug class the shared source removes |
 | A compiled DLL copied into the Unity project | Any build setup on the .NET side | A binary in the repository or a copy step; the source Unity runs can't be read or reviewed; versions can drift | The local package needs no copy |
 | A newer C# or target framework with polyfills | Records, newer syntax | Unity 6.3 compiles C# 9 against `netstandard2.1`; newer syntax fails there, and shims cover only a few features (`init` through `IsExternalInit`) | Unity sets the limit |

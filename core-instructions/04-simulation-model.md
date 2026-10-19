@@ -20,7 +20,7 @@ A settlement covers the window `[T0, T0 + elapsed]`.
   even if the player was away for a week.
 - **Production cycles may start only while `t ≤ T0 + Rules.MaxOfflineProductionSeconds`** (8 h in M0).
   After that the city is *dormant*: running cycles finish, no new cycle starts.
-- The next request opens a new window, and the zero-length advance that ends every request (§7) restarts production immediately.
+- The next request opens a new window, and a zero-length advance (§7) restarts production immediately.
 - Why: this bounds simulation cost and gives players a reason to check in, while never delaying research.
 
 ## 3. Workers and labor

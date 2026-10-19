@@ -22,10 +22,11 @@ in one building only: workers who leave a cycle slow it by exactly the work they
 - **Pause = 0 workers:** a frozen cycle makes no progress and has no timer; its inputs stay taken and its outputs reserved (they count
   against the cap), and its stall reason is `NoWorkers`. There is no pause command (`05`: `assign-workers` with 0).
 - **Exact:** the subtraction is exact in worker-seconds. The only rounding is the end, which is the first whole second at which the labor is
-  done (`04` invariant 11), however many segments the cycle has: moving workers back and forth gains and loses nothing. The same count
-  again starts a new segment but never moves the end (`04` §3).
-- **Nothing automatic but one thing:** a completed construction gets `min(free, MaxWorkers)` workers (decision 018); an upgrade keeps the
-  workers assigned, idle, refunds a running or frozen cycle (decision 013), and raises the limit when it completes (decision 034).
+  done (`04` invariant 11), however many segments the cycle has: moving workers back and forth never gains a worker-second and never
+  loses progress. The same count again starts a new segment but never moves the end (`04` §3).
+- **Automatic only on construction:** a completed construction gets `min(free, MaxWorkers)` workers (decision 018); nothing else assigns
+  workers. An upgrade keeps them assigned but idle, refunds a running or frozen cycle (decision 013), and its new limit applies when it
+  completes (decision 034).
 - **Stored per producing building:** `CycleLabor`, `LaborRemaining`, `SegmentStartedAt`, `PhaseEndsAt`, and the cycle's start in
   `PhaseStartedAt` (`04` §4), in the snapshot (`05`) and the database (`06`).
 

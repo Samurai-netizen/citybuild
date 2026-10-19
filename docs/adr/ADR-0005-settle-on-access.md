@@ -32,7 +32,7 @@ in it. `GET /city` settles too, so it is safe to repeat but not free of side eff
 |---|---|---|---|
 | A "claim" command: the player collects what was produced | One clear moment that writes | Taps become progress, which `22` rules out ("taps are decisions, never progress"); when to claim becomes a tactic; the elapsed time must still be computed | Rejected with the kit (KIT build log, decision 1); `05` has no claim command |
 | A background ticker advances and writes every city every few minutes | Stored state always fresh; reads don't write | Cost grows with cities × time, even for cities nobody looks at; the ticker and requests compete for the same row lock | Cost and moving parts with no gain a player sees; decision 005's fallback rules it out |
-| Fixed time steps (simulate every second) | The simplest loop | 8 h is 28,800 steps over every building, almost all of them empty | Events give the same result far cheaper |
+| Fixed time steps (simulate every second) | The simplest loop | 8 h is 28,800 steps over every building, and in a typical city most of them change nothing | Events give the same result far cheaper |
 | Settle only on commands; `GET /city` computes a projection without writing | A side-effect-free read | Every poll of an idle city simulates the whole window since the last write again; two code paths (projection and authority); the welcome-back report and the ledger have no single settlement | One path; a poll every 2 minutes then simulates only those 2 minutes |
 | A scheduled job per timer end settles that city | State fresh at every event | One job per event (a busy city has thousands per hour); a scheduler to run and monitor; exactness between events still needs a settle | Not needed in M0; notifications (`22`, later) can be planned from the end times a settle stores |
 | The client simulates and the server checks | No server simulation | Breaks the authority | Rejected by ADR-0001 |
@@ -43,7 +43,7 @@ in it. `GET /city` settles too, so it is safe to repeat but not free of side eff
   Online and offline use one code path, and the client predicts with the same engine. Tests drive time with `FakeTimeProvider`.
 - **Harder:** every request writes the city and its ledger rows in a transaction, polls included. The settle's cost lands on the request
   (budget < 50 ms in the worst case, `04` §12). The stored state is only as fresh as the last request, so anything that reads many cities at
-  once (rankings, analytics, the market in M2) must settle them or use only values that don't change with time.
+  once (rankings, analytics, admin tools) must settle them or use only values that don't change with time.
 - **Watch:** settle duration and event counts in the logs (M0-35); the write load of polling (ADR-0002, ADR-0003); `state_version` rises
   only when the state changed (M0-23); the dev time scale changes the server clock only, never the engine (`04` §1, M0-35).
 - **As built (M0-18):** `SettlementWindow.Compute` and the `SettleCity` skeleton with an in-memory repository (M0-13); `Simulator.Advance`
