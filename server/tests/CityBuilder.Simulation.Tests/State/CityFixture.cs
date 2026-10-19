@@ -13,9 +13,11 @@ internal static class CityFixture
 {
     /// <summary>
     /// The valid fixture content (a 6 × 5 grid, two builders, a house <c>hut</c>, producers <c>lumber_camp</c> and, locked, <c>workshop</c>)
-    /// with three additions for the rules: the workshop gets a level 2, so an upgrade can refund a cycle's inputs; the lumber camp's level 2
-    /// takes 4 workers, for the spec's example of 3 workers becoming 4; and <c>manor</c>, an era-2 house available at the start (10 gold,
-    /// 5 s), for the era check of placement.
+    /// with four additions for the rules: the workshop gets a level 2 with 180 labor and up to 6 workers, so an upgrade can refund a cycle's
+    /// inputs and raise the worker limit, and the spec's durations (180 labor: 4 workers 45 s, 5 workers 36 s) run on it; the lumber camp's
+    /// level 2 takes 4 workers, for the spec's example of 3 workers becoming 4; <c>manor</c>, an era-2 house available at the start (10 gold,
+    /// 5 s), for the era check of placement; and <c>mint</c>, a producer of the uncapped gold (5 per 20 labor, up to 2 workers), for outputs
+    /// without a cap.
     /// </summary>
     public static GameContent TestContent { get; } = ContentAssert.Valid(ContentFixture.ValidWith(data =>
     {
@@ -24,10 +26,21 @@ internal static class CityFixture
         ContentFixture.Building(data, "workshop").Levels!.Add(new BuildingLevelData
         {
             Level = 2,
-            MaxWorkers = 3,
-            Recipe = new RecipeData { Inputs = new() { ["wood"] = 2 }, Outputs = new() { ["boards"] = 1 }, Labor = 90 },
+            MaxWorkers = 6,
+            Recipe = new RecipeData { Inputs = new() { ["wood"] = 2 }, Outputs = new() { ["boards"] = 1 }, Labor = 180 },
             UpgradeCost = new() { ["gold"] = 30, ["wood"] = 1 },
             UpgradeSeconds = 15,
+        });
+        data.Buildings!.Add(new BuildingData
+        {
+            Id = "mint",
+            Name = "Mint",
+            Kind = "producer",
+            Era = 1,
+            AvailableAtStart = true,
+            Cost = new() { ["gold"] = 10 },
+            BuildSeconds = 5,
+            Levels = [new BuildingLevelData { Level = 1, MaxWorkers = 2, Recipe = new RecipeData { Outputs = new() { ["gold"] = 5 }, Labor = 20 } }],
         });
         data.Buildings!.Add(new BuildingData
         {
