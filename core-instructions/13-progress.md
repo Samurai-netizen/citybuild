@@ -10,8 +10,8 @@
 - **Build log entry:** `docs/build-log/2026/2026-10-19-06-M0-16.md` (plan: steps 1–5)
 - **Last green commit:** the head of the branch (fast suite: Simulation 765, Application 14; format clean)
 - **Done steps:** 1 (write-ahead), 2 (worst-case city, exact counts), 3 (timing test), 4a (`Reservations`), 4b (ablation), 4c (start pass
-  repeats only when it can start something), 4d (`BuildingTimerQueue`): Release ~38–42 ms median (target 50), no-PGO 67, Debug ~170–180
-- **Next step:** 5: docs (module doc: Settlement section, key types, tests, measured numbers; `04` §12; `CHANGELOG`), then `/finish-task`.
+  repeats only when it can start something), 4d (`BuildingTimerQueue`), 5 (docs): Release ~38–42 ms median (target 50), no-PGO 67, Debug ~170–180
+- **Next step:** finish (`16` §E): DoD, own line-by-line review, Unity EditMode/PlayMode, PR. Step 5 (docs) is done.
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —

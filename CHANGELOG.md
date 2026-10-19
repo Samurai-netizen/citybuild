@@ -76,3 +76,7 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   dormant tail against a test model, branches with commands mid-cycle) checks conservation, stock, caps, clock, production, workers,
   builders and research, labor per cycle, no starts after the cap, unlocks and prerequisites; `MutationResult` now names what a mutation
   spent and refunded; how-to `debug-determinism-failure.md` (M0-15).
+- Performance budget: the worst case of `04` §12 (64 producers, 10 s cycles ending on all ten seconds, from a test content file) advanced
+  8 h, then 7 days, with exact event counts and a timed test (median of 5 runs ≤ 500 ms; printed). An advance went from 144 ms to about
+  40 ms (Release): per-advance reservations instead of a scan per capped output, a heap of building timers instead of two scans per event
+  time, and a repeat start pass only when it can start something; no behaviour change, property suite green (M0-16).
