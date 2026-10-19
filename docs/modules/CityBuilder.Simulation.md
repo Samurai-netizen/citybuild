@@ -6,8 +6,8 @@
 
 > *Growing.* The integer helpers, the content ids and the content model with its validation exist (M0-07a); the server loads the content
 > JSON through it (M0-07b, `docs/modules/CityBuilder.Infrastructure.md`). The city state, its derived queries and the four player mutations exist
-> (M0-08), and `Simulator.Advance` settles a city (M0-09); each rule of `04` has a rule test (M0-10). The settlement window, invariants and
-> performance follow in M0-13 to M0-16 *(planned)*.
+> (M0-08), and `Simulator.Advance` settles a city (M0-09); the rules of `04` §2, §3, §5, §6 and the upgrade of §8 have a rule test each
+> (M0-10). The settlement window, invariants and performance follow in M0-13 to M0-16 *(planned)*.
 
 ## Purpose
 The deterministic simulation engine: integer-only game rules and the helpers they share (`core-instructions/04-simulation-model.md`).
@@ -152,9 +152,9 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
   with reservations, the production cap). `CityFixture` builds cities and one building per phase over `ContentFixture` (plus a
   workshop level 2 with 180 labor and 6 workers, 4 workers on lumber camp level 2, the era-2 house `manor` and `mint`, a producer of the
   uncapped gold); `RulesAssert.Rejected` checks that a rejection leaves the `CityDump` unchanged.
-- `EngineRules/`: one test per rule of `04`, named after it (`Duration_CycleStarts_IsTheLaborCeilDivTheWorkers`), in a class per area
-  (`CycleRuleTests`, `StartRuleTests`, `WorkerRuleTests`, `ResearchRuleTests`, `UpgradeRuleTests`). A rule is played out through
-  advances and commands (`Commands`: the mutation, then a zero-length advance); the M0-10 build log lists which broken rule each test catches.
+- `EngineRules/`: one test per rule of `04` §2, §3, §5, §6 and the upgrade of §8, named after it (`Duration_CycleStarts_IsTheLaborCeilDivTheWorkers`),
+  in a class per area (`CycleRuleTests`, `StartRuleTests`, `WorkerRuleTests`, `ResearchRuleTests`, `UpgradeRuleTests`). A rule is played out
+  through advances and commands (`Commands`: the mutation, then a zero-length advance); the M0-10 build log lists which broken rule each test catches.
 - `SimulationDependencyTests`: the compiled assembly references exactly `netstandard` and is built for `netstandard2.1`.
 - `SimulationPackageTests`: the files only Unity sees. The asmdef (`noEngineReferences`, no references, no platform or define
   restrictions, same name as the assembly, auto-referenced, the only asmdef, no asmref), `package.json` (name, `unity` 6000.3,
