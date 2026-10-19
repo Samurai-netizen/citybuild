@@ -226,8 +226,7 @@ namespace CityBuilder.Simulation.State
             for (int index = 0; index < outputs.Count; index++)
             {
                 ItemId output = outputs[index].Item;
-                if (TryGetEffectiveCap(city, content, output, out long cap)
-                    && checked(city.GetQuantity(output) + Reserved(city, content, output) + outputs[index].Quantity) > cap)
+                if (!FitsUnderCap(city, content, outputs[index], Reserved(city, content, output)))
                 {
                     item = output;
                     return true;
@@ -237,6 +236,13 @@ namespace CityBuilder.Simulation.State
             item = default;
             return false;
         }
+
+        /// <summary>
+        /// Whether one more cycle's output fits (<c>04</c> section 6): an uncapped item always fits; a capped one fits while stock +
+        /// <paramref name="reserved"/> + the output's quantity is at most the effective cap. The start rule and the stall reason share it.
+        /// </summary>
+        internal static bool FitsUnderCap(CityState city, GameContent content, ItemQuantity output, long reserved) =>
+            !TryGetEffectiveCap(city, content, output.Item, out long cap) || checked(city.GetQuantity(output.Item) + reserved + output.Quantity) <= cap;
 
         /// <summary>The definition of a building type the city uses.</summary>
         internal static BuildingDefinition DefinitionOf(GameContent content, BuildingTypeId type) =>

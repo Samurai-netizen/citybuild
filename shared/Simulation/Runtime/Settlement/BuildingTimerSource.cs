@@ -9,42 +9,42 @@ namespace CityBuilder.Simulation.Settlement
     /// <summary>
     /// The buildings' phase timers (<c>core-instructions/04-simulation-model.md</c>, section 6, completion rule). Buildings due at the same time
     /// complete in ascending id order, each fully before the next, so a house that completes first provides workers to the auto-staffing of a
-    /// producer with a higher id. A frozen cycle has no end and never completes.
+    /// producer with a higher id. A frozen cycle has no end and never completes. The source lives for one advance: it takes the due buildings
+    /// from that advance's <see cref="BuildingTimerQueue"/>, to which the start rule adds every cycle it starts, and a completed cycle's
+    /// outputs leave that advance's <see cref="Reservations"/>.
     /// </summary>
     internal sealed class BuildingTimerSource : IEventSource
     {
-        /// <inheritdoc/>
-        public long? NextDueAt(CityState city)
-        {
-            long? next = null;
-            IReadOnlyList<Building> buildings = city.Buildings;
-            for (int index = 0; index < buildings.Count; index++)
-            {
-                long? endsAt = buildings[index].PhaseEndsAt;
-                if (endsAt.HasValue && (!next.HasValue || endsAt.Value < next.Value))
-                {
-                    next = endsAt;
-                }
-            }
+        private readonly BuildingTimerQueue _timers;
+        private readonly Reservations _reservations;
 
-            return next;
+        public BuildingTimerSource(BuildingTimerQueue timers, Reservations reservations)
+        {
+            _timers = timers;
+            _reservations = reservations;
         }
+
+        /// <inheritdoc/>
+        public long? NextDueAt(CityState city) => _timers.Count > 0 ? _timers.PeekEndsAt() : (long?)null;
 
         /// <inheritdoc/>
         public void CompleteDue(CityState city, GameContent content, long time, SettlementReportBuilder report)
         {
             IReadOnlyList<Building> buildings = city.Buildings;
-            for (int index = 0; index < buildings.Count; index++)
+            while (_timers.Count > 0 && _timers.PeekEndsAt() == time)
             {
-                Building building = buildings[index];
-                if (building.PhaseEndsAt == time)
+                Building building = buildings[_timers.Pop()];
+                if (building.PhaseEndsAt != time)
                 {
-                    Complete(city, content, building, report);
+                    throw new InvalidOperationException(
+                        FormattableString.Invariant($"Building {building.Id} ends at {building.PhaseEndsAt}, but the timer queue had it due at {time}."));
                 }
+
+                Complete(city, content, building, report, _reservations);
             }
         }
 
-        private static void Complete(CityState city, GameContent content, Building building, SettlementReportBuilder report)
+        private static void Complete(CityState city, GameContent content, Building building, SettlementReportBuilder report, Reservations reservations)
         {
             switch (building.Phase)
             {
@@ -62,6 +62,7 @@ namespace CityBuilder.Simulation.Settlement
                     // The reserved outputs move to stock; caps limit only starts. An upgrade ends a running cycle, so the level is the start's.
                     IReadOnlyList<ItemQuantity> outputs = CityQueries.RecipeOf(content, building.TypeId, building.Level).Outputs;
                     city.AddItems(outputs);
+                    reservations.Remove(outputs);
                     report.AddProduced(outputs);
                     building.CompleteCycle();
                     break;

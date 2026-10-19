@@ -137,8 +137,9 @@ and upgrades), `completedResearch[id]`, `eraChanged` (false until the era transi
 It is persisted as aggregated ledger entries (one per item and direction per settlement).
 
 ## 12. Performance budget
-Worst case: 64 producers with 10 s cycles over the full 8 h cap ≈ 184k events, plus timers.
-Dormant time adds only timer events. Target: < 50 ms on a dev machine (CI uses a generous limit).
+Worst case: 64 producers with 10 s cycles over the full 8 h cap ≈ 184k events, plus timers. Their cycles end on all ten seconds of every
+ten (28,800 event times), the most work a 10 s cycle can cause. Dormant time adds only timer events. Target: < 50 ms on a dev machine
+(CI uses a generous limit). The test and the measured numbers: `docs/modules/CityBuilder.Simulation.md` → Tests → `Performance/`.
 
 ## 13. Planned extension — external deliveries (not in M0)
 Market fills, expired-order returns and other cross-player transfers will arrive through a **mailbox**

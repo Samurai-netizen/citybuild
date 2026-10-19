@@ -1,7 +1,6 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.State;
 
@@ -14,11 +13,6 @@ namespace CityBuilder.Simulation.Settlement
     /// </summary>
     public static class Simulator
     {
-        // The order at the same second (04 section 6): research completion, then building completions by id. The mailbox deliveries of
-        // 04 section 13 will go between the two. The sources hold no state, and the read-only collection can't be changed.
-        private static readonly ReadOnlyCollection<IEventSource> _eventSources =
-            Array.AsReadOnly(new IEventSource[] { new ResearchTimerSource(), new BuildingTimerSource() });
-
         /// <summary>
         /// Advances the city by <paramref name="elapsedSeconds"/> (<c>04</c> section 7). At the clock and at every event time up to the target,
         /// in this order: the research that is due completes, then the buildings that are due complete in ascending id order, then idle
@@ -51,7 +45,14 @@ namespace CityBuilder.Simulation.Settlement
             long elapsed = Math.Max(elapsedSeconds, 0);
             long target = checked(start + elapsed);
             long productionUntil = checked(start + content.Rules.MaxOfflineProductionSeconds);
-            long? firstDueAt = NextDueAt(city);
+
+            // What this advance keeps up to date instead of scanning every building at every event time (04 section 12). Making them changes
+            // nothing in the city. The order of the sources is the order at the same second (04 section 6): research completion, then
+            // building completions by id; the mailbox deliveries of 04 section 13 will go between the two.
+            Reservations reservations = Reservations.Of(city, content);
+            BuildingTimerQueue timers = BuildingTimerQueue.Of(city);
+            IEventSource[] sources = { new ResearchTimerSource(), new BuildingTimerSource(timers, reservations) };
+            long? firstDueAt = NextDueAt(sources, city);
             if (firstDueAt < start)
             {
                 throw new InvalidOperationException(
@@ -66,17 +67,17 @@ namespace CityBuilder.Simulation.Settlement
             // later (durations and labor are at least 1, content rule 1), so each pass moves on in time and the loop ends.
             while (true)
             {
-                for (int index = 0; index < _eventSources.Count; index++)
+                for (int index = 0; index < sources.Length; index++)
                 {
-                    _eventSources[index].CompleteDue(city, content, time, report);
+                    sources[index].CompleteDue(city, content, time, report);
                 }
 
                 if (time <= productionUntil)
                 {
-                    StartEligible(city, content, time, report);
+                    StartEligible(city, content, time, report, reservations, timers);
                 }
 
-                long? next = NextDueAt(city);
+                long? next = NextDueAt(sources, city);
                 if (!next.HasValue || next.Value > target)
                 {
                     break;
@@ -91,12 +92,14 @@ namespace CityBuilder.Simulation.Settlement
 
         /// <summary>
         /// The start rule (<c>04</c> section 6): passes in ascending id order until a pass starts nothing. A start takes inputs, which can make
-        /// room under a cap for a lower id that the pass has already skipped (CR-0001); the next pass starts it in the same second. Each pass
-        /// starts at least one building or ends the loop, and a building starts at most once (it is then producing), so the loop ends.
+        /// room under a cap for a lower id that the pass has already skipped (CR-0001); the next pass starts it in the same second. A pass
+        /// that could start nothing is not run (see <see cref="StartPass"/>). Each pass that runs again has started at least one building,
+        /// and a building starts at most once (it is then producing), so the loop ends.
         /// </summary>
-        private static void StartEligible(CityState city, GameContent content, long time, SettlementReportBuilder report)
+        private static void StartEligible(
+            CityState city, GameContent content, long time, SettlementReportBuilder report, Reservations reservations, BuildingTimerQueue timers)
         {
-            while (StartPass(city, content, time, report))
+            while (StartPass(city, content, time, report, reservations, timers))
             {
             }
         }
@@ -105,11 +108,16 @@ namespace CityBuilder.Simulation.Settlement
         /// One pass of the start rule in ascending id order, each start fully applied before the next, so a lower id gets scarce inputs and
         /// output space first: an idle producer with at least 1 worker, every input in stock and room for every capped output
         /// (stock + reserved + quantity ≤ cap) takes its inputs and starts a cycle with the labor of now (research reductions included).
-        /// Returns whether any building started.
+        /// Returns whether another pass could start anything: only when a building was skipped for a full output and a later start took
+        /// inputs. Nothing else a start does helps a skipped building: phases, workers, recipes and caps stay as they are, stock only falls
+        /// (a missing input stays missing) and reservations only grow. Without that, the next pass would start nothing, so it is not run.
+        /// Every cycle it starts joins the advance's timer queue.
         /// </summary>
-        private static bool StartPass(CityState city, GameContent content, long time, SettlementReportBuilder report)
+        private static bool StartPass(
+            CityState city, GameContent content, long time, SettlementReportBuilder report, Reservations reservations, BuildingTimerQueue timers)
         {
-            bool started = false;
+            bool skippedForFullOutput = false;
+            bool passAgain = false;
             IReadOnlyList<Building> buildings = city.Buildings;
             for (int index = 0; index < buildings.Count; index++)
             {
@@ -120,29 +128,51 @@ namespace CityBuilder.Simulation.Settlement
                 }
 
                 RecipeDefinition? recipe = CityQueries.DefinitionOf(content, building.TypeId).GetLevel(building.Level).Recipe;
-                if (recipe is null
-                    || CityQueries.TryFindMissingInput(city, recipe, out _)
-                    || CityQueries.TryFindFullOutput(city, content, recipe, out _))
+                if (recipe is null || CityQueries.TryFindMissingInput(city, recipe, out _))
                 {
                     continue;
                 }
 
-                // The outputs are reserved by the Producing phase itself: reservations are derived, never stored.
+                if (!OutputsFit(city, content, recipe, reservations))
+                {
+                    skippedForFullOutput = true;
+                    continue;
+                }
+
+                // The outputs are reserved by the Producing phase itself: reservations are derived, never stored. The table only keeps
+                // this advance from summing them again for every check.
                 city.RemoveItems(recipe.Inputs);
                 report.AddConsumed(recipe.Inputs);
+                reservations.Add(recipe.Outputs);
                 building.StartCycle(time, CityQueries.EffectiveLabor(city, content, building.TypeId, building.Level));
-                started = true;
+                timers.Add(index, building.PhaseEndsAt!.Value);
+                passAgain = passAgain || (skippedForFullOutput && recipe.Inputs.Count > 0);
             }
 
-            return started;
+            return passAgain;
         }
 
-        private static long? NextDueAt(CityState city)
+        // The output check of the start rule, CityQueries.TryFindFullOutput with the reservations of this advance.
+        private static bool OutputsFit(CityState city, GameContent content, RecipeDefinition recipe, Reservations reservations)
+        {
+            IReadOnlyList<ItemQuantity> outputs = recipe.Outputs;
+            for (int index = 0; index < outputs.Count; index++)
+            {
+                if (!CityQueries.FitsUnderCap(city, content, outputs[index], reservations.Get(outputs[index].Item)))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static long? NextDueAt(IEventSource[] sources, CityState city)
         {
             long? next = null;
-            for (int index = 0; index < _eventSources.Count; index++)
+            for (int index = 0; index < sources.Length; index++)
             {
-                long? dueAt = _eventSources[index].NextDueAt(city);
+                long? dueAt = sources[index].NextDueAt(city);
                 if (dueAt.HasValue && (!next.HasValue || dueAt.Value < next.Value))
                 {
                     next = dueAt;

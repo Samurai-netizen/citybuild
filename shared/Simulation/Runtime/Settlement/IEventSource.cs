@@ -7,7 +7,8 @@ namespace CityBuilder.Simulation.Settlement
     /// <summary>
     /// One kind of timed event that <see cref="Simulator.Advance"/> processes: the research timer, the building timers, and later the mailbox
     /// deliveries (<c>core-instructions/04-simulation-model.md</c>, section 13). The simulator asks every source for its next due time, moves to
-    /// the earliest, and lets each source complete what is due then, in the order of its source list. Sources hold no state.
+    /// the earliest, and lets each source complete what is due then, in the order of its source list. A source may keep state for one
+    /// advance (the building timers' queue); the simulator makes the sources new for every advance.
     /// </summary>
     internal interface IEventSource
     {

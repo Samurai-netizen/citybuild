@@ -1,0 +1,83 @@
+{
+  "contentVersion": "performance-1",
+  "rules": {
+    "gridWidth": 10,
+    "gridHeight": 10,
+    "builderSlots": 10,
+    "researchSlots": 1,
+    "baseStorageCaps": { "ore": 1000000000000 },
+    "maxOfflineProductionSeconds": 28800,
+    "minCycleSeconds": 10,
+    "maxLaborReductionPermille": 0
+  },
+  "startingCity": {
+    "era": 1,
+    "inventory": { "coins": 10000, "ore": 100 }
+  },
+  "eras": [
+    { "number": 1, "id": "test_era", "name": "Test Era" }
+  ],
+  "items": [
+    { "id": "coins", "name": "Coins", "era": 1, "capped": false, "tradable": false },
+    { "id": "ingots", "name": "Ingots", "era": 1, "capped": false, "tradable": true },
+    { "id": "ore", "name": "Ore", "era": 1, "capped": true, "tradable": true }
+  ],
+  "buildings": [
+    {
+      "id": "house",
+      "name": "House",
+      "kind": "house",
+      "era": 1,
+      "availableAtStart": true,
+      "cost": { "coins": 10 },
+      "buildSeconds": 10,
+      "levels": [
+        { "level": 1, "workersProvided": 32 }
+      ]
+    },
+    {
+      "id": "mine",
+      "name": "Mine",
+      "kind": "producer",
+      "era": 1,
+      "availableAtStart": true,
+      "cost": { "coins": 10 },
+      "buildSeconds": 10,
+      "levels": [
+        {
+          "level": 1,
+          "maxWorkers": 2,
+          "recipe": { "outputs": { "ore": 2 }, "labor": 20 }
+        }
+      ]
+    },
+    {
+      "id": "smelter",
+      "name": "Smelter",
+      "kind": "producer",
+      "era": 1,
+      "availableAtStart": true,
+      "cost": { "coins": 10 },
+      "buildSeconds": 10,
+      "levels": [
+        {
+          "level": 1,
+          "maxWorkers": 2,
+          "recipe": { "inputs": { "ore": 1 }, "outputs": { "ingots": 1 }, "labor": 20 }
+        }
+      ]
+    }
+  ],
+  "research": [
+    {
+      "id": "deep_vaults",
+      "name": "Deep Vaults",
+      "era": 1,
+      "cost": { "coins": 100 },
+      "durationSeconds": 172800,
+      "effects": [
+        { "type": "storageCapBonus", "item": "ore", "amount": 1 }
+      ]
+    }
+  ]
+}

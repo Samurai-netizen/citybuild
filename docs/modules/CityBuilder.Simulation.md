@@ -9,7 +9,8 @@
 > (M0-08), and `Simulator.Advance` settles a city (M0-09); the rules of `04` §2, §3, §5, §6 and the upgrade of §8 have a rule test each
 > (M0-10), golden scenario #1 of `23` passes on a frozen copy of the content (M0-11), and the engine review fixed its four findings (M0-12). `SettlementWindow` turns the server seconds into the elapsed time of a settle (M0-13);
 > seeded property tests check determinism, split invariance and timer invariance, and the first of them found that the start pass must repeat
-> (M0-14, CR-0001); the other invariants and the performance budget follow in M0-15 and M0-16 *(planned)*.
+> (M0-14, CR-0001); invariants 4–13 of `04` §10 hold over the same seeds (M0-15), and the worst case of `04` §12 settles 8 hours in about
+> 40 ms (M0-16, numbers under Tests).
 
 ## Purpose
 The deterministic simulation engine: integer-only game rules and the helpers they share (`core-instructions/04-simulation-model.md`).
@@ -67,11 +68,19 @@ flowchart LR
   N -- "yes: t = next" --> C
   N -- no --> K["clock = target"] --> R[SettlementReport]
 ```
-The loop of `04` §7: completions come before starts at every time, the clock included (a restored city may have a timer due there; M0-12). The event sources are an internal list (`IEventSource`: `ResearchTimerSource`, then `BuildingTimerSource`) whose order
+The loop of `04` §7: completions come before starts at every time, the clock included (a restored city may have a timer due there; M0-12). The event sources are an internal list, made for each advance (`IEventSource`: `ResearchTimerSource`, then `BuildingTimerSource`), whose order
 is the order within a second; the mailbox of `04` §13 will be one more source. Research effects are derived from `CompletedResearch`, so a
 completed node counts from that second; running cycles keep their labor. The start step repeats its pass by ascending id until a pass starts
 nothing: a start takes inputs, and that can make room under a cap for a lower id already passed (CR-0001, found by the split invariance
-property of M0-14). The start rule and the stall reason share the checks in `CityQueries`. There is no era transition until M2. Decisions: build log `docs/build-log/2026/2026-10-18-01-M0-09.md`, decisions 3–19.
+property of M0-14); it repeats only when a building was skipped for a full output and a later start took inputs, because nothing else a
+start does can help a skipped building (M0-16). The start rule and the stall reason share the checks in `CityQueries` (`FitsUnderCap`).
+There is no era transition until M2. Decisions: build log `docs/build-log/2026/2026-10-18-01-M0-09.md`, decisions 3–19.
+
+Each advance makes, before it changes anything, what it keeps up to date instead of scanning every building at every event time (M0-16,
+`04` §12): the event sources themselves, a `BuildingTimerQueue` (a binary heap of the building timers, earliest end first and ascending
+id within a second) and a `Reservations` table (what `CityQueries.Reserved` gives, item by item). Inside an advance only a start (a new
+timer, outputs reserved) and a completion (timer gone, outputs delivered) change them, so they stay exact; the city still stores neither.
+Decisions: build log `docs/build-log/2026/2026-10-19-06-M0-16.md`, decisions 8, 10 and 11.
 
 ## Key types
 | Type | Responsibility |
@@ -98,6 +107,7 @@ property of M0-14). The start rule and the stall reason share the checks in `Cit
 | `Rules.MutationResult`, `Rules.MutationErrorCode` | `Ok` or `Rejected(code)`; an applied mutation names what it paid (`Spent`, the cost lines) and gave back (`Refunded`, an interrupted cycle's inputs), for the `COST_*` and `REFUND_*` ledger rows (`06`; M0-15); the codes are those of `05` that the engine decides, each doc names its API code. The server's error catalogue (M0-34) maps them to API codes and HTTP statuses |
 | `State.StallReason`, `State.StallKind` | `StallReason.Of(city, content, building)`: null, or the first of `NoRecipe`, `NoWorkers`, `MissingInput`, `StorageFull` with its item; `ToString` is the API text (`MissingInput:logs`). None while constructing or upgrading |
 | `Settlement.Simulator` | `Advance(city, content, elapsedSeconds)`: the event loop of `04` §7, changing the city in place. Elapsed below 0 counts as 0; a timer due at the clock completes first; one due before the clock throws `InvalidOperationException` before anything changes. Allocates nothing per event |
+| `Settlement.BuildingTimerQueue`, `Settlement.Reservations` (internal) | One advance's building timers as a min-heap by (end, building index) and its reserved quantities per item; made from the city at the start of the advance, updated by starts and completions, never stored |
 | `Settlement.SettlementReport` | `ElapsedSeconds`, `ProductionSeconds` (`min(elapsed, cap)`), `Produced` and `Consumed` (production only, per item in ordinal order), `CompletedBuildings` (constructions and upgrades, ascending), `CompletedResearch` (ordinal), `EraChanged` (false until M2) |
 | `Settlement.SettlementWindow` | `Compute(lastSettledUnixSec, nowUnixSec)`: `ElapsedSeconds` (now minus the last settled second, never negative) and `NewLastSettledUnixSec` (now); with the clock behind (`IsClockBehind`) nothing elapses and the last settled second stays, so successive windows add up to the span from first to last. The engine never reads a clock: the server passes both seconds (`04` §1). An overflowing difference throws `OverflowException` |
 
@@ -105,8 +115,11 @@ property of M0-14). The start rule and the stall reason share the checks in `Cit
 `.claude/rules/simulation.md` is the binding list (integers only, `CeilDiv` for durations, no `DateTime` or randomness, no iteration
 order that matters, `checked` arithmetic, results instead of exceptions for business rules). What is specific to this module:
 - **`Advance` allocates nothing per event** (it can process ~200k): index loops over the `IReadOnlyList`s (a `foreach` over an interface
-  boxes its enumerator), no LINQ, and no `SortedDictionary` with an id key (its lookups box the struct key on .NET). The stock and the
-  report totals are the internal `State.ItemTotals`, a sorted table with binary search. `Settlement/AdvanceAllocationTests` guards it.
+  boxes its enumerator), no LINQ, and no `SortedDictionary` with an id key (its lookups box the struct key on .NET). The stock, the
+  reservations and the report totals are the internal `State.ItemTotals`, a sorted table with binary search; the timer queue is two arrays
+  sized once per advance. `Settlement/AdvanceAllocationTests` guards it.
+- **No scan of every building per event** where a per-advance structure can answer: the next due time and the due buildings come from the
+  timer queue, reservations from the table. Only the start pass still visits every building in id order. `Performance/` guards the cost.
 - **Content comes in only as `GameContent`.** Engine code takes it, never the `*Data` classes, and may rely on every content rule of `04`.
 - **The city changes only through the engine**, and a rejected mutation changes nothing. Derived values (workers, reservations, caps, labor,
   unlocks) are never stored. Fields a phase doesn't use are 0, so two equal situations are equal field by field.
@@ -130,8 +143,10 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
   `ContentErrorCode` value with its XML doc, a failing case in the matching test class, and the list in `04` → Content rules.
 - A new engine rule or effect type: recipe "New engine rule or effect type" in `core-instructions/19-change-recipes.md`; a new effect type
   end to end, with a worked example: `docs/how-to/add-research-effect.md`.
-- A new event source (mailbox deliveries, `04` §13): a class implementing `IEventSource` in `Runtime/Settlement/`, inserted into `Simulator`'s
-  list at its place in the order within a second. After `CompleteDue(t)` it has nothing due at or before `t`, or the loop can't move on.
+- A new event source (mailbox deliveries, `04` §13): a class implementing `IEventSource` in `Runtime/Settlement/`, created in `Simulator.Advance`
+  with what it needs for that advance and inserted into the sources array at its place in the order within a second. After `CompleteDue(t)`
+  it has nothing due at or before `t`, or the loop can't move on. A source that changes timers or reservations keeps the advance's
+  `BuildingTimerQueue` and `Reservations` in step.
 - A new mutation (recipe "New command" in `19`): a method in `Runtime/Rules/CityRules.cs` (a class of its own once that file passes ~300
   lines) that checks in the order of `04` §8 before it changes anything, state changes as internal transitions of `CityState` or `Building`,
   new codes in `MutationErrorCode` (and the server's catalogue), and a test per success path and code in `Rules/` with `RulesAssert.Rejected`.
@@ -187,6 +202,17 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
   the clock, production only from cycles that ended, workers, builders and research, labor (`LaborLedger` counts worker-seconds per
   cycle), no start after the window, unlocks and prerequisites. `InvariantObservation` runs all seeds once per content (a few seconds) and
   `InvariantPropertyTests` has one test per invariant and content, plus floors on what the checks exercised (printed in the test output).
+- `Performance/` (M0-16): the budget of `04` §12. `WorstCaseCity` builds the worst case through `CityRules` over
+  `Fixtures/content-performance.json`: 4 houses, 32 mines and 32 smelters, 10 s cycles at full staffing that never stall (a raw item under a
+  cap of 10¹², an uncapped product), placed one a second so the cycles end on all ten seconds of every ten (28,800 event times in 8 h), and
+  a 2-day research. `PerformanceBudgetTests` checks that shape, the exact counts of an 8 h advance (2,880 completions and starts per producer,
+  184,320 completions) and of a 7-day one after it (2,881 completions, 2,880 starts, the research in the tail, all idle at the end), and
+  times both advances: the median of 5 runs after a warm-up must stay within 500 ms; the test output prints median, min and max.
+  The tests run in the collection `RunsAlone`, after the parallel tests (beside the property suite a run took up to 427 ms).
+  Measured on an Apple A18 Pro (Mac17,5), .NET SDK 10.0.401, per advance (8 h / 7 d, median of 5): **Release 37 / 37 ms** alone (CI runs
+  Release; target 50 ms), 45–52 ms right after the parallel suite; Release without dynamic PGO (`DOTNET_TieredCompilation=0`, closer to
+  Unity's runtimes) 67 ms; Debug 161 / 161 ms. Before M0-16: Release 144 ms, Debug 605 ms (build log `docs/build-log/2026/2026-10-19-06-M0-16.md`). `Content/ContentFile` reads a fixture file as the
+  server does, for the golden and the performance contents.
 - `SimulationDependencyTests`: the compiled assembly references exactly `netstandard` and is built for `netstandard2.1`.
 - `SimulationPackageTests`: the files only Unity sees. The asmdef (`noEngineReferences`, no references, no platform or define
   restrictions, same name as the assembly, auto-referenced, the only asmdef, no asmref), `package.json` (name, `unity` 6000.3,
@@ -213,4 +239,4 @@ too, but guards the Unity client's asmdefs and manifest, not the engine (see `do
   depend on `Dictionary` or `HashSet` order (`04` §9).
 - Content error messages are English text for content authors; only `ContentErrorCode` and `Path` are stable.
 
-Last updated: M0-15
+Last updated: M0-16

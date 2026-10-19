@@ -29,6 +29,8 @@ and Unity 6.3 (client, Mono/IL2CPP), and it must behave identically in both.
 - Era, research and effects are data. Never write `if (researchId == "…")` or `if (era == 2)` in engine code.
   Add an effect type instead.
 - Keep `Advance` allocation-light (it can run ~200k steps).
+- Inside `Advance`, the next due time, the due buildings and the reservations come from the per-advance `BuildingTimerQueue` and
+  `Reservations`, not from scans of every building. Anything that starts, ends or changes a timer or a cycle there keeps both in step.
 - Source lives in `shared/Simulation/Runtime/`. `shared/Simulation.Build/CityBuilder.Simulation.csproj` compiles it
   with `EnableDefaultCompileItems=false` and `<Compile Include="../Simulation/Runtime/**/*.cs" />`.
   Never put `bin/` or `obj/` inside `shared/Simulation/`.
