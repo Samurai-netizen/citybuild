@@ -8,11 +8,12 @@
 - **Task:** M0-14 · Property test harness (`[O]`, Claude Code / claude-opus-5-5)
 - **Branch:** `task/M0-14-property-harness` (from `main` = `b183438`)
 - **Build log entry:** `docs/build-log/2026/2026-10-19-04-M0-14.md`
-- **Last green commit:** `main` = `b183438` (fast suite 741 passed: Simulation 701, Application 14)
+- **Last green commit:** the head of the branch (Simulation tests 713 passed, format clean)
 - **Steps:** 1 write-ahead · 2 structural equality helper · 3 seeded generator + coverage test · 4 determinism property ·
   5 split and timer invariance properties · 6 docs and finish (details in the build log Plan)
-- **Done steps:** —
-- **Next step:** step 1 (write-ahead commit), then step 2 in `server/tests/CityBuilder.Simulation.Tests/Properties/`.
+- **Done steps:** 1, 2 (`Properties/StructuralEquality`, `ReportTotals`, 12 tests)
+- **Next step:** step 3: `Properties/` seeded city generator (`System.Random(seed)`, operations only through `CityRules` and
+  `Simulator.Advance`, a replayable and printable operation list) and a coverage test over the seeds.
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
