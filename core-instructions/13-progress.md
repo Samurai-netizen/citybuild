@@ -8,11 +8,11 @@
 - **Task:** M0-15 · Invariant properties (`[O]`, Claude Code / claude-opus-5-5)
 - **Branch:** `task/M0-15-invariant-properties` (from `main` = `ac07a3b`)
 - **Build log entry:** `docs/build-log/2026/2026-10-19-05-M0-15.md` (plan: 7 steps, decisions 1–5)
-- **Last green commit:** the branch head (fast suite 796 passed: Simulation 756, Application 14; format clean)
-- **Done steps:** 1 (write-ahead; M0-14 and CR-0001 set to `Done`), 2 (`MutationResult.Spent`/`Refunded`, rule tests), 3 (observer with
-  stepped replay, dormant tail model, branches; invariants 4, 5, 7), 4 (invariants 6, 8, 9, 10; coverage floors)
-- **Next step:** 5: invariants 11 (labor ledger per cycle in `InvariantChecks`, forked for branches), 12 (tail model vs the whole advance),
-  13 (unlocks, prerequisites); a test each in `InvariantPropertyTests`.
+- **Last green commit:** the branch head (fast suite 802 passed: Simulation 762, Application 14; format clean)
+- **Done steps:** 1 (write-ahead; M0-14, CR-0001 `Done`), 2 (`MutationResult.Spent`/`Refunded`), 3 (observer: stepped replay, dormant
+  tail model, branches; invariants 4, 5, 7), 4 (invariants 6, 8, 9, 10), 5 (11 `LaborLedger`, 12, 13); all hold on both contents
+- **Next step:** 6: sensitivity check: plant engine bugs one at a time (local, never committed), confirm the named invariant fails with
+  seed and operations, revert; record each in the build log. Then 7: `docs/how-to/debug-determinism-failure.md` and docs, finish.
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —

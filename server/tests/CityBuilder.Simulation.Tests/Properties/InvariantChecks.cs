@@ -14,16 +14,23 @@ internal sealed class InvariantChecks
     private readonly GameContent _content;
     private readonly Action<Invariant, string> _fail;
     private readonly Action<string> _count;
+    private readonly LaborLedger _labor;
 
     public InvariantChecks(GameContent content, Action<Invariant, string> fail, Action<string> count)
+        : this(content, fail, count, new LaborLedger(content))
+    {
+    }
+
+    private InvariantChecks(GameContent content, Action<Invariant, string> fail, Action<string> count, LaborLedger labor)
     {
         _content = content;
         _fail = fail;
         _count = count;
+        _labor = labor;
     }
 
     /// <summary>Checks for a branch that leaves the history here: the same callbacks, and a copy of what these checks track so far.</summary>
-    public InvariantChecks Fork() => new(_content, _fail, _count);
+    public InvariantChecks Fork() => new(_content, _fail, _count, _labor.Fork());
 
     public void Check(InvariantStep step)
     {
@@ -35,6 +42,9 @@ internal sealed class InvariantChecks
         Report(Invariant.NoProductionWhileBuilding, step, Production(step) ?? Building(step));
         Report(Invariant.WorkerLimits, step, Workers(step.After));
         Report(Invariant.BuilderAndResearchSlots, step, Slots(step));
+        Report(Invariant.LaborAccounting, step, _labor.Check(step, _count));
+        Report(Invariant.NoStartAfterTheCap, step, NoStartAfterTheCap(step));
+        Report(Invariant.UnlockAndPrerequisites, step, Unlocks(step));
     }
 
     private void Report(Invariant invariant, InvariantStep step, string? failure)
@@ -225,6 +235,86 @@ internal sealed class InvariantChecks
         ActiveResearch? active = step.After.ActiveResearch;
         return active is not null && step.After.HasCompletedResearch(active.Id) ? $"research {active.Id} is running and completed" : null;
     }
+
+    // 12: every cycle that starts in a step starts within its window; and the dormant tail of an advance beyond the cap does exactly what
+    // the model says: timers complete, nothing starts, nothing is consumed.
+    private string? NoStartAfterTheCap(InvariantStep step)
+    {
+        foreach (Building after in step.After.Buildings.Where(building => building.Phase == BuildingPhase.Producing))
+        {
+            bool running = step.Before.TryGetBuilding(after.Id, out Building? before)
+                && before.Phase == BuildingPhase.Producing && before.PhaseStartedAt == after.PhaseStartedAt;
+            CountIf(!running && after.PhaseStartedAt == step.ProductionUntil, "cycles started at the last second of a window");
+            if (!running && after.PhaseStartedAt > step.ProductionUntil)
+            {
+                return $"building {after.Id} started a cycle at {after.PhaseStartedAt}, after the window's last second {step.ProductionUntil}";
+            }
+        }
+
+        if (step.ExpectedTail is not { } tail)
+        {
+            return null;
+        }
+
+        _count("dormant tails");
+        CountIf(tail.CompletedBuildings.Count > 0 || tail.CompletedResearch.Count > 0 || tail.Produced.Count > 0, "dormant tails with a completion");
+        string? consumed = step.Consumed.Where(item => item.Value != 0).Select(item => $"{item.Key} {item.Value}").FirstOrDefault();
+        return StructuralEquality.FirstDifference(tail.City, step.After)
+            ?? (consumed is not null ? $"the tail consumed {consumed}" : null)
+            ?? Differ("produced", Text(tail.Produced), Text(step.Produced))
+            ?? Differ("completed buildings", string.Join(",", tail.CompletedBuildings), string.Join(",", step.CompletedBuildings.Order()))
+            ?? Differ("completed research", string.Join(",", tail.CompletedResearch), string.Join(",", step.CompletedResearch));
+    }
+
+    // 13: a placed type was unlocked and of the city's era or earlier when it was placed; a research started had its prerequisites and the
+    // city's era; and at every step the completed research has all its prerequisites, and every building's type is unlocked.
+    private string? Unlocks(InvariantStep step)
+    {
+        if (step.Mutation is not null && step.Operation is CityOperation.PlaceBuilding
+            && step.After.TryGetBuilding(step.Before.NextBuildingId, out Building? placed))
+        {
+            BuildingDefinition type = DormantTail.Definition(_content, placed.TypeId);
+            CountIf(!type.IsAvailableAtStart, "placements of a type locked at the start");
+            if (!IsUnlocked(step.Before, type))
+            {
+                return $"building {placed.Id} of type {type.Id} (era {type.Era}) was placed while locked";
+            }
+        }
+
+        if (step.Mutation is not null && step.Operation is CityOperation.StartResearch start)
+        {
+            ResearchDefinition node = Research(new ResearchId(start.ResearchId));
+            CountIf(node.Prerequisites.Count > 0, "research starts with prerequisites");
+            if (node.Era != step.Before.Era || node.Prerequisites.Any(prerequisite => !step.Before.HasCompletedResearch(prerequisite)))
+            {
+                return $"research {node.Id} (era {node.Era}) started in era {step.Before.Era} with completed [{string.Join(",", step.Before.CompletedResearch)}]";
+            }
+        }
+
+        IEnumerable<ResearchId> researched = step.After.ActiveResearch is null
+            ? step.After.CompletedResearch
+            : step.After.CompletedResearch.Append(step.After.ActiveResearch.Id);
+        foreach (ResearchId id in researched)
+        {
+            ResearchId[] missing = [.. Research(id).Prerequisites.Where(prerequisite => !step.After.HasCompletedResearch(prerequisite))];
+            if (missing.Length > 0)
+            {
+                return $"research {id} is completed or running without {string.Join(",", missing)}";
+            }
+        }
+
+        Building? locked = step.After.Buildings.FirstOrDefault(building => !IsUnlocked(step.After, DormantTail.Definition(_content, building.TypeId)));
+        return locked is null ? null : $"building {locked.Id} of the locked type {locked.TypeId} stands in the city";
+    }
+
+    private static bool IsUnlocked(CityState city, BuildingDefinition type) =>
+        type.Era <= city.Era && (type.IsAvailableAtStart || (type.UnlockedByResearch is { } research && city.HasCompletedResearch(research)));
+
+    private static string? Differ(string what, string expected, string actual) =>
+        expected == actual ? null : $"{what}: expected [{expected}], actual [{actual}]";
+
+    private static string Text(IReadOnlyDictionary<ItemId, long> quantities) =>
+        string.Join(",", quantities.Where(item => item.Value != 0).OrderBy(item => item.Key).Select(item => $"{item.Key} {item.Value}"));
 
     // The storage cap of an item now: its base cap plus the bonuses of the completed research.
     private long Cap(CityState city, ItemId item) =>

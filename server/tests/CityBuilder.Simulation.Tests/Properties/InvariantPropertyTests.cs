@@ -39,6 +39,20 @@ public sealed class InvariantPropertyTests(ITestOutputHelper output)
 
     [Theory]
     [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
+    public void Observe_EveryStep_CompletesEachCycleWhenItsWorkerSecondsReachItsLabor(string contentName) =>
+        Holds(contentName, Invariant.LaborAccounting);
+
+    [Theory]
+    [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
+    public void Observe_EveryStep_StartsNoCycleAfterTheProductionCap(string contentName) => Holds(contentName, Invariant.NoStartAfterTheCap);
+
+    [Theory]
+    [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
+    public void Observe_EveryStep_NeverPlacesALockedBuildingOrSkipsAPrerequisite(string contentName) =>
+        Holds(contentName, Invariant.UnlockAndPrerequisites);
+
+    [Theory]
+    [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
     public void Observe_PropertySeeds_ExerciseEveryCheck(string contentName)
     {
         InvariantObservation observation = InvariantObservation.For(contentName);
@@ -55,6 +69,15 @@ public sealed class InvariantPropertyTests(ITestOutputHelper output)
         observation.AssertAtLeast("buildings at their worker limit", 1000);
         observation.AssertAtLeast("steps with every builder busy", 50);
         observation.AssertAtLeast("research starts", 100);
+        observation.AssertAtLeast("cycles completed after a worker change", 100);
+        observation.AssertAtLeast("cycles ended by an upgrade", 50);
+        observation.AssertAtLeast("frozen cycles carried", 1000);
+        observation.AssertAtLeast("cycles started with a labor reduction", 100);
+        observation.AssertAtLeast("cycles started at the last second of a window", 5);
+        observation.AssertAtLeast("dormant tails", 500);
+        observation.AssertAtLeast("dormant tails with a completion", 10);
+        observation.AssertAtLeast("placements of a type locked at the start", 20);
+        observation.AssertAtLeast("research starts with prerequisites", 20);
     }
 
     private static void Holds(string contentName, Invariant invariant) => InvariantObservation.For(contentName).AssertHolds(invariant);
