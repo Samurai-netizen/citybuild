@@ -30,6 +30,7 @@ in it. `GET /city` settles too, so it is safe to repeat but not free of side eff
 ## Alternatives considered
 | Option | Pros | Cons | Why not |
 |---|---|---|---|
+| A "claim" command: the player collects what was produced | One clear moment that writes | Taps become progress, which `22` rules out ("taps are decisions, never progress"); when to claim becomes a tactic; the elapsed time must still be computed | Rejected with the kit (KIT build log, decision 1); `05` has no claim command |
 | A background ticker advances and writes every city every few minutes | Stored state always fresh; reads don't write | Cost grows with cities × time, even for cities nobody looks at; the ticker and requests compete for the same row lock | Cost and moving parts with no gain a player sees; decision 005's fallback rules it out |
 | Fixed time steps (simulate every second) | The simplest loop | 8 h is 28,800 steps over every building, almost all of them empty | Events give the same result far cheaper |
 | Settle only on commands; `GET /city` computes a projection without writing | A side-effect-free read | Every poll of an idle city simulates the whole window since the last write again; two code paths (projection and authority); the welcome-back report and the ledger have no single settlement | One path; a poll every 2 minutes then simulates only those 2 minutes |
