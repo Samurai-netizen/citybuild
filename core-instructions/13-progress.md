@@ -8,10 +8,9 @@
 - **Task:** M0-10 · Engine rule tests (`[O]`)
 - **Branch:** `task/M0-10-engine-rule-tests` (from `main` = `328dbba`)
 - **Build log entry:** `docs/build-log/2026/2026-10-18-02-M0-10.md` (plan: steps 1–6)
-- **Last green commit:** `main` = `328dbba` (fast suite 660 passed: Simulation 633)
-- **Done steps:** 1 (write-ahead)
-- **Next step:** step 2: `CityFixture` (workshop level 2 = 180 labor / 6 workers, uncapped producer `mint`), the command helper,
-  `EngineRules/CycleRuleTests` and `StartRuleTests`.
+- **Last green commit:** the head of the branch (0 warnings, format clean, fast suite 677 passed: Simulation 650)
+- **Done steps:** 1 (write-ahead), 2 (fixture, `EngineRules/Commands`, `CycleRuleTests`, `StartRuleTests`)
+- **Next step:** step 3: `EngineRules/WorkerRuleTests` (reassign, freeze, resume, auto-staffing, house provides workers).
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
