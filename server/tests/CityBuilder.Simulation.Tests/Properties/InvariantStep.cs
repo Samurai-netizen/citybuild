@@ -32,7 +32,10 @@ internal sealed class InvariantStep
     /// <summary>The city after the step (the engine's own object: read it before the next step changes it).</summary>
     public required CityState After { get; init; }
 
-    /// <summary>The generated operation this step belongs to, and its number in the history (1-based; 0 after the history).</summary>
+    /// <summary>
+    /// The operation of the step: the generated one, or a branch's command. Its number is that of the generated operation during or after
+    /// which the step runs (1-based; 0 after the history).
+    /// </summary>
     public required CityOperation Operation { get; init; }
 
     public required int OperationNumber { get; init; }
@@ -73,5 +76,5 @@ internal sealed class InvariantStep
     /// <summary>Where the step is, for a failure message.</summary>
     public string Describe() => string.Create(
         CultureInfo.InvariantCulture,
-        $"operation {OperationNumber} ({Operation}){(Branch is null ? "" : $", {Branch}")}, step from clock {Before.Clock} to {After.Clock}{(EventAligned ? "" : " (dormant tail)")}");
+        $"operation {OperationNumber}{(Branch is null ? $" ({Operation})" : $", {Branch}")}, step from clock {Before.Clock} to {After.Clock}{(EventAligned ? "" : " (dormant tail)")}");
 }
