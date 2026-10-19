@@ -76,18 +76,19 @@ Advance(city, content, elapsedSeconds) -> SettlementReport
   productionUntil = T0 + content.Rules.MaxOfflineProductionSeconds
   t = T0
   loop:
+    CompleteDue(city, t)                                   # research, then buildings by Id
     if t <= productionUntil: StartEligible(city, t)        # ascending Id
     next = min(city.ResearchEndsAt, non-null PhaseEndsAt of all buildings)
     if next is none or next > target: break
     t = next
-    CompleteDue(city, t)                                   # research, then buildings by Id
   city.Clock = target
 ```
 
-`Advance(city, 0)` (a **zero-length advance**) only runs `StartEligible` at the current clock.
+`Advance(city, 0)` (a **zero-length advance**) only runs `StartEligible` at the current clock (and completes a timer due exactly there).
 Every mutation is followed by a zero-length advance, so the returned state is always canonical.
 The event sources (research timer, building timers, later the mailbox of §13) are a list in the order of §6; `next` is the earliest of them.
-A timer due before the clock means an invalid city: `Advance` throws before it changes anything.
+A timer due at the clock completes first, in the order of §6 (a canonical city has none: every timer ends ≥ 1 s after it is set, but a
+restored city may). A timer due before the clock means an invalid city: `Advance` throws before it changes anything.
 
 ## 8. Mutations (all happen at `city.Clock`, after settling)
 

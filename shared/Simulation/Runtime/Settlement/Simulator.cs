@@ -61,10 +61,16 @@ namespace CityBuilder.Simulation.Settlement
             var report = new SettlementReportBuilder();
             long time = start;
 
-            // Every event a source completes is gone afterwards, and every new timer ends at least 1 second later (durations and labor are at
-            // least 1, content rule 1), so each pass moves on in time and the loop ends.
+            // Each pass completes what is due, then starts, so the order of 04 section 6 holds at the clock too: a canonical city has nothing
+            // due there, but a restored one may. Every event a source completes is gone afterwards, and every new timer ends at least 1 second
+            // later (durations and labor are at least 1, content rule 1), so each pass moves on in time and the loop ends.
             while (true)
             {
+                for (int index = 0; index < _eventSources.Count; index++)
+                {
+                    _eventSources[index].CompleteDue(city, content, time, report);
+                }
+
                 if (time <= productionUntil)
                 {
                     StartEligible(city, content, time, report);
@@ -77,10 +83,6 @@ namespace CityBuilder.Simulation.Settlement
                 }
 
                 time = next.Value;
-                for (int index = 0; index < _eventSources.Count; index++)
-                {
-                    _eventSources[index].CompleteDue(city, content, time, report);
-                }
             }
 
             city.AdvanceClockTo(target);

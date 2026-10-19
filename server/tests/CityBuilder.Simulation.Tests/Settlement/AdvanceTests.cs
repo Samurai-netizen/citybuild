@@ -102,6 +102,23 @@ public sealed class AdvanceTests
     }
 
     [Fact]
+    public void Advance_TimerDueAtTheClock_CompletesBeforeTheStarts()
+    {
+        // A restored city whose research ends at its clock: the order of 04 section 6 holds at the clock too, so the camp's cycle starts with
+        // better_saws' 25 % off (40 → 30 labor, 15 s with 2 workers), not before it.
+        CityState city = City(
+            clock: 1000,
+            buildings: [Idle(1, "hut", 0, 0), Idle(2, "lumber_camp", 1, 0, workers: 2)],
+            completedResearch: ["carpentry"],
+            activeResearch: new ActiveResearch(new ResearchId("better_saws"), 800, 1000));
+
+        SettlementReport report = Simulator.Advance(city, TestContent, 0);
+
+        Assert.Equal([new ResearchId("better_saws")], report.CompletedResearch);
+        Assert.Equal("building 2 lumber_camp (1,0) L1 w=2 Producing 1000..1015 target=0 labor=30/30@1000", CityDump.BuildingLine(city, 2));
+    }
+
+    [Fact]
     public void Advance_NullCityOrContent_Throws()
     {
         // The nulls are deliberate: they are programmer errors, not business rules.
