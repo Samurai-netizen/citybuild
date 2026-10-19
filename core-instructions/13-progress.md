@@ -4,15 +4,15 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** M0-11 · Golden scenario #1 (`[O]`, Claude Code / claude-opus-5-5)
-- **Branch:** `task/M0-11-golden-scenario-1` (from `main` = `a0b802a`)
-- **Build log entry:** `docs/build-log/2026/2026-10-19-01-M0-11.md` (In progress; plan and the hand check of the table are there)
-- **Last green commit:** the head of the branch (0 warnings, format clean, fast suite 713 passed: Simulation 686)
-- **Done steps:** 1 write-ahead · 2 frozen content `Fixtures/content-golden-v1.json`, `Golden/` runner and one case per table row (all pass;
-  the table and the engine agree) · 3 split check (one advance per gap vs 1-second steps, identical cities) · 4 docs (module doc, overview,
-  `CHANGELOG`, how-to `add-building-or-item.md`)
-- **Next step:** finish (`16` §E): the owner runs `/finish-task` (self-review line by line, Definition of Done, PR).
+- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** — (last completed: M0-11 · Golden scenario #1; PR open, the owner merges it)
+- **Branch:** `task/M0-11-golden-scenario-1` (from `main` = `a0b802a`) until the owner merges
+- **Build log entry:** last: `docs/build-log/2026/2026-10-19-01-M0-11.md` (Done)
+- **Last green commit:** the head of `task/M0-11-golden-scenario-1` (0 warnings, format clean, fast suite 713 passed: Simulation 686;
+  `check-docs --base origin/main` OK; Unity not run: nothing Unity compiles changed)
+- **Done steps:** all of M0-11 (frozen content, golden runner, one case per table row, split check, docs, finish); the table and the engine
+  agree
+- **Next step:** the owner merges the PR; then `/model` → Opus 5.5 and `/start-task M0-12` (engine review, `[O]`).
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
@@ -20,12 +20,12 @@
   `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 10 / 85 (M0-11 in progress)
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 10 / 85 (M0-11 in review)
 
 | Area | State | Notes |
 |---|---|---|
 | Repo, kit, hooks, CI | done | M0-01 and the audit fixes merged (PR #4, #5); A18 can be closed in M0-04 |
-| Shared engine: content, research, labor | in progress | M0-03 merged (PR #7); the content model and its validation (M0-07a) merged (PR #14); the JSON file and server loading (M0-07b) merged (PR #15); city state and mutations (M0-08) merged (PR #16); `Simulator.Advance` (M0-09) merged (PR #17); rule tests (M0-10) merged (PR #18); golden scenario #1 is M0-11 (in progress) |
+| Shared engine: content, research, labor | in progress | M0-03 merged (PR #7); the content model and its validation (M0-07a) merged (PR #14); the JSON file and server loading (M0-07b) merged (PR #15); city state and mutations (M0-08) merged (PR #16); `Simulator.Advance` (M0-09) merged (PR #17); rule tests (M0-10) merged (PR #18); golden scenario #1 is M0-11 (in review) |
 | Shared engine: invariants, performance | not started | |
 | Server skeleton | done | M0-02 merged (PR #6) |
 | Persistence (EF + PostgreSQL) | not started | |

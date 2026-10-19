@@ -5,10 +5,11 @@ using CityBuilder.Simulation.Tests.State;
 namespace CityBuilder.Simulation.Tests.Golden;
 
 /// <summary>
-/// Golden scenario #1 (<see cref="GoldenScenario1"/>) against the table in <c>core-instructions/23-mvp-content.md</c>, which was checked by
-/// hand. Each table row is one case: the stock, the free workers, every building's phase and stall reason, and the research. If a case
-/// fails, work out by hand whether the table or the engine is wrong before changing either. The same script also runs one second at a time,
-/// and must give the same city at every row.
+/// Golden scenario #1 (<see cref="GoldenScenario1"/>) against the table in <c>core-instructions/23-mvp-content.md</c> as it was for content
+/// <c>mvp-1</c> (the frozen <see cref="GoldenContent.V1"/>), checked by hand in M0-11. Each table row is one case: the stock, the free workers,
+/// every building's phase and stall reason, and the research. A later content change updates the table in <c>23</c>, not these cases. If a
+/// case fails, work out by hand whether the expectation or the engine is wrong before changing either. The same script also runs one second
+/// at a time, and must give the same city at every row.
 /// </summary>
 public sealed class GoldenScenario1Tests
 {
