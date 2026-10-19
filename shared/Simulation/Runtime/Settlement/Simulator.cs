@@ -59,6 +59,7 @@ namespace CityBuilder.Simulation.Settlement
             }
 
             var report = new SettlementReportBuilder();
+            Reservations reservations = Reservations.Of(city, content);
             long time = start;
 
             // Each pass completes what is due, then starts, so the order of 04 section 6 holds at the clock too: a canonical city has nothing
@@ -68,12 +69,12 @@ namespace CityBuilder.Simulation.Settlement
             {
                 for (int index = 0; index < _eventSources.Count; index++)
                 {
-                    _eventSources[index].CompleteDue(city, content, time, report);
+                    _eventSources[index].CompleteDue(city, content, time, report, reservations);
                 }
 
                 if (time <= productionUntil)
                 {
-                    StartEligible(city, content, time, report);
+                    StartEligible(city, content, time, report, reservations);
                 }
 
                 long? next = NextDueAt(city);
@@ -94,9 +95,9 @@ namespace CityBuilder.Simulation.Settlement
         /// room under a cap for a lower id that the pass has already skipped (CR-0001); the next pass starts it in the same second. Each pass
         /// starts at least one building or ends the loop, and a building starts at most once (it is then producing), so the loop ends.
         /// </summary>
-        private static void StartEligible(CityState city, GameContent content, long time, SettlementReportBuilder report)
+        private static void StartEligible(CityState city, GameContent content, long time, SettlementReportBuilder report, Reservations reservations)
         {
-            while (StartPass(city, content, time, report))
+            while (StartPass(city, content, time, report, reservations))
             {
             }
         }
@@ -107,7 +108,7 @@ namespace CityBuilder.Simulation.Settlement
         /// (stock + reserved + quantity ≤ cap) takes its inputs and starts a cycle with the labor of now (research reductions included).
         /// Returns whether any building started.
         /// </summary>
-        private static bool StartPass(CityState city, GameContent content, long time, SettlementReportBuilder report)
+        private static bool StartPass(CityState city, GameContent content, long time, SettlementReportBuilder report, Reservations reservations)
         {
             bool started = false;
             IReadOnlyList<Building> buildings = city.Buildings;
@@ -122,19 +123,36 @@ namespace CityBuilder.Simulation.Settlement
                 RecipeDefinition? recipe = CityQueries.DefinitionOf(content, building.TypeId).GetLevel(building.Level).Recipe;
                 if (recipe is null
                     || CityQueries.TryFindMissingInput(city, recipe, out _)
-                    || CityQueries.TryFindFullOutput(city, content, recipe, out _))
+                    || !OutputsFit(city, content, recipe, reservations))
                 {
                     continue;
                 }
 
-                // The outputs are reserved by the Producing phase itself: reservations are derived, never stored.
+                // The outputs are reserved by the Producing phase itself: reservations are derived, never stored. The table only keeps
+                // this advance from summing them again for every check.
                 city.RemoveItems(recipe.Inputs);
                 report.AddConsumed(recipe.Inputs);
+                reservations.Add(recipe.Outputs);
                 building.StartCycle(time, CityQueries.EffectiveLabor(city, content, building.TypeId, building.Level));
                 started = true;
             }
 
             return started;
+        }
+
+        // The output check of the start rule, CityQueries.TryFindFullOutput with the reservations of this advance.
+        private static bool OutputsFit(CityState city, GameContent content, RecipeDefinition recipe, Reservations reservations)
+        {
+            IReadOnlyList<ItemQuantity> outputs = recipe.Outputs;
+            for (int index = 0; index < outputs.Count; index++)
+            {
+                if (!CityQueries.FitsUnderCap(city, content, outputs[index], reservations.Get(outputs[index].Item)))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private static long? NextDueAt(CityState city)

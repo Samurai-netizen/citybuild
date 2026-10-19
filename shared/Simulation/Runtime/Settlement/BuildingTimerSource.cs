@@ -31,7 +31,7 @@ namespace CityBuilder.Simulation.Settlement
         }
 
         /// <inheritdoc/>
-        public void CompleteDue(CityState city, GameContent content, long time, SettlementReportBuilder report)
+        public void CompleteDue(CityState city, GameContent content, long time, SettlementReportBuilder report, Reservations reservations)
         {
             IReadOnlyList<Building> buildings = city.Buildings;
             for (int index = 0; index < buildings.Count; index++)
@@ -39,12 +39,12 @@ namespace CityBuilder.Simulation.Settlement
                 Building building = buildings[index];
                 if (building.PhaseEndsAt == time)
                 {
-                    Complete(city, content, building, report);
+                    Complete(city, content, building, report, reservations);
                 }
             }
         }
 
-        private static void Complete(CityState city, GameContent content, Building building, SettlementReportBuilder report)
+        private static void Complete(CityState city, GameContent content, Building building, SettlementReportBuilder report, Reservations reservations)
         {
             switch (building.Phase)
             {
@@ -62,6 +62,7 @@ namespace CityBuilder.Simulation.Settlement
                     // The reserved outputs move to stock; caps limit only starts. An upgrade ends a running cycle, so the level is the start's.
                     IReadOnlyList<ItemQuantity> outputs = CityQueries.RecipeOf(content, building.TypeId, building.Level).Outputs;
                     city.AddItems(outputs);
+                    reservations.Remove(outputs);
                     report.AddProduced(outputs);
                     building.CompleteCycle();
                     break;

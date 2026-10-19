@@ -9,9 +9,9 @@
 - **Branch:** `task/M0-16-performance-budget` (from `main` = `b783bbf`)
 - **Build log entry:** `docs/build-log/2026/2026-10-19-06-M0-16.md` (plan: steps 1–5)
 - **Last green commit:** the head of the branch (fast suite: Simulation 765, Application 14; format clean)
-- **Done steps:** 1 (write-ahead), 2 (worst-case content, `Performance/WorstCaseCity`, exact counts for 8 h then 7 d)
-- **Next step:** 4: profile and optimize the event loop (measured: ~144 ms Release, ~605 ms Debug per advance; target 50 ms), then
-  commit the timing test (step 3; the full version is described in the build log, decision 6).
+- **Done steps:** 1 (write-ahead), 2 (worst-case city, exact counts), 3 (timing test), 4a (`Settlement/Reservations`: 144 → ~52 ms Release)
+- **Next step:** 4b: ablate what remains (scans of all buildings per event time, content lookups), then optimize it (target < 50 ms
+  Release, with margin); property suite stays green.
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —

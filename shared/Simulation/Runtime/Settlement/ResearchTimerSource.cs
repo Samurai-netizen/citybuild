@@ -14,7 +14,7 @@ namespace CityBuilder.Simulation.Settlement
         public long? NextDueAt(CityState city) => city.ActiveResearch?.EndsAt;
 
         /// <inheritdoc/>
-        public void CompleteDue(CityState city, GameContent content, long time, SettlementReportBuilder report)
+        public void CompleteDue(CityState city, GameContent content, long time, SettlementReportBuilder report, Reservations reservations)
         {
             if (city.ActiveResearch != null && city.ActiveResearch.EndsAt == time)
             {
