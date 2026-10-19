@@ -11,9 +11,9 @@
 - **Last green commit:** the head of the branch (fast suite 740 passed: Simulation 701, Application 13; 0 warnings, format clean)
 - **Steps:** 1 write-ahead · 2 `SettlementWindow` (engine, test-first) · 3 Application `ICityRepository` / `CityAggregate` / `SettleCity`
   · 4 `FakeTimeProvider` tests of the spec list · 5 docs and finish
-- **Done steps:** 1, 2 (`SettlementWindow`), 3 and 4 (`Application/Cities/`: `SettleCity` and its `FakeTimeProvider` tests)
-- **Next step:** step 5: docs per `19` (module docs Simulation and Application, architecture overview, `04` §1, glossary, `CHANGELOG`),
-  then `/finish-task`.
+- **Done steps:** 1, 2 (`SettlementWindow`), 3 and 4 (`Application/Cities/`: `SettleCity` and its tests), 5 docs (all but `CHANGELOG`)
+- **Next step:** finish (`16` §E, `/finish-task`, started by the owner): `CHANGELOG` line, Definition of Done, `check-docs --base origin/main`,
+  Unity EditMode/PlayMode (the engine got a file), PR.
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —

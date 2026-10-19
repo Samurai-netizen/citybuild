@@ -33,6 +33,7 @@ Use these names in code, docs and UI text. Consistent words keep Claude and the 
 | City state | Everything stored about one city: clock, era, stock, buildings, research; derived values are computed, never stored | `CityState`, `CityFactory`, `CityQueries` |
 | City clock | Per-city simulation time in integer seconds | `CityState.Clock` |
 | Settle | Advance a city from its last settlement to now | `SettleCity`, `Simulator.Advance` |
+| Settlement window | The server seconds one settle covers: from the last settled second to now; nothing elapses when the clock is behind | `SettlementWindow`, `CityAggregate.LastSettledUnixSec` |
 | Event source | One kind of timed event the advance processes, in a fixed order within a second: research timer, building timers, later the mailbox | `IEventSource` |
 | Production cap | Max seconds per settlement during which cycles may start | `Rules.MaxOfflineProductionSeconds` |
 | Dormant tail | Part of a settlement after the production cap: timers run, no new cycles | — |

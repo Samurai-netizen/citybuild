@@ -19,12 +19,12 @@ flowchart LR
     CORE["Client.Core<br/>AppInfo"]
   end
   subgraph sharedside["shared"]
-    SIM["CityBuilder.Simulation<br/>IntegerMath, content ids,<br/>GameContentFactory, GameContent,<br/>CityState, CityQueries, CityRules,<br/>Simulator, SettlementReport"]
+    SIM["CityBuilder.Simulation<br/>IntegerMath, content ids,<br/>GameContentFactory, GameContent,<br/>CityState, CityQueries, CityRules,<br/>Simulator, SettlementReport,<br/>SettlementWindow"]
   end
   subgraph serverside["server - CityBuilder.slnx"]
     API["CityBuilder.Api<br/>health, OpenAPI in Development,<br/>content at startup"]
     INF["CityBuilder.Infrastructure<br/>ContentFileLoader, ContentProvider"]
-    APP["CityBuilder.Application<br/>IContentProvider"]
+    APP["CityBuilder.Application<br/>IContentProvider, ICityRepository,<br/>SettleCity (skeleton)"]
     DOM["CityBuilder.Domain<br/>no types yet"]
   end
   DB[("PostgreSQL 18")]
@@ -58,13 +58,13 @@ decision 020 and `core-instructions/14-coding-standards.md` (checked by a probe 
 | Project | Path | References | Packages | Holds today | Doc |
 |---|---|---|---|---|---|
 | `CityBuilder.Api` | `server/src/` | Application, Infrastructure | `Microsoft.AspNetCore.OpenApi` | `Program.cs`: JSON console logs, ProblemDetails, health check, `TimeProvider.System`, OpenAPI in Development, the content loaded before any request (`Content:FilePath`, `ContentOptions`, `ContentLog`); the build copies `server/content/*.json` to `content/` | [module](../modules/CityBuilder.Api.md) |
-| `CityBuilder.Application` | `server/src/` | Domain, Simulation | — | `IContentProvider` *(planned: more ports M0-20, pipeline M0-26)* | [module](../modules/CityBuilder.Application.md) |
+| `CityBuilder.Application` | `server/src/` | Domain, Simulation | — | `IContentProvider`; `Cities/`: the `SettleCity` skeleton over a first `ICityRepository` and `CityAggregate` (M0-13) *(planned: more ports M0-20, pipeline M0-26)* | [module](../modules/CityBuilder.Application.md) |
 | `CityBuilder.Domain` | `server/src/` | Simulation | — | nothing yet *(planned, M0-19 on)* | [module](../modules/CityBuilder.Domain.md) |
 | `CityBuilder.Infrastructure` | `server/src/` | Application, Domain | — *(EF Core and Npgsql planned, M0-19)* | the content loader: `ContentFileLoader`, `ContentLoadException`, `ContentProvider` *(planned: persistence M0-19)* | [module](../modules/CityBuilder.Infrastructure.md) |
-| `CityBuilder.Simulation` | `shared/Simulation.Build/` (.NET) and `shared/Simulation/` (Unity package) | the base class library only | — | `IntegerMath` (`CeilDiv`, `ApplyPermilleReduction`); `ItemId`, `BuildingTypeId`, `ResearchId`, `EraId`; the content model (`Content/`: `*Data` → `GameContentFactory` → `GameContent`, `04` §14); the city state (`State/`: `CityState`, `Building`, `CityFactory`, `CityQueries`, `StallReason`), the mutations (`Rules/`: `CityRules`, `MutationResult`, `04` §8) and the settlement (`Settlement/`: `Simulator.Advance`, `SettlementReport`, `04` §7) | [module](../modules/CityBuilder.Simulation.md) |
+| `CityBuilder.Simulation` | `shared/Simulation.Build/` (.NET) and `shared/Simulation/` (Unity package) | the base class library only | — | `IntegerMath` (`CeilDiv`, `ApplyPermilleReduction`); `ItemId`, `BuildingTypeId`, `ResearchId`, `EraId`; the content model (`Content/`: `*Data` → `GameContentFactory` → `GameContent`, `04` §14); the city state (`State/`: `CityState`, `Building`, `CityFactory`, `CityQueries`, `StallReason`), the mutations (`Rules/`: `CityRules`, `MutationResult`, `04` §8) and the settlement (`Settlement/`: `Simulator.Advance`, `SettlementReport`, `04` §7; `SettlementWindow`, `04` §1) | [module](../modules/CityBuilder.Simulation.md) |
 | `CityBuilder.Domain.Tests` | `server/tests/` | Domain | xUnit v3 (`xunit.v3.mtp-off`, runner, test SDK; decision 019) | 1 test | the Domain module doc → Tests |
-| `CityBuilder.Application.Tests` | `server/tests/` | Application | the same | 1 test | the Application module doc → Tests |
-| `CityBuilder.Simulation.Tests` | `server/tests/` | Simulation | the same | 692 tests: engine helpers, content ids, content model and validation, city state, queries, stall reasons, mutations, `Simulator.Advance`, a rule test per engine rule, golden scenario #1, and the architecture tests below | the Simulation module doc → Tests |
+| `CityBuilder.Application.Tests` | `server/tests/` | Application | the same, plus `Microsoft.Extensions.TimeProvider.Testing` (`FakeTimeProvider`) | 13 tests: the dependency rule and `SettleCity` with a fake clock and repository | the Application module doc → Tests |
+| `CityBuilder.Simulation.Tests` | `server/tests/` | Simulation | the same | 701 tests: engine helpers, content ids, content model and validation, city state, queries, stall reasons, mutations, `Simulator.Advance`, the settlement window, a rule test per engine rule, golden scenario #1, and the architecture tests below | the Simulation module doc → Tests |
 | `CityBuilder.IntegrationTests` | `server/tests/` | Api | the same, plus `Microsoft.AspNetCore.Mvc.Testing` | 25 in-memory tests (no Docker): the API host, the content loader and the content startup; none in the `Integration` category yet *(planned, M0-21)* | the Api module doc → Tests |
 
 ### Unity client
