@@ -7,7 +7,8 @@ runs authoritatively on the server, and runs on the client for display only.
 ## 1. Time
 - Simulation time is **integer seconds** (`long`) on a per-city **city clock**.
 - The server converts `now` (`TimeProvider`, UTC, floored to whole seconds) into
-  `elapsed = nowSec − city.LastSettledUnixSec`. `elapsed < 0` → 0, keep `LastSettledUnixSec`, log a warning.
+  `elapsed = nowSec − city.LastSettledUnixSec`. `elapsed < 0` → 0, keep `LastSettledUnixSec`, log a warning
+  (`SettlementWindow.Compute`; the engine computes, the server logs). Each settle starts where the last one ended, so floored fractions are never lost.
 - Every settlement advances the clock by the **full** elapsed time.
 - Client time is never an input.
 - Development servers may run a scaled `TimeProvider` (`Simulation:DevTimeScale`, e.g. 60 = one hour per minute).
