@@ -9,9 +9,8 @@
 - **Branch:** `task/M0-17-display-helpers` (from `main` = `d2aa41a`)
 - **Build log entry:** `docs/build-log/2026/2026-10-19-07-M0-17.md`
 - **Last green commit:** `d2aa41a` on `main` (0 warnings, format clean, fast suite 806 passed; Unity EditMode 13/13, PlayMode 6/6)
-- **Done steps:** start of the task (write-ahead); step 1 (`IntegerMath.FloorDiv` + `FloorDivTests`)
-- **Next step:** step 2 of the plan in the build log: `Display/ItemRate` and `PerHour`; then net rate and `SecondsUntilFull`, progress
-  helpers, docs.
+- **Done steps:** start of the task (write-ahead); step 1 (`IntegerMath.FloorDiv`); step 2 (`Display/ItemRate`, `ProductionRates`, `ProductionDisplay.PerHour` + `PerHourTests`)
+- **Next step:** step 3 of the plan in the build log: `NetPerHour` and `SecondsUntilFull`; then progress helpers, docs.
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
