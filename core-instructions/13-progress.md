@@ -5,7 +5,7 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-10 · Engine rule tests; PR open, the owner merges it)
+- **Task:** — (last completed: M0-10 · Engine rule tests; PR #18 open, the owner merges it)
 - **Branch:** `task/M0-10-engine-rule-tests` (from `main` = `328dbba`) until the owner merges
 - **Build log entry:** last: `docs/build-log/2026/2026-10-18-02-M0-10.md` (Done)
 - **Last green commit:** the head of `task/M0-10-engine-rule-tests` (0 warnings, format clean, fast suite 692 passed: Simulation 665;
