@@ -42,7 +42,7 @@ need (`ICityRepository`, `IUnitOfWork`, `IContentProvider`) and the command pipe
 `server/tests/CityBuilder.Application.Tests` (xUnit v3, milliseconds; use cases with fakes). It checks the dependency rule, on the
 assembly of `IContentProvider`, and `SettleCity` in `Cities/SettleCityTests` with `FakeTimeProvider` (`Microsoft.Extensions.TimeProvider.Testing`):
 0 s, 1 s, exactly 8 h and 8 h + 1 s, 30 days (timers finish, no cycle starts after the cap), a timer completing at its second, the clock behind
-and catching up, 100 calls 300 ms apart (= one call at 29.7 s) and the save. `SettleFixture` is a small content in code (the production cap
+and catching up, null dependencies, 100 calls 300 ms apart (= one call at 29.7 s) and the save. `SettleFixture` is a small content in code (the production cap
 is the M0 value, 8 h) with a city built through `CityRules`; `InMemoryCityRepository` is the fake repository. `FakeTimeProvider` can't go
 back in time, so a clock behind is a last settled second ahead of now. The content port's implementation and its registration are tested in
 `CityBuilder.IntegrationTests` (`Content/`). Run: `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`.

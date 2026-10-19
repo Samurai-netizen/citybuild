@@ -4,16 +4,14 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** M0-13 · Settlement window and production cap (`[O]`, Claude Code / claude-opus-5-5)
-- **Branch:** `task/M0-13-settlement-window` (from `main` = `433a665`)
-- **Build log entry:** `docs/build-log/2026/2026-10-19-03-M0-13.md` (In progress)
-- **Last green commit:** the head of the branch (fast suite 740 passed: Simulation 701, Application 13; 0 warnings, format clean)
-- **Steps:** 1 write-ahead · 2 `SettlementWindow` (engine, test-first) · 3 Application `ICityRepository` / `CityAggregate` / `SettleCity`
-  · 4 `FakeTimeProvider` tests of the spec list · 5 docs and finish
-- **Done steps:** 1, 2 (`SettlementWindow`), 3 and 4 (`Application/Cities/`: `SettleCity` and its tests), 5 docs (all but `CHANGELOG`)
-- **Next step:** finish (`16` §E, `/finish-task`, started by the owner): `CHANGELOG` line, Definition of Done, `check-docs --base origin/main`,
-  Unity EditMode/PlayMode (the engine got a file), PR.
+- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** — (last completed: M0-13 · Settlement window and production cap; PR open, the owner merges it)
+- **Branch:** `task/M0-13-settlement-window` (from `main` = `433a665`) until the owner merges
+- **Build log entry:** last: `docs/build-log/2026/2026-10-19-03-M0-13.md` (Done)
+- **Last green commit:** the head of `task/M0-13-settlement-window` (0 warnings, format clean, fast suite 741 passed: Simulation 701,
+  Application 14; `check-docs --base origin/main` OK; Unity EditMode 13/13, PlayMode 6/6)
+- **Done steps:** all of M0-13 (`SettlementWindow`, the `SettleCity` skeleton with `FakeTimeProvider` tests, docs, review finding R1 fixed)
+- **Next step:** the owner merges the PR; then `/model` → Opus 5.5 and `/start-task M0-14` (property test harness, `[O]`).
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
@@ -21,13 +19,13 @@
   `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 12 / 85 (M0-13 in progress)
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 12 / 85 (M0-13 in review)
 
 | Area | State | Notes |
 |---|---|---|
 | Repo, kit, hooks, CI | done | M0-01 and the audit fixes merged (PR #4, #5); A18 can be closed in M0-04 |
 | Shared engine: content, research, labor | done | M0-03 merged (PR #7); the content model and its validation (M0-07a) merged (PR #14); the JSON file and server loading (M0-07b) merged (PR #15); city state and mutations (M0-08) merged (PR #16); `Simulator.Advance` (M0-09) merged (PR #17); rule tests (M0-10) merged (PR #18); golden scenario #1 (M0-11) merged (PR #19); engine review (M0-12) merged (PR #20) |
-| Shared engine: invariants, performance | in progress | settlement window and production cap is M0-13 (in progress) |
+| Shared engine: invariants, performance | in progress | settlement window and production cap is M0-13 (in review); property tests M0-14 next |
 | Server skeleton | done | M0-02 merged (PR #6) |
 | Persistence (EF + PostgreSQL) | not started | |
 | Auth + command pipeline | not started | |

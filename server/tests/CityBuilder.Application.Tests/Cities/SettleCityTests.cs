@@ -1,4 +1,5 @@
 using CityBuilder.Application.Cities;
+using CityBuilder.Application.Content;
 using CityBuilder.Simulation.State;
 using Microsoft.Extensions.Time.Testing;
 using static CityBuilder.Application.Tests.Cities.SettleFixture;
@@ -160,6 +161,18 @@ public sealed class SettleCityTests
         Assert.Equal(29, single.Report.ElapsedSeconds);
         Assert.Equal(single.City.LastSettledUnixSec, last!.City.LastSettledUnixSec);
         Assert.Equal(Describe(single.City.State), Describe(last.City.State));
+    }
+
+    [Fact]
+    public void Constructor_NullDependency_Throws()
+    {
+        var repository = new InMemoryCityRepository();
+        FakeTimeProvider clock = ClockAtLastSettled();
+        IContentProvider content = new FixedContent(SettleFixture.Content);
+
+        Assert.Throws<ArgumentNullException>("cities", () => new SettleCity(null!, content, clock));
+        Assert.Throws<ArgumentNullException>("content", () => new SettleCity(repository, null!, clock));
+        Assert.Throws<ArgumentNullException>("timeProvider", () => new SettleCity(repository, content, null!));
     }
 
     [Fact]

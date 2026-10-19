@@ -158,7 +158,8 @@ internal static class SettleFixture
         Levels = [new BuildingLevelData { Level = 1, WorkersProvided = 2 }],
     };
 
-    private sealed class FixedContent(GameContent content) : IContentProvider
+    /// <summary>An <see cref="IContentProvider"/> that serves the given content.</summary>
+    public sealed class FixedContent(GameContent content) : IContentProvider
     {
         public GameContent Content { get; } = content;
     }

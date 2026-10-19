@@ -63,3 +63,7 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   instead of a `SortedDictionary`, whose lookups box the id key), a timer due exactly at the clock completes before cycles start (`04` §7,
   decision 033), a restored producing building's end must match its labor, labor subtraction is `checked`; `04` §4 and §8 say which
   buildings have no stall reason and which level's worker limit applies while upgrading (decision 034) (M0-12).
+- Settlement window and production cap: `SettlementWindow.Compute` in the engine (elapsed from the last settled server second to now; a
+  clock behind elapses nothing and keeps the second), and a `SettleCity` use case skeleton in Application (`Cities/`: `ICityRepository`,
+  `CityAggregate`) that floors the `TimeProvider` to whole seconds and runs `Simulator.Advance`, tested with `FakeTimeProvider`
+  (`Microsoft.Extensions.TimeProvider.Testing` 10.10.0) and an in-memory repository (M0-13).
