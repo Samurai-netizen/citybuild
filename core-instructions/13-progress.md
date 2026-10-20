@@ -4,24 +4,25 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** CR-0002-T1 · Handbook site and docs-as-code workflow (`docs/changes/CR-0002-docs-site.md`, owner's request of 2026-10-20)
-- **Branch:** `task/CR-0002-T1-docs-site` (from `main` = `e10937a`)
-- **Build log entry:** `docs/build-log/2026/2026-10-20-01-CR-0002-T1.md`
-- **Last green commit:** the head of the branch (site builds; no .NET change; fast suite at `e10937a`: Simulation 872, Domain 1,
-  Application 14, IntegrationTests 25)
-- **Steps:** 1 start ✓ · 2 site in `website/` ✓ · 3 CI and `check-docs.sh` checks ✓ · 4 workflow docs ✓ · 5 audit of all docs against the
-  code ✓ · 6 finish (details: the entry's Session 1 plan)
-- **Next step:** step 6: finish (`16` §E): CHANGELOG line, close the Docs impact table, `check-docs.sh --base origin/main`, site build,
-  fast suite, self-review, PR.
+- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** — (last completed: CR-0002-T1 · Handbook site and docs-as-code workflow; PR open, the owner merges it)
+- **Branch:** `task/CR-0002-T1-docs-site` (from `main` = `e10937a`) until the owner merges
+- **Build log entry:** last: `docs/build-log/2026/2026-10-20-01-CR-0002-T1.md` (Done)
+- **Last green commit:** the head of `task/CR-0002-T1-docs-site` (build 0 warnings, format clean, fast suite: Simulation 872, Domain 1,
+  Application 14, IntegrationTests 25; handbook builds; `check-docs --base origin/main` OK)
+- **Done steps:** all of CR-0002-T1 (the handbook in `website/`, search, Pages publishing, CI site build, three new PR checks, the
+  workflow docs, an audit of all docs with 11 fixes; details and follow-ups in the entry)
+- **Next step:** the owner merges the PR; the workflow "Handbook site" then publishes https://samurai-netizen.github.io/citybuild/
+  (check it once). Then `/model` → Opus 5.5 and `/start-task M0-19` (EF Core model, migrations, Docker, `[O]` `[PLAN]`: write ahead,
+  present the plan, wait for approval); its start commit sets CR-0002 to `Done`. From now on every task fills a Docs impact table.
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
-- **Verify with:** `bash scripts/dev/check-docs.sh` · `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` ·
-  `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
+- **Verify with:** `bash scripts/dev/check-docs.sh` · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
+  `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 18 / 85 (CR-0002-T1 in progress)
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 18 / 85 (CR-0002-T1 in review)
 
 | Area | State | Notes |
 |---|---|---|
@@ -36,7 +37,7 @@
 | Unity city view + placement | not started | |
 | Inspector, worker stepper, research screen, HUD | not started | |
 | Resilience (limits, retries, logging) | not started | |
-| Docs automation (DocTools) + docs completeness | in progress | handbook site and docs-as-code checks: CR-0002-T1; DocTools is M0-61 |
+| Docs automation (DocTools) + docs completeness | in progress | handbook site, Pages, docs-as-code checks and a full audit: CR-0002-T1 in review; DocTools is M0-61 |
 | Balance simulator | not started | |
 | E2E / security / concurrency suites | not started | |
 | Dev build + M0 close-out | not started | |

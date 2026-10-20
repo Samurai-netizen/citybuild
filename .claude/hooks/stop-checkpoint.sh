@@ -10,7 +10,7 @@ git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0
 paths="$(git status --porcelain 2>/dev/null | sed -E 's/^.. //; s/^"//; s/"$//; s/.* -> //')"
 [ -z "$paths" ] && exit 0
 
-code="$(printf '%s\n' "$paths" | grep -E '^(server/|shared/|client/CityBuilder/(Assets|Packages|ProjectSettings)/|tools/|scripts/)' || true)"
+code="$(printf '%s\n' "$paths" | grep -E '^(server/|shared/|client/CityBuilder/(Assets|Packages|ProjectSettings)/|tools/|scripts/|website/)' || true)"
 [ -z "$code" ] && exit 0
 
 branch="$(git branch --show-current 2>/dev/null)"

@@ -53,16 +53,6 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   each test fails when its rule is broken (M0-10).
 - Golden scenario #1: the first-session table of `23` as tests on a frozen copy of the content (`Fixtures/content-golden-v1.json`), every
   row checked (stock, free workers, phases, stall reasons, research), and one advance per action gap equal to one-second steps (M0-11).
-
-### Fixed
-- Kit audit follow-ups A1, A2, A3, A9, A15, A16: `[PLAN]` tasks write ahead before the plan (no Plan Mode), the Bash guard no longer
-  reads here-documents, comments or quoted text and checks each command on its own (new `scripts/dev/test-guard-bash.sh`),
-  `scripts/dev/**` is a protected path, `scripts/` counts as code for the PR checks and the Stop hook, `.DS_Store` is untracked,
-  and the license question is parked: no `LICENSE` file for now, directive OD-8 (KIT-AUDIT-FIXES).
-- Engine review: `Simulator.Advance` allocates nothing per event (index loops; the stock and report totals in a sorted `ItemTotals`
-  instead of a `SortedDictionary`, whose lookups box the id key), a timer due exactly at the clock completes before cycles start (`04` §7,
-  decision 033), a restored producing building's end must match its labor, labor subtraction is `checked`; `04` §4 and §8 say which
-  buildings have no stall reason and which level's worker limit applies while upgrading (decision 034) (M0-12).
 - Settlement window and production cap: `SettlementWindow.Compute` in the engine (elapsed from the last settled server second to now; a
   clock behind elapses nothing and keeps the second), and a `SettleCity` use case skeleton in Application (`Cities/`: `ICityRepository`,
   `CityAggregate`) that floors the `TimeProvider` to whole seconds and runs `Simulator.Advance`, tested with `FakeTimeProvider`
@@ -87,3 +77,19 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   (every request ends with a zero-length advance, the era transition is planned, `ActiveResearch.EndsAt`, the allowed divisions as decision
   036, what each mutation pays and for how long, labor accounting, a same-count worker assignment). New ADRs: ADR-0005 settle on access,
   ADR-0006 production cap and dormant tail, ADR-0007 shared engine (with its fallback), ADR-0008 labor model (M0-18).
+- Project handbook: the docs as a Docusaurus website (`website/`) that renders `core-instructions/`, `docs/` and the READMEs where they
+  live, in book chapters, with local search; spec numbers and backticked paths become links, and every page shows its kind (spec, as
+  built, how-to, decision, history…) and source file; built and link-checked in CI, published to GitHub Pages after every merge
+  (`.github/workflows/docs-site.yml`), `scripts/dev/docs-site.sh`. Every task keeps it current: a Docs impact table in each build log
+  entry, and `check-docs.sh --base` fails when a module's code changes without its module doc (or a reason) or a living doc still names a
+  deleted or renamed file (`17` §5, §7; OD-11). A full audit of the docs against the code fixed every drift it found (CR-0002-T1).
+
+### Fixed
+- Kit audit follow-ups A1, A2, A3, A9, A15, A16: `[PLAN]` tasks write ahead before the plan (no Plan Mode), the Bash guard no longer
+  reads here-documents, comments or quoted text and checks each command on its own (new `scripts/dev/test-guard-bash.sh`),
+  `scripts/dev/**` is a protected path, `scripts/` counts as code for the PR checks and the Stop hook, `.DS_Store` is untracked,
+  and the license question is parked: no `LICENSE` file for now, directive OD-8 (KIT-AUDIT-FIXES).
+- Engine review: `Simulator.Advance` allocates nothing per event (index loops; the stock and report totals in a sorted `ItemTotals`
+  instead of a `SortedDictionary`, whose lookups box the id key), a timer due exactly at the clock completes before cycles start (`04` §7,
+  decision 033), a restored producing building's end must match its labor, labor subtraction is `checked`; `04` §4 and §8 say which
+  buildings have no stall reason and which level's worker limit applies while upgrading (decision 034) (M0-12).

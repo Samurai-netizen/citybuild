@@ -99,7 +99,7 @@ copied. Every Markdown file under `core-instructions/` and `docs/` is a page (te
 listed in `website/docs-set.js`.
 - **Plain Markdown.** Pages are `.md`: CommonMark with GitHub tables and Mermaid blocks. No MDX, no front matter, no raw HTML, so the
   same text reads the same on GitHub, on the site and in every AI tool.
-- **URL = path.** `core-instructions/04-simulation-model.md` is `/core-instructions/04-simulation-model`; a folder's `README.md` is the
+- **URL = path.** `core-instructions/04-simulation-model.md` is `/core-instructions/04-simulation-model/`; a folder's `README.md` is the
   folder's page. Never rename a page for the site's sake.
 - **Links.** Write cross-references as before: spec numbers (`` `04` ``) and repository paths in backticks become links on the site
   (to the page, or to the file on GitHub); a path that doesn't exist yet stays plain code. Links between pages are relative Markdown

@@ -48,7 +48,7 @@ also wants the AI workflow to keep the documentation current with every task, wi
 ## Out of scope
 - Moving or renaming documentation files, or rewriting the specs' content beyond the audit's fixes.
 - Docs versioning (one version: `main`; history is git and the build log), a blog, translations, MDX pages.
-- Publishing the site and full-text search: each needs the owner's yes first (publishing is outward-facing; search is G-Dependency).
+- Nothing else: publishing (GitHub Pages) and local search were out of scope until the owner said yes to both on 2026-10-20 (below).
 
 ## Impact analysis
 | Area | Impact | Files / docs |
@@ -75,10 +75,12 @@ also wants the AI workflow to keep the documentation current with every task, wi
 ## Tasks (filled in after approval)
 | ID | Title | Model | Status |
 |---|---|---|---|
-| CR-0002-T1 | Handbook site, docs-as-code workflow and the full docs audit (one PR) | O | In progress |
+| CR-0002-T1 | Handbook site, docs-as-code workflow and the full docs audit (one PR) | O | In review |
 
 ## Owner approval
 - Approved on: 2026-10-20 — the owner's request in chat: "Implement a documentation system for citybuild game. Run through all previous
   work, make the documentation up to date, and make changes to the AI workflow, so it continues to keep the documentation up to date with
   every Task. Let's use docusaurus." The owner also asked for "your own improved and well thought out implementation" of an outline from
   another AI. The request covers the protected files this needs (the AI workflow); each edit is listed in the build log entry.
+- 2026-10-20, later: publish on GitHub Pages: "GitHub Pages (Recommended)"; search: "Local search (Recommended)"
+  (`@easyops-cn/docusaurus-search-local`, G-Dependency approved).

@@ -31,7 +31,8 @@ The live preview reads the page list once at start: restart it after adding or r
 
 ## URLs
 A page's URL is its file path without `.md`, and a folder's `README.md` is the folder's page:
-`core-instructions/04-simulation-model.md` → `/core-instructions/04-simulation-model`, `docs/adr/README.md` → `/docs/adr`.
+`core-instructions/04-simulation-model.md` → `/core-instructions/04-simulation-model/`, `docs/adr/README.md` → `/docs/adr/`
+(`trailingSlash: true`: every page is a folder with an `index.html`, the shape GitHub Pages serves without redirects).
 Number prefixes are kept on purpose (`numberPrefixParser: false`), so the path and the URL never disagree. Front matter (`slug:`, `id:`)
 is not used: it would make the URL differ from the path.
 

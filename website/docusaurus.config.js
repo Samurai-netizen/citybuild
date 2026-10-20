@@ -18,7 +18,8 @@ module.exports = {
   // Where the site would be published (GitHub Pages of this repository); both can be overridden for another host.
   url: process.env.DOCS_SITE_URL || 'https://samurai-netizen.github.io',
   baseUrl: process.env.DOCS_BASE_URL || '/citybuild/',
-  trailingSlash: false,
+  // Every page is a folder with an index.html, which GitHub Pages serves for every URL shape (no redirect to a 404).
+  trailingSlash: true,
 
   // Every broken link, anchor or Markdown link fails the build: that is the docs' link check.
   onBrokenLinks: 'throw',
