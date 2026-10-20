@@ -17,3 +17,4 @@ as a CR. That's how the owner keeps control over what gets built (`core-instruct
 | CR | Title | Type | Status |
 |---|---|---|---|
 | [CR-0001](CR-0001-start-pass-repeats.md) | A start frees cap room: the start pass repeats until nothing starts | Bug | Done |
+| [CR-0002](CR-0002-docs-site.md) | Project handbook: a Docusaurus site over the docs, kept current by every task | Process | In progress |

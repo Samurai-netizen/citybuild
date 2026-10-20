@@ -4,30 +4,29 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-18 · Spec sync and ADRs; PR open, the owner merges it)
-- **Branch:** `task/M0-18-spec-sync-adrs` (from `main` = `fac266e`) until the owner merges
-- **Build log entry:** last: `docs/build-log/2026/2026-10-19-08-M0-18.md` (Done)
-- **Last green commit:** the head of `task/M0-18-spec-sync-adrs` (0 warnings, format clean, fast suite green: Simulation 872, Application 14;
-  full Simulation suite in Release 872/872; `check-docs --base origin/main` OK; Unity EditMode 13/13, PlayMode 6/6)
-- **Done steps:** all of M0-18 (`04` compared line by line: the engine follows it, ten places reworded, no code fix; decision row 036;
-  ADR-0005 to ADR-0008; follow-ups for M0-23/M0-26, M0-32 and M0-63 in the entry)
-- **Next step:** the owner merges the PR; then `/model` → Opus 5.5 and `/start-task M0-19` (EF Core model, migrations, Docker, `[O]`
-  `[PLAN]`: write ahead, present the plan, wait for approval); its start commit sets M0-18 to `Done`.
-- **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
+- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** CR-0002-T1 · Handbook site and docs-as-code workflow (`docs/changes/CR-0002-docs-site.md`, owner's request of 2026-10-20)
+- **Branch:** `task/CR-0002-T1-docs-site` (from `main` = `e10937a`)
+- **Build log entry:** `docs/build-log/2026/2026-10-20-01-CR-0002-T1.md`
+- **Last green commit:** `main` = `e10937a` (build 0 warnings; fast suite: Simulation 872, Domain 1, Application 14, IntegrationTests 25)
+- **Steps:** 1 start ✓ · 2 site in `website/` · 3 CI and `check-docs.sh` checks · 4 workflow docs · 5 audit of all docs against the
+  code · 6 finish (details: the entry's Session 1 plan)
+- **Next step:** step 2: create `website/` (Docusaurus 3.10.2 over the docs in place), build it with broken links failing.
+- **Open questions for the owner:** publish the site to GitHub Pages? add local search (G-Dependency)? (until answered: build only, no
+  search; entry decision 2) · guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` ·
   `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 17 / 85 (M0-18 in review)
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 18 / 85 (CR-0002-T1 in progress)
 
 | Area | State | Notes |
 |---|---|---|
 | Repo, kit, hooks, CI | done | M0-01 and the audit fixes merged (PR #4, #5); A18 can be closed in M0-04 |
 | Shared engine: content, research, labor | done | M0-03 merged (PR #7); the content model and its validation (M0-07a) merged (PR #14); the JSON file and server loading (M0-07b) merged (PR #15); city state and mutations (M0-08) merged (PR #16); `Simulator.Advance` (M0-09) merged (PR #17); rule tests (M0-10) merged (PR #18); golden scenario #1 (M0-11) merged (PR #19); engine review (M0-12) merged (PR #20) |
-| Shared engine: invariants, performance | in progress | settlement window and production cap (M0-13) merged (PR #21); property test harness (M0-14, with engine fix CR-0001) merged (PR #22); invariant properties (M0-15) merged (PR #23); performance budget M0-16 merged (PR #24; worst case ~37 ms per advance in Release); display helpers M0-17 merged (PR #25); spec sync and ADRs M0-18 in review (the last task of Day 3) |
+| Shared engine: invariants, performance | done | settlement window and production cap (M0-13) merged (PR #21); property test harness (M0-14, with engine fix CR-0001) merged (PR #22); invariant properties (M0-15) merged (PR #23); performance budget M0-16 merged (PR #24; worst case ~37 ms per advance in Release); display helpers M0-17 merged (PR #25); spec sync and ADRs M0-18 merged (PR #26) |
 | Server skeleton | done | M0-02 merged (PR #6) |
 | Persistence (EF + PostgreSQL) | not started | |
 | Auth + command pipeline | not started | |
@@ -36,7 +35,7 @@
 | Unity city view + placement | not started | |
 | Inspector, worker stepper, research screen, HUD | not started | |
 | Resilience (limits, retries, logging) | not started | |
-| Docs automation (DocTools) + docs completeness | not started | |
+| Docs automation (DocTools) + docs completeness | in progress | handbook site and docs-as-code checks: CR-0002-T1; DocTools is M0-61 |
 | Balance simulator | not started | |
 | E2E / security / concurrency suites | not started | |
 | Dev build + M0 close-out | not started | |
