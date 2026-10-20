@@ -7,3 +7,13 @@ updates:
       interval: "monthly"
     commit-message:
       prefix: "ci(repo)"
+  # The handbook site's packages (website/). One group, so Docusaurus packages move together.
+  - package-ecosystem: "npm"
+    directory: "/website"
+    schedule:
+      interval: "monthly"
+    commit-message:
+      prefix: "build(repo)"
+    groups:
+      handbook-site:
+        patterns: ["*"]

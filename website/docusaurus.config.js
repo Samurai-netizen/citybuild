@@ -30,7 +30,22 @@ module.exports = {
     mermaid: true,
     hooks: {onBrokenMarkdownLinks: 'throw', onBrokenMarkdownImages: 'throw'},
   },
-  themes: ['@docusaurus/theme-mermaid'],
+  themes: [
+    '@docusaurus/theme-mermaid',
+    [
+      // Offline full-text search: the index is built with the site, no external service (owner's yes, CR-0002).
+      '@easyops-cn/docusaurus-search-local',
+      {
+        docsRouteBasePath: '/',
+        indexBlog: false,
+        indexPages: false,
+        // Not hashed: hashing scans the docs folder, which here is the whole repository.
+        hashed: false,
+        highlightSearchTermsOnTargetPage: true,
+        searchResultLimits: 10,
+      },
+    ],
+  ],
 
   i18n: {defaultLocale: 'en', locales: ['en']},
   customFields: {githubRepoUrl, branch},

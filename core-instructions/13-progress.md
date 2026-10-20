@@ -10,12 +10,11 @@
 - **Build log entry:** `docs/build-log/2026/2026-10-20-01-CR-0002-T1.md`
 - **Last green commit:** the head of the branch (site builds; no .NET change; fast suite at `e10937a`: Simulation 872, Domain 1,
   Application 14, IntegrationTests 25)
-- **Steps:** 1 start ✓ · 2 site in `website/` ✓ · 3 CI and `check-docs.sh` checks · 4 workflow docs · 5 audit of all docs against the
+- **Steps:** 1 start ✓ · 2 site in `website/` ✓ · 3 CI and `check-docs.sh` checks ✓ · 4 workflow docs · 5 audit of all docs against the
   code · 6 finish (details: the entry's Session 1 plan)
-- **Next step:** step 3: the CI `docs` job builds the site (`bash scripts/dev/docs-site.sh build`); `check-docs.sh --base` gets the
-  module-doc, renamed-file and Docs impact checks.
-- **Open questions for the owner:** publish the site to GitHub Pages? add local search (G-Dependency)? (until answered: build only, no
-  search; entry decision 2) · guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
+- **Next step:** step 4: the workflow docs (`16`, `17`, `19`, `11`, `18`, `14`, `03`, `12` W12, `15` OD-11, `AGENTS.md`, PR template,
+  skills, `.claude/rules/docs.md`, getting started, `docs/README.md`, `README.md`, `website/README.md` → Publishing).
+- **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` ·
