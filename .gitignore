@@ -24,6 +24,11 @@ Thumbs.db
 # --- Docker volumes (local) ---
 .data/
 
+# --- handbook site (website/README.md) ---
+website/node_modules/
+website/build/
+website/.docusaurus/
+
 # --- tool output ---
 artifacts/
 *.log

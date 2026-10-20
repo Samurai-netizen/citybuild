@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="CityBuilder">
+  <title>CityBuilder</title>
+  <rect width="64" height="64" rx="12" fill="#2f6b8a"/>
+  <path fill="#f4e9d4" d="M16 52V26h5v5h4v-5h5v5h4v-5h5v5h4v-5h5v26H37V43a5 5 0 0 0-10 0v9z"/>
+  <path fill="#f4e9d4" d="M31 11h2v15h-2z"/>
+  <path fill="#e0a060" d="M33 11h10l-3 3.5 3 3.5H33z"/>
+</svg>

@@ -1,0 +1,27 @@
+{
+  "name": "citybuilder-handbook",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The CityBuilder handbook: a Docusaurus site that renders the repository's Markdown docs in place (website/README.md).",
+  "scripts": {
+    "start": "docusaurus start",
+    "build": "docusaurus build",
+    "serve": "docusaurus serve",
+    "clear": "docusaurus clear"
+  },
+  "dependencies": {
+    "@docusaurus/core": "3.10.2",
+    "@docusaurus/preset-classic": "3.10.2",
+    "@docusaurus/theme-mermaid": "3.10.2",
+    "prism-react-renderer": "2.4.1",
+    "react": "19.2.9",
+    "react-dom": "19.2.9"
+  },
+  "engines": {
+    "node": ">=20.0"
+  },
+  "browserslist": {
+    "production": [">0.5%", "not dead", "not op_mini all"],
+    "development": ["last 3 chrome version", "last 3 firefox version", "last 5 safari version"]
+  }
+}
