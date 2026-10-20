@@ -70,4 +70,6 @@ Use these names in code, docs and UI text. Consistent words keep Claude and the 
 | Change recipe | The checklist of code, tests and docs for one kind of change (`19`) |
 | Module doc | `docs/modules/<Project>.md`, one per project or assembly |
 | Generated docs | `docs/reference/generated/`, produced by DocTools, never edited by hand |
+| Handbook | The documentation as a website (`website/`, published on GitHub Pages): the same Markdown files, in book order (`17` §7) |
+| Docs impact | The table in a build log entry of every page a change could make wrong, each `updated` or `no change: <why>` (`17` §5) |
 | `[O]` / `[S]` / `[PLAN]` / `[MANUAL]` | Strong model / standard model / plan approval first / human step |

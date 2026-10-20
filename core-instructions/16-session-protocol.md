@@ -34,6 +34,7 @@ This protocol is tool-agnostic. Claude Code has skills for each part (`/resume`,
 3. **Branch:** `git switch -c task/<ID>-<short-slug>`.
 4. **Write ahead:**
    - `bash scripts/dev/new-log-entry.sh <ID> "<title>" "<tool> / <model>"` creates the build log entry. Fill in the plan.
+   - Fill the entry's **Docs impact** table: every page the change could make wrong, from the recipe(s) in `19` (`17` §5).
    - Set the resume point in `13-progress.md`: state `IN PROGRESS`, the task, the branch, the planned steps, and the next step.
    - Set the task's row in the plan board to `In progress`.
    - Commit `chore(<ID>): start task` and push with `git push -u origin HEAD`.
@@ -42,6 +43,8 @@ This protocol is tool-agnostic. Claude Code has skills for each part (`/resume`,
 
 ## C. While working
 - Implement step by step. Tests come with the step, not at the end (test-first for engine rules).
+- **Docs come with the step too.** A step that changes behaviour, a contract, a command or a file name updates its pages in the same
+  commit and marks their Docs impact rows. A page you didn't plan for gets a new row.
 - **Log each decision when you make it** (build log → Decisions), including small ones: names, data shapes,
   trade-offs, rejected alternatives. Project-wide ones also get a row in `12-decisions.md` (`17` §4).
 - Owner instructions given in chat must be written down in the same session: in the build log under "Owner input",
@@ -54,13 +57,15 @@ This protocol is tool-agnostic. Claude Code has skills for each part (`/resume`,
 ## D. Checkpoint (after every green step, before any pause, before asking the owner a question)
 1. Build and fast tests are green, or the step is explicitly marked broken in the resume point.
 2. Resume point updated: done steps, next step, open questions, anything half-done.
-3. Build log updated: session notes and decisions since the last checkpoint.
+3. Build log updated: session notes, decisions and Docs impact rows since the last checkpoint.
 4. Commit (`feat(<ID>): …`, or `wip(<ID>): …` on task branches only) and `git push`.
 
 ## E. Finish a task
 1. Go through the Definition of Done (`11-workflow.md`) and the change recipe for this kind of change (`19-change-recipes.md`).
-2. Update the docs per the recipe. Regenerate the generated docs once `tools/DocTools` exists (from M0-61).
-3. Run `bash scripts/dev/check-docs.sh --base origin/main` and the quality script (once it exists), and fix everything.
+2. Update the docs per the recipe and close every Docs impact row (`updated`, `new`, `deleted` or `no change: <why>`).
+   Regenerate the generated docs once `tools/DocTools` exists (from M0-61).
+3. Run `bash scripts/dev/check-docs.sh --base origin/main`, `bash scripts/dev/docs-site.sh build` (the handbook: links, anchors,
+   sidebar) and the quality script (once it exists), and fix everything.
 4. Review your own branch against the task spec, the Definition of Done (`11-workflow.md`) and the recipe: line by line for `[O]` tasks and any
    task touching the engine, persistence or security. Fix blocking findings and log them. Don't start an agent for this on your own: it needs
    the owner's approval of a proposal (OD-9, `15`). The owner can also start a fresh session as the independent reviewer.

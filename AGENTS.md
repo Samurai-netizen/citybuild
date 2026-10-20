@@ -25,7 +25,7 @@ Then check the repo state (`git status`, branch, last commits) and that hooks ar
 | what needs owner approval | `core-instructions/15-change-control.md` |
 | where code goes and which docs to update | `core-instructions/19-change-recipes.md` |
 | code style and quality rules | `core-instructions/14-coding-standards.md` |
-| documentation and the build log | `core-instructions/17-documentation-system.md` |
+| documentation, the build log, the handbook site | `core-instructions/17-documentation-system.md`, `website/README.md` |
 | branches, commits, PRs, CI | `core-instructions/18-git-and-ci.md` |
 | production, workers, research, time | `core-instructions/04-simulation-model.md` |
 | eras, research tree, progression | `core-instructions/25-eras-and-research.md` |
@@ -41,15 +41,17 @@ Then check the repo state (`git status`, branch, last commits) and that hooks ar
 | all files | `core-instructions/README.md` (index), `docs/README.md` (docs map) |
 
 ## The loop (details in `16`)
-1. **Start:** preconditions → branch `task/<ID>-<slug>` → build log entry (`scripts/dev/new-log-entry.sh`) →
-   resume point IN PROGRESS → commit and push.
-2. **Work in small green steps.** After each step, checkpoint: resume point, build log decisions, commit, push.
-3. **Finish:** Definition of Done (`11`) → docs per recipe (`19`) → `check-docs.sh` → review → PR. The owner merges.
+1. **Start:** preconditions → branch `task/<ID>-<slug>` → build log entry (`scripts/dev/new-log-entry.sh`) with its plan and its
+   **Docs impact** table (the pages the change could make wrong, from `19`) → resume point IN PROGRESS → commit and push.
+2. **Work in small green steps,** code, tests and docs together. After each step, checkpoint: resume point, build log, commit, push.
+3. **Finish:** Definition of Done (`11`) → docs per recipe, every Docs impact row closed → `check-docs.sh` and the handbook build →
+   review → PR. The owner merges.
 
 ## Hard rules (full list in `02`, `15`, `18`)
 - Only work on a task from `docs/plan/` or an **approved** CR. New ideas → `docs/changes/CR-NNNN-*.md` (Proposed), then stop.
 - **Log every decision** in the build log entry as you make it. Write owner instructions into the repo the same session.
-- **Docs are updated in the same PR as the code.** Never hand-edit `docs/reference/generated/`.
+- **Docs are updated in the same PR as the code,** and the build log's Docs impact table says which pages and why (`17` §5).
+  Never hand-edit `docs/reference/generated/`. Docs are plain Markdown, placeholders in backticks (`17` §7).
 - Ask before: new dependencies, design changes, API/DB contract breaks, edits to protected files, deleting or loosening tests.
 - Never work on `main`, push to `main`, force-push, use `--no-verify`, merge your own PR, or commit secrets.
 - Server-authoritative, integer-only deterministic engine, game numbers only in content JSON, no XP or city levels.
@@ -62,6 +64,7 @@ bash scripts/dev/setup-hooks.sh                 # once per clone: enable .githoo
 bash scripts/dev/show-task.sh M0-15             # print a task (or CR) spec
 bash scripts/dev/new-log-entry.sh M0-15 "Title" "Claude Code / claude-opus-5-5"
 bash scripts/dev/check-docs.sh [--base origin/main]   # docs and process checks (also in pre-commit and CI)
+bash scripts/dev/docs-site.sh build             # the handbook site, as CI builds it (Node.js 20+); `start` = live preview
 bash scripts/dev/test-guard-bash.sh             # after changing .claude/hooks/guard-bash.sh
 dotnet build server/CityBuilder.slnx
 dotnet format server/CityBuilder.slnx --verify-no-changes   # as CI; part of Done
@@ -77,6 +80,7 @@ dotnet run --project tools/BalanceSim -- --help                        # [M0-67]
 
 ## Repository map
 `core-instructions/` rules and design (normative) · `docs/` the system as built, the plan, the build log, ADRs, CRs ·
+`website/` the handbook site over both (https://samurai-netizen.github.io/citybuild/) ·
 `shared/Simulation/` engine · `server/` API and tests · `client/CityBuilder/` Unity · `tools/` DocTools, BalanceSim ·
 `scripts/dev/` helpers · `.githooks/` git hooks · `.github/` CI and PR template · `.claude/` Claude Code config.
 

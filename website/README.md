@@ -14,7 +14,8 @@ explains how the site works and how to change it.
 | Serve the last build: http://localhost:3000/citybuild/ | `bash scripts/dev/docs-site.sh serve` |
 
 Node.js 20 or newer is needed (CI uses 24). Without Bash, the same works with `npm --prefix website ci` and `npm --prefix website run build`.
-The live preview reads the page list once at start: restart it after adding or removing a page.
+The live preview reads the page list once at start: restart it after adding or removing a page. Search works only on a build
+(`build`, then `serve`), not in the live preview.
 
 ## Files
 | File | Job |
@@ -80,9 +81,10 @@ Every page starts with one line that says what it is (`kinds.js`, first match wi
   Upgrades: change the version in `package.json`, run `npm install` in `website/`, build, and commit both files.
 
 ## Publishing
-The site is built and checked on every pull request (CI job `docs`), but it is **not published yet**: that is the owner's decision
-(CR-0002). `url` and `baseUrl` in `docusaurus.config.js` already point at the repository's GitHub Pages address
-(`https://samurai-netizen.github.io/citybuild/`); `DOCS_SITE_URL` and `DOCS_BASE_URL` override them for another host.
+Every pull request builds and checks the site (CI job `docs`). After each merge to `main`, the workflow
+`.github/workflows/docs-site.yml` builds it again and publishes it to GitHub Pages: https://samurai-netizen.github.io/citybuild/
+(the owner's choice in CR-0002). `url` and `baseUrl` in `docusaurus.config.js` point there; `DOCS_SITE_URL` and `DOCS_BASE_URL`
+override them for another host. Search is local (`@easyops-cn/docusaurus-search-local`): its index is built with the site.
 
 ## Troubleshooting
 | Message | Fix |

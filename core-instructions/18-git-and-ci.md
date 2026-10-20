@@ -47,9 +47,11 @@ AI coders must never bypass hooks or set `ALLOW_MAIN_COMMIT`.
 ## CI (`.github/workflows/ci.yml`, runs on every PR and on `main`)
 | Job | Steps | Active from |
 |---|---|---|
-| `docs` | `check-docs.sh` (+ PR checks against the base branch) | Day 0 |
+| `docs` | `check-docs.sh` (+ PR checks against the base branch) → commit subjects (PRs) → the handbook builds (`docs-site.sh build`: links, anchors, sidebar) | Day 0; the site build CR-0002 |
 | `server` | restore (locked) → `dotnet format --verify-no-changes` → build → fast tests → integration tests (Docker) | M0-02 (skips until `server/CityBuilder.slnx` exists) |
 | `server` (last step) | generated docs are current: `dotnet run --project tools/DocTools -- check` | M0-61 (skips until DocTools exists) |
+The workflow `.github/workflows/docs-site.yml` ("Handbook site") builds the handbook again on every push to `main` and publishes it to
+GitHub Pages (https://samurai-netizen.github.io/citybuild/); it has a `workflow_dispatch` trigger for a manual rerun.
 Unity tests are not in CI (they need a Unity license on the runner). They run locally via `scripts/dev/test-unity.sh`
 and their results go in the build log. Revisit in M3.
 
@@ -60,7 +62,10 @@ and their results go in the build log. Revisit in M3.
   - block force pushes and deletions; require linear history.
   - No bypass actors, so even the owner changes `main` through a PR. `ALLOW_MAIN_COMMIT` only lifts the local hook.
 - Settings → General → Pull Requests: squash merging only (title = PR title); automatically delete head branches.
-- Security: secret scanning with push protection, Dependabot alerts and security updates.
+- Security: secret scanning with push protection, Dependabot alerts and security updates. Dependabot (`.github/dependabot.yml`) also
+  proposes monthly updates of the CI actions and of the handbook's npm packages (one group); the owner decides (G-Dependency).
+- Pages: source "GitHub Actions" (turned on in CR-0002 with `gh api -X POST repos/{owner}/{repo}/pages -f build_type=workflow`); the
+  `github-pages` environment deploys only from `main`.
 - The repository is **public** (owner directive OD-7 in `15`). Never commit secrets, tokens or personal data;
   local configuration stays in ignored files (`.env`, `*.local.json`).
 - Check the current state: `gh api repos/{owner}/{repo}/rules/branches/main` and `gh api repos/{owner}/{repo}`.

@@ -1,6 +1,8 @@
 # Documentation Map
 
 Everything about this project is written down, for people and for AI coders. Start with the row that matches your question.
+To read it as a book, with search, open the **handbook**: https://samurai-netizen.github.io/citybuild/. It shows these same files,
+in chapters, with every backticked path and spec number as a link (`website/README.md`).
 
 | I want to… | Read |
 |---|---|
@@ -15,6 +17,7 @@ Everything about this project is written down, for people and for AI coders. Sta
 | look up API, errors, content, config, schema | [reference/](reference/README.md) |
 | work on this repo as an AI coder | `AGENTS.md` (entry point), `core-instructions/16-session-protocol.md` |
 | work on this repo as a person | `CONTRIBUTING.md` |
+| add or move a documentation page | `core-instructions/19-change-recipes.md` → "New documentation page", `website/README.md` |
 
 ## Normative vs descriptive
 - `core-instructions/` says what **must** be true (rules, design, contracts).
@@ -32,4 +35,4 @@ Everything about this project is written down, for people and for AI coders. Sta
 | `modules/` | One doc per project or assembly | AI, kept current (enforced) |
 | `how-to/` | Worked guides for common changes | AI, kept current |
 | `reference/` | Generated reference (from M0-61) | `tools/DocTools` |
-| `testing/`, `security/`, `balance/` | Test checklists, security report, balance reports | AI, per task |
+| `testing/`, `security/`, `balance/` *(planned: M0-21, M0-78, M0-68)* | Test checklists, security report, balance reports | AI, per task |

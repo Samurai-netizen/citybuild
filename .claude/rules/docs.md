@@ -18,3 +18,6 @@ System: `core-instructions/17-documentation-system.md`. Short form:
 - Mermaid for diagrams. Glossary words (`31`). Mark unbuilt things as *(planned, Mx)*.
 - Keep files under ~150 lines; split instead of growing. `13-progress.md` ≤ 80 lines.
 - Protected files (`15`) need the owner's approval for every edit.
+- Every page you change or should have changed gets a row in the build log entry's Docs impact table (`17` §5).
+- Pages are plain CommonMark `.md` (no MDX, front matter or raw HTML); placeholders like `<task id>` go in backticks.
+- They are also the handbook site (`17` §7): a new page goes into `website/sidebars.js`; check with `bash scripts/dev/docs-site.sh build`.
