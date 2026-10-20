@@ -1,5 +1,9 @@
 # Data Model (PostgreSQL 18)
 
+> **Built so far:** no database yet. The tables arrive with M0-19 (EF Core model, migrations, Docker), the mapping with M0-20 and the
+> locks and transaction with M0-22 *(planned)*. The engine's city state already has the fields the tables store
+> (`docs/modules/CityBuilder.Simulation.md`). A task that builds a part updates this line.
+
 PostgreSQL is the only source of truth. Wall timestamps are `timestamptz` (UTC). Simulation times and labor
 are `bigint` city-clock seconds and worker-seconds. Quantities are `bigint`. Item, building, research and era ids are `text` from content.
 

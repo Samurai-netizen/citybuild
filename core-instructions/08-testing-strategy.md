@@ -8,10 +8,10 @@ Tests protect **gameplay invariants**, not a coverage percentage. A feature with
 |---|---|---|---|
 | Simulation | `CityBuilder.Simulation.Tests` | ms | Engine rules, labor, research, invariants, golden scenarios, performance budget |
 | Domain/Application | `CityBuilder.Domain.Tests`, `CityBuilder.Application.Tests` | ms | Use cases with fakes: validation, pipeline order, idempotency logic, error codes |
-| Integration | `CityBuilder.IntegrationTests` | s | Real PostgreSQL (Testcontainers) + in-process API (`WebApplicationFactory`): persistence, locks, receipts, HTTP contract |
+| Integration | `CityBuilder.IntegrationTests` | s | Real PostgreSQL (Testcontainers) + in-process API (`WebApplicationFactory`): persistence, locks, receipts, HTTP contract. Today it holds in-process tests only (host, content loading); PostgreSQL and the `Integration` category arrive with M0-21 *(planned)* |
 | Unity EditMode | `Assets/_Project/Tests/EditMode` | ms | DTO (de)serialization, client state store, grid math, retry policy, display prediction, view-models |
 | Unity PlayMode | `Assets/_Project/Tests/PlayMode` | s | Bootstrap starts; the city view builds from a snapshot |
-| Manual smoke | `docs/testing/UNITY-SMOKE-TEST.md` | min | Full loop on a real build |
+| Manual smoke | `docs/testing/UNITY-SMOKE-TEST.md` *(planned, M0-72)* | min | Full loop on a real build |
 
 Mark integration tests with `[Trait("Category", "Integration")]` so the fast suite runs without Docker.
 

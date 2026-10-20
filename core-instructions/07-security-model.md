@@ -1,5 +1,9 @@
 # Security Model
 
+> **Built so far:** the rules the engine enforces (integers only, every mutation checked before it changes anything; M0-08 to M0-17) and
+> OpenAPI only in Development (tested). Authentication, the command pipeline, limits and the `Security_` tests arrive from M0-25 on
+> (review M0-30, attack suite M0-74, report M0-78) *(planned)*. A task that builds a part updates this line.
+
 **Goal for M0:** a modified client, a replayed request or a wrong clock cannot create resources, skip costs,
 skip waiting, over-assign workers, skip research, or touch another player's city.
 From Era II this matters even more: one duplication bug floods the shared market and hurts every player.

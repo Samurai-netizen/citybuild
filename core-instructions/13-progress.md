@@ -11,9 +11,9 @@
 - **Last green commit:** the head of the branch (site builds; no .NET change; fast suite at `e10937a`: Simulation 872, Domain 1,
   Application 14, IntegrationTests 25)
 - **Steps:** 1 start ✓ · 2 site in `website/` ✓ · 3 CI and `check-docs.sh` checks ✓ · 4 workflow docs ✓ · 5 audit of all docs against the
-  code · 6 finish (details: the entry's Session 1 plan)
-- **Next step:** step 5: audit every doc against the code (module docs and the overview, how-tos, getting started and folder READMEs,
-  specs `03`, `04`, `05`–`09`, `13`, `14`, `23` against the content JSON, `31`, indexes); fix each finding, a Docs impact row each.
+  code ✓ · 6 finish (details: the entry's Session 1 plan)
+- **Next step:** step 6: finish (`16` §E): CHANGELOG line, close the Docs impact table, `check-docs.sh --base origin/main`, site build,
+  fast suite, self-review, PR.
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —
@@ -44,9 +44,10 @@
 States: `not started` · `in progress` · `done` · `blocked (reason)`
 
 ## Commands that work right now
-All run in M0-06 (details and the "since" task: `docs/getting-started.md` → Run).
+All run in M0-06, the handbook in CR-0002-T1 (details and the "since" task: `docs/getting-started.md` → Run).
 - **Process:** `bash scripts/dev/setup-hooks.sh` · `bash scripts/dev/check-docs.sh [--base origin/main]` · `bash scripts/dev/show-task.sh <ID>` ·
-  `bash scripts/dev/new-log-entry.sh <ID> "<title>" "<tool / model>"` · `bash scripts/dev/test-guard-bash.sh` (after changing the Bash guard)
+  `bash scripts/dev/new-log-entry.sh <ID> "<title>" "<tool / model>"` · `bash scripts/dev/test-guard-bash.sh` (after changing the Bash guard) ·
+  `bash scripts/dev/docs-site.sh build` (the handbook; `start` previews it; Node.js 20+)
 - **Server:** `dotnet restore server/CityBuilder.slnx --locked-mode` · `dotnet format server/CityBuilder.slnx --verify-no-changes` ·
   `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` ·
   `dotnet run --project server/src/CityBuilder.Api` (loads `server/content/mvp-content.json`; another file: `-- --Content:FilePath=<file>`),

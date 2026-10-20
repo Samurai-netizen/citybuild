@@ -1,5 +1,9 @@
 # Unity Client
 
+> **Built so far:** the project, its four assemblies and their tests, and the `Bootstrap` scene that shows "Not connected" (M0-04, M0-05;
+> `client/README.md`). Networking comes with M0-37, the city view with M0-43, the screens from M0-45 *(planned)*. A task that builds a
+> part updates this line.
+
 The client renders the latest authoritative snapshot and makes waiting feel alive.
 It never decides outcomes.
 

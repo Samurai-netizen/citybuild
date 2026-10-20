@@ -75,8 +75,8 @@ CityBuilder/
 ├── tools/BalanceSim/            # headless economy simulator (M0-67)
 ├── website/                     # the handbook: Docusaurus site over core-instructions/ and docs/ (CR-0002)
 ├── client/CityBuilder/          # Unity project: Assets/_Project/{Core,Net,Presentation,Resources/UI,Tests}
-├── docker-compose.yml
-└── scripts/dev/                 # check-docs, show-task, new-log-entry, setup-hooks, test-unity, quality
+├── docker-compose.yml           # PostgreSQL for development (M0-19)
+└── scripts/dev/                 # check-docs, docs-site, show-task, new-log-entry, setup-hooks, test-guard-bash, test-unity; quality (M0-62)
 ```
 
 Why the split under `shared/`: Unity imports every file inside a package folder, including `bin/` and `obj/`.
