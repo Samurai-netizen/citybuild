@@ -64,15 +64,15 @@ Claude cannot use the Editor GUI, and a scene file is never hand-edited. The sce
    `GameRoot` with one child `UI`; no red messages in the Console (the yellow "no scripts" warnings above are expected). The Game
    view may print "No cameras rendering": that is
    expected, the scene has no camera until M0-43, and the UI overlay does not need one. Press Play again to stop.
-6. **File → Save**, close the Editor. Then either commit the files yourself on the task branch, before you merge the PR (the message
-   must look like `type(ID): text`):
+6. **File → Save**, close the Editor. Then either commit the files yourself on the current task branch, before you merge its PR (the
+   message must look like `type(ID): text`; in M0-04 it was `chore(M0-04): add the Bootstrap scene` on `task/M0-04-unity-skeleton`):
    ```
-   git switch task/M0-04-unity-skeleton
+   git switch task/<ID>-<slug>
    git add client/CityBuilder/Assets/Scenes client/CityBuilder/ProjectSettings/EditorBuildSettings.asset
-   git commit -m "chore(M0-04): add the Bootstrap scene"
+   git commit -m "chore(<ID>): re-create the Bootstrap scene"
    git push
    ```
    or tell the next AI coder that the scene exists, and it commits `Bootstrap.unity`, its `.meta` file and `EditorBuildSettings.asset`.
 7. If the label does not show, copy the first red Console message into the chat. Do not edit the scene or the scripts by hand.
 
-Last updated: M0-05
+Last updated: CR-0002-T1

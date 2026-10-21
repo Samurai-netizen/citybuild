@@ -57,11 +57,25 @@ Paths are the M0 layout (`03`). "Module doc" means `docs/modules/<Project>.md`.
 - Code: `scripts/dev/<name>.sh` (and `.ps1` if it must run without Git Bash).
 - Docs: the `AGENTS.md` command list, `docs/getting-started.md`.
 
+## New documentation page
+- Where: a rule, design or contract → `core-instructions/NN-<slug>.md` (next free number of its range, a row in `core-instructions/README.md`);
+  a description of what exists → the `docs/` folder of its kind (`architecture/`, `modules/`, `how-to/`, …). One topic, under ~150 lines.
+- Handbook: add the page to a chapter in `website/sidebars.js`; pages in `docs/modules/`, `docs/how-to/`, `docs/adr/`, `docs/changes/`,
+  `docs/build-log/` and `docs/reference/` are listed by their folder. A file outside `core-instructions/` and `docs/` also goes into
+  `pageFiles` in `website/docs-set.js`.
+- Links: a row in its folder's `README.md` index, links from the pages that need it, and a row in the `docs/README.md` map if it
+  answers a new question. Plain CommonMark only (`17` §7).
+- Renaming or deleting a page: change every living doc that names it (check-docs fails otherwise). Build log entries are never renamed.
+- Check: `bash scripts/dev/docs-site.sh build`.
+
 ## New dependency
-G-Dependency first. Then: `Directory.Packages.props` / Unity manifest, the approved list in `14`, and a decision row with the alternatives considered.
+G-Dependency first. Then: `Directory.Packages.props` / Unity manifest / `website/package.json` (with `npm install` in `website/`, which updates
+`package-lock.json`), the approved list in `14`, and a decision row with the alternatives considered.
 
 ## Bug fix
 Failing regression test first, then the fix. Build log: root cause in one paragraph. Docs: whatever describes the corrected behaviour.
 
 ## Every change, always
-Build log entry (decisions), the resume point in `13`, the plan board row, the `CHANGELOG` line, and `Last updated:` in each touched module doc.
+Build log entry (decisions, and a Docs impact row for every page the recipe above names: `updated` or `no change: <why>`), the resume
+point in `13`, the plan board row, the `CHANGELOG` line, `Last updated:` in each touched module doc, and a handbook that still builds
+(`bash scripts/dev/docs-site.sh build`).

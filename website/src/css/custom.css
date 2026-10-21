@@ -1,0 +1,57 @@
+/* CityBuilder handbook theme: Infima variables plus the page-kind colours (src/components/PageKind). */
+
+:root {
+  --ifm-color-primary: #2f6b8a;
+  --ifm-color-primary-dark: #2a607c;
+  --ifm-color-primary-darker: #285b75;
+  --ifm-color-primary-darkest: #214b60;
+  --ifm-color-primary-light: #347698;
+  --ifm-color-primary-lighter: #377b9f;
+  --ifm-color-primary-lightest: #3f8bb3;
+  --ifm-code-font-size: 92%;
+  --ifm-font-family-base: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.08);
+
+  --handbook-kind-spec: #8a4b12;
+  --handbook-kind-built: #2f6b8a;
+  --handbook-kind-howto: #2d7a46;
+  --handbook-kind-decision: #6b4a9a;
+  --handbook-kind-change: #9a3f5b;
+  --handbook-kind-plan: #5b6470;
+  --handbook-kind-history: #6d6250;
+  --handbook-kind-status: #b5401f;
+  --handbook-kind-generated: #4c5b8c;
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: #7fb7d6;
+  --ifm-color-primary-dark: #65a9ce;
+  --ifm-color-primary-darker: #58a2ca;
+  --ifm-color-primary-darkest: #3a8bb7;
+  --ifm-color-primary-light: #99c5de;
+  --ifm-color-primary-lighter: #a6cce2;
+  --ifm-color-primary-lightest: #cce2ef;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+
+  --handbook-kind-spec: #e0a060;
+  --handbook-kind-built: #7fb7d6;
+  --handbook-kind-howto: #77c58f;
+  --handbook-kind-decision: #b9a0e0;
+  --handbook-kind-change: #e58fa9;
+  --handbook-kind-plan: #a9b1bc;
+  --handbook-kind-history: #c4b79e;
+  --handbook-kind-status: #f08a6a;
+  --handbook-kind-generated: #9fb0e6;
+}
+
+/* The specs use wide tables; let them scroll instead of squeezing every column. */
+.markdown table {
+  display: block;
+  overflow-x: auto;
+  font-size: 0.9rem;
+}
+
+/* Links made from backticked paths keep the code look and gain the link colour. */
+.markdown a > code {
+  color: var(--ifm-link-color);
+}

@@ -33,6 +33,36 @@ list_md() {
 list_files() {  # $1 = glob pattern for git ls-files
   { git ls-files "$1" 2>/dev/null; git ls-files --others --exclude-standard "$1" 2>/dev/null; } | sort -u
 }
+regex_escape() { printf '%s' "$1" | sed -e 's/[][\.*^$+?(){}|]/\\&/g'; }
+
+# Rows of a build log entry's "## Docs impact" table, without its header and separator lines.
+impact_table_rows() {
+  awk '/^## Docs impact/ { p = 1; next } /^## / { p = 0 } p && /^\|/' "$1" | grep -vE '^\|[[:space:]|:-]*$' | tail -n +2
+}
+
+# The module doc of a source file: the nearest .csproj or .asmdef above it names the module (17 §2); tests have none.
+module_doc_for() {
+  local f="$1" dir proj name
+  case "$f" in *.meta) return ;; esac
+  case "$f" in
+    shared/Simulation/*|shared/Simulation.Build/*) name="CityBuilder.Simulation" ;;
+    client/CityBuilder/Assets/_Project/Resources/*) name="CityBuilder.Client.Presentation" ;;  # its UI assets (decision 024)
+    server/*|client/CityBuilder/Assets/_Project/*|tools/*)
+      dir="$(dirname "$f")"
+      while [ "$dir" != "." ] && [ -z "${proj:-}" ]; do
+        proj="$(printf '%s\n' "$project_files" | awk -v d="$dir/" 'index($0, d) == 1 && substr($0, length(d) + 1) !~ /\//' | head -1)"
+        dir="$(dirname "$dir")"
+      done
+      [ -n "${proj:-}" ] || return
+      name="$(basename "${proj%.*}")" ;;
+    *) return ;;
+  esac
+  case "$name" in *Tests*) return ;; esac
+  [ -f "docs/modules/$name.md" ] && echo "docs/modules/$name.md"
+}
+
+# Pages that describe the present. History (build log entries, CHANGELOG), records of the time (ADRs, CRs) and the plan keep old names.
+living_docs=('*.md' ':!docs/build-log/[0-9]*' ':!docs/adr/ADR-*' ':!docs/changes/CR-*' ':!docs/plan/*' ':!CHANGELOG.md')
 
 # 1. Required files ---------------------------------------------------------------------------
 required=(README.md AGENTS.md CLAUDE.md CONTRIBUTING.md CHANGELOG.md
@@ -127,7 +157,8 @@ if [ -n "$base" ]; then
   else
     changes="$(git diff --name-status "$base"...HEAD)"
     names="$(printf '%s\n' "$changes" | awk '{print $NF}')"
-    if printf '%s\n' "$names" | grep -qE '^(server/|shared/|client/CityBuilder/(Assets|Packages|ProjectSettings)/|tools/|scripts/)'; then
+    project_files="$(list_files '*.csproj'; list_files '*.asmdef')"
+    if printf '%s\n' "$names" | grep -qE '^(server/|shared/|client/CityBuilder/(Assets|Packages|ProjectSettings)/|tools/|scripts/|website/)'; then
       printf '%s\n' "$names" | grep -qE '^docs/build-log/[0-9]{4}/' || fail "Code changed but no build log entry was added or updated"
       printf '%s\n' "$names" | grep -qx 'core-instructions/13-progress.md' || fail "Code changed but core-instructions/13-progress.md was not updated"
       printf '%s\n' "$names" | grep -qx 'CHANGELOG.md' || fail "Code changed but CHANGELOG.md was not updated"
@@ -140,6 +171,54 @@ if [ -n "$base" ]; then
         esac ;;
       esac
     done <<< "$changes"
+
+    # Docs impact (17 §5): the "## Docs impact" tables of the build log entries this change adds or updates
+    changed_logs="$(printf '%s\n' "$names" | grep -E '^docs/build-log/[0-9]{4}/.+\.md$' || true)"
+    impact_rows=""
+    while IFS= read -r entry; do
+      [ -f "$entry" ] || continue
+      impact_rows+="$(impact_table_rows "$entry")"$'\n'
+    done <<< "$changed_logs"
+
+    # a new entry plans its Docs impact; a Done one has a result in every row
+    while IFS=$'\t' read -r status path rest; do
+      [ "$status" = "A" ] || continue
+      case "$path" in docs/build-log/[0-9][0-9][0-9][0-9]/*.md) ;; *) continue ;; esac
+      [ -f "$path" ] || continue
+      rows="$(impact_table_rows "$path")"
+      if [ -z "$rows" ]; then
+        fail "$path: no '## Docs impact' table with at least one row (core-instructions/17-documentation-system.md §5)"
+      elif grep -qE '^- \*\*Status:\*\* Done' "$path"; then
+        while IFS= read -r open_row; do
+          [ -n "$open_row" ] && fail "$path is Done but this Docs impact row has no result (updated, new, deleted or 'no change: <why>'): $open_row"
+        done < <(printf '%s\n' "$rows" | awk -F'|' '{ r = $(NF-1); gsub(/^[ \t]+|[ \t]+$/, "", r); if (r == "" || tolower(r) ~ /^(planned|todo|…|\.\.\.)$/) print }')
+      fi
+    done <<< "$changes"
+
+    # a module's code changed: its module doc changed too, or a Docs impact row names it ("no change: <why>")
+    while IFS= read -r doc; do
+      [ -n "$doc" ] || continue
+      printf '%s\n' "$names" | grep -qxF "$doc" && continue
+      printf '%s\n' "$impact_rows" | grep -qF "$doc" && continue
+      fail "Code of module $(basename "$doc" .md) changed but $doc did not: update it, or give it a Docs impact row ('no change: <why>') in the build log entry"
+    done < <(printf '%s\n' "$names" | while IFS= read -r f; do [ -n "$f" ] && module_doc_for "$f"; done | sort -u)
+
+    # a deleted or renamed file (or emptied folder) is no longer named by the living docs (history is exempt)
+    while IFS=$'\t' read -r status old rest; do
+      case "$status" in D|R*) ;; *) continue ;; esac
+      [ -e "$old" ] && continue
+      gone="$old"; dir="$(dirname "$old")"
+      while [ "$dir" != "." ] && [ ! -e "$dir" ]; do gone+=$'\n'"$dir/"; dir="$(dirname "$dir")"; done
+      what="deleted"; [ "${status#R}" != "$status" ] && what="renamed to $rest"
+      while IFS= read -r g; do
+        # a folder counts only when written as a path (`tools/`, `tools/DocTools`), never as the bare word
+        case "$g" in */) pattern="$(regex_escape "$g")" ;; *) pattern="$(regex_escape "$g")([^A-Za-z0-9_-]|$)" ;; esac
+        while IFS= read -r hit; do
+          [ -n "$hit" ] && fail "${hit%%:*} still names '$g', which this change $what (line ${hit#*:})"
+        done < <(git grep -n -E -e "(^|[^A-Za-z0-9_./-])$pattern" -- "${living_docs[@]}" 2>/dev/null)
+      done <<< "$gone"
+    done <<< "$changes"
+
     # protected files: allowed, but must be visible to the owner
     protected='^(AGENTS\.md|CLAUDE\.md|core-instructions/02-principles\.md|core-instructions/15-change-control\.md|core-instructions/22-game-mechanics\.md|\.claude/settings\.json|\.claude/hooks/|\.githooks/|scripts/dev/|\.github/workflows/)'
     printf '%s\n' "$names" | grep -E "$protected" | while IFS= read -r p; do note "Protected file changed (owner approval must be recorded in the build log): $p"; done

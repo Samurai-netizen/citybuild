@@ -25,10 +25,19 @@
 <!-- Approvals, answers and instructions from the owner, quoted, with where they were persisted. -->
 - —
 
+## Docs impact
+<!-- Every page this change could make wrong, from the recipe(s) in core-instructions/19-change-recipes.md: listed at the start,
+     closed at the finish. Result: updated · new · deleted · no change: <why> · planned (only while In progress).
+     check-docs.sh --base fails a new entry without rows, a Done entry with an open row, and a change to a module's code without a
+     change to its module doc or a row naming it (core-instructions/17-documentation-system.md §5). -->
+| Page | Why it could be affected | Result |
+|---|---|---|
+| | | planned |
+
 ## Changes
 - **Code:** —
 - **Tests:** —
-- **Docs:** —
+- **Docs:** — (each page is in Docs impact)
 
 ## Verification
 | Command | Result |

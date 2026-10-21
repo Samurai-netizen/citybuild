@@ -19,10 +19,12 @@ approve it (set `Status: Approved`, or say "approve CR-NNNN"), or reject it. Onl
 
 ## Rules everyone follows
 - Work on a `task/<ID>-<slug>` branch, never on `main`. Commit subjects look like `feat(M0-15): …` (the hook checks this).
-- Every change comes with tests, docs per `core-instructions/19-change-recipes.md`, and a build log entry with every decision.
+- Every change comes with tests, docs per `core-instructions/19-change-recipes.md` (listed in the build log's Docs impact table), and a
+  build log entry with every decision.
 - Don't bypass hooks or CI. Don't commit secrets (`.env` and `*.local.json` are refused by the pre-commit hook).
 - Owner-only: merging PRs, approving CRs and plans, editing protected files (`core-instructions/15`), and repo maintenance (`<type>(kit)` / `<type>(repo)` commits). Since the
   `main-protection` ruleset, maintenance also goes through a branch and a PR; `ALLOW_MAIN_COMMIT=1` only lifts the local hook.
 
 ## Where to look
-`docs/README.md` maps all documentation. `AGENTS.md` is the AI entry point. `core-instructions/README.md` indexes all specs.
+The handbook (https://samurai-netizen.github.io/citybuild/) shows all documentation as a book, with search. In the repository,
+`docs/README.md` maps it, `AGENTS.md` is the AI entry point and `core-instructions/README.md` indexes all specs.

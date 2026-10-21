@@ -10,6 +10,7 @@ How to get from a clean machine to a running project. Every command here must wo
 | .NET SDK | 10.0.401 or a newer 10.0 SDK | `global.json` pins 10.0.401 (`rollForward: latestFeature`); with an older SDK, SDK commands such as `dotnet build` fail with "A compatible .NET SDK was not found" (`dotnet --list-sdks` shows what is installed) |
 | Docker Desktop | current | PostgreSQL and integration tests (Testcontainers) |
 | Unity Hub + Unity | 6.3 LTS; the project is on 6000.3.25f1 (`client/CityBuilder/ProjectSettings/ProjectVersion.txt`) | Android Build Support for device builds |
+| Node.js | 20 or newer (CI uses 24) | Only for the handbook site (`website/`); `npm` comes with it |
 | Claude Code | current | Or any AI coding tool that reads `AGENTS.md` |
 
 ## First-time setup (owner, Day 0)
@@ -27,6 +28,8 @@ How to get from a clean machine to a running project. Every command here must wo
 | What | Command | Since |
 |---|---|---|
 | Docs and process checks | `bash scripts/dev/check-docs.sh` | Day 0 |
+| Build the handbook as CI does (fails on broken links, anchors, pages missing from the sidebar) | `bash scripts/dev/docs-site.sh build` (first run installs the pinned packages) | CR-0002-T1 |
+| Preview the handbook while editing (live reload) | `bash scripts/dev/docs-site.sh start` → http://localhost:3000/citybuild/ (published: https://samurai-netizen.github.io/citybuild/) | CR-0002-T1 |
 | Print a task spec | `bash scripts/dev/show-task.sh M0-01` | Day 0 |
 | Test the Claude Code Bash guard (after changing `.claude/hooks/guard-bash.sh`; `core-instructions/18-git-and-ci.md`) | `bash scripts/dev/test-guard-bash.sh` | KIT-AUDIT-FIXES |
 | Build server | `dotnet build server/CityBuilder.slnx` | M0-02 |

@@ -1,4 +1,4 @@
-# <Module name> (e.g. CityBuilder.Simulation)
+# ModuleName (the project or assembly name, e.g. CityBuilder.Simulation)
 
 **Path:** `…` · **Kind:** .NET project | Unity assembly · **References:** … · **Referenced by:** …
 
@@ -22,4 +22,6 @@ Where the tests live, what they cover, and how to run them.
 ## Known limitations
 - …
 
-Last updated: <task id>
+<!-- Placeholders stay plain text or go in backticks: a bare tag in angle brackets disappears on GitHub and breaks the handbook (17 §6). -->
+
+Last updated: TASK-ID (the task that last changed this doc, e.g. M0-19)

@@ -59,6 +59,8 @@ Server: ASP.NET Core and EF Core 10 (Microsoft, incl. `Microsoft.AspNetCore.Open
 `Testcontainers.PostgreSql`, `Microsoft.Extensions.TimeProvider.Testing`, `coverlet.collector`.
 Unity: `com.unity.nuget.newtonsoft-json`, `com.unity.inputsystem`, `com.unity.test-framework`, built-in UI Toolkit and the built-in module
 `com.unity.modules.unitywebrequest`. A package that arrives without anyone asking for it (a new project, the Hub, the Editor, Package Manager) is not approved by that (decision 025).
+Handbook site (`website/`, Node.js 20 or newer): `@docusaurus/core`, `@docusaurus/preset-classic`, `@docusaurus/theme-mermaid`, `prism-react-renderer`,
+`react`, `react-dom`, `@easyops-cn/docusaurus-search-local` (CR-0002), each pinned exactly in `website/package.json` and locked by `package-lock.json`.
 
 ## Formatting and analysis (enforced)
 `.editorconfig` at the repo root plus `dotnet format --verify-no-changes` in CI. `TreatWarningsAsErrors` in `src/`.

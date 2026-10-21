@@ -36,7 +36,8 @@ Roles:
    Other tools: "Read AGENTS.md, then start task M0-15 following core-instructions/16-session-protocol.md."
 3. For `[PLAN]` tasks, review the plan and approve it, or redirect.
 4. Answer questions, and do [MANUAL] steps when asked.
-5. Read the task report, review the PR on GitHub, and squash-merge when satisfied.
+5. Read the task report, review the PR on GitHub, and squash-merge when satisfied. The handbook
+   (https://samurai-netizen.github.io/citybuild/) shows the merged docs a few minutes later.
 6. If the session ended early (tokens ran out), start a new session (any tool) and run `/resume`, or say "resume".
 
 ## Definition of Ready (before coding starts)
@@ -49,8 +50,10 @@ Roles:
 - [ ] Build passes with zero warnings in `src/`, and `dotnet format --verify-no-changes` passes.
 - [ ] New behaviour has tests; relevant suites pass; no test was weakened (or G-Tests was approved).
 - [ ] No game-number literals, no client authority, no era- or research-specific `if`s, no XP or level concepts.
-- [ ] Docs updated per the change recipe (`19`); public APIs have XML docs; touched module docs show `Last updated: <ID>`.
-- [ ] `scripts/dev/check-docs.sh --base origin/main` passes; generated docs are current (from M0-61).
+- [ ] Docs updated per the change recipe (`19`), and every row of the build log's Docs impact table closed (`updated`, `new`, `deleted` or
+  `no change: <why>`); public APIs have XML docs; touched module docs show `Last updated: <ID>`.
+- [ ] `scripts/dev/check-docs.sh --base origin/main` passes; the handbook builds (`bash scripts/dev/docs-site.sh build`); generated docs
+  are current (from M0-61).
 - [ ] Build log entry complete: sessions, every decision, owner input, verification, follow-ups.
 - [ ] Resume point `IDLE`, plan board row updated, `CHANGELOG` line added, decision rows and ADRs added if needed.
 - [ ] Self-review done (line by line for `[O]` tasks and for engine, persistence or security changes), with blocking findings fixed; any agent used was
@@ -65,7 +68,7 @@ Roles:
 ## Tests              — added/changed; commands run; pass/fail counts before → after
 ## Not verified       — anything you could not run, and why
 ## Decisions          — count + the important ones (full list in the build log entry)
-## Docs updated       — list
+## Docs impact        — each page: updated / new / no change (why), as in the build log entry
 ## Known limitations  — honest list
 ## PR                 — link; anything the owner must do (merge, [MANUAL] steps)
 ## Next task          — id and title

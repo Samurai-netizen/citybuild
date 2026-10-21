@@ -29,6 +29,8 @@ If the task doesn't exist, stop.)
 3. **Branch:** `git switch -c task/$id-<short-slug>`.
 4. **Write ahead:**
    - `bash scripts/dev/new-log-entry.sh $id "<task title>" "Claude Code / <model id>"`; fill in Session 1 → Plan with numbered steps;
+   - fill its **Docs impact** table: one row per page the change could make wrong, from the recipe(s) in `core-instructions/19-change-recipes.md`
+     (result `planned` for now);
    - resume point in `core-instructions/13-progress.md`: state IN PROGRESS, task, branch, log entry path, steps, next step;
    - plan board row (or CR task row): `In progress`;
    - commit `chore($id): start task` and push with `git push -u origin HEAD`.

@@ -24,7 +24,7 @@ ASP.NET Core endpoint types.
   types", is not tested yet (M0-65).
 - The loader takes a plain path and reads no configuration; the Api resolves `Content:FilePath` (decision 2 of the M0-07b build log).
   All content checks are the engine's (`04` §14); the loader only adds the JSON layer.
-- EF Core mappings live in `Persistence/Configurations`; persistence models are not Simulation types and are mapped
+- EF Core mappings will live in `Persistence/Configurations` *(from M0-19)*; persistence models are not Simulation types and are mapped
   explicitly (`.claude/rules/server.md`).
 - XML doc comments are optional here; the project writes its doc file only so that unnecessary usings (IDE0005)
   fail the build.
@@ -45,4 +45,4 @@ round-trip tests come with M0-20.
 ## Known limitations
 - A JSON problem stops the reader, so a file with a syntax error and a rule error shows only the syntax error until it is fixed.
 
-Last updated: M0-07b
+Last updated: CR-0002-T1

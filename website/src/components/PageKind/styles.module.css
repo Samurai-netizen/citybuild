@@ -1,0 +1,47 @@
+.kind {
+  --kind-accent: var(--ifm-color-emphasis-600);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  margin-bottom: 1.25rem;
+  padding: 0.5rem 0.75rem;
+  border-left: 4px solid var(--kind-accent);
+  border-radius: var(--ifm-global-radius);
+  background: var(--ifm-color-emphasis-100);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.label {
+  color: var(--kind-accent);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.text {
+  flex: 1 1 18rem;
+  color: var(--ifm-color-emphasis-800);
+}
+
+.source {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.source code {
+  font-size: 0.75rem;
+}
+
+.spec { --kind-accent: var(--handbook-kind-spec); }
+.built { --kind-accent: var(--handbook-kind-built); }
+.howto { --kind-accent: var(--handbook-kind-howto); }
+.decision { --kind-accent: var(--handbook-kind-decision); }
+.change { --kind-accent: var(--handbook-kind-change); }
+.plan { --kind-accent: var(--handbook-kind-plan); }
+.history { --kind-accent: var(--handbook-kind-history); }
+.status { --kind-accent: var(--handbook-kind-status); }
+.generated { --kind-accent: var(--handbook-kind-generated); }

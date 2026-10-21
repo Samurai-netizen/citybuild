@@ -12,7 +12,8 @@ Read `core-instructions/17-documentation-system.md` §2: which file owns which f
 Code and tests are the truth for "what exists". `core-instructions/` is the truth for "what must be".
 
 ## Check
-1. `bash scripts/dev/check-docs.sh`. Once `tools/DocTools` exists, also `dotnet run --project tools/DocTools -- check`.
+1. `bash scripts/dev/check-docs.sh` and `bash scripts/dev/docs-site.sh build`. Once `tools/DocTools` exists, also
+   `dotnet run --project tools/DocTools -- check`.
 2. **Module docs** (`docs/modules/*.md`): the public types, responsibilities and extension points they describe exist
    in the code, and every important public type is mentioned. `Last updated:` is present.
 3. **`docs/architecture/overview.md`** matches the real project references and folders.
