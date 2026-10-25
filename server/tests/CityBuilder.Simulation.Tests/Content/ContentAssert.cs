@@ -42,6 +42,7 @@ internal static class ContentAssert
             "Expected:\n" + string.Join("\n", expected.Select(error => $"{error.Code} at {error.Path}")) + "\nGot:\n" + Describe(result.Errors));
     }
 
+    /// <summary>The errors one per line as <c>ContentError.ToString()</c> gives them, for a failing assertion's message.</summary>
     private static string Describe(IReadOnlyList<ContentError> errors) =>
         errors.Count == 0 ? "(no errors)" : string.Join("\n", errors.Select(error => error.ToString()));
 }

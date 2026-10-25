@@ -10,6 +10,7 @@ namespace CityBuilder.Simulation.Tests.Display;
 /// </summary>
 public sealed class ProgressPermilleTests
 {
+    /// <summary>A running cycle's bar is worker-seconds done out of its labor: 0 before the start, 250 after 10 of 40, full at and after the end.</summary>
     [Theory]
     [InlineData(985L, 0)] // before the cycle started
     [InlineData(990L, 0)]
@@ -25,6 +26,7 @@ public sealed class ProgressPermilleTests
         Assert.Equal(expected, ProgressDisplay.ProgressPermille(camp, clock));
     }
 
+    /// <summary>The bar rounds down: 1 of 90 worker-seconds is 11 permille, not 12.</summary>
     [Fact]
     public void ProgressPermille_RoundsDown()
     {
@@ -34,6 +36,7 @@ public sealed class ProgressPermilleTests
         Assert.Equal(11, ProgressDisplay.ProgressPermille(workshop, 1001));
     }
 
+    /// <summary>A frozen cycle's bar stays at what was done before the freeze (40 of 90: 444), however far the clock runs.</summary>
     [Theory]
     [InlineData(990L, 444)] // 40 of 90 worker-seconds were done before the freeze
     [InlineData(1000L, 444)]
@@ -45,6 +48,7 @@ public sealed class ProgressPermilleTests
         Assert.Equal(expected, ProgressDisplay.ProgressPermille(frozen, clock));
     }
 
+    /// <summary>After a worker change the bar keeps the labor done before and adds the new workers' share from the segment's start.</summary>
     [Fact]
     public void ProgressPermille_AfterAWorkerChange_CountsFromTheSegmentWithTheNewWorkers()
     {
@@ -56,6 +60,7 @@ public sealed class ProgressPermilleTests
         Assert.Equal(1000, ProgressDisplay.ProgressPermille(workshop, 1015));
     }
 
+    /// <summary>Second by second, the bar never goes back and stays within 0 to 1000.</summary>
     [Fact]
     public void ProgressPermille_NeverDecreasesAsTheClockAdvances()
     {
@@ -72,6 +77,7 @@ public sealed class ProgressPermilleTests
         }
     }
 
+    /// <summary>A clock of <c>long.MaxValue</c> gives a full bar without overflowing.</summary>
     [Fact]
     public void ProgressPermille_FarAwayClock_DoesNotOverflow()
     {
@@ -80,12 +86,14 @@ public sealed class ProgressPermilleTests
         Assert.Equal(1000, ProgressDisplay.ProgressPermille(camp, long.MaxValue));
     }
 
+    /// <summary>An idle building has no job, so its bar is 0.</summary>
     [Fact]
     public void ProgressPermille_IdleBuilding_IsZero()
     {
         Assert.Equal(0, ProgressDisplay.ProgressPermille(Idle(1, "workshop", 0, 0, workers: 1), 1000));
     }
 
+    /// <summary>A construction's bar counts seconds of the phase: 10 of 20 s is 500, full at and after the end.</summary>
     [Theory]
     [InlineData(980L, 0)]
     [InlineData(990L, 0)]
@@ -100,6 +108,7 @@ public sealed class ProgressPermilleTests
         Assert.Equal(expected, ProgressDisplay.ProgressPermille(building, clock));
     }
 
+    /// <summary>An upgrade's bar counts seconds of the phase: 14 of 15 s is 933.</summary>
     [Theory]
     [InlineData(1004L, 933)] // 14 of 15 s
     [InlineData(1005L, 1000)]
@@ -110,6 +119,7 @@ public sealed class ProgressPermilleTests
         Assert.Equal(expected, ProgressDisplay.ProgressPermille(building, clock));
     }
 
+    /// <summary>A null building throws.</summary>
     [Fact]
     public void ProgressPermille_NullBuilding_Throws()
     {

@@ -11,8 +11,10 @@ namespace CityBuilder.Simulation.Tests.Display;
 /// </summary>
 public sealed class SecondsUntilFullTests
 {
+    /// <summary>The capped item whose fill time is measured.</summary>
     private static readonly ItemId _wood = new("wood");
 
+    /// <summary>The time is the missing wood at the net rate: 100 wood at 90 an hour is 4000 s, 1 wood is 40 s.</summary>
     [Theory]
     [InlineData(0, 4_000L)] // 100 wood at 90 an hour
     [InlineData(10, 3_600L)] // 90 wood: one hour
@@ -24,6 +26,7 @@ public sealed class SecondsUntilFullTests
         Assert.Equal(expected, ProductionDisplay.SecondsUntilFull(city, TestContent, _wood));
     }
 
+    /// <summary>The time rounds up (1401 s, since 1400 s would give 99.99 wood), so it never shows the cap sooner than it comes.</summary>
     [Fact]
     public void SecondsUntilFull_RoundsUp()
     {
@@ -33,6 +36,7 @@ public sealed class SecondsUntilFullTests
         Assert.Equal(1_401L, ProductionDisplay.SecondsUntilFull(city, TestContent, _wood));
     }
 
+    /// <summary>The cap includes completed research bonuses: 150 wood at 90 an hour.</summary>
     [Fact]
     public void SecondsUntilFull_UsesTheCapWithBonuses()
     {
@@ -42,6 +46,7 @@ public sealed class SecondsUntilFullTests
         Assert.Equal(6_000L, ProductionDisplay.SecondsUntilFull(city, TestContent, _wood));
     }
 
+    /// <summary>An uncapped item never fills, so there is no time.</summary>
     [Fact]
     public void SecondsUntilFull_UncappedItem_IsNull()
     {
@@ -50,12 +55,14 @@ public sealed class SecondsUntilFullTests
         Assert.Null(ProductionDisplay.SecondsUntilFull(city, TestContent, new ItemId("gold")));
     }
 
+    /// <summary>Without a producer the stock never fills.</summary>
     [Fact]
     public void SecondsUntilFull_NothingMakesTheItem_IsNull()
     {
         Assert.Null(ProductionDisplay.SecondsUntilFull(City(), TestContent, _wood));
     }
 
+    /// <summary>With more used than made the stock falls, so there is no time.</summary>
     [Fact]
     public void SecondsUntilFull_NetRateBelowZero_IsNull()
     {
@@ -64,6 +71,7 @@ public sealed class SecondsUntilFullTests
         Assert.Null(ProductionDisplay.SecondsUntilFull(city, TestContent, _wood));
     }
 
+    /// <summary>A camp without workers makes nothing, so there is no time.</summary>
     [Fact]
     public void SecondsUntilFull_CampWithoutWorkers_IsNull()
     {
@@ -72,6 +80,7 @@ public sealed class SecondsUntilFullTests
         Assert.Null(ProductionDisplay.SecondsUntilFull(city, TestContent, _wood));
     }
 
+    /// <summary>A stock already above the cap (refunds may do that) while something is still made is full now: 0 s.</summary>
     [Fact]
     public void SecondsUntilFull_StockAboveTheCapWhileACycleRuns_IsZero()
     {
@@ -82,6 +91,7 @@ public sealed class SecondsUntilFullTests
         Assert.Equal(0L, ProductionDisplay.SecondsUntilFull(city, TestContent, _wood));
     }
 
+    /// <summary>At the cap an idle camp can't start (storage full), so the net rate is 0 and there is no time.</summary>
     [Fact]
     public void SecondsUntilFull_FullStockWithOnlyAnIdleCamp_IsNull()
     {
@@ -91,6 +101,7 @@ public sealed class SecondsUntilFullTests
         Assert.Null(ProductionDisplay.SecondsUntilFull(city, TestContent, _wood));
     }
 
+    /// <summary>A null city or content throws.</summary>
     [Fact]
     public void SecondsUntilFull_NullArguments_Throw()
     {
