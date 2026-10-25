@@ -13,10 +13,14 @@ namespace CityBuilder.Simulation.Tests.Golden;
 /// </summary>
 public sealed class GoldenScenario1Tests
 {
+    /// <summary>The two finished Cottages as <see cref="DescribeBuildings"/> shows them: idle, and a house has no recipe.</summary>
     private const string _houses = "1 Idle NoRecipe | 2 Idle NoRecipe";
+    /// <summary>The research line while trade_charter runs (until t=600).</summary>
     private const string _researching = "active trade_charter until 600";
+    /// <summary>The research line once trade_charter is done.</summary>
     private const string _researched = "completed trade_charter";
 
+    /// <summary>At each row of the table the city has exactly the row's coins, logs, planks, free workers, building phases, stall reasons and research.</summary>
     [Theory]
     [InlineData(0, 450, 40, 10, 0, "1 Constructing | 2 Constructing", _researching)]
     [InlineData(30, 220, 10, 10, 8, _houses + " | 3 Constructing | 4 Constructing", _researching)]
@@ -42,6 +46,7 @@ public sealed class GoldenScenario1Tests
         Assert.Equal(research, DescribeResearch(city));
     }
 
+    /// <summary>Just before the Trading Post is placed at t=750 the city has the 220 coins and 20 planks the row's "before placing" note gives.</summary>
     [Fact]
     public void Advance_GoldenScenario1At750BeforePlacingTheTradingPost_HasTheTwentyPlanksItCosts()
     {
@@ -51,8 +56,11 @@ public sealed class GoldenScenario1Tests
         Assert.Equal(20, city.GetQuantity(new ItemId("planks")));
     }
 
-    // At 1170 the advances are exactly one per gap between actions (30, 720, 420 s); at the other rows the last gap ends at the row instead.
-    // The scenario stays far below the production cap, so split invariance (04 section 10, invariant 2) promises identical cities.
+    /// <summary>
+    /// One advance per gap and one-second steps give identical cities at every row. At 1170 the advances are exactly one per gap between actions
+    /// (30, 720, 420 s); at the other rows the last gap ends at the row instead. The scenario stays far below the production cap, so split
+    /// invariance (<c>04</c> section 10, invariant 2) promises identical cities.
+    /// </summary>
     [Theory]
     [InlineData(0)]
     [InlineData(30)]
@@ -72,7 +80,7 @@ public sealed class GoldenScenario1Tests
         Assert.Equal(CityDump.Describe(oneAdvancePerGap), CityDump.Describe(oneSecondSteps));
     }
 
-    // "<id> <phase>", followed by the stall reason when there is one, in ascending id.
+    /// <summary>Each building as its id and phase, followed by its stall reason when it has one, in ascending id, joined by " | ".</summary>
     private static string DescribeBuildings(CityState city) =>
         string.Join(" | ", city.Buildings.Select(building =>
         {
@@ -81,6 +89,7 @@ public sealed class GoldenScenario1Tests
             return stall is null ? text : text + " " + stall;
         }));
 
+    /// <summary>The research as "active id until end", or "completed" followed by the completed nodes.</summary>
     private static string DescribeResearch(CityState city)
     {
         ActiveResearch? active = city.ActiveResearch;

@@ -14,8 +14,10 @@ namespace CityBuilder.Simulation.Tests.EngineRules;
 /// </summary>
 public sealed class StartRuleTests
 {
+    /// <summary>The workshop's input and the lumber camp's capped output.</summary>
     private static readonly ItemId _wood = new("wood");
 
+    /// <summary>With any one start condition unmet (no worker, an input short, the output at its cap, reserved room taken), nothing changes and the stall reason names it.</summary>
     [Theory]
     [InlineData(0, 2, 79, false, "NoWorkers")]
     [InlineData(1, 1, 79, false, "MissingInput:wood")]
@@ -33,6 +35,7 @@ public sealed class StartRuleTests
         Assert.Equal(stallReason, StallReason.Of(city, TestContent, city.Buildings[1])?.ToString());
     }
 
+    /// <summary>With every condition met exactly (1 worker, exactly the inputs, the output reaching exactly the cap) the cycle starts.</summary>
     [Fact]
     public void StartRule_EveryConditionJustMet_StartsTheCycle()
     {
@@ -44,6 +47,7 @@ public sealed class StartRuleTests
         Assert.Equal("building 2 workshop (1,0) L1 w=1 Producing 1000..1090 target=0 labor=90/90@1000", CityDump.BuildingLine(city, 2));
     }
 
+    /// <summary>When the inputs suffice for one cycle, the lower id takes them, whatever order the city lists the buildings in.</summary>
     [Fact]
     public void ScarceInputs_TwoProducersCanStart_TheLowerIdTakesThem()
     {
@@ -58,6 +62,7 @@ public sealed class StartRuleTests
         Assert.Equal(1, city.GetQuantity(_wood));
     }
 
+    /// <summary>A higher id's start that frees room under a cap lets a skipped lower id start in the same second (CR-0001).</summary>
     [Fact]
     public void StartRule_HigherIdStartFreesRoomForALowerId_BothStartInTheSameSecond()
     {
@@ -73,6 +78,7 @@ public sealed class StartRuleTests
         Assert.Equal(98, city.GetQuantity(_wood));
     }
 
+    /// <summary>A building under construction produces nothing; when it completes it is staffed and starts in that second.</summary>
     [Fact]
     public void Construction_InputsInStock_BlocksProductionUntilItCompletes()
     {
@@ -89,6 +95,7 @@ public sealed class StartRuleTests
         Assert.Equal(2, city.GetQuantity(_wood));
     }
 
+    /// <summary>An uncapped output (gold, the fixture's coins) never blocks a start, however high its stock.</summary>
     [Fact]
     public void UncappedOutput_StockFarAboveEveryCap_CyclesStillStart()
     {
@@ -101,6 +108,7 @@ public sealed class StartRuleTests
         Assert.Equal("building 2 mint (1,0) L1 w=2 Producing 1100..1110 target=0 labor=20/20@1100", CityDump.BuildingLine(city, 2));
     }
 
+    /// <summary>After the production cap no cycle starts, but construction and research timers still complete in the dormant tail.</summary>
     [Fact]
     public void ProductionCap_DormantTail_StartsNoCycleWhileTimersStillComplete()
     {

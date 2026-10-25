@@ -16,8 +16,10 @@ namespace CityBuilder.Simulation.Tests.EngineRules;
 /// </summary>
 public sealed class UpgradeRuleTests
 {
+    /// <summary>The workshop's input, refunded by the upgrade.</summary>
     private static readonly ItemId _wood = new("wood");
 
+    /// <summary>Upgrading mid-cycle refunds the cycle's inputs, drops its reservation, and keeps both workers assigned.</summary>
     [Fact]
     public void Upgrade_ProducerMidCycle_RefundsTheCycleAndKeepsTheWorkers()
     {
@@ -28,6 +30,7 @@ public sealed class UpgradeRuleTests
         Assert.Equal((3L, 0L), (city.GetQuantity(_wood), CityQueries.Reserved(city, TestContent, new ItemId("boards"))));
     }
 
+    /// <summary>During the upgrade nothing is produced and the old level's worker limit holds.</summary>
     [Fact]
     public void Upgrade_WhileItRuns_BlocksProductionAndKeepsTheOldWorkerLimit()
     {
@@ -41,6 +44,7 @@ public sealed class UpgradeRuleTests
         Assert.Empty(report.Consumed);
     }
 
+    /// <summary>When the upgrade completes, the kept workers start the new level's cycle in that second, and the new limit applies.</summary>
     [Fact]
     public void Upgrade_Completes_RaisesMaxWorkersAndTheKeptWorkersStartAtOnce()
     {
@@ -54,6 +58,7 @@ public sealed class UpgradeRuleTests
         Assert.Equal(6, city.Buildings[2].AssignedWorkers);
     }
 
+    /// <summary>A refund may push the stock above the cap; it is kept, and it blocks new cycles until the stock is back under the cap.</summary>
     [Fact]
     public void Refund_AboveTheCap_IsKeptButBlocksNewCycles()
     {
