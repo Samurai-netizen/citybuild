@@ -8,13 +8,17 @@ namespace CityBuilder.Simulation.Tests;
 /// </summary>
 public sealed class ClientAssemblyTests
 {
+    /// <summary>The only precompiled DLL a client assembly may list: Newtonsoft, and only <c>CityBuilder.Client.Net</c> uses it (<c>09</c>).</summary>
     private const string _newtonsoftDll = "Newtonsoft.Json.dll";
+    /// <summary>The manifest's path to the shared engine package, relative to the Unity project's <c>Packages</c> folder.</summary>
     private const string _simulationPackagePath = "file:../../../shared/Simulation";
 
+    /// <summary>The Unity project's folder, <c>client/CityBuilder</c>.</summary>
     private static readonly string _unityProject = Path.Combine(RepositoryPaths.Root, "client", "CityBuilder");
+    /// <summary>The folder of the project's own code, <c>Assets/_Project</c>, where the five assembly definitions live.</summary>
     private static readonly string _projectFolder = Path.Combine(_unityProject, "Assets", "_Project");
 
-    // Folder under Assets/_Project -> assembly name. The name is also the asmdef file name.
+    /// <summary>The five client assemblies: the folder under <c>Assets/_Project</c> and the assembly name, which is also the asmdef file's name.</summary>
     private static readonly (string Folder, string Name)[] _allAssemblies =
     [
         ("Core", "CityBuilder.Client.Core"),
@@ -24,7 +28,7 @@ public sealed class ClientAssemblyTests
         ("Tests/PlayMode", "CityBuilder.Client.Tests.PlayMode"),
     ];
 
-    // The assembly references each runtime assembly may have: exactly the table in 09 (UI Toolkit is an engine module, not a reference).
+    /// <summary>The assembly references each runtime assembly may have: exactly the table in <c>09</c> (UI Toolkit is an engine module, not a reference).</summary>
     public static TheoryData<string, string[]> RuntimeReferences => new()
     {
         { "Core", ["CityBuilder.Simulation"] },
@@ -32,12 +36,15 @@ public sealed class ClientAssemblyTests
         { "Presentation", ["CityBuilder.Client.Core", "CityBuilder.Client.Net", "Unity.InputSystem"] },
     };
 
+    /// <summary>The folders of the three runtime assemblies, for the theories that check each.</summary>
     public static TheoryData<string> RuntimeFolders => new() { "Core", "Net", "Presentation" };
 
+    /// <summary>The folders of the two test assemblies, for the theories that check each.</summary>
     public static TheoryData<string> TestFolders => new() { "Tests/EditMode", "Tests/PlayMode" };
 
     // ----- the set of assemblies -----
 
+    /// <summary>The project folder holds exactly the five assembly definitions and no assembly reference file.</summary>
     [Fact]
     public void ProjectFolder_AssemblyDefinitions_AreTheFiveClientAssemblies()
     {
@@ -55,6 +62,7 @@ public sealed class ClientAssemblyTests
         Assert.Empty(Directory.GetFiles(_projectFolder, "*.asmref", SearchOption.AllDirectories));
     }
 
+    /// <summary>Each asmdef's <c>name</c> equals its file name, which is how the other asmdefs reference it.</summary>
     [Fact]
     public void AssemblyDefinitions_NameField_MatchesTheFileName()
     {
@@ -66,6 +74,7 @@ public sealed class ClientAssemblyTests
 
     // ----- runtime assemblies: the dependency table -----
 
+    /// <summary>Each runtime assembly references exactly what the dependency table allows it, nothing more and nothing less.</summary>
     [Theory]
     [MemberData(nameof(RuntimeReferences))]
     public void RuntimeAssembly_References_AreExactlyTheDependencyTable(string folder, string[] expected)
@@ -77,6 +86,7 @@ public sealed class ClientAssemblyTests
         Assert.Equal(expected.Order(StringComparer.Ordinal), Strings(asmdef, "references").Order(StringComparer.Ordinal));
     }
 
+    /// <summary>A runtime assembly compiles for every platform, has no define constraint, and is not auto-referenced.</summary>
     [Theory]
     [MemberData(nameof(RuntimeFolders))]
     public void RuntimeAssembly_Restrictions_AreAbsent(string folder)
@@ -92,6 +102,7 @@ public sealed class ClientAssemblyTests
         Assert.Empty(Strings(asmdef, "versionDefines"));
     }
 
+    /// <summary>A runtime assembly overrides the precompiled references and lists only its own: Newtonsoft for Net, nothing for Core and Presentation.</summary>
     [Theory]
     [MemberData(nameof(RuntimeFolders))]
     public void RuntimeAssembly_PrecompiledLibraries_AreListedExplicitly(string folder)
@@ -108,6 +119,7 @@ public sealed class ClientAssemblyTests
 
     // ----- test assemblies -----
 
+    /// <summary>A test assembly has the Unity Test Runner setup: NUnit, the test runner references and the <c>UNITY_INCLUDE_TESTS</c> constraint.</summary>
     [Theory]
     [MemberData(nameof(TestFolders))]
     public void TestAssembly_Setup_IsTheUnityTestRunnerSetup(string folder)
@@ -122,6 +134,7 @@ public sealed class ClientAssemblyTests
         Assert.Contains("UnityEditor.TestRunner", Strings(asmdef, "references"));
     }
 
+    /// <summary>The EditMode tests run in the Editor only; the PlayMode tests on every platform.</summary>
     [Fact]
     public void TestAssemblies_Platforms_EditModeIsEditorOnlyAndPlayModeIsEverywhere()
     {
@@ -129,6 +142,7 @@ public sealed class ClientAssemblyTests
         Assert.Empty(Strings(ReadAsmdef("Tests/PlayMode"), "includePlatforms"));
     }
 
+    /// <summary>A test assembly references the engine and the three runtime assemblies besides the test runner, and nothing on the server.</summary>
     [Theory]
     [MemberData(nameof(TestFolders))]
     public void TestAssembly_References_NameTheSimulationAndTheThreeRuntimeAssemblies(string folder)
@@ -146,6 +160,7 @@ public sealed class ClientAssemblyTests
 
     // ----- Packages/manifest.json -----
 
+    /// <summary>The manifest's <c>file:</c> path resolves to <c>shared/Simulation</c>, where the engine's <c>package.json</c> is.</summary>
     [Fact]
     public void Manifest_SimulationPackage_PointsAtTheSharedPackageFolder()
     {
@@ -160,6 +175,7 @@ public sealed class ClientAssemblyTests
         Assert.True(File.Exists(Path.Combine(resolved, "package.json")));
     }
 
+    /// <summary>The manifest names Newtonsoft, the Input System and the UnityWebRequest module directly, because the assemblies use them.</summary>
     [Fact]
     public void Manifest_Dependencies_IncludeNewtonsoftInputSystemAndWebRequests()
     {
@@ -173,6 +189,7 @@ public sealed class ClientAssemblyTests
         Assert.NotNull(dependencies["com.unity.modules.unitywebrequest"]);
     }
 
+    /// <summary>The three pre-release AI packages the owner removed in M0-04 stay out of the manifest (decision 025).</summary>
     [Theory]
     [InlineData("com.unity.ai.assistant")]
     [InlineData("com.unity.ai.inference")]
@@ -186,15 +203,18 @@ public sealed class ClientAssemblyTests
 
     // ----- helpers -----
 
+    /// <summary>Reads the asmdef of the assembly in a folder of <see cref="_allAssemblies"/>.</summary>
     private static JsonObject ReadAsmdef(string folder)
     {
         string name = _allAssemblies.Single(assembly => assembly.Folder == folder).Name;
         return ReadAsmdef(folder, name);
     }
 
+    /// <summary>Reads the asmdef with a given name in a folder under <c>Assets/_Project</c>.</summary>
     private static JsonObject ReadAsmdef(string folder, string name) =>
         ReadJsonObject(Path.Combine(_projectFolder, folder, name + ".asmdef"));
 
+    /// <summary>The <c>dependencies</c> object of <c>Packages/manifest.json</c>; fails the test when it is missing.</summary>
     private static JsonObject ReadManifestDependencies()
     {
         JsonNode? dependencies = ReadJsonObject(Path.Combine(_unityProject, "Packages", "manifest.json"))["dependencies"];
@@ -203,6 +223,7 @@ public sealed class ClientAssemblyTests
         return dependencies.AsObject();
     }
 
+    /// <summary>Parses a JSON file whose root is an object; fails the test when it isn't.</summary>
     private static JsonObject ReadJsonObject(string path)
     {
         JsonNode? root = JsonNode.Parse(File.ReadAllText(path));
@@ -211,10 +232,13 @@ public sealed class ClientAssemblyTests
         return root.AsObject();
     }
 
+    /// <summary>A boolean property of a JSON object, or null when it is absent.</summary>
     private static bool? BoolOf(JsonObject json, string propertyName) => (bool?)json[propertyName];
 
-    // Unity treats a missing array as an empty one. The "!" only silences the compiler: a null entry comes out as null and then fails
-    // the comparison it takes part in, and a non-string entry throws.
+    /// <summary>
+    /// A string-array property of a JSON object; a missing array is empty, as Unity treats it. The "!" only silences the compiler: a null entry
+    /// comes out as null and then fails the comparison it takes part in, and a non-string entry throws.
+    /// </summary>
     private static string[] Strings(JsonObject json, string propertyName) =>
         (json[propertyName]?.AsArray() ?? []).Select(node => (string)node!).ToArray();
 }

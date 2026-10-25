@@ -5,12 +5,14 @@ namespace CityBuilder.Simulation.Tests;
 /// <summary>Edge cases of the labor reduction that research effects apply to every recipe (permille, rounded up).</summary>
 public sealed class ApplyPermilleReductionTests
 {
+    /// <summary>The unit of every modifier is 1000: 200 permille is 20 %.</summary>
     [Fact]
     public void PermilleScale_Value_IsOneThousand()
     {
         Assert.Equal(1_000, IntegerMath.PermilleScale);
     }
 
+    /// <summary>No reduction leaves the labor as it is.</summary>
     [Theory]
     [InlineData(0L)]
     [InlineData(1L)]
@@ -22,6 +24,7 @@ public sealed class ApplyPermilleReductionTests
         Assert.Equal(labor, IntegerMath.ApplyPermilleReduction(labor, 0));
     }
 
+    /// <summary>A reduction of 1000 permille removes all of the labor (content keeps the sum lower, but the helper handles the edge).</summary>
     [Theory]
     [InlineData(0L)]
     [InlineData(1L)]
@@ -32,6 +35,7 @@ public sealed class ApplyPermilleReductionTests
         Assert.Equal(0L, IntegerMath.ApplyPermilleReduction(labor, 1_000));
     }
 
+    /// <summary>No labor stays no labor for every permille from 0 to 1000.</summary>
     [Fact]
     public void ApplyPermilleReduction_ZeroLabor_ReturnsZeroForEveryPermille()
     {
@@ -41,6 +45,7 @@ public sealed class ApplyPermilleReductionTests
         }
     }
 
+    /// <summary>When labor × (1000 − permille) divides by 1000 exactly, the result is that quotient, not one more.</summary>
     [Theory]
     [InlineData(180L, 500, 90L)] // 500 permille is the cap on the total reduction per building type (MaxLaborReductionPermille in 23)
     [InlineData(180L, 250, 135L)]
@@ -53,6 +58,7 @@ public sealed class ApplyPermilleReductionTests
         Assert.Equal(expected, IntegerMath.ApplyPermilleReduction(labor, permille));
     }
 
+    /// <summary>A fractional result rounds up, so a reduction never makes a cycle cheaper than the exact share.</summary>
     [Theory]
     [InlineData(100L, 333, 67L)] // 66.7
     [InlineData(1L, 1, 1L)] // 0.999
@@ -67,6 +73,7 @@ public sealed class ApplyPermilleReductionTests
         Assert.Equal(expected, IntegerMath.ApplyPermilleReduction(labor, permille));
     }
 
+    /// <summary>For every labor 0..1500 and permille 0..1000 the result is the ceiling of the exact share and never more than the labor.</summary>
     [Fact]
     public void ApplyPermilleReduction_SmallRange_MatchesTheDefinitionOfTheCeiling()
     {
@@ -93,6 +100,10 @@ public sealed class ApplyPermilleReductionTests
         Assert.Empty(failures);
     }
 
+    /// <summary>
+    /// Labor far above <c>long.MaxValue / 1000</c>, where labor × (1000 − permille) no longer fits a <c>long</c>, still gives the exact ceiling
+    /// (compared with <see cref="BigInteger"/>).
+    /// </summary>
     [Fact]
     public void ApplyPermilleReduction_LaborUpToLongMaxValue_IsExactAndDoesNotOverflow()
     {
@@ -121,6 +132,7 @@ public sealed class ApplyPermilleReductionTests
         Assert.Empty(failures);
     }
 
+    /// <summary>The result never rises as the reduction grows, permille by permille from 0 to 1000.</summary>
     [Theory]
     [InlineData(1L)]
     [InlineData(7L)]
@@ -140,6 +152,7 @@ public sealed class ApplyPermilleReductionTests
         }
     }
 
+    /// <summary>The result never falls as the labor grows, labor by labor from 0 to 2000.</summary>
     [Theory]
     [InlineData(0)]
     [InlineData(1)]
@@ -158,8 +171,11 @@ public sealed class ApplyPermilleReductionTests
         }
     }
 
-    // The bad argument is paired with several partners (edge values, and the other argument bad as well), so that no shortcut ahead of
-    // the guards can let bad input through. When both are out of range the labor is reported: it is checked first.
+    /// <summary>
+    /// Negative labor is a programmer error and throws for the parameter <c>labor</c>. The bad argument is paired with several partners (edge
+    /// values, and the other argument bad as well), so that no shortcut ahead of the guards can let bad input through; when both are out of
+    /// range the labor is reported, because it is checked first.
+    /// </summary>
     [Theory]
     [InlineData(-1L, 0)]
     [InlineData(-1L, 500)]
@@ -176,6 +192,7 @@ public sealed class ApplyPermilleReductionTests
         Assert.Equal("labor", exception.ParamName);
     }
 
+    /// <summary>A permille below 0 or above 1000 is a programmer error and throws for the parameter <c>permille</c>.</summary>
     [Theory]
     [InlineData(180L, -1)]
     [InlineData(180L, 1_001)]
@@ -194,6 +211,7 @@ public sealed class ApplyPermilleReductionTests
 
     // ----- both helpers together, as the start rule uses them -----
 
+    /// <summary>The two helpers as the start rule chains them: a sawmill's 180 labor less 250 permille is 135, and 3 workers need 45 s.</summary>
     [Fact]
     public void CeilDiv_OfReducedLabor_GivesTheCycleSecondsOfTheStartRule()
     {
