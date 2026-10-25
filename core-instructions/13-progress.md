@@ -8,15 +8,14 @@
 - **Task:** CR-0003-T1 · Code documentation: every file and declaration (`docs/changes/CR-0003-code-documentation.md`, owner's request of 2026-10-26)
 - **Branch:** `task/CR-0003-T1-code-docs` (from `main` = `a402563`)
 - **Build log entry:** `docs/build-log/2026/2026-10-25-01-CR-0003-T1.md`
-- **Last green commit:** `main` = `a402563` (CR-0002 merged; handbook deployed and checked)
-- **Steps:** 1 start ✓ · 2 checker + standard · 3 server · 4 engine · 5 tests · 6 Unity client · 7 scripts and other files · 8 workflow docs ·
+- **Last green commit:** the head of the branch (fast suite: Repository 20, Simulation 872, Domain 1, Application 14, IntegrationTests 25)
+- **Steps:** 1 start ✓ · 2 checker + standard ✓ · 3 server · 4 engine · 5 tests · 6 Unity client · 7 scripts and other files · 8 workflow docs ·
   9 finish (details: the entry's Session 1 plan)
-- **Next step:** step 2: `server/tests/CityBuilder.Repository.Tests` (Microsoft.CodeAnalysis.CSharp 5.9.0) with rule tests and a shrinking
-  list of folders not yet documented; the standard in `14` and `docs/how-to/document-code.md`.
+- **Next step:** step 3: document server `src/` (8 problems), remove it from `_notYetDocumented` in `CodeDocumentationTests`, and make
+  CS1591 an error in Api and Infrastructure (`server/Directory.Build.props`). Inventory of what is left: build log, step 2.
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); Dependabot PR #28.
-- **Known broken / do not touch:** `CityBuilder.Repository.Tests` is unfinished (wip: it doesn't build yet). The clash with another
-  session in this folder is over and checked (build log → Interruption, Resolved).
+- **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 

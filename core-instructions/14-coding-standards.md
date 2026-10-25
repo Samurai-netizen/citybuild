@@ -26,12 +26,28 @@ check as much as possible. When a rule here and an analyzer disagree, the analyz
 - Every `async` method takes a `CancellationToken` and passes it on. No `async void` (except Unity event handlers), no `.Result`/`.Wait()`.
 
 ## Documentation in code
-- XML doc comments on every public type and member in `CityBuilder.Simulation`, `.Domain` and `.Application`.
-  These projects set `GenerateDocumentationFile=true`, and CS1591 (missing XML comment) is an error there.
-  The other server projects write the doc file too, only so that IDE0005 runs on build; they suppress CS1591
-  (`server/Directory.Build.props`).
-- Doc comments state the contract: what it does, units (seconds, worker-seconds, permille), errors it returns, and invariants it keeps.
-- Tests are documentation too: names read as sentences (`08`).
+Goal: a programmer or an AI coder who opens any file understands what it is for and what every part of it does and why, without asking
+anyone (owner directive OD-12). Worked examples for each kind: `docs/how-to/document-code.md`.
+- **Every declaration has an XML doc comment**, at every access level and in every project, tests and Unity scripts included: types,
+  constructors, methods, properties, indexers, fields, constants, events, operators, enum members, delegates. Its `<summary>` says what it
+  is or does and why it exists, in glossary words (`31`), with units (seconds, worker-seconds, permille) and the rule it implements
+  (`<c>04</c> section 6`). Add `<param>`, `<returns>`, `<exception>` and `<remarks>` where the summary doesn't say it yet: a unit, a range,
+  a null case, an error, an invariant, how an algorithm works. `<inheritdoc/>` marks an override or implementation that adds nothing.
+  Each primary constructor parameter gets a `<param>` in the type's comment.
+- **A local function** has a `//` comment above it (XML doc comments aren't allowed there). **Inside a body**, comments say why: a step that
+  isn't obvious, the spec rule a block implements, a trap the next change could fall into. Never what the next line plainly does.
+- **Every file says what it is for, at its top.** In C# that is the doc comment of the file's type (one type per file, named after it); a
+  file without a type (top-level statements) starts with a comment. Scripts, JavaScript, workflows, MSBuild files, UXML and USS start with
+  a header comment, and every shell or JavaScript function has a comment above it. Files that can't hold comments (JSON) are described by
+  the doc of the folder or module that owns them; files that tools generate (Unity's `.asset`, `.unity`, `.meta`, lock files) are not.
+- **Tests:** the class says what it covers (the spec section, the fixture numbers it relies on); each test method says in one sentence the
+  behaviour it proves; helpers and fixtures are documented like production code. Test names still read as sentences (`08`).
+- **Comments are code:** a change that makes a comment wrong fixes it in the same commit.
+- **Checks:** the compiler reports a missing doc comment on a public member (CS1591) and a broken one (bad XML, an unknown `cref` or
+  `param`) as an error in the engine and in every server project, tests included (`server/Directory.Build.props`).
+  `CityBuilder.Repository.Tests` parses every C# file, the Unity scripts included, and fails for an undocumented declaration at any access
+  level, a local function without a comment, or a file without a description. `check-docs.sh` checks the header comments of the other
+  files and the comments above shell and JavaScript functions. Whether a comment is good is for review.
 
 ## Server (.NET 10, C# 14)
 - File-scoped namespaces; `sealed` by default; dependency injection through constructors only. No service locator, no static mutable state.
@@ -56,7 +72,8 @@ check as much as possible. When a rule here and an analyzer disagree, the analyz
 Server: ASP.NET Core and EF Core 10 (Microsoft, incl. `Microsoft.AspNetCore.OpenApi`), `Npgsql.EntityFrameworkCore.PostgreSQL`, `Microsoft.AspNetCore.Authentication.JwtBearer`,
 `Microsoft.CodeAnalysis.BannedApiAnalyzers`. Tests: `xunit.v3.mtp-off` (xUnit v3 for VSTest; replaces `xunit`, decision 019 in `12`),
 `xunit.runner.visualstudio`, `Microsoft.NET.Test.Sdk`, `Microsoft.AspNetCore.Mvc.Testing`,
-`Testcontainers.PostgreSql`, `Microsoft.Extensions.TimeProvider.Testing`, `coverlet.collector`.
+`Testcontainers.PostgreSql`, `Microsoft.Extensions.TimeProvider.Testing`, `coverlet.collector`, `Microsoft.CodeAnalysis.CSharp` (the parser
+of the documentation checks in `CityBuilder.Repository.Tests`, CR-0003).
 Unity: `com.unity.nuget.newtonsoft-json`, `com.unity.inputsystem`, `com.unity.test-framework`, built-in UI Toolkit and the built-in module
 `com.unity.modules.unitywebrequest`. A package that arrives without anyone asking for it (a new project, the Hub, the Editor, Package Manager) is not approved by that (decision 025).
 Handbook site (`website/`, Node.js 20 or newer): `@docusaurus/core`, `@docusaurus/preset-classic`, `@docusaurus/theme-mermaid`, `prism-react-renderer`,
