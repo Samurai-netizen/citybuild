@@ -9,6 +9,7 @@ namespace CityBuilder.Simulation.Tests.Rules;
 /// <summary>Checks the result of a mutation and, for a rejection, that the city did not change at all.</summary>
 internal static class RulesAssert
 {
+    /// <summary>The mutation was applied: no error code.</summary>
     public static void Ok(MutationResult result)
     {
         Assert.True(result.IsOk, result.ToString());
@@ -38,6 +39,7 @@ internal static class RulesAssert
         Assert.Equal(before, CityDump.Describe(city));
     }
 
+    /// <summary>Items as <c>item=quantity</c> joined by spaces, in the result's order (empty for none).</summary>
     private static string Text(IReadOnlyList<ItemQuantity> items) =>
         string.Join(" ", items.Select(item => string.Create(CultureInfo.InvariantCulture, $"{item.Item}={item.Quantity}")));
 }

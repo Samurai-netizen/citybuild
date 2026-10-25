@@ -11,6 +11,7 @@ namespace CityBuilder.Simulation.Tests.Rules;
 /// </summary>
 public sealed class AssignWorkersTests
 {
+    /// <summary>More workers mid-cycle keep the labor done and end sooner: 120 labor left with 4 workers ends 30 s later.</summary>
     [Fact]
     public void AssignWorkers_MoreWorkersMidCycle_KeepsProgressAndEndsSooner()
     {
@@ -22,6 +23,7 @@ public sealed class AssignWorkersTests
         Assert.Equal("building 3 lumber_camp (2,0) L2 w=4 Producing 1000..1050 target=0 labor=180/120@1020", CityDump.BuildingLine(city, 3));
     }
 
+    /// <summary>A worker change moves no items.</summary>
     [Fact]
     public void AssignWorkers_MidCycle_NamesNothingSpentOrRefunded()
     {
@@ -30,6 +32,7 @@ public sealed class AssignWorkersTests
         RulesAssert.Moved(Assign(city, 3, 1), spent: "", refunded: "");
     }
 
+    /// <summary>0 workers freeze the cycle (no end), keep its progress, and keep its outputs reserved.</summary>
     [Fact]
     public void AssignWorkers_ZeroWorkersMidCycle_FreezesTheCycleAndKeepsItsReservation()
     {
@@ -41,6 +44,7 @@ public sealed class AssignWorkersTests
         Assert.Equal(1, CityQueries.Reserved(city, TestContent, new ItemId("wood")));
     }
 
+    /// <summary>Workers on a frozen cycle resume it with the labor it had left: 120 labor with 3 workers takes 40 s.</summary>
     [Fact]
     public void AssignWorkers_WorkersOnAFrozenCycle_ResumeWhereItStopped()
     {
@@ -52,6 +56,7 @@ public sealed class AssignWorkersTests
         Assert.Equal("building 3 lumber_camp (2,0) L2 w=3 Producing 1000..1060 target=0 labor=180/120@1020", CityDump.BuildingLine(city, 3));
     }
 
+    /// <summary>The new end rounds up: 100 labor with 3 workers takes 34 s.</summary>
     [Fact]
     public void AssignWorkers_LaborNotDivisible_RoundsTheDurationUp()
     {
@@ -63,6 +68,7 @@ public sealed class AssignWorkersTests
         Assert.Equal((long?)1054, city.Buildings[2].PhaseEndsAt);
     }
 
+    /// <summary>Setting the same count mid-cycle starts a new segment but keeps the same end.</summary>
     [Fact]
     public void AssignWorkers_SameCountMidCycle_KeepsTheEnd()
     {
@@ -74,6 +80,7 @@ public sealed class AssignWorkersTests
         Assert.Equal("building 3 lumber_camp (2,0) L2 w=3 Producing 1000..1034 target=0 labor=180/97@1001", CityDump.BuildingLine(city, 3));
     }
 
+    /// <summary>On an idle building only the count changes; a cycle starts with the next advance.</summary>
     [Fact]
     public void AssignWorkers_IdleBuilding_SetsOnlyTheCount()
     {
@@ -85,6 +92,7 @@ public sealed class AssignWorkersTests
         Assert.Equal(2, CityQueries.FreeWorkers(city, TestContent));
     }
 
+    /// <summary>On an upgrading building only the count changes; it starts producing when the upgrade completes.</summary>
     [Fact]
     public void AssignWorkers_UpgradingBuilding_SetsOnlyTheCount()
     {
@@ -95,12 +103,14 @@ public sealed class AssignWorkersTests
         Assert.Equal("building 3 lumber_camp (2,0) L1 w=2 Upgrading 1010..1022 target=2 labor=0/0@0", CityDump.BuildingLine(city, 3));
     }
 
+    /// <summary>While upgrading, the current level's limit applies; the next level's limit counts only from the upgrade's end (<c>04</c> section 8).</summary>
     [Fact]
     public void AssignWorkers_UpgradingAboveTheCurrentLevelsLimit_IsRejected() =>
         // Level 1 takes up to 2 workers, level 2 up to 3: the new limit applies when the upgrade completes (04 section 8).
         RulesAssert.Rejected(MutationErrorCode.WorkerLimit,
             TwoHutsAnd(Upgrading(3, "lumber_camp", 2, 0, level: 1, workers: 1, startedAt: 1010, endsAt: 1022), clock: 1020), city => Assign(city, 3, 3));
 
+    /// <summary>Lowering a count needs no free worker.</summary>
     [Fact]
     public void AssignWorkers_FewerWorkersWithNoneFree_IsAllowed()
     {
@@ -112,6 +122,7 @@ public sealed class AssignWorkersTests
         Assert.Equal(2, CityQueries.FreeWorkers(city, TestContent));
     }
 
+    /// <summary>Assigning exactly all free workers is allowed.</summary>
     [Fact]
     public void AssignWorkers_AllFreeWorkers_IsAllowed()
     {
@@ -122,24 +133,29 @@ public sealed class AssignWorkersTests
         Assert.Equal(0, CityQueries.FreeWorkers(city, TestContent));
     }
 
+    /// <summary>An id with no building is rejected as <see cref="MutationErrorCode.BuildingNotFound"/>.</summary>
     [Fact]
     public void AssignWorkers_UnknownId_IsRejected() =>
         RulesAssert.Rejected(MutationErrorCode.BuildingNotFound, TwoHutsAnd(Idle(3, "lumber_camp", 2, 0), clock: 1000), city => Assign(city, 4, 1));
 
+    /// <summary>A house takes no workers: <see cref="MutationErrorCode.InvalidArgument"/>.</summary>
     [Fact]
     public void AssignWorkers_House_IsRejectedAsInvalidArgument() =>
         RulesAssert.Rejected(MutationErrorCode.InvalidArgument, TwoHutsAnd(Idle(3, "lumber_camp", 2, 0), clock: 1000), city => Assign(city, 1, 1));
 
+    /// <summary>A house under construction is still a house: <see cref="MutationErrorCode.InvalidArgument"/>.</summary>
     [Fact]
     public void AssignWorkers_ConstructingHouse_IsRejectedAsInvalidArgument() =>
         RulesAssert.Rejected(MutationErrorCode.InvalidArgument, TwoHutsAnd(Constructing(3, "hut", 2, 0, startedAt: 998, endsAt: 1003), clock: 1000),
             city => Assign(city, 3, 0));
 
+    /// <summary>A producer under construction takes no workers yet: <see cref="MutationErrorCode.BuildingBusy"/>.</summary>
     [Fact]
     public void AssignWorkers_ConstructingProducer_IsRejected() =>
         RulesAssert.Rejected(MutationErrorCode.BuildingBusy, TwoHutsAnd(Constructing(3, "lumber_camp", 2, 0, startedAt: 995, endsAt: 1005), clock: 1000),
             city => Assign(city, 3, 1));
 
+    /// <summary>A count below 0 or above the level's limit is rejected as <see cref="MutationErrorCode.WorkerLimit"/>.</summary>
     [Theory]
     [InlineData(-1)]
     [InlineData(3)]
@@ -148,6 +164,7 @@ public sealed class AssignWorkersTests
     public void AssignWorkers_CountOutsideTheLevelsLimit_IsRejected(int workers) =>
         RulesAssert.Rejected(MutationErrorCode.WorkerLimit, TwoHutsAnd(Idle(3, "lumber_camp", 2, 0), clock: 1000), city => Assign(city, 3, workers));
 
+    /// <summary>Raising a count by more than the free workers is rejected as <see cref="MutationErrorCode.InsufficientWorkers"/>.</summary>
     [Fact]
     public void AssignWorkers_MoreThanTheFreeWorkers_IsRejected()
     {
@@ -157,6 +174,7 @@ public sealed class AssignWorkersTests
         RulesAssert.Rejected(MutationErrorCode.InsufficientWorkers, city, city => Assign(city, 3, 2));
     }
 
+    /// <summary>A house still under construction provides no workers, so there are none to assign.</summary>
     [Fact]
     public void AssignWorkers_OnlyAHouseUnderConstruction_HasNoWorkersToAssign()
     {
@@ -165,6 +183,7 @@ public sealed class AssignWorkersTests
         RulesAssert.Rejected(MutationErrorCode.InsufficientWorkers, city, city => Assign(city, 2, 1));
     }
 
+    /// <summary>When several checks fail, the first in spec order wins: constructing before the limit, the limit before free workers.</summary>
     [Fact]
     public void AssignWorkers_SeveralChecksFail_ReportsTheFirstInSpecOrder()
     {
@@ -175,6 +194,7 @@ public sealed class AssignWorkersTests
         RulesAssert.Rejected(MutationErrorCode.WorkerLimit, city, city => Assign(city, 2, 5));
     }
 
+    /// <summary>A null city or content is a programmer error and throws.</summary>
     [Fact]
     public void AssignWorkers_NullCityOrContent_Throws()
     {
@@ -191,5 +211,6 @@ public sealed class AssignWorkersTests
     private static CityState TwoHutsAnd(Building third, long clock) =>
         City(clock: clock, buildings: [Idle(1, "hut", 0, 0), Idle(2, "hut", 1, 0), third]);
 
+    /// <summary>Tries to set a building's workers to an absolute count, with the fixture content.</summary>
     private static MutationResult Assign(CityState city, int buildingId, int workers) => CityRules.AssignWorkers(city, TestContent, buildingId, workers);
 }

@@ -12,6 +12,7 @@ namespace CityBuilder.Simulation.Tests.Settlement;
 /// </summary>
 public sealed class AdvanceTimerTests
 {
+    /// <summary>A research ending mid-advance completes, frees the slot and is reported.</summary>
     [Fact]
     public void Advance_ResearchEndsMidAdvance_CompletesItAndFreesTheSlot()
     {
@@ -24,6 +25,7 @@ public sealed class AdvanceTimerTests
         Assert.Equal([new ResearchId("carpentry")], report.CompletedResearch);
     }
 
+    /// <summary>A completed research's effects apply from its second: here the unlock of the workshop.</summary>
     [Fact]
     public void Advance_ResearchCompletes_ItsEffectsApplyFromThatMoment()
     {
@@ -35,6 +37,7 @@ public sealed class AdvanceTimerTests
         Assert.True(CityQueries.IsUnlocked(city, TestContent, new BuildingTypeId("workshop")));
     }
 
+    /// <summary>Timers after the production cap still complete on time; only starts stop (the dormant tail).</summary>
     [Fact]
     public void Advance_TimersAfterTheProductionCap_StillCompleteOnTime()
     {
@@ -51,6 +54,7 @@ public sealed class AdvanceTimerTests
         Assert.Equal(2, city.Buildings[1].Level);
     }
 
+    /// <summary>The other camp's level and workers, and the workers the new camp gets: <c>min(free, MaxWorkers)</c> in each case.</summary>
     public static TheoryData<int, int, int> AutoStaffing => new()
     {
         // The other camp's level and workers (one hut provides 3), and the workers the new camp (max 2) gets.
@@ -59,6 +63,7 @@ public sealed class AdvanceTimerTests
         { 2, 3, 0 },
     };
 
+    /// <summary>A completed construction gets <c>min(free workers, MaxWorkers)</c> workers (decision 018).</summary>
     [Theory]
     [MemberData(nameof(AutoStaffing))]
     public void Advance_ConstructionCompletesMidAdvance_AutoStaffsMinOfFreeAndMaxWorkers(int otherLevel, int otherWorkers, int expected)
@@ -76,6 +81,7 @@ public sealed class AdvanceTimerTests
         Assert.Equal([3], report.CompletedBuildings);
     }
 
+    /// <summary>A completed house provides its workers and takes none itself.</summary>
     [Fact]
     public void Advance_HouseConstructionCompletes_ProvidesWorkersAndTakesNone()
     {
@@ -88,6 +94,7 @@ public sealed class AdvanceTimerTests
         Assert.Equal(6, CityQueries.FreeWorkers(city, TestContent));
     }
 
+    /// <summary>The hut's id, the camp's id and the camp's workers: only a hut with the lower id completes first and provides its workers.</summary>
     public static TheoryData<int, int, int> SameSecondCompletions => new()
     {
         // The hut's id, the camp's id, and the camp's workers: only a hut with a lower id completes first and provides its workers.
@@ -95,6 +102,7 @@ public sealed class AdvanceTimerTests
         { 2, 1, 0 },
     };
 
+    /// <summary>Completions in the same second run by ascending id, each fully before the next, so a lower-id house staffs a higher-id producer.</summary>
     [Theory]
     [MemberData(nameof(SameSecondCompletions))]
     public void Advance_HouseAndProducerCompleteInTheSameSecond_LowerIdCompletesFirst(int hutId, int campId, int campWorkers)
@@ -111,6 +119,7 @@ public sealed class AdvanceTimerTests
         Assert.Equal(campWorkers, camp.AssignedWorkers);
     }
 
+    /// <summary>A completed upgrade raises the level and keeps the workers; it staffs nobody automatically.</summary>
     [Fact]
     public void Advance_UpgradeCompletes_RaisesTheLevelAndKeepsTheWorkers()
     {
@@ -129,6 +138,7 @@ public sealed class AdvanceTimerTests
         Assert.Equal([3], report.CompletedBuildings);
     }
 
+    /// <summary>A house's upgrade provides the new level's workers from its completion.</summary>
     [Fact]
     public void Advance_HouseUpgradeCompletes_ProvidesTheNewLevelsWorkers()
     {
@@ -140,6 +150,7 @@ public sealed class AdvanceTimerTests
         Assert.Equal(5, CityQueries.WorkersProvided(city, TestContent));
     }
 
+    /// <summary>The report lists completed buildings by ascending id, whatever order they completed in.</summary>
     [Fact]
     public void Advance_CompletionsInAnotherOrderThanTheIds_ReportListsThemByAscendingId()
     {
@@ -154,6 +165,7 @@ public sealed class AdvanceTimerTests
         Assert.Equal([1, 2], report.CompletedBuildings);
     }
 
+    /// <summary>A cycle ending mid-advance moves its outputs from reserved to stock and reports them as produced.</summary>
     [Fact]
     public void Advance_CycleEndsMidAdvance_MovesTheOutputsToStockAndReportsThem()
     {
@@ -170,6 +182,7 @@ public sealed class AdvanceTimerTests
         Assert.Empty(report.CompletedBuildings);
     }
 
+    /// <summary>A frozen cycle has no end, so it never completes however long the advance.</summary>
     [Fact]
     public void Advance_FrozenCycle_NeverCompletes()
     {

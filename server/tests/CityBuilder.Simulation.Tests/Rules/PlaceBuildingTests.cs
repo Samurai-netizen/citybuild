@@ -12,6 +12,7 @@ namespace CityBuilder.Simulation.Tests.Rules;
 /// </summary>
 public sealed class PlaceBuildingTests
 {
+    /// <summary>A valid placement pays the cost and starts construction on the tile from the clock, with the next id, level 1 and no workers.</summary>
     [Fact]
     public void PlaceBuilding_ValidPlacement_PaysAndStartsConstructionWithTheNextId()
     {
@@ -31,6 +32,7 @@ public sealed class PlaceBuildingTests
             CityDump.Describe(city));
     }
 
+    /// <summary>The result names the cost line by line as spent and nothing as refunded, for the ledger.</summary>
     [Fact]
     public void PlaceBuilding_ValidPlacement_NamesTheCostAsSpentAndNothingRefunded()
     {
@@ -39,6 +41,7 @@ public sealed class PlaceBuildingTests
         RulesAssert.Moved(Place(city, "workshop", 0, 0), spent: "gold=40 wood=10", refunded: "");
     }
 
+    /// <summary>A stock of exactly the cost is enough, and the item then leaves the stock entirely (no 0 entries are kept).</summary>
     [Fact]
     public void PlaceBuilding_StockExactlyTheCost_LeavesNoneOfTheItem()
     {
@@ -49,6 +52,7 @@ public sealed class PlaceBuildingTests
         Assert.Empty(city.Inventory);
     }
 
+    /// <summary>A type unlocked by completed research can be placed.</summary>
     [Fact]
     public void PlaceBuilding_TypeUnlockedByCompletedResearch_IsPlaced()
     {
@@ -60,10 +64,12 @@ public sealed class PlaceBuildingTests
         Assert.Equal(("workshop", BuildingPhase.Constructing, (long?)1020), (workshop.TypeId.Value, workshop.Phase, workshop.PhaseEndsAt));
     }
 
+    /// <summary>A type of a later era than the city's is rejected as <see cref="MutationErrorCode.BuildingLocked"/> (OD-10).</summary>
     [Fact]
     public void PlaceBuilding_TypeOfALaterEra_IsRejectedAsLocked() =>
         RulesAssert.Rejected(MutationErrorCode.BuildingLocked, City(era: 1, inventory: [("gold", 100)]), city => Place(city, "manor", 0, 0));
 
+    /// <summary>A type of the city's own era can be placed.</summary>
     [Fact]
     public void PlaceBuilding_TypeOfTheCitysEra_IsPlaced()
     {
@@ -74,9 +80,11 @@ public sealed class PlaceBuildingTests
         Assert.Equal("manor", Assert.Single(city.Buildings).TypeId.Value);
     }
 
+    /// <summary>A type of an earlier era stays placeable.</summary>
     [Fact]
     public void PlaceBuilding_TypeOfAnEarlierEra_IsPlaced() => RulesAssert.Ok(Place(City(era: 2, inventory: [("gold", 10)]), "hut", 0, 0));
 
+    /// <summary>With one of two builders busy, a placement takes the second.</summary>
     [Fact]
     public void PlaceBuilding_OneBuilderBusy_UsesTheSecond()
     {
@@ -87,10 +95,12 @@ public sealed class PlaceBuildingTests
         Assert.Equal(2, CityQueries.BuildersBusy(city));
     }
 
+    /// <summary>A type the content doesn't know is rejected as <see cref="MutationErrorCode.UnknownBuildingType"/>.</summary>
     [Fact]
     public void PlaceBuilding_UnknownType_IsRejected() =>
         RulesAssert.Rejected(MutationErrorCode.UnknownBuildingType, City(inventory: [("gold", 100)]), city => Place(city, "castle", 0, 0));
 
+    /// <summary>A type whose unlocking research is only running is still locked.</summary>
     [Fact]
     public void PlaceBuilding_LockedType_IsRejected()
     {
@@ -99,6 +109,7 @@ public sealed class PlaceBuildingTests
         RulesAssert.Rejected(MutationErrorCode.BuildingLocked, city, city => Place(city, "workshop", 0, 0));
     }
 
+    /// <summary>A tile outside the grid (negative, or at the width or height, or extreme values) is rejected as <see cref="MutationErrorCode.OutOfBounds"/>.</summary>
     [Theory]
     [InlineData(-1, 0)]
     [InlineData(0, -1)]
@@ -108,11 +119,13 @@ public sealed class PlaceBuildingTests
     public void PlaceBuilding_TileOutsideTheGrid_IsRejected(int x, int y) =>
         RulesAssert.Rejected(MutationErrorCode.OutOfBounds, City(inventory: [("gold", 100)]), city => Place(city, "hut", x, y));
 
+    /// <summary>The last column and row of the grid are inside it.</summary>
     [Theory]
     [InlineData(5, 4)]
     [InlineData(0, 4)]
     public void PlaceBuilding_LastTileOfTheGrid_IsInside(int x, int y) => RulesAssert.Ok(Place(City(inventory: [("gold", 10)]), "hut", x, y));
 
+    /// <summary>A tile with a building on it, in any phase, is rejected as <see cref="MutationErrorCode.TileOccupied"/>.</summary>
     [Fact]
     public void PlaceBuilding_TileTaken_IsRejected()
     {
@@ -121,6 +134,7 @@ public sealed class PlaceBuildingTests
         RulesAssert.Rejected(MutationErrorCode.TileOccupied, city, city => Place(city, "lumber_camp", 3, 2));
     }
 
+    /// <summary>With every builder busy (a construction and an upgrade) a placement is rejected as <see cref="MutationErrorCode.NoFreeBuilder"/>.</summary>
     [Fact]
     public void PlaceBuilding_EveryBuilderBusy_IsRejected()
     {
@@ -133,6 +147,7 @@ public sealed class PlaceBuildingTests
         RulesAssert.Rejected(MutationErrorCode.NoFreeBuilder, city, city => Place(city, "hut", 2, 0));
     }
 
+    /// <summary>A cost the stock can't cover, even by one item, is rejected as <see cref="MutationErrorCode.InsufficientResource"/>.</summary>
     [Fact]
     public void PlaceBuilding_CostNotAffordable_IsRejected()
     {
@@ -141,6 +156,7 @@ public sealed class PlaceBuildingTests
         RulesAssert.Rejected(MutationErrorCode.InsufficientResource, city, city => Place(city, "workshop", 0, 0));
     }
 
+    /// <summary>When several checks fail, the first in the order of <c>04</c> section 8 is reported: the lock before bounds, the tile before builders and cost.</summary>
     [Fact]
     public void PlaceBuilding_SeveralChecksFail_ReportsTheFirstInSpecOrder()
     {
@@ -157,6 +173,7 @@ public sealed class PlaceBuildingTests
         RulesAssert.Rejected(MutationErrorCode.NoFreeBuilder, busy, city => Place(city, "hut", 2, 0));
     }
 
+    /// <summary>A null city or content is a programmer error and throws, unlike a business rule.</summary>
     [Fact]
     public void PlaceBuilding_NullCityOrContent_Throws()
     {
@@ -165,6 +182,7 @@ public sealed class PlaceBuildingTests
         Assert.Throws<ArgumentNullException>(() => CityRules.PlaceBuilding(City(), null!, new BuildingTypeId("hut"), 0, 0));
     }
 
+    /// <summary>Tries to place a building of the type on the tile, with the fixture content.</summary>
     private static MutationResult Place(CityState city, string type, int x, int y) =>
         CityRules.PlaceBuilding(city, TestContent, new BuildingTypeId(type), x, y);
 }
