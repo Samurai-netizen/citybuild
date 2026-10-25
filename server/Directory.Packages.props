@@ -15,6 +15,8 @@
        Owner approval 2026-10-12 (build log of M0-02, decision row 019 in core-instructions/12-decisions.md). -->
   <ItemGroup Label="Tests">
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.12" />
+    <!-- Microsoft's C# parser, for the documentation checks of CityBuilder.Repository.Tests (syntax only; owner approval 2026-10-26, CR-0003). -->
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.9.0" />
     <PackageVersion Include="Microsoft.Extensions.TimeProvider.Testing" Version="10.10.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.1" />

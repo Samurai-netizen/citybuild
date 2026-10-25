@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Checks that hold for the repository's source tree as a whole rather than for one project: today, that every C# file and every
+       declaration in it is documented (core-instructions/14-coding-standards.md → Documentation in code). It references no project of
+       the solution: it reads the source files and parses them with Microsoft's C# parser, syntax only, so the Unity scripts, which only
+       Unity compiles, are checked like the rest (CR-0003). -->
+  <PropertyGroup>
+    <!-- xUnit v3 test projects are executables. -->
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="xunit.v3.mtp-off" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+</Project>

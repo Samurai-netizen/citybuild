@@ -15,7 +15,8 @@
   list of folders not yet documented; the standard in `14` and `docs/how-to/document-code.md`.
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); Dependabot PR #28.
-- **Known broken / do not touch:** —
+- **Known broken / do not touch:** `CityBuilder.Repository.Tests` is unfinished (wip: not built, no tests yet). Another session used the
+  same folder at the same time (build log → Interruption); waiting for the owner on where this task continues.
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
