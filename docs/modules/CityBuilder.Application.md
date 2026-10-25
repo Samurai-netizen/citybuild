@@ -28,8 +28,8 @@ need (`ICityRepository`, `IUnitOfWork`, `IContentProvider`) and the command pipe
 - Time comes only from an injected `TimeProvider`, never `DateTime.UtcNow` (`.claude/rules/server.md`). Now is floored to whole seconds
   (`ToUnixTimeSeconds`), and every settle starts where the last one ended, so the dropped fractions are counted by a later settle, never lost
   and never counted twice.
-- Every public type and member has an XML doc comment (`core-instructions/14-coding-standards.md`): the project writes
-  its doc file, and a missing comment (CS1591) fails the build.
+- Every type and member, private ones included, has an XML doc comment (`core-instructions/14-coding-standards.md` → Documentation
+  in code): a missing one on a public member fails the build (CS1591), and `CityBuilder.Repository.Tests` checks the rest.
 - Warnings are errors (`server/Directory.Build.props`, `src/` projects).
 
 ## How to extend
@@ -52,4 +52,4 @@ back in time, so a clock behind is a last settled second ahead of now. The conte
   *(planned, M0-23)*. Nothing registers it in the Api yet, and `ICityRepository` has no implementation *(planned, M0-20)*.
 - No commands yet *(planned, M0-26 on)*.
 
-Last updated: M0-13
+Last updated: CR-0003-T1

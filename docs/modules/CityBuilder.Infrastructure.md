@@ -26,8 +26,8 @@ ASP.NET Core endpoint types.
   All content checks are the engine's (`04` §14); the loader only adds the JSON layer.
 - EF Core mappings will live in `Persistence/Configurations` *(from M0-19)*; persistence models are not Simulation types and are mapped
   explicitly (`.claude/rules/server.md`).
-- XML doc comments are optional here; the project writes its doc file only so that unnecessary usings (IDE0005)
-  fail the build.
+- Every type and member, private ones included, has an XML doc comment (`core-instructions/14-coding-standards.md` → Documentation
+  in code): a missing one on a public member fails the build (CS1591), and `CityBuilder.Repository.Tests` checks the rest.
 - Warnings are errors (`server/Directory.Build.props`, `src/` projects).
 
 ## How to extend
@@ -45,4 +45,4 @@ round-trip tests come with M0-20.
 ## Known limitations
 - A JSON problem stops the reader, so a file with a syntax error and a rule error shows only the syntax error until it is fixed.
 
-Last updated: CR-0002-T1
+Last updated: CR-0003-T1

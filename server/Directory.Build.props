@@ -25,9 +25,9 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
-  <!-- XML docs are required only in Domain and Application (14): there a missing comment (CS1591) fails the build.
-       Everywhere else CS1591 is suppressed, because those projects generate the doc file only for IDE0005 (above). -->
-  <PropertyGroup Condition="'$(MSBuildProjectName)' != 'CityBuilder.Domain' And '$(MSBuildProjectName)' != 'CityBuilder.Application'">
+  <!-- Every declaration has a doc comment (14 → Documentation in code, CR-0003). In src/ a missing one on a public member (CS1591) fails
+       the build like every other warning. The test projects still suppress it until CR-0003-T1 has documented them. -->
+  <PropertyGroup Condition="$(ServerProjectFolder.StartsWith('tests'))">
     <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
 </Project>
