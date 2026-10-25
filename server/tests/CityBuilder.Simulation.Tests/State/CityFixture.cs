@@ -80,12 +80,15 @@ internal static class CityFixture
             activeResearch);
     }
 
+    /// <summary>An idle building in canonical form: phase start 0, and no end, target level or cycle.</summary>
     public static Building Idle(int id, string type, int x, int y, int level = 1, int workers = 0) =>
         new(id, new BuildingTypeId(type), x, y, level, workers, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
 
+    /// <summary>A building under construction from <paramref name="startedAt"/> to <paramref name="endsAt"/>, level 1 and no workers.</summary>
     public static Building Constructing(int id, string type, int x, int y, long startedAt, long endsAt) =>
         new(id, new BuildingTypeId(type), x, y, 1, 0, BuildingPhase.Constructing, startedAt, endsAt, 0, 0, 0, 0);
 
+    /// <summary>A building upgrading from <paramref name="level"/> to the next, keeping its workers, from <paramref name="startedAt"/> to <paramref name="endsAt"/>.</summary>
     public static Building Upgrading(int id, string type, int x, int y, int level, int workers, long startedAt, long endsAt) =>
         new(id, new BuildingTypeId(type), x, y, level, workers, BuildingPhase.Upgrading, startedAt, endsAt, level + 1, 0, 0, 0);
 

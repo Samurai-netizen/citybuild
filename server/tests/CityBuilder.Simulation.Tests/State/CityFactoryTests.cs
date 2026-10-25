@@ -6,6 +6,7 @@ namespace CityBuilder.Simulation.Tests.State;
 /// <summary>A new city is exactly the content's starting city.</summary>
 public sealed class CityFactoryTests
 {
+    /// <summary>A new city has the content's starting era and stock.</summary>
     [Fact]
     public void CreateStarterCity_ValidContent_HasTheStartingEraAndStock()
     {
@@ -15,6 +16,7 @@ public sealed class CityFactoryTests
         Assert.Equal([("gold", 100L), ("wood", 5L)], city.Inventory.Select(stock => (stock.Key.Value, stock.Value)));
     }
 
+    /// <summary>A new city starts at clock 0 with next id 1, no buildings, no research.</summary>
     [Fact]
     public void CreateStarterCity_ValidContent_StartsAtClockZeroWithNothingBuiltOrResearched()
     {
@@ -26,6 +28,7 @@ public sealed class CityFactoryTests
         Assert.Null(city.ActiveResearch);
     }
 
+    /// <summary>Null content is a programmer error and throws.</summary>
     [Fact]
     public void CreateStarterCity_NullContent_Throws()
     {
