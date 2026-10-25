@@ -1,6 +1,6 @@
 # CR-0002 — Project handbook: a Docusaurus site over the docs, kept current by every task
 
-- **Status:** In progress
+- **Status:** Done
 - **Type:** Process
 - **Requested by:** owner · **Date:** 2026-10-20
 - **Milestone / era:** M0 (before M0-19) / —
@@ -75,7 +75,7 @@ also wants the AI workflow to keep the documentation current with every task, wi
 ## Tasks (filled in after approval)
 | ID | Title | Model | Status |
 |---|---|---|---|
-| CR-0002-T1 | Handbook site, docs-as-code workflow and the full docs audit (one PR) | O | In review |
+| CR-0002-T1 | Handbook site, docs-as-code workflow and the full docs audit (one PR) | O | Done |
 
 ## Owner approval
 - Approved on: 2026-10-20 — the owner's request in chat: "Implement a documentation system for citybuild game. Run through all previous
