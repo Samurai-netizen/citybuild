@@ -6,6 +6,7 @@ namespace CityBuilder.Simulation.Content
     /// <summary>One problem found in content data: what is wrong, where, and a message for the person who edits the content.</summary>
     public sealed class ContentError
     {
+        /// <summary>Creates an error; only <see cref="ContentErrorList.Add"/> does, while the factory checks content. Each value is described on its property.</summary>
         internal ContentError(ContentErrorCode code, string path, string message)
         {
             Code = code;

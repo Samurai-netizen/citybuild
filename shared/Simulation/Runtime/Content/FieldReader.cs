@@ -13,13 +13,16 @@ namespace CityBuilder.Simulation.Content
     /// </summary>
     internal sealed class FieldReader
     {
+        /// <summary>Where every shape error goes.</summary>
         private readonly ContentErrorList _errors;
 
+        /// <summary>Creates a reader that reports into the factory's error list.</summary>
         public FieldReader(ContentErrorList errors)
         {
             _errors = errors;
         }
 
+        /// <summary>Reads a required text; an absent, empty or blank one is reported and comes back as an empty text.</summary>
         public string RequireText(string? value, string path)
         {
             if (value is null || value.Trim().Length == 0)
@@ -31,6 +34,7 @@ namespace CityBuilder.Simulation.Content
             return value;
         }
 
+        /// <summary>Reads a required whole number; an absent one is reported and comes back as 0. Its sign and range are checked by the rules.</summary>
         public int RequireInt(int? value, string path)
         {
             if (value is null)
@@ -42,6 +46,10 @@ namespace CityBuilder.Simulation.Content
             return value.Value;
         }
 
+        /// <summary>
+        /// Reads a required quantity, cost, duration or labor value; an absent one is reported and comes back as 0, and one above
+        /// <see cref="GameContentFactory.MaxQuantity"/> is reported too.
+        /// </summary>
         public long RequireLong(long? value, string path)
         {
             if (value is null)
@@ -53,6 +61,7 @@ namespace CityBuilder.Simulation.Content
             return CheckLimit(value.Value, path);
         }
 
+        /// <summary>Reads a required true/false value; an absent one is reported and comes back as false.</summary>
         public bool RequireBool(bool? value, string path)
         {
             if (value is null)
@@ -167,8 +176,10 @@ namespace CityBuilder.Simulation.Content
         /// <summary>Reports a text that is not one of the allowed values.</summary>
         public void InvalidValue(string path, string message) => _errors.Add(ContentErrorCode.InvalidValue, path, message);
 
+        /// <summary>Reports a required value that is absent.</summary>
         public void Missing(string path) => _errors.Add(ContentErrorCode.MissingValue, path, "A value is required here.");
 
+        /// <summary>Reports a value above <see cref="GameContentFactory.MaxQuantity"/> and returns the value unchanged (the factory stops before it is used).</summary>
         private long CheckLimit(long value, string path)
         {
             if (value > GameContentFactory.MaxQuantity)

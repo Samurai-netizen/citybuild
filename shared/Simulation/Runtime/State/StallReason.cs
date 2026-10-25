@@ -11,6 +11,7 @@ namespace CityBuilder.Simulation.State
     /// </summary>
     public sealed class StallReason
     {
+        /// <summary>Holds one reason; <see cref="Of"/> derives them.</summary>
         private StallReason(StallKind kind, ItemId item)
         {
             Kind = kind;

@@ -8,6 +8,7 @@ namespace CityBuilder.Simulation.Content
     /// </summary>
     public sealed class ItemQuantity
     {
+        /// <summary>Creates one line of an item map; only <see cref="FieldReader.ReadItemAmounts"/> makes them, in item id order.</summary>
         internal ItemQuantity(ItemId item, long quantity)
         {
             Item = item;

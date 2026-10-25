@@ -6,6 +6,7 @@ namespace CityBuilder.Simulation.Content
     /// <summary>An item of the game content, such as coins, logs or planks.</summary>
     public sealed class ItemDefinition
     {
+        /// <summary>Creates the item from values the shape phase has read (<see cref="ContentReader"/>); each is described on its property.</summary>
         internal ItemDefinition(ItemId id, string name, int era, bool isCapped, bool isTradable)
         {
             Id = id;

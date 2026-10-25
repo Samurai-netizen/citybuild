@@ -77,6 +77,10 @@ namespace CityBuilder.Simulation.Display
             return research is null ? 0 : TimePermille(research.StartedAt, research.EndsAt, clock);
         }
 
+        /// <summary>
+        /// How far a running cycle is, in permille of its labor: the labor done before the current segment plus what its workers did since, out of
+        /// <see cref="Building.CycleLabor"/>. A frozen cycle keeps its value because 0 workers add nothing.
+        /// </summary>
         private static int CyclePermille(Building building, long clock)
         {
             // Past the end the bar is full. Checking it first also keeps the product below from growing with a far-away clock.
@@ -90,6 +94,7 @@ namespace CityBuilder.Simulation.Display
             return PermilleOf(building.CycleLabor - remaining, building.CycleLabor);
         }
 
+        /// <summary>How far a timed job (construction, upgrade, research) is, in permille of its seconds; a job with no length or past its end is full.</summary>
         private static int TimePermille(long startedAt, long? endsAt, long clock)
         {
             long end = endsAt ?? startedAt;

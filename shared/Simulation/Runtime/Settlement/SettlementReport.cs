@@ -9,6 +9,7 @@ namespace CityBuilder.Simulation.Settlement
     /// </summary>
     public sealed class SettlementReport
     {
+        /// <summary>Creates the report; only <see cref="SettlementReportBuilder.Build"/> does, with sorted lists. Each value is described on its property.</summary>
         internal SettlementReport(
             long elapsedSeconds,
             long productionSeconds,

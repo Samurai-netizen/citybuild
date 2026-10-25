@@ -18,7 +18,6 @@ public sealed class CodeDocumentationTests
         "server/tests/CityBuilder.Domain.Tests",
         "server/tests/CityBuilder.IntegrationTests",
         "server/tests/CityBuilder.Simulation.Tests",
-        "shared/Simulation",
     ];
 
     /// <summary>Every C# file of the repository passes every rule of <see cref="DocumentationRules"/>; the message lists all problems at once.</summary>

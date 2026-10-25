@@ -11,9 +11,13 @@ namespace CityBuilder.Simulation.Settlement
     /// </summary>
     internal sealed class SettlementReportBuilder
     {
+        /// <summary>The outputs of every cycle completed during the advance, per item.</summary>
         private readonly ItemTotals _produced = new ItemTotals();
+        /// <summary>The inputs of every cycle started during the advance, per item.</summary>
         private readonly ItemTotals _consumed = new ItemTotals();
+        /// <summary>The ids of the buildings whose construction or upgrade completed, in time order until <see cref="Build"/> sorts them.</summary>
         private readonly List<int> _completedBuildings = new List<int>();
+        /// <summary>The research nodes that completed, in time order until <see cref="Build"/> sorts them.</summary>
         private readonly List<ResearchId> _completedResearch = new List<ResearchId>();
 
         /// <summary>Counts the outputs of a completed cycle.</summary>
@@ -46,6 +50,7 @@ namespace CityBuilder.Simulation.Settlement
                 eraChanged: false);
         }
 
+        /// <summary>Adds each amount to its item's total (<c>checked</c>, though content bounds make an overflow impossible).</summary>
         private static void Add(ItemTotals totals, IReadOnlyList<ItemQuantity> amounts)
         {
             for (int index = 0; index < amounts.Count; index++)

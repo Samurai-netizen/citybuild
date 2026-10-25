@@ -14,10 +14,14 @@ namespace CityBuilder.Simulation.Settlement
     /// </summary>
     internal sealed class BuildingTimerQueue
     {
+        /// <summary>The heap's end times: <c>_endsAt[slot]</c> belongs to <c>_indexes[slot]</c>; slot 0 holds the earliest timer.</summary>
         private readonly long[] _endsAt;
+        /// <summary>The heap's building indexes in <see cref="CityState.Buildings"/>, slot by slot beside <see cref="_endsAt"/>.</summary>
         private readonly int[] _indexes;
+        /// <summary>How many slots are in use; slots from here on are free.</summary>
         private int _count;
 
+        /// <summary>Creates an empty queue with room for one timer per building, so it never grows during the advance.</summary>
         private BuildingTimerQueue(int capacity)
         {
             _endsAt = new long[capacity];
@@ -55,6 +59,8 @@ namespace CityBuilder.Simulation.Settlement
                 throw new InvalidOperationException("Every building already has a timer in the queue.");
             }
 
+            // Sift up: the new timer takes the last slot, and every parent that comes later (a later end, or a higher index at the same end) moves down
+            // one level until the new timer's place is found. A heap of n timers needs at most log2(n) moves.
             int slot = _count++;
             while (slot > 0)
             {
@@ -85,6 +91,8 @@ namespace CityBuilder.Simulation.Settlement
             _count--;
             long lastEndsAt = _endsAt[_count];
             int lastIndex = _indexes[_count];
+            // Sift down: the last timer refills the root's place, and the earlier of the two children moves up one level until the last timer fits,
+            // which keeps every parent earlier than its children.
             int slot = 0;
             while (true)
             {
@@ -114,6 +122,7 @@ namespace CityBuilder.Simulation.Settlement
             return first;
         }
 
+        /// <summary>The heap's order: an earlier end first, and at the same end the lower building index (which is the lower id) first.</summary>
         private static bool IsEarlier(long endsAt, int index, long otherEndsAt, int otherIndex) =>
             endsAt < otherEndsAt || (endsAt == otherEndsAt && index < otherIndex);
     }

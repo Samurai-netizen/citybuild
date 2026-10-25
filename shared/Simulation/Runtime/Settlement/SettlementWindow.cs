@@ -9,6 +9,7 @@ namespace CityBuilder.Simulation.Settlement
     /// </summary>
     public readonly struct SettlementWindow
     {
+        /// <summary>Holds one window; <see cref="Compute"/> is the only way to make one.</summary>
         private SettlementWindow(long elapsedSeconds, long newLastSettledUnixSec, bool isClockBehind)
         {
             ElapsedSeconds = elapsedSeconds;

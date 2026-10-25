@@ -135,8 +135,8 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
   raw string literals. Every file starts with `#nullable enable`, because Unity does not read the project file.
 - **Strict build.** The project is outside `server/`, so it repeats the settings that `server/Directory.Build.props` gives the server:
   warnings are errors, the XML doc file is written (a missing comment, CS1591, fails the build), `AnalysisLevel=latest-recommended`
-  and `EnforceCodeStyleInBuild`, so the build and `dotnet format` agree. Always braces; every public member, operators included,
-  has an XML doc. The target `GuardUnityCompatibleBuild` fails the build when the *evaluated* target framework, language version or
+  and `EnforceCodeStyleInBuild`, so the build and `dotnet format` agree. Always braces; every type and member, private ones and
+  operators included, has an XML doc comment (`14` → Documentation in code; `CityBuilder.Repository.Tests` checks the non-public ones). The target `GuardUnityCompatibleBuild` fails the build when the *evaluated* target framework, language version or
   warnings-as-errors setting differ, which a `Directory.Build.targets` file or a `-p:` override on the command line would otherwise change
   without any test noticing.
 - **No packages, no lock file.** The project has no `PackageReference`, `Reference`, `ProjectReference` or `FrameworkReference`; a package
@@ -157,8 +157,8 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
   lines) that checks in the order of `04` §8 before it changes anything, state changes as internal transitions of `CityState` or `Building`,
   new codes in `MutationErrorCode` (and the server's catalogue), and a test per success path and code in `Rules/` with `RulesAssert.Rejected`.
   A subfolder needs no asmdef: a second asmdef would split the Unity assembly (a test fails).
-- One public type per file, named after it, with XML docs and `#nullable enable` on the first line, and its `.meta` file (below). Both builds
-  pick the file up.
+- One public type per file, named after it, with an XML doc comment on it and on every member (any access level), `#nullable enable` on
+  the first line, and its `.meta` file (below). Both builds pick the file up.
 - Anything that needs a package or the Unity engine belongs in the server or in a Unity assembly, never here.
 
 ## Tests
@@ -249,4 +249,4 @@ too, but guards the Unity client's asmdefs and manifest, not the engine (see `do
   depend on `Dictionary` or `HashSet` order (`04` §9).
 - Content error messages are English text for content authors; only `ContentErrorCode` and `Path` are stable.
 
-Last updated: M0-18
+Last updated: CR-0003-T1

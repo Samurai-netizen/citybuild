@@ -10,6 +10,7 @@ namespace CityBuilder.Simulation.Content
     /// </summary>
     public sealed class RecipeDefinition
     {
+        /// <summary>Creates the recipe from values the shape phase has read (<see cref="ContentReader"/>); each is described on its property.</summary>
         internal RecipeDefinition(IReadOnlyList<ItemQuantity> inputs, IReadOnlyList<ItemQuantity> outputs, long labor)
         {
             Inputs = inputs ?? throw new ArgumentNullException(nameof(inputs));
