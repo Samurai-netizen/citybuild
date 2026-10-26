@@ -8,12 +8,13 @@
 - **Task:** M0-21 · Testcontainers integration base (`[S]`, run on Opus 5.5)
 - **Branch:** `task/M0-21-testcontainers-base` (from `main` = `117407a`)
 - **Build log entry:** `docs/build-log/2026/2026-10-26-04-M0-21.md`
-- **Last green commit:** the head of the branch (build 0 warnings, format clean, fast suite 22/872/21/23/101, Integration 6)
+- **Last green commit:** the head of the branch (build 0 warnings, format clean, fast suite 22/872/21/23/101, Integration 15)
 - **Planned steps:** 1. fixture (one `postgres:18.6` container per run, a database per test from a migrated template, `WebApplicationFactory`
   on it) and the migration tests · 2. persistence tests (starter city, every table, merge, stale version, constraints, new context) ·
   3. docs (`docs/testing/README.md` and the rest of Docs impact)
-- **Done steps:** start; step 1 (fixture and 6 integration tests: container, isolation, migrations on an empty database)
-- **Next step:** step 2, the persistence tests.
+- **Done steps:** start; step 1 (fixture and 6 integration tests: container, isolation, migrations on an empty database); step 2 (9
+  persistence tests: starter and full city, every table, merge, stale version, three constraints)
+- **Next step:** step 3, the docs (Docs impact table in the entry).
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7

@@ -6,7 +6,6 @@ using CityBuilder.Infrastructure.Persistence.Mapping;
 using CityBuilder.Infrastructure.Persistence.Repositories;
 using CityBuilder.Infrastructure.Persistence.Rows;
 using CityBuilder.Simulation;
-using CityBuilder.Simulation.State;
 using Microsoft.EntityFrameworkCore;
 using static CityBuilder.IntegrationTests.Persistence.SampleCities;
 
@@ -180,32 +179,6 @@ public sealed class CityRepositoryTests : IDisposable
 
         Assert.Empty(_db.ChangeTracker.Entries<LedgerEntryRow>());
         Assert.Empty(_db.ChangeTracker.Entries<CommandReceiptRow>());
-    }
-
-    /// <summary>
-    /// The sample city later, at clock 90 000: coins spent, logs used up, planks new; the producing building finished its cycle, the idle one
-    /// is gone and a new one is under construction; <c>forestry</c> completed at its end. Version and ids as loaded.
-    /// </summary>
-    private static CityAggregate Later()
-    {
-        CityAggregate full = Full();
-        Building[] buildings =
-        [
-            .. full.State.Buildings.Where(building => building.Id is not (IdleId or ProducingId)),
-            new(ProducingId, new BuildingTypeId("woodcutter"), 3, 0, 1, 2, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
-            new(7, new BuildingTypeId("cottage"), 2, 1, 1, 0, BuildingPhase.Constructing, 89_000, 89_900, 0, 0, 0, 0),
-        ];
-        var state = new CityState(
-            90_000,
-            full.State.Era,
-            full.State.NextBuildingId,
-            [new(new ItemId("coins"), 240), new(new ItemId("planks"), 3)],
-            buildings,
-            [new ResearchId("masonry"), new ResearchId("forestry")],
-            activeResearch: null);
-        KeyValuePair<ResearchId, long>[] completedAt = [new(new ResearchId("masonry"), 120), new(new ResearchId("forestry"), 86_700)];
-
-        return new CityAggregate(full.CityId, full.PlayerId, state, completedAt, full.LastSettledUnixSec, full.StateVersion, full.ContentVersion);
     }
 
     /// <summary>Attaches the city's rows unchanged, as <see cref="CityRepository.LoadForUpdateAsync"/> leaves them, created at <see cref="_createdAt"/>.</summary>

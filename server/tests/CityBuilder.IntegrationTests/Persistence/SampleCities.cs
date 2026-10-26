@@ -65,6 +65,38 @@ internal static class SampleCities
         return new CityAggregate(CityId, PlayerId, state, [new(new ResearchId("masonry"), 120)], 1_790_000_000, 7, "content-1");
     }
 
+    /// <summary>
+    /// <see cref="Full"/> later, at clock 90 000: coins spent, logs used up, planks new; the producing building finished its cycle, the idle one
+    /// is gone and a new one (id 7) is under construction; <c>forestry</c> completed at its end. Ids as in <see cref="Full"/>.
+    /// </summary>
+    /// <param name="stateVersion">The version the city was loaded with; <see cref="Full"/>'s 7 by default.</param>
+    public static CityAggregate Later(long stateVersion = 7)
+    {
+        CityAggregate full = Full();
+        Building[] buildings =
+        [
+            .. full.State.Buildings.Where(building => building.Id is not (IdleId or ProducingId)),
+            new(ProducingId, new BuildingTypeId("woodcutter"), 3, 0, 1, 2, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
+            new(7, new BuildingTypeId("cottage"), 2, 1, 1, 0, BuildingPhase.Constructing, 89_000, 89_900, 0, 0, 0, 0),
+        ];
+        var state = new CityState(
+            90_000,
+            full.State.Era,
+            full.State.NextBuildingId,
+            [new(new ItemId("coins"), 240), new(new ItemId("planks"), 3)],
+            buildings,
+            [new ResearchId("masonry"), new ResearchId("forestry")],
+            activeResearch: null);
+        KeyValuePair<ResearchId, long>[] completedAt = [new(new ResearchId("masonry"), 120), new(new ResearchId("forestry"), 86_700)];
+
+        return new CityAggregate(full.CityId, full.PlayerId, state, completedAt, full.LastSettledUnixSec, stateVersion, full.ContentVersion);
+    }
+
+    /// <summary>The city as a load returns it after one save: the same values with the next state version.</summary>
+    /// <param name="city">The city that was saved.</param>
+    public static CityAggregate Saved(CityAggregate city) =>
+        new(city.CityId, city.PlayerId, city.State, city.ResearchCompletedAt, city.LastSettledUnixSec, city.StateVersion + 1, city.ContentVersion);
+
     /// <summary>A new city: clock 0, era 1, no stock, buildings or research, state version 0.</summary>
     public static CityAggregate Empty()
     {
