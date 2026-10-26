@@ -90,6 +90,9 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   parser), by the compiler (missing or broken doc comments are errors in every server project) and by `check-docs.sh`. The code itself
   changed only in comments (CR-0003-T1).
 
+### Changed
+- Handbook site: react and react-dom 19.2.9 → 19.3.1, scheduler 0.28.0 (Dependabot PR #28, DEP-PR28).
+
 ### Fixed
 - Kit audit follow-ups A1, A2, A3, A9, A15, A16: `[PLAN]` tasks write ahead before the plan (no Plan Mode), the Bash guard no longer
   reads here-documents, comments or quoted text and checks each command on its own (new `scripts/dev/test-guard-bash.sh`),

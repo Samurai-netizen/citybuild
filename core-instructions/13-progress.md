@@ -16,6 +16,7 @@
 - **Next step:** the owner merges the PR. Then `/model` → Opus 5.5 and `/start-task M0-19` (EF Core model, migrations, Docker, `[O]`
   `[PLAN]`: write ahead, present the plan, wait for approval); its start commit sets CR-0003 to `Done`. Every change now documents its
   code (OD-12).
+- **Dependency PR:** #28 (handbook-site: react 19.3.1) builds with its docs; the owner decides (G-Dependency), build log `2026-10-26-01-DEP-PR28.md`.
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); Dependabot PR #28 and the 7
