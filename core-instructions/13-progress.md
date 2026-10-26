@@ -9,8 +9,9 @@
 - **Branch:** `task/M0-19-ef-core-docker` (from `main` = `2c724ae`)
 - **Build log entry:** `docs/build-log/2026/2026-10-26-02-M0-19.md`
 - **Last green commit:** `main` = `2c724ae` (CR-0003-T1 merged in #29, #28 merged; nothing changed in code yet)
-- **Done steps:** write-ahead (plan approved); 1 Docker (`docker-compose.yml`, `.env.example`); 2 packages (EF Core 10.0.14, Npgsql 10.0.3, `dotnet-ef` local tool)
-- **Next step:** step 3, persistence model (`CityBuilderDbContext`, rows, configurations, model tests). Decisions 8-10 are the owner's answers.
+- **Done steps:** write-ahead (plan approved); 1 Docker (`docker-compose.yml`, `.env.example`); 2 packages (EF Core 10.0.14, Npgsql 10.0.3, `dotnet-ef` local tool); 3 persistence model
+  (`Infrastructure/Persistence`, 22 model tests)
+- **Next step:** step 4, configuration and registration (`AddCityBuilderPersistence`, connection string, test factory). Decisions 8-10 are the owner's answers.
   Step 7 needs Docker Desktop running.
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
