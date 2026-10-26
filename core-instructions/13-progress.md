@@ -12,8 +12,8 @@
 - **Done steps:** write-ahead (plan approved); 1 Docker (`docker-compose.yml`, `.env.example`); 2 packages (EF Core 10.0.14, Npgsql 10.0.3, `dotnet-ef` local tool); 3 persistence model
   (`Infrastructure/Persistence`, 22 model tests); 4 configuration (`ConnectionStrings:CityBuilder`, required; `ApiFactory` for tests);
   5 startup migration (Development only); 6 initial migration `InitialCreate` (+ migration tests);
-  7 applied to the compose database (results in the build log → Verification)
-- **Next step:** step 8, docs (`add-migration.md` written; getting-started, module docs, `06`, AGENTS.md mark, the rest per Docs impact), then finish. Decisions 8-10 are the owner's answers.
+  7 applied to the compose database (results in the build log → Verification); 8 docs
+- **Next step:** finish: Definition of Done, line-by-line self-review (`[O]`, persistence), PR. Decisions 8-10 are the owner's answers.
   Step 7 needs Docker Desktop running.
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
@@ -53,11 +53,13 @@ All run in M0-06, the handbook in CR-0002-T1 (details and the "since" task: `doc
   `bash scripts/dev/docs-site.sh build` (the handbook; `start` previews it; Node.js 20+)
 - **Server:** `dotnet restore server/CityBuilder.slnx --locked-mode` · `dotnet format server/CityBuilder.slnx --verify-no-changes` ·
   `dotnet build server/CityBuilder.slnx` · `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` ·
-  `dotnet run --project server/src/CityBuilder.Api` (loads `server/content/mvp-content.json`; another file: `-- --Content:FilePath=<file>`),
-  then `curl http://localhost:8080/health` → `Healthy`
+  `dotnet run --project server/src/CityBuilder.Api` (loads `server/content/mvp-content.json`; another file: `-- --Content:FilePath=<file>`;
+  needs `ConnectionStrings:CityBuilder` and, in Development, the running database), then `curl http://localhost:8080/health` → `Healthy`
+- **Database (M0-19):** `docker compose up -d postgres` (`.env` from `.env.example`) · `dotnet tool restore` ·
+  `dotnet ef migrations add <Name> …` (`docs/how-to/add-migration.md`)
 - **Unity (Editor closed):** `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (`.ps1` on Windows, never run yet) · compile check
   `<UNITY> -batchmode -quit -projectPath client/CityBuilder -logFile -` (exit 0, no `error CS`; `client/README.md`)
-- **Not yet:** integration tests (the filter finds none until M0-21) · `docker compose` (M0-19) · DocTools (M0-61) · `quality.sh` (M0-62) ·
+- **Not yet:** integration tests (the filter finds none until M0-21) · DocTools (M0-61) · `quality.sh` (M0-62) ·
   BalanceSim (M0-67)
 
 ## Open issues / tech debt

@@ -73,7 +73,9 @@ dotnet format server/CityBuilder.slnx --verify-no-changes   # as CI; part of Don
 dotnet test  server/CityBuilder.slnx --filter "Category!=Integration"  # fast suite
 dotnet test  server/CityBuilder.slnx --filter "Category=Integration"   # [M0-21] needs Docker
 dotnet run   --project server/src/CityBuilder.Api                      # http://localhost:8080
-docker compose up -d postgres                                          # [M0-19]
+docker compose up -d postgres                                          # dev database; first .env from .env.example
+dotnet tool restore                                                    # once per clone: the pinned dotnet-ef
+dotnet ef migrations add <Name> --project server/src/CityBuilder.Infrastructure --startup-project server/src/CityBuilder.Api --output-dir Persistence/Migrations
 bash scripts/dev/test-unity.sh                                         # needs UNITY_EDITOR; close the Unity Editor first
 bash scripts/dev/quality.sh                                            # [M0-62] everything CI runs, locally
 dotnet run --project tools/DocTools -- generate                        # [M0-61] regenerate reference docs

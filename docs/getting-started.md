@@ -37,8 +37,10 @@ How to get from a clean machine to a running project. Every command here must wo
 | Integration tests (Docker running) | `dotnet test server/CityBuilder.slnx --filter "Category=Integration"` (today it finds no test and exits 0) | *(planned, M0-21)* |
 | Format check (as CI) | `dotnet format server/CityBuilder.slnx --verify-no-changes` | M0-02 |
 | Restore exactly the locked package versions (as CI) | `dotnet restore server/CityBuilder.slnx --locked-mode` | M0-02 |
-| Database | `docker compose up -d postgres` | *(planned, M0-19)* |
-| Run API | `dotnet run --project server/src/CityBuilder.Api` → http://localhost:8080 (Development) | M0-02 |
+| Database (Docker running; once: `.env` from `.env.example`) | `docker compose up -d postgres`; stop it with `docker compose stop postgres` (section Database below) | M0-19 |
+| Restore the pinned `dotnet-ef` tool (once per clone) | `dotnet tool restore` | M0-19 |
+| Add a migration | `dotnet ef migrations add <Name> --project server/src/CityBuilder.Infrastructure --startup-project server/src/CityBuilder.Api --output-dir Persistence/Migrations` (`docs/how-to/add-migration.md`) | M0-19 |
+| Run API (needs the connection string; in Development it applies pending migrations, so the database must be running) | `dotnet run --project server/src/CityBuilder.Api` → http://localhost:8080 (Development) | M0-02 |
 | Is the API up? | `curl http://localhost:8080/health` prints `Healthy`; OpenAPI (Development only): http://localhost:8080/openapi/v1.json | M0-02 |
 | Run the API with another content file (a draft) | `dotnet run --project server/src/CityBuilder.Api -- --Content:FilePath=/path/to/draft.json` | M0-07b |
 | Open the Unity project | Unity Hub → Add → `client/CityBuilder` (editor 6000.3.25f1); details and the Bootstrap scene steps: `client/README.md` | M0-04 |
@@ -54,10 +56,30 @@ Any key can be overridden with an environment variable (`:` becomes `__`) or a c
 | Key | Default | Meaning |
 |---|---|---|
 | `Content:FilePath` | `content/mvp-content.json` | The content file the server loads at startup, absolute or relative to the app's base directory (the build copies `server/content/*.json` to `content/` there). Required; a blank value or invalid content stops the start with every error listed (`docs/how-to/add-building-or-item.md`) |
+| `ConnectionStrings:CityBuilder` | none (required) | The PostgreSQL connection string. It holds a password, so it lives in user-secrets (Development) or the environment variable `ConnectionStrings__CityBuilder`, never in a committed file. Missing or blank stops the start |
+| `Database:ApplyMigrationsAtStartup` | `false`; `true` in `appsettings.Development.json` | Apply pending migrations before the server accepts requests. Allowed only in Development: `true` in another environment stops the start (`docs/how-to/add-migration.md`) |
 | `Logging:LogLevel:*`, `AllowedHosts` | as in `appsettings.json` | ASP.NET Core's own keys |
 
-No key holds a secret yet; secrets will come from user-secrets or the environment, never a committed file *(planned, M0-25)*.
+Secrets come from user-secrets or the environment, never a committed file: today the connection string; signing keys follow *(planned, M0-25)*.
+
+## Database
+PostgreSQL 18.6 runs in Docker (`docker-compose.yml` at the repo root; `core-instructions/06-data-model.md`). Once per clone:
+1. `cp .env.example .env` and set your own `POSTGRES_PASSWORD` in `.env` (gitignored; compose refuses to start without the three
+   `POSTGRES_*` values).
+2. Give the API the same values (in one line):
+   `dotnet user-secrets set ConnectionStrings:CityBuilder "Host=localhost;Port=5432;Database=citybuilder;Username=citybuilder;Password=<your password>" --project server/src/CityBuilder.Api`
+   (with the user and database from your `.env`).
+3. `docker compose up -d postgres`; `docker compose ps` shows it `healthy` after a few seconds.
+4. `dotnet run --project server/src/CityBuilder.Api`: in Development it applies the pending migrations and logs which ones
+   ("Database migrated at startup: …").
+
+The data lives in the Docker volume `citybuild_postgres-data` and survives `docker compose down`; `docker compose down -v` deletes it.
+A shell in the database: `docker compose exec postgres psql -U citybuilder -d citybuilder`. Schema changes: `docs/how-to/add-migration.md`.
 From M0-61 this section links to the generated reference.
 
 ## Troubleshooting
-*(planned)* Added whenever a setup problem is solved (the build log entry links here).
+Added whenever a setup problem is solved (the build log entry links here).
+- **The API stops at startup with "ConnectionStrings:CityBuilder must hold the database connection string":** set it (Database, step 2).
+- **The API stops at startup with an `NpgsqlException`:** the database isn't running (`docker compose up -d postgres`) or the
+  connection string doesn't match `.env` (M0-19).
+- **`docker compose up` says "required variable POSTGRES_PASSWORD is missing a value":** create `.env` from `.env.example` (M0-19).

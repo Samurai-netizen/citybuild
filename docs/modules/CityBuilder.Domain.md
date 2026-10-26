@@ -5,7 +5,7 @@
 **Referenced by:** `CityBuilder.Application`, `CityBuilder.Infrastructure`, `CityBuilder.Domain.Tests`
 
 > *Skeleton.* The project builds but has no types yet. The first ones arrive with persistence and the command
-> pipeline *(planned, M0-19 on)*.
+> pipeline *(planned, M0-20 on; the persistence models of M0-19 are Infrastructure's row classes, not Domain types)*.
 
 ## Purpose
 Server-only concepts that the shared engine doesn't have: player, ledger entry, command receipt, settlement record
@@ -35,4 +35,4 @@ Run: `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`.
 ## Known limitations
 - No types yet (skeleton).
 
-Last updated: CR-0003-T1
+Last updated: M0-19

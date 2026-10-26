@@ -58,6 +58,7 @@ CityBuilder/
 ├── AGENTS.md · CLAUDE.md        # AI entry points (any tool · Claude Code)
 ├── README.md · CONTRIBUTING.md · CHANGELOG.md
 ├── global.json                  # pinned .NET SDK (M0-02)
+├── dotnet-tools.json            # pinned local .NET tools: dotnet-ef (M0-19)
 ├── .claude/                     # settings (permissions, hooks), hooks/, rules/, skills/, agents/
 ├── .githooks/ · .github/        # git hooks · CI workflow, PR template, dependabot
 ├── core-instructions/           # this folder (normative)
@@ -75,7 +76,7 @@ CityBuilder/
 ├── tools/BalanceSim/            # headless economy simulator (M0-67)
 ├── website/                     # the handbook: Docusaurus site over core-instructions/ and docs/ (CR-0002)
 ├── client/CityBuilder/          # Unity project: Assets/_Project/{Core,Net,Presentation,Resources/UI,Tests}
-├── docker-compose.yml           # PostgreSQL for development (M0-19)
+├── docker-compose.yml · .env.example   # PostgreSQL for development; .env (gitignored) holds its credentials (M0-19)
 └── scripts/dev/                 # check-docs, docs-site, show-task, new-log-entry, setup-hooks, test-guard-bash, test-unity; quality (M0-62)
 ```
 
