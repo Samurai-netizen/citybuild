@@ -5,7 +5,7 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-20 · Repository and mapping; PR open, the owner merges it)
+- **Task:** — (last completed: M0-20 · Repository and mapping; PR #32 open, the owner merges it)
 - **Branch:** `task/M0-20-repository-mapping` (from `main` = `cafca28`) until the owner merges
 - **Build log entry:** last: `docs/build-log/2026/2026-10-26-03-M0-20.md` (Done)
 - **Last green commit:** the head of `task/M0-20-repository-mapping` (build 0 warnings, format clean, fast suite: Repository 22, Simulation 872,
