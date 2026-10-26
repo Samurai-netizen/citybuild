@@ -95,6 +95,9 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
 - Repository and mapping: Domain types `Player`, `LedgerEntry`, `CommandReceipt`; ports `ICityRepository.Save(city, ledger, receipt)`,
   `IPlayerRepository`, `IUnitOfWork`; `CityAggregate` keeps research completion clocks; explicit `CityMapping` with round-trip tests;
   `CityRepository`, `PlayerRepository`, `UnitOfWork` over EF Core, registered scoped (M0-20).
+- Integration test base on real PostgreSQL: one `postgres:18.6` Testcontainers container per run, a fresh database per test from a
+  migrated template, a `WebApplicationFactory` on it with a fake clock; tests for the migrations, the repositories and the constraints;
+  `docs/testing/README.md` (M0-21).
 
 ### Changed
 - Handbook site: react and react-dom 19.2.9 → 19.3.1, scheduler 0.28.0 (Dependabot PR #28, DEP-PR28).

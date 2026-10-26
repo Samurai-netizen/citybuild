@@ -62,6 +62,7 @@ const handbook = [
     folder('How-to guides', 'docs/how-to'),
     spec('14'),
     spec('08'),
+    folder('Testing', 'docs/testing'),
     folder('Reference', 'docs/reference'),
     page('tools/README.md', 'tools/ folder'),
   ]),

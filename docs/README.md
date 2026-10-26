@@ -35,4 +35,5 @@ in chapters, with every backticked path and spec number as a link (`website/READ
 | `modules/` | One doc per project or assembly | AI, kept current (enforced) |
 | `how-to/` | Worked guides for common changes | AI, kept current |
 | `reference/` | Generated reference (from M0-61) | `tools/DocTools` |
-| `testing/`, `security/`, `balance/` *(planned: M0-21, M0-78, M0-68)* | Test checklists, security report, balance reports | AI, per task |
+| `testing/` | How to run the test suites (integration tests need Docker), test checklists | AI, kept current |
+| `security/`, `balance/` *(planned: M0-78, M0-68)* | Security report, balance reports | AI, per task |

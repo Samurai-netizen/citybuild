@@ -58,16 +58,18 @@ No test project of its own; its tests are in `server/tests/CityBuilder.Integrati
 key, a wrong number type, a missing value and rule errors each fail as described above; every broken file is the real one with one change)
 and `InfrastructureDependencyTests` (the dependency rule). Persistence, still without a database: `Persistence/PersistenceModelTests` reads
 EF's relational model and checks every table, column (type, null rule), key, unique index, index, check, foreign key, the concurrency token,
-value generation and that every name is snake_case; `Persistence/MigrationTests` checks that no model change lacks a migration. Real
-PostgreSQL comes with the Testcontainers tests *(planned, M0-21)*. `Persistence/CityMappingTests` (no database) maps the cities of
+value generation and that every name is snake_case; `Persistence/MigrationTests` checks that no model change lacks a migration. `Persistence/CityMappingTests` (no database) maps the cities of
 `Persistence/SampleCities` (every phase, a frozen cycle, a cycle started at clock 0, completed and running research, era 2; a new empty city) to
 rows and back and compares every value, checks the columns of each phase, and rejects each kind of broken row.
 `Persistence/CityRepositoryTests` reads EF's change tracker after `Save` (no database): a new city inserted with every row, a loaded city
 (rows attached) merged row by row (city row, inventory, buildings, research), an unchanged city writing only the version and `updated_at`,
 ledger rows and the receipt stamped with now. `Persistence/PlayerAndLedgerPersistenceTests`: every reason's text, a new player's row, and the
-ports' registration. Loading needs PostgreSQL *(planned, M0-21)*; M0-20 ran insert, load, update and a stale version once against the
-compose database by hand (its build log → Verification). M0-19 applied the
-migration to the compose database by hand (its build log → Verification).
+ports' registration.
+On real PostgreSQL (`Category=Integration`, Docker running; `docs/testing/README.md`): `Persistence/MigrationDatabaseTests` (the committed
+migrations on an empty database, once), `Persistence/CityRepositoryDatabaseTests` (through the server's registered ports, a scope per
+request: the content's starter city and the full sample city save and load equal; a save writes every table; a loaded city's changes merge,
+a used-up item staying as a 0 row; a stale `state_version` throws `DbUpdateConcurrencyException`) and `Persistence/ConstraintDatabaseTests`
+(the unique tile index, `quantity >= 0` and `assigned_workers >= 0` refuse broken rows, by constraint name).
 
 ## Known limitations
 - A JSON problem stops the reader, so a file with a syntax error and a rule error shows only the syntax error until it is fixed.
@@ -75,4 +77,4 @@ migration to the compose database by hand (its build log → Verification).
 - `LoadForUpdateAsync` doesn't lock the row yet and the writes run without an explicit transaction *(planned, M0-22)*; a stale version
   surfaces as EF's exception, not yet as `CONCURRENCY_CONFLICT`.
 
-Last updated: M0-20
+Last updated: M0-21

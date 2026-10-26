@@ -76,6 +76,10 @@ the default configuration serves the real content through one `IContentProvider`
 stops the start; the startup migration on in Production or Staging stops the start; in Development the server migrates before serving). The project also holds the content loader's tests and `InfrastructureDependencyTests` (the
 Infrastructure module doc → Tests).
 Run them with the fast suite: `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`.
+The `Integration` category runs the app on real PostgreSQL: `Postgres/PostgresApiFactory` is the same server on one test's own database
+(one `postgres:18.6` container per run, a fresh database per test, a `FakeTimeProvider` clock), and `Persistence/MigrationDatabaseTests`
+checks that the server in Development migrates an empty database at startup. Docker must be running:
+`dotnet test server/CityBuilder.slnx --filter "Category=Integration"` (`docs/testing/README.md`).
 
 ## Known limitations
 - Not every error is a ProblemDetails response yet: an unknown route returns an empty 404, and outside Development an
@@ -84,4 +88,4 @@ Run them with the fast suite: `dotnet test server/CityBuilder.slnx --filter "Cat
 - No authentication, rate limits or request correlation yet *(planned, M0-25, M0-34, M0-35)*.
 - A failed start is reported by the runtime as an unhandled exception in plain text on stderr, not as a JSON log line.
 
-Last updated: M0-19
+Last updated: M0-21

@@ -59,7 +59,8 @@ All run in M0-06, the handbook in CR-0002-T1 (details and the "since" task: `doc
   `dotnet ef migrations add <Name> …` (`docs/how-to/add-migration.md`)
 - **Unity (Editor closed):** `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (`.ps1` on Windows, never run yet) · compile check
   `<UNITY> -batchmode -quit -projectPath client/CityBuilder -logFile -` (exit 0, no `error CS`; `client/README.md`)
-- **Not yet:** integration tests (the filter finds none until M0-21) · DocTools (M0-61) · `quality.sh` (M0-62) ·
+- **Integration tests (M0-21, Docker running):** `dotnet test server/CityBuilder.slnx --filter "Category=Integration"` (`docs/testing/README.md`)
+- **Not yet:** DocTools (M0-61) · `quality.sh` (M0-62) ·
   BalanceSim (M0-67)
 
 ## Open issues / tech debt
