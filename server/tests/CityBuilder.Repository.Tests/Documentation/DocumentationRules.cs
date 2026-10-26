@@ -6,8 +6,9 @@ namespace CityBuilder.Repository.Tests.Documentation;
 
 /// <summary>
 /// The rules of <c>core-instructions/14-coding-standards.md</c> → Documentation in code that a parser can check in one C# file: every
-/// declaration has a doc comment with a description, every primary constructor parameter is described, every local function has a
-/// comment above it, and a file without a type starts with a comment that describes it.
+/// declaration has a doc comment with a description (an <c>&lt;inheritdoc/&gt;</c> only where there is something to inherit), every
+/// <c>&lt;param&gt;</c> and <c>&lt;paramref/&gt;</c> names a real parameter, every primary constructor parameter is described, every local
+/// function has a comment above it, and a file without a type starts with a comment that describes it.
 /// </summary>
 /// <remarks>
 /// The rules read only the syntax tree, never a compiled assembly, so they apply alike to the server, the engine and the Unity scripts,
@@ -62,7 +63,10 @@ internal static class DocumentationRules
     private static bool IsDeclaration(MemberDeclarationSyntax member) =>
         member is not (BaseNamespaceDeclarationSyntax or GlobalStatementSyntax or IncompleteMemberSyntax);
 
-    /// <summary>Adds the problems of one declaration: no doc comment, an empty or placeholder description, or an undescribed primary constructor parameter.</summary>
+    /// <summary>
+    /// Adds the problems of one declaration: no doc comment, an empty or placeholder description, an <c>&lt;inheritdoc/&gt;</c> with
+    /// nothing to inherit, a parameter tag that names no parameter, or an undescribed primary constructor parameter.
+    /// </summary>
     private static void CheckDeclaration(string path, MemberDeclarationSyntax member, List<DocumentationProblem> problems)
     {
         (string kind, string name, SyntaxToken anchor) = Describe(member);
@@ -74,7 +78,15 @@ internal static class DocumentationRules
             return;
         }
 
-        if (!HasElement(comment, "inheritdoc"))
+        if (HasElement(comment, "inheritdoc"))
+        {
+            if (!HasSomethingToInherit(member, comment))
+            {
+                problems.Add(new DocumentationProblem(path, line, kind, name,
+                    "has an <inheritdoc/> but overrides or implements nothing: describe it, or name the source with <inheritdoc cref=\"…\"/>"));
+            }
+        }
+        else
         {
             XmlElementSyntax? summary = ElementsOf(comment, "summary").FirstOrDefault();
             if (summary is null)
@@ -87,10 +99,16 @@ internal static class DocumentationRules
             }
         }
 
-        if (member is TypeDeclarationSyntax { ParameterList: { } parameters })
+        HashSet<string> parameters = ParametersOf(member);
+        foreach (string unknown in ParameterNamesIn(comment).Where(named => !parameters.Contains(named)).Distinct(StringComparer.Ordinal))
+        {
+            problems.Add(new DocumentationProblem(path, line, kind, name, $"names the parameter \"{unknown}\" in a <param> or <paramref/>, but has no parameter of that name"));
+        }
+
+        if (member is TypeDeclarationSyntax { ParameterList: { } parameterList })
         {
             var described = ElementsOf(comment, "param").Select(NameAttributeOf).ToHashSet(StringComparer.Ordinal);
-            foreach (ParameterSyntax parameter in parameters.Parameters.Where(parameter => !described.Contains(parameter.Identifier.Text)))
+            foreach (ParameterSyntax parameter in parameterList.Parameters.Where(parameter => !described.Contains(parameter.Identifier.Text)))
             {
                 problems.Add(new DocumentationProblem(path, LineOf(parameter.Identifier), "parameter", parameter.Identifier.Text,
                     $"of the primary constructor of {name} has no <param name=\"{parameter.Identifier.Text}\"> in the type's doc comment"));
@@ -107,6 +125,54 @@ internal static class DocumentationRules
                 "has no comment above it (// …)"));
         }
     }
+
+    /// <summary>
+    /// Whether an <c>&lt;inheritdoc/&gt;</c> has a description to take: it names its source with <c>cref</c>, or the declaration overrides
+    /// a member, implements an interface member explicitly, or is or belongs to a type with a base type or interface, whose members it
+    /// may implement. Without any of these the compiler finds nothing to inherit and the declaration stays undescribed.
+    /// </summary>
+    private static bool HasSomethingToInherit(MemberDeclarationSyntax member, DocumentationCommentTriviaSyntax comment)
+    {
+        bool namesItsSource = comment.DescendantNodes().OfType<XmlCrefAttributeSyntax>().Any(cref =>
+            cref.Parent is XmlEmptyElementSyntax { Name.LocalName.Text: "inheritdoc" } or XmlElementStartTagSyntax { Name.LocalName.Text: "inheritdoc" });
+        bool overridesOrImplements = member.Modifiers.Any(SyntaxKind.OverrideKeyword)
+            || member is MethodDeclarationSyntax { ExplicitInterfaceSpecifier: not null }
+                or PropertyDeclarationSyntax { ExplicitInterfaceSpecifier: not null }
+                or EventDeclarationSyntax { ExplicitInterfaceSpecifier: not null }
+                or IndexerDeclarationSyntax { ExplicitInterfaceSpecifier: not null };
+        BaseTypeDeclarationSyntax? type = member as BaseTypeDeclarationSyntax ?? member.Parent as BaseTypeDeclarationSyntax;
+        return namesItsSource || overridesOrImplements || type?.BaseList is not null;
+    }
+
+    /// <summary>
+    /// The parameter names a declaration's doc comment may use: its own parameters (a method's, constructor's, operator's, delegate's or
+    /// indexer's, or a type's primary constructor's), and those of the primary constructor of the type it belongs to.
+    /// </summary>
+    private static HashSet<string> ParametersOf(MemberDeclarationSyntax member)
+    {
+        BaseParameterListSyntax? own = member switch
+        {
+            BaseMethodDeclarationSyntax method => method.ParameterList,
+            DelegateDeclarationSyntax @delegate => @delegate.ParameterList,
+            IndexerDeclarationSyntax indexer => indexer.ParameterList,
+            TypeDeclarationSyntax type => type.ParameterList,
+            _ => null,
+        };
+        ParameterListSyntax? primary = (member.Parent as TypeDeclarationSyntax)?.ParameterList;
+        return new[] { own, primary }
+            .SelectMany(list => list?.Parameters ?? [])
+            .Select(parameter => parameter.Identifier.Text)
+            .ToHashSet(StringComparer.Ordinal);
+    }
+
+    /// <summary>The parameter names a doc comment uses: the <c>name</c> of each top-level <c>&lt;param&gt;</c> and of each <c>&lt;paramref/&gt;</c> anywhere in it.</summary>
+    private static IEnumerable<string> ParameterNamesIn(DocumentationCommentTriviaSyntax comment) =>
+        ElementsOf(comment, "param").Select(NameAttributeOf)
+            .Concat(comment.DescendantNodes().OfType<XmlEmptyElementSyntax>()
+                .Where(element => element.Name.LocalName.Text == "paramref")
+                .SelectMany(element => element.Attributes.OfType<XmlNameAttributeSyntax>())
+                .Select(attribute => attribute.Identifier.Identifier.Text))
+            .Where(parameterName => parameterName.Length > 0);
 
     /// <summary>The doc comment written right above a declaration (before its attributes), or null when there is none.</summary>
     private static DocumentationCommentTriviaSyntax? DocCommentOf(MemberDeclarationSyntax member) =>

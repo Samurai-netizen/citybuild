@@ -11,8 +11,8 @@
 - **Last green commit:** the head of the branch (fast suite: Repository 20, Simulation 872, Domain 1, Application 14, IntegrationTests 25)
 - **Steps:** 1 start ✓ · 2 checker + standard ✓ · 3 server ✓ · 4 engine ✓ · 5 tests ✓ · 6 Unity client ✓ · 7 scripts and other files ✓ · 8 workflow docs ✓ ·
   9 finish (details: the entry's Session 1 plan)
-- **Next step:** the owner runs `/finish-task` (the AI can't start that skill): Definition of Done, self-review, Docs impact closed,
-  build log `Done`, resume point `IDLE`, the PR. The assembly proof is done (step 9, part 1 in the build log).
+- **Next step:** the owner's revision request: part 2, review every comment of the task against its code (part 1, the checks, is done);
+  then the owner runs `/finish-task` (the AI can't start that skill) for the Definition of Done, build log `Done`, resume point and PR.
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); Dependabot PR #28.
 - **Known broken / do not touch:** —

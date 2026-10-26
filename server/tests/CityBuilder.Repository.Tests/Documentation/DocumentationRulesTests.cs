@@ -75,6 +75,14 @@ public sealed class DocumentationRulesTests
             /// <param name="Width">The width.</param>
             public sealed record Size(int Width);
 
+            /// <summary>A class with a primary constructor, whose members may refer to its parameter.</summary>
+            /// <param name="clock">The clock.</param>
+            public sealed class Service(System.TimeProvider clock)
+            {
+                /// <summary>The time on <paramref name="clock"/>.</summary>
+                public System.DateTimeOffset Now => clock.GetUtcNow();
+            }
+
             /// <summary>A delegate.</summary>
             public delegate void Handler();
             """;
@@ -136,20 +144,97 @@ public sealed class DocumentationRulesTests
         Assert.Equal(("field", "_first, _second"), (problem.Kind, problem.Name));
     }
 
-    /// <summary>An <c>&lt;inheritdoc/&gt;</c> stands for the description of the member it overrides or implements.</summary>
+    /// <summary>
+    /// An <c>&lt;inheritdoc/&gt;</c> stands for the description of what the declaration overrides or implements: an override, an
+    /// implicit or explicit interface implementation, and one that names its source with <c>cref</c>.
+    /// </summary>
     [Fact]
-    public void Check_InheritDoc_CountsAsADescription()
+    public void Check_InheritDocWithSomethingToInherit_CountsAsADescription()
     {
         const string sample = """
-            /// <summary>A class.</summary>
-            internal sealed class Named
+            /// <summary>A shape.</summary>
+            internal interface IShape
+            {
+                /// <summary>The area.</summary>
+                int Area { get; }
+
+                /// <summary>The number of corners.</summary>
+                int Corners { get; }
+            }
+
+            /// <summary>A square.</summary>
+            internal sealed class Square : IShape
             {
                 /// <inheritdoc/>
-                public override string ToString() => "named";
+                public int Area => 4;
+
+                /// <inheritdoc/>
+                int IShape.Corners => 4;
+
+                /// <inheritdoc/>
+                public override string ToString() => "square";
+            }
+
+            /// <summary>A class without a base type that borrows a description.</summary>
+            internal sealed class Tile
+            {
+                /// <inheritdoc cref="IShape.Area"/>
+                public int Area => 1;
             }
             """;
 
         Assert.Empty(DocumentationRules.Check(_samplePath, sample));
+    }
+
+    /// <summary>
+    /// An <c>&lt;inheritdoc/&gt;</c> on a declaration that overrides and implements nothing has no description to take, so it is
+    /// reported: it would pass the check while describing nothing.
+    /// </summary>
+    [Fact]
+    public void Check_InheritDocWithNothingToInherit_ReportsIt()
+    {
+        const string sample = """
+            /// <summary>A class without a base type or interface.</summary>
+            internal sealed class Plain
+            {
+                /// <inheritdoc/>
+                public int Size => 2;
+            }
+            """;
+
+        DocumentationProblem problem = Assert.Single(DocumentationRules.Check(_samplePath, sample));
+        Assert.Equal(("property", "Size", 5), (problem.Kind, problem.Name, problem.Line));
+        Assert.StartsWith("has an <inheritdoc/> but overrides or implements nothing", problem.Message, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// A <c>&lt;param&gt;</c> or <c>&lt;paramref/&gt;</c> must name a parameter the declaration has (the compiler checks this in the
+    /// server projects, CS1572 and CS1734, but nothing compiles the Unity scripts' comments).
+    /// </summary>
+    [Fact]
+    public void Check_ParameterTagNamingNoParameter_ReportsIt()
+    {
+        const string sample = """
+            /// <summary>A class.</summary>
+            internal sealed class Calculator
+            {
+                /// <summary>Adds <paramref name="amount"/> to the total.</summary>
+                /// <param name="value">The amount.</param>
+                public int Add(int amount) => amount;
+
+                /// <summary>Doubles <paramref name="numbr"/>.</summary>
+                public int Double(int number) => number * 2;
+            }
+            """;
+
+        string[] problems = DocumentationRules.Check(_samplePath, sample).Select(problem => $"{problem.Line} {problem.Name}: {problem.Message}").ToArray();
+
+        Assert.Equal(
+            [
+                "6 Add: names the parameter \"value\" in a <param> or <paramref/>, but has no parameter of that name",
+                "9 Double: names the parameter \"numbr\" in a <param> or <paramref/>, but has no parameter of that name",
+            ],
+            problems);
     }
 
     /// <summary>A summary that holds only a <c>&lt;see cref&gt;</c> says something (the name of what it refers to), so it counts.</summary>
