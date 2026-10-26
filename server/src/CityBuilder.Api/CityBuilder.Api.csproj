@@ -3,6 +3,12 @@
   <!-- The HTTP host and composition root of the server (docs/modules/CityBuilder.Api.md). The settings every server project shares are in
        ../../Directory.Build.props, the package versions in ../../Directory.Packages.props. -->
 
+  <!-- user-secrets hold the settings that must never be committed, such as the database connection string (docs/getting-started.md →
+       Database); in Development ASP.NET Core reads them by this id. -->
+  <PropertyGroup>
+    <UserSecretsId>citybuilder-api</UserSecretsId>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <!-- Only for dotnet-ef at design time (Api is its startup project); nothing of it ships with the app. -->

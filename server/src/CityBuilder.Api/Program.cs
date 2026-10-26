@@ -1,8 +1,10 @@
 // Composition root of the server (core-instructions/03-architecture.md): hosting, logging and service registration only.
 
 using CityBuilder.Api.Content;
+using CityBuilder.Api.Persistence;
 using CityBuilder.Application.Content;
 using CityBuilder.Infrastructure.Content;
+using CityBuilder.Infrastructure.Persistence;
 using CityBuilder.Simulation.Content;
 using Microsoft.Extensions.Options;
 
@@ -34,6 +36,16 @@ builder.Services.AddOptions<ContentOptions>()
 builder.Services.AddSingleton<IContentProvider>(services =>
     new ContentProvider(ContentFileLoader.Load(services.GetRequiredService<IOptions<ContentOptions>>().Value.GetFullFilePath())));
 
+// The database (core-instructions/06-data-model.md). The connection string holds a password: user-secrets or the environment only.
+builder.Services.AddOptions<DatabaseOptions>()
+    .Configure(options => options.ConnectionString =
+        builder.Configuration.GetConnectionString(DatabaseOptions.ConnectionStringName) ?? string.Empty)
+    .Validate(options => !string.IsNullOrWhiteSpace(options.ConnectionString),
+        "ConnectionStrings:CityBuilder must hold the database connection string (user-secrets or the environment variable " +
+        "ConnectionStrings__CityBuilder; docs/getting-started.md → Database).")
+    .ValidateOnStart();
+builder.Services.AddCityBuilderPersistence(services => services.GetRequiredService<IOptions<DatabaseOptions>>().Value.ConnectionString);
+
 var app = builder.Build();
 
 // Load the content before the server accepts requests: an empty Content:FilePath or invalid content stops the start here, and the
@@ -41,6 +53,9 @@ var app = builder.Build();
 string contentFilePath = app.Services.GetRequiredService<IOptions<ContentOptions>>().Value.GetFullFilePath();
 GameContent content = app.Services.GetRequiredService<IContentProvider>().Content;
 ContentLog.ContentLoaded(app.Logger, content.ContentVersion, contentFilePath);
+
+// Check the database settings before the server accepts requests, as for the content.
+_ = app.Services.GetRequiredService<IOptions<DatabaseOptions>>().Value;
 
 if (app.Environment.IsDevelopment())
 {
