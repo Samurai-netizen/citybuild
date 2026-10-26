@@ -145,7 +145,8 @@ namespace CityBuilder.Simulation.Content
 
         /// <summary>
         /// Reads one effect by its <c>type</c>: each type has its own values, and a value of another type is an error. Null when the type is
-        /// missing or unknown, or a required value is missing (all reported).
+        /// missing or unknown, or when its building or item id is missing or malformed (all reported); a missing number is reported and reads
+        /// as 0, which the value rules then report too.
         /// </summary>
         private ResearchEffect? ReadEffect(ResearchEffectData data, string path)
         {

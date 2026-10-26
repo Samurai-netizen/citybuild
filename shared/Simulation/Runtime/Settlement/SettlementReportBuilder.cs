@@ -50,7 +50,7 @@ namespace CityBuilder.Simulation.Settlement
                 eraChanged: false);
         }
 
-        /// <summary>Adds each amount to its item's total (<c>checked</c>, though content bounds make an overflow impossible).</summary>
+        /// <summary>Adds each amount to its item's total, <c>checked</c> (<c>04</c> section 9): an overflow throws instead of wrapping around.</summary>
         private static void Add(ItemTotals totals, IReadOnlyList<ItemQuantity> amounts)
         {
             for (int index = 0; index < amounts.Count; index++)

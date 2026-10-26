@@ -16,8 +16,8 @@ namespace CityBuilder.Simulation.Display
     {
         /// <summary>
         /// One hour in seconds, the time unit of every rate here. A quantity is multiplied by this and by <see cref="_milliScale"/> before the
-        /// division by the cycle seconds; content bounds a quantity by 10^12 (<see cref="GameContentFactory.MaxQuantity"/>), so the product is at
-        /// most 3.6 × 10^18, inside a <c>long</c>.
+        /// division by the cycle seconds; content bounds a recipe line's quantity by 10^12 (<see cref="GameContentFactory.MaxQuantity"/>), so that
+        /// product is at most 3.6 × 10^18, inside a <c>long</c>.
         /// </summary>
         private const long _secondsPerHour = 3600;
         /// <summary>Thousandths per item: rates are <see cref="ItemRate.MilliPerHour"/>, so a producer slower than one item per hour still shows a rate.</summary>

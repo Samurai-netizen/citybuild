@@ -34,7 +34,10 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
-        /// <summary>Reports levels that aren't exactly 1, 2, … up to the max level, each once (<see cref="ContentErrorCode.LevelsNotContiguous"/>).</summary>
+        /// <summary>
+        /// Reports a building type whose levels aren't numbered exactly 1, 2, … up to the max level, each number once, or that has no level: one
+        /// error for the type, listing its numbers (<see cref="ContentErrorCode.LevelsNotContiguous"/>).
+        /// </summary>
         private static void CheckLevelNumbers(BuildingDefinition building, ContentErrorList errors)
         {
             // Levels are sorted by number, so 1..max means exactly: the level at position i has the number i + 1.

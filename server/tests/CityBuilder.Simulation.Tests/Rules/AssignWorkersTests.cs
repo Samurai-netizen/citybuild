@@ -106,7 +106,7 @@ public sealed class AssignWorkersTests
     /// <summary>While upgrading, the current level's limit applies; the next level's limit counts only from the upgrade's end (<c>04</c> section 8).</summary>
     [Fact]
     public void AssignWorkers_UpgradingAboveTheCurrentLevelsLimit_IsRejected() =>
-        // Level 1 takes up to 2 workers, level 2 up to 3: the new limit applies when the upgrade completes (04 section 8).
+        // Level 1 takes up to 2 workers, level 2 up to 4 (TestContent): the new limit applies when the upgrade completes (04 section 8).
         RulesAssert.Rejected(MutationErrorCode.WorkerLimit,
             TwoHutsAnd(Upgrading(3, "lumber_camp", 2, 0, level: 1, workers: 1, startedAt: 1010, endsAt: 1022), clock: 1020), city => Assign(city, 3, 3));
 
