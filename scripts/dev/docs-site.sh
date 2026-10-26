@@ -28,6 +28,7 @@ if [ "$major" -lt 20 ]; then
   exit 1
 fi
 
+# Installs exactly the packages of website/package-lock.json (npm ci).
 install() { (cd "$site" && npm ci --no-audit --no-fund); }
 
 # npm writes node_modules/.package-lock.json on every install: an older one means the lockfile changed since.

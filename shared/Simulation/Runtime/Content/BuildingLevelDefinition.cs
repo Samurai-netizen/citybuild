@@ -7,6 +7,10 @@ namespace CityBuilder.Simulation.Content
     /// <summary>One level of a building type: its workers, its recipe, and what upgrading to it costs.</summary>
     public sealed class BuildingLevelDefinition
     {
+        /// <summary>
+        /// Creates the level from values the shape phase has read (<see cref="ContentReader"/>); the content rules check them afterwards.
+        /// Each value is described on its property.
+        /// </summary>
         internal BuildingLevelDefinition(
             int level, int maxWorkers, int workersProvided, RecipeDefinition? recipe, IReadOnlyList<ItemQuantity> upgradeCost, long upgradeSeconds)
         {

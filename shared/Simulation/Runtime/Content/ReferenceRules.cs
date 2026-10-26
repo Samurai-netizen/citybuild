@@ -12,6 +12,7 @@ namespace CityBuilder.Simulation.Content
     /// </summary>
     internal static class ReferenceRules
     {
+        /// <summary>Runs every cross-definition check, duplicates first, so the later checks can rely on the first definition of each id.</summary>
         public static void Check(ContentDraft draft, ContentErrorList errors)
         {
             CheckDuplicates(draft, errors);
@@ -23,6 +24,10 @@ namespace CityBuilder.Simulation.Content
             CheckPrerequisiteReferences(draft, errors);
         }
 
+        /// <summary>
+        /// Reports a repeated era id or era number, item id, building type id, research id, and a prerequisite listed twice
+        /// (<see cref="ContentErrorCode.DuplicateId"/>). An era that repeats both id and number is one mistake, reported once.
+        /// </summary>
         private static void CheckDuplicates(ContentDraft draft, ContentErrorList errors)
         {
             var eraIds = new HashSet<EraId>();
@@ -67,6 +72,7 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
+        /// <summary>The eras are numbered 1, 2, … without gaps, at least era 1 (<see cref="ContentErrorCode.ErasNotContiguous"/>).</summary>
         private static void CheckEraNumbers(ContentDraft draft, ContentErrorList errors)
         {
             // Duplicate numbers are reported above; here only the set of numbers counts.
@@ -81,6 +87,7 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
+        /// <summary>Every era number used by the starting city, an item, a building type or a research node names an existing era.</summary>
         private static void CheckEraReferences(ContentDraft draft, ContentErrorList errors)
         {
             // Without any era every reference would be unknown; that one problem is already reported as ErasNotContiguous.
@@ -106,6 +113,7 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
+        /// <summary>Every item named in base caps, the starting stock, costs, upgrade costs, recipes and research costs exists.</summary>
         private static void CheckItemReferences(ContentDraft draft, ContentErrorList errors)
         {
             ItemsExist(draft, draft.Rules.BaseStorageCaps, "rules.baseStorageCaps", errors);
@@ -131,6 +139,7 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
+        /// <summary>A capped item has a base storage cap and an uncapped item has none (<see cref="ContentErrorCode.StorageCapMismatch"/>).</summary>
         private static void CheckBaseStorageCaps(ContentDraft draft, ContentErrorList errors)
         {
             // A base cap for an item that doesn't exist is an unknown reference (above); here every defined item is checked.
@@ -149,6 +158,7 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
+        /// <summary>Every effect's target exists and fits its type: an unlock names a building type, a labor reduction a producer, a storage bonus a capped item.</summary>
         private static void CheckEffectTargets(ContentDraft draft, ContentErrorList errors)
         {
             foreach (ResearchDefinition node in draft.Research.Where(draft.IsFirst))
@@ -172,6 +182,7 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
+        /// <summary>A labor reduction names an existing producer: a house has no labor (<see cref="ContentErrorCode.InvalidEffectTarget"/>).</summary>
         private static void CheckLaborReductionTarget(ContentDraft draft, LaborReductionEffect reduction, string path, ContentErrorList errors)
         {
             if (BuildingExists(draft, reduction.Building, path, errors) && draft.BuildingsById[reduction.Building].Kind != BuildingKind.Producer)
@@ -180,6 +191,7 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
+        /// <summary>A storage bonus names an existing capped item: on an uncapped one it would do nothing (<see cref="ContentErrorCode.InvalidEffectTarget"/>).</summary>
         private static void CheckStorageBonusTarget(ContentDraft draft, StorageCapBonusEffect bonus, string path, ContentErrorList errors)
         {
             if (ItemExists(draft, bonus.Item, path, errors) && !draft.ItemsById[bonus.Item].IsCapped)
@@ -188,6 +200,7 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
+        /// <summary>Every prerequisite names an existing research node.</summary>
         private static void CheckPrerequisiteReferences(ContentDraft draft, ContentErrorList errors)
         {
             foreach (ResearchDefinition node in draft.Research.Where(draft.IsFirst))
@@ -199,6 +212,7 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
+        /// <summary>Reports an era number that no era has.</summary>
         private static void EraExists(ContentDraft draft, int era, string path, ContentErrorList errors)
         {
             if (!draft.ErasByNumber.ContainsKey(era))
@@ -207,6 +221,7 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
+        /// <summary>Reports every item of a list that the content doesn't define.</summary>
         private static void ItemsExist(ContentDraft draft, IReadOnlyList<ItemQuantity> amounts, string path, ContentErrorList errors)
         {
             foreach (ItemQuantity amount in amounts)
@@ -215,6 +230,7 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
+        /// <summary>Reports an item the content doesn't define; true when it exists, so the caller can go on checking it.</summary>
         private static bool ItemExists(ContentDraft draft, ItemId item, string path, ContentErrorList errors)
         {
             bool exists = draft.ItemsById.ContainsKey(item);
@@ -226,6 +242,7 @@ namespace CityBuilder.Simulation.Content
             return exists;
         }
 
+        /// <summary>Reports a building type the content doesn't define; true when it exists, so the caller can go on checking it.</summary>
         private static bool BuildingExists(ContentDraft draft, BuildingTypeId building, string path, ContentErrorList errors)
         {
             bool exists = draft.BuildingsById.ContainsKey(building);
@@ -237,12 +254,15 @@ namespace CityBuilder.Simulation.Content
             return exists;
         }
 
+        /// <summary>Adds an <see cref="ContentErrorCode.UnknownReference"/> error: "The content defines no …".</summary>
         private static void Unknown(string path, string what, ContentErrorList errors) =>
             errors.Add(ContentErrorCode.UnknownReference, path, "The content defines no " + what + ".");
 
+        /// <summary>Adds a <see cref="ContentErrorCode.DuplicateId"/> error: "The … is used more than once".</summary>
         private static void Duplicate(string path, string what, ContentErrorList errors) =>
             errors.Add(ContentErrorCode.DuplicateId, path, "The " + what + " is used more than once; ids are unique per kind.");
 
+        /// <summary>An era number as text, the same in every culture.</summary>
         private static string Format(int number) => number.ToString(CultureInfo.InvariantCulture);
     }
 }

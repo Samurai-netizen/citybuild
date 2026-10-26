@@ -8,14 +8,17 @@ namespace CityBuilder.Simulation.Tests;
 /// </summary>
 public sealed class SimulationPackageTests
 {
-    // What a Unity package of sources may hold. Anything else (a dll, a pdb, a restore cache, a project file) is build output or clutter.
+    /// <summary>What a Unity package of sources may hold; anything else (a DLL, a PDB, a restore cache, a project file) is build output or clutter.</summary>
     private static readonly string[] _allowedExtensions = [".cs", ".asmdef", ".meta", ".md"];
 
+    /// <summary>The engine's Unity package folder, <c>shared/Simulation</c>.</summary>
     private static readonly string _packageFolder = Path.Combine(RepositoryPaths.Root, "shared", "Simulation");
+    /// <summary>The package's <c>Runtime</c> folder, which holds the asmdef and every source file.</summary>
     private static readonly string _runtimeFolder = Path.Combine(_packageFolder, "Runtime");
 
     // ----- Runtime/CityBuilder.Simulation.asmdef -----
 
+    /// <summary>The asmdef keeps <c>noEngineReferences</c> on, so no engine code can use Unity's API.</summary>
     [Fact]
     public void Asmdef_NoEngineReferences_IsTrue()
     {
@@ -24,6 +27,7 @@ public sealed class SimulationPackageTests
         Assert.True(BoolOf(asmdef, "noEngineReferences") == true);
     }
 
+    /// <summary>The asmdef references no assembly and no precompiled library: the engine depends on nothing.</summary>
     [Fact]
     public void Asmdef_AssemblyAndLibraryReferences_AreAbsent()
     {
@@ -34,6 +38,7 @@ public sealed class SimulationPackageTests
         Assert.False(BoolOf(asmdef, "overrideReferences") ?? false);
     }
 
+    /// <summary>The asmdef has no platform filter and no define constraint, so the engine compiles into every Unity build target.</summary>
     [Fact]
     public void Asmdef_PlatformAndDefineRestrictions_AreAbsent()
     {
@@ -47,6 +52,7 @@ public sealed class SimulationPackageTests
         Assert.Empty(ArrayOf(asmdef, "versionDefines"));
     }
 
+    /// <summary>The Unity assembly has the .NET assembly's name and the root namespace <c>CityBuilder.Simulation</c>.</summary>
     [Fact]
     public void Asmdef_Name_MatchesTheDotNetAssemblyAndRootNamespace()
     {
@@ -56,6 +62,7 @@ public sealed class SimulationPackageTests
         Assert.Equal("CityBuilder.Simulation", (string?)asmdef["rootNamespace"]);
     }
 
+    /// <summary>The engine is auto-referenced, so the client assemblies and their tests can use it.</summary>
     [Fact]
     public void Asmdef_AutoReferenced_IsTrue()
     {
@@ -64,6 +71,7 @@ public sealed class SimulationPackageTests
         Assert.True(BoolOf(asmdef, "autoReferenced") == true);
     }
 
+    /// <summary>The package has exactly one asmdef, in <c>Runtime/</c>, and no asmref, so Unity compiles one assembly as the .NET project does.</summary>
     [Fact]
     public void PackageFolder_AssemblyDefinitions_AreTheRuntimeAsmdefOnly()
     {
@@ -79,18 +87,21 @@ public sealed class SimulationPackageTests
 
     // ----- package.json -----
 
+    /// <summary>The package is named <c>com.citybuilder.simulation</c>, the name the client's manifest uses.</summary>
     [Fact]
     public void PackageJson_Name_IsTheCityBuilderSimulationPackage()
     {
         Assert.Equal("com.citybuilder.simulation", (string?)ReadPackageJson()["name"]);
     }
 
+    /// <summary>The package requires Unity 6.3 (<c>6000.3</c>), the client's editor line.</summary>
     [Fact]
     public void PackageJson_UnityField_RequiresUnity63()
     {
         Assert.Equal("6000.3", (string?)ReadPackageJson()["unity"]);
     }
 
+    /// <summary>The package version is <c>major.minor.patch</c> in ASCII digits.</summary>
     [Fact]
     public void PackageJson_Version_IsSemantic()
     {
@@ -100,6 +111,7 @@ public sealed class SimulationPackageTests
 
     // ----- layout -----
 
+    /// <summary>No <c>bin</c> or <c>obj</c> folder lies in the package: Unity would import it.</summary>
     [Fact]
     public void PackageFolder_BuildOutputFolders_AreAbsent()
     {
@@ -111,6 +123,7 @@ public sealed class SimulationPackageTests
         Assert.Empty(buildOutput);
     }
 
+    /// <summary>The package holds only sources, asmdefs, .meta files, Markdown and <c>package.json</c>.</summary>
     [Fact]
     public void PackageFolder_Files_AreSourcesAndPackageMetadataOnly()
     {
@@ -122,6 +135,7 @@ public sealed class SimulationPackageTests
         Assert.Empty(unexpected);
     }
 
+    /// <summary>Every file and folder has its committed .meta file, so the asset keeps one identity on every clone.</summary>
     [Fact]
     public void PackageFolder_EveryFileAndFolder_HasItsMetaFile()
     {
@@ -135,6 +149,7 @@ public sealed class SimulationPackageTests
         Assert.Empty(withoutMeta);
     }
 
+    /// <summary>No .meta file is left over from a removed file or folder.</summary>
     [Fact]
     public void PackageFolder_EveryMetaFile_BelongsToAFileOrFolder()
     {
@@ -146,6 +161,7 @@ public sealed class SimulationPackageTests
         Assert.Empty(orphans);
     }
 
+    /// <summary>Every .meta file has a well-formed GUID of its own; a copied one would give two assets the same identity.</summary>
     [Fact]
     public void PackageFolder_MetaFileGuids_AreUniqueAndWellFormed()
     {
@@ -160,6 +176,7 @@ public sealed class SimulationPackageTests
         Assert.Equal(guids.Length, guids.Distinct(StringComparer.Ordinal).Count());
     }
 
+    /// <summary>The runtime folder holds source files, so the checks over them can't pass on an empty list.</summary>
     [Fact]
     public void RuntimeSources_Folder_ContainsSourceFiles()
     {
@@ -167,6 +184,7 @@ public sealed class SimulationPackageTests
         Assert.NotEmpty(RuntimeSources());
     }
 
+    /// <summary>Every source starts with <c>#nullable enable</c>, the only way Unity turns nullable annotations on.</summary>
     [Fact]
     public void RuntimeSources_FirstLine_IsNullableEnable()
     {
@@ -181,10 +199,13 @@ public sealed class SimulationPackageTests
 
     // ----- helpers -----
 
+    /// <summary>Reads the engine's asmdef.</summary>
     private static JsonObject ReadAsmdef() => ReadJsonObject(Path.Combine(_runtimeFolder, "CityBuilder.Simulation.asmdef"));
 
+    /// <summary>Reads the engine's <c>package.json</c>.</summary>
     private static JsonObject ReadPackageJson() => ReadJsonObject(Path.Combine(_packageFolder, "package.json"));
 
+    /// <summary>Parses a JSON file whose root is an object; fails the test when it isn't.</summary>
     private static JsonObject ReadJsonObject(string path)
     {
         JsonNode? root = JsonNode.Parse(File.ReadAllText(path));
@@ -193,19 +214,23 @@ public sealed class SimulationPackageTests
         return root.AsObject();
     }
 
+    /// <summary>A boolean property of a JSON object, or null when it is absent.</summary>
     private static bool? BoolOf(JsonObject json, string propertyName) => (bool?)json[propertyName];
 
-    // Unity treats a missing array as an empty one.
+    /// <summary>An array property of a JSON object; a missing array is empty, as Unity treats it.</summary>
     private static JsonArray ArrayOf(JsonObject json, string propertyName) => json[propertyName]?.AsArray() ?? [];
 
+    /// <summary>Every C# file under the runtime folder.</summary>
     private static string[] RuntimeSources() => Directory.GetFiles(_runtimeFolder, "*.cs", SearchOption.AllDirectories);
 
-    // Every file and folder below the package root. The root itself has no .meta file: it is the package, not an asset in it.
+    /// <summary>Every file and folder below the package root. The root itself has no .meta file: it is the package, not an asset in it.</summary>
     private static IEnumerable<string> PackageEntries() =>
         Directory.EnumerateFileSystemEntries(_packageFolder, "*", SearchOption.AllDirectories);
 
+    /// <summary>Whether a path's last part has a name, ignoring case (a <c>Bin</c> folder is build output too).</summary>
     private static bool IsNamed(string path, string name) => string.Equals(Path.GetFileName(path), name, StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>Whether a file may be in the package: <c>package.json</c> or one of <see cref="_allowedExtensions"/>.</summary>
     private static bool IsPackageFile(string path) =>
         string.Equals(Path.GetFileName(path), "package.json", StringComparison.Ordinal)
         || _allowedExtensions.Contains(Path.GetExtension(path), StringComparer.OrdinalIgnoreCase);

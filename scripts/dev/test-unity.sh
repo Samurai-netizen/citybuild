@@ -43,6 +43,8 @@ attr() { printf '%s' "$1" | sed -n "s/.* $2=\"\\([0-9][0-9]*\\)\".*/\\1/p"; }
 failed_runs=0
 summary=""
 
+# Runs the tests of one platform (EditMode or PlayMode) and adds its line to the summary; a run that fails, runs no test or
+# leaves no readable result file counts as failed.
 run_platform() {
   local platform="$1" code tag total passed failed skipped line names
   local results="$out/$platform.xml" log="$out/$platform.log"

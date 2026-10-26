@@ -14,9 +14,13 @@ namespace CityBuilder.Simulation.Display
     /// </summary>
     public static class ProductionDisplay
     {
-        // One hour in seconds, and the milli scale of ItemRate. Their product multiplies a quantity before the division by the cycle seconds:
-        // content bounds a quantity by 10^12 (GameContentFactory.MaxQuantity), so the product is at most 3.6 × 10^18, inside a long.
+        /// <summary>
+        /// One hour in seconds, the time unit of every rate here. A quantity is multiplied by this and by <see cref="_milliScale"/> before the
+        /// division by the cycle seconds; content bounds a recipe line's quantity by 10^12 (<see cref="GameContentFactory.MaxQuantity"/>), so that
+        /// product is at most 3.6 × 10^18, inside a <c>long</c>.
+        /// </summary>
         private const long _secondsPerHour = 3600;
+        /// <summary>Thousandths per item: rates are <see cref="ItemRate.MilliPerHour"/>, so a producer slower than one item per hour still shows a rate.</summary>
         private const long _milliScale = 1000;
 
         /// <summary>
@@ -146,6 +150,7 @@ namespace CityBuilder.Simulation.Display
             }
 
             long missing = cap - city.GetQuantity(item);
+            // Items × 3600 s × 1000 over thousandths of an item per hour gives seconds; rounding up never shows the cap sooner than it comes.
             return missing <= 0 ? 0 : IntegerMath.CeilDiv(checked(missing * _secondsPerHour * _milliScale), net);
         }
 
@@ -153,6 +158,10 @@ namespace CityBuilder.Simulation.Display
         internal static long MilliPerHour(long quantity, long cycleSeconds) =>
             cycleSeconds == 0 ? 0 : IntegerMath.FloorDiv(checked(quantity * _secondsPerHour * _milliScale), cycleSeconds);
 
+        /// <summary>
+        /// Whether a building counts toward an item's net rate: it has workers, and its cycle runs or, when idle, it could start the next one now
+        /// (no stall reason). Constructing, upgrading and frozen buildings make nothing.
+        /// </summary>
         private static bool IsAbleToRun(CityState city, GameContent content, Building building)
         {
             if (building.AssignedWorkers == 0 || (building.Phase != BuildingPhase.Idle && building.Phase != BuildingPhase.Producing))
@@ -164,6 +173,7 @@ namespace CityBuilder.Simulation.Display
             return building.Phase == BuildingPhase.Producing || StallReason.Of(city, content, building) is null;
         }
 
+        /// <summary>The rate of one item over the recipe lines that name it, for a cycle of <paramref name="cycleSeconds"/>; 0 when no line names it.</summary>
         private static long SumOf(IReadOnlyList<ItemQuantity> lines, ItemId item, long cycleSeconds)
         {
             long sum = 0;
@@ -178,6 +188,7 @@ namespace CityBuilder.Simulation.Display
             return sum;
         }
 
+        /// <summary>One rate per recipe line, in recipe order, for a cycle of <paramref name="cycleSeconds"/>.</summary>
         private static ItemRate[] RatesOf(IReadOnlyList<ItemQuantity> lines, long cycleSeconds)
         {
             var rates = new ItemRate[lines.Count];

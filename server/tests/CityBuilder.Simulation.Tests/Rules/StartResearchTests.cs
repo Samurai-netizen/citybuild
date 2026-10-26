@@ -11,6 +11,7 @@ namespace CityBuilder.Simulation.Tests.Rules;
 /// </summary>
 public sealed class StartResearchTests
 {
+    /// <summary>Starting a node pays its whole cost at once and fills the research slot until clock plus duration.</summary>
     [Fact]
     public void StartResearch_ValidNode_PaysTheFullCostUpFrontAndFillsTheSlot()
     {
@@ -28,6 +29,7 @@ public sealed class StartResearchTests
             CityDump.Describe(city));
     }
 
+    /// <summary>The result names the cost as spent and nothing as refunded.</summary>
     [Fact]
     public void StartResearch_ValidNode_NamesTheCostAsSpentAndNothingRefunded()
     {
@@ -36,6 +38,7 @@ public sealed class StartResearchTests
         RulesAssert.Moved(Start(city, "better_saws"), spent: "boards=5 gold=60", refunded: "");
     }
 
+    /// <summary>With its prerequisite completed a node starts and pays every item of its cost (gold and boards).</summary>
     [Fact]
     public void StartResearch_PrerequisiteCompleted_PaysEveryItemOfTheCost()
     {
@@ -48,6 +51,7 @@ public sealed class StartResearchTests
         Assert.Equal(["carpentry"], city.CompletedResearch.Select(id => id.Value));
     }
 
+    /// <summary>A city of era 2 can start an era-2 node.</summary>
     [Fact]
     public void StartResearch_NodeOfTheCitysLaterEra_IsStarted()
     {
@@ -56,14 +60,17 @@ public sealed class StartResearchTests
         RulesAssert.Ok(Start(city, "warehouses"));
     }
 
+    /// <summary>A node the content doesn't know is rejected as <see cref="MutationErrorCode.UnknownResearch"/>.</summary>
     [Fact]
     public void StartResearch_UnknownNode_IsRejected() =>
         RulesAssert.Rejected(MutationErrorCode.UnknownResearch, City(inventory: [("gold", 100)]), city => Start(city, "alchemy"));
 
+    /// <summary>A completed node can't run again: <see cref="MutationErrorCode.ResearchCompleted"/>.</summary>
     [Fact]
     public void StartResearch_NodeAlreadyCompleted_IsRejected() =>
         RulesAssert.Rejected(MutationErrorCode.ResearchCompleted, City(inventory: [("gold", 100)], completedResearch: ["carpentry"]), city => Start(city, "carpentry"));
 
+    /// <summary>With the one slot busy another node is rejected as <see cref="MutationErrorCode.ResearchInProgress"/>.</summary>
     [Fact]
     public void StartResearch_SlotBusy_IsRejected()
     {
@@ -72,10 +79,12 @@ public sealed class StartResearchTests
         RulesAssert.Rejected(MutationErrorCode.ResearchInProgress, city, city => Start(city, "carpentry"));
     }
 
+    /// <summary>A node whose prerequisite isn't completed is rejected as <see cref="MutationErrorCode.ResearchLocked"/>.</summary>
     [Fact]
     public void StartResearch_PrerequisiteMissing_IsRejected() =>
         RulesAssert.Rejected(MutationErrorCode.ResearchLocked, City(inventory: [("boards", 5), ("gold", 100)]), city => Start(city, "better_saws"));
 
+    /// <summary>A node of a later era than the city's is locked.</summary>
     [Fact]
     public void StartResearch_NodeOfALaterEra_IsRejected()
     {
@@ -84,10 +93,12 @@ public sealed class StartResearchTests
         RulesAssert.Rejected(MutationErrorCode.ResearchLocked, city, city => Start(city, "warehouses"));
     }
 
+    /// <summary>A node of an earlier era is locked too: a city researches only its own era's tree.</summary>
     [Fact]
     public void StartResearch_NodeOfAnEarlierEra_IsRejected() =>
         RulesAssert.Rejected(MutationErrorCode.ResearchLocked, City(era: 2, inventory: [("gold", 100)]), city => Start(city, "carpentry"));
 
+    /// <summary>A cost the stock can't cover is rejected as <see cref="MutationErrorCode.InsufficientResource"/>.</summary>
     [Fact]
     public void StartResearch_CostNotAffordable_IsRejected()
     {
@@ -96,6 +107,7 @@ public sealed class StartResearchTests
         RulesAssert.Rejected(MutationErrorCode.InsufficientResource, city, city => Start(city, "better_saws"));
     }
 
+    /// <summary>When several checks fail, the first in spec order wins: completed before a busy slot, a busy slot before a lock or the cost.</summary>
     [Fact]
     public void StartResearch_SeveralChecksFail_ReportsTheFirstInSpecOrder()
     {
@@ -108,6 +120,7 @@ public sealed class StartResearchTests
         RulesAssert.Rejected(MutationErrorCode.ResearchLocked, City(), city => Start(city, "better_saws"));
     }
 
+    /// <summary>A null city or content is a programmer error and throws.</summary>
     [Fact]
     public void StartResearch_NullCityOrContent_Throws()
     {
@@ -116,5 +129,6 @@ public sealed class StartResearchTests
         Assert.Throws<ArgumentNullException>(() => CityRules.StartResearch(City(), null!, new ResearchId("carpentry")));
     }
 
+    /// <summary>Tries to start a research node, with the fixture content.</summary>
     private static MutationResult Start(CityState city, string research) => CityRules.StartResearch(city, TestContent, new ResearchId(research));
 }

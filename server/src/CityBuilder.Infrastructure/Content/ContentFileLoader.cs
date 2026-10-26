@@ -14,6 +14,7 @@ namespace CityBuilder.Infrastructure.Content;
 /// </summary>
 public static class ContentFileLoader
 {
+    /// <summary>The strict reader settings, made once and frozen: thread-safe to share between loads (<see cref="CreateOptions"/>).</summary>
     private static readonly JsonSerializerOptions _options = CreateOptions();
 
     /// <summary>Reads, checks and builds the content in a file.</summary>
@@ -56,8 +57,12 @@ public static class ContentFileLoader
         throw new ContentLoadException(path, result.Errors.Select(error => error.ToString()).ToArray());
     }
 
-    // Most System.Text.Json messages end with "Path: … | LineNumber: … | BytePositionInLine: …", but some leave the place out (an unknown
-    // field, for example). Those get it from the exception's properties, in the same format; line and position count from 0, as there.
+    /// <summary>
+    /// The message of a JSON error with its place in the file. Most System.Text.Json messages end with
+    /// "Path: … | LineNumber: … | BytePositionInLine: …", but some leave the place out (an unknown field, for example); those get it from the
+    /// exception's properties, in the same format. Line and position count from 0, as in System.Text.Json's own messages.
+    /// </summary>
+    /// <param name="exception">The reader's error.</param>
     private static string DescribeWithPlace(JsonException exception)
     {
         if (exception.Path is null || exception.Message.Contains("Path: ", StringComparison.Ordinal))
@@ -70,6 +75,10 @@ public static class ContentFileLoader
             $"{exception.Message} Path: {exception.Path} | LineNumber: {exception.LineNumber} | BytePositionInLine: {exception.BytePositionInLine}.");
     }
 
+    /// <summary>
+    /// The settings that make the reader strict: camelCase names compared case-sensitively, an unknown field, a repeated key or a number
+    /// written as text is an error, so a typo in the content can't silently drop or change a value (decision 028). Read-only once made.
+    /// </summary>
     private static JsonSerializerOptions CreateOptions()
     {
         var options = new JsonSerializerOptions

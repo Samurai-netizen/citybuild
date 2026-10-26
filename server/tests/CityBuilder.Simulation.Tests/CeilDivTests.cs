@@ -5,12 +5,13 @@ namespace CityBuilder.Simulation.Tests;
 /// <summary>Edge cases of the rounding-up division behind every duration of the engine.</summary>
 public sealed class CeilDivTests
 {
-    // Values that reach the edges of long, used where a test checks the defining property with exact (BigInteger) arithmetic.
+    /// <summary>Values that reach the edges of <c>long</c>, for the tests that check the defining property with exact (<see cref="BigInteger"/>) arithmetic.</summary>
     private static readonly long[] _extremeValues =
     [
         1L, 2L, 3L, 7L, 60L, 180L, 1_000L, 999_999_999_999L, long.MaxValue / 2, long.MaxValue - 1, long.MaxValue,
     ];
 
+    /// <summary>No labor takes no time: 0 divided by any positive divisor is 0.</summary>
     [Theory]
     [InlineData(0L, 1L)]
     [InlineData(0L, 7L)]
@@ -20,6 +21,7 @@ public sealed class CeilDivTests
         Assert.Equal(0L, IntegerMath.CeilDiv(dividend, divisor));
     }
 
+    /// <summary>An exact multiple is not rounded: 180 labor with 4 workers is 45 s, also at the edges of <c>long</c>.</summary>
     [Theory]
     [InlineData(1L, 1L, 1L)]
     [InlineData(10L, 5L, 2L)]
@@ -33,6 +35,7 @@ public sealed class CeilDivTests
         Assert.Equal(expected, IntegerMath.CeilDiv(dividend, divisor));
     }
 
+    /// <summary>Any remainder adds a whole second (181 labor with 4 workers is 46 s), up to <c>long.MaxValue</c> without overflow.</summary>
     [Theory]
     [InlineData(1L, 2L, 1L)]
     [InlineData(3L, 2L, 2L)]
@@ -48,6 +51,7 @@ public sealed class CeilDivTests
         Assert.Equal(expected, IntegerMath.CeilDiv(dividend, divisor));
     }
 
+    /// <summary>One worker does the labor in as many seconds as it has.</summary>
     [Theory]
     [InlineData(0L)]
     [InlineData(1L)]
@@ -58,6 +62,7 @@ public sealed class CeilDivTests
         Assert.Equal(dividend, IntegerMath.CeilDiv(dividend, 1L));
     }
 
+    /// <summary>Any positive labor takes at least one second, however many workers share it.</summary>
     [Theory]
     [InlineData(1L, 2L)]
     [InlineData(5L, 6L)]
@@ -68,6 +73,7 @@ public sealed class CeilDivTests
         Assert.Equal(1L, IntegerMath.CeilDiv(dividend, divisor));
     }
 
+    /// <summary>For every dividend 0..400 and divisor 1..70 the result is the smallest q with q × divisor ≥ dividend.</summary>
     [Fact]
     public void CeilDiv_SmallRange_MatchesTheDefinitionOfTheCeiling()
     {
@@ -92,6 +98,7 @@ public sealed class CeilDivTests
         Assert.Empty(failures);
     }
 
+    /// <summary>The ceiling definition holds for every pair of edge values, checked with <see cref="BigInteger"/> so the check itself can't overflow.</summary>
     [Fact]
     public void CeilDiv_ExtremeValues_SatisfyTheDefinitionOfTheCeilingWithoutOverflow()
     {
@@ -115,8 +122,11 @@ public sealed class CeilDivTests
         Assert.Empty(failures);
     }
 
-    // Each bad argument is paired with several partners (edge values, and the other argument bad as well), so that no shortcut ahead of
-    // the guards can let bad input through. When both are out of range the dividend is reported: it is checked first.
+    /// <summary>
+    /// A negative dividend is a programmer error and throws for the parameter <c>dividend</c>. Each bad argument is paired with several
+    /// partners (edge values, and the other argument bad as well), so that no shortcut ahead of the guards can let bad input through; when both
+    /// are out of range the dividend is reported, because it is checked first.
+    /// </summary>
     [Theory]
     [InlineData(-1L, 1L)]
     [InlineData(-1L, long.MaxValue)]
@@ -132,6 +142,7 @@ public sealed class CeilDivTests
         Assert.Equal("dividend", exception.ParamName);
     }
 
+    /// <summary>A divisor of 0 or less (no workers) is a programmer error and throws for the parameter <c>divisor</c>.</summary>
     [Theory]
     [InlineData(10L, 0L)]
     [InlineData(0L, 0L)]

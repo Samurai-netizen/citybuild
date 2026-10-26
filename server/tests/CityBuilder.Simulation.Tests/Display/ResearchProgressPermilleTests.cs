@@ -7,6 +7,7 @@ namespace CityBuilder.Simulation.Tests.Display;
 /// <summary><c>ProgressDisplay.ResearchProgressPermille</c>: the bar of the running research (here 100 s, from 900 to 1000).</summary>
 public sealed class ResearchProgressPermilleTests
 {
+    /// <summary>The research bar counts seconds of its 100 s duration: 0 before the start, 500 halfway, full at and after the end.</summary>
     [Theory]
     [InlineData(850L, 0)] // before the start
     [InlineData(900L, 0)]
@@ -21,6 +22,7 @@ public sealed class ResearchProgressPermilleTests
         Assert.Equal(expected, ProgressDisplay.ResearchProgressPermille(city, clock));
     }
 
+    /// <summary>The research bar rounds down: 1 of 3 s is 333.</summary>
     [Fact]
     public void ResearchProgressPermille_RoundsDown()
     {
@@ -29,12 +31,14 @@ public sealed class ResearchProgressPermilleTests
         Assert.Equal(333, ProgressDisplay.ResearchProgressPermille(city, 1));
     }
 
+    /// <summary>With no research running the bar is 0.</summary>
     [Fact]
     public void ResearchProgressPermille_NoResearchRunning_IsZero()
     {
         Assert.Equal(0, ProgressDisplay.ResearchProgressPermille(City(), 1000));
     }
 
+    /// <summary>A null city throws.</summary>
     [Fact]
     public void ResearchProgressPermille_NullCity_Throws()
     {

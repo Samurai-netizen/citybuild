@@ -1,3 +1,5 @@
+# Dependabot: each month it proposes updates of the CI actions and of the handbook site's npm packages, as pull requests the owner
+# decides on (G-Dependency in core-instructions/15-change-control.md).
 version: 2
 updates:
   # Keeps CI actions current. Dependency updates are proposals: the owner decides (G-Dependency).

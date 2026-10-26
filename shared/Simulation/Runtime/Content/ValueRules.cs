@@ -10,9 +10,13 @@ namespace CityBuilder.Simulation.Content
     /// </summary>
     internal static class ValueRules
     {
-        // The M0 engine holds one active research (core-instructions/04-simulation-model.md, section 5); more slots are a later minor mechanic.
+        /// <summary>
+        /// The research slots the M0 engine supports: it holds one active research (<c>core-instructions/04-simulation-model.md</c>,
+        /// section 5); more slots are a later minor mechanic.
+        /// </summary>
         private const int _supportedResearchSlots = 1;
 
+        /// <summary>Checks the numbers of the global rules, the starting stock, every building type and every research node, duplicates included.</summary>
         public static void Check(ContentDraft draft, ContentErrorList errors)
         {
             CheckRules(draft.Rules, errors);
@@ -28,6 +32,10 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
+        /// <summary>
+        /// The grid, the slots, the production cap, the minimum cycle and the base caps are greater than zero; exactly one research slot; the labor
+        /// reduction limit is 0 to 1000 permille.
+        /// </summary>
         private static void CheckRules(GameRules rules, ContentErrorList errors)
         {
             Positive(rules.GridWidth, "rules.gridWidth", errors);
@@ -49,6 +57,7 @@ namespace CityBuilder.Simulation.Content
             Positive(rules.BaseStorageCaps, "rules.baseStorageCaps", errors);
         }
 
+        /// <summary>Costs are at least zero; build and upgrade times, recipe amounts and labor are greater than zero.</summary>
         private static void CheckBuilding(BuildingDefinition building, ContentErrorList errors)
         {
             string path = ContentPaths.Building(building);
@@ -72,6 +81,7 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
+        /// <summary>The cost is at least zero, the duration greater than zero, a labor reduction 1 to 1000 permille, a storage bonus greater than zero.</summary>
         private static void CheckResearch(ResearchDefinition node, ContentErrorList errors)
         {
             string path = ContentPaths.Research(node);
@@ -93,6 +103,7 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
+        /// <summary>Reports a value of 0 or less (<see cref="ContentErrorCode.NotPositive"/>).</summary>
         private static void Positive(long value, string path, ContentErrorList errors)
         {
             if (value <= 0)
@@ -101,6 +112,7 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
+        /// <summary>Reports each amount of a list that is 0 or less; the item id is appended to the path.</summary>
         private static void Positive(IReadOnlyList<ItemQuantity> amounts, string path, ContentErrorList errors)
         {
             foreach (ItemQuantity amount in amounts)
@@ -109,6 +121,7 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
+        /// <summary>Reports a negative value (<see cref="ContentErrorCode.Negative"/>).</summary>
         private static void AtLeastZero(long value, string path, ContentErrorList errors)
         {
             if (value < 0)
@@ -117,6 +130,7 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
+        /// <summary>Reports each negative amount of a list; the item id is appended to the path.</summary>
         private static void AtLeastZero(IReadOnlyList<ItemQuantity> amounts, string path, ContentErrorList errors)
         {
             foreach (ItemQuantity amount in amounts)
@@ -125,6 +139,7 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
+        /// <summary>Reports a permille above 1000, which would remove more than all of the labor (<see cref="ContentErrorCode.ValueTooLarge"/>).</summary>
         private static void AtMostOneThousand(int permille, string path, ContentErrorList errors)
         {
             if (permille > IntegerMath.PermilleScale)

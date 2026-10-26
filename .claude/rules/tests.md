@@ -10,6 +10,8 @@ Strategy: `core-instructions/08-testing-strategy.md`.
 
 - Name tests `Method_Scenario_ExpectedResult`; security tests start with `Security_` and name the property.
 - One behaviour per test. Arrange with builders/fixtures, not copy-pasted setup.
+- Every test class has an XML doc comment that says what it covers, every test one that says the behaviour it proves, and every helper
+  one that says what it builds (`core-instructions/14-coding-standards.md` → Documentation in code).
 - Integration tests: `[Trait("Category", "Integration")]`, real PostgreSQL via Testcontainers,
   in-process API via `WebApplicationFactory`. Assert database state and ledger rows, not just status codes.
 - Time only through `FakeTimeProvider`. No `Thread.Sleep`, no real clock, no test-order dependence.

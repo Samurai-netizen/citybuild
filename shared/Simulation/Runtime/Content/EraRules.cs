@@ -13,6 +13,10 @@ namespace CityBuilder.Simulation.Content
     /// </summary>
     internal static class EraRules
     {
+        /// <summary>
+        /// Checks the items used by the starting city, by each building type (cost, upgrade costs, recipes) and by each research node (cost)
+        /// against the era of the user. Duplicates are left out: their own rule reports them.
+        /// </summary>
         public static void Check(ContentDraft draft, ContentErrorList errors)
         {
             CheckItems(draft, draft.StartingCity.Era, draft.StartingCity.Inventory, "startingCity.inventory", "the starting city", errors);
@@ -39,6 +43,16 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
+        /// <summary>
+        /// Reports each item of a list whose era is later than the user's (<see cref="ContentErrorCode.ItemInLaterEra"/>). Unknown items and
+        /// eras are skipped, because the reference rules report them.
+        /// </summary>
+        /// <param name="draft">The content being checked.</param>
+        /// <param name="userEra">The era of whatever uses the items.</param>
+        /// <param name="amounts">The items it uses.</param>
+        /// <param name="path">The list's error path; each item is appended to it.</param>
+        /// <param name="user">The user's name in the message: an id, or "the starting city".</param>
+        /// <param name="errors">Where errors go.</param>
         private static void CheckItems(
             ContentDraft draft, int userEra, IReadOnlyList<ItemQuantity> amounts, string path, string user, ContentErrorList errors)
         {
@@ -59,6 +73,7 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
+        /// <summary>An era number as text, the same in every culture.</summary>
         private static string Format(int number) => number.ToString(CultureInfo.InvariantCulture);
     }
 }

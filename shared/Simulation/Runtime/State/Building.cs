@@ -205,6 +205,7 @@ namespace CityBuilder.Simulation.State
             Phase = BuildingPhase.Idle;
         }
 
+        /// <summary>Throws when the building is not in the phase a transition needs: the engine's own bug, never a player's mistake.</summary>
         private void RequirePhase(BuildingPhase phase)
         {
             if (Phase != phase)
@@ -213,6 +214,7 @@ namespace CityBuilder.Simulation.State
             }
         }
 
+        /// <summary>Sets every field a phase uses back to 0 or null, the canonical form of an idle building (decision 030).</summary>
         private void ClearPhaseFields()
         {
             PhaseStartedAt = 0;
@@ -223,6 +225,10 @@ namespace CityBuilder.Simulation.State
             SegmentStartedAt = 0;
         }
 
+        /// <summary>
+        /// Why the fields can't form a building, as the end of the restoring constructor's error message, or null when they can: each phase
+        /// uses exactly its own fields, and the others are 0 or null.
+        /// </summary>
         private string? FindProblem()
         {
             if (Id < 1 || X < 0 || Y < 0 || Level < 1 || AssignedWorkers < 0 || PhaseStartedAt < 0)
@@ -255,11 +261,15 @@ namespace CityBuilder.Simulation.State
             }
         }
 
+        /// <summary>Whether no cycle field is set: required in every phase except producing.</summary>
         private bool HasNoCycle() => CycleLabor == 0 && LaborRemaining == 0 && SegmentStartedAt == 0;
 
-        // The end of a running cycle is SegmentStartedAt + CeilDiv(LaborRemaining, AssignedWorkers) (04 section 3), the only value StartCycle and
-        // AssignWorkers give it; a restored building with another end would finish its labor early or late. Frozen cycles have no end. The
-        // difference is compared, so huge values can't overflow; the remaining labor is checked first, so CeilDiv gets no negative dividend.
+        /// <summary>
+        /// Whether a producing building's end is exactly <c>SegmentStartedAt + CeilDiv(LaborRemaining, AssignedWorkers)</c> (<c>04</c> section 3),
+        /// the only value <see cref="StartCycle"/> and <see cref="AssignWorkers"/> give it; a restored building with another end would finish its
+        /// labor early or late. A frozen cycle has no end. The difference is compared, so huge values can't overflow, and the remaining labor is
+        /// checked first, so <see cref="IntegerMath.CeilDiv"/> gets no negative dividend.
+        /// </summary>
         private bool EndsWhenTheLaborIsDone() =>
             PhaseEndsAt == null
             || (LaborRemaining >= 0 && PhaseEndsAt >= SegmentStartedAt

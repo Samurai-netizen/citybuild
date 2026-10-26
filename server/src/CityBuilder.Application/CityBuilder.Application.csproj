@@ -1,5 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <!-- The use cases and the ports they need (docs/modules/CityBuilder.Application.md). It references Domain and the shared engine, never
+       ASP.NET Core or EF Core (core-instructions/03-architecture.md; ApplicationDependencyTests checks it). -->
+
   <ItemGroup>
     <ProjectReference Include="..\CityBuilder.Domain\CityBuilder.Domain.csproj" />
     <ProjectReference Include="..\..\..\shared\Simulation.Build\CityBuilder.Simulation.csproj" />

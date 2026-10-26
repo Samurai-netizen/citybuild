@@ -12,6 +12,7 @@ public sealed class ContentEraRuleTests
 {
     // "!" in these tests reaches into the valid fixture, which sets every value it touches (ContentFixture.Valid).
 
+    /// <summary>Each place of era 1 where the era-2 item iron can be used, by the expected error path.</summary>
     private static readonly Dictionary<string, Action<GameContentData>> _laterEraUses = new()
     {
         ["startingCity.inventory.iron"] = data => data.StartingCity!.Inventory!["iron"] = 1,
@@ -22,19 +23,23 @@ public sealed class ContentEraRuleTests
         ["research[carpentry].cost.iron"] = data => Research(data, "carpentry").Cost!["iron"] = 1,
     };
 
+    /// <summary>The error paths of <see cref="_laterEraUses"/>.</summary>
     public static TheoryData<string> LaterEraUsePaths => new(_laterEraUses.Keys);
 
+    /// <summary>Using iron in era 1 gives one <see cref="ContentErrorCode.ItemInLaterEra"/> at that use, so no city meets an item before its era (OD-10).</summary>
     [Theory]
     [MemberData(nameof(LaterEraUsePaths))]
     public void Create_ItemOfALaterEraUsed_ReportsItemInLaterEraAtItsPath(string path) =>
         ContentAssert.SingleError(WithIron(_laterEraUses[path]), ContentErrorCode.ItemInLaterEra, path);
 
+    /// <summary>An era-2 research node may cost the era-2 item.</summary>
     [Fact]
     public void Create_ItemUsedInItsOwnEra_IsAccepted()
     {
         ContentAssert.Valid(WithIron(data => Research(data, "warehouses").Cost!["iron"] = 1));
     }
 
+    /// <summary>A later era may keep using earlier goods: warehouses (era 2) costs gold (era 1).</summary>
     [Fact]
     public void Create_ItemOfAnEarlierEraUsed_IsAccepted()
     {
@@ -43,6 +48,7 @@ public sealed class ContentEraRuleTests
         ContentAssert.Valid(Valid());
     }
 
+    /// <summary>When the user's era doesn't exist, only that unknown era is reported, not the item's era as well.</summary>
     [Fact]
     public void Create_UserOfAnUnknownEra_ReportsOnlyTheUnknownEra()
     {
@@ -55,6 +61,7 @@ public sealed class ContentEraRuleTests
         ContentAssert.SingleError(data, ContentErrorCode.UnknownReference, "buildings[hut].era");
     }
 
+    /// <summary>When the item's era doesn't exist, only that unknown era is reported.</summary>
     [Fact]
     public void Create_ItemOfAnUnknownEra_ReportsOnlyTheUnknownEra()
     {

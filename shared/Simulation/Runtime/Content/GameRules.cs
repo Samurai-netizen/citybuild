@@ -7,8 +7,10 @@ namespace CityBuilder.Simulation.Content
     /// <summary>The global rules of the game content (<c>core-instructions/23-mvp-content.md</c>, global rules).</summary>
     public sealed class GameRules
     {
+        /// <summary>The base cap of each capped item, for <see cref="TryGetBaseStorageCap"/>; only looked up, never iterated.</summary>
         private readonly Dictionary<ItemId, long> _baseStorageCapByItem;
 
+        /// <summary>Creates the rules from values the shape phase has read (<see cref="ContentReader"/>); each is described on its property.</summary>
         internal GameRules(
             int gridWidth,
             int gridHeight,

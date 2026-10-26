@@ -12,6 +12,7 @@ namespace CityBuilder.Simulation.Tests.Properties;
 /// </summary>
 internal sealed class CityHistory
 {
+    /// <summary>A history: its seed, the final city, the accepted operations with their reports, and how many commands were rejected.</summary>
     public CityHistory(int seed, CityState city, IReadOnlyList<CityOperation> operations, IReadOnlyList<SettlementReport> reports, int rejected)
     {
         Seed = seed;

@@ -9,6 +9,7 @@ namespace CityBuilder.IntegrationTests;
 /// </summary>
 public sealed class InfrastructureDependencyTests
 {
+    /// <summary>The Infrastructure assembly doesn't reference the Api assembly.</summary>
     [Fact]
     public void GetReferencedAssemblies_OfInfrastructure_DoNotIncludeApi()
     {

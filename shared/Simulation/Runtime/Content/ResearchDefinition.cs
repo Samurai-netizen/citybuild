@@ -10,6 +10,10 @@ namespace CityBuilder.Simulation.Content
     /// </summary>
     public sealed class ResearchDefinition
     {
+        /// <summary>
+        /// Creates the node from values the shape phase has read (<see cref="ContentReader"/>), prerequisites already sorted by id; the rules
+        /// check the graph afterwards. Each value is described on its property.
+        /// </summary>
         internal ResearchDefinition(
             ResearchId id,
             string name,

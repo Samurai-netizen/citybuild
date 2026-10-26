@@ -7,6 +7,10 @@ namespace CityBuilder.Simulation.Content
     /// <summary>A building type of the game content: what placing it costs, how it is unlocked, and its levels.</summary>
     public sealed class BuildingDefinition
     {
+        /// <summary>
+        /// Creates the definition from values the shape phase has read (<see cref="ContentReader"/>); it becomes part of a
+        /// <see cref="GameContent"/> only after every content rule passed. Each value is described on its property.
+        /// </summary>
         internal BuildingDefinition(
             BuildingTypeId id,
             string name,

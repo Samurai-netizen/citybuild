@@ -20,6 +20,7 @@ public abstract class ContentIdOrderContract<TId> : ContentIdEqualityContract<TI
     /// <summary>Applies the id's <c>&gt;=</c> operator.</summary>
     protected abstract bool GreaterThanOrEqualOperator(TId left, TId right);
 
+    /// <summary>Ordinal order compares code units, so "B" (66) sorts before "a" (97), unlike a culture-aware comparison.</summary>
     [Fact]
     public void CompareTo_Ordinal_PutsUppercaseBeforeLowercase()
     {
@@ -32,6 +33,7 @@ public abstract class ContentIdOrderContract<TId> : ContentIdEqualityContract<TI
         Assert.True(LessThanOperator(upper, lower));
     }
 
+    /// <summary>Texts that a culture-aware comparison calls equal don't compare as 0.</summary>
     [Theory]
     [InlineData("caf\u00E9", "cafe\u0301")]
     [InlineData("sawmill", "saw\u00ADmill")]
@@ -40,6 +42,7 @@ public abstract class ContentIdOrderContract<TId> : ContentIdEqualityContract<TI
         Assert.NotEqual(0, IdOf(first).CompareTo(IdOf(second)));
     }
 
+    /// <summary>A prefix sorts before the longer text: "saw" before "sawmill".</summary>
     [Fact]
     public void CompareTo_TextThatIsAPrefixOfAnother_SortsFirst()
     {
@@ -47,12 +50,14 @@ public abstract class ContentIdOrderContract<TId> : ContentIdEqualityContract<TI
         Assert.True(IdOf("sawmill").CompareTo(IdOf("saw")) > 0);
     }
 
+    /// <summary>Equal ids compare as 0.</summary>
     [Fact]
     public void CompareTo_EqualIds_IsZero()
     {
         Assert.Equal(0, IdOf("house").CompareTo(IdOf("house")));
     }
 
+    /// <summary><c>default</c> sorts before every real id and compares as 0 with another <c>default</c>.</summary>
     [Fact]
     public void CompareTo_Default_SortsBeforeEveryId()
     {
@@ -63,6 +68,7 @@ public abstract class ContentIdOrderContract<TId> : ContentIdEqualityContract<TI
         Assert.Equal(0, none.CompareTo(default));
     }
 
+    /// <summary><c>&lt;</c>, <c>&lt;=</c>, <c>&gt;</c> and <c>&gt;=</c> agree with <c>CompareTo</c> for smaller, equal and larger ids.</summary>
     [Fact]
     public void RelationalOperators_SmallerEqualAndLargerIds_FollowCompareTo()
     {
@@ -84,6 +90,7 @@ public abstract class ContentIdOrderContract<TId> : ContentIdEqualityContract<TI
         Assert.False(GreaterThanOrEqualOperator(smaller, larger));
     }
 
+    /// <summary>Sorting ids gives ordinal ascending order: uppercase first, prefixes before longer texts.</summary>
     [Fact]
     public void Sort_OfIds_GivesOrdinalAscendingOrder()
     {
@@ -94,6 +101,7 @@ public abstract class ContentIdOrderContract<TId> : ContentIdEqualityContract<TI
         Assert.Equal(["Zebra", "apple", "house", "saw", "sawmill", "woodcutter"], ids.Select(ValueOf));
     }
 
+    /// <summary>The id type implements <see cref="IComparable{T}"/> of itself, so sorting needs no boxing.</summary>
     [Fact]
     public void Declaration_IsComparableToItself()
     {

@@ -9,6 +9,11 @@ namespace CityBuilder.Simulation.Tests.Content;
 /// </summary>
 internal static class ContentFixture
 {
+    /// <summary>
+    /// The valid test content, built new on every call: two eras, gold (uncapped), wood (cap 100) and boards (cap 80), a hut (3 then 5
+    /// workers), a lumber camp (1 wood from 40 labor, 2 then 3 workers) and a workshop locked behind carpentry (2 wood → 1 boards, 90 labor),
+    /// and research carpentry → better_saws (−250 ‰ camp, −100 ‰ workshop) → warehouses (era 2, +50 wood, +40 boards).
+    /// </summary>
     public static GameContentData Valid() => new()
     {
         ContentVersion = "test-1",
@@ -110,19 +115,26 @@ internal static class ContentFixture
     }
 
     // The fixture is built fresh each time, so every test may change any of it; these shortcuts reach into it without null checks.
+    /// <summary>The fixture's global rules.</summary>
     public static GameRulesData RulesOf(GameContentData data) => data.Rules!;
 
+    /// <summary>The fixture's building type with the id.</summary>
     public static BuildingData Building(GameContentData data, string id) => data.Buildings!.Single(building => building!.Id == id)!;
 
+    /// <summary>A level of one of the fixture's building types, by its number.</summary>
     public static BuildingLevelData Level(GameContentData data, string building, int level) =>
         Building(data, building).Levels!.Single(candidate => candidate!.Level == level)!;
 
+    /// <summary>The fixture's research node with the id.</summary>
     public static ResearchData Research(GameContentData data, string id) => data.Research!.Single(node => node!.Id == id)!;
 
+    /// <summary>The fixture's item with the id.</summary>
     public static ItemData Item(GameContentData data, string id) => data.Items!.Single(item => item!.Id == id)!;
 
+    /// <summary>The fixture's era with the number.</summary>
     public static EraData Era(GameContentData data, int number) => data.Eras!.Single(era => era!.Number == number)!;
 
+    /// <summary>A recipe's data from its inputs (null for a raw producer), outputs and labor.</summary>
     private static RecipeData Recipe(Dictionary<string, long?>? inputs, Dictionary<string, long?> outputs, long labor) =>
         new() { Inputs = inputs, Outputs = outputs, Labor = labor };
 }

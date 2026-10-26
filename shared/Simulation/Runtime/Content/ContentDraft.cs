@@ -9,6 +9,10 @@ namespace CityBuilder.Simulation.Content
     /// </summary>
     internal sealed class ContentDraft
     {
+        /// <summary>
+        /// Takes the read definitions as they are and indexes them by id or number; the first definition of an id wins the lookup, so a
+        /// duplicate stays in the list (for its rule to report) without hiding the original from the other rules.
+        /// </summary>
         public ContentDraft(
             string contentVersion,
             GameRules rules,
@@ -47,26 +51,37 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
+        /// <summary>The content's version label, such as <c>mvp-1</c>; not checked beyond being present.</summary>
         public string ContentVersion { get; }
 
+        /// <summary>The global rules (grid, slots, caps, limits) as read; <see cref="ValueRules"/> checks their values.</summary>
         public GameRules Rules { get; }
 
+        /// <summary>The era and stock of a new city as read.</summary>
         public StartingCityDefinition StartingCity { get; }
 
+        /// <summary>Every era in file order, duplicates included.</summary>
         public List<EraDefinition> Eras { get; }
 
+        /// <summary>Every item in file order, duplicates included.</summary>
         public List<ItemDefinition> Items { get; }
 
+        /// <summary>Every building type in file order, duplicates included.</summary>
         public List<BuildingDefinition> Buildings { get; }
 
+        /// <summary>Every research node in file order, duplicates included.</summary>
         public List<ResearchDefinition> Research { get; }
 
+        /// <summary>The first era with each number; for references from items, buildings, research and the starting city.</summary>
         public Dictionary<int, EraDefinition> ErasByNumber { get; } = new Dictionary<int, EraDefinition>();
 
+        /// <summary>The first item with each id; for references from costs, recipes, caps, bonuses and the starting stock.</summary>
         public Dictionary<ItemId, ItemDefinition> ItemsById { get; } = new Dictionary<ItemId, ItemDefinition>();
 
+        /// <summary>The first building type with each id; for the targets of research effects.</summary>
         public Dictionary<BuildingTypeId, BuildingDefinition> BuildingsById { get; } = new Dictionary<BuildingTypeId, BuildingDefinition>();
 
+        /// <summary>The first research node with each id; for prerequisites and the research graph.</summary>
         public Dictionary<ResearchId, ResearchDefinition> ResearchById { get; } = new Dictionary<ResearchId, ResearchDefinition>();
 
         /// <summary>Whether this is the first item with its id (a later one is a duplicate, reported once and left out of other checks).</summary>

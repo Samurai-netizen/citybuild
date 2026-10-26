@@ -10,6 +10,10 @@ namespace CityBuilder.Simulation.Content
     /// </summary>
     internal static class UnlockRules
     {
+        /// <summary>
+        /// Collects the unlocking node of each building type from the effects, reporting a second unlock or an unlock of a type available at the
+        /// start, then reports every type that is neither available at the start nor unlocked (<see cref="ContentErrorCode.UnlockMismatch"/>).
+        /// </summary>
         public static void Check(ContentDraft draft, ContentErrorList errors)
         {
             var unlockedBy = new Dictionary<BuildingTypeId, ResearchId>();
@@ -37,6 +41,10 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
+        /// <summary>
+        /// Checks one unlock effect: the type must not be available at the start and must not be unlocked by an earlier node already;
+        /// otherwise records this node as its unlocker.
+        /// </summary>
         private static void CheckUnlock(
             ResearchDefinition node, int index, BuildingDefinition building, Dictionary<BuildingTypeId, ResearchId> unlockedBy, ContentErrorList errors)
         {

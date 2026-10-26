@@ -22,9 +22,10 @@ public abstract class ContentIdEqualityContract<TId>
     /// <summary>Applies the id's <c>!=</c> operator.</summary>
     protected abstract bool NotEqualsOperator(TId left, TId right);
 
-    // A new string object each time, so a test cannot pass by comparing references of interned literals.
+    /// <summary>The id of a text, built from a new string object each time, so a test can't pass by comparing references of interned literals.</summary>
     protected TId IdOf(string text) => Create(new string(text.ToCharArray()));
 
+    /// <summary>A null text is rejected with <see cref="ArgumentNullException"/> for the parameter <c>value</c>.</summary>
     [Fact]
     public void Constructor_NullText_Throws()
     {
@@ -34,6 +35,7 @@ public abstract class ContentIdEqualityContract<TId>
         Assert.Equal("value", exception.ParamName);
     }
 
+    /// <summary>An empty text is rejected with <see cref="ArgumentException"/>: the empty id is <c>default</c>, never a constructed one.</summary>
     [Fact]
     public void Constructor_EmptyText_Throws()
     {
@@ -42,6 +44,7 @@ public abstract class ContentIdEqualityContract<TId>
         Assert.Equal("value", exception.ParamName);
     }
 
+    /// <summary>The constructor neither trims nor normalizes, so " sawmill " is kept as given and differs from "sawmill".</summary>
     [Fact]
     public void Constructor_TextWithSurroundingWhitespace_KeepsTheTextAsGiven()
     {
@@ -52,6 +55,7 @@ public abstract class ContentIdEqualityContract<TId>
         Assert.False(EqualsOperator(padded, IdOf("sawmill")));
     }
 
+    /// <summary><c>Value</c> and <c>ToString</c> both give the id's text.</summary>
     [Fact]
     public void ValueAndToString_IdWithText_ReturnThatText()
     {
@@ -61,6 +65,7 @@ public abstract class ContentIdEqualityContract<TId>
         Assert.Equal("trade_charter", id.ToString());
     }
 
+    /// <summary>Two ids with the same text are equal through <c>Equals</c>, <c>Equals(object)</c> and <c>==</c>, and have the same hash code.</summary>
     [Fact]
     public void Equals_SameTextInSeparateStrings_IsEqualInEveryForm()
     {
@@ -74,6 +79,7 @@ public abstract class ContentIdEqualityContract<TId>
         Assert.Equal(first.GetHashCode(), second.GetHashCode());
     }
 
+    /// <summary>Case matters: "sawmill" and "Sawmill" are different ids.</summary>
     [Fact]
     public void Equals_TextThatDiffersOnlyInCase_IsNotEqual()
     {
@@ -84,6 +90,7 @@ public abstract class ContentIdEqualityContract<TId>
         Assert.True(NotEqualsOperator(lower, capitalized));
     }
 
+    /// <summary>Texts that a culture-aware comparison calls equal (composed and decomposed é, a soft hyphen) are different ids under ordinal equality.</summary>
     [Theory]
     [InlineData("caf\u00E9", "cafe\u0301")] // é as one character, and as e followed by a combining accent
     [InlineData("sawmill", "saw\u00ADmill")] // the same word with an invisible soft hyphen inside
@@ -98,6 +105,7 @@ public abstract class ContentIdEqualityContract<TId>
         Assert.True(NotEqualsOperator(left, right));
     }
 
+    /// <summary>Ids with different texts are unequal through every form of equality.</summary>
     [Fact]
     public void Equals_DifferentText_IsNotEqualInEveryForm()
     {
@@ -110,6 +118,7 @@ public abstract class ContentIdEqualityContract<TId>
         Assert.True(NotEqualsOperator(house, sawmill));
     }
 
+    /// <summary>An id equals neither null, nor a string, nor an id of another type with the same text: an item and a building type may share a name.</summary>
     [Fact]
     public void Equals_NullTextOrAnotherIdTypeWithTheSameText_IsFalse()
     {
@@ -121,6 +130,7 @@ public abstract class ContentIdEqualityContract<TId>
         Assert.False(id.Equals((object)new ItemId("logs")));
     }
 
+    /// <summary><c>default</c> has the empty text, equals only another <c>default</c>, and hashes consistently.</summary>
     [Fact]
     public void Default_IsTheEmptyId_AndEqualsOnlyAnotherDefault()
     {
@@ -133,6 +143,7 @@ public abstract class ContentIdEqualityContract<TId>
         Assert.False(EqualsOperator(none, IdOf("house")));
     }
 
+    /// <summary>An id works as a dictionary key: another id with the same text finds the entry, one that differs in case does not.</summary>
     [Fact]
     public void DictionaryKey_IdBuiltFromAnotherString_IsFound()
     {
@@ -142,6 +153,7 @@ public abstract class ContentIdEqualityContract<TId>
         Assert.False(names.ContainsKey(IdOf("House")));
     }
 
+    /// <summary>The id type is a readonly struct, so ids copy cheaply and can't change.</summary>
     [Fact]
     public void Declaration_IsAReadonlyStruct()
     {

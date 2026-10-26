@@ -6,6 +6,7 @@ namespace CityBuilder.Simulation.Tests.State;
 /// <summary>Restoring a city: sorted lists, the stock without zeros, lookups, read-only views, and the checks that need no content.</summary>
 public sealed class CityStateTests
 {
+    /// <summary>The restoring constructor keeps the clock, era and next building id.</summary>
     [Fact]
     public void Constructor_ValidValues_KeepsClockEraAndNextId()
     {
@@ -15,6 +16,7 @@ public sealed class CityStateTests
         Assert.Null(city.ActiveResearch);
     }
 
+    /// <summary>Buildings come sorted by id whatever order they are given in.</summary>
     [Fact]
     public void Constructor_BuildingsInAnyOrder_SortsThemById()
     {
@@ -23,6 +25,7 @@ public sealed class CityStateTests
         Assert.Equal([2, 3, 5], city.Buildings.Select(building => building.Id));
     }
 
+    /// <summary>The stock keeps only quantities above 0, in item order.</summary>
     [Fact]
     public void Constructor_StockWithZeros_KeepsOnlyPositiveQuantitiesInItemOrder()
     {
@@ -32,6 +35,7 @@ public sealed class CityStateTests
         Assert.Equal(0, city.GetQuantity(new ItemId("boards")));
     }
 
+    /// <summary>The stock reads as a dictionary in item order, with 0 for items it doesn't hold.</summary>
     [Fact]
     public void Inventory_ReadAsADictionary_GivesTheStockInItemOrder()
     {
@@ -46,6 +50,7 @@ public sealed class CityStateTests
         Assert.Throws<KeyNotFoundException>(() => stock[new ItemId("boards")]);
     }
 
+    /// <summary>Completed research comes sorted in ordinal order.</summary>
     [Fact]
     public void Constructor_CompletedResearchInAnyOrder_SortsItInOrdinalOrder()
     {
@@ -56,6 +61,7 @@ public sealed class CityStateTests
         Assert.False(city.HasCompletedResearch(new ResearchId("warehouses")));
     }
 
+    /// <summary>A building is found by its id.</summary>
     [Theory]
     [InlineData(1)]
     [InlineData(4)]
@@ -66,6 +72,7 @@ public sealed class CityStateTests
         Assert.Equal(id, found.Id);
     }
 
+    /// <summary>An id with no building finds nothing.</summary>
     [Theory]
     [InlineData(-1)]
     [InlineData(0)]
@@ -78,6 +85,7 @@ public sealed class CityStateTests
         Assert.Null(found);
     }
 
+    /// <summary>The city's lists can't be changed through a cast, and the stock has no writable interface at all.</summary>
     [Fact]
     public void Lists_CastBack_CanNotBeChanged()
     {
@@ -89,6 +97,7 @@ public sealed class CityStateTests
         Assert.Throws<NotSupportedException>(() => ((IList<ResearchId>)city.CompletedResearch).Clear());
     }
 
+    /// <summary>Values that can't form a city, by name: a negative clock, era 0, duplicates, a taken tile, research completed twice or also running.</summary>
     private static readonly Dictionary<string, Func<CityState>> _invalidCities = new()
     {
         ["negative clock"] = () => City(clock: -1),
@@ -104,12 +113,15 @@ public sealed class CityStateTests
             City(completedResearch: ["carpentry"], activeResearch: new ActiveResearch(new ResearchId("carpentry"), 0, 100)),
     };
 
+    /// <summary>The names of <see cref="_invalidCities"/>.</summary>
     public static TheoryData<string> InvalidCities => new(_invalidCities.Keys);
 
+    /// <summary>Each invalid set of values throws <see cref="ArgumentException"/>.</summary>
     [Theory]
     [MemberData(nameof(InvalidCities))]
     public void Constructor_InvalidValues_Throws(string problem) => Assert.Throws<ArgumentException>(_invalidCities[problem]);
 
+    /// <summary>A null list, or a null building in the list, is a programmer error and throws.</summary>
     [Fact]
     public void Constructor_NullListOrBuilding_Throws()
     {
@@ -120,6 +132,7 @@ public sealed class CityStateTests
         Assert.Throws<ArgumentNullException>(() => new CityState(0, 1, 1, [], [null!], [], null));
     }
 
+    /// <summary>A running research that ends before it starts, or starts before 0, throws.</summary>
     [Fact]
     public void ActiveResearch_EndBeforeStart_Throws()
     {
@@ -127,5 +140,6 @@ public sealed class CityStateTests
         Assert.Throws<ArgumentException>(() => new ActiveResearch(new ResearchId("carpentry"), -1, 10));
     }
 
+    /// <summary>A city with three huts with the ids 1, 4 and 6.</summary>
     private static CityState ThreeBuildings() => City(buildings: [Idle(1, "hut", 0, 0), Idle(4, "hut", 1, 0), Idle(6, "hut", 2, 0)]);
 }

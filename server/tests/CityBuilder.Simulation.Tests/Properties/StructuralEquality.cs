@@ -11,6 +11,7 @@ namespace CityBuilder.Simulation.Tests.Properties;
 /// </summary>
 internal static class StructuralEquality
 {
+    /// <summary>The value shown for a field only one side has: an item the other side's stock doesn't hold, or a building it doesn't have.</summary>
     private const string _absent = "absent";
 
     /// <summary>The first field in which <paramref name="actual"/> differs from <paramref name="expected"/>, or null when they are equal.</summary>

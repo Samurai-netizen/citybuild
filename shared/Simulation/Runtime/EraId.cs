@@ -12,6 +12,7 @@ namespace CityBuilder.Simulation
     /// </summary>
     public readonly struct EraId : IEquatable<EraId>
     {
+        /// <summary>The id text; null only in <c>default(EraId)</c>, the empty id, which every member treats as an empty text.</summary>
         private readonly string? _value;
 
         /// <summary>Creates the id with the given text. The content factory checks the text of every id and reports bad ones before it creates them.</summary>

@@ -54,8 +54,9 @@ same C# files of it (decision 007, [ADR-0007](../adr/ADR-0007-shared-engine.md))
 ## Projects and assemblies
 Solution: `server/CityBuilder.slnx` (it also builds the shared engine project). Build settings for the server projects:
 `server/Directory.Build.props`; package versions: `server/Directory.Packages.props`; SDK: `global.json`. The engine project sits
-outside `server/`, so it repeats the settings it needs (decision 021). Which projects treat warnings as errors and require XML docs:
-decision 020 and `core-instructions/14-coding-standards.md` (checked by a probe build in M0-06, see its build log entry).
+outside `server/`, so it repeats the settings it needs (decision 021). Which projects treat warnings as errors: decision 020 (checked by
+a probe build in M0-06, see its build log entry). Doc comments are required on every declaration of every C# file, and missing or broken
+ones fail the build of every server project and the engine (decision 037, `core-instructions/14-coding-standards.md` → Documentation in code).
 
 | Project | Path | References | Packages | Holds today | Doc |
 |---|---|---|---|---|---|
@@ -68,6 +69,7 @@ decision 020 and `core-instructions/14-coding-standards.md` (checked by a probe 
 | `CityBuilder.Application.Tests` | `server/tests/` | Application | the same, plus `Microsoft.Extensions.TimeProvider.Testing` (`FakeTimeProvider`) | 14 tests: the dependency rule and `SettleCity` with a fake clock and repository | the Application module doc → Tests |
 | `CityBuilder.Simulation.Tests` | `server/tests/` | Simulation | the same | 872 tests: engine helpers, content ids, content model and validation, city state, queries, stall reasons, mutations, `Simulator.Advance`, the settlement window, a rule test per engine rule, golden scenario #1, the property tests, the performance budget, the display helpers, and the architecture tests below | the Simulation module doc → Tests |
 | `CityBuilder.IntegrationTests` | `server/tests/` | Api | the same, plus `Microsoft.AspNetCore.Mvc.Testing` | 25 in-memory tests (no Docker): the API host, the content loader and the content startup; none in the `Integration` category yet *(planned, M0-21)* | the Api module doc → Tests |
+| `CityBuilder.Repository.Tests` | `server/tests/` | — (it reads the source files) | the same, plus `Microsoft.CodeAnalysis.CSharp` (syntax only, decision 037) | 22 tests: the documentation check over every C# file of the repository, and the tests of its rules and of its file search | `core-instructions/14-coding-standards.md` → Documentation in code |
 
 ### Unity client
 The Unity project is `client/CityBuilder/` (Unity 6000.3.25f1, URP; `client/README.md`). It consumes the engine as the local package

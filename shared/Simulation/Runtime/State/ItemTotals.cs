@@ -14,7 +14,9 @@ namespace CityBuilder.Simulation.State
     /// </summary>
     internal sealed class ItemTotals : IReadOnlyDictionary<ItemId, long>
     {
+        /// <summary>The items, sorted by id in ordinal order, so lookups are binary searches; <c>_quantities[i]</c> belongs to <c>_items[i]</c>.</summary>
         private readonly List<ItemId> _items = new List<ItemId>();
+        /// <summary>The quantities beside <see cref="_items"/>, every one above 0.</summary>
         private readonly List<long> _quantities = new List<long>();
 
         /// <inheritdoc/>
@@ -53,6 +55,8 @@ namespace CityBuilder.Simulation.State
                 throw new ArgumentOutOfRangeException(nameof(quantity), quantity, "A quantity must not be below 0.");
             }
 
+            // BinarySearch returns the item's index, or for a missing item the bitwise complement of where it belongs (~index), so an insertion
+            // there keeps the list sorted.
             int index = _items.BinarySearch(item);
             if (index < 0)
             {

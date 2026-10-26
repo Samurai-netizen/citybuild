@@ -11,6 +11,10 @@ namespace CityBuilder.Simulation.Tests.Properties;
 /// </summary>
 public sealed class CityGeneratorTests
 {
+    /// <summary>
+    /// Over the property seeds the generator makes each kind of operation at least 20 times, and reaches each situation (a gap beyond the cap,
+    /// an upgrade, research, a locked building, a cycle with inputs, a frozen cycle) in at least its floor of seeds.
+    /// </summary>
     [Theory]
     [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
     public void Generate_PropertySeeds_ReachEveryCommandAndSituation(string contentName)
@@ -47,6 +51,7 @@ public sealed class CityGeneratorTests
         AssertAtLeast(counts, "seeds ending with a frozen cycle", 5, observed);
     }
 
+    /// <summary>Rejected commands are left out of the history but counted: a replay accepts every listed operation, and seed 7 had rejections.</summary>
     [Fact]
     public void Generate_RejectedCommands_AreLeftOutAndCounted()
     {
@@ -57,6 +62,7 @@ public sealed class CityGeneratorTests
         Assert.True(history.Rejected > 0, history.Describe());
     }
 
+    /// <summary>A history prints as its seed and its numbered operations, one per line.</summary>
     [Fact]
     public void Describe_History_PrintsTheSeedAndNumberedOperations()
     {
@@ -72,6 +78,7 @@ public sealed class CityGeneratorTests
             history.Describe());
     }
 
+    /// <summary>Gaps stay between 0 and four production caps, and reach both a minute or less and beyond the cap.</summary>
     [Fact]
     public void Gap_ManyDraws_StayWithinZeroAndFourCapsAndReachBothSidesOfTheCap()
     {
@@ -86,6 +93,7 @@ public sealed class CityGeneratorTests
         Assert.Contains(gaps, gap => gap > cap);
     }
 
+    /// <summary>Counts the case when it happened.</summary>
     private static void Count(SortedDictionary<string, int> counts, string key, bool happened)
     {
         if (happened)
@@ -94,11 +102,14 @@ public sealed class CityGeneratorTests
         }
     }
 
+    /// <summary>Fails unless the case was counted at least <paramref name="floor"/> times; the message lists every count.</summary>
     private static void AssertAtLeast(SortedDictionary<string, int> counts, string key, int floor, string observed) =>
         Assert.True(counts.GetValueOrDefault(key) >= floor, $"Fewer than {floor} {key}. Observed: {observed}");
 
+    /// <summary>Whether the building's type is locked at the start, so research had to unlock it.</summary>
     private static bool IsLockedAtStart(GameContent content, Building building) =>
         content.TryGetBuilding(building.TypeId, out BuildingDefinition? type) && !type.IsAvailableAtStart;
 
+    /// <summary>Whether the building holds a frozen cycle: producing, with no end.</summary>
     private static bool IsFrozen(Building building) => building.Phase == BuildingPhase.Producing && building.PhaseEndsAt is null;
 }

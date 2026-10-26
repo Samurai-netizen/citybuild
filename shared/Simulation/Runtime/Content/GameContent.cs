@@ -12,11 +12,19 @@ namespace CityBuilder.Simulation.Content
     /// </summary>
     public sealed class GameContent
     {
+        /// <summary>Every era by its number, for <see cref="TryGetEra"/>; filled once in the constructor and never changed.</summary>
         private readonly Dictionary<int, EraDefinition> _erasByNumber = new Dictionary<int, EraDefinition>();
+        /// <summary>Every item by its id, for <see cref="TryGetItem"/>. Only looked up, never iterated, so its order can't leak into results.</summary>
         private readonly Dictionary<ItemId, ItemDefinition> _itemsById = new Dictionary<ItemId, ItemDefinition>();
+        /// <summary>Every building type by its id, for <see cref="TryGetBuilding"/>; only looked up, never iterated.</summary>
         private readonly Dictionary<BuildingTypeId, BuildingDefinition> _buildingsById = new Dictionary<BuildingTypeId, BuildingDefinition>();
+        /// <summary>Every research node by its id, for <see cref="TryGetResearch"/>; only looked up, never iterated.</summary>
         private readonly Dictionary<ResearchId, ResearchDefinition> _researchById = new Dictionary<ResearchId, ResearchDefinition>();
 
+        /// <summary>
+        /// Freezes validated definitions: sorts the lists (eras by number, the rest by id in ordinal order) and builds the lookups. Only
+        /// <see cref="ContentDraft.ToContent"/> calls it, after every content rule passed; a duplicate key here would be a bug in the factory.
+        /// </summary>
         internal GameContent(
             string contentVersion,
             GameRules rules,

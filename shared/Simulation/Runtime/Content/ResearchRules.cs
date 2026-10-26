@@ -12,18 +12,26 @@ namespace CityBuilder.Simulation.Content
     /// </summary>
     internal static class ResearchRules
     {
+        /// <summary>Where the depth-first search stands with a node: still on the current path, or fully explored.</summary>
         private enum VisitState
         {
+            /// <summary>The node is on the current search path; reaching it again closes a cycle.</summary>
             InProgress,
+            /// <summary>The node and everything it requires were searched; reaching it again finds nothing new.</summary>
             Done,
         }
 
+        /// <summary>Checks the research graph: no cycle, and no prerequisite from a later era.</summary>
         public static void Check(ContentDraft draft, ContentErrorList errors)
         {
             CheckCycles(draft, errors);
             CheckPrerequisiteEras(draft, errors);
         }
 
+        /// <summary>
+        /// Searches the prerequisite graph depth-first from every node in ordinal id order and reports each cycle it closes; the fixed order
+        /// makes the same content report the same cycles.
+        /// </summary>
         private static void CheckCycles(ContentDraft draft, ContentErrorList errors)
         {
             // Depth-first search in ordinal id order (prerequisites are sorted too), so the same content reports the same cycles.
@@ -35,6 +43,10 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
+        /// <summary>
+        /// Visits a node and, recursively, its known prerequisites. A prerequisite that is still on the current path closes a cycle, reported at
+        /// the prerequisite that closes it; unknown prerequisites are left to the reference rules.
+        /// </summary>
         private static void Visit(ContentDraft draft, ResearchDefinition node, Dictionary<ResearchId, VisitState> visits, List<ResearchId> stack, ContentErrorList errors)
         {
             if (visits.ContainsKey(node.Id))
@@ -65,6 +77,7 @@ namespace CityBuilder.Simulation.Content
             visits[node.Id] = VisitState.Done;
         }
 
+        /// <summary>Reports a cycle (<see cref="ContentErrorCode.ResearchCycle"/>), naming every node on it in order, closed by the first one again.</summary>
         private static void ReportCycle(ResearchDefinition node, ResearchId backTo, List<ResearchId> stack, ContentErrorList errors)
         {
             // The stack runs from the search's start to this node; the cycle is its part from backTo onwards, closed by backTo again.
@@ -76,6 +89,10 @@ namespace CityBuilder.Simulation.Content
                 + "; none of these nodes could ever start.");
         }
 
+        /// <summary>
+        /// Reports a prerequisite from a later era than its node (<see cref="ContentErrorCode.PrerequisiteInLaterEra"/>): a city leaves an era only
+        /// after all of its research, so the node could never start.
+        /// </summary>
         private static void CheckPrerequisiteEras(ContentDraft draft, ContentErrorList errors)
         {
             foreach (ResearchDefinition node in draft.Research.Where(draft.IsFirst))

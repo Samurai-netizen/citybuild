@@ -19,7 +19,9 @@ done
 root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 cd "$root"
 errors=0
+# Reports a problem and counts it; the script fails at the end when there is any.
 fail() { echo "✗ $*"; errors=$((errors + 1)); }
+# Reports something to look at that is not a problem.
 note() { echo "• $*"; }
 
 # Markdown files known to git (tracked + untracked, excluding ignored), or all if not a git repo.
@@ -30,9 +32,11 @@ list_md() {
     find . -name '*.md' -not -path './.git/*' | sed 's|^\./||' | sort
   fi
 }
+# The files that match a pattern and that git knows (tracked or untracked, never ignored), sorted.
 list_files() {  # $1 = glob pattern for git ls-files
   { git ls-files "$1" 2>/dev/null; git ls-files --others --exclude-standard "$1" 2>/dev/null; } | sort -u
 }
+# The text with every regular expression metacharacter escaped, for a grep -E pattern.
 regex_escape() { printf '%s' "$1" | sed -e 's/[][\.*^$+?(){}|]/\\&/g'; }
 
 # Rows of a build log entry's "## Docs impact" table, without its header and separator lines.
@@ -150,7 +154,74 @@ check_lines CLAUDE.md 80
 check_lines core-instructions/02-principles.md 70
 check_lines core-instructions/13-progress.md 80
 
-# 7. Change checks against a base (pull requests) -----------------------------------------------
+# 7. Every file says what it is for, every function has a comment (14 → Documentation in code) ------------------
+# C# is checked by server/tests/CityBuilder.Repository.Tests. Files that can't hold a comment (JSON, lock files, Unity's generated
+# assets and theme files) are described by the docs of the folder or module that owns them.
+
+# The first line of a file that is neither blank nor a shebang.
+first_line() { awk 'NR == 1 && /^#!/ { next } NF { print; exit }' "$1"; }
+
+# Succeeds when an XML file has a comment before its second element: above its root element or first inside it.
+xml_has_header() {
+  awk '{ rest = $0
+         while (match(rest, /<!--|<[A-Za-z]/)) {
+           if (substr(rest, RSTART, RLENGTH) == "<!--") { found = 1; exit }
+           if (++elements == 2) exit
+           rest = substr(rest, RSTART + RLENGTH)
+         } }
+       END { exit !found }' "$1"
+}
+
+# The functions of a file without a comment on the line right above them, as "file:line: text". Shell: name() and function name;
+# PowerShell: function Name; JavaScript: function name(…), const name = (…) =>, const name = function, module.exports = function.
+uncommented_functions() {  # $1 = file, $2 = sh | ps1 | js
+  awk -v kind="$2" -v file="$1" '
+    { line = $0; is_function = 0
+      if (kind == "sh")
+        is_function = line ~ /^[ \t]*(function[ \t]+[A-Za-z_][A-Za-z0-9_:-]*([ \t]*\(\))?|[A-Za-z_][A-Za-z0-9_:-]*[ \t]*\(\))[ \t]*(\{.*)?$/
+      else if (kind == "ps1")
+        is_function = tolower(line) ~ /^[ \t]*function[ \t]+[a-z_][a-z0-9_-]*/
+      else
+        is_function = line ~ /^[ \t]*(export[ \t]+(default[ \t]+)?)?(async[ \t]+)?function[ \t*]+[A-Za-z_$][A-Za-z0-9_$]*[ \t]*\(/ ||
+          line ~ /^[ \t]*(export[ \t]+)?(const|let|var)[ \t]+[A-Za-z_$][A-Za-z0-9_$]*[ \t]*=[ \t]*(async[ \t]+)?(function|\([^)]*\)[ \t]*=>|[A-Za-z_$][A-Za-z0-9_$]*[ \t]*=>)/ ||
+          line ~ /^[ \t]*module\.exports[ \t]*=[ \t]*(async[ \t]+)?function/
+      if (is_function) {
+        above = previous; sub(/^[ \t]+/, "", above)
+        commented = (kind == "js") ? (above ~ /^(\/\/|\/\*|\*)/) : (above ~ /^#/)
+        if (!commented) print file ":" NR ": " line
+      }
+      previous = $0 }' "$1"
+}
+
+header_patterns=('*.sh' '*.ps1' '.githooks/*' '*.yml' '*.yaml' '*.editorconfig' '*.gitattributes' '*.gitignore'
+  '*.js' '*.mjs' '*.cjs' '*.css' '*.uss' '*.csproj' '*.props' '*.targets' '*.slnx' '*.uxml')
+while IFS= read -r f; do
+  [ -f "$f" ] || continue
+  case "$f" in
+    *.md) continue ;;
+    *.csproj|*.props|*.targets|*.slnx|*.uxml) xml_has_header "$f" && continue ;;
+    *.js|*.mjs|*.cjs) first_line "$f" | grep -qE '^[[:space:]]*(//|/\*)' && continue ;;
+    *.css|*.uss) first_line "$f" | grep -qE '^[[:space:]]*/\*' && continue ;;
+    *.ps1) first_line "$f" | grep -qE '^[[:space:]]*(#|<#)' && continue ;;
+    *) first_line "$f" | grep -qE '^[[:space:]]*#' && continue ;;
+  esac
+  fail "$f: doesn't start with a comment that says what the file is for (core-instructions/14-coding-standards.md → Documentation in code)"
+done < <(for pattern in "${header_patterns[@]}"; do list_files "$pattern"; done | sort -u)
+
+while IFS= read -r f; do
+  [ -f "$f" ] || continue
+  case "$f" in
+    *.md) continue ;;
+    *.sh|.githooks/*) kind=sh ;;
+    *.ps1) kind=ps1 ;;
+    *) kind=js ;;
+  esac
+  while IFS= read -r hit; do
+    [ -n "$hit" ] && fail "$hit: no comment above this function that says what it does (core-instructions/14-coding-standards.md → Documentation in code)"
+  done < <(uncommented_functions "$f" "$kind")
+done < <(for pattern in '*.sh' '.githooks/*' '*.ps1' '*.js' '*.mjs' '*.cjs'; do list_files "$pattern"; done | sort -u)
+
+# 8. Change checks against a base (pull requests) -----------------------------------------------
 if [ -n "$base" ]; then
   if ! git rev-parse --verify --quiet "$base" >/dev/null; then
     fail "Base ref '$base' not found (fetch it first, e.g. git fetch origin main)"

@@ -15,10 +15,13 @@ namespace CityBuilder.Simulation.Tests.EngineRules;
 /// </summary>
 public sealed class ResearchRuleTests
 {
+    /// <summary>The capped item whose cap the storage research raises.</summary>
     private static readonly ItemId _wood = new("wood");
 
+    /// <summary>The three kinds of building completion that can share a second with a research completion.</summary>
     public static TheoryData<string> BuildingCompletions => new() { "construction", "upgrade", "cycle end" };
 
+    /// <summary>A research completing in the same second as a construction, upgrade or cycle end counts for the cycle that starts in that second.</summary>
     [Theory]
     [MemberData(nameof(BuildingCompletions))]
     public void ResearchCompletion_DueWithABuildingCompletion_CountsBeforeThatSecondsStarts(string completion)
@@ -42,6 +45,7 @@ public sealed class ResearchRuleTests
         Assert.Equal([new ResearchId("better_saws")], report.CompletedResearch);
     }
 
+    /// <summary>A labor reduction completing mid-cycle leaves the running cycle's labor as it is, even through a worker change; the next cycle gets it.</summary>
     [Fact]
     public void ResearchEffects_CompleteMidCycle_LeaveTheRunningCycleAlone()
     {
@@ -59,6 +63,7 @@ public sealed class ResearchRuleTests
         Assert.Equal("building 3 lumber_camp (2,0) L2 w=4 Producing 1015..1023 target=0 labor=30/30@1015", CityDump.BuildingLine(city, 3));
     }
 
+    /// <summary>An unlock applies from the second its research completes: one second earlier the building is still locked.</summary>
     [Fact]
     public void Unlock_ResearchCompletes_EnablesPlacementFromThatSecond()
     {
@@ -75,6 +80,7 @@ public sealed class ResearchRuleTests
         Assert.Equal("workshop", Assert.Single(city.Buildings).TypeId.Value);
     }
 
+    /// <summary>A storage bonus raises the cap from its research's second: a producer waiting on a full stock starts then, and stops at the new cap.</summary>
     [Fact]
     public void StorageBonus_ResearchCompletes_RaisesTheCapFromThatSecond()
     {
@@ -93,5 +99,6 @@ public sealed class ResearchRuleTests
         Assert.Equal((150L, "StorageFull:wood"), (city.GetQuantity(_wood), StallReason.Of(city, TestContent, city.Buildings[1])?.ToString()));
     }
 
+    /// <summary>Tries to place the locked workshop on tile (0, 0).</summary>
     private static MutationResult PlaceWorkshop(CityState city) => CityRules.PlaceBuilding(city, TestContent, new BuildingTypeId("workshop"), 0, 0);
 }

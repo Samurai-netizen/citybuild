@@ -1,3 +1,6 @@
+# CI (core-instructions/18-git-and-ci.md), on every pull request and every push to main. Job `docs`: the documentation and process
+# checks, the commit message format of a pull request, and the handbook build. Job `server`: restore, format check, build and tests of
+# server/CityBuilder.slnx.
 name: CI
 
 on:

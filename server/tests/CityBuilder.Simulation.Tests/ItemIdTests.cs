@@ -5,9 +5,10 @@ namespace CityBuilder.Simulation.Tests;
 /// <summary>The identity of an item: text equality and ordering that never depend on the machine's culture.</summary>
 public sealed class ItemIdTests
 {
-    // A new string object each time, so a test cannot pass by comparing references of interned literals.
+    /// <summary>The id of a text, built from a new string object each time, so a test can't pass by comparing references of interned literals.</summary>
     private static ItemId IdOf(string text) => new(new string(text.ToCharArray()));
 
+    /// <summary>A null text is rejected with <see cref="ArgumentNullException"/> for the parameter <c>value</c>.</summary>
     [Fact]
     public void Constructor_NullText_Throws()
     {
@@ -17,6 +18,7 @@ public sealed class ItemIdTests
         Assert.Equal("value", exception.ParamName);
     }
 
+    /// <summary>An empty text is rejected: the empty id is <c>default</c>, never a constructed one.</summary>
     [Fact]
     public void Constructor_EmptyText_Throws()
     {
@@ -25,6 +27,7 @@ public sealed class ItemIdTests
         Assert.Equal("value", exception.ParamName);
     }
 
+    /// <summary>The constructor neither trims nor normalizes, so " logs " is kept as given and differs from "logs".</summary>
     [Fact]
     public void Constructor_TextWithSurroundingWhitespace_KeepsTheTextAsGiven()
     {
@@ -35,18 +38,21 @@ public sealed class ItemIdTests
         Assert.False(padded == IdOf("logs"));
     }
 
+    /// <summary><c>Value</c> gives the id's text.</summary>
     [Fact]
     public void Value_IdWithText_ReturnsThatText()
     {
         Assert.Equal("trading_post", IdOf("trading_post").Value);
     }
 
+    /// <summary><c>ToString</c> gives the id's text, as logs and messages show it.</summary>
     [Fact]
     public void ToString_IdWithText_ReturnsThatText()
     {
         Assert.Equal("planks", IdOf("planks").ToString());
     }
 
+    /// <summary>Two ids with the same text are equal through <c>Equals</c>, <c>Equals(object)</c> and <c>==</c>, and have the same hash code.</summary>
     [Fact]
     public void Equals_SameTextInSeparateStrings_IsEqualInEveryForm()
     {
@@ -60,6 +66,7 @@ public sealed class ItemIdTests
         Assert.Equal(first.GetHashCode(), second.GetHashCode());
     }
 
+    /// <summary>Case matters: "logs" and "Logs" are different items.</summary>
     [Fact]
     public void Equals_TextThatDiffersOnlyInCase_IsNotEqual()
     {
@@ -70,6 +77,7 @@ public sealed class ItemIdTests
         Assert.True(lower != capitalized);
     }
 
+    /// <summary>Texts that a culture-aware comparison calls equal (composed and decomposed é, a soft hyphen) are different ids under ordinal equality.</summary>
     [Theory]
     [InlineData("café", "café")] // é as one character, and as e followed by a combining accent
     [InlineData("logs", "lo­gs")] // the same word with an invisible soft hyphen inside
@@ -84,6 +92,7 @@ public sealed class ItemIdTests
         Assert.NotEqual(0, left.CompareTo(right));
     }
 
+    /// <summary>Ids with different texts are unequal through every form of equality.</summary>
     [Fact]
     public void Equals_DifferentText_IsNotEqualInEveryForm()
     {
@@ -96,6 +105,7 @@ public sealed class ItemIdTests
         Assert.True(logs != planks);
     }
 
+    /// <summary>An id equals neither null, nor its text as a string, nor a number.</summary>
     [Fact]
     public void Equals_NullOrAnotherType_IsFalse()
     {
@@ -106,6 +116,7 @@ public sealed class ItemIdTests
         Assert.False(id.Equals(42));
     }
 
+    /// <summary><c>default(ItemId)</c> has the empty text, equals only another <c>default</c>, and hashes consistently.</summary>
     [Fact]
     public void Default_IsTheEmptyId_AndEqualsOnlyAnotherDefault()
     {
@@ -118,6 +129,7 @@ public sealed class ItemIdTests
         Assert.False(none == IdOf("coins"));
     }
 
+    /// <summary>Ordinal order compares code units, so "B" sorts before "a", unlike a culture-aware comparison.</summary>
     [Fact]
     public void CompareTo_Ordinal_PutsUppercaseBeforeLowercase()
     {
@@ -130,6 +142,7 @@ public sealed class ItemIdTests
         Assert.True(upper < lower);
     }
 
+    /// <summary>A prefix sorts before the longer text.</summary>
     [Fact]
     public void CompareTo_TextThatIsAPrefixOfAnother_SortsFirst()
     {
@@ -137,12 +150,14 @@ public sealed class ItemIdTests
         Assert.True(IdOf("logs").CompareTo(IdOf("log")) > 0);
     }
 
+    /// <summary>Equal ids compare as 0.</summary>
     [Fact]
     public void CompareTo_EqualIds_IsZero()
     {
         Assert.Equal(0, IdOf("coins").CompareTo(IdOf("coins")));
     }
 
+    /// <summary><c>default</c> sorts before every real id.</summary>
     [Fact]
     public void CompareTo_Default_SortsBeforeEveryId()
     {
@@ -153,6 +168,7 @@ public sealed class ItemIdTests
         Assert.Equal(0, none.CompareTo(default));
     }
 
+    /// <summary><c>&lt;</c>, <c>&lt;=</c>, <c>&gt;</c> and <c>&gt;=</c> agree with <c>CompareTo</c> for smaller, equal and larger ids.</summary>
     [Fact]
     public void RelationalOperators_SmallerEqualAndLargerIds_FollowCompareTo()
     {
@@ -174,6 +190,7 @@ public sealed class ItemIdTests
         Assert.False(smaller >= larger);
     }
 
+    /// <summary>Sorting item ids gives ordinal ascending order, which is the order of every sorted list in the engine.</summary>
     [Fact]
     public void Sort_OfIds_GivesOrdinalAscendingOrder()
     {
@@ -184,6 +201,7 @@ public sealed class ItemIdTests
         Assert.Equal(["Zebra", "apple", "coins", "log", "logs", "planks"], ids.Select(id => id.Value));
     }
 
+    /// <summary>An id works as a dictionary key: another id with the same text finds the entry, one that differs in case does not.</summary>
     [Fact]
     public void DictionaryKey_IdBuiltFromAnotherString_IsFound()
     {
@@ -193,6 +211,7 @@ public sealed class ItemIdTests
         Assert.False(stock.ContainsKey(IdOf("Logs")));
     }
 
+    /// <summary><see cref="ItemId"/> is a readonly struct, so ids copy cheaply and can't change.</summary>
     [Fact]
     public void ItemId_Declaration_IsAReadonlyStruct()
     {
@@ -200,6 +219,7 @@ public sealed class ItemIdTests
         Assert.Contains(typeof(ItemId).GetCustomAttributes(false), attribute => attribute.GetType().Name == "IsReadOnlyAttribute");
     }
 
+    /// <summary>The id implements <see cref="IEquatable{T}"/> and <see cref="IComparable{T}"/> of itself: without them every lookup would box it.</summary>
     [Fact]
     public void ItemId_Interfaces_IncludeEquatableAndComparableOfItself()
     {
@@ -208,6 +228,10 @@ public sealed class ItemIdTests
         Assert.True(typeof(IComparable<ItemId>).IsAssignableFrom(typeof(ItemId)));
     }
 
+    /// <summary>
+    /// A precondition of the ordinal tests: this machine has culture data, so a culture-aware comparison really differs from an ordinal one. Under
+    /// invariant globalization (no ICU) the two are identical, the ordinal tests would also pass for a culture-aware id, and this test fails loudly.
+    /// </summary>
     [Fact]
     public void InvariantCulture_Comparison_DiffersFromOrdinal()
     {

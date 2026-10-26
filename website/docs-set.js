@@ -26,6 +26,7 @@ const pageFiles = [
 // Templates are scaffolding for new files, not pages; links to them go to GitHub.
 const isExcluded = (relPath) => path.posix.basename(relPath) === 'TEMPLATE.md';
 
+// The Markdown files under a repository folder, recursively, in ordinal name order; none when the folder doesn't exist.
 function walk(relDir) {
   const absDir = path.join(repoRoot, relDir);
   if (!fs.existsSync(absDir)) return [];

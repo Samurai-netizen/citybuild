@@ -9,10 +9,14 @@ namespace CityBuilder.Simulation.Tests.State;
 /// </summary>
 public sealed class CityQueriesTests
 {
+    /// <summary>The capped raw item (cap 100).</summary>
     private static readonly ItemId _wood = new("wood");
+    /// <summary>The workshop's capped output (cap 80).</summary>
     private static readonly ItemId _boards = new("boards");
+    /// <summary>The uncapped item.</summary>
     private static readonly ItemId _gold = new("gold");
 
+    /// <summary>Only completed houses provide workers: an idle and an upgrading hut count, a constructing hut doesn't, nor does a producer.</summary>
     [Fact]
     public void WorkersProvided_HousesInEveryPhase_CountsOnlyCompletedHouses()
     {
@@ -28,6 +32,7 @@ public sealed class CityQueriesTests
         Assert.Equal(6, CityQueries.WorkersProvided(city, TestContent));
     }
 
+    /// <summary>A level-2 house provides its level's workers (5).</summary>
     [Fact]
     public void WorkersProvided_HouseAtLevelTwo_CountsThatLevelsWorkers()
     {
@@ -36,6 +41,7 @@ public sealed class CityQueriesTests
         Assert.Equal(5, CityQueries.WorkersProvided(city, TestContent));
     }
 
+    /// <summary>Assigned workers count on idle, upgrading and producing buildings alike, and free workers are provided minus assigned.</summary>
     [Fact]
     public void WorkersAssignedAndFree_WorkersOnIdleUpgradingAndProducingBuildings_CountEveryAssignment()
     {
@@ -52,6 +58,7 @@ public sealed class CityQueriesTests
         Assert.Equal(8 - 5, CityQueries.FreeWorkers(city, TestContent));
     }
 
+    /// <summary>Builders are busy for constructions and upgrades only.</summary>
     [Fact]
     public void BuildersBusy_EveryPhase_CountsConstructingAndUpgrading()
     {
@@ -66,6 +73,7 @@ public sealed class CityQueriesTests
         Assert.Equal(2, CityQueries.BuildersBusy(city));
     }
 
+    /// <summary>The reserved quantity sums the outputs of every producing building, frozen cycles included.</summary>
     [Fact]
     public void Reserved_ProducingBuildingsFrozenIncluded_SumsTheirOutputs()
     {
@@ -82,6 +90,7 @@ public sealed class CityQueriesTests
         Assert.Equal(0, CityQueries.Reserved(city, TestContent, _gold));
     }
 
+    /// <summary>Without research the effective cap is the base cap.</summary>
     [Fact]
     public void TryGetEffectiveCap_NoResearch_IsTheBaseCap()
     {
@@ -89,6 +98,7 @@ public sealed class CityQueriesTests
         Assert.Equal(100, cap);
     }
 
+    /// <summary>A completed storage research adds its bonus to the base cap.</summary>
     [Fact]
     public void TryGetEffectiveCap_StorageResearchCompleted_AddsTheBonus()
     {
@@ -99,6 +109,7 @@ public sealed class CityQueriesTests
         Assert.Equal((150L, 120L), (woodCap, boardsCap));
     }
 
+    /// <summary>An uncapped item has no cap at all.</summary>
     [Fact]
     public void TryGetEffectiveCap_UncappedItem_ReturnsFalse()
     {
@@ -106,6 +117,7 @@ public sealed class CityQueriesTests
         Assert.Equal(0, cap);
     }
 
+    /// <summary>Without research the effective labor is the recipe's.</summary>
     [Fact]
     public void EffectiveLabor_NoResearch_IsTheRecipeLabor()
     {
@@ -113,6 +125,7 @@ public sealed class CityQueriesTests
         Assert.Equal(90, CityQueries.EffectiveLabor(City(), TestContent, new BuildingTypeId("workshop"), 1));
     }
 
+    /// <summary>A completed reduction applies per type: the lumber camp's 40 → 30 and the workshop's 90 → 81.</summary>
     [Fact]
     public void EffectiveLabor_ReductionResearchCompleted_AppliesItToEachType()
     {
@@ -123,6 +136,7 @@ public sealed class CityQueriesTests
         Assert.Equal(81, CityQueries.EffectiveLabor(city, TestContent, new BuildingTypeId("workshop"), 1));
     }
 
+    /// <summary>A house has no recipe, an unknown type no definition, and level 3 is outside the workshop's levels: each is a programmer error and throws.</summary>
     [Fact]
     public void EffectiveLabor_HouseOrUnknownType_Throws()
     {
@@ -131,12 +145,14 @@ public sealed class CityQueriesTests
         Assert.Throws<ArgumentOutOfRangeException>(() => CityQueries.EffectiveLabor(City(), TestContent, new BuildingTypeId("workshop"), 3));
     }
 
+    /// <summary>A type available at the start is unlocked.</summary>
     [Fact]
     public void IsUnlocked_AvailableAtStart_IsTrue()
     {
         Assert.True(CityQueries.IsUnlocked(City(), TestContent, new BuildingTypeId("lumber_camp")));
     }
 
+    /// <summary>A locked type stays locked while its research is not completed, even when it runs.</summary>
     [Fact]
     public void IsUnlocked_UnlockResearchNotCompleted_IsFalse()
     {
@@ -145,12 +161,14 @@ public sealed class CityQueriesTests
         Assert.False(CityQueries.IsUnlocked(city, TestContent, new BuildingTypeId("workshop")));
     }
 
+    /// <summary>A locked type is unlocked once its research is completed.</summary>
     [Fact]
     public void IsUnlocked_UnlockResearchCompleted_IsTrue()
     {
         Assert.True(CityQueries.IsUnlocked(City(completedResearch: ["carpentry"]), TestContent, new BuildingTypeId("workshop")));
     }
 
+    /// <summary>A type of a later era is locked until the city reaches that era, even when it is available at the start (OD-10).</summary>
     [Fact]
     public void IsUnlocked_TypeOfALaterEraAvailableAtStart_IsFalseUntilThatEra()
     {
@@ -158,12 +176,14 @@ public sealed class CityQueriesTests
         Assert.True(CityQueries.IsUnlocked(City(era: 2), TestContent, new BuildingTypeId("manor")));
     }
 
+    /// <summary>An unknown type is never unlocked.</summary>
     [Fact]
     public void IsUnlocked_UnknownType_IsFalse()
     {
         Assert.False(CityQueries.IsUnlocked(City(), TestContent, new BuildingTypeId("castle")));
     }
 
+    /// <summary>A city that names a type or research the content doesn't know makes the queries throw: it doesn't belong to this content.</summary>
     [Fact]
     public void Queries_CityNamesWhatTheContentDoesNotKnow_Throw()
     {

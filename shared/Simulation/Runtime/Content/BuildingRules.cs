@@ -12,6 +12,7 @@ namespace CityBuilder.Simulation.Content
     /// </summary>
     internal static class BuildingRules
     {
+        /// <summary>Checks every building type, duplicates included: its level numbers, each level against its kind, and that workers never drop.</summary>
         public static void Check(ContentDraft draft, ContentErrorList errors)
         {
             foreach (BuildingDefinition building in draft.Buildings)
@@ -33,6 +34,10 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
+        /// <summary>
+        /// Reports a building type whose levels aren't numbered exactly 1, 2, … up to the max level, each number once, or that has no level: one
+        /// error for the type, listing its numbers (<see cref="ContentErrorCode.LevelsNotContiguous"/>).
+        /// </summary>
         private static void CheckLevelNumbers(BuildingDefinition building, ContentErrorList errors)
         {
             // Levels are sorted by number, so 1..max means exactly: the level at position i has the number i + 1.
@@ -47,6 +52,7 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
+        /// <summary>A house level provides at least one worker and has neither worker slots nor a recipe (<see cref="ContentErrorCode.InvalidHouseLevel"/>).</summary>
         private static void CheckHouseLevel(BuildingDefinition building, BuildingLevelDefinition level, ContentErrorList errors)
         {
             string path = ContentPaths.Level(building, level);
@@ -66,6 +72,10 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
+        /// <summary>
+        /// A producer level has at least one worker slot, provides no workers, and has a recipe that makes at least one item
+        /// (<see cref="ContentErrorCode.InvalidProducerLevel"/>).
+        /// </summary>
         private static void CheckProducerLevel(BuildingDefinition building, BuildingLevelDefinition level, ContentErrorList errors)
         {
             string path = ContentPaths.Level(building, level);
@@ -89,6 +99,10 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
+        /// <summary>
+        /// Reports a level with fewer workers than the level below: max workers for a producer, workers provided for a house
+        /// (<see cref="ContentErrorCode.WorkersDecrease"/>). An upgrade keeps the assigned workers, so a drop would break invariant 9.
+        /// </summary>
         private static void CheckWorkersNeverDrop(BuildingDefinition building, ContentErrorList errors)
         {
             // Only the number that matters for the kind is compared; the other one is 0 by the checks above, or already reported. A count

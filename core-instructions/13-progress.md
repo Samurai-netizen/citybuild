@@ -5,25 +5,28 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: CR-0002-T1 · Handbook site and docs-as-code workflow; PR open, the owner merges it)
-- **Branch:** `task/CR-0002-T1-docs-site` (from `main` = `e10937a`) until the owner merges
-- **Build log entry:** last: `docs/build-log/2026/2026-10-20-01-CR-0002-T1.md` (Done)
-- **Last green commit:** the head of `task/CR-0002-T1-docs-site` (build 0 warnings, format clean, fast suite: Simulation 872, Domain 1,
-  Application 14, IntegrationTests 25; handbook builds; `check-docs --base origin/main` OK)
-- **Done steps:** all of CR-0002-T1 (the handbook in `website/`, search, Pages publishing, CI site build, three new PR checks, the
-  workflow docs, an audit of all docs with 11 fixes; details and follow-ups in the entry)
-- **Next step:** the owner merges the PR; the workflow "Handbook site" then publishes https://samurai-netizen.github.io/citybuild/
-  (check it once). Then `/model` → Opus 5.5 and `/start-task M0-19` (EF Core model, migrations, Docker, `[O]` `[PLAN]`: write ahead,
-  present the plan, wait for approval); its start commit sets CR-0002 to `Done`. From now on every task fills a Docs impact table.
-- **Dependency PR:** #28 (handbook-site: react 19.3.1) builds green with its docs; the owner decides (G-Dependency), build log `2026-10-26-01-DEP-PR28.md`.
-- **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
-  executed); the template sample content (M0-04 follow-up).
+- **Task:** — (last completed: CR-0003-T1 · Code documentation: every file and declaration; PR open, the owner merges it)
+- **Branch:** `task/CR-0003-T1-code-docs` (from `main` = `a402563`) until the owner merges
+- **Build log entry:** last: `docs/build-log/2026/2026-10-25-01-CR-0003-T1.md` (Done)
+- **Last green commit:** the head of `task/CR-0003-T1-code-docs` (build 0 warnings, format clean, fast suite: Repository 22, Simulation 872,
+  Domain 1, Application 14, IntegrationTests 25; Unity EditMode 13, PlayMode 6; handbook builds; `check-docs --base origin/main` OK)
+- **Done steps:** all of CR-0003-T1 (every file and declaration documented, the checker `CityBuilder.Repository.Tests`, doc comment errors
+  in every server project, header and function checks in `check-docs.sh`, the workflow docs, and the owner's revision; details and
+  follow-ups in the entry)
+- **Next step:** the owner merges the PR. Then `/model` → Opus 5.5 and `/start-task M0-19` (EF Core model, migrations, Docker, `[O]`
+  `[PLAN]`: write ahead, present the plan, wait for approval); its start commit sets CR-0003 to `Done`. Every change now documents its
+  code (OD-12).
+- **Dependency PR:** #28 (handbook-site: react 19.3.1) builds with its docs; the owner decides (G-Dependency), build log `2026-10-26-01-DEP-PR28.md`.
+- **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, build
+  log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
+  executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); Dependabot PR #28 and the 7
+  security alerts GitHub reports on `main`.
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 18 / 85 (CR-0002-T1 in review)
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 18 / 85 (CR-0003-T1 in review)
 
 | Area | State | Notes |
 |---|---|---|
@@ -38,7 +41,7 @@
 | Unity city view + placement | not started | |
 | Inspector, worker stepper, research screen, HUD | not started | |
 | Resilience (limits, retries, logging) | not started | |
-| Docs automation (DocTools) + docs completeness | in progress | handbook site, Pages, docs-as-code checks and a full audit: CR-0002-T1 in review; DocTools is M0-61 |
+| Docs automation (DocTools) + docs completeness | in progress | handbook, Pages, docs-as-code checks and a full audit: CR-0002 done (PR #27); code documentation CR-0003-T1 in review; DocTools is M0-61 |
 | Balance simulator | not started | |
 | E2E / security / concurrency suites | not started | |
 | Dev build + M0 close-out | not started | |

@@ -12,6 +12,7 @@ public sealed class ContentValueRuleTests
 {
     // "!" in these tests reaches into the valid fixture, which sets every value it touches (ContentFixture.Valid).
 
+    /// <summary>Values that must be greater than 0, each set to 0 or below, by the expected error path.</summary>
     private static readonly Dictionary<string, Action<GameContentData>> _notPositive = new()
     {
         ["rules.gridWidth"] = data => RulesOf(data).GridWidth = 0,
@@ -32,6 +33,7 @@ public sealed class ContentValueRuleTests
         ["research[warehouses].effects[#1].amount"] = data => Research(data, "warehouses").Effects![1]!.Amount = 0,
     };
 
+    /// <summary>Costs, stock and the reduction limit set below 0, by the expected error path.</summary>
     private static readonly Dictionary<string, Action<GameContentData>> _negative = new()
     {
         ["rules.maxLaborReductionPermille"] = data => RulesOf(data).MaxLaborReductionPermille = -1,
@@ -41,6 +43,7 @@ public sealed class ContentValueRuleTests
         ["research[better_saws].cost.boards"] = data => Research(data, "better_saws").Cost!["boards"] = -1,
     };
 
+    /// <summary>Two research slots and permille above 1000, by the expected error path.</summary>
     private static readonly Dictionary<string, Action<GameContentData>> _tooLarge = new()
     {
         ["rules.researchSlots"] = data => RulesOf(data).ResearchSlots = 2,
@@ -48,27 +51,34 @@ public sealed class ContentValueRuleTests
         ["research[better_saws].effects[#0].permille"] = data => Research(data, "better_saws").Effects![0]!.Permille = 1001,
     };
 
+    /// <summary>The error paths of <see cref="_notPositive"/>.</summary>
     public static TheoryData<string> NotPositivePaths => new(_notPositive.Keys);
 
+    /// <summary>The error paths of <see cref="_negative"/>.</summary>
     public static TheoryData<string> NegativePaths => new(_negative.Keys);
 
+    /// <summary>The error paths of <see cref="_tooLarge"/>.</summary>
     public static TheoryData<string> TooLargePaths => new(_tooLarge.Keys);
 
+    /// <summary>A quantity, duration, cap or slot count of 0 or less gives one <see cref="ContentErrorCode.NotPositive"/>.</summary>
     [Theory]
     [MemberData(nameof(NotPositivePaths))]
     public void Create_ValueThatMustBePositiveIsZeroOrLess_ReportsNotPositive(string path) =>
         ContentAssert.SingleError(ValidWith(_notPositive[path]), ContentErrorCode.NotPositive, path);
 
+    /// <summary>A cost, stock or limit below 0 gives one <see cref="ContentErrorCode.Negative"/>.</summary>
     [Theory]
     [MemberData(nameof(NegativePaths))]
     public void Create_CostStockOrLimitBelowZero_ReportsNegative(string path) =>
         ContentAssert.SingleError(ValidWith(_negative[path]), ContentErrorCode.Negative, path);
 
+    /// <summary>More than one research slot, or permille above 1000, gives one <see cref="ContentErrorCode.ValueTooLarge"/>.</summary>
     [Theory]
     [MemberData(nameof(TooLargePaths))]
     public void Create_SlotsOrPermilleAboveTheirLimit_ReportsValueTooLarge(string path) =>
         ContentAssert.SingleError(ValidWith(_tooLarge[path]), ContentErrorCode.ValueTooLarge, path);
 
+    /// <summary>Zero costs, zero stock and a limit of 1000 ‰ are allowed.</summary>
     [Fact]
     public void Create_ZeroCostsAndStock_AreAccepted()
     {
@@ -82,6 +92,7 @@ public sealed class ContentValueRuleTests
         ContentAssert.Valid(data);
     }
 
+    /// <summary>The rules run only on content of the right shape, so a shape error hides the rule errors.</summary>
     [Fact]
     public void Create_ShapeErrorAndRuleError_ReportsOnlyTheShapeError()
     {
@@ -93,6 +104,7 @@ public sealed class ContentValueRuleTests
         ContentAssert.Errors(data, (ContentErrorCode.MissingValue, "items[wood].name"));
     }
 
+    /// <summary>Several rule errors are all reported, in the order the rules run.</summary>
     [Fact]
     public void Create_SeveralRuleErrors_ReportsAllOfThem()
     {

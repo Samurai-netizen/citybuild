@@ -5,52 +5,67 @@ namespace CityBuilder.Simulation.Tests.Properties;
 /// the checks: <see cref="InvariantObserver"/>, <see cref="InvariantChecks"/>). A failure names the invariant, content, seed and step and
 /// prints the operation list; <c>docs/how-to/debug-determinism-failure.md</c> turns it into a rule test.
 /// </summary>
+/// <param name="output">Receives the counts of what the checks exercised, one line per content.</param>
 public sealed class InvariantPropertyTests(ITestOutputHelper output)
 {
+    /// <summary>Invariant 4: on every step each item's stock changes only by what was produced, consumed, spent and refunded.</summary>
     [Theory]
     [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
     public void Observe_EveryStep_ConservesEachItem(string contentName) => Holds(contentName, Invariant.Conservation);
 
+    /// <summary>Invariant 5: no step leaves an item below zero.</summary>
     [Theory]
     [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
     public void Observe_EveryStep_LeavesNoStockBelowZero(string contentName) => Holds(contentName, Invariant.NoNegativeStock);
 
+    /// <summary>Invariant 6: no step's production takes stock + reserved of a capped item above its cap.</summary>
     [Theory]
     [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
     public void Observe_EveryStep_ProductionKeepsStockPlusReservedWithinTheCap(string contentName) => Holds(contentName, Invariant.StorageCap);
 
+    /// <summary>Invariant 7: every step moves the clock by exactly the requested seconds, a negative request by none.</summary>
     [Theory]
     [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
     public void Observe_EveryStep_MovesTheClockByTheRequestedTimeOnly(string contentName) => Holds(contentName, Invariant.ClockNeverDecreases);
 
+    /// <summary>Invariant 8: no step produces anything from a building before its construction completed or during an upgrade.</summary>
     [Theory]
     [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
     public void Observe_EveryStep_ProducesNothingBeforeConstructionOrDuringAnUpgrade(string contentName) =>
         Holds(contentName, Invariant.NoProductionWhileBuilding);
 
+    /// <summary>Invariant 9: after every step the assigned workers are within what the houses provide and each building's limit.</summary>
     [Theory]
     [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
     public void Observe_EveryStep_AssignsNoMoreWorkersThanProvidedOrAllowed(string contentName) => Holds(contentName, Invariant.WorkerLimits);
 
+    /// <summary>Invariant 10: after every step the busy builders are within the slots, and at most one research is active.</summary>
     [Theory]
     [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
     public void Observe_EveryStep_KeepsBuildersWithinTheSlotsAndOneResearch(string contentName) =>
         Holds(contentName, Invariant.BuilderAndResearchSlots);
 
+    /// <summary>Invariant 11: every cycle completes at the first second its worker-seconds reach its labor, over every worker change.</summary>
     [Theory]
     [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
     public void Observe_EveryStep_CompletesEachCycleWhenItsWorkerSecondsReachItsLabor(string contentName) =>
         Holds(contentName, Invariant.LaborAccounting);
 
+    /// <summary>Invariant 12: no step starts a cycle after its window's last second, and every dormant tail does what the model says.</summary>
     [Theory]
     [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
     public void Observe_EveryStep_StartsNoCycleAfterTheProductionCap(string contentName) => Holds(contentName, Invariant.NoStartAfterTheCap);
 
+    /// <summary>Invariant 13: no step places a locked building or starts a research without its prerequisites and era.</summary>
     [Theory]
     [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
     public void Observe_EveryStep_NeverPlacesALockedBuildingOrSkipsAPrerequisite(string contentName) =>
         Holds(contentName, Invariant.UnlockAndPrerequisites);
 
+    /// <summary>
+    /// The seeds exercise every check: each counted case happened at least a floor number of times, so a check that never fires can't pass
+    /// for one that holds. The counts are printed.
+    /// </summary>
     [Theory]
     [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
     public void Observe_PropertySeeds_ExerciseEveryCheck(string contentName)
@@ -80,5 +95,6 @@ public sealed class InvariantPropertyTests(ITestOutputHelper output)
         observation.AssertAtLeast("research starts with prerequisites", 20);
     }
 
+    /// <summary>Fails with the first failure of the invariant on the content, if any seed had one.</summary>
     private static void Holds(string contentName, Invariant invariant) => InvariantObservation.For(contentName).AssertHolds(invariant);
 }

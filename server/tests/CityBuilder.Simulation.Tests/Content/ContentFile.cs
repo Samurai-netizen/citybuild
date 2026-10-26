@@ -11,8 +11,10 @@ namespace CityBuilder.Simulation.Tests.Content;
 /// </summary>
 internal static class ContentFile
 {
-    // The same strict reading as the server's ContentFileLoader (Infrastructure, which this project must not reference): camelCase and
-    // case-sensitive names, no unknown fields, no repeated keys, numbers only as numbers.
+    /// <summary>
+    /// The same strict reading as the server's <c>ContentFileLoader</c> (Infrastructure, which this project must not reference): camelCase and
+    /// case-sensitive names, no unknown fields, no repeated keys, numbers only as numbers.
+    /// </summary>
     private static readonly JsonSerializerOptions _options = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,

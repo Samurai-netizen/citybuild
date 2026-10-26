@@ -9,6 +9,7 @@ Tests protect **gameplay invariants**, not a coverage percentage. A feature with
 | Simulation | `CityBuilder.Simulation.Tests` | ms | Engine rules, labor, research, invariants, golden scenarios, performance budget |
 | Domain/Application | `CityBuilder.Domain.Tests`, `CityBuilder.Application.Tests` | ms | Use cases with fakes: validation, pipeline order, idempotency logic, error codes |
 | Integration | `CityBuilder.IntegrationTests` | s | Real PostgreSQL (Testcontainers) + in-process API (`WebApplicationFactory`): persistence, locks, receipts, HTTP contract. Today it holds in-process tests only (host, content loading); PostgreSQL and the `Integration` category arrive with M0-21 *(planned)* |
+| Repository | `CityBuilder.Repository.Tests` | ms | Checks over the whole source tree: every C# file says what it is for and every declaration has a doc comment, Unity scripts included (`14` → Documentation in code); each rule is tested on small samples |
 | Unity EditMode | `Assets/_Project/Tests/EditMode` | ms | DTO (de)serialization, client state store, grid math, retry policy, display prediction, view-models |
 | Unity PlayMode | `Assets/_Project/Tests/PlayMode` | s | Bootstrap starts; the city view builds from a snapshot |
 | Manual smoke | `docs/testing/UNITY-SMOKE-TEST.md` *(planned, M0-72)* | min | Full loop on a real build |
@@ -39,6 +40,8 @@ Assert on the **database state and ledger**, not only on the HTTP status.
 ## Naming
 `Method_Scenario_ExpectedResult`, e.g. `Advance_SawmillLosesWorkersMidCycle_KeepsProgressAndFreezes`.
 Security tests name the property they protect: `Security_ClientCannotSetCost_…`.
+Every test class has a doc comment that says what it covers, every test one that says the behaviour it proves, and every helper one
+that says what it builds (`14` → Documentation in code).
 
 ## Commands
 ```

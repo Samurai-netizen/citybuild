@@ -14,6 +14,7 @@ namespace CityBuilder.Client.Tests.EditMode
     /// </summary>
     public sealed class ContentInUnityTests
     {
+        /// <summary>Valid data gives content with the items in ordinal order and the house's level as given.</summary>
         [Test]
         public void Create_SmallValidContent_BuildsSortedContent()
         {
@@ -26,6 +27,7 @@ namespace CityBuilder.Client.Tests.EditMode
             Assert.That(hut!.GetLevel(1).WorkersProvided, Is.EqualTo(2));
         }
 
+        /// <summary>Data with two rule errors gives both errors, with their codes and paths, in order.</summary>
         [Test]
         public void Create_TwoRuleErrors_ReportsBothInOrder()
         {
@@ -42,7 +44,7 @@ namespace CityBuilder.Client.Tests.EditMode
                 Is.EqualTo(new[] { "NotPositive rules.gridWidth", "Negative buildings[hut].cost.gold" }));
         }
 
-        // One era, a capped and an uncapped item, and a house; the numbers are made up for this test.
+        /// <summary>One era, a capped and an uncapped item, and a house; the numbers are made up for this test.</summary>
         private static GameContentData SmallContent() => new GameContentData
         {
             ContentVersion = "unity-test-1",

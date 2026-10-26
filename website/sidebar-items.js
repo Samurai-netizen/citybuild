@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const {repoRoot, docId} = require('./docs-set');
 
+// A page's first level-1 heading without backticks, or its path when it has none.
 function pageTitle(relPath) {
   const text = fs.readFileSync(path.join(repoRoot, relPath), 'utf8');
   const heading = /^# (.+)$/m.exec(text);
@@ -22,8 +23,10 @@ function shortLabel(relPath) {
   return title;
 }
 
+// Whether a folder is the build log or one of its year folders.
 const isBuildLog = (dirName) => dirName === 'docs/build-log' || dirName.startsWith('docs/build-log/');
 
+// The items with their short labels, folders included; reversed at every level when newestFirst (the build log's newest entry first).
 function relabel(items, newestFirst) {
   const result = items.map((item) => {
     if (item.type === 'doc') return {...item, label: shortLabel(`${item.id}.md`)};

@@ -25,6 +25,14 @@ public sealed class ContentLoadException : Exception
     /// <summary>Every error found, each on one line: for a rule error, its code, path and message (<c>ContentError.ToString</c>).</summary>
     public IReadOnlyList<string> Errors { get; }
 
+    /// <summary>
+    /// The exception's message: the file, the number of errors and each error on its own indented line, so the startup failure lists
+    /// everything that needs fixing at once.
+    /// </summary>
+    /// <param name="filePath">The content file.</param>
+    /// <param name="errors">Every error found; at least one.</param>
+    /// <exception cref="ArgumentNullException">A parameter is null.</exception>
+    /// <exception cref="ArgumentException"><paramref name="errors"/> is empty: a failed load always has a reason.</exception>
     private static string FormatMessage(string filePath, IReadOnlyList<string> errors)
     {
         ArgumentNullException.ThrowIfNull(filePath);

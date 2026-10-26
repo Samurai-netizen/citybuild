@@ -12,6 +12,7 @@ namespace CityBuilder.Simulation.Tests.Display;
 /// </summary>
 public sealed class PerHourTests
 {
+    /// <summary>A raw producer has no input rates and an output rate of 3600 s over its cycle: 90 wood an hour with 1 worker, 180 with 2.</summary>
     [Theory]
     [InlineData(1, "wood:90000")] // 40 s per cycle
     [InlineData(2, "wood:180000")] // 20 s per cycle
@@ -23,6 +24,7 @@ public sealed class PerHourTests
         Assert.Equal(expectedOutputs, Text(rates.Outputs));
     }
 
+    /// <summary>A producer with inputs shows both sides: the workshop uses 80 wood and makes 40 boards an hour with 1 worker.</summary>
     [Theory]
     [InlineData(1, "wood:80000", "boards:40000")] // 90 s per cycle
     [InlineData(2, "wood:160000", "boards:80000")] // 45 s per cycle
@@ -34,6 +36,7 @@ public sealed class PerHourTests
         Assert.Equal(expectedOutputs, Text(rates.Outputs));
     }
 
+    /// <summary>With no workers the cycle would freeze, so every line shows 0, still in recipe order.</summary>
     [Fact]
     public void PerHour_NoWorkers_IsZeroForEveryItem()
     {
@@ -43,6 +46,7 @@ public sealed class PerHourTests
         Assert.Equal("boards:0", Text(rates.Outputs));
     }
 
+    /// <summary>The cycle's seconds round up (40 labor, 3 workers: 14 s), and the rate then rounds down (257.142 an hour).</summary>
     [Fact]
     public void PerHour_CycleSecondsRoundUp_ThenTheRateRoundsDown()
     {
@@ -52,6 +56,7 @@ public sealed class PerHourTests
         Assert.Equal("wood:257142", Text(rates.Outputs));
     }
 
+    /// <summary>Several items per cycle scale the rate: 5 gold per 20 s is 900 an hour.</summary>
     [Fact]
     public void PerHour_QuantityPerCycleAboveOne_ScalesTheRate()
     {
@@ -59,6 +64,7 @@ public sealed class PerHourTests
         Assert.Equal("gold:900000", Text(RatesOf(Idle(1, "mint", 0, 0), 1).Outputs));
     }
 
+    /// <summary>Completed research counts, because the next cycle gets it: 25 % off 40 labor gives 120 wood an hour instead of 90.</summary>
     [Fact]
     public void PerHour_CompletedLaborReduction_ShortensTheCycle()
     {
@@ -68,6 +74,7 @@ public sealed class PerHourTests
         Assert.Equal("wood:120000", Text(RatesOf(city, Idle(1, "lumber_camp", 0, 0), 1).Outputs));
     }
 
+    /// <summary>More workers never show a lower rate, from 0 to the level's maximum of 6.</summary>
     [Fact]
     public void PerHour_AtEveryWorkerCountOfTheLevel_NeverDecreasesWithMoreWorkers()
     {
@@ -83,6 +90,7 @@ public sealed class PerHourTests
         }
     }
 
+    /// <summary>An upgrading building shows the recipe and worker limit of the level it has now, not the target level.</summary>
     [Fact]
     public void PerHour_UsesTheCurrentLevelOfAnUpgradingBuilding()
     {
@@ -92,6 +100,7 @@ public sealed class PerHourTests
         Assert.Equal("boards:80000", Text(RatesOf(upgrading, 4).Outputs));
     }
 
+    /// <summary>A worker count below 0 or above the level's maximum is a programmer error and throws for <c>workers</c>.</summary>
     [Theory]
     [InlineData(-1)]
     [InlineData(3)]
@@ -102,6 +111,7 @@ public sealed class PerHourTests
         Assert.Equal("workers", exception.ParamName);
     }
 
+    /// <summary>A house has no recipe, so asking for its rates is a programmer error.</summary>
     [Fact]
     public void PerHour_House_Throws()
     {
@@ -110,6 +120,7 @@ public sealed class PerHourTests
         Assert.Equal("building", exception.ParamName);
     }
 
+    /// <summary>A null city, content or building throws.</summary>
     [Fact]
     public void PerHour_NullArguments_Throw()
     {
@@ -121,10 +132,13 @@ public sealed class PerHourTests
         Assert.Throws<ArgumentNullException>(() => ProductionDisplay.PerHour(city, TestContent, null!, 1));
     }
 
+    /// <summary>The rates of a building in an empty fixture city.</summary>
     private static ProductionRates RatesOf(Building building, int workers) => RatesOf(City(), building, workers);
 
+    /// <summary>The rates of a building in a given city (for completed research).</summary>
     private static ProductionRates RatesOf(CityState city, Building building, int workers) =>
         ProductionDisplay.PerHour(city, TestContent, building, workers);
 
+    /// <summary>Rates as <c>item:milli</c> joined by commas, for compact assertions.</summary>
     private static string Text(IReadOnlyList<ItemRate> rates) => string.Join(",", rates.Select(rate => rate.ToString()));
 }

@@ -11,6 +11,7 @@ namespace CityBuilder.Simulation.Tests.Settlement;
 /// </summary>
 public sealed class AdvanceTests
 {
+    /// <summary>With nothing running, the clock still moves by the full elapsed time and the report says so.</summary>
     [Fact]
     public void Advance_NothingRunning_MovesTheClockByTheFullElapsedTime()
     {
@@ -27,6 +28,7 @@ public sealed class AdvanceTests
         Assert.False(report.EraChanged);
     }
 
+    /// <summary>Beyond the cap the clock moves fully, but the report's production seconds stop at the cap.</summary>
     [Fact]
     public void Advance_ElapsedBeyondTheProductionCap_ReportsTheCapAsProductionSeconds()
     {
@@ -38,6 +40,7 @@ public sealed class AdvanceTests
         Assert.Equal((10_000L, 3600L), (report.ElapsedSeconds, report.ProductionSeconds));
     }
 
+    /// <summary>A zero-length advance keeps the clock.</summary>
     [Fact]
     public void Advance_ZeroElapsed_KeepsTheClock()
     {
@@ -50,6 +53,7 @@ public sealed class AdvanceTests
         Assert.Equal(BuildingPhase.Constructing, city.Buildings[0].Phase);
     }
 
+    /// <summary>A negative elapsed time counts as 0: the clock never moves back.</summary>
     [Fact]
     public void Advance_NegativeElapsed_CountsAsZero()
     {
@@ -62,6 +66,7 @@ public sealed class AdvanceTests
         Assert.Equal((0L, 0L), (report.ElapsedSeconds, report.ProductionSeconds));
     }
 
+    /// <summary>A timer ending exactly at the target completes in this advance.</summary>
     [Fact]
     public void Advance_TimerExactlyAtTheTarget_CompletesIt()
     {
@@ -74,6 +79,7 @@ public sealed class AdvanceTests
         Assert.Equal(1005, city.Clock);
     }
 
+    /// <summary>A timer ending one second after the target keeps running.</summary>
     [Fact]
     public void Advance_TimerOneSecondAfterTheTarget_KeepsItRunning()
     {
@@ -86,8 +92,10 @@ public sealed class AdvanceTests
         Assert.Equal(1004, city.Clock);
     }
 
+    /// <summary>The timers a restored city may have due before its clock: a construction and a research.</summary>
     public static TheoryData<string> TimersBeforeTheClock => new() { "construction", "research" };
 
+    /// <summary>A timer due before the clock makes the city invalid: the advance throws before it changes anything.</summary>
     [Theory]
     [MemberData(nameof(TimersBeforeTheClock))]
     public void Advance_TimerDueBeforeTheClock_ThrowsAndChangesNothing(string timer)
@@ -101,6 +109,7 @@ public sealed class AdvanceTests
         Assert.Equal(before, CityDump.Describe(city));
     }
 
+    /// <summary>A timer due exactly at the clock completes before cycles start there (decision 033), so a research ending then already counts.</summary>
     [Fact]
     public void Advance_TimerDueAtTheClock_CompletesBeforeTheStarts()
     {
@@ -118,6 +127,7 @@ public sealed class AdvanceTests
         Assert.Equal("building 2 lumber_camp (1,0) L1 w=2 Producing 1000..1015 target=0 labor=30/30@1000", CityDump.BuildingLine(city, 2));
     }
 
+    /// <summary>A null city or content is a programmer error and throws.</summary>
     [Fact]
     public void Advance_NullCityOrContent_Throws()
     {

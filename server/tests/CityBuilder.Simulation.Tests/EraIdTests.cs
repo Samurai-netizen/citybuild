@@ -5,14 +5,19 @@ namespace CityBuilder.Simulation.Tests;
 /// <summary>The text identity of an era: the shared equality contract, and no order of its own (eras are ordered by number).</summary>
 public sealed class EraIdTests : ContentIdEqualityContract<EraId>
 {
+    /// <inheritdoc/>
     protected override EraId Create(string text) => new(text);
 
+    /// <inheritdoc/>
     protected override string ValueOf(EraId id) => id.Value;
 
+    /// <inheritdoc/>
     protected override bool EqualsOperator(EraId left, EraId right) => left == right;
 
+    /// <inheritdoc/>
     protected override bool NotEqualsOperator(EraId left, EraId right) => left != right;
 
+    /// <summary>An era id has no order at all (no IComparable, no relational operators), so no code can sort eras by text (decision 022).</summary>
     [Fact]
     public void Declaration_HasNoComparisonOrRelationalOperators()
     {

@@ -11,15 +11,19 @@ namespace CityBuilder.Simulation.Tests.Display;
 /// </summary>
 public sealed class NetPerHourTests
 {
+    /// <summary>The capped raw item of the fixture.</summary>
     private static readonly ItemId _wood = new("wood");
+    /// <summary>The workshop's product.</summary>
     private static readonly ItemId _boards = new("boards");
 
+    /// <summary>No buildings make or use anything.</summary>
     [Fact]
     public void NetPerHour_CityWithoutBuildings_IsZero()
     {
         Assert.Equal(0L, ProductionDisplay.NetPerHour(City(), TestContent, _wood));
     }
 
+    /// <summary>An idle producer with a worker that could start now counts: 90 wood an hour.</summary>
     [Fact]
     public void NetPerHour_IdleProducerThatCanStart_CountsItsOutput()
     {
@@ -28,6 +32,7 @@ public sealed class NetPerHourTests
         Assert.Equal(90_000L, ProductionDisplay.NetPerHour(city, TestContent, _wood));
     }
 
+    /// <summary>A running cycle counts at its current workers: 2 workers make 180 wood an hour.</summary>
     [Fact]
     public void NetPerHour_RunningCycle_CountsItAtItsWorkers()
     {
@@ -37,6 +42,7 @@ public sealed class NetPerHourTests
         Assert.Equal(180_000L, ProductionDisplay.NetPerHour(city, TestContent, _wood));
     }
 
+    /// <summary>A frozen cycle (no workers) makes nothing.</summary>
     [Fact]
     public void NetPerHour_FrozenCycle_ContributesZero()
     {
@@ -46,6 +52,7 @@ public sealed class NetPerHourTests
         Assert.Equal(0L, ProductionDisplay.NetPerHour(city, TestContent, _wood));
     }
 
+    /// <summary>An idle producer without workers makes nothing.</summary>
     [Fact]
     public void NetPerHour_IdleProducerWithoutWorkers_ContributesZero()
     {
@@ -54,6 +61,7 @@ public sealed class NetPerHourTests
         Assert.Equal(0L, ProductionDisplay.NetPerHour(city, TestContent, _wood));
     }
 
+    /// <summary>Constructing and upgrading buildings make nothing, even with workers assigned.</summary>
     [Fact]
     public void NetPerHour_ConstructingAndUpgradingBuildings_ContributeZero()
     {
@@ -66,6 +74,7 @@ public sealed class NetPerHourTests
         Assert.Equal(0L, ProductionDisplay.NetPerHour(city, TestContent, _wood));
     }
 
+    /// <summary>A house makes and uses nothing.</summary>
     [Fact]
     public void NetPerHour_HouseWithWorkersAround_ContributesZero()
     {
@@ -74,6 +83,7 @@ public sealed class NetPerHourTests
         Assert.Equal(0L, ProductionDisplay.NetPerHour(city, TestContent, _wood));
     }
 
+    /// <summary>An idle producer that can't start for a missing input neither uses its inputs nor makes its outputs.</summary>
     [Fact]
     public void NetPerHour_IdleProducerMissingAnInput_ContributesZero()
     {
@@ -83,6 +93,7 @@ public sealed class NetPerHourTests
         Assert.Equal(0L, ProductionDisplay.NetPerHour(city, TestContent, _wood));
     }
 
+    /// <summary>An idle producer that can't start because its output is at the cap makes nothing.</summary>
     [Fact]
     public void NetPerHour_IdleProducerWhoseOutputIsAtTheCap_ContributesZero()
     {
@@ -91,6 +102,7 @@ public sealed class NetPerHourTests
         Assert.Equal(0L, ProductionDisplay.NetPerHour(city, TestContent, _wood));
     }
 
+    /// <summary>Inputs count as negative: the workshop gives −80 wood and +40 boards an hour.</summary>
     [Fact]
     public void NetPerHour_ProducerWithInputs_SubtractsWhatItUses()
     {
@@ -100,6 +112,7 @@ public sealed class NetPerHourTests
         Assert.Equal(40_000L, ProductionDisplay.NetPerHour(city, TestContent, _boards));
     }
 
+    /// <summary>The rates of several buildings add up: 90 + 180 = 270 wood an hour.</summary>
     [Fact]
     public void NetPerHour_SeveralBuildings_AddUp()
     {
@@ -108,6 +121,7 @@ public sealed class NetPerHourTests
         Assert.Equal(270_000L, ProductionDisplay.NetPerHour(city, TestContent, _wood));
     }
 
+    /// <summary>A camp making 90 and a workshop using 80 wood leave a net of 10 wood an hour.</summary>
     [Fact]
     public void NetPerHour_ProducerAndConsumerOfOneItem_GivesTheDifference()
     {
@@ -116,6 +130,7 @@ public sealed class NetPerHourTests
         Assert.Equal(10_000L, ProductionDisplay.NetPerHour(city, TestContent, _wood));
     }
 
+    /// <summary>Completed research raises the rate: 120 wood an hour with the reduction.</summary>
     [Fact]
     public void NetPerHour_CompletedLaborReduction_RaisesTheRate()
     {
@@ -124,6 +139,7 @@ public sealed class NetPerHourTests
         Assert.Equal(120_000L, ProductionDisplay.NetPerHour(city, TestContent, _wood));
     }
 
+    /// <summary>An item no building makes or uses has a rate of 0.</summary>
     [Fact]
     public void NetPerHour_ItemNoBuildingTouches_IsZero()
     {
@@ -132,6 +148,7 @@ public sealed class NetPerHourTests
         Assert.Equal(0L, ProductionDisplay.NetPerHour(city, TestContent, new ItemId("gold")));
     }
 
+    /// <summary>A null city or content throws.</summary>
     [Fact]
     public void NetPerHour_NullArguments_Throw()
     {

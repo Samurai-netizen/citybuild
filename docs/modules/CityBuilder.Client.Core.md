@@ -28,6 +28,9 @@ structure). It is **not** responsible for talking to the server (`CityBuilder.Cl
 - No singletons and no static mutable state; `GameRoot` builds the objects by hand (`.claude/rules/unity.md`).
 - A snapshot with a lower `stateVersion` than the one held is ignored; predicted values never leave the client.
 - Unity compiles this as C# 9: no file-scoped namespaces, no global usings.
+- Every type and member, private ones included, has an XML doc comment (`core-instructions/14-coding-standards.md` → Documentation
+  in code). Unity's compiler doesn't check them, so `CityBuilder.Repository.Tests` (a server test project) checks every script
+  under `Assets/_Project`.
 
 ## How to extend
 A new client-side state type goes here as one class per file with its namespace under `CityBuilder.Client.Core`; a new Unity assembly or
@@ -42,4 +45,4 @@ folder area follows the recipe "New project, assembly or folder area" in `core-i
 ## Known limitations
 - Only `AppInfo` exists (skeleton).
 
-Last updated: M0-05
+Last updated: CR-0003-T1

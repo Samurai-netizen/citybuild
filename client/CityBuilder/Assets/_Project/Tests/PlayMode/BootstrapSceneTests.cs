@@ -15,13 +15,20 @@ namespace CityBuilder.Client.Tests.PlayMode
     /// </summary>
     public sealed class BootstrapSceneTests
     {
+        /// <summary>The name of the scene under test.</summary>
         private const string BootstrapSceneName = "Bootstrap";
+        /// <summary>The scene's path in the project; the build settings must list it first.</summary>
         private const string BootstrapScenePath = "Assets/Scenes/Bootstrap.unity";
+        /// <summary>The name of the label in the connection status layout.</summary>
         private const string ConnectionStatusElementName = "connection-status";
 
+        /// <summary>The errors logged since the test's setup, each with its log type.</summary>
         private readonly List<string> _errors = new List<string>();
 
-        // The handler is added before the scene loads, so an error logged by Awake of the new GameRoot is caught too.
+        /// <summary>
+        /// Before each test: listens for errors, then loads the Bootstrap scene. The handler is added before the scene loads, so an error logged by
+        /// <c>Awake</c> of the new <see cref="GameRoot"/> is caught too.
+        /// </summary>
         [UnitySetUp]
         public IEnumerator LoadBootstrapScene()
         {
@@ -30,30 +37,35 @@ namespace CityBuilder.Client.Tests.PlayMode
             yield return LoadBootstrapSceneAndWaitOneFrame();
         }
 
+        /// <summary>After each test: stops listening for log messages.</summary>
         [TearDown]
         public void StopListening()
         {
             Application.logMessageReceived -= OnLogMessage;
         }
 
+        /// <summary>The first scene of the build settings is the Bootstrap scene.</summary>
         [Test]
         public void BuildSettings_SceneZero_IsTheBootstrapScene()
         {
             Assert.That(SceneUtility.GetScenePathByBuildIndex(0), Is.EqualTo(BootstrapScenePath));
         }
 
+        /// <summary>The loaded scene has exactly one <see cref="GameRoot"/>.</summary>
         [Test]
         public void BootstrapScene_WhenLoaded_HasExactlyOneGameRoot()
         {
             Assert.That(FindGameRoots(), Has.Length.EqualTo(1));
         }
 
+        /// <summary>Loading the scene logs no errors, exceptions or failed asserts.</summary>
         [Test]
         public void BootstrapScene_WhenLoaded_LogsNoErrors()
         {
             Assert.That(_errors, Is.Empty);
         }
 
+        /// <summary>The <see cref="GameRoot"/> lives in the Bootstrap scene.</summary>
         [Test]
         public void GameRoot_WhenBootstrapSceneIsLoaded_LivesInThatScene()
         {
@@ -62,6 +74,7 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(gameRoot.gameObject.scene.name, Is.EqualTo(BootstrapSceneName));
         }
 
+        /// <summary>The connection status label reads <c>Not connected</c>.</summary>
         [Test]
         public void ConnectionStatus_WhenBootstrapSceneIsLoaded_ReadsNotConnected()
         {
@@ -75,6 +88,7 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(label.text, Is.EqualTo("Not connected"));
         }
 
+        /// <summary>Loading the scene a second time still leaves exactly one <see cref="GameRoot"/>.</summary>
         [UnityTest]
         public IEnumerator BootstrapScene_WhenLoadedAgain_StillHasExactlyOneGameRoot()
         {
@@ -83,20 +97,26 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(FindGameRoots(), Has.Length.EqualTo(1));
         }
 
-        // One frame after the load: the old scene's objects are destroyed at the end of the frame, and a UIDocument builds its tree on enable.
+        /// <summary>
+        /// Loads the Bootstrap scene and waits one frame after the load: the old scene's objects are destroyed at the end of the frame, and a
+        /// UIDocument builds its tree on enable.
+        /// </summary>
         private static IEnumerator LoadBootstrapSceneAndWaitOneFrame()
         {
             yield return SceneManager.LoadSceneAsync(BootstrapSceneName, LoadSceneMode.Single);
             yield return null;
         }
 
-        // Looks in every loaded scene, so a second root anywhere (also one that is inactive) is counted.
+        /// <summary>Every <see cref="GameRoot"/> in every loaded scene, inactive ones included, so a second root anywhere is counted.</summary>
         private static GameRoot[] FindGameRoots()
         {
             return Object.FindObjectsByType<GameRoot>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         }
 
-        // Only what the spec calls an error: warnings are not counted, because a graphics driver or a package can add one that the project does not own.
+        /// <summary>
+        /// Records errors, exceptions and failed asserts: what the spec calls an error. Warnings are not counted, because a graphics driver or a
+        /// package can add one that the project does not own.
+        /// </summary>
         private void OnLogMessage(string message, string stackTrace, LogType type)
         {
             if (type == LogType.Error || type == LogType.Exception || type == LogType.Assert)

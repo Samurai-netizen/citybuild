@@ -12,9 +12,12 @@ namespace CityBuilder.Simulation.Tests.Settlement;
 /// </summary>
 public sealed class AdvanceProductionTests
 {
+    /// <summary>The lumber camp's output and the workshop's input.</summary>
     private static readonly ItemId _wood = new("wood");
+    /// <summary>The workshop's output.</summary>
     private static readonly ItemId _boards = new("boards");
 
+    /// <summary>A raw producer makes one output per finished cycle: five cycles ended by 1100, the sixth still runs.</summary>
     [Fact]
     public void Advance_RawProducerOverSeveralCycles_MakesOneOutputPerCycle()
     {
@@ -29,6 +32,7 @@ public sealed class AdvanceProductionTests
         Assert.Equal("building 2 lumber_camp (1,0) L1 w=2 Producing 1100..1120 target=0 labor=40/40@1100", CityDump.BuildingLine(city, 2));
     }
 
+    /// <summary>In a chain the second producer starts as soon as the first has made enough of its input, all within one advance.</summary>
     [Fact]
     public void Advance_TwoStepChain_TheSecondStepRunsOnTheFirstStepsOutput()
     {
@@ -51,6 +55,7 @@ public sealed class AdvanceProductionTests
         Assert.Equal("building 4 workshop (3,0) L1 w=2 Producing 1085..1130 target=0 labor=90/90@1085", CityDump.BuildingLine(city, 4));
     }
 
+    /// <summary>A labor reduction completing mid-cycle leaves the running cycle at 40 labor; the next one starts with 30.</summary>
     [Fact]
     public void Advance_ResearchCompletesMidCycle_SpeedsUpOnlyTheNextCycle()
     {
@@ -65,6 +70,7 @@ public sealed class AdvanceProductionTests
         Assert.Equal("building 2 lumber_camp (1,0) L1 w=2 Producing 1040..1055 target=0 labor=30/30@1040", CityDump.BuildingLine(city, 2));
     }
 
+    /// <summary>When research and a cycle end share a second, the research completes first, so the next cycle already has the new labor.</summary>
     [Fact]
     public void Advance_ResearchAndCycleEndInTheSameSecond_TheNextCycleUsesTheNewLabor()
     {
@@ -76,6 +82,7 @@ public sealed class AdvanceProductionTests
         Assert.Equal([new ResearchId("better_saws")], report.CompletedResearch);
     }
 
+    /// <summary>A cycle ending exactly at the target completes in this advance, and the next cycle starts at the target.</summary>
     [Fact]
     public void Advance_CycleEndsExactlyAtTheTarget_CompletesItAndStartsTheNext()
     {
@@ -87,6 +94,7 @@ public sealed class AdvanceProductionTests
         Assert.Equal("building 2 lumber_camp (1,0) L1 w=2 Producing 1020..1040 target=0 labor=40/40@1020", CityDump.BuildingLine(city, 2));
     }
 
+    /// <summary>A zero-length advance moves no time but starts the cycles that can start at the clock.</summary>
     [Fact]
     public void Advance_ZeroLength_StartsTheCyclesThatCanStartAtTheClock()
     {
@@ -100,6 +108,7 @@ public sealed class AdvanceProductionTests
         Assert.Equal(1000, city.Clock);
     }
 
+    /// <summary>A completed construction is staffed and starts its first cycle in the same second.</summary>
     [Fact]
     public void Advance_ConstructionCompletes_TheStaffedProducerStartsInTheSameSecond()
     {
@@ -110,6 +119,7 @@ public sealed class AdvanceProductionTests
         Assert.Equal("building 2 lumber_camp (1,0) L1 w=2 Producing 1005..1025 target=0 labor=40/40@1005", CityDump.BuildingLine(city, 2));
     }
 
+    /// <summary>A cycle's duration rounds up: 40 labor with 3 workers takes 14 s.</summary>
     [Fact]
     public void Advance_LaborNotDivisibleByWorkers_RoundsTheDurationUp()
     {
@@ -121,6 +131,7 @@ public sealed class AdvanceProductionTests
         Assert.Equal("building 3 lumber_camp (2,0) L2 w=3 Producing 1000..1014 target=0 labor=40/40@1000", CityDump.BuildingLine(city, 3));
     }
 
+    /// <summary>A producer without workers never starts a cycle.</summary>
     [Fact]
     public void Advance_ProducerWithoutWorkers_StartsNoCycle()
     {
@@ -132,6 +143,7 @@ public sealed class AdvanceProductionTests
         Assert.Empty(report.Produced);
     }
 
+    /// <summary>A start counts what running cycles already reserve: with 99 wood one camp starts, and the second waits (99 + 1 + 1 > 100).</summary>
     [Fact]
     public void Advance_OutputFitsTheStockButNotTheReservation_TheSecondProducerWaits()
     {
@@ -151,6 +163,7 @@ public sealed class AdvanceProductionTests
         Assert.Equal("StorageFull:wood", StallReason.Of(city, TestContent, city.Buildings[3])?.ToString());
     }
 
+    /// <summary>No cycle starts after the production cap; the one started at the cap's last second still finishes in the dormant tail.</summary>
     [Fact]
     public void Advance_BeyondTheProductionCap_StartsNoCycleButFinishesTheRunningOne()
     {
@@ -165,6 +178,7 @@ public sealed class AdvanceProductionTests
         Assert.Equal((8200L, 3600L), (city.Clock, report.ProductionSeconds));
     }
 
+    /// <summary>The next request opens a new window, so a zero-length advance after the tail starts production again.</summary>
     [Fact]
     public void Advance_AfterADormantTail_AZeroLengthAdvanceRestartsProduction()
     {

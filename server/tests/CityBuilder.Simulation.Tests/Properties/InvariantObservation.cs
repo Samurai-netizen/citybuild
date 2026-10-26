@@ -11,11 +11,15 @@ namespace CityBuilder.Simulation.Tests.Properties;
 /// </summary>
 internal sealed class InvariantObservation
 {
+    /// <summary>The observation of each content, by content name, made once on first use, also when several tests ask at the same time.</summary>
     private static readonly ConcurrentDictionary<string, Lazy<InvariantObservation>> _byContent = new(StringComparer.Ordinal);
 
+    /// <summary>The name of the observed content, for failure messages.</summary>
     private readonly string _contentName;
+    /// <summary>The first failure of each invariant that failed, with its seed and the history.</summary>
     private readonly Dictionary<Invariant, string> _failures = [];
 
+    /// <summary>Observes every seed of the named content: generates the history, replays it step by step, and records failures and counts.</summary>
     private InvariantObservation(string contentName)
     {
         _contentName = contentName;
@@ -44,6 +48,7 @@ internal sealed class InvariantObservation
     /// <summary>How often each counted case happened over all seeds.</summary>
     public SortedDictionary<string, int> Counts { get; } = new(StringComparer.Ordinal);
 
+    /// <summary>The observation of the named content, made on the first call and cached for every later one.</summary>
     public static InvariantObservation For(string contentName) =>
         _byContent.GetOrAdd(contentName, name => new Lazy<InvariantObservation>(() => new InvariantObservation(name))).Value;
 
@@ -63,6 +68,7 @@ internal sealed class InvariantObservation
     /// <summary>Every count, as one line.</summary>
     public string CountsText() => string.Join(", ", Counts.Select(count => $"{count.Key} {count.Value}"));
 
+    /// <summary>Records the failure when it is the invariant's first: the seed, the failure, and the generated history when there is one.</summary>
     private void Fail(Invariant invariant, int seed, string failure, CityHistory? history)
     {
         if (!_failures.ContainsKey(invariant))
@@ -72,5 +78,6 @@ internal sealed class InvariantObservation
         }
     }
 
+    /// <summary>Counts one more case of <paramref name="what"/>.</summary>
     private void Count(string what) => Counts[what] = Counts.GetValueOrDefault(what) + 1;
 }

@@ -10,6 +10,10 @@ namespace CityBuilder.Simulation.Tests.Properties;
 /// </summary>
 public sealed class SplitInvariancePropertyTests
 {
+    /// <summary>
+    /// For every seed, a random total within the cap cut into two pieces (sometimes all of it in the first or the second) gives the same city
+    /// and report totals as one advance over the total.
+    /// </summary>
     [Theory]
     [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
     public void Advance_TwoPiecesWithinTheCap_EqualsOneAdvanceOverBoth(string contentName)
@@ -36,7 +40,10 @@ public sealed class SplitInvariancePropertyTests
         });
     }
 
-    // A quarter each: up to a minute, up to ten minutes, anywhere up to the cap, and exactly the cap (the largest a + b allowed).
+    /// <summary>
+    /// The total seconds, a quarter each: up to a minute, up to ten minutes, anywhere up to the cap, and exactly the cap (the largest a + b
+    /// allowed).
+    /// </summary>
     private static long Total(SeededRandom random, long cap) => random.Between(1, 4) switch
     {
         1 => random.Between(0, Math.Min(60, cap)),

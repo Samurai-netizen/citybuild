@@ -5,10 +5,16 @@ namespace CityBuilder.Simulation.Tests.Properties;
 /// forever (<c>System.Random</c> doesn't promise that across .NET versions), and a printed failing seed reproduces the failure. Test code
 /// only: the engine never sees randomness.
 /// </summary>
+/// <param name="seed">The seed: the same seed always gives the same numbers.</param>
 internal sealed class SeededRandom(int seed)
 {
+    /// <summary>SplitMix64's step, 2^64 divided by the golden ratio, added to the state on every draw.</summary>
     private const ulong _golden = 0x9E3779B97F4A7C15;
 
+    /// <summary>
+    /// The state. It starts at the seed times <see cref="_golden"/>: seed 0 gives the reference sequence, and seed n the same sequence from its
+    /// (n + 1)th number on.
+    /// </summary>
     private ulong _state = unchecked((ulong)seed * _golden);
 
     /// <summary>A number from <paramref name="min"/> to <paramref name="max"/>, both included.</summary>
@@ -33,6 +39,7 @@ internal sealed class SeededRandom(int seed)
     /// <summary>True with a chance of <paramref name="percent"/> in 100.</summary>
     public bool Chance(int percent) => Between(1, 100) <= percent;
 
+    /// <summary>The next 64 random bits: SplitMix64's step, then its output mix.</summary>
     private ulong Next()
     {
         unchecked

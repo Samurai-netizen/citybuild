@@ -12,6 +12,7 @@ public sealed class ContentShapeTests
 {
     // "!" in these tests reaches into the valid fixture, which sets every value it touches (ContentFixture.Valid).
 
+    /// <summary>Every required value removed once, by the expected error path.</summary>
     private static readonly Dictionary<string, Action<GameContentData>> _missingValues = new()
     {
         ["contentVersion"] = data => data.ContentVersion = null,
@@ -65,6 +66,7 @@ public sealed class ContentShapeTests
         ["research[warehouses].effects[#1].amount"] = data => Research(data, "warehouses").Effects![1]!.Amount = null,
     };
 
+    /// <summary>Id texts that break the id format (case, first character, spaces, dashes, non-ASCII, empty), by the expected error path.</summary>
     private static readonly Dictionary<string, Action<GameContentData>> _invalidIds = new()
     {
         ["items[Wood].id"] = data => Item(data, "wood").Id = "Wood",
@@ -84,6 +86,7 @@ public sealed class ContentShapeTests
         ["research[warehouses].effects[#0].item"] = data => Research(data, "warehouses").Effects![0]!.Item = "WOOD",
     };
 
+    /// <summary>Texts outside their fixed set (building kind, effect type), by the expected error path.</summary>
     private static readonly Dictionary<string, Action<GameContentData>> _invalidValues = new()
     {
         ["buildings[hut].kind"] = data => Building(data, "hut").Kind = "farm",
@@ -91,6 +94,7 @@ public sealed class ContentShapeTests
         ["research[carpentry].effects[#0].type"] = data => Research(data, "carpentry").Effects![0]!.Type = "unlock",
     };
 
+    /// <summary>Values given where none is allowed (an upgrade on level 1, an effect value of another type), by the expected error path.</summary>
     private static readonly Dictionary<string, Action<GameContentData>> _unexpectedValues = new()
     {
         ["buildings[hut].levels[1].upgradeCost"] = data => Level(data, "hut", 1).UpgradeCost = new() { ["gold"] = 1 },
@@ -102,6 +106,7 @@ public sealed class ContentShapeTests
         ["research[warehouses].effects[#0].permille"] = data => Research(data, "warehouses").Effects![0]!.Permille = 10,
     };
 
+    /// <summary>Numbers just above <see cref="GameContentFactory.MaxQuantity"/>, by the expected error path.</summary>
     private static readonly Dictionary<string, Action<GameContentData>> _valuesTooLarge = new()
     {
         ["rules.maxOfflineProductionSeconds"] = data => RulesOf(data).MaxOfflineProductionSeconds = GameContentFactory.MaxQuantity + 1,
@@ -114,41 +119,52 @@ public sealed class ContentShapeTests
         ["research[warehouses].effects[#0].amount"] = data => Research(data, "warehouses").Effects![0]!.Amount = GameContentFactory.MaxQuantity + 1,
     };
 
+    /// <summary>The error paths of <see cref="_missingValues"/>.</summary>
     public static TheoryData<string> MissingValuePaths => new(_missingValues.Keys);
 
+    /// <summary>The error paths of <see cref="_invalidIds"/>.</summary>
     public static TheoryData<string> InvalidIdPaths => new(_invalidIds.Keys);
 
+    /// <summary>The error paths of <see cref="_invalidValues"/>.</summary>
     public static TheoryData<string> InvalidValuePaths => new(_invalidValues.Keys);
 
+    /// <summary>The error paths of <see cref="_unexpectedValues"/>.</summary>
     public static TheoryData<string> UnexpectedValuePaths => new(_unexpectedValues.Keys);
 
+    /// <summary>The error paths of <see cref="_valuesTooLarge"/>.</summary>
     public static TheoryData<string> ValueTooLargePaths => new(_valuesTooLarge.Keys);
 
+    /// <summary>Each missing required value gives exactly one <see cref="ContentErrorCode.MissingValue"/> at its path.</summary>
     [Theory]
     [MemberData(nameof(MissingValuePaths))]
     public void Create_RequiredValueMissing_ReportsMissingValueAtItsPath(string path) =>
         ContentAssert.SingleError(ValidWith(_missingValues[path]), ContentErrorCode.MissingValue, path);
 
+    /// <summary>Each malformed id gives exactly one <see cref="ContentErrorCode.InvalidId"/> at its path.</summary>
     [Theory]
     [MemberData(nameof(InvalidIdPaths))]
     public void Create_IdTextWithoutTheIdFormat_ReportsInvalidIdAtItsPath(string path) =>
         ContentAssert.SingleError(ValidWith(_invalidIds[path]), ContentErrorCode.InvalidId, path);
 
+    /// <summary>Each unknown building kind or effect type gives exactly one <see cref="ContentErrorCode.InvalidValue"/>; matching is case-sensitive.</summary>
     [Theory]
     [MemberData(nameof(InvalidValuePaths))]
     public void Create_TextOutsideItsFixedSet_ReportsInvalidValueAtItsPath(string path) =>
         ContentAssert.SingleError(ValidWith(_invalidValues[path]), ContentErrorCode.InvalidValue, path);
 
+    /// <summary>Each value given where none is allowed gives exactly one <see cref="ContentErrorCode.UnexpectedValue"/>.</summary>
     [Theory]
     [MemberData(nameof(UnexpectedValuePaths))]
     public void Create_ValueWhereNoneIsAllowed_ReportsUnexpectedValueAtItsPath(string path) =>
         ContentAssert.SingleError(ValidWith(_unexpectedValues[path]), ContentErrorCode.UnexpectedValue, path);
 
+    /// <summary>Each number above the maximum gives exactly one <see cref="ContentErrorCode.ValueTooLarge"/>.</summary>
     [Theory]
     [MemberData(nameof(ValueTooLargePaths))]
     public void Create_NumberAboveMaxQuantity_ReportsValueTooLargeAtItsPath(string path) =>
         ContentAssert.SingleError(ValidWith(_valuesTooLarge[path]), ContentErrorCode.ValueTooLarge, path);
 
+    /// <summary>Numbers of exactly <see cref="GameContentFactory.MaxQuantity"/> are allowed.</summary>
     [Fact]
     public void Create_NumbersExactlyAtMaxQuantity_AreAccepted()
     {
@@ -159,6 +175,7 @@ public sealed class ContentShapeTests
         ContentAssert.Valid(data);
     }
 
+    /// <summary>Ids of one letter, with digits and underscores, and of the full 64 characters are allowed.</summary>
     [Theory]
     [InlineData("a")]
     [InlineData("a_1")]
@@ -173,6 +190,7 @@ public sealed class ContentShapeTests
         ContentAssert.Valid(data);
     }
 
+    /// <summary>An id of 65 characters is one too long.</summary>
     [Fact]
     public void Create_IdTextOneLongerThanTheLimit_ReportsInvalidId()
     {
@@ -183,6 +201,7 @@ public sealed class ContentShapeTests
         ContentAssert.SingleError(data, ContentErrorCode.InvalidId, $"eras[{tooLong}].id");
     }
 
+    /// <summary>Several shape errors are all reported, in file order (rules, items, research).</summary>
     [Fact]
     public void Create_SeveralShapeErrors_ReportsAllOfThemInFileOrder()
     {
@@ -198,6 +217,7 @@ public sealed class ContentShapeTests
             (ContentErrorCode.MissingValue, "research[warehouses].durationSeconds"));
     }
 
+    /// <summary>Bad keys of one map are reported in ordinal key order, never in the dictionary's own order.</summary>
     [Fact]
     public void Create_SeveralBadKeysInOneMap_ReportsThemInOrdinalKeyOrder()
     {
@@ -211,6 +231,7 @@ public sealed class ContentShapeTests
             (ContentErrorCode.InvalidId, "buildings[hut].cost.Zinc"));
     }
 
+    /// <summary>An error prints as <c>code at path: message</c>.</summary>
     [Fact]
     public void ToString_OfAnError_GivesCodePathAndMessage()
     {
@@ -222,7 +243,7 @@ public sealed class ContentShapeTests
         Assert.Equal("MissingValue at rules.gridWidth: " + error.Message, error.ToString());
     }
 
-    // Keeps the content valid when an item gets another id: every map key and effect that names it follows.
+    /// <summary>Keeps the content valid when an item gets another id: every map key and effect that names it follows.</summary>
     private static void RenameItemKeys(GameContentData data, string from, string to)
     {
         IEnumerable<Dictionary<string, long?>?> maps = new[] { data.Rules!.BaseStorageCaps, data.StartingCity!.Inventory }
