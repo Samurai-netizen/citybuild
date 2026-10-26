@@ -1,4 +1,5 @@
-// Composition root of the server (core-instructions/03-architecture.md): hosting, logging and service registration only.
+// Composition root of the server (core-instructions/03-architecture.md): hosting, logging, service registration and the startup steps
+// (content load; database settings and, in Development only, the migrations).
 
 using CityBuilder.Api.Content;
 using CityBuilder.Api.Persistence;

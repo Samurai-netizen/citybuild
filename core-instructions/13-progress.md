@@ -4,17 +4,16 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** M0-19 · EF Core model, migrations, Docker (`[O]` `[PLAN]`)
-- **Branch:** `task/M0-19-ef-core-docker` (from `main` = `2c724ae`)
-- **Build log entry:** `docs/build-log/2026/2026-10-26-02-M0-19.md`
-- **Last green commit:** `main` = `2c724ae` (CR-0003-T1 merged in #29, #28 merged; nothing changed in code yet)
-- **Done steps:** write-ahead (plan approved); 1 Docker (`docker-compose.yml`, `.env.example`); 2 packages (EF Core 10.0.14, Npgsql 10.0.3, `dotnet-ef` local tool); 3 persistence model
-  (`Infrastructure/Persistence`, 22 model tests); 4 configuration (`ConnectionStrings:CityBuilder`, required; `ApiFactory` for tests);
-  5 startup migration (Development only); 6 initial migration `InitialCreate` (+ migration tests);
-  7 applied to the compose database (results in the build log → Verification); 8 docs
-- **Next step:** finish: Definition of Done, line-by-line self-review (`[O]`, persistence), PR. Decisions 8-10 are the owner's answers.
-  Step 7 needs Docker Desktop running.
+- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** — (last completed: M0-19 · EF Core model, migrations, Docker; PR open, the owner merges it)
+- **Branch:** `task/M0-19-ef-core-docker` (from `main` = `2c724ae`) until the owner merges
+- **Build log entry:** last: `docs/build-log/2026/2026-10-26-02-M0-19.md` (Done)
+- **Last green commit:** the head of `task/M0-19-ef-core-docker` (build 0 warnings, format clean, fast suite: Repository 22, Simulation 872,
+  Domain 1, Application 14, IntegrationTests 55; migration applied to the compose database; handbook builds; `check-docs --base origin/main` OK)
+- **Done steps:** all of M0-19 (compose PostgreSQL 18.6, EF Core model of the seven tables, `InitialCreate`, connection string from
+  user-secrets/environment, migrations at startup in Development only, model and migration tests, docs; details in the entry)
+- **Next step:** the owner merges the PR. Then `/start-task M0-20` (Repository and mapping, `[O]`); read the entry's Follow-ups first
+  (`city_research.completed_at`, nullable labor columns).
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7
@@ -24,7 +23,7 @@
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 18 / 85 (M0-19 in progress)
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 18 / 85 (M0-19 in review)
 
 | Area | State | Notes |
 |---|---|---|
@@ -32,7 +31,7 @@
 | Shared engine: content, research, labor | done | M0-03 merged (PR #7); the content model and its validation (M0-07a) merged (PR #14); the JSON file and server loading (M0-07b) merged (PR #15); city state and mutations (M0-08) merged (PR #16); `Simulator.Advance` (M0-09) merged (PR #17); rule tests (M0-10) merged (PR #18); golden scenario #1 (M0-11) merged (PR #19); engine review (M0-12) merged (PR #20) |
 | Shared engine: invariants, performance | done | settlement window and production cap (M0-13) merged (PR #21); property test harness (M0-14, with engine fix CR-0001) merged (PR #22); invariant properties (M0-15) merged (PR #23); performance budget M0-16 merged (PR #24; worst case ~37 ms per advance in Release); display helpers M0-17 merged (PR #25); spec sync and ADRs M0-18 merged (PR #26) |
 | Server skeleton | done | M0-02 merged (PR #6) |
-| Persistence (EF + PostgreSQL) | in progress | M0-19 (EF Core model, migrations, Docker): plan approved |
+| Persistence (EF + PostgreSQL) | in progress | M0-19 (EF Core model, migrations, Docker) in review; repository and mapping M0-20 next |
 | Auth + command pipeline | not started | |
 | Commands: place / upgrade / assign workers / start research | not started | |
 | Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) and M0-05 (Unity tests, `test-unity.sh`) merged (PR #8, #12); networking is M0-37 |
