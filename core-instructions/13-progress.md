@@ -4,16 +4,17 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-21 · Testcontainers integration base; PR #33 open, the owner merges it)
-- **Branch:** `task/M0-21-testcontainers-base` (from `main` = `117407a`) until the owner merges
-- **Build log entry:** last: `docs/build-log/2026/2026-10-26-04-M0-21.md` (Done)
-- **Last green commit:** the head of `task/M0-21-testcontainers-base` (Release build 0 warnings, format clean, fast suite: Repository 22,
-  Simulation 872, Domain 21, Application 23, IntegrationTests 101; Integration 15 on `postgres:18.6`; handbook builds; `check-docs --base origin/main` OK)
-- **Done steps:** all of M0-21 (fixture: one container per run, a database per test from a migrated template, `PostgresApiFactory`; tests
-  for the migrations, the repositories through the server and the constraints; `docs/testing/README.md`; details in the entry)
-- **Next step:** the owner merges the PR. Then `/start-task M0-22` (transaction boundary and locking, `[O]`); read the entry's Follow-ups.
-- **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, build
+- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** M0-22 · Transaction boundary and locking (`[O]`); then M0-23 and M0-24 in the same sitting (owner, build log → Owner input)
+- **Branch:** `task/M0-22-transaction-locking`, stacked on `task/M0-21-testcontainers-base` (PR #33 not merged yet; the owner allowed it)
+- **Build log entry:** `docs/build-log/2026/2026-10-26-05-M0-22.md`
+- **Last green commit:** the head of `task/M0-21-testcontainers-base` (Release build 0 warnings, fast suite 21/23/22/101/872, Integration 15)
+- **Planned steps:** 1. Application: `ICityTransactionRunner`, `CityTransaction`, `ConcurrencyConflictException`, `SettleCity` on the
+  runner, fast tests; 2. Infrastructure: `FOR UPDATE`, `lock_timeout` (`Database:LockTimeoutMilliseconds`), exception mapping,
+  integration tests; 3. docs (Docs impact in the entry)
+- **Done steps:** start (write-ahead)
+- **Next step:** step 1 (Application runner and its fast tests)
+- **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7
   security alerts GitHub reports on `main`.
