@@ -12,8 +12,13 @@ namespace CityBuilder.Application.Tests.Cities;
 /// </summary>
 public sealed class SettleCityTests
 {
+    /// <summary>The woodcutter's building id: it is the second building placed.</summary>
     private const int _woodcutterId = 2;
 
+    /// <summary>
+    /// The city advances by the elapsed whole seconds and produces for at most the cap: after 0 s, 1 s, exactly the cap (480 logs) and one
+    /// second more (still 480), with nothing completed yet.
+    /// </summary>
     [Theory]
     [InlineData(0L, 0L, 0L)]
     [InlineData(1L, 1L, 0L)]
@@ -36,6 +41,7 @@ public sealed class SettleCityTests
         Assert.Empty(result.Report.CompletedBuildings);
     }
 
+    /// <summary>At the cap and one second beyond, the woodcutter runs the cycle that started at the cap's last second.</summary>
     [Theory]
     [InlineData(ProductionCapSeconds)]
     [InlineData(ProductionCapSeconds + 1)]
@@ -53,6 +59,10 @@ public sealed class SettleCityTests
         Assert.Equal(StartClock + ProductionCapSeconds, woodcutter.PhaseStartedAt);
     }
 
+    /// <summary>
+    /// After 30 days away the research and the manor have completed, 481 logs were made (480 cycles within the cap and the one that started at
+    /// its last second), and the woodcutter stands idle with its worker.
+    /// </summary>
     [Fact]
     public async Task ExecuteAsync_ThirtyDaysAway_FinishesTheTimersAndStopsStartingCyclesAfterTheCap()
     {
@@ -81,6 +91,7 @@ public sealed class SettleCityTests
         Assert.Equal(1, woodcutter.AssignedWorkers);
     }
 
+    /// <summary>The research completes at its end second, not a second before.</summary>
     [Fact]
     public async Task ExecuteAsync_TheSecondTheResearchEnds_CompletesItThenAndNotBefore()
     {
@@ -100,6 +111,7 @@ public sealed class SettleCityTests
         Assert.Equal(ResearchEndsAt, at.City.State.Clock);
     }
 
+    /// <summary>When the server clock is behind the last settlement (it was set back), nothing advances and the last settled second stays.</summary>
     [Fact]
     public async Task ExecuteAsync_ClockBehindTheLastSettlement_AdvancesNothingAndKeepsTheLastSettledSecond()
     {
@@ -115,6 +127,7 @@ public sealed class SettleCityTests
         Assert.Equal(LastSettled.ToUnixTimeSeconds() + 60, result.City.LastSettledUnixSec);
     }
 
+    /// <summary>When the clock catches up after going back, only the seconds after the last settlement count: 30 of the 90.</summary>
     [Fact]
     public async Task ExecuteAsync_ClockCatchesUpAfterGoingBack_CountsOnlyTheSecondsAfterTheLastSettlement()
     {
@@ -131,6 +144,10 @@ public sealed class SettleCityTests
         Assert.Equal(StartClock + 30, result.City.State.Clock);
     }
 
+    /// <summary>
+    /// A hundred calls 0.3 s apart elapse 29 s in all and leave the same city as one call at 29.7 s: the dropped fractions of a second carry
+    /// over to the next window.
+    /// </summary>
     [Fact]
     public async Task ExecuteAsync_HundredCallsThreeHundredMillisecondsApart_ElapseTheSameAsOneCallAtTheLast()
     {
@@ -163,6 +180,7 @@ public sealed class SettleCityTests
         Assert.Equal(Describe(single.City.State), Describe(last.City.State));
     }
 
+    /// <summary>Each null dependency throws for its parameter.</summary>
     [Fact]
     public void Constructor_NullDependency_Throws()
     {
@@ -175,6 +193,7 @@ public sealed class SettleCityTests
         Assert.Throws<ArgumentNullException>("timeProvider", () => new SettleCity(repository, content, null!));
     }
 
+    /// <summary>Settling saves the city once, with its new clock and last settled second.</summary>
     [Fact]
     public async Task ExecuteAsync_AnySettlement_SavesTheCity()
     {

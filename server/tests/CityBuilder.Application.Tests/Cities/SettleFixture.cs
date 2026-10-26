@@ -16,6 +16,7 @@ namespace CityBuilder.Application.Tests.Cities;
 /// </summary>
 internal static class SettleFixture
 {
+    /// <summary>The production cap: the M0 value of 8 hours, in seconds.</summary>
     public const long ProductionCapSeconds = 8 * 3600;
 
     /// <summary>The woodcutter's cycle: 60 labor with its one worker.</summary>
@@ -30,19 +31,25 @@ internal static class SettleFixture
     /// <summary>The manor (3 days, placed at <see cref="StartClock"/>) completes at this city-clock second, after the production cap.</summary>
     public const long ManorEndsAt = StartClock + (3 * 86_400);
 
+    /// <summary>The manor's building id: it is the third building placed.</summary>
     public const int ManorId = 3;
 
+    /// <summary>The player whose city the repository holds.</summary>
     public static readonly Guid PlayerId = new("6f1d2c3b-0000-4000-8000-000000000001");
 
     /// <summary>The server second the city was last settled at: a whole second, so the fake clock starts at t = 0 of the tests.</summary>
     public static readonly DateTimeOffset LastSettled = DateTimeOffset.FromUnixTimeSeconds(1_790_000_000);
 
+    /// <summary>The woodcutter's output.</summary>
     public static readonly ItemId Logs = new("logs");
 
+    /// <summary>The research the player starts at clock 0.</summary>
     public static readonly ResearchId Forestry = new("forestry");
 
+    /// <summary>The fixture's content, made once.</summary>
     public static GameContent Content { get; } = CreateContent();
 
+    /// <summary>A fake server clock at <see cref="LastSettled"/>; each test moves it.</summary>
     public static FakeTimeProvider ClockAtLastSettled() => new(LastSettled);
 
     /// <summary>
@@ -65,6 +72,7 @@ internal static class SettleFixture
         return repository;
     }
 
+    /// <summary>The settle use case over the repository, the fixture's content and the clock.</summary>
     public static SettleCity UseCase(ICityRepository repository, TimeProvider clock) => new(repository, new FixedContent(Content), clock);
 
     /// <summary>The city's state as text, field by field, so two cities compare in one assertion that shows the first difference.</summary>
@@ -84,13 +92,17 @@ internal static class SettleFixture
         return string.Join("\n", lines);
     }
 
-    // A mutation followed by the zero-length advance every command gets (04 section 7).
+    /// <summary>A mutation followed by the zero-length advance every command gets (<c>04</c> section 7); a rejected mutation fails the test.</summary>
     private static void Apply(CityState state, MutationResult result)
     {
         Assert.True(result.IsOk, result.ToString());
         Simulator.Advance(state, Content, 0);
     }
 
+    /// <summary>
+    /// The fixture's content: a 4 × 4 grid, two houses (cottage and manor), the woodcutter, and the research <c>forestry</c> (−100 ‰ on the
+    /// woodcutter's labor). Invalid content fails the test with every error.
+    /// </summary>
     private static GameContent CreateContent()
     {
         var data = new GameContentData
@@ -146,6 +158,7 @@ internal static class SettleFixture
         return result.Content!;
     }
 
+    /// <summary>A house type with one level that provides 2 workers, costs 10 coins and builds in <paramref name="buildSeconds"/>.</summary>
     private static BuildingData House(string id, long buildSeconds) => new()
     {
         Id = id,
@@ -159,8 +172,10 @@ internal static class SettleFixture
     };
 
     /// <summary>An <see cref="IContentProvider"/> that serves the given content.</summary>
+    /// <param name="content">The content to serve.</param>
     public sealed class FixedContent(GameContent content) : IContentProvider
     {
+        /// <summary>The content given to the constructor.</summary>
         public GameContent Content { get; } = content;
     }
 }

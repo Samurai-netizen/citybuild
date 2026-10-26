@@ -14,9 +14,6 @@ public sealed class CodeDocumentationTests
     private static readonly string[] _notYetDocumented =
     [
         "client/CityBuilder/Assets/_Project",
-        "server/tests/CityBuilder.Application.Tests",
-        "server/tests/CityBuilder.Domain.Tests",
-        "server/tests/CityBuilder.IntegrationTests",
     ];
 
     /// <summary>Every C# file of the repository passes every rule of <see cref="DocumentationRules"/>; the message lists all problems at once.</summary>

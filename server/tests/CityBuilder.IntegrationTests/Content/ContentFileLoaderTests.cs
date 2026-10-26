@@ -10,10 +10,13 @@ namespace CityBuilder.IntegrationTests.Content;
 /// </summary>
 public sealed class ContentFileLoaderTests : IDisposable
 {
+    /// <summary>The temporary directory for this test's content files.</summary>
     private readonly ContentFileDirectory _files = new();
 
+    /// <summary>Deletes this test's content files.</summary>
     public void Dispose() => _files.Dispose();
 
+    /// <summary>The real content file loads as valid content.</summary>
     [Fact]
     public void Load_RealMvpContent_ReturnsValidContent()
     {
@@ -24,6 +27,7 @@ public sealed class ContentFileLoaderTests : IDisposable
         Assert.False(string.IsNullOrEmpty(content.ContentVersion));
     }
 
+    /// <summary>A missing file gives one read error, with the path and the file error as the cause.</summary>
     [Fact]
     public void Load_MissingFile_ThrowsOneReadError()
     {
@@ -37,6 +41,7 @@ public sealed class ContentFileLoaderTests : IDisposable
         Assert.IsType<FileNotFoundException>(exception.InnerException);
     }
 
+    /// <summary>A file cut off halfway gives one JSON error.</summary>
     [Fact]
     public void Load_TruncatedJson_ThrowsOneJsonError()
     {
@@ -48,6 +53,7 @@ public sealed class ContentFileLoaderTests : IDisposable
         AssertSingleJsonError(exception);
     }
 
+    /// <summary>A file that holds only the JSON value null gives one error that says so.</summary>
     [Fact]
     public void Load_JsonNull_ThrowsOneError()
     {
@@ -58,6 +64,7 @@ public sealed class ContentFileLoaderTests : IDisposable
         Assert.Equal("The file holds the JSON value null instead of a content object.", Assert.Single(exception.Errors));
     }
 
+    /// <summary>An unknown field gives one JSON error that names the field and where it is.</summary>
     [Fact]
     public void Load_UnknownField_ThrowsOneJsonErrorNamingTheField()
     {
@@ -73,6 +80,7 @@ public sealed class ContentFileLoaderTests : IDisposable
         Assert.Contains("Path: $.buildings[0].colour | LineNumber: ", error, StringComparison.Ordinal);
     }
 
+    /// <summary>A known field name in another case is an unknown field: names are case-sensitive.</summary>
     [Fact]
     public void Load_FieldNameInOtherCase_ThrowsOneJsonErrorNamingTheField()
     {
@@ -89,6 +97,7 @@ public sealed class ContentFileLoaderTests : IDisposable
         Assert.Contains("'BuildSeconds'", AssertSingleJsonError(exception), StringComparison.Ordinal);
     }
 
+    /// <summary>A key repeated in one object, a field or a map key, gives one JSON error.</summary>
     [Theory]
     [InlineData("field", "\"contentVersion\":\"repeated\"")] // the root already has contentVersion
     [InlineData("map key", "\"twice\":1,\"twice\":1")] // a key of the starting inventory
@@ -107,6 +116,7 @@ public sealed class ContentFileLoaderTests : IDisposable
         AssertSingleJsonError(exception);
     }
 
+    /// <summary>A number given as text, as a fraction or as a boolean gives one JSON error at its path.</summary>
     [Theory]
     [InlineData("\"8\"")]
     [InlineData("8.5")]
@@ -122,6 +132,7 @@ public sealed class ContentFileLoaderTests : IDisposable
         Assert.Contains("$.rules.gridWidth", AssertSingleJsonError(exception), StringComparison.Ordinal);
     }
 
+    /// <summary>A missing required value gives the content factory's <c>MissingValue</c> error with its path.</summary>
     [Fact]
     public void Load_MissingRequiredValue_ThrowsTheFactorysShapeError()
     {
@@ -136,6 +147,7 @@ public sealed class ContentFileLoaderTests : IDisposable
         Assert.StartsWith($"{ContentErrorCode.MissingValue} at items[{item["id"]}].name:", error, StringComparison.Ordinal);
     }
 
+    /// <summary>Two rule errors are both listed, in order, in the errors and in the message.</summary>
     [Fact]
     public void Load_TwoRuleErrors_ListsBothInTheErrorsAndTheMessage()
     {
@@ -158,12 +170,14 @@ public sealed class ContentFileLoaderTests : IDisposable
         Assert.Equal(expectedMessage, exception.Message);
     }
 
+    /// <summary>An empty path is a programmer error and throws.</summary>
     [Fact]
     public void Load_EmptyPath_ThrowsArgumentException()
     {
         Assert.Throws<ArgumentException>(() => ContentFileLoader.Load(string.Empty));
     }
 
+    /// <summary>A load exception without errors is a programmer error and throws.</summary>
     [Fact]
     public void ContentLoadException_NoErrors_ThrowsArgumentException()
     {
@@ -171,6 +185,7 @@ public sealed class ContentFileLoaderTests : IDisposable
         Assert.Throws<ArgumentException>("errors", () => new ContentLoadException("content.json", []));
     }
 
+    /// <summary>Checks that the load failed with exactly one JSON error that says once where it is, and returns that error.</summary>
     private static string AssertSingleJsonError(ContentLoadException exception)
     {
         string error = Assert.Single(exception.Errors);
