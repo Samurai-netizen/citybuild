@@ -34,6 +34,7 @@ function folder(label, dirName) {
   };
 }
 
+// A sidebar category that starts expanded.
 const chapter = (label, items) => ({type: 'category', label, collapsed: false, items});
 
 const handbook = [

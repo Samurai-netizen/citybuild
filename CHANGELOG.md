@@ -83,6 +83,12 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   (`.github/workflows/docs-site.yml`), `scripts/dev/docs-site.sh`. Every task keeps it current: a Docs impact table in each build log
   entry, and `check-docs.sh --base` fails when a module's code changes without its module doc (or a reason) or a living doc still names a
   deleted or renamed file (`17` §5, §7; OD-11). A full audit of the docs against the code fixed every drift it found (CR-0002-T1).
+- Code documentation: every file and every declaration of the code says what it is for (`14` → Documentation in code, how-to
+  `docs/how-to/document-code.md`): XML doc comments on every C# type and member at every access level, tests and Unity scripts included,
+  and a header comment on every script, hook, workflow, MSBuild, JavaScript, stylesheet, UXML and config file, with a comment above
+  every shell, PowerShell and JavaScript function. Checked by the new test project `CityBuilder.Repository.Tests` (Microsoft's C#
+  parser), by the compiler (missing or broken doc comments are errors in every server project) and by `check-docs.sh`. The code itself
+  changed only in comments (CR-0003-T1).
 
 ### Fixed
 - Kit audit follow-ups A1, A2, A3, A9, A15, A16: `[PLAN]` tasks write ahead before the plan (no Plan Mode), the Bash guard no longer

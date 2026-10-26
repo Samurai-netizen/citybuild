@@ -8,6 +8,7 @@ namespace CityBuilder.Simulation.Content
     /// </summary>
     public sealed class LaborReductionEffect : ResearchEffect
     {
+        /// <summary>Creates the effect as read from a <c>laborReduction</c> entry; the rules check its target and permille afterwards.</summary>
         internal LaborReductionEffect(BuildingTypeId building, int permille)
         {
             Building = building;

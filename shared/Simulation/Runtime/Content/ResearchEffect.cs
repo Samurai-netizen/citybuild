@@ -10,6 +10,7 @@ namespace CityBuilder.Simulation.Content
     /// </summary>
     public abstract class ResearchEffect
     {
+        /// <summary>Internal, so the set of effect types stays closed: only this assembly can derive one (the engine switches on the type).</summary>
         internal ResearchEffect()
         {
         }

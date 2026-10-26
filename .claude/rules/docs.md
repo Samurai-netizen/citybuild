@@ -8,7 +8,8 @@ paths:
 # Documentation rules
 
 System: `core-instructions/17-documentation-system.md`. Short form:
-- Every fact has one home (`17` §2). Link to it; don't copy it.
+- Every fact has one home (`17` §2). Link to it; don't copy it. What a file, type or function is for lives in its comments in the
+  code (`14` → Documentation in code); module docs give the overview.
 - `core-instructions/` = what must be true (rules, design, contracts). `docs/` = what exists, how to use it, what happened.
 - Build log entries (`docs/build-log/<YYYY>/…`) are append-only once merged. Correct them with a new entry.
   Keep `docs/build-log/README.md` listing every entry.

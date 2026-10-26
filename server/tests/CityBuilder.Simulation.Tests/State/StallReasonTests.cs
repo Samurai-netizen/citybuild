@@ -11,6 +11,7 @@ namespace CityBuilder.Simulation.Tests.State;
 /// </summary>
 public sealed class StallReasonTests
 {
+    /// <summary>An idle house has no recipe: <c>NoRecipe</c>.</summary>
     [Fact]
     public void Of_IdleHouse_IsNoRecipe()
     {
@@ -19,8 +20,10 @@ public sealed class StallReasonTests
         Assert.Equal("NoRecipe", ReasonOf(city, 1));
     }
 
+    /// <summary>Buildings whose timer makes progress: a constructing house and producer, and an upgrading producer.</summary>
     public static TheoryData<string> BuildingsWithTimers => new() { "constructing hut", "constructing workshop", "upgrading workshop" };
 
+    /// <summary>A constructing or upgrading building makes progress, so it has no stall reason, even without stock or workers.</summary>
     [Theory]
     [MemberData(nameof(BuildingsWithTimers))]
     public void Of_ConstructingOrUpgrading_IsNull(string name)
@@ -36,6 +39,7 @@ public sealed class StallReasonTests
         Assert.Null(ReasonOf(City(buildings: [building]), 1));
     }
 
+    /// <summary>An idle producer without workers: <c>NoWorkers</c>.</summary>
     [Fact]
     public void Of_IdleProducerWithoutWorkers_IsNoWorkers()
     {
@@ -44,6 +48,7 @@ public sealed class StallReasonTests
         Assert.Equal("NoWorkers", ReasonOf(city, 1));
     }
 
+    /// <summary>A frozen cycle: <c>NoWorkers</c>.</summary>
     [Fact]
     public void Of_FrozenCycle_IsNoWorkers()
     {
@@ -53,6 +58,7 @@ public sealed class StallReasonTests
         Assert.Equal("NoWorkers", ReasonOf(city, 1));
     }
 
+    /// <summary>A cycle running with workers makes progress, even with the output at its cap and no input left.</summary>
     [Fact]
     public void Of_CycleRunningWithWorkers_IsNull()
     {
@@ -63,6 +69,7 @@ public sealed class StallReasonTests
         Assert.Null(ReasonOf(city, 1));
     }
 
+    /// <summary>An idle producer short of an input: <c>MissingInput</c> with that item.</summary>
     [Fact]
     public void Of_IdleProducerLackingAnInput_IsMissingInputOfThatItem()
     {
@@ -71,6 +78,7 @@ public sealed class StallReasonTests
         Assert.Equal("MissingInput:wood", ReasonOf(city, 1));
     }
 
+    /// <summary>An idle producer whose output is at its cap: <c>StorageFull</c> with that item.</summary>
     [Fact]
     public void Of_IdleProducerWhoseOutputIsAtTheCap_IsStorageFullOfThatItem()
     {
@@ -79,6 +87,7 @@ public sealed class StallReasonTests
         Assert.Equal("StorageFull:boards", ReasonOf(city, 1));
     }
 
+    /// <summary>The reservation counts: 79 boards plus 1 reserved plus 1 more would make 81 > 80, so <c>StorageFull</c>.</summary>
     [Fact]
     public void Of_OutputFitsTheStockButNotTheReservation_IsStorageFull()
     {
@@ -92,6 +101,7 @@ public sealed class StallReasonTests
         Assert.Equal("StorageFull:boards", ReasonOf(city, 2));
     }
 
+    /// <summary>The check uses the effective cap: with warehouses 80 boards + 1 fits under 120.</summary>
     [Fact]
     public void Of_CapRaisedByCompletedResearch_UsesTheEffectiveCap()
     {
@@ -104,6 +114,7 @@ public sealed class StallReasonTests
         Assert.Null(ReasonOf(city, 1));
     }
 
+    /// <summary>An idle producer that could start now has no stall reason.</summary>
     [Fact]
     public void Of_IdleProducerThatCanStart_IsNull()
     {
@@ -112,6 +123,7 @@ public sealed class StallReasonTests
         Assert.Null(ReasonOf(city, 1));
     }
 
+    /// <summary>The first match wins: no workers before a missing input.</summary>
     [Fact]
     public void Of_NoWorkersAndNoInput_NoWorkersWinsFirst()
     {
@@ -120,6 +132,7 @@ public sealed class StallReasonTests
         Assert.Equal("NoWorkers", ReasonOf(city, 1));
     }
 
+    /// <summary>The first match wins: a missing input before a full output.</summary>
     [Fact]
     public void Of_MissingInputAndFullOutput_MissingInputWinsFirst()
     {
@@ -128,6 +141,7 @@ public sealed class StallReasonTests
         Assert.Equal("MissingInput:wood", ReasonOf(city, 1));
     }
 
+    /// <summary>With two inputs missing, the first in ordinal item order is named ("gold" before "wood").</summary>
     [Fact]
     public void Of_TwoInputsMissing_NamesTheFirstInOrdinalOrder()
     {
@@ -139,6 +153,7 @@ public sealed class StallReasonTests
         Assert.Equal("MissingInput:gold", StallReason.Of(city, content, city.Buildings[0])?.ToString());
     }
 
+    /// <summary>A reason exposes its kind and item; a house's <c>NoRecipe</c> has no item (the default).</summary>
     [Fact]
     public void Of_Reason_HasKindAndItem()
     {
@@ -151,6 +166,7 @@ public sealed class StallReasonTests
         Assert.Equal((StallKind.NoRecipe, default(ItemId)), (house.Kind, house.Item));
     }
 
+    /// <summary>A null city, content or building throws for that parameter.</summary>
     [Fact]
     public void Of_NullArgument_Throws()
     {
@@ -161,6 +177,7 @@ public sealed class StallReasonTests
         Assert.Throws<ArgumentNullException>("building", () => StallReason.Of(city, TestContent, null!));
     }
 
+    /// <summary>The stall reason of the building with the id as text, or null for none.</summary>
     private static string? ReasonOf(CityState city, int buildingId)
     {
         Assert.True(city.TryGetBuilding(buildingId, out Building? building));

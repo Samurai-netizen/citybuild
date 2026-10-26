@@ -11,9 +11,12 @@ namespace CityBuilder.Simulation.Tests.EngineRules;
 /// </summary>
 public sealed class CycleRuleTests
 {
+    /// <summary>The workshop's input.</summary>
     private static readonly ItemId _wood = new("wood");
+    /// <summary>The workshop's output.</summary>
     private static readonly ItemId _boards = new("boards");
 
+    /// <summary>A cycle takes its inputs in the second it starts and nothing more while it runs.</summary>
     [Fact]
     public void Inputs_CycleStarts_LeaveTheStockAtOnce()
     {
@@ -28,6 +31,7 @@ public sealed class CycleRuleTests
         Assert.Equal(1, city.GetQuantity(_wood));
     }
 
+    /// <summary>A cycle's outputs are only reserved until its end, arrive in exactly that second, and count as produced then.</summary>
     [Fact]
     public void Outputs_CycleEnds_ArriveInThatSecondAndNotBefore()
     {
@@ -43,6 +47,7 @@ public sealed class CycleRuleTests
         Assert.Equal(new Dictionary<ItemId, long> { [_boards] = 1 }, report.Produced);
     }
 
+    /// <summary>A cycle lasts <c>CeilDiv(labor, workers)</c> seconds, with research reductions applied to the labor first (162 / 4 = 40.5 → 41 s).</summary>
     [Theory]
     [InlineData(4, false, 180, 45)]
     [InlineData(5, false, 180, 36)]

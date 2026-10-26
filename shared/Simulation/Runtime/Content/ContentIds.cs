@@ -33,6 +33,7 @@ namespace CityBuilder.Simulation.Content
             return true;
         }
 
+        /// <summary>Whether a character is an ASCII letter from <c>a</c> to <c>z</c>; no other alphabet counts, so the rule is the same in every culture.</summary>
         private static bool IsLowercaseLetter(char character) => character >= 'a' && character <= 'z';
     }
 }

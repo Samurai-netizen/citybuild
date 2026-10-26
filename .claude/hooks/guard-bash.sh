@@ -73,6 +73,7 @@ split_segments() {
   awk '{ gsub(/[0-9]*>&[0-9-]*/, " "); gsub(/&>>?/, ">"); gsub(/&&|\|\||[;|&(){}`]/, "\n"); print }'
 }
 
+# Denies the command: prints the hook's JSON answer with the reason (backslashes and quotes escaped) and ends the hook.
 deny() {
   local reason="$1"
   reason="${reason//\\/\\\\}"; reason="${reason//\"/\\\"}"

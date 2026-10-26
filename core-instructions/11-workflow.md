@@ -51,7 +51,8 @@ Roles:
 - [ ] New behaviour has tests; relevant suites pass; no test was weakened (or G-Tests was approved).
 - [ ] No game-number literals, no client authority, no era- or research-specific `if`s, no XP or level concepts.
 - [ ] Docs updated per the change recipe (`19`), and every row of the build log's Docs impact table closed (`updated`, `new`, `deleted` or
-  `no change: <why>`); public APIs have XML docs; touched module docs show `Last updated: <ID>`.
+  `no change: <why>`); every file and declaration the change adds or changes is documented (`14` → Documentation in code); touched
+  module docs show `Last updated: <ID>`.
 - [ ] `scripts/dev/check-docs.sh --base origin/main` passes; the handbook builds (`bash scripts/dev/docs-site.sh build`); generated docs
   are current (from M0-61).
 - [ ] Build log entry complete: sessions, every decision, owner input, verification, follow-ups.

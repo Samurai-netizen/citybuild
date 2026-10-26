@@ -11,10 +11,13 @@ namespace CityBuilder.Simulation.Tests.Settlement;
 /// </summary>
 public sealed class AdvanceAllocationTests
 {
+    /// <summary>The short advance whose allocations are the baseline: two minutes, about 8 events of the golden city.</summary>
     private const long _shortAdvanceSeconds = 120;
 
+    /// <summary>The long advance: eight hours, about 1,700 events of the golden city.</summary>
     private const long _eightHours = 8 * 3600;
 
+    /// <summary>Eight hours of production allocate no more than two minutes do, so nothing allocates per event (after a warm-up run).</summary>
     [Fact]
     public void Advance_EightHoursOfProduction_AllocatesNoMoreThanTwoMinutes()
     {
@@ -30,6 +33,7 @@ public sealed class AdvanceAllocationTests
         Assert.True(longBytes <= shortBytes, $"Eight hours allocated {longBytes} bytes, two minutes {shortBytes}.");
     }
 
+    /// <summary>The bytes the current thread allocated while running the action.</summary>
     private static long AllocatedBytes(Action action)
     {
         long before = GC.GetAllocatedBytesForCurrentThread();

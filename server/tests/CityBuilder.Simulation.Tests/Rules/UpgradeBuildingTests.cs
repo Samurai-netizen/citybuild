@@ -12,8 +12,10 @@ namespace CityBuilder.Simulation.Tests.Rules;
 /// </summary>
 public sealed class UpgradeBuildingTests
 {
+    /// <summary>The workshop's output, reserved by a running cycle.</summary>
     private static readonly ItemId _boards = new("boards");
 
+    /// <summary>Upgrading an idle producer pays the next level's cost and starts the upgrade from the clock, keeping its workers.</summary>
     [Fact]
     public void UpgradeBuilding_IdleProducer_PaysAndUpgradesKeepingItsWorkers()
     {
@@ -33,6 +35,7 @@ public sealed class UpgradeBuildingTests
             CityDump.Describe(city));
     }
 
+    /// <summary>Upgrading a house pays every item of the cost (gold and wood).</summary>
     [Fact]
     public void UpgradeBuilding_IdleHouse_PaysEveryItemOfTheCost()
     {
@@ -44,6 +47,7 @@ public sealed class UpgradeBuildingTests
         Assert.Equal((BuildingPhase.Upgrading, 1000L, (long?)1008, 2), (city.Buildings[0].Phase, city.Buildings[0].PhaseStartedAt, city.Buildings[0].PhaseEndsAt, city.Buildings[0].TargetLevel));
     }
 
+    /// <summary>Upgrading mid-cycle refunds the cycle's inputs before paying, clears the cycle and its reservation, and keeps the workers.</summary>
     [Fact]
     public void UpgradeBuilding_ProducingBuilding_RefundsTheCycleInputsAndReleasesTheReservation()
     {
@@ -66,6 +70,7 @@ public sealed class UpgradeBuildingTests
         Assert.Equal(0, CityQueries.Reserved(city, TestContent, _boards));
     }
 
+    /// <summary>A frozen cycle is refunded like a running one.</summary>
     [Fact]
     public void UpgradeBuilding_FrozenCycle_RefundsItsInputsToo()
     {
@@ -76,6 +81,7 @@ public sealed class UpgradeBuildingTests
         Assert.Equal(2, city.GetQuantity(new ItemId("wood")));
     }
 
+    /// <summary>Upgrading an idle building names the cost as spent and nothing as refunded.</summary>
     [Fact]
     public void UpgradeBuilding_IdleBuilding_NamesTheCostAsSpentAndNothingRefunded()
     {
@@ -84,6 +90,7 @@ public sealed class UpgradeBuildingTests
         RulesAssert.Moved(Upgrade(city, 1), spent: "gold=20 wood=5", refunded: "");
     }
 
+    /// <summary>Upgrading over a running or frozen cycle names its inputs as refunded, besides the cost as spent.</summary>
     [Theory]
     [InlineData(1035L, 2)]
     [InlineData(null, 0)]
@@ -94,6 +101,7 @@ public sealed class UpgradeBuildingTests
         RulesAssert.Moved(Upgrade(city, 2), spent: "gold=30 wood=1", refunded: "wood=2");
     }
 
+    /// <summary>A refund that lifts the stock above the cap is kept in full: caps limit production only.</summary>
     [Fact]
     public void UpgradeBuilding_RefundAboveTheCap_KeepsAllOfIt()
     {
@@ -105,6 +113,7 @@ public sealed class UpgradeBuildingTests
         Assert.Equal(101, city.GetQuantity(new ItemId("wood")));
     }
 
+    /// <summary>The cost is checked against the stock before the refund, so a cost only the refund would cover is rejected.</summary>
     [Fact]
     public void UpgradeBuilding_CostCoveredOnlyWithTheRefund_IsRejected()
     {
@@ -114,11 +123,13 @@ public sealed class UpgradeBuildingTests
         RulesAssert.Rejected(MutationErrorCode.InsufficientResource, city, city => Upgrade(city, 2));
     }
 
+    /// <summary>A cost the stock can't cover is rejected as <see cref="MutationErrorCode.InsufficientResource"/>.</summary>
     [Fact]
     public void UpgradeBuilding_CostNotAffordable_IsRejected() =>
         RulesAssert.Rejected(MutationErrorCode.InsufficientResource, City(inventory: [("gold", 20), ("wood", 4)], buildings: [Idle(1, "hut", 0, 0)]),
             city => Upgrade(city, 1));
 
+    /// <summary>An id with no building is rejected as <see cref="MutationErrorCode.BuildingNotFound"/>.</summary>
     [Theory]
     [InlineData(0)]
     [InlineData(3)]
@@ -127,21 +138,25 @@ public sealed class UpgradeBuildingTests
         RulesAssert.Rejected(MutationErrorCode.BuildingNotFound, City(inventory: [("gold", 100), ("wood", 100)], buildings: [Idle(1, "hut", 0, 0), Idle(2, "hut", 1, 0)]),
             city => Upgrade(city, id));
 
+    /// <summary>A building under construction can't be upgraded: <see cref="MutationErrorCode.BuildingBusy"/>.</summary>
     [Fact]
     public void UpgradeBuilding_Constructing_IsRejected() =>
         RulesAssert.Rejected(MutationErrorCode.BuildingBusy, City(inventory: [("gold", 100), ("wood", 100)], buildings: [Constructing(1, "hut", 0, 0, startedAt: 998, endsAt: 1003)]),
             city => Upgrade(city, 1));
 
+    /// <summary>A building already upgrading can't start another upgrade: <see cref="MutationErrorCode.BuildingBusy"/>.</summary>
     [Fact]
     public void UpgradeBuilding_AlreadyUpgrading_IsRejected() =>
         RulesAssert.Rejected(MutationErrorCode.BuildingBusy, City(inventory: [("gold", 100), ("wood", 100)], buildings: [Upgrading(1, "lumber_camp", 0, 0, level: 1, workers: 1, startedAt: 995, endsAt: 1007)]),
             city => Upgrade(city, 1));
 
+    /// <summary>A building at its max level is rejected as <see cref="MutationErrorCode.MaxLevel"/>.</summary>
     [Fact]
     public void UpgradeBuilding_AtMaxLevel_IsRejected() =>
         RulesAssert.Rejected(MutationErrorCode.MaxLevel, City(inventory: [("gold", 100), ("wood", 100)], buildings: [Idle(1, "lumber_camp", 0, 0, level: 2)]),
             city => Upgrade(city, 1));
 
+    /// <summary>With every builder busy an upgrade is rejected as <see cref="MutationErrorCode.NoFreeBuilder"/>.</summary>
     [Fact]
     public void UpgradeBuilding_EveryBuilderBusy_IsRejected()
     {
@@ -155,6 +170,7 @@ public sealed class UpgradeBuildingTests
         RulesAssert.Rejected(MutationErrorCode.NoFreeBuilder, city, city => Upgrade(city, 3));
     }
 
+    /// <summary>When several checks fail, the first in spec order wins: busy before max level, max level before no builder, no builder before the cost.</summary>
     [Fact]
     public void UpgradeBuilding_SeveralChecksFail_ReportsTheFirstInSpecOrder()
     {
@@ -172,6 +188,7 @@ public sealed class UpgradeBuildingTests
         RulesAssert.Rejected(MutationErrorCode.NoFreeBuilder, city, city => Upgrade(city, 4));
     }
 
+    /// <summary>A null city or content is a programmer error and throws.</summary>
     [Fact]
     public void UpgradeBuilding_NullCityOrContent_Throws()
     {
@@ -184,5 +201,6 @@ public sealed class UpgradeBuildingTests
     private static Building WorkshopProducing(long? endsAt, int workers = 2) =>
         Producing(2, "workshop", 1, 0, 1, workers, cycleStartedAt: 990, cycleLabor: 90, laborRemaining: 90, segmentStartedAt: 990, endsAt: endsAt);
 
+    /// <summary>Tries to upgrade a building, with the fixture content.</summary>
     private static MutationResult Upgrade(CityState city, int buildingId) => CityRules.UpgradeBuilding(city, TestContent, buildingId);
 }

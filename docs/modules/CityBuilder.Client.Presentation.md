@@ -32,6 +32,9 @@ field to assign them to: `PanelSettings.asset` (the owner's; its theme is `Asset
 - Screens are UI Toolkit (UXML + USS) loaded from `Resources/UI`; scene objects are created from code. `.unity` and `.prefab` YAML is
   never hand-edited (`.claude/rules/unity.md`).
 - MonoBehaviours stay thin; logic lives in plain classes that EditMode tests can run (`14`).
+- Every type and member, private ones included, has an XML doc comment (`core-instructions/14-coding-standards.md` → Documentation
+  in code). Unity's compiler doesn't check them, so `CityBuilder.Repository.Tests` (a server test project) checks every script
+  under `Assets/_Project`.
 
 ## How to extend
 A new screen or view: recipe "New client screen or view" in `core-instructions/19-change-recipes.md` (a folder under
@@ -57,4 +60,4 @@ Those two are **not** tests: both need a second scene asset that a test can load
   camera until M0-43, so the Editor may print "No cameras rendering"; the UI Toolkit overlay does not need one.
 - The label has a fixed top-left position; safe-area padding and touch-target sizes come with M0-59.
 
-Last updated: M0-05
+Last updated: CR-0003-T1

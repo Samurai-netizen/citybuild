@@ -255,6 +255,7 @@ namespace CityBuilder.Simulation.State
             DefinitionOf(content, type).GetLevel(level).Recipe
             ?? throw new InvalidOperationException(FormattableString.Invariant($"The city has a {type} at level {level} producing, but it has no recipe."));
 
+        /// <summary>The definition of a research node the city has completed; throws when the content doesn't know it, since then the city doesn't belong to this content.</summary>
         private static ResearchDefinition ResearchOf(GameContent content, ResearchId id) =>
             content.TryGetResearch(id, out ResearchDefinition? research)
                 ? research

@@ -24,13 +24,17 @@ namespace CityBuilder.Simulation.Tests.Properties;
 /// </summary>
 internal sealed class InvariantObserver
 {
-    // A branch leaves after this percentage of the history's steps.
+    /// <summary>The chance in percent that a branch leaves the history after one of its steps.</summary>
     private const int _branchPercent = 5;
 
+    /// <summary>The game content the history runs on.</summary>
     private readonly GameContent _content;
+    /// <summary>The observer's own random numbers: where branches leave, what they do, and the negative advance at the end.</summary>
     private readonly SeededRandom _random;
+    /// <summary>The production cap in seconds (<see cref="GameRules.MaxOfflineProductionSeconds"/>): a longer advance has a dormant tail.</summary>
     private readonly long _cap;
 
+    /// <summary>An observer of one history on <paramref name="content"/>, drawing its own choices from <paramref name="random"/>.</summary>
     private InvariantObserver(GameContent content, SeededRandom random)
     {
         _content = content;
@@ -38,9 +42,17 @@ internal sealed class InvariantObserver
         _cap = content.Rules.MaxOfflineProductionSeconds;
     }
 
+    /// <summary>
+    /// Replays the history from a new starter city step by step and hands every step to <paramref name="checks"/>. Throws when the observed
+    /// steps don't add up to the generated reports and city.
+    /// </summary>
     public static void Observe(GameContent content, CityHistory history, SeededRandom random, InvariantChecks checks) =>
         new InvariantObserver(content, random).Run(history, new Line(checks, Branch: null));
 
+    /// <summary>
+    /// Replays every operation, compares each operation's reports and then the final city with the generated history, and last checks a
+    /// negative advance on a copy.
+    /// </summary>
     private void Run(CityHistory history, Line line)
     {
         CityState city = CityFactory.CreateStarterCity(_content);
@@ -64,7 +76,10 @@ internal sealed class InvariantObserver
         Piece(CityCopy.Of(city), backwards, 0, backwards.Seconds, city.Clock, line with { Branch = "after the history, on a copy" });
     }
 
-    // The command's step; null when a branch's command was rejected (a rejection changes nothing: the rule tests' business).
+    /// <summary>
+    /// The command's step: the mutation and its zero-length advance, checked as one step. Null when a branch's command was rejected (a
+    /// rejection changes nothing: the rule tests' business); a rejection on the history itself throws, since the replay no longer follows it.
+    /// </summary>
     private SettlementReport? Command(CityState city, CityOperation.Command command, int number, Line line)
     {
         CityState before = CityCopy.Of(city);
@@ -79,7 +94,10 @@ internal sealed class InvariantObserver
         return report;
     }
 
-    // A zero-length piece first (after a dormant tail the city may have idle producers that can start), then one piece to each next due time.
+    /// <summary>
+    /// An advance in steps: a zero-length piece first (after a dormant tail the city may have idle producers that can start), then one piece
+    /// to each next due time, until <paramref name="seconds"/> have passed.
+    /// </summary>
     private List<SettlementReport> Stepped(CityState city, CityOperation operation, int number, long seconds, long windowStart, Line line)
     {
         long target = city.Clock + seconds;
@@ -98,6 +116,7 @@ internal sealed class InvariantObserver
         return reports;
     }
 
+    /// <summary>One piece of an advance, checked as a step; after a step of the history itself a branch may leave (<see cref="_branchPercent"/>).</summary>
     private SettlementReport Piece(CityState city, CityOperation operation, int number, long seconds, long windowStart, Line line)
     {
         CityState before = CityCopy.Of(city);
@@ -111,6 +130,10 @@ internal sealed class InvariantObserver
         return report;
     }
 
+    /// <summary>
+    /// Leaves the history on a copy of the city: an aimed command and, when it is applied, a stepped advance of 0 to 600 seconds (never more
+    /// than the cap), checked with a fork of the checks. The replayed city does not change.
+    /// </summary>
     private void BranchFrom(CityState city, int number, Line line)
     {
         CityState branch = CityCopy.Of(city);
@@ -130,8 +153,10 @@ internal sealed class InvariantObserver
         }
     }
 
-    // Mostly a worker change (a new labor segment) or an upgrade on a producing building, an upgrade preferably where the cycle took inputs (it
-    // refunds them); else any command.
+    /// <summary>
+    /// The branch's command: mostly a worker change (a new labor segment) or an upgrade on a producing building, an upgrade preferably where
+    /// the cycle took inputs (it refunds them); else any command, or null when <see cref="CityGenerator.RandomCommand"/> gives none.
+    /// </summary>
     private CityOperation.Command? AimedCommand(CityState city)
     {
         List<Building> producing = [.. city.Buildings.Where(building => building.Phase == BuildingPhase.Producing)];
@@ -150,8 +175,13 @@ internal sealed class InvariantObserver
         return new CityOperation.UpgradeBuilding(_random.Pick(withInputs.Count > 0 ? withInputs : producing).Id);
     }
 
+    /// <summary>The definition of a building's current level.</summary>
     private BuildingLevelDefinition Level(Building building) => DormantTail.Definition(_content, building.TypeId).GetLevel(building.Level);
 
+    /// <summary>
+    /// An advance beyond the cap: the city advances in one call, a copy is stepped through the window, and the rest, from the copy to the
+    /// city, is checked as one dormant-tail step against <see cref="DormantTail.Model"/>.
+    /// </summary>
     private SettlementReport Dormant(CityState city, CityOperation.Advance advance, int number, Line line)
     {
         long windowStart = city.Clock;
@@ -178,6 +208,7 @@ internal sealed class InvariantObserver
         return whole;
     }
 
+    /// <summary>The step from <paramref name="before"/> to <paramref name="after"/>, with what the report says happened in between.</summary>
     private InvariantStep Step(
         CityState before, CityState after, CityOperation operation, int number, MutationResult? mutation, long requested, SettlementReport report,
         long windowStart, Line line) => new()
@@ -198,7 +229,10 @@ internal sealed class InvariantObserver
             CompletedResearch = report.CompletedResearch,
         };
 
-    // The earliest timer end of the city, read from its public state: research, constructions, upgrades and running cycles.
+    /// <summary>
+    /// The earliest timer end of the city, read from its public state: research, constructions, upgrades and running cycles. Null when no
+    /// timer runs.
+    /// </summary>
     private static long? NextDueAt(CityState city)
     {
         long? next = city.ActiveResearch?.EndsAt;
@@ -213,6 +247,7 @@ internal sealed class InvariantObserver
         return next;
     }
 
+    /// <summary>The quantities of the whole advance less those of its stepped pieces: what the dormant tail did.</summary>
     private static SortedDictionary<ItemId, long> Minus(IReadOnlyDictionary<ItemId, long> whole, IEnumerable<IReadOnlyDictionary<ItemId, long>> parts)
     {
         var rest = new SortedDictionary<ItemId, long>(whole.ToDictionary(item => item.Key, item => item.Value));
@@ -224,6 +259,7 @@ internal sealed class InvariantObserver
         return rest;
     }
 
+    /// <summary>Throws when the observed values differ from the generated ones: then the observer did not replay the history it was given.</summary>
     private static void Same(string what, IReadOnlyList<(string Path, string Value)> generated, IReadOnlyList<(string Path, string Value)> observed)
     {
         string? difference = StructuralEquality.FirstDifference(generated, observed);
@@ -233,6 +269,8 @@ internal sealed class InvariantObserver
         }
     }
 
-    // Where steps go: the history's own checks (Branch null), or a branch's fork of them with a description of how the branch left.
+    /// <summary>Where steps go: the history's own checks, or a branch's fork of them with a description of how the branch left.</summary>
+    /// <param name="Checks">The checks the steps go to.</param>
+    /// <param name="Branch">Null for the history itself; for a branch, how it left the history.</param>
     private sealed record Line(InvariantChecks Checks, string? Branch);
 }

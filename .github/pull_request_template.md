@@ -13,6 +13,7 @@
 - [ ] Tests added for new behaviour; no test deleted, skipped or loosened (or approved under G-Tests)
 - [ ] No game-number literals, no client authority, no era/research-specific `if`s
 - [ ] Docs updated per change recipe (core-instructions/19), every Docs impact row closed; module docs show `Last updated:`
+- [ ] Every new or changed file and declaration says what it is for (core-instructions/14 → Documentation in code)
 - [ ] `check-docs.sh --base origin/main` passes; the handbook builds (`bash scripts/dev/docs-site.sh build`); generated docs current (from M0-61)
 - [ ] Build log entry complete (decisions, owner input, verification)
 - [ ] Resume point, plan board, CHANGELOG updated

@@ -25,6 +25,8 @@ paths:
   check constraints, migrations committed. Persistence models ≠ Simulation types; map explicitly.
 - Async all the way; pass `CancellationToken` from the endpoint down to EF calls.
 - `Directory.Build.props`: `Nullable=enable`, `TreatWarningsAsErrors=true` for `src/`,
-  `AnalysisLevel=latest-recommended`.
+  `AnalysisLevel=latest-recommended`. A missing or broken doc comment is an error in every server project, tests included.
+- Every type and member, private ones included, has an XML doc comment, and every project file starts with a comment
+  (`core-instructions/14-coding-standards.md` → Documentation in code; `CityBuilder.Repository.Tests` checks the C# files).
 - Log with structured templates (`{PlayerId}`, `{RequestId}`, `{Command}`), never string concatenation,
   never tokens or secrets.

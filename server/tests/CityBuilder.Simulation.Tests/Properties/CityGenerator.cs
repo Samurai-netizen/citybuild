@@ -66,7 +66,10 @@ internal static class CityGenerator
         _ => StartResearch(random, city, content),
     };
 
-    // Time passes in a third of the attempts; the rest are commands, placing and assigning workers more often than upgrading and research.
+    /// <summary>
+    /// The next operation to try: time passes in about a third of the attempts (35 in 100); the rest are commands, placing and assigning
+    /// workers more often than upgrading and research. Null when the chosen command has nothing to act on.
+    /// </summary>
     private static CityOperation? Next(SeededRandom random, CityState city, GameContent content) => random.Between(1, 100) switch
     {
         <= 35 => new CityOperation.Advance(Gap(random, content)),
@@ -76,6 +79,10 @@ internal static class CityGenerator
         _ => StartResearch(random, city, content),
     };
 
+    /// <summary>
+    /// A placement on a random free tile, of a type the city doesn't have yet three times in four (when there is one), else of any type; null
+    /// when no tile is free. The rules still decide whether the type is unlocked and affordable.
+    /// </summary>
     private static CityOperation.PlaceBuilding? PlaceBuilding(SeededRandom random, CityState city, GameContent content)
     {
         var freeTiles = new List<(int X, int Y)>();
@@ -95,13 +102,15 @@ internal static class CityGenerator
             return null;
         }
 
-        // Half the time a type the city doesn't have yet, so the coins aren't all spent on the first types and later chains get built.
+        // Three times in four a type the city doesn't have yet (when there is one), so the coins aren't all spent on the first types and later
+        // chains get built.
         var newTypes = content.Buildings.Where(type => !city.Buildings.Any(building => building.TypeId == type.Id)).ToList();
         BuildingDefinition chosen = newTypes.Count > 0 && random.Chance(75) ? random.Pick(newTypes) : random.Pick(content.Buildings);
         (int tileX, int tileY) = random.Pick(freeTiles);
         return new CityOperation.PlaceBuilding(chosen.Id.ToString(), tileX, tileY);
     }
 
+    /// <summary>A worker change on a random building, to a random count from 0 to its level's limit; null when the city has no building.</summary>
     private static CityOperation.AssignWorkers? AssignWorkers(SeededRandom random, CityState city, GameContent content)
     {
         if (city.Buildings.Count == 0)
@@ -118,13 +127,17 @@ internal static class CityGenerator
         return new CityOperation.AssignWorkers(building.Id, (int)random.Between(0, type.GetLevel(building.Level).MaxWorkers));
     }
 
-    // A node that isn't completed yet when there is one; the rules still check the slot, the prerequisites, the era and the cost.
+    /// <summary>
+    /// A research start of a random node, one that isn't completed yet when there is one; the rules still check the slot, the prerequisites,
+    /// the era and the cost.
+    /// </summary>
     private static CityOperation.StartResearch StartResearch(SeededRandom random, CityState city, GameContent content)
     {
         var open = content.Research.Where(node => !city.HasCompletedResearch(node.Id)).ToList();
         return new CityOperation.StartResearch(random.Pick(open.Count > 0 ? open : content.Research).Id.ToString());
     }
 
+    /// <summary>An upgrade of a random building; null when the city has no building. The rules still decide whether it can be upgraded.</summary>
     private static CityOperation.UpgradeBuilding? UpgradeBuilding(SeededRandom random, CityState city) =>
         city.Buildings.Count == 0 ? null : new CityOperation.UpgradeBuilding(random.Pick(city.Buildings).Id);
 }

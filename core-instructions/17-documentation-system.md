@@ -9,7 +9,7 @@ Every fact has exactly one home; everything else links to it.
 |---|---|---|---|
 | **Normative** (specs and rules) | `core-instructions/`, `AGENTS.md`, `CLAUDE.md` | What must be true: rules, design, contracts | AI coders first, people too |
 | **Descriptive** (the system as built) | `docs/` | What exists, how to run it, how it works, how to extend it, what happened | People first, AI too |
-| **In code** | XML doc comments, tests | What a public type or member does; executable examples | Both |
+| **In code** | A doc comment on every declaration, a header comment in every file, tests | What each file, type, member and function is for and does (`14` → Documentation in code); executable examples | Both |
 
 When the code changes a normative fact (an engine rule, an API field), update the spec in the same commit.
 Specs never describe the future as if it were built. Unbuilt parts are marked *(planned, M2)*.
@@ -26,6 +26,7 @@ The handbook site (§7) renders both kinds as one book, and every page says whic
 | DB schema | `core-instructions/06` + migrations → generated schema doc | |
 | Architecture (intended) | `core-instructions/03` | |
 | Architecture (as built) | `docs/architecture/overview.md` + `docs/modules/<Module>.md` | One module doc per project or assembly (enforced) |
+| What a file, type, member or function is for | its doc comment or header comment (`14` → Documentation in code) | Module docs give the overview and name the key types; they don't repeat member docs |
 | How to run, build, test | `docs/getting-started.md` | Commands summary in `AGENTS.md` |
 | How to extend (recipes) | `core-instructions/19` (checklists) + `docs/how-to/*.md` (worked guides) | |
 | Decisions | build log (all) → `12-decisions.md` (project-wide) → `docs/adr/` (architectural) | §4 |
@@ -68,6 +69,9 @@ Every task keeps the docs current (owner directive OD-11, `15`), in this order:
 4. **Checks** (`scripts/dev/check-docs.sh`; the pre-commit hook runs the static part, CI the rest):
    - required files exist; relative links resolve; the build log index is complete and entries have the required sections;
    - CR and ADR status lines are valid; every project or assembly has a module doc; the always-loaded files stay small;
+   - every file that isn't C# and can hold a comment starts with one that says what it is for, and every shell, PowerShell and
+     JavaScript function has a comment above it (`14` → Documentation in code; C# files are checked by `CityBuilder.Repository.Tests`
+     and the compiler);
    - on a PR (`--base`): code changes (`server/`, `shared/`, the Unity project, `tools/`, `scripts/`, `website/`) come with a build log
      entry, a progress update and a CHANGELOG line; merged log entries are untouched;
    - on a PR: a module's code changed → its module doc changed, or a Docs impact row names it with the reason (the module is the

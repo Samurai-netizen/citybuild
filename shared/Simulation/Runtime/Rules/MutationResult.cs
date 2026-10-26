@@ -12,8 +12,10 @@ namespace CityBuilder.Simulation.Rules
     /// </summary>
     public sealed class MutationResult
     {
+        /// <summary>The one shared empty item list of every result that spent or refunded nothing, so a rejection allocates nothing.</summary>
         private static readonly IReadOnlyList<ItemQuantity> _nothing = Array.AsReadOnly(Array.Empty<ItemQuantity>());
 
+        /// <summary>Holds one outcome; the static members make sure a rejection carries no items.</summary>
         private MutationResult(MutationErrorCode? errorCode, IReadOnlyList<ItemQuantity> spent, IReadOnlyList<ItemQuantity> refunded)
         {
             ErrorCode = errorCode;

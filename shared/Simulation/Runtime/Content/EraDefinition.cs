@@ -9,6 +9,7 @@ namespace CityBuilder.Simulation.Content
     /// </summary>
     public sealed class EraDefinition
     {
+        /// <summary>Creates the era from values the shape phase has read (<see cref="ContentReader"/>); each is described on its property.</summary>
         internal EraDefinition(int number, EraId id, string name)
         {
             Number = number;

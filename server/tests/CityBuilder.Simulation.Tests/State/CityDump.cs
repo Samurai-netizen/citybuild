@@ -10,6 +10,10 @@ namespace CityBuilder.Simulation.Tests.State;
 /// </summary>
 internal static class CityDump
 {
+    /// <summary>
+    /// The city as text: a line with clock, era and next id, one with the stock, one per building (every stored field), the completed research
+    /// and the active research. Two cities with the same text have the same stored values.
+    /// </summary>
     public static string Describe(CityState city)
     {
         var text = new StringBuilder();
@@ -38,5 +42,6 @@ internal static class CityDump
     public static string BuildingLine(CityState city, int buildingId) =>
         Describe(city).Split('\n').Single(line => line.StartsWith($"building {buildingId} ", StringComparison.Ordinal));
 
+    /// <summary>A nullable time as text, <c>null</c> for none.</summary>
     private static string Time(long? time) => time.HasValue ? time.Value.ToString(CultureInfo.InvariantCulture) : "null";
 }

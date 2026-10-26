@@ -5,6 +5,7 @@ namespace CityBuilder.Simulation.Tests;
 /// <summary>Edge cases of the rounding-down division that the display helpers use for rates and progress.</summary>
 public sealed class FloorDivTests
 {
+    /// <summary>0 divided by any positive divisor is 0.</summary>
     [Theory]
     [InlineData(0L, 1L)]
     [InlineData(0L, 7L)]
@@ -14,6 +15,7 @@ public sealed class FloorDivTests
         Assert.Equal(0L, IntegerMath.FloorDiv(dividend, divisor));
     }
 
+    /// <summary>An exact multiple is not rounded, also at the edges of <c>long</c>.</summary>
     [Theory]
     [InlineData(10L, 5L, 2L)]
     [InlineData(180L, 4L, 45L)]
@@ -24,6 +26,7 @@ public sealed class FloorDivTests
         Assert.Equal(expected, IntegerMath.FloorDiv(dividend, divisor));
     }
 
+    /// <summary>A remainder is dropped (181 / 4 is 45), so a display value never promises more than will happen.</summary>
     [Theory]
     [InlineData(1L, 2L, 0L)]
     [InlineData(3L, 2L, 1L)]
@@ -37,6 +40,7 @@ public sealed class FloorDivTests
         Assert.Equal(expected, IntegerMath.FloorDiv(dividend, divisor));
     }
 
+    /// <summary>For every dividend 0..400 and divisor 1..70 the result is the largest q with q × divisor ≤ dividend.</summary>
     [Fact]
     public void FloorDiv_SmallRange_MatchesTheDefinitionOfTheFloor()
     {
@@ -59,6 +63,7 @@ public sealed class FloorDivTests
         Assert.Empty(failures);
     }
 
+    /// <summary>A negative dividend is a programmer error and throws for the parameter <c>dividend</c>, also when the divisor is bad too.</summary>
     [Theory]
     [InlineData(-1L, 1L)]
     [InlineData(long.MinValue, long.MaxValue)]
@@ -71,6 +76,7 @@ public sealed class FloorDivTests
         Assert.Equal("dividend", exception.ParamName);
     }
 
+    /// <summary>A divisor of 0 or less is a programmer error and throws for the parameter <c>divisor</c>.</summary>
     [Theory]
     [InlineData(10L, 0L)]
     [InlineData(0L, 0L)]

@@ -15,9 +15,12 @@ namespace CityBuilder.Simulation.Tests.EngineRules;
 /// </summary>
 public sealed class WorkerRuleTests
 {
+    /// <summary>The lumber camp's output and the workshop's input.</summary>
     private static readonly ItemId _wood = new("wood");
+    /// <summary>The workshop's output.</summary>
     private static readonly ItemId _boards = new("boards");
 
+    /// <summary>A worker change mid-cycle keeps the labor done: 180 labor with 3 workers, after 20 s 120 are left, and 4 workers finish them in 30 s.</summary>
     [Fact]
     public void Reassigning_MidCycle_KeepsTheProgress()
     {
@@ -35,6 +38,7 @@ public sealed class WorkerRuleTests
         Assert.Equal(1, city.GetQuantity(_boards));
     }
 
+    /// <summary>Removing all workers freezes the cycle with its progress, and its reserved output still counts against the cap.</summary>
     [Fact]
     public void ZeroWorkers_MidCycle_FreezeItAndKeepItsReservedOutput()
     {
@@ -53,6 +57,7 @@ public sealed class WorkerRuleTests
         Assert.Equal((99L, "StorageFull:wood"), (city.GetQuantity(_wood), StallReason.Of(city, TestContent, city.Buildings[2])?.ToString()));
     }
 
+    /// <summary>Workers added to a frozen cycle resume it with the labor it had left, however long it stood still.</summary>
     [Fact]
     public void ReAddingWorkers_FrozenCycle_ResumesWhereItStopped()
     {
@@ -70,6 +75,7 @@ public sealed class WorkerRuleTests
         Assert.Equal(1, city.GetQuantity(_wood));
     }
 
+    /// <summary>Only a completed construction staffs itself, with <c>min(free, MaxWorkers)</c> in id order; upgrades and new houses staff nobody.</summary>
     [Fact]
     public void AutoStaffing_SeveralCompletions_OnlyConstructionsGetMinOfFreeAndMax()
     {
@@ -96,6 +102,7 @@ public sealed class WorkerRuleTests
         Assert.Equal((0, 2, 1), (city.Buildings[1].AssignedWorkers, city.Buildings[4].AssignedWorkers, city.Buildings[5].AssignedWorkers));
     }
 
+    /// <summary>A house provides its workers from the second its construction completes, not before.</summary>
     [Fact]
     public void HouseCompleting_ConstructionEnds_ProvidesWorkersFromThatSecond()
     {

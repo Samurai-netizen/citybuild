@@ -18,6 +18,9 @@ Full guide: `core-instructions/09-unity-client.md`.
 - No allocations or LINQ in `Update()`. No per-frame server calls.
 - Use `Awaitable`/`async` with `destroyCancellationToken`; never `async void` except Unity event handlers.
 - C# 9 only (Unity's compiler): no file-scoped namespaces, no global usings.
+- Every script: an XML doc comment on every type and member, a `//` comment above a local function; UXML and USS start with a comment
+  (`core-instructions/14-coding-standards.md` → Documentation in code). Unity doesn't check them: `CityBuilder.Repository.Tests` and
+  `check-docs.sh` do.
 - Every new script folder needs the correct `.asmdef`; tests go in `Assets/_Project/Tests/EditMode|PlayMode`.
 - Commit `.meta` files with their assets. Never commit `Library/`, `Temp/`, `Logs/`, `UserSettings/`.
 - Anything requiring the Editor GUI → write numbered **[MANUAL]** steps in your report.

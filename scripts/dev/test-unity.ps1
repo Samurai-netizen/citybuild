@@ -12,6 +12,7 @@
 #>
 $ErrorActionPreference = 'Stop'
 
+# Reports a setup problem (UNITY_EDITOR, the project) and ends the script with exit code 2.
 function Stop-Setup([string]$Message) {
     [Console]::Error.WriteLine($Message)
     exit 2
@@ -54,6 +55,8 @@ function Get-Count($Element, [string]$Name) {
 $script:failedRuns = 0
 $script:summary = @()
 
+# Runs the tests of one platform (EditMode or PlayMode) and adds its line to the summary; a run that fails, runs no test or
+# leaves no readable result file counts as failed.
 function Invoke-UnityTests([string]$Platform) {
     $results = Join-Path $out "$Platform.xml"
     $log = Join-Path $out "$Platform.log"

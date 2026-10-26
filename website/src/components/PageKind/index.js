@@ -1,3 +1,4 @@
+// The page-kind line above every handbook page (website/README.md): what kind of page it is and the repository file it comes from.
 import React from 'react';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import {useDoc} from '@docusaurus/plugin-content-docs/client';

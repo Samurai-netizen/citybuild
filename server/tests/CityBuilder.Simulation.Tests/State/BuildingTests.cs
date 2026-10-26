@@ -6,6 +6,7 @@ namespace CityBuilder.Simulation.Tests.State;
 /// <summary>The building constructor accepts every phase in its canonical form and rejects fields a phase can't have.</summary>
 public sealed class BuildingTests
 {
+    /// <summary>The restoring constructor keeps every field as given, here of a producing building mid-cycle.</summary>
     [Fact]
     public void Constructor_EachPhase_KeepsEveryField()
     {
@@ -17,6 +18,7 @@ public sealed class BuildingTests
         Assert.Equal((180L, 120L, 120L), (building.CycleLabor, building.LaborRemaining, building.SegmentStartedAt));
     }
 
+    /// <summary>Each phase in its canonical form (the fixture's builders) is accepted, a frozen cycle included.</summary>
     [Fact]
     public void Constructor_CanonicalPhases_AreAccepted()
     {
@@ -26,6 +28,7 @@ public sealed class BuildingTests
         Assert.Null(Producing(1, "lumber_camp", 0, 0, 1, workers: 0, cycleStartedAt: 10, cycleLabor: 40, laborRemaining: 40, segmentStartedAt: 10, endsAt: null).PhaseEndsAt);
     }
 
+    /// <summary>Field combinations no game can reach, by name: bad ids, tiles, levels and workers, an undefined phase, and fields a phase can't have or must have.</summary>
     private static readonly Dictionary<string, Func<Building>> _invalidBuildings = new()
     {
         ["id 0"] = () => Idle(0, "hut", 0, 0),
@@ -56,8 +59,10 @@ public sealed class BuildingTests
         ["producing with a target level"] = () => new Building(1, new BuildingTypeId("lumber_camp"), 0, 0, 1, 1, BuildingPhase.Producing, 10, 50, 2, 40, 40, 10),
     };
 
+    /// <summary>The names of <see cref="_invalidBuildings"/>.</summary>
     public static TheoryData<string> InvalidBuildings => new(_invalidBuildings.Keys);
 
+    /// <summary>Each invalid combination throws <see cref="ArgumentException"/> whose message starts with <c>Building</c>.</summary>
     [Theory]
     [MemberData(nameof(InvalidBuildings))]
     public void Constructor_InvalidFields_Throws(string problem)

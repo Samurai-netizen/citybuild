@@ -3,6 +3,7 @@ namespace CityBuilder.Simulation.Tests.Properties;
 /// <summary>The seed runner of the properties: a failing or throwing seed fails the test and prints everything needed to replay it.</summary>
 public sealed class PropertyCheckTests
 {
+    /// <summary>A check that holds for every seed passes, and runs on seeds 0, 1 and 2 in that order.</summary>
     [Fact]
     public void ForEachSeed_CheckHoldsForEverySeed_Passes()
     {
@@ -17,6 +18,7 @@ public sealed class PropertyCheckTests
         Assert.Equal([0, 1, 2], seen);
     }
 
+    /// <summary>A seed whose check fails fails the run with the property, content, seed, difference, and the history's operations.</summary>
     [Fact]
     public void ForEachSeed_CheckFailsForOneSeed_PrintsPropertyContentSeedDifferenceAndOperations()
     {
@@ -27,6 +29,7 @@ public sealed class PropertyCheckTests
         Assert.Equal($"Property \"sample\" failed on content fixture, seed 2: clock: expected 1, actual 2\n{expectedOperations}", failure.Message);
     }
 
+    /// <summary>A check that throws fails the run with the exception and the history.</summary>
     [Fact]
     public void ForEachSeed_CheckThrows_PrintsTheExceptionAndTheOperations()
     {

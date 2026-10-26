@@ -14,8 +14,11 @@ namespace CityBuilder.Simulation.State
     /// </summary>
     public sealed class CityState
     {
+        /// <summary>The stock: only items above 0, sorted by item id.</summary>
         private readonly ItemTotals _inventory = new ItemTotals();
+        /// <summary>The buildings, sorted by id; ids and tiles are unique.</summary>
         private readonly List<Building> _buildings;
+        /// <summary>The completed research nodes, sorted by id, each once.</summary>
         private readonly List<ResearchId> _completedResearch;
 
         /// <summary>
@@ -225,6 +228,10 @@ namespace CityBuilder.Simulation.State
             Clock = clock;
         }
 
+        /// <summary>
+        /// The restoring constructor's buildings, checked and sorted by id: none null, every id below the next building id and unique, every tile
+        /// used once.
+        /// </summary>
         private static List<Building> SortedBuildings(IEnumerable<Building> buildings, int nextBuildingId)
         {
             if (buildings is null)
@@ -263,6 +270,7 @@ namespace CityBuilder.Simulation.State
             return sorted;
         }
 
+        /// <summary>The restoring constructor's completed research, checked and sorted: each node once, and not also the running one.</summary>
         private static List<ResearchId> SortedResearch(IEnumerable<ResearchId> completedResearch, ActiveResearch? activeResearch)
         {
             if (completedResearch is null)

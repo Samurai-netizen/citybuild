@@ -25,6 +25,7 @@ nn="$(printf '%02d' $((n + 1)))"
 file="$dir/$date-$nn-$id.md"
 blid="BL-${date//-/}-$nn"
 
+# The text escaped for the replacement side of the sed command below (/, & and |).
 esc() { printf '%s' "$1" | sed -e 's/[\/&|]/\\&/g'; }
 sed -e "s|{{BLID}}|$(esc "$blid")|g" \
     -e "s|{{TASK}}|$(esc "$id")|g" \

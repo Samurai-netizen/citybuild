@@ -13,8 +13,10 @@ namespace CityBuilder.Simulation.Settlement
     /// </summary>
     internal sealed class Reservations
     {
+        /// <summary>The reserved quantity per item, sorted by item id; reading and changing it allocates nothing.</summary>
         private readonly ItemTotals _reserved = new ItemTotals();
 
+        /// <summary>Creates an empty table; <see cref="Of"/> fills it from a city.</summary>
         private Reservations()
         {
         }

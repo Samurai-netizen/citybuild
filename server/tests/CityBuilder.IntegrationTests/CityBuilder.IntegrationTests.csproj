@@ -1,5 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <!-- Tests of the server running in process (WebApplicationFactory): the host, content loading and the dependency rule of
+       Infrastructure (core-instructions/08-testing-strategy.md, test layers). -->
+
   <PropertyGroup>
     <!-- xUnit v3 test projects are executables. -->
     <OutputType>Exe</OutputType>

@@ -49,12 +49,13 @@ Paths are the M0 layout (`03`). "Module doc" means `docs/modules/<Project>.md`.
 - Docs: `09` (screen list), module doc `CityBuilder.Client.Presentation.md`, `21` only if the design changed (G-Design).
 
 ## New project, assembly or folder area
-- Code: project + references respecting `03`; architecture tests updated.
+- Code: project + references respecting `03`, the project file starting with a comment that says what it is for; architecture tests updated.
 - Docs: `03` (dependency table and layout), `docs/architecture/overview.md`, a new module doc (check-docs enforces this), `AGENTS.md` map.
 - Gate: G-Contract if it changes dependency direction; otherwise a decision row.
 
 ## New script or command
-- Code: `scripts/dev/<name>.sh` (and `.ps1` if it must run without Git Bash).
+- Code: `scripts/dev/<name>.sh` (and `.ps1` if it must run without Git Bash), with a header comment and a comment above every function
+  (`check-docs.sh` checks both).
 - Docs: the `AGENTS.md` command list, `docs/getting-started.md`.
 
 ## New documentation page
@@ -76,6 +77,8 @@ G-Dependency first. Then: `Directory.Packages.props` / Unity manifest / `website
 Failing regression test first, then the fix. Build log: root cause in one paragraph. Docs: whatever describes the corrected behaviour.
 
 ## Every change, always
+A doc comment on every declaration the change adds or changes, a header comment in every new file, and comments that the change made
+untrue fixed with it (`14` → Documentation in code; worked guide `docs/how-to/document-code.md`).
 Build log entry (decisions, and a Docs impact row for every page the recipe above names: `updated` or `no change: <why>`), the resume
 point in `13`, the plan board row, the `CHANGELOG` line, `Last updated:` in each touched module doc, and a handbook that still builds
 (`bash scripts/dev/docs-site.sh build`).

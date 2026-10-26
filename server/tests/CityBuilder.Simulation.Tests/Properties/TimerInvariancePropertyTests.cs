@@ -13,9 +13,10 @@ namespace CityBuilder.Simulation.Tests.Properties;
 /// </summary>
 public sealed class TimerInvariancePropertyTests
 {
-    // Most seeds must start a timer somewhere, or the property says little; today far more than this do (the failure prints the count).
+    /// <summary>The fewest seeds that must start a timer somewhere, or the property says little; today far more do (the failure prints the count).</summary>
     private const int _minimumSeedsWithTimers = 250;
 
+    /// <summary>Every seed of the content keeps timer invariance, and at least <see cref="_minimumSeedsWithTimers"/> of them had a running timer.</summary>
     [Theory]
     [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
     public void Advance_AnySplitAlsoBeyondTheCap_CompletesEveryTimerAtItsEndSecond(string contentName)
@@ -57,8 +58,10 @@ public sealed class TimerInvariancePropertyTests
         Assert.True(seedsWithTimers >= _minimumSeedsWithTimers, $"Only {seedsWithTimers} seeds had a running timer.");
     }
 
-    // The number of operations to replay: up to a random command that started a timer (a placement, an upgrade or a research start), or the
-    // whole history when there is none.
+    /// <summary>
+    /// The number of operations to replay: up to a random command that started a timer (a placement, an upgrade or a research start), or the
+    /// whole history when there is none.
+    /// </summary>
     private static int AfterATimerStarted(CityHistory history, SeededRandom random)
     {
         int[] candidates =
@@ -69,7 +72,7 @@ public sealed class TimerInvariancePropertyTests
         return candidates.Length == 0 ? history.Operations.Count : random.Pick(candidates);
     }
 
-    // The running timers by name ("building 3", "research x") and end second.
+    /// <summary>The running timers by name (<c>building 3</c>, <c>research x</c>) and end second.</summary>
     private static List<(string Name, long EndsAt)> Timers(CityState city)
     {
         List<(string Name, long EndsAt)> timers =
@@ -86,7 +89,7 @@ public sealed class TimerInvariancePropertyTests
         return timers;
     }
 
-    // Up to five cut points between the start and the end, sorted; each is random, or a timer's end second, or one second before or after it.
+    /// <summary>Up to five cut points between the start and the end, sorted; each is random, or a timer's end second, or one second before or after it.</summary>
     private static long[] Cuts(SeededRandom random, long start, long total, List<(string Name, long EndsAt)> timers)
     {
         long count = random.Between(0, 5);
@@ -103,7 +106,10 @@ public sealed class TimerInvariancePropertyTests
         return [.. cuts];
     }
 
-    // A timer must be reported by the piece whose window holds its end second: (pieceStart, pieceEnd], and the first piece also its start.
+    /// <summary>
+    /// A timer must be reported by the piece whose window holds its end second: (pieceStart, pieceEnd], and the first piece also its start.
+    /// Returns the first timer reported by the wrong piece, or null.
+    /// </summary>
     private static string? FirstMisplacedCompletion(
         List<(string Name, long EndsAt)> timers, SettlementReport report, long pieceStart, long pieceEnd, bool firstPiece)
     {
@@ -122,8 +128,10 @@ public sealed class TimerInvariancePropertyTests
         return null;
     }
 
-    // What timers decide, and production doesn't: each building's level and workers (auto-staffing follows the houses' completions), which
-    // buildings are still under construction or upgrade and until when, and the research.
+    /// <summary>
+    /// What timers decide, and production doesn't: each building's level and workers (auto-staffing follows the houses' completions), which
+    /// buildings are still under construction or upgrade and until when, and the research.
+    /// </summary>
     private static List<(string Path, string Value)> TimerFields(CityState city)
     {
         var fields = new List<(string Path, string Value)>();
@@ -138,6 +146,7 @@ public sealed class TimerInvariancePropertyTests
         return [.. fields, .. StructuralEquality.Fields(city).Where(field => field.Path is "completedResearch" or "activeResearch")];
     }
 
+    /// <summary>The completed buildings and research of report totals: the part of the reports that timers decide.</summary>
     private static List<(string Path, string Value)> CompletionFields(ReportTotals totals) =>
         [.. totals.Fields().Where(field => field.Path is "completedBuildings" or "completedResearch")];
 }

@@ -15,10 +15,12 @@ mkdir "$tmp/main" "$tmp/task"
 git init -q "$tmp/main" && git -C "$tmp/main" symbolic-ref HEAD refs/heads/main
 git init -q "$tmp/task" && git -C "$tmp/task" symbolic-ref HEAD refs/heads/task/x
 
+# The text as the inside of a JSON string: backslashes and quotes escaped, line breaks as \n.
 json_escape() { printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' | awk 'BEGIN { ORS = "" } NR > 1 { print "\\n" } { print }'; }
 
 passed=0
 failed=0
+# Runs the guard on one command in the main or the task test repository and counts a pass when it decides as wanted.
 check() {  # check <allow|deny> <main|task> "<what is tested>" "<the Bash command>"
   local want="$1" where="$2" what="$3" cmd="$4" json out got
   json="{\"session_id\":\"t\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"$(json_escape "$cmd")\",\"description\":\"test\"}}"

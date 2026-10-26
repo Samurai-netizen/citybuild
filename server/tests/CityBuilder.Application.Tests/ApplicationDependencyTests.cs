@@ -6,9 +6,10 @@ namespace CityBuilder.Application.Tests;
 /// <summary>Guards the dependency rule for Application (core-instructions/03-architecture.md, dependency table).</summary>
 public sealed class ApplicationDependencyTests
 {
-    // Frameworks that Application must never depend on: use cases reach HTTP and the database only through ports.
+    /// <summary>Frameworks that Application must never depend on: use cases reach HTTP and the database only through ports.</summary>
     private static readonly string[] _forbiddenAssemblyPrefixes = ["Microsoft.AspNetCore", "Microsoft.EntityFrameworkCore"];
 
+    /// <summary>The Application assembly references neither ASP.NET Core nor Entity Framework Core.</summary>
     [Fact]
     public void GetReferencedAssemblies_OfApplication_ContainNoAspNetCoreOrEntityFrameworkCore()
     {

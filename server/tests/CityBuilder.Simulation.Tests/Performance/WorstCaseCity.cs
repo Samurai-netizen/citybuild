@@ -26,18 +26,25 @@ internal static class WorstCaseCity
     /// <summary>A cycle at full staffing: labor 20 with 2 workers.</summary>
     public const long CycleSeconds = 10;
 
+    /// <summary>The house type of the performance content, which provides the workers.</summary>
     public static readonly BuildingTypeId House = new("house");
 
+    /// <summary>The mine: 2 ore a cycle from labor alone.</summary>
     public static readonly BuildingTypeId Mine = new("mine");
 
+    /// <summary>The smelter: 1 ore in, 1 ingot out.</summary>
     public static readonly BuildingTypeId Smelter = new("smelter");
 
+    /// <summary>The mines' output, capped so high it never fills.</summary>
     public static readonly ItemId Ore = new("ore");
 
+    /// <summary>The smelters' uncapped output.</summary>
     public static readonly ItemId Ingots = new("ingots");
 
+    /// <summary>The 2-day research the city starts last, so a long advance has a timer in its dormant tail.</summary>
     public static readonly ResearchId DeepVaults = new("deep_vaults");
 
+    /// <summary>The performance content of <c>Fixtures/content-performance.json</c>, loaded once and checked like the server's.</summary>
     public static GameContent WorstCaseContent { get; } = ContentFile.Load("content-performance.json");
 
     /// <summary>
@@ -68,9 +75,11 @@ internal static class WorstCaseCity
         return city;
     }
 
+    /// <summary>The construction time of a building type of the performance content.</summary>
     private static long BuildSeconds(BuildingTypeId type) =>
         WorstCaseContent.TryGetBuilding(type, out BuildingDefinition? definition) ? definition.BuildSeconds : throw new ArgumentOutOfRangeException(nameof(type));
 
+    /// <summary>Asserts a mutation succeeded and runs the zero-length advance that follows every command.</summary>
     private static void Run(CityState city, MutationResult result)
     {
         RulesAssert.Ok(result);

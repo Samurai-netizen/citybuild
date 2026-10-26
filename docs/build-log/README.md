@@ -11,6 +11,7 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
+- [BL-20261025-01 · CR-0003-T1 · Code documentation: every file and declaration](2026/2026-10-25-01-CR-0003-T1.md) — Done
 - [BL-20261020-01 · CR-0002-T1 · Handbook site and docs-as-code workflow](2026/2026-10-20-01-CR-0002-T1.md) — Done
 - [BL-20261019-08 · M0-18 · Spec sync and ADRs](2026/2026-10-19-08-M0-18.md) — Done
 - [BL-20261019-07 · M0-17 · Display helpers](2026/2026-10-19-07-M0-17.md) — Done

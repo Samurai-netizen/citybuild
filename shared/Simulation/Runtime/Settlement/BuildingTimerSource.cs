@@ -15,9 +15,12 @@ namespace CityBuilder.Simulation.Settlement
     /// </summary>
     internal sealed class BuildingTimerSource : IEventSource
     {
+        /// <summary>The advance's building timers; the start rule adds every cycle it starts to the same queue.</summary>
         private readonly BuildingTimerQueue _timers;
+        /// <summary>The advance's reserved quantities; a completed cycle's outputs leave them here.</summary>
         private readonly Reservations _reservations;
 
+        /// <summary>Creates the source for one advance over that advance's timer queue and reservations.</summary>
         public BuildingTimerSource(BuildingTimerQueue timers, Reservations reservations)
         {
             _timers = timers;
@@ -44,6 +47,10 @@ namespace CityBuilder.Simulation.Settlement
             }
         }
 
+        /// <summary>
+        /// Completes one building's phase: a construction staffs the building with <c>min(free, MaxWorkers)</c> (decision 018), an upgrade
+        /// raises its level, and a cycle moves its outputs from reserved to stock, even above a cap (decision 013).
+        /// </summary>
         private static void Complete(CityState city, GameContent content, Building building, SettlementReportBuilder report, Reservations reservations)
         {
             switch (building.Phase)

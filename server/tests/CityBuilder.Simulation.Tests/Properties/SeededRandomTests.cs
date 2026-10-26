@@ -6,6 +6,7 @@ namespace CityBuilder.Simulation.Tests.Properties;
 /// </summary>
 public sealed class SeededRandomTests
 {
+    /// <summary>Over the full range, seed 0 gives the first outputs of the reference SplitMix64.</summary>
     [Fact]
     public void Between_FullRangeFromSeedZero_GivesTheSplitMix64ReferenceValues()
     {
@@ -17,6 +18,7 @@ public sealed class SeededRandomTests
         Assert.Equal(unchecked((long)0x06C45D188009454F), random.Between(long.MinValue, long.MaxValue));
     }
 
+    /// <summary>Draws stay within the range, both ends included, and reach both ends.</summary>
     [Fact]
     public void Between_ManyDraws_StayInRangeAndReachBothEnds()
     {
@@ -29,6 +31,7 @@ public sealed class SeededRandomTests
         Assert.Contains(3L, draws);
     }
 
+    /// <summary>Two generators with the same seed give the same numbers.</summary>
     [Fact]
     public void Between_SameSeed_GivesTheSameSequence()
     {
@@ -40,6 +43,7 @@ public sealed class SeededRandomTests
             Enumerable.Range(0, 20).Select(_ => second.Between(0, 1_000_000)));
     }
 
+    /// <summary>A range whose maximum is below its minimum throws.</summary>
     [Fact]
     public void Between_EmptyRange_Throws()
     {

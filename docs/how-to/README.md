@@ -14,3 +14,4 @@ creates the capability, and every later change to that area keeps it valid. The 
 | `add-ui-screen.md`: a UI Toolkit screen with a view-model | M0-45 | planned |
 | `run-balance-simulator.md`: test a content change | M0-67 | planned |
 | [`resume-interrupted-session.md`](resume-interrupted-session.md): recover after an AI session ended mid-task | M0-01 | done |
+| [`document-code.md`](document-code.md): describe every file and declaration, and fix a failing documentation check | CR-0003-T1 | done |

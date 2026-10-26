@@ -11,15 +11,24 @@ namespace CityBuilder.Client.Presentation.Bootstrap
     [DisallowMultipleComponent]
     public sealed class GameRoot : MonoBehaviour
     {
-        // Loaded by name from Assets/_Project/Resources/UI: this object is created from code, so there is no scene field to assign.
+        /// <summary>
+        /// The UI's panel settings, loaded by name from <c>Assets/_Project/Resources/UI</c>: this object is created from code, so there is no
+        /// scene field to assign.
+        /// </summary>
         private const string PanelSettingsPath = "UI/PanelSettings";
+        /// <summary>The connection status layout (UXML), loaded by name from the same folder.</summary>
         private const string ConnectionStatusPath = "UI/ConnectionStatus";
 
+        /// <summary>Unity calls it once, right after the component is created: it shows the connection status.</summary>
         private void Awake()
         {
             CreateConnectionStatus();
         }
 
+        /// <summary>
+        /// Shows the connection status: a child object <c>UI</c> with a <see cref="UIDocument"/> of the panel settings and the layout. When an
+        /// asset is missing it logs an error that names both and shows nothing.
+        /// </summary>
         private void CreateConnectionStatus()
         {
             var panelSettings = Resources.Load<PanelSettings>(PanelSettingsPath);

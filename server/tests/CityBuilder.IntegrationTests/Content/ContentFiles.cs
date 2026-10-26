@@ -16,14 +16,17 @@ internal static class ContentFiles
 /// <summary>A new temporary directory for the content files of one test; deleted with everything in it on dispose.</summary>
 internal sealed class ContentFileDirectory : IDisposable
 {
+    /// <summary>How many files the directory has written; it numbers the next file.</summary>
     private int _fileCount;
 
+    /// <summary>Creates a new, empty directory in the system's temporary folder.</summary>
     public ContentFileDirectory()
     {
         Directory = Path.Combine(Path.GetTempPath(), "citybuilder-content-tests", Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(Directory);
     }
 
+    /// <summary>The directory's full path.</summary>
     public string Directory { get; }
 
     /// <summary>Writes a new file with the text and returns its path.</summary>
@@ -35,5 +38,6 @@ internal sealed class ContentFileDirectory : IDisposable
         return path;
     }
 
+    /// <summary>Deletes the directory and every file in it.</summary>
     public void Dispose() => System.IO.Directory.Delete(Directory, recursive: true);
 }

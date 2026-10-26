@@ -10,9 +10,11 @@ namespace CityBuilder.Simulation.Tests;
 /// </summary>
 public sealed class SimulationBuildProjectTests
 {
+    /// <summary>The engine's .NET project file, read as XML.</summary>
     private static readonly XDocument _project =
         XDocument.Load(Path.Combine(RepositoryPaths.Root, "shared", "Simulation.Build", "CityBuilder.Simulation.csproj"));
 
+    /// <summary>The project compiles C# 9, the language Unity 6.3 compiles, so newer syntax fails here before it breaks Unity.</summary>
     [Fact]
     public void BuildProject_LangVersion_IsCSharp9()
     {
@@ -20,12 +22,14 @@ public sealed class SimulationBuildProjectTests
         Assert.Equal("9.0", PropertyOf("LangVersion"));
     }
 
+    /// <summary>Every warning fails the engine's build.</summary>
     [Fact]
     public void BuildProject_TreatWarningsAsErrors_IsTrue()
     {
         Assert.Equal("true", PropertyOf("TreatWarningsAsErrors"));
     }
 
+    /// <summary>The project writes its XML doc file, which, with warnings as errors, makes a missing public doc comment (CS1591) fail the build.</summary>
     [Fact]
     public void BuildProject_GenerateDocumentationFile_IsTrue()
     {
@@ -33,6 +37,7 @@ public sealed class SimulationBuildProjectTests
         Assert.Equal("true", PropertyOf("GenerateDocumentationFile"));
     }
 
+    /// <summary>The project repeats the server's analysis settings, so build and <c>dotnet format</c> agree (decision 021).</summary>
     [Fact]
     public void BuildProject_AnalysisSettings_MatchTheServerConventions()
     {
@@ -41,6 +46,7 @@ public sealed class SimulationBuildProjectTests
         Assert.Equal("true", PropertyOf("EnforceCodeStyleInBuild"));
     }
 
+    /// <summary>The project suppresses no warning and exempts none from being an error.</summary>
     [Fact]
     public void BuildProject_WarningSuppressions_AreAbsent()
     {
@@ -49,6 +55,7 @@ public sealed class SimulationBuildProjectTests
         Assert.Empty(_project.Descendants("WarningsNotAsErrors"));
     }
 
+    /// <summary>The project compiles exactly <c>../Simulation/Runtime/**/*.cs</c>, the files Unity compiles, with default globbing off.</summary>
     [Fact]
     public void BuildProject_CompileItems_AreTheRuntimeFolderOnly()
     {
@@ -60,6 +67,7 @@ public sealed class SimulationBuildProjectTests
         Assert.All(compileItems, item => Assert.Null(item.Attribute("Remove")));
     }
 
+    /// <summary>The project references no package, assembly, project or framework: the base class library only.</summary>
     [Fact]
     public void BuildProject_References_AreAbsent()
     {
@@ -71,12 +79,14 @@ public sealed class SimulationBuildProjectTests
         Assert.Empty(_project.Descendants("FrameworkReference"));
     }
 
+    /// <summary>The target <c>GuardUnityCompatibleBuild</c> exists, which checks the evaluated settings during every build.</summary>
     [Fact]
     public void BuildProject_UnityCompatibilityGuard_Exists()
     {
         Assert.Single(_project.Descendants("Target"), target => (string?)target.Attribute("Name") == "GuardUnityCompatibleBuild");
     }
 
+    /// <summary>The value of a property set in one of the project's property groups, or null when none sets it.</summary>
     private static string? PropertyOf(string name) =>
         _project.Root?.Elements("PropertyGroup").Elements(name).Select(element => element.Value.Trim()).SingleOrDefault();
 }

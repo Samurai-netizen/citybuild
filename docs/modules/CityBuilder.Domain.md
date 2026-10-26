@@ -20,8 +20,8 @@ Game rules that the client also runs belong in `CityBuilder.Simulation`, not her
 ## Rules and invariants
 - May reference only `CityBuilder.Simulation` and the BCL, never ASP.NET Core or EF Core (`03` dependency table).
   `CityBuilder.Domain.Tests` checks the assembly's references.
-- Every public type and member has an XML doc comment that states its contract (`core-instructions/14-coding-standards.md`):
-  the project writes its doc file, and a missing comment (CS1591) fails the build.
+- Every type and member, private ones included, has an XML doc comment that states its contract (`core-instructions/14-coding-standards.md` → Documentation
+  in code): a missing one on a public member fails the build (CS1591), and `CityBuilder.Repository.Tests` checks the rest.
 - Warnings are errors (`server/Directory.Build.props`, `src/` projects).
 
 ## How to extend
@@ -35,4 +35,4 @@ Run: `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`.
 ## Known limitations
 - No types yet (skeleton).
 
-Last updated: M0-03
+Last updated: CR-0003-T1

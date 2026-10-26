@@ -1,5 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
+  <!-- The HTTP host and composition root of the server (docs/modules/CityBuilder.Api.md). The settings every server project shares are in
+       ../../Directory.Build.props, the package versions in ../../Directory.Packages.props. -->
+
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
   </ItemGroup>

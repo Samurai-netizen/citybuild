@@ -9,6 +9,7 @@ internal static class RepositoryPaths
     /// </summary>
     public static string Root { get; } = FindRoot();
 
+    /// <summary>Walks up from the test binaries to the first folder with a <c>global.json</c>; throws when there is none, because then the tests can't run.</summary>
     private static string FindRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

@@ -6,6 +6,7 @@ namespace CityBuilder.Simulation.Content
     /// <summary>Collects the errors of one <see cref="GameContentFactory.Create"/> call in the order they are found.</summary>
     internal sealed class ContentErrorList
     {
+        /// <summary>The errors in the order the checks found them, which is the order <see cref="GameContentResult.Errors"/> reports.</summary>
         private readonly List<ContentError> _errors = new List<ContentError>();
 
         /// <summary>How many errors were found so far.</summary>

@@ -15,8 +15,11 @@ namespace CityBuilder.Application.Cities;
 /// <exception cref="ArgumentNullException">A parameter is null.</exception>
 public sealed class SettleCity(ICityRepository cities, IContentProvider content, TimeProvider timeProvider)
 {
+    /// <summary>The stored cities: loads the acting player's city and saves it after the settle.</summary>
     private readonly ICityRepository _cities = cities ?? throw new ArgumentNullException(nameof(cities));
+    /// <summary>The game content every settle runs the engine with; the same for every request.</summary>
     private readonly IContentProvider _content = content ?? throw new ArgumentNullException(nameof(content));
+    /// <summary>The server clock, read once per settle; the only clock that drives progress (principle 3).</summary>
     private readonly TimeProvider _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
 
     /// <summary>Settles the player's city to now and stores it.</summary>

@@ -17,6 +17,7 @@ internal static class GoldenScenario1
     /// <summary>A largest step that is never reached: one advance per gap between actions (and up to the time asked for).</summary>
     public const long OneAdvancePerGap = long.MaxValue;
 
+    /// <summary>The script of the first session: each action's time and what the player does then, as in the table of <c>23</c>.</summary>
     private static readonly (long Time, Action<CityState> Run)[] _script =
     [
         (0, city =>
@@ -33,6 +34,7 @@ internal static class GoldenScenario1
         (750, city => Place(city, "trading_post", 4)),
     ];
 
+    /// <summary>The frozen content the scenario was checked against by hand (<see cref="GoldenContent.V1"/>).</summary>
     private static GameContent Content => GoldenContent.V1;
 
     /// <summary>The city at <paramref name="time"/>, after the actions due then.</summary>
@@ -45,6 +47,7 @@ internal static class GoldenScenario1
     /// <param name="largestStepSeconds">The longest single advance; <see cref="OneAdvancePerGap"/> or 1 for one second at a time.</param>
     public static CityState Before(long time, long largestStepSeconds) => Run(time, largestStepSeconds, includeActionsAtTime: false);
 
+    /// <summary>Plays the script on a new starter city up to <paramref name="time"/>, with or without the actions due exactly then.</summary>
     private static CityState Run(long time, long largestStepSeconds, bool includeActionsAtTime)
     {
         CityState city = CityFactory.CreateStarterCity(Content);
@@ -63,6 +66,7 @@ internal static class GoldenScenario1
         return city;
     }
 
+    /// <summary>Advances the city to <paramref name="time"/> in steps of at most <paramref name="largestStepSeconds"/>.</summary>
     private static void AdvanceTo(CityState city, long time, long largestStepSeconds)
     {
         while (city.Clock < time)
@@ -71,9 +75,11 @@ internal static class GoldenScenario1
         }
     }
 
+    /// <summary>Places a building of the type at (x, 0), as a command.</summary>
     private static void Place(CityState city, string type, int x) =>
         Command(city, target => CityRules.PlaceBuilding(target, Content, new BuildingTypeId(type), x, 0));
 
+    /// <summary>Applies a mutation as the server runs a command: it must succeed, and a zero-length advance follows.</summary>
     private static void Command(CityState city, Func<CityState, MutationResult> mutation)
     {
         RulesAssert.Ok(mutation(city));

@@ -11,16 +11,22 @@ namespace CityBuilder.Simulation.Tests.Properties;
 /// </summary>
 internal sealed class InvariantChecks
 {
+    /// <summary>The game content the history runs on.</summary>
     private readonly GameContent _content;
+    /// <summary>Receives each failure: the invariant, and where and how it failed.</summary>
     private readonly Action<Invariant, string> _fail;
+    /// <summary>Receives the name of each case a check exercised, for the coverage test.</summary>
     private readonly Action<string> _count;
+    /// <summary>The worker-seconds of every running cycle so far, for invariant 11.</summary>
     private readonly LaborLedger _labor;
 
+    /// <summary>Checks for a new history on <paramref name="content"/>: failures go to <paramref name="fail"/>, exercised cases to <paramref name="count"/>.</summary>
     public InvariantChecks(GameContent content, Action<Invariant, string> fail, Action<string> count)
         : this(content, fail, count, new LaborLedger(content))
     {
     }
 
+    /// <summary>Checks that go on with an existing labor ledger (<see cref="Fork"/>).</summary>
     private InvariantChecks(GameContent content, Action<Invariant, string> fail, Action<string> count, LaborLedger labor)
     {
         _content = content;
@@ -32,6 +38,10 @@ internal sealed class InvariantChecks
     /// <summary>Checks for a branch that leaves the history here: the same callbacks, and a copy of what these checks track so far.</summary>
     public InvariantChecks Fork() => new(_content, _fail, _count, _labor.Fork());
 
+    /// <summary>
+    /// Checks every invariant on one step and reports each that fails. Each check returns a description of its first failure, or null when
+    /// its invariant holds.
+    /// </summary>
     public void Check(InvariantStep step)
     {
         _count("steps");
@@ -47,6 +57,7 @@ internal sealed class InvariantChecks
         Report(Invariant.UnlockAndPrerequisites, step, Unlocks(step));
     }
 
+    /// <summary>Hands a failure, if there is one, to the callback, prefixed with where the step is.</summary>
     private void Report(Invariant invariant, InvariantStep step, string? failure)
     {
         if (failure is not null)
@@ -55,7 +66,7 @@ internal sealed class InvariantChecks
         }
     }
 
-    // 4: final = initial + produced − consumed − spent + refunded, per item, over every item any of them names.
+    /// <summary>Invariant 4: final = initial + produced − consumed − spent + refunded, per item, over every item any of them names.</summary>
     private string? Conservation(InvariantStep step)
     {
         Dictionary<ItemId, long> spent = Quantities(step.Mutation?.Spent ?? []);
@@ -79,7 +90,7 @@ internal sealed class InvariantChecks
         return null;
     }
 
-    // 5: no item below zero.
+    /// <summary>Invariant 5: no item below zero.</summary>
     private static string? NoNegativeStock(CityState city)
     {
         foreach (KeyValuePair<ItemId, long> stock in city.Inventory.Where(stock => stock.Value < 0))
@@ -90,8 +101,11 @@ internal sealed class InvariantChecks
         return null;
     }
 
-    // 6: production never takes stock + reserved of a capped item above its cap. Only a refund may: so after the step it is at most the cap,
-    // or what it was before plus the refund, whichever is more (a start needs room, a completion moves reserved to stock, inputs only lower it).
+    /// <summary>
+    /// Invariant 6: production never takes stock + reserved of a capped item above its cap. Only a refund may: so after the step it is at most
+    /// the cap, or what it was before plus the refund, whichever is more (a start needs room, a completion moves reserved to stock, inputs only
+    /// lower it).
+    /// </summary>
     private string? StorageCap(InvariantStep step)
     {
         foreach (ItemQuantity baseCap in _content.Rules.BaseStorageCaps)
@@ -112,7 +126,7 @@ internal sealed class InvariantChecks
         return null;
     }
 
-    // 7: the clock moves by exactly the requested seconds (0 for a command or a negative request), and the report says the same.
+    /// <summary>Invariant 7: the clock moves by exactly the requested seconds (0 for a command or a negative request), and the report says the same.</summary>
     private string? Clock(InvariantStep step)
     {
         long expected = Math.Max(step.Requested, 0);
@@ -122,8 +136,10 @@ internal sealed class InvariantChecks
             : $"asked for {step.Requested} s: the clock moved {step.After.Clock - step.Before.Clock} s, the report says {step.ReportedElapsed} s";
     }
 
-    // 8, first half: the outputs of a step are exactly those of the cycles that were running before it and end by its end. So nothing a
-    // constructing or upgrading building did shows up as production, and an upgrade's interrupted cycle delivers nothing.
+    /// <summary>
+    /// Invariant 8, first half: the outputs of a step are exactly those of the cycles that were running before it and end by its end. So
+    /// nothing a constructing or upgrading building did shows up as production, and an upgrade's interrupted cycle delivers nothing.
+    /// </summary>
     private string? Production(InvariantStep step)
     {
         var expected = new Dictionary<ItemId, long>();
@@ -150,8 +166,10 @@ internal sealed class InvariantChecks
         return null;
     }
 
-    // 8, second half: a construction or upgrade not due yet goes on unchanged; a cycle starts only after the construction or upgrade before
-    // it ended (an upgrade at the new level); constructing and upgrading buildings hold no cycle.
+    /// <summary>
+    /// Invariant 8, second half: a construction or upgrade not due yet goes on unchanged; a cycle starts only after the construction or
+    /// upgrade before it ended (an upgrade at the new level); constructing and upgrading buildings hold no cycle.
+    /// </summary>
     private string? BusyBuildings(InvariantStep step)
     {
         foreach (Building after in step.After.Buildings)
@@ -188,8 +206,10 @@ internal sealed class InvariantChecks
         return null;
     }
 
-    // 9: the houses provide at least the workers assigned, every building stays within its level's limit, and a building under construction
-    // has none.
+    /// <summary>
+    /// Invariant 9: the houses provide at least the workers assigned, every building stays within its level's limit, and a building under
+    /// construction has none.
+    /// </summary>
     private string? Workers(CityState city)
     {
         long provided = DormantTail.Provided(_content, city.Buildings);
@@ -213,7 +233,7 @@ internal sealed class InvariantChecks
         return null;
     }
 
-    // 10: busy builders within the slots; a research starts only when none runs, and the running one is not completed.
+    /// <summary>Invariant 10: busy builders within the slots; a research starts only when none runs, and the running one is not completed.</summary>
     private string? Slots(InvariantStep step)
     {
         int busy = step.After.Buildings.Count(building => building.Phase is BuildingPhase.Constructing or BuildingPhase.Upgrading);
@@ -236,8 +256,10 @@ internal sealed class InvariantChecks
         return active is not null && step.After.HasCompletedResearch(active.Id) ? $"research {active.Id} is running and completed" : null;
     }
 
-    // 12: every cycle that starts in a step starts within its window; and the dormant tail of an advance beyond the cap does exactly what
-    // the model says: timers complete, nothing starts, nothing is consumed.
+    /// <summary>
+    /// Invariant 12: every cycle that starts in a step starts within its window; and the dormant tail of an advance beyond the cap does
+    /// exactly what the model says: timers complete, nothing starts, nothing is consumed.
+    /// </summary>
     private string? NoStartAfterTheCap(InvariantStep step)
     {
         foreach (Building after in step.After.Buildings.Where(building => building.Phase == BuildingPhase.Producing))
@@ -266,8 +288,11 @@ internal sealed class InvariantChecks
             ?? Differ("completed research", string.Join(",", tail.CompletedResearch), string.Join(",", step.CompletedResearch));
     }
 
-    // 13: a placed type was unlocked and of the city's era or earlier when it was placed; a research started had its prerequisites and the
-    // city's era; and at every step the completed research has all its prerequisites, and every building's type is unlocked.
+    /// <summary>
+    /// Invariant 13: a placed type was unlocked and of the city's era or earlier when it was placed; a research started had its
+    /// prerequisites and the city's era; and at every step the completed research has all its prerequisites, and every building's type is
+    /// unlocked.
+    /// </summary>
     private string? Unlocks(InvariantStep step)
     {
         if (step.Mutation is not null && step.Operation is CityOperation.PlaceBuilding
@@ -307,33 +332,42 @@ internal sealed class InvariantChecks
         return locked is null ? null : $"building {locked.Id} of the locked type {locked.TypeId} stands in the city";
     }
 
+    /// <summary>
+    /// Whether the city may have a building of the type: of its era or earlier, and available at the start or unlocked by completed research.
+    /// Worked out here, not with <see cref="CityQueries.IsUnlocked"/>, so a wrong engine query can't hide a wrong state.
+    /// </summary>
     private static bool IsUnlocked(CityState city, BuildingDefinition type) =>
         type.Era <= city.Era && (type.IsAvailableAtStart || (type.UnlockedByResearch is { } research && city.HasCompletedResearch(research)));
 
+    /// <summary>A failure when the expected and the actual text differ; null when they are the same.</summary>
     private static string? Differ(string what, string expected, string actual) =>
         expected == actual ? null : $"{what}: expected [{expected}], actual [{actual}]";
 
+    /// <summary>The non-zero quantities as text in item order, for <see cref="Differ"/>.</summary>
     private static string Text(IReadOnlyDictionary<ItemId, long> quantities) =>
         string.Join(",", quantities.Where(item => item.Value != 0).OrderBy(item => item.Key).Select(item => $"{item.Key} {item.Value}"));
 
-    // The storage cap of an item now: its base cap plus the bonuses of the completed research.
+    /// <summary>The storage cap of an item now: its base cap plus the bonuses of the completed research.</summary>
     private long Cap(CityState city, ItemId item) =>
         _content.Rules.BaseStorageCaps.Single(cap => cap.Item == item).Quantity
         + city.CompletedResearch.SelectMany(id => Research(id).Effects).OfType<StorageCapBonusEffect>()
             .Where(bonus => bonus.Item == item).Sum(bonus => bonus.Amount);
 
-    // What the running cycles (frozen ones too) will deliver of an item.
+    /// <summary>What the running cycles (frozen ones too) will deliver of an item.</summary>
     private long Reserved(CityState city, ItemId item) => city.Buildings
         .Where(building => building.Phase == BuildingPhase.Producing)
         .SelectMany(building => Level(building).Recipe!.Outputs)
         .Where(output => output.Item == item)
         .Sum(output => output.Quantity);
 
+    /// <summary>The definition of a building's current level.</summary>
     private BuildingLevelDefinition Level(Building building) => DormantTail.Definition(_content, building.TypeId).GetLevel(building.Level);
 
+    /// <summary>The definition of a research node; throws for one the content doesn't know.</summary>
     private ResearchDefinition Research(ResearchId id) =>
         _content.TryGetResearch(id, out ResearchDefinition? node) ? node : throw new InvalidOperationException($"Unknown research {id}.");
 
+    /// <summary>Counts the case when it happened.</summary>
     private void CountIf(bool happened, string what)
     {
         if (happened)
@@ -342,6 +376,7 @@ internal sealed class InvariantChecks
         }
     }
 
+    /// <summary>The total per item of a list of lines (an item may appear in several).</summary>
     private static Dictionary<ItemId, long> Quantities(IEnumerable<ItemQuantity> lines) =>
         lines.GroupBy(line => line.Item).ToDictionary(group => group.Key, group => group.Sum(line => line.Quantity));
 }

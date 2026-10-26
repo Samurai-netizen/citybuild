@@ -9,6 +9,7 @@ public sealed class GameContentFactoryTests
 {
     // "!" in these tests reaches into the valid fixture, which sets every value it touches (ContentFixture.Valid).
 
+    /// <summary>Null data is a programmer error and throws, unlike a missing value inside the data, which is a reported error.</summary>
     [Fact]
     public void Create_NullData_Throws()
     {
@@ -16,6 +17,7 @@ public sealed class GameContentFactoryTests
         Assert.Throws<ArgumentNullException>(() => GameContentFactory.Create(null!));
     }
 
+    /// <summary>Valid data gives content and no errors, with its version carried over.</summary>
     [Fact]
     public void Create_ValidData_ReturnsContentAndNoErrors()
     {
@@ -24,6 +26,7 @@ public sealed class GameContentFactoryTests
         Assert.Equal("test-1", content.ContentVersion);
     }
 
+    /// <summary>Every global rule is carried over, and the base caps come sorted by item id.</summary>
     [Fact]
     public void Create_ValidData_CarriesOverTheRules()
     {
@@ -34,6 +37,7 @@ public sealed class GameContentFactoryTests
         Assert.Equal([("boards", 80L), ("wood", 100L)], rules.BaseStorageCaps.Select(cap => (cap.Item.Value, cap.Quantity)));
     }
 
+    /// <summary>A capped item has a base cap and an uncapped one has none.</summary>
     [Fact]
     public void TryGetBaseStorageCap_CappedAndUncappedItems_FindsOnlyTheCapped()
     {
@@ -44,6 +48,7 @@ public sealed class GameContentFactoryTests
         Assert.False(rules.TryGetBaseStorageCap(new ItemId("gold"), out _));
     }
 
+    /// <summary>The starting era and stock are carried over, the stock sorted by item id.</summary>
     [Fact]
     public void Create_ValidData_CarriesOverTheStartingCity()
     {
@@ -53,6 +58,7 @@ public sealed class GameContentFactoryTests
         Assert.Equal([("gold", 100L), ("wood", 5L)], startingCity.Inventory.Select(stock => (stock.Item.Value, stock.Quantity)));
     }
 
+    /// <summary>Every era and item value is carried over.</summary>
     [Fact]
     public void Create_ValidData_CarriesOverErasAndItems()
     {
@@ -65,6 +71,7 @@ public sealed class GameContentFactoryTests
         Assert.Equal((false, false), (gold.IsCapped, gold.IsTradable));
     }
 
+    /// <summary>Items, building types and research nodes are sorted by id whatever order the file lists them in.</summary>
     [Fact]
     public void Create_ListsInAnyFileOrder_SortsItemsBuildingsAndResearchById()
     {
@@ -80,6 +87,7 @@ public sealed class GameContentFactoryTests
         Assert.Equal(["better_saws", "carpentry", "warehouses"], content.Research.Select(node => node.Id.Value));
     }
 
+    /// <summary>Eras are sorted by number whatever order the file lists them in.</summary>
     [Fact]
     public void Create_ErasInAnyFileOrder_SortsErasByNumber()
     {
@@ -89,6 +97,7 @@ public sealed class GameContentFactoryTests
         Assert.Equal([1, 2], ContentAssert.Valid(data).Eras.Select(era => era.Number));
     }
 
+    /// <summary>Each lookup finds exactly the defined definitions: an unknown, differently cased or other-kind id finds nothing.</summary>
     [Fact]
     public void Lookups_KnownAndUnknownIds_FindExactlyTheDefinedOnes()
     {
@@ -103,6 +112,7 @@ public sealed class GameContentFactoryTests
         Assert.False(content.TryGetItem(new ItemId("hut"), out _));
     }
 
+    /// <summary>The lines of an item map (here a cost) come sorted by item id.</summary>
     [Fact]
     public void Create_ItemMapInAnyOrder_SortsItsLinesByItemId()
     {
@@ -114,6 +124,7 @@ public sealed class GameContentFactoryTests
         Assert.Equal([("gold", 40L), ("wood", 10L)], workshop.Cost.Select(line => (line.Item.Value, line.Quantity)));
     }
 
+    /// <summary>Every building value and its recipe are carried over.</summary>
     [Fact]
     public void Create_ValidData_CarriesOverTheBuildingValues()
     {
@@ -126,6 +137,7 @@ public sealed class GameContentFactoryTests
         Assert.Equal(90L, recipe.Labor);
     }
 
+    /// <summary>A locked type's <c>UnlockedByResearch</c> is the node whose effect names it; a type available at the start has none.</summary>
     [Fact]
     public void Create_LockedBuilding_IsUnlockedByTheResearchWhoseEffectNamesIt()
     {
@@ -136,6 +148,7 @@ public sealed class GameContentFactoryTests
         Assert.True(BuildingOf(content, "hut").IsAvailableAtStart);
     }
 
+    /// <summary>Levels are sorted by number whatever their file order, and each is found by <c>GetLevel</c>.</summary>
     [Fact]
     public void Create_LevelsInAnyFileOrder_AreSortedAndReachableByNumber()
     {
@@ -151,6 +164,7 @@ public sealed class GameContentFactoryTests
         Assert.Equal(8L, hut.GetLevel(2).UpgradeSeconds);
     }
 
+    /// <summary>A level number outside 1..max is a programmer error and throws.</summary>
     [Theory]
     [InlineData(0)]
     [InlineData(3)]
@@ -162,6 +176,7 @@ public sealed class GameContentFactoryTests
         Assert.Throws<ArgumentOutOfRangeException>(() => hut.GetLevel(level));
     }
 
+    /// <summary>Optional values left out become 0, null or empty: a house's slots and recipe, level 1's upgrade, missing inputs and prerequisites.</summary>
     [Fact]
     public void Create_LeftOutOptionalValues_BecomeZeroNoneOrEmpty()
     {
@@ -178,6 +193,7 @@ public sealed class GameContentFactoryTests
         Assert.Empty(ResearchOf(content, "carpentry").Prerequisites);
     }
 
+    /// <summary>Every research value is carried over.</summary>
     [Fact]
     public void Create_ValidData_CarriesOverTheResearchValues()
     {
@@ -188,6 +204,7 @@ public sealed class GameContentFactoryTests
         Assert.Equal([new ResearchId("carpentry")], betterSaws.Prerequisites);
     }
 
+    /// <summary>Several prerequisites come sorted by id.</summary>
     [Fact]
     public void Create_SeveralPrerequisites_AreSortedById()
     {
@@ -197,6 +214,7 @@ public sealed class GameContentFactoryTests
         Assert.Equal(["better_saws", "carpentry"], ResearchOf(ContentAssert.Valid(data), "warehouses").Prerequisites.Select(id => id.Value));
     }
 
+    /// <summary>Each effect keeps its type and values, and effects keep the file's order.</summary>
     [Fact]
     public void Create_Effects_KeepTheirTypeTheirValuesAndTheFileOrder()
     {
@@ -214,6 +232,7 @@ public sealed class GameContentFactoryTests
             effect => Assert.Equal(("boards", 40L), StorageCapBonus(effect)));
     }
 
+    /// <summary>The content's lists are read-only even through a cast: content can't change after it is made.</summary>
     [Fact]
     public void ContentLists_CannotBeChangedThroughACast()
     {
@@ -225,6 +244,7 @@ public sealed class GameContentFactoryTests
         Assert.True(((ICollection<BuildingLevelDefinition>)BuildingOf(content, "hut").Levels).IsReadOnly);
     }
 
+    /// <summary>The factory only reads the data: sorting the levels doesn't reorder the caller's list.</summary>
     [Fact]
     public void Create_ValidData_LeavesTheDataUnchanged()
     {
@@ -236,18 +256,22 @@ public sealed class GameContentFactoryTests
         Assert.Equal([2, 1], Building(data, "hut").Levels!.Select(level => level!.Level));
     }
 
+    /// <summary>A building type of the content by id; throws when it doesn't exist.</summary>
     private static BuildingDefinition BuildingOf(GameContent content, string id) =>
         content.TryGetBuilding(new BuildingTypeId(id), out BuildingDefinition? building) ? building : throw new InvalidOperationException(id);
 
+    /// <summary>A research node of the content by id; throws when it doesn't exist.</summary>
     private static ResearchDefinition ResearchOf(GameContent content, string id) =>
         content.TryGetResearch(new ResearchId(id), out ResearchDefinition? node) ? node : throw new InvalidOperationException(id);
 
+    /// <summary>An effect as (building, permille), asserting that it is a labor reduction.</summary>
     private static (string Building, int Permille) LaborReduction(ResearchEffect effect)
     {
         LaborReductionEffect reduction = Assert.IsType<LaborReductionEffect>(effect);
         return (reduction.Building.Value, reduction.Permille);
     }
 
+    /// <summary>An effect as (item, amount), asserting that it is a storage cap bonus.</summary>
     private static (string Item, long Amount) StorageCapBonus(ResearchEffect effect)
     {
         StorageCapBonusEffect bonus = Assert.IsType<StorageCapBonusEffect>(effect);

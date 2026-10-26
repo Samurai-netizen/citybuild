@@ -13,6 +13,7 @@ public sealed class ContentResearchRuleTests
 {
     // "!" in these tests reaches into the valid fixture, which sets every value it touches (ContentFixture.Valid).
 
+    /// <summary>Two nodes that require each other form a cycle, reported at the prerequisite that closes it.</summary>
     [Fact]
     public void Create_TwoNodesRequiringEachOther_ReportsResearchCycle()
     {
@@ -21,6 +22,7 @@ public sealed class ContentResearchRuleTests
         ContentAssert.SingleError(data, ContentErrorCode.ResearchCycle, "research[carpentry].prerequisites[better_saws]");
     }
 
+    /// <summary>A node that requires itself is the shortest cycle.</summary>
     [Fact]
     public void Create_NodeRequiringItself_ReportsResearchCycle()
     {
@@ -29,6 +31,7 @@ public sealed class ContentResearchRuleTests
         ContentAssert.SingleError(data, ContentErrorCode.ResearchCycle, "research[carpentry].prerequisites[carpentry]");
     }
 
+    /// <summary>A cycle through three nodes is one error whose message names the whole path, closed by its first node again.</summary>
     [Fact]
     public void Create_CycleThroughThreeNodes_ReportsOneResearchCycleWithThePath()
     {
@@ -42,6 +45,7 @@ public sealed class ContentResearchRuleTests
         Assert.Contains("better_saws → carpentry → warehouses → better_saws", Assert.Single(GameContentFactory.Create(data).Errors).Message);
     }
 
+    /// <summary>A prerequisite from a later era gives <see cref="ContentErrorCode.PrerequisiteInLaterEra"/>: the node could never start.</summary>
     [Fact]
     public void Create_PrerequisiteInALaterEra_ReportsPrerequisiteInLaterEra()
     {
@@ -54,6 +58,7 @@ public sealed class ContentResearchRuleTests
         ContentAssert.SingleError(data, ContentErrorCode.PrerequisiteInLaterEra, "research[carpentry].prerequisites[warehouses]");
     }
 
+    /// <summary>A diamond of prerequisites (two paths to one node) is not a cycle.</summary>
     [Fact]
     public void Create_SharedPrerequisitesWithoutACycle_AreAccepted()
     {
@@ -63,6 +68,7 @@ public sealed class ContentResearchRuleTests
         ContentAssert.Valid(data);
     }
 
+    /// <summary>Reductions that add up above the limit (250 + 200 = 450 ‰ against 400) give <see cref="ContentErrorCode.LaborReductionTooHigh"/>.</summary>
     [Fact]
     public void Create_LaborReductionsAddingUpAboveTheLimit_ReportsLaborReductionTooHigh()
     {
@@ -73,6 +79,7 @@ public sealed class ContentResearchRuleTests
         ContentAssert.SingleError(data, ContentErrorCode.LaborReductionTooHigh, "buildings[lumber_camp]");
     }
 
+    /// <summary>Reductions that add up to exactly the limit are fine.</summary>
     [Fact]
     public void Create_LaborReductionsAddingUpToExactlyTheLimit_AreAccepted()
     {
@@ -82,6 +89,7 @@ public sealed class ContentResearchRuleTests
         ContentAssert.Valid(data);
     }
 
+    /// <summary>With every reduction and all max workers a cycle of 10 s is below a minimum of 11 s: <see cref="ContentErrorCode.CycleTooShort"/>.</summary>
     [Fact]
     public void Create_CycleShorterThanTheMinimumWithEveryReduction_ReportsCycleTooShort()
     {
@@ -91,6 +99,7 @@ public sealed class ContentResearchRuleTests
         ContentAssert.SingleError(data, ContentErrorCode.CycleTooShort, "buildings[lumber_camp].levels[2]");
     }
 
+    /// <summary>A shortest cycle of exactly the minimum is fine.</summary>
     [Fact]
     public void Create_CycleExactlyAtTheMinimum_IsAccepted()
     {
@@ -99,6 +108,7 @@ public sealed class ContentResearchRuleTests
         ContentAssert.Valid(data);
     }
 
+    /// <summary>The same minimum without the reduction passes (14 s), so the error above really comes from applying the reduction.</summary>
     [Fact]
     public void Create_SameMinimumWithoutTheReduction_IsAccepted()
     {
@@ -113,6 +123,7 @@ public sealed class ContentResearchRuleTests
         ContentAssert.Valid(withoutReduction);
     }
 
+    /// <summary>Every level is checked with its own recipe and workers: only the cheaper level 1 is reported.</summary>
     [Fact]
     public void Create_ShortCycleOnALowerLevelOnly_ReportsCycleTooShortForThatLevel()
     {
@@ -126,6 +137,7 @@ public sealed class ContentResearchRuleTests
         ContentAssert.SingleError(data, ContentErrorCode.CycleTooShort, "buildings[lumber_camp].levels[1]");
     }
 
+    /// <summary>A 1000 ‰ reduction is a valid value but leaves no labor, so it is reported as a cycle too short, not as a bad value.</summary>
     [Fact]
     public void Create_FullReductionOfOneThousandPermille_ReportsCycleTooShortNotAValueError()
     {

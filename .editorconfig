@@ -1,3 +1,5 @@
+# Formatting and analyzer settings for every file of the repository (core-instructions/14-coding-standards.md);
+# server/tests/.editorconfig adds the settings for test code.
 root = true
 
 [*]

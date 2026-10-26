@@ -18,6 +18,10 @@ namespace CityBuilder.Client.Tests.EditMode
     /// </summary>
     public sealed class SimulatorInUnityTests
     {
+        /// <summary>
+        /// Advancing a city with a placed hut and camp completes both, staffs the camp and runs its cycles (2 wood in the next 25 s), with the
+        /// report's completions in order.
+        /// </summary>
         [Test]
         public void Advance_PlacedHutAndCamp_CompleteStaffAndProduce()
         {
@@ -38,6 +42,7 @@ namespace CityBuilder.Client.Tests.EditMode
             Assert.That((city.Clock, city.GetQuantity(new ItemId("wood")), second.ProductionSeconds), Is.EqualTo((31L, 6L, 25L)));
         }
 
+        /// <summary>The stall reasons of a house, a camp without workers and a camp whose output is full read as their API text.</summary>
         [Test]
         public void StallReason_HutIdleCampAndFullStorage_GiveTheApiText()
         {
@@ -53,7 +58,7 @@ namespace CityBuilder.Client.Tests.EditMode
             Assert.That(reasons, Is.EqualTo(new[] { "NoRecipe", "NoWorkers", "StorageFull:wood" }));
         }
 
-        // One era, a capped and an uncapped item, a house and a producer; the numbers are made up for this test.
+        /// <summary>One era, a capped and an uncapped item, a house and a producer; the numbers are made up for this test.</summary>
         private static GameContent SmallContent()
         {
             var data = new GameContentData

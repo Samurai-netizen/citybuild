@@ -145,6 +145,7 @@ namespace CityBuilder.Simulation.Settlement
                 report.AddConsumed(recipe.Inputs);
                 reservations.Add(recipe.Outputs);
                 building.StartCycle(time, CityQueries.EffectiveLabor(city, content, building.TypeId, building.Level));
+                // StartCycle with at least 1 worker (checked above) always sets an end, so PhaseEndsAt has a value here.
                 timers.Add(index, building.PhaseEndsAt!.Value);
                 passAgain = passAgain || (skippedForFullOutput && recipe.Inputs.Count > 0);
             }
@@ -152,7 +153,10 @@ namespace CityBuilder.Simulation.Settlement
             return passAgain;
         }
 
-        // The output check of the start rule, CityQueries.TryFindFullOutput with the reservations of this advance.
+        /// <summary>
+        /// The output check of the start rule: every output of the recipe fits under its cap with the stock and what this advance has reserved
+        /// (stock + reserved + quantity ≤ cap); <see cref="CityQueries.TryFindFullOutput"/> with the advance's reservations instead of a sum.
+        /// </summary>
         private static bool OutputsFit(CityState city, GameContent content, RecipeDefinition recipe, Reservations reservations)
         {
             IReadOnlyList<ItemQuantity> outputs = recipe.Outputs;
@@ -167,6 +171,7 @@ namespace CityBuilder.Simulation.Settlement
             return true;
         }
 
+        /// <summary>The earliest time any event source has something due, or null when no source has anything left.</summary>
         private static long? NextDueAt(IEventSource[] sources, CityState city)
         {
             long? next = null;

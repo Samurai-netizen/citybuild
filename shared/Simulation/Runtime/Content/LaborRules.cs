@@ -12,6 +12,10 @@ namespace CityBuilder.Simulation.Content
     /// </summary>
     internal static class LaborRules
     {
+        /// <summary>
+        /// For each producer type: its research reductions add up to at most the limit (<see cref="ContentErrorCode.LaborReductionTooHigh"/>), and
+        /// even with the allowed reduction and all max workers no cycle is shorter than <see cref="GameRules.MinCycleSeconds"/>.
+        /// </summary>
         public static void Check(ContentDraft draft, ContentErrorList errors)
         {
             GameRules rules = draft.Rules;
@@ -34,6 +38,7 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
+        /// <summary>The sum of every valid labor reduction (1 to 1000 permille) that research gives a building type; out-of-range values are left to the value rules.</summary>
         private static long TotalReduction(ContentDraft draft, BuildingTypeId building)
         {
             // A long sum of values of at most 1000 each cannot overflow. Out-of-range values are reported by the value rules.
@@ -52,6 +57,10 @@ namespace CityBuilder.Simulation.Content
             return total;
         }
 
+        /// <summary>
+        /// Reports each level whose shortest cycle, <c>CeilDiv(ApplyPermilleReduction(labor, reduction), MaxWorkers)</c> seconds, is below the
+        /// minimum (<see cref="ContentErrorCode.CycleTooShort"/>). Levels with values reported elsewhere are skipped.
+        /// </summary>
         private static void CheckCycles(BuildingDefinition building, int reductionPermille, long minCycleSeconds, ContentErrorList errors)
         {
             foreach (BuildingLevelDefinition level in building.Levels)
