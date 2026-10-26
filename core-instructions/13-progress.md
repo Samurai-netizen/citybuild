@@ -5,7 +5,7 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-21 · Testcontainers integration base; PR open, the owner merges it)
+- **Task:** — (last completed: M0-21 · Testcontainers integration base; PR #33 open, the owner merges it)
 - **Branch:** `task/M0-21-testcontainers-base` (from `main` = `117407a`) until the owner merges
 - **Build log entry:** last: `docs/build-log/2026/2026-10-26-04-M0-21.md` (Done)
 - **Last green commit:** the head of `task/M0-21-testcontainers-base` (Release build 0 warnings, format clean, fast suite: Repository 22,
