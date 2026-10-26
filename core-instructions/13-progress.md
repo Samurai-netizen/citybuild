@@ -11,8 +11,8 @@
 - **Last green commit:** `main` = `2c724ae` (CR-0003-T1 merged in #29, #28 merged; nothing changed in code yet)
 - **Done steps:** write-ahead (plan approved); 1 Docker (`docker-compose.yml`, `.env.example`); 2 packages (EF Core 10.0.14, Npgsql 10.0.3, `dotnet-ef` local tool); 3 persistence model
   (`Infrastructure/Persistence`, 22 model tests); 4 configuration (`ConnectionStrings:CityBuilder`, required; `ApiFactory` for tests);
-  5 startup migration (Development only)
-- **Next step:** step 6, initial migration `InitialCreate` (generated-code folder, decision 9). Decisions 8-10 are the owner's answers.
+  5 startup migration (Development only); 6 initial migration `InitialCreate` (+ migration tests)
+- **Next step:** step 7, run the migration against the compose database (needs Docker Desktop running), then step 8 docs. Decisions 8-10 are the owner's answers.
   Step 7 needs Docker Desktop running.
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never

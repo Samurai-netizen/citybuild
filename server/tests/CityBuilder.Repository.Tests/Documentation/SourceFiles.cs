@@ -21,9 +21,12 @@ internal static class SourceFiles
 
     /// <summary>
     /// Folders, relative to the repository root, whose files the rules don't apply to because the project didn't write them: the
-    /// sample scripts of Unity's project template (<c>Assets/TutorialInfo/</c>), which the owner may remove (an open question since M0-04).
+    /// sample scripts of Unity's project template (<c>Assets/TutorialInfo/</c>), which the owner may remove (an open question since M0-04),
+    /// and the EF Core migrations that dotnet ef generates and nobody edits by hand (docs/how-to/add-migration.md; the owner's choice in
+    /// M0-19, decision 9 of its build log).
     /// </summary>
-    public static IReadOnlyList<string> ExemptFolders { get; } = ["client/CityBuilder/Assets/TutorialInfo"];
+    public static IReadOnlyList<string> ExemptFolders { get; } =
+        ["client/CityBuilder/Assets/TutorialInfo", "server/src/CityBuilder.Infrastructure/Persistence/Migrations"];
 
     /// <summary>Every C# file to check, as paths relative to <paramref name="root"/> with <c>/</c> separators, in ordinal order.</summary>
     /// <param name="root">The repository root, normally <see cref="RepositoryPaths.Root"/>.</param>

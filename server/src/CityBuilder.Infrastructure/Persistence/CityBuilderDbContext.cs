@@ -8,7 +8,7 @@ namespace CityBuilder.Infrastructure.Persistence;
 /// The EF Core context over the game database (core-instructions/06-data-model.md): one set per table, each mapped by its configuration
 /// in <c>Persistence/Configurations</c>. Only Infrastructure uses it; Application sees ports (M0-20).
 /// </summary>
-/// <param name="options">The options with the Npgsql provider and the connection string.</param>
+/// <param name="options">The options with the Npgsql provider and the connection string (<see cref="PersistenceServiceCollectionExtensions"/>).</param>
 public sealed class CityBuilderDbContext(DbContextOptions<CityBuilderDbContext> options) : DbContext(options)
 {
     /// <summary>The <c>players</c> table.</summary>

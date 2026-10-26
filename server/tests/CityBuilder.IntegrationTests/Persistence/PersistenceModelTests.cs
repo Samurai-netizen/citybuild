@@ -12,7 +12,7 @@ namespace CityBuilder.IntegrationTests.Persistence;
 /// <summary>
 /// The EF Core model of <see cref="CityBuilderDbContext"/> is the schema of core-instructions/06-data-model.md: tables, columns, types,
 /// null rules, keys, unique rules, checks, indexes, foreign keys and the concurrency token. It reads EF's relational model, no database
-/// and no Docker; the migration that creates this schema is checked against this model in step 6 of M0-19.
+/// and no Docker; the committed migrations are checked against this model by <see cref="MigrationTests"/>.
 /// </summary>
 public sealed partial class PersistenceModelTests
 {

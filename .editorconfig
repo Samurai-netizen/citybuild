@@ -56,3 +56,8 @@ dotnet_diagnostic.CA2007.severity = none          # ConfigureAwait not needed in
 dotnet_diagnostic.IDE0005.severity = warning      # unnecessary usings
 dotnet_diagnostic.IDE1006.severity = warning      # naming rules above: without this line only the IDE and dotnet format report them, not the build
 dotnet_diagnostic.CS1591.severity = warning       # missing XML docs (errors in projects that set TreatWarningsAsErrors)
+
+# EF Core migrations: dotnet ef writes these files and nobody edits them by hand (core-instructions/06-data-model.md; decision 9 of the
+# M0-19 build log). As generated code, analyzers and missing doc comments are not reported there; the doc checker skips the folder too.
+[server/src/CityBuilder.Infrastructure/Persistence/Migrations/**.cs]
+generated_code = true

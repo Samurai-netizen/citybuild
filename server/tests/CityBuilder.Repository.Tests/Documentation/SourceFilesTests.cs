@@ -1,7 +1,7 @@
 namespace CityBuilder.Repository.Tests.Documentation;
 
 /// <summary>
-/// <see cref="SourceFiles"/> on the real repository: it finds the code of every area, skips build output and the exempt template folder,
+/// <see cref="SourceFiles"/> on the real repository: it finds the code of every area, skips build output and the exempt folders,
 /// and lists the files in a stable order. The floors make a broken search fail loudly instead of checking nothing.
 /// </summary>
 public sealed class SourceFilesTests
@@ -19,7 +19,7 @@ public sealed class SourceFilesTests
         Assert.True(files.Count >= 150, $"Only {files.Count} C# files found; the search must be broken.");
     }
 
-    /// <summary>No listed file lies in build output, an IDE or Unity cache, or the Unity template's exempt sample folder.</summary>
+    /// <summary>No listed file lies in build output, an IDE or Unity cache, or an exempt folder (Unity template samples, EF migrations).</summary>
     [Fact]
     public void All_Repository_SkipsBuildOutputCachesAndExemptFolders()
     {
@@ -28,6 +28,7 @@ public sealed class SourceFilesTests
         Assert.DoesNotContain(files, file => file.Contains("/bin/", StringComparison.Ordinal) || file.Contains("/obj/", StringComparison.Ordinal));
         Assert.DoesNotContain(files, file => file.Contains("/Library/", StringComparison.Ordinal));
         Assert.DoesNotContain(files, file => file.StartsWith("client/CityBuilder/Assets/TutorialInfo/", StringComparison.Ordinal));
+        Assert.DoesNotContain(files, file => file.StartsWith("server/src/CityBuilder.Infrastructure/Persistence/Migrations/", StringComparison.Ordinal));
     }
 
     /// <summary>The files come in ordinal order, so reports are identical on every machine and in every run.</summary>
