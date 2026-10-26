@@ -1,5 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <!-- The server-only concepts the shared engine doesn't have (docs/modules/CityBuilder.Domain.md). It references only the shared engine
+       (core-instructions/03-architecture.md; DomainDependencyTests checks it). -->
+
   <ItemGroup>
     <ProjectReference Include="..\..\..\shared\Simulation.Build\CityBuilder.Simulation.csproj" />
   </ItemGroup>

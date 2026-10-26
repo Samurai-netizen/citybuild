@@ -1,4 +1,6 @@
 <Solution>
+  <!-- The server's solution: every server project and the shared engine's .NET build. dotnet restore, format, build and test run on
+       this file (AGENTS.md → Commands). -->
   <Folder Name="/shared/">
     <Project Path="../shared/Simulation.Build/CityBuilder.Simulation.csproj" />
   </Folder>

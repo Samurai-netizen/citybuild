@@ -1,3 +1,5 @@
+/* The page-kind line (index.js): a left border and label in the accent colour of the page's kind; the colours are set in
+   src/css/custom.css. */
 .kind {
   --kind-accent: var(--ifm-color-emphasis-600);
   display: flex;

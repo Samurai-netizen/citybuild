@@ -1,7 +1,7 @@
-name: Handbook site
-
 # Publishes the handbook (website/) to GitHub Pages after every merge to main (owner's decision, CR-0002).
 # The same build runs on every pull request in the CI job `docs`, so a merged change has already passed it.
+name: Handbook site
+
 on:
   push:
     branches: [main]

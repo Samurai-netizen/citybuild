@@ -1,5 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <!-- The implementations of the Application ports (docs/modules/CityBuilder.Infrastructure.md). It must not reference Api
+       (core-instructions/03-architecture.md; InfrastructureDependencyTests in the integration tests checks it). -->
+
   <ItemGroup>
     <ProjectReference Include="..\CityBuilder.Application\CityBuilder.Application.csproj" />
     <ProjectReference Include="..\CityBuilder.Domain\CityBuilder.Domain.csproj" />

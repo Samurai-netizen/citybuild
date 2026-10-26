@@ -14,6 +14,7 @@ code="$(printf '%s\n' "$paths" | grep -E '^(server/|shared/|client/CityBuilder/(
 [ -z "$code" ] && exit 0
 
 branch="$(git branch --show-current 2>/dev/null)"
+# Blocks the end of the turn: prints the hook's JSON answer with the reason (backslashes and quotes escaped) and ends the hook.
 block() {
   local reason="$1"
   reason="${reason//\\/\\\\}"; reason="${reason//\"/\\\"}"

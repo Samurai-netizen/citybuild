@@ -1,4 +1,5 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
+  <!-- The connection status label that GameRoot shows (docs/modules/CityBuilder.Client.Presentation.md); its style is ConnectionStatus.uss. -->
   <Style src="ConnectionStatus.uss" />
   <ui:Label name="connection-status" class="connection-status" text="Not connected" />
 </ui:UXML>

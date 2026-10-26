@@ -15,9 +15,11 @@ const HAS_EXTENSION = /\.[A-Za-z0-9]+$/;
 const EXTERNAL = /^[a-z][a-z0-9+.-]*:/i; // http:, https:, mailto:, …
 const NO_AUTOLINK_INSIDE = new Set(['link', 'linkReference', 'definition', 'code', 'html']);
 
+// The plugin: its options come from docusaurus.config.js, and the transformer it returns rewrites the tree of each page.
 module.exports = function repoLinks({repoRoot, pages, tracked, githubRepoUrl, branch}) {
   const pageSet = new Set(pages);
   const existsCache = new Map();
+  // What a repository path is: 'file', 'dir' or null; from git's list of tracked files when given, else from the disk (cached).
   const exists = (rel) => {
     if (tracked) return tracked.files.has(rel) ? 'file' : tracked.dirs.has(rel) ? 'dir' : null;
     if (!existsCache.has(rel)) {
@@ -27,6 +29,7 @@ module.exports = function repoLinks({repoRoot, pages, tracked, githubRepoUrl, br
     return existsCache.get(rel);
   };
   const specFiles = fs.readdirSync(path.join(repoRoot, 'core-instructions')).filter((n) => /^\d{2}-.*\.md$/.test(n));
+  // The page of the spec with number nn (04 → core-instructions/04-….md), or null when there is none.
   const specPath = (nn) => {
     const name = specFiles.find((n) => n.startsWith(`${nn}-`));
     return name ? `core-instructions/${name}` : null;
@@ -68,6 +71,7 @@ module.exports = function repoLinks({repoRoot, pages, tracked, githubRepoUrl, br
     return null;
   }
 
+  // A relative .md link from a folder to a page, with an optional #hash; Docusaurus turns it into the page's URL.
   const relativeLink = (fromDir, page, hash = '') => {
     const rel = path.posix.relative(fromDir, page);
     return (rel.startsWith('.') ? rel : `./${rel}`) + hash;
@@ -92,6 +96,8 @@ module.exports = function repoLinks({repoRoot, pages, tracked, githubRepoUrl, br
     else if (found.page !== path.posix.normalize(path.posix.join(sourceDir, decoded))) node.url = relativeLink(sourceDir, found.page, hash);
   }
 
+  // Walks the tree: rewrites Markdown links and definitions, and turns code spans that name repository files into links
+  // (not inside links, code or HTML).
   function visit(node, sourceDir) {
     if (!node.children) return;
     node.children.forEach((child, index) => {

@@ -76,6 +76,7 @@ export function repoPath(source) {
   return source.replace(/^@site\/\.\.\//, '');
 }
 
+// The kind of a repository page (the first rule that matches its path), and whether the file is protected.
 export function pageKind(path) {
   const found = KINDS.find((k) => k.test(path));
   return {...found, isProtected: PROTECTED.has(path)};

@@ -1,3 +1,5 @@
+# What git ignores in the whole repository; client/CityBuilder/.gitignore adds the Unity project's own ignores.
+
 # --- secrets and local settings (never commit) ---
 .env
 *.local.json

@@ -1,5 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <!-- Tests of the shared engine: rules, labor, research, invariants, golden scenarios, properties and the performance budget
+       (core-instructions/08-testing-strategy.md, test layers). -->
+
   <PropertyGroup>
     <!-- xUnit v3 test projects are executables. -->
     <OutputType>Exe</OutputType>
