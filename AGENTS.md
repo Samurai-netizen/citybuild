@@ -52,6 +52,8 @@ Then check the repo state (`git status`, branch, last commits) and that hooks ar
 - **Log every decision** in the build log entry as you make it. Write owner instructions into the repo the same session.
 - **Docs are updated in the same PR as the code,** and the build log's Docs impact table says which pages and why (`17` §5).
   Never hand-edit `docs/reference/generated/`. Docs are plain Markdown, placeholders in backticks (`17` §7).
+- **Every file and every declaration says what it is for** (OD-12): a doc comment on each type, member and local function, a header
+  comment in each other file (`14` → Documentation in code). The build, `CityBuilder.Repository.Tests` and `check-docs.sh` check it.
 - Ask before: new dependencies, design changes, API/DB contract breaks, edits to protected files, deleting or loosening tests.
 - Never work on `main`, push to `main`, force-push, use `--no-verify`, merge your own PR, or commit secrets.
 - Server-authoritative, integer-only deterministic engine, game numbers only in content JSON, no XP or city levels.

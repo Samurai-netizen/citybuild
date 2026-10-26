@@ -37,9 +37,11 @@ anyone (owner directive OD-12). Worked examples for each kind: `docs/how-to/docu
 - **A local function** has a `//` comment above it (XML doc comments aren't allowed there). **Inside a body**, comments say why: a step that
   isn't obvious, the spec rule a block implements, a trap the next change could fall into. Never what the next line plainly does.
 - **Every file says what it is for, at its top.** In C# that is the doc comment of the file's type (one type per file, named after it); a
-  file without a type (top-level statements) starts with a comment. Scripts, JavaScript, workflows, MSBuild files, UXML and USS start with
-  a header comment, and every shell or JavaScript function has a comment above it. Files that can't hold comments (JSON) are described by
-  the doc of the folder or module that owns them; files that tools generate (Unity's `.asset`, `.unity`, `.meta`, lock files) are not.
+  file without a type (top-level statements) starts with a comment. Every other file that can hold a comment starts with one: scripts and
+  hooks, YAML, MSBuild files and the solution (above the root element or first inside it), JavaScript, CSS and USS, UXML, and the git and
+  editor config files; every shell, PowerShell or JavaScript function has a comment on the line right above it. Files that can't hold
+  comments (JSON) are described by the doc of the folder or module that owns them; files that tools generate (Unity's `.asset`, `.unity`,
+  `.meta` and theme `.tss` files, lock files) are not.
 - **Tests:** the class says what it covers (the spec section, the fixture numbers it relies on); each test method says in one sentence the
   behaviour it proves; helpers and fixtures are documented like production code. Test names still read as sentences (`08`).
 - **Comments are code:** a change that makes a comment wrong fixes it in the same commit.
@@ -47,7 +49,7 @@ anyone (owner directive OD-12). Worked examples for each kind: `docs/how-to/docu
   `param`) as an error in the engine and in every server project, tests included (`server/Directory.Build.props`).
   `CityBuilder.Repository.Tests` parses every C# file, the Unity scripts included, and fails for an undocumented declaration at any access
   level, a local function without a comment, or a file without a description. `check-docs.sh` checks the header comments of the other
-  files and the comments above shell and JavaScript functions. Whether a comment is good is for review.
+  files and the comments above shell, PowerShell and JavaScript functions. Whether a comment is good is for review.
 
 ## Server (.NET 10, C# 14)
 - File-scoped namespaces; `sealed` by default; dependency injection through constructors only. No service locator, no static mutable state.

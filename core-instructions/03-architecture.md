@@ -70,7 +70,7 @@ CityBuilder/
 │   ├── CityBuilder.slnx
 │   ├── content/mvp-content.json
 │   ├── src/  CityBuilder.Api · .Application · .Domain · .Infrastructure
-│   └── tests/ CityBuilder.Simulation.Tests · .Domain.Tests · .Application.Tests · .IntegrationTests
+│   └── tests/ CityBuilder.Simulation.Tests · .Domain.Tests · .Application.Tests · .IntegrationTests · .Repository.Tests
 ├── tools/DocTools/              # generates docs/reference/generated (M0-61)
 ├── tools/BalanceSim/            # headless economy simulator (M0-67)
 ├── website/                     # the handbook: Docusaurus site over core-instructions/ and docs/ (CR-0002)

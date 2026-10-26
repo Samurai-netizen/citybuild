@@ -22,7 +22,7 @@ The task id is in the request. If it's missing, read it from `core-instructions/
    - **Tests:** new behaviour tested; negative tests present; **no deleted, skipped or loosened tests or assertions**
      (inspect the test diffs line by line).
    - **Quality:** standards in `14`; no game-number literals; no era- or research-specific `if`s; no dead code or TODOs in production paths.
-   - **Docs:** everything the change recipe requires is updated; XML docs on public APIs; module docs `Last updated:`;
+   - **Docs:** everything the change recipe requires is updated; a doc comment on every new or changed declaration and a header comment in every new file (`14` → Documentation in code); module docs `Last updated:`;
      generated docs not hand-edited; CHANGELOG line.
    - **Process:** the build log entry lists the decisions the diff obviously contains; resume point and plan board updated;
      protected files changed only with owner approval recorded in the build log.

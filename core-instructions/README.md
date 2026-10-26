@@ -24,7 +24,7 @@ are in `docs/` (map: `docs/README.md`). Entry points: `AGENTS.md` (any AI tool),
 ## AI-building process (14–19)
 | File | Read when | Owns |
 |---|---|---|
-| `14-coding-standards.md` | Writing any code | Size, clarity, correctness, XML docs, approved dependencies |
+| `14-coding-standards.md` | Writing any code | Size, clarity, correctness, documentation in code (every file and declaration), approved dependencies |
 | `15-change-control.md` | Before anything outside the task | Autonomy levels, gates, protected files, feature intake (CRs), standing owner directives |
 | `16-session-protocol.md` | Every session | Start, checkpoint, finish, resume — the repo is the only memory |
 | `17-documentation-system.md` | Writing docs or the build log | Doc kinds, single source of truth map, build log rules, freshness |

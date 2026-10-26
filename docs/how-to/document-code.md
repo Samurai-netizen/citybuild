@@ -66,8 +66,14 @@ public sealed class WorkerRuleTests
     [Fact]
     public void Reassigning_MidCycle_KeepsTheProgress()
 ```
-Other files start with a header comment (what the file is for, and for scripts, how to run it), and a shell or JavaScript function has a
-comment above it:
+Every other file that can hold a comment starts with one: what the file is for and, for a script, how to run it. In an XML file (a
+project, the solution, UXML) the comment comes above the root element or first inside it:
+```xml
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Tests of the use cases with fakes, no database (core-instructions/08-testing-strategy.md, test layers). -->
+```
+A shell, PowerShell or JavaScript function has a comment on the line right above it:
 ```bash
 #!/usr/bin/env bash
 # Builds or previews the handbook site (website/README.md).
@@ -78,7 +84,7 @@ install() { (cd "$site" && npm ci); }
 ```
 
 ## When a check fails
-`CityBuilder.Repository.Tests` (part of the fast suite and of CI) prints one line per problem, `path:line: kind name message`:
+`CityBuilder.Repository.Tests` (part of the fast suite and of CI) prints one line per problem in a C# file, `path:line: kind name message`:
 
 | Message ends with | Fix |
 |---|---|
@@ -90,8 +96,15 @@ install() { (cd "$site" && npm ci); }
 | `declares no type and does not start with a comment …` | A file of top-level statements: start it with a `//` comment |
 
 The compiler adds its own errors in the server projects and the engine: CS1591 (a public member without a comment), CS1570 (badly formed
-XML), CS1572 and CS1573 (`<param>` names that don't match), CS1574 (a `cref` that names nothing). `check-docs.sh` reports a script,
-JavaScript, workflow, MSBuild, UXML or USS file without a header comment, and a shell or JavaScript function without a comment above it.
+XML), CS1572 and CS1573 (`<param>` names that don't match), CS1574 (a `cref` that names nothing), CS1587 (a doc comment where none is
+allowed, such as above a local function).
+
+`check-docs.sh` (the pre-commit hook and CI) checks the other files and prints `✗ path: …` or `✗ path:line: …`:
+
+| Message ends with | Fix |
+|---|---|
+| `doesn't start with a comment that says what the file is for …` | Start the file with one: `#` in scripts, YAML and config files, `//` in JavaScript, `/* */` in CSS and USS, `<!-- -->` above or first inside the root element of a project, solution or UXML file |
+| `no comment above this function that says what it does …` | Put a comment on the line right above the function, with no blank line between |
 
 ## Related
 - The rules: `core-instructions/14-coding-standards.md` → Documentation in code.
