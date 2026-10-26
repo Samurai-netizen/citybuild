@@ -79,14 +79,21 @@ public sealed class PostgresServer : IAsyncDisposable
         PostgreSqlContainer container = new PostgreSqlBuilder(Image).Build();
         await container.StartAsync(TestContext.Current.CancellationToken);
 
-        await ExecuteAsync(container, $"CREATE DATABASE \"{_templateName}\"");
-        // Without pooling the migration's connection closes with the context; CREATE DATABASE … TEMPLATE fails while one is open.
-        var options = new DbContextOptionsBuilder<CityBuilderDbContext>()
-            .UseNpgsql(ConnectionString(container, _templateName, pooling: false))
-            .Options;
-        await using (var context = new CityBuilderDbContext(options))
+        try
         {
+            await ExecuteAsync(container, $"CREATE DATABASE \"{_templateName}\"");
+            // Without pooling the migration's connection closes with the context; CREATE DATABASE … TEMPLATE fails while one is open.
+            var options = new DbContextOptionsBuilder<CityBuilderDbContext>()
+                .UseNpgsql(ConnectionString(container, _templateName, pooling: false))
+                .Options;
+            await using var context = new CityBuilderDbContext(options);
             await context.Database.MigrateAsync(TestContext.Current.CancellationToken);
+        }
+        catch
+        {
+            // A failed migration leaves no half-made template behind: the next test starts a new container.
+            await container.DisposeAsync();
+            throw;
         }
 
         _container = container;

@@ -30,7 +30,7 @@ public sealed class CityRepositoryDatabaseTests(PostgresServer server) : Postgre
 
     /// <summary>
     /// The starter city of the real content (its era and stock, clock 0, no buildings or research), saved for a new player with its
-    /// starting grants, loads in a new scope with every value equal and state version 1.
+    /// starting grants, loads in a new scope with every value equal and state version 1; the ledger holds one grant per item.
     /// </summary>
     [Fact]
     public async Task LoadForUpdateAsync_SavedStarterCity_IsTheStarterCity()
@@ -46,6 +46,11 @@ public sealed class CityRepositoryDatabaseTests(PostgresServer server) : Postgre
         CityAggregate loaded = await LoadAsync();
         Assert.Equal(Describe(Saved(starter)), Describe(loaded));
         Assert.NotEmpty(loaded.State.Inventory);
+        await using CityBuilderDbContext db = Database.CreateContext();
+        Assert.Equal(
+            starter.State.Inventory.Select(stock => (stock.Key.ToString(), stock.Value, stock.Value, "STARTING_GRANT")),
+            (await db.LedgerEntries.OrderBy(row => row.Id).ToListAsync(TestContext.Current.CancellationToken))
+                .Select(row => (row.ItemId, row.Delta, row.BalanceAfter, row.Reason)));
     }
 
     /// <summary>
