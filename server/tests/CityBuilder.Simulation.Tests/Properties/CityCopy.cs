@@ -8,6 +8,7 @@ namespace CityBuilder.Simulation.Tests.Properties;
 /// </summary>
 internal static class CityCopy
 {
+    /// <summary>A copy of the city: every stored value, with new building and research objects.</summary>
     public static CityState Of(CityState city) => new(
         city.Clock,
         city.Era,
@@ -17,6 +18,7 @@ internal static class CityCopy
         city.CompletedResearch,
         city.ActiveResearch is null ? null : new ActiveResearch(city.ActiveResearch.Id, city.ActiveResearch.StartedAt, city.ActiveResearch.EndsAt));
 
+    /// <summary>A copy of the building: every stored value.</summary>
     public static Building Of(Building building) => new(
         building.Id,
         building.TypeId,

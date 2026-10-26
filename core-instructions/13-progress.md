@@ -11,7 +11,7 @@
 - **Last green commit:** the head of the branch (fast suite: Repository 20, Simulation 872, Domain 1, Application 14, IntegrationTests 25)
 - **Steps:** 1 start ✓ · 2 checker + standard ✓ · 3 server ✓ · 4 engine ✓ · 5 tests · 6 Unity client · 7 scripts and other files · 8 workflow docs ·
   9 finish (details: the entry's Session 1 plan)
-- **Next step:** step 5: `Properties/` of `CityBuilder.Simulation.Tests` (178 problems; the other folders are done), then the other test projects (67), each
+- **Next step:** step 5, part 3: the other test projects (Application 29, Integration 36, Domain 2; the engine tests are done), each
   removed from `_notYetDocumented` when done; then CS1591 and the doc checks as errors in `tests/` (`server/Directory.Build.props`).
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); Dependabot PR #28.

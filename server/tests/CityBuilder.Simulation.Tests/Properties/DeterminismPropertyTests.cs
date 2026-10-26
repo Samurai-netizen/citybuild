@@ -8,6 +8,7 @@ namespace CityBuilder.Simulation.Tests.Properties;
 /// </summary>
 public sealed class DeterminismPropertyTests
 {
+    /// <summary>Generating a seed's history a second time gives the same operations, rejected commands, reports and city.</summary>
     [Theory]
     [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
     public void Generate_SameSeedTwice_GivesIdenticalOperationsReportsAndCity(string contentName)
@@ -22,6 +23,7 @@ public sealed class DeterminismPropertyTests
         });
     }
 
+    /// <summary>Replaying a seed's operation list on a new city gives the same reports and city.</summary>
     [Theory]
     [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
     public void Replay_OperationsOfASeed_GivesIdenticalReportsAndCity(string contentName)
@@ -35,6 +37,10 @@ public sealed class DeterminismPropertyTests
         });
     }
 
+    /// <summary>
+    /// The first operation in which two histories differ (a missing one shows as <c>none</c>), then their counts of rejected commands; null
+    /// when both match.
+    /// </summary>
     private static string? FirstOperationDifference(CityHistory expected, CityHistory actual)
     {
         int count = Math.Max(expected.Operations.Count, actual.Operations.Count);

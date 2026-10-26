@@ -16,14 +16,18 @@ namespace CityBuilder.Simulation.Tests.Properties;
 /// </summary>
 internal sealed class LaborLedger
 {
+    /// <summary>The game content: recipes and research reductions.</summary>
     private readonly GameContent _content;
+    /// <summary>The running cycle of each producing building, by building id, as the ledger counted it.</summary>
     private readonly Dictionary<int, Cycle> _cycles;
 
+    /// <summary>An empty ledger for a new history on <paramref name="content"/>.</summary>
     public LaborLedger(GameContent content)
         : this(content, [])
     {
     }
 
+    /// <summary>A ledger that goes on with the given cycles (<see cref="Fork"/>).</summary>
     private LaborLedger(GameContent content, Dictionary<int, Cycle> cycles)
     {
         _content = content;
@@ -33,6 +37,11 @@ internal sealed class LaborLedger
     /// <summary>A ledger for a branch: the same cycles so far, kept apart from now on.</summary>
     public LaborLedger Fork() => new(_content, new Dictionary<int, Cycle>(_cycles));
 
+    /// <summary>
+    /// Checks one step and moves the ledger past it: adds the step's worker-seconds to every cycle that was running, then checks each cycle
+    /// that continued, ended or started.
+    /// </summary>
+    /// <returns>The first failure, naming the building, or null when the labor of the step adds up.</returns>
     public string? Check(InvariantStep step, Action<string> count)
     {
         long seconds = step.After.Clock - step.Before.Clock;
@@ -71,6 +80,7 @@ internal sealed class LaborLedger
         return null;
     }
 
+    /// <summary>A cycle that runs on: it has done less than its labor, keeps that labor, and ends when the ledger says (never while it has no workers).</summary>
     private string? Continued(Building after, Cycle cycle, InvariantStep step, Action<string> count)
     {
         _cycles[after.Id] = cycle;
@@ -94,6 +104,10 @@ internal sealed class LaborLedger
         return null;
     }
 
+    /// <summary>
+    /// A cycle that is gone: an upgrade may end it at any time; otherwise it has done at least its labor, and on an event-aligned step it did
+    /// not have it already a second earlier.
+    /// </summary>
     private string? Ended(int id, Cycle cycle, long work, int workers, InvariantStep step, Action<string> count)
     {
         _cycles.Remove(id);
@@ -114,6 +128,10 @@ internal sealed class LaborLedger
             : null;
     }
 
+    /// <summary>
+    /// A new cycle: recorded with the worker-seconds since its start; on an event-aligned step it must start at the step's end, with the
+    /// effective labor, and end when that labor gives.
+    /// </summary>
     private string? Started(Building after, InvariantStep step, Action<string> count)
     {
         // Within a step every start happens at its end; a start inside the dormant tail is invariant 12's to report.
@@ -137,7 +155,7 @@ internal sealed class LaborLedger
                 + $"{after.PhaseStartedAt} with labor {after.CycleLabor} and ends at {End(after.PhaseEndsAt)}";
     }
 
-    // The recipe's labor less the reductions of the completed research, rounded up (04 section 3).
+    /// <summary>The recipe's labor less the reductions of the completed research, rounded up (<c>04</c> section 3).</summary>
     private long EffectiveLabor(CityState city, Building building)
     {
         long labor = DormantTail.Definition(_content, building.TypeId).GetLevel(building.Level).Recipe!.Labor;
@@ -149,10 +167,16 @@ internal sealed class LaborLedger
         return CeilDiv(labor * (1000 - permille), 1000);
     }
 
+    /// <summary>An end time as text, <c>never</c> for none.</summary>
     private static string End(long? endsAt) => endsAt.HasValue ? StructuralEquality.Text(endsAt.Value) : "never";
 
+    /// <summary>Division rounded up, worked out here like the rest of the ledger, not with the engine's <see cref="IntegerMath.CeilDiv"/>.</summary>
     private static long CeilDiv(long dividend, long divisor) => (dividend + divisor - 1) / divisor;
 
-    // A running cycle as the ledger knows it: when it started, its labor, the worker-seconds done so far, and whether its workers ever changed.
+    /// <summary>A running cycle as the ledger knows it.</summary>
+    /// <param name="StartedAt">When the cycle started.</param>
+    /// <param name="Labor">Its labor, in worker-seconds.</param>
+    /// <param name="Work">The worker-seconds done so far.</param>
+    /// <param name="Reassigned">Whether its workers ever changed.</param>
     private readonly record struct Cycle(long StartedAt, long Labor, long Work, bool Reassigned);
 }

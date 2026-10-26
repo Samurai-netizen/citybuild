@@ -12,6 +12,7 @@ namespace CityBuilder.Simulation.Tests.Properties;
 /// </summary>
 internal sealed class DormantTail
 {
+    /// <summary>A tail with the city it must leave, its outputs and its completions; only <see cref="Model"/> makes one.</summary>
     private DormantTail(CityState city, SortedDictionary<ItemId, long> produced, List<int> completedBuildings, List<ResearchId> completedResearch)
     {
         City = city;
@@ -26,9 +27,10 @@ internal sealed class DormantTail
     /// <summary>The outputs of the cycles that complete in the tail (nothing is consumed there).</summary>
     public IReadOnlyDictionary<ItemId, long> Produced { get; }
 
-    /// <summary>The constructions and upgrades that complete in the tail, by id, and the research.</summary>
+    /// <summary>The ids of the buildings whose construction or upgrade completes in the tail, sorted.</summary>
     public IReadOnlyList<int> CompletedBuildings { get; }
 
+    /// <summary>The research that completes in the tail: the running one, when it ends by the target.</summary>
     public IReadOnlyList<ResearchId> CompletedResearch { get; }
 
     /// <summary>The tail from <paramref name="atCap"/> (the city at the window's last second, after its starts) to <paramref name="target"/>.</summary>
@@ -90,9 +92,11 @@ internal sealed class DormantTail
         .Where(building => building.Phase != BuildingPhase.Constructing)
         .Sum(building => (long)Definition(content, building.TypeId).GetLevel(building.Level).WorkersProvided);
 
+    /// <summary>The definition of a building type; throws for one the content doesn't know.</summary>
     public static BuildingDefinition Definition(GameContent content, BuildingTypeId type) =>
         content.TryGetBuilding(type, out BuildingDefinition? definition) ? definition : throw new InvalidOperationException($"Unknown type {type}.");
 
+    /// <summary>The building idle at <paramref name="level"/> with <paramref name="workers"/>, in canonical form, as a completion leaves it.</summary>
     private static Building Idle(Building building, int level, int workers) =>
         new(building.Id, building.TypeId, building.X, building.Y, level, workers, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
 }

@@ -9,14 +9,22 @@ namespace CityBuilder.Simulation.Tests.Properties;
 /// </summary>
 internal sealed class ReportTotals
 {
+    /// <summary>The seconds that passed, over all reports.</summary>
     private readonly long _elapsedSeconds;
+    /// <summary>The seconds in which cycles could start, over all reports.</summary>
     private readonly long _productionSeconds;
+    /// <summary>The quantity produced per item, over all reports.</summary>
     private readonly SortedDictionary<ItemId, long> _produced = [];
+    /// <summary>The quantity consumed per item, over all reports.</summary>
     private readonly SortedDictionary<ItemId, long> _consumed = [];
+    /// <summary>The ids of the buildings that completed in any report, sorted.</summary>
     private readonly List<int> _completedBuildings = [];
+    /// <summary>The research that completed in any report, sorted.</summary>
     private readonly List<ResearchId> _completedResearch = [];
+    /// <summary>Whether the era changed in any report.</summary>
     private readonly bool _eraChanged;
 
+    /// <summary>Adds up the reports.</summary>
     private ReportTotals(IEnumerable<SettlementReport> reports)
     {
         foreach (SettlementReport report in reports)
@@ -53,6 +61,7 @@ internal sealed class ReportTotals
         return fields;
     }
 
+    /// <summary>Adds each item's quantity to its total; an overflow throws.</summary>
     private static void Add(SortedDictionary<ItemId, long> totals, IReadOnlyDictionary<ItemId, long> quantities)
     {
         foreach (KeyValuePair<ItemId, long> quantity in quantities)
