@@ -4,6 +4,11 @@
        (core-instructions/03-architecture.md; InfrastructureDependencyTests in the integration tests checks it). -->
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\CityBuilder.Application\CityBuilder.Application.csproj" />
     <ProjectReference Include="..\CityBuilder.Domain\CityBuilder.Domain.csproj" />
   </ItemGroup>

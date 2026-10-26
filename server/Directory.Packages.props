@@ -8,6 +8,15 @@
 
   <ItemGroup Label="Api">
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
+    <!-- Design-time support for the dotnet-ef tool (migrations); the tool's own version is pinned in dotnet-tools.json at the repo root. -->
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.14" />
+  </ItemGroup>
+
+  <!-- EF Core on PostgreSQL (core-instructions/06-data-model.md). The provider accepts any EF Core 10 from 10.0.4; the explicit
+       Relational reference keeps EF Core on one patch version with the Design package. -->
+  <ItemGroup Label="Infrastructure">
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.14" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
   </ItemGroup>
 
   <!-- xUnit v3 without Microsoft Testing Platform (xunit.v3.mtp-off) runs under VSTest, so the dotnet test commands with a

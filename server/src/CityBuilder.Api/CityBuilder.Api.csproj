@@ -5,6 +5,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <!-- Only for dotnet-ef at design time (Api is its startup project); nothing of it ships with the app. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
   </ItemGroup>
 
   <!-- The content files (core-instructions/03-architecture.md, content pipeline) go to content/ next to the app; the configuration key
