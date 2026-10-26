@@ -37,6 +37,9 @@ runtime prints the message to stderr. On success the log has one line with the c
 - `TimeProvider` is registered once, as `TimeProvider.System`. Game code gets time only through it
   (`core-instructions/02-principles.md`, rule 3); tests replace it with `FakeTimeProvider`.
 - OpenAPI is mapped only in Development (`05`); a test checks that Production answers 404 (`07`).
+- The OpenAPI package's source generator (`OpenApiXmlCommentSupport`) compiles this project's XML doc comments into the assembly:
+  the comments of endpoint handlers and of request and response types become descriptions in the OpenAPI document, so they are
+  written for API consumers too, and a doc comment change in Api changes the assembly (found in CR-0003-T1).
 - Logs are JSON lines on stdout: UTC timestamp, level, category, message, the template's named values (`State`)
   and scopes. Every log call is a source-generated `[LoggerMessage]` method in a `<Feature>Log` class (the analyzers reject `LogInformation`
   calls in `src/`: CA1848, CA1873); decision 029 in `core-instructions/12-decisions.md`. What may and may not be logged: `core-instructions/07-security-model.md` → Logging policy.
