@@ -34,6 +34,9 @@ internal static class SettleFixture
     /// <summary>The manor's building id: it is the third building placed.</summary>
     public const int ManorId = 3;
 
+    /// <summary>The id of the player's city.</summary>
+    public static readonly Guid CityId = new("6f1d2c3b-0000-4000-8000-0000000000c1");
+
     /// <summary>The player whose city the repository holds.</summary>
     public static readonly Guid PlayerId = new("6f1d2c3b-0000-4000-8000-000000000001");
 
@@ -68,12 +71,14 @@ internal static class SettleFixture
         Apply(state, CityRules.PlaceBuilding(state, Content, new BuildingTypeId("manor"), 2, 0));
 
         var repository = new InMemoryCityRepository();
-        repository.Add(new CityAggregate(PlayerId, state, (lastSettled ?? LastSettled).ToUnixTimeSeconds()));
+        repository.Add(new CityAggregate(
+            CityId, PlayerId, state, researchCompletedAt: [], (lastSettled ?? LastSettled).ToUnixTimeSeconds(), stateVersion: 0, Content.ContentVersion));
         return repository;
     }
 
-    /// <summary>The settle use case over the repository, the fixture's content and the clock.</summary>
-    public static SettleCity UseCase(ICityRepository repository, TimeProvider clock) => new(repository, new FixedContent(Content), clock);
+    /// <summary>The settle use case over the repository (also its unit of work), the fixture's content and the clock.</summary>
+    public static SettleCity UseCase(InMemoryCityRepository repository, TimeProvider clock) =>
+        new(repository, repository, new FixedContent(Content), clock);
 
     /// <summary>The city's state as text, field by field, so two cities compare in one assertion that shows the first difference.</summary>
     public static string Describe(CityState city)

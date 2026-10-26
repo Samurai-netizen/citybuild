@@ -8,9 +8,9 @@
 - **Task:** M0-20 · Repository and mapping `[O]`
 - **Branch:** `task/M0-20-repository-mapping` (from `main` = `cafca28`)
 - **Build log entry:** `docs/build-log/2026/2026-10-26-03-M0-20.md`
-- **Last green commit:** the head of the branch (build 0 warnings, format clean, fast suite 22/872/21/14/55)
-- **Done steps:** write-ahead; step 1 (Domain types `Player`, `LedgerEntry`/`LedgerReason`, `CommandReceipt`, tests, module doc)
-- **Next step:** step 2, Application ports (`ICityRepository.Save(city, ledger, receipt)`, `IUnitOfWork`, `IPlayerRepository`) and `CityAggregate` (plan in the entry, steps 1-5)
+- **Last green commit:** the head of the branch (build 0 warnings, format clean, fast suite 22/872/21/23/55)
+- **Done steps:** write-ahead; step 1 (Domain types); step 2 (ports `ICityRepository.Save`, `IUnitOfWork`, `IPlayerRepository`; `CityAggregate` with completion clocks and `Advance`)
+- **Next step:** step 3, `CityMapping` in Infrastructure (pure) with round-trip tests (plan in the entry, steps 1-5)
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7

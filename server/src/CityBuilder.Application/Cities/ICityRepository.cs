@@ -1,8 +1,11 @@
+using CityBuilder.Domain.Commands;
+using CityBuilder.Domain.Ledger;
+
 namespace CityBuilder.Application.Cities;
 
 /// <summary>
-/// The port to the stored cities (<c>core-instructions/03-architecture.md</c>). A skeleton for the settle use case: M0-20 adds the ledger
-/// and the command receipt to <see cref="SaveAsync"/>, and M0-22 the row lock and the transaction around both calls.
+/// The port to the stored cities (<c>core-instructions/03-architecture.md</c>, <c>06-data-model.md</c>). <see cref="Save"/> only stages
+/// the writes; <see cref="Persistence.IUnitOfWork.SaveChangesAsync"/> writes them. M0-22 adds the row lock and the transaction around both.
 /// </summary>
 public interface ICityRepository
 {
@@ -10,11 +13,17 @@ public interface ICityRepository
     /// <param name="playerId">The acting player; a use case never loads another player's city.</param>
     /// <param name="cancellationToken">Cancels the load.</param>
     /// <returns>The player's city.</returns>
+    /// <exception cref="InvalidOperationException">The player has no city.</exception>
     Task<CityAggregate> LoadForUpdateAsync(Guid playerId, CancellationToken cancellationToken);
 
-    /// <summary>Stores the city as it is now.</summary>
-    /// <param name="city">A city loaded by <see cref="LoadForUpdateAsync"/>.</param>
-    /// <param name="cancellationToken">Cancels the save.</param>
-    /// <returns>A task that completes when the city is stored.</returns>
-    Task SaveAsync(CityAggregate city, CancellationToken cancellationToken);
+    /// <summary>
+    /// Stages the city as it is now, with the ledger entries and the receipt of what changed it, for the next
+    /// <see cref="Persistence.IUnitOfWork.SaveChangesAsync"/>. A city this repository didn't load is new and is inserted. Call it once per
+    /// city and unit of work: the stored version becomes <see cref="CityAggregate.StateVersion"/> + 1.
+    /// </summary>
+    /// <param name="city">The city, loaded by <see cref="LoadForUpdateAsync"/> or new.</param>
+    /// <param name="ledger">The ledger entries of the city's changes since it was loaded, in order; empty when there are none.</param>
+    /// <param name="receipt">The receipt of the successful command that changed the city, or <see langword="null"/> (a settle, a
+    /// rejected command).</param>
+    void Save(CityAggregate city, IReadOnlyList<LedgerEntry> ledger, CommandReceipt? receipt);
 }

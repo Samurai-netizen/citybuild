@@ -4,8 +4,8 @@
 **References:** `CityBuilder.Domain`, `CityBuilder.Simulation` ·
 **Referenced by:** `CityBuilder.Api`, `CityBuilder.Infrastructure`, `CityBuilder.Application.Tests`
 
-> *Growing.* The first port, `IContentProvider`, exists (M0-07b). The settle use case `SettleCity` exists as a skeleton over a first
-> `ICityRepository` (M0-13); the full ports (M0-20), the transaction (M0-22), the complete settle (M0-23), the commands and the command pipeline
+> *Growing.* The ports `IContentProvider` (M0-07b), `ICityRepository`, `IPlayerRepository` and `IUnitOfWork` (M0-20) exist, and the settle
+> use case `SettleCity` as a skeleton (M0-13). The transaction (M0-22), the complete settle (M0-23), the commands and the command pipeline
 > follow *(planned)*.
 
 ## Purpose
@@ -17,9 +17,11 @@ need (`ICityRepository`, `IUnitOfWork`, `IContentProvider`) and the command pipe
 | Type | Responsibility |
 |---|---|
 | `Content/IContentProvider` | The port for the game content: `GameContent Content`, loaded and validated once before the server accepts requests and the same for every request. Implemented by `ContentProvider` in Infrastructure, registered by the Api |
-| `Cities/CityAggregate` | A player's city as the server keeps it: `PlayerId`, the engine's `State` (`CityState`) and `LastSettledUnixSec`, the server second of the last settle (wall time, separate from the city clock; `06` `last_settled_unix`). `MarkSettled` never lets that second decrease |
-| `Cities/ICityRepository` | The port to the stored cities, a skeleton: `LoadForUpdateAsync(playerId)` (every player has a city) and `SaveAsync(city)`. M0-20 adds the ledger and the receipt, M0-22 the lock and the transaction; no implementation yet |
-| `Cities/SettleCity`, `Cities/SettleCityResult` | `ExecuteAsync(playerId)`: loads the city, floors the `TimeProvider`'s now to whole Unix seconds, computes the `SettlementWindow` from the last settled second, runs `Simulator.Advance` by its elapsed seconds, records the new last settled second and saves. The result carries the city, the `SettlementReport` and the window, whose `IsClockBehind` calls for the warning of `04` §1 |
+| `Cities/CityAggregate` | A player's city as the server keeps it: `CityId`, `PlayerId`, the engine's `State` (`CityState`), `LastSettledUnixSec` (the server second of the last settle, wall time, separate from the city clock; `06` `last_settled_unix`), `StateVersion` (as loaded), `ContentVersion`, and `ResearchCompletedAt`, the city-clock second each completed research completed (the engine keeps only the ids; `06` `city_research.completed_at`). `Advance(content, seconds)` runs `Simulator.Advance` and records the completion clock of the research that completed (its `EndsAt`); advance a city only through it. `MarkSettled` never lets the last settled second decrease |
+| `Cities/ICityRepository` | The port to the stored cities: `LoadForUpdateAsync(playerId)` (every player has a city) and `Save(city, ledger, receipt)`, which only stages the city, its `LedgerEntry` rows and the optional `CommandReceipt`; a city the repository didn't load is inserted. Implemented by `CityRepository` in Infrastructure; M0-22 adds the lock and the transaction |
+| `Players/IPlayerRepository` | The port to the stored players: `FindByDevNameAsync(devName)` and `Add(player)` (staged), for the dev login (M0-25). Implemented by `PlayerRepository` in Infrastructure |
+| `Persistence/IUnitOfWork` | `SaveChangesAsync()` writes everything the repositories staged, together. Implemented by `UnitOfWork` in Infrastructure |
+| `Cities/SettleCity`, `Cities/SettleCityResult` | `ExecuteAsync(playerId)`: loads the city, floors the `TimeProvider`'s now to whole Unix seconds, computes the `SettlementWindow` from the last settled second, advances the city (`CityAggregate.Advance`) by its elapsed seconds, records the new last settled second, stages the city and writes it through `IUnitOfWork`. The result carries the city, the `SettlementReport` and the window, whose `IsClockBehind` calls for the warning of `04` §1 |
 
 ## Rules and invariants
 - May reference only `CityBuilder.Domain`, `CityBuilder.Simulation` and the BCL, never ASP.NET Core or EF Core
@@ -42,14 +44,15 @@ need (`ICityRepository`, `IUnitOfWork`, `IContentProvider`) and the command pipe
 `server/tests/CityBuilder.Application.Tests` (xUnit v3, milliseconds; use cases with fakes). It checks the dependency rule, on the
 assembly of `IContentProvider`, and `SettleCity` in `Cities/SettleCityTests` with `FakeTimeProvider` (`Microsoft.Extensions.TimeProvider.Testing`):
 0 s, 1 s, exactly 8 h and 8 h + 1 s, 30 days (timers finish, no cycle starts after the cap), a timer completing at its second, the clock behind
-and catching up, null dependencies, 100 calls 300 ms apart (= one call at 29.7 s) and the save. `SettleFixture` is a small content in code (the production cap
-is the M0 value, 8 h) with a city built through `CityRules`; `InMemoryCityRepository` is the fake repository. `FakeTimeProvider` can't go
+and catching up, null dependencies, 100 calls 300 ms apart (= one call at 29.7 s), the completion clock of a research completed in the window, and the
+save (staged without ledger or receipt, written once). `Cities/CityAggregateTests` checks the aggregate's constructor rules and `Advance`. `SettleFixture` is a small content in code (the production cap
+is the M0 value, 8 h) with a city built through `CityRules`; `InMemoryCityRepository` is the fake repository and unit of work in one. `FakeTimeProvider` can't go
 back in time, so a clock behind is a last settled second ahead of now. The content port's implementation and its registration are tested in
 `CityBuilder.IntegrationTests` (`Content/`). Run: `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`.
 
 ## Known limitations
 - `SettleCity` is a skeleton: no closing zero-length advance, no ledger rows, no transaction and no log line for a clock behind
-  *(planned, M0-23)*. Nothing registers it in the Api yet, and `ICityRepository` has no implementation *(planned, M0-20)*.
+  *(planned, M0-23)*. `ContentVersion` keeps the loaded value until M0-23 sets it on settle. Nothing registers the use case in the Api yet.
 - No commands yet *(planned, M0-26 on)*.
 
-Last updated: CR-0003-T1
+Last updated: M0-20
