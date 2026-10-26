@@ -4,14 +4,14 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** AWAITING OWNER   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M0-19 · EF Core model, migrations, Docker (`[O]` `[PLAN]`)
 - **Branch:** `task/M0-19-ef-core-docker` (from `main` = `2c724ae`)
 - **Build log entry:** `docs/build-log/2026/2026-10-26-02-M0-19.md`
 - **Last green commit:** `main` = `2c724ae` (CR-0003-T1 merged in #29, #28 merged; nothing changed in code yet)
-- **Done steps:** write-ahead: the plan (8 steps) in the build log, the Docs impact table, board row `In progress`, CR-0003 `Done`
-- **Next step:** the owner approves the plan (G-Plan) and answers its questions (build log → Session 1 → Plan). Then step 1, Docker
-  (`docker-compose.yml`, `.env.example`). Step 7 needs Docker Desktop running.
+- **Done steps:** write-ahead (plan approved); 1 Docker (`docker-compose.yml`, `.env.example`; checked with `docker compose config`)
+- **Next step:** step 2, packages (Npgsql EF provider, EF Design, the local tool `dotnet-ef`). Decisions 8-10 are the owner's answers.
+  Step 7 needs Docker Desktop running.
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7
@@ -29,7 +29,7 @@
 | Shared engine: content, research, labor | done | M0-03 merged (PR #7); the content model and its validation (M0-07a) merged (PR #14); the JSON file and server loading (M0-07b) merged (PR #15); city state and mutations (M0-08) merged (PR #16); `Simulator.Advance` (M0-09) merged (PR #17); rule tests (M0-10) merged (PR #18); golden scenario #1 (M0-11) merged (PR #19); engine review (M0-12) merged (PR #20) |
 | Shared engine: invariants, performance | done | settlement window and production cap (M0-13) merged (PR #21); property test harness (M0-14, with engine fix CR-0001) merged (PR #22); invariant properties (M0-15) merged (PR #23); performance budget M0-16 merged (PR #24; worst case ~37 ms per advance in Release); display helpers M0-17 merged (PR #25); spec sync and ADRs M0-18 merged (PR #26) |
 | Server skeleton | done | M0-02 merged (PR #6) |
-| Persistence (EF + PostgreSQL) | in progress | M0-19 (EF Core model, migrations, Docker): plan awaiting approval |
+| Persistence (EF + PostgreSQL) | in progress | M0-19 (EF Core model, migrations, Docker): plan approved |
 | Auth + command pipeline | not started | |
 | Commands: place / upgrade / assign workers / start research | not started | |
 | Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) and M0-05 (Unity tests, `test-unity.sh`) merged (PR #8, #12); networking is M0-37 |
