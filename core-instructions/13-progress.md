@@ -4,15 +4,18 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** CR-0003-T1 · Code documentation: every file and declaration (`docs/changes/CR-0003-code-documentation.md`, owner's request of 2026-10-26)
-- **Branch:** `task/CR-0003-T1-code-docs` (from `main` = `a402563`)
-- **Build log entry:** `docs/build-log/2026/2026-10-25-01-CR-0003-T1.md`
-- **Last green commit:** the head of the branch (fast suite: Repository 22, Simulation 872, Domain 1, Application 14, IntegrationTests 25)
-- **Steps:** 1 start ✓ · 2 checker + standard ✓ · 3 server ✓ · 4 engine ✓ · 5 tests ✓ · 6 Unity client ✓ · 7 scripts and other files ✓ · 8 workflow docs ✓ ·
-  9 finish (details: the entry's Session 1 plan)
-- **Next step:** the owner runs `/finish-task` (the AI can't start that skill): Definition of Done, self-review, Docs impact closed, build
-  log `Done`, resume point `IDLE`, the PR. The owner's revision request (checks, comments, docs) is done (build log, Session 2).
+- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** — (last completed: CR-0003-T1 · Code documentation: every file and declaration; PR open, the owner merges it)
+- **Branch:** `task/CR-0003-T1-code-docs` (from `main` = `a402563`) until the owner merges
+- **Build log entry:** last: `docs/build-log/2026/2026-10-25-01-CR-0003-T1.md` (Done)
+- **Last green commit:** the head of `task/CR-0003-T1-code-docs` (build 0 warnings, format clean, fast suite: Repository 22, Simulation 872,
+  Domain 1, Application 14, IntegrationTests 25; Unity EditMode 13, PlayMode 6; handbook builds; `check-docs --base origin/main` OK)
+- **Done steps:** all of CR-0003-T1 (every file and declaration documented, the checker `CityBuilder.Repository.Tests`, doc comment errors
+  in every server project, header and function checks in `check-docs.sh`, the workflow docs, and the owner's revision; details and
+  follow-ups in the entry)
+- **Next step:** the owner merges the PR. Then `/model` → Opus 5.5 and `/start-task M0-19` (EF Core model, migrations, Docker, `[O]`
+  `[PLAN]`: write ahead, present the plan, wait for approval); its start commit sets CR-0003 to `Done`. Every change now documents its
+  code (OD-12).
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); Dependabot PR #28 and the 7
@@ -22,7 +25,7 @@
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 18 / 85 (CR-0003-T1 in progress)
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 18 / 85 (CR-0003-T1 in review)
 
 | Area | State | Notes |
 |---|---|---|
@@ -37,7 +40,7 @@
 | Unity city view + placement | not started | |
 | Inspector, worker stepper, research screen, HUD | not started | |
 | Resilience (limits, retries, logging) | not started | |
-| Docs automation (DocTools) + docs completeness | in progress | handbook, Pages, docs-as-code checks and a full audit: CR-0002 done (PR #27); code documentation CR-0003-T1 in progress; DocTools is M0-61 |
+| Docs automation (DocTools) + docs completeness | in progress | handbook, Pages, docs-as-code checks and a full audit: CR-0002 done (PR #27); code documentation CR-0003-T1 in review; DocTools is M0-61 |
 | Balance simulator | not started | |
 | E2E / security / concurrency suites | not started | |
 | Dev build + M0 close-out | not started | |
