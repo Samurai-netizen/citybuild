@@ -8,13 +8,15 @@
 - **Task:** CR-0003-T1 · Code documentation: every file and declaration (`docs/changes/CR-0003-code-documentation.md`, owner's request of 2026-10-26)
 - **Branch:** `task/CR-0003-T1-code-docs` (from `main` = `a402563`)
 - **Build log entry:** `docs/build-log/2026/2026-10-25-01-CR-0003-T1.md`
-- **Last green commit:** the head of the branch (fast suite: Repository 20, Simulation 872, Domain 1, Application 14, IntegrationTests 25)
+- **Last green commit:** the head of the branch (fast suite: Repository 22, Simulation 872, Domain 1, Application 14, IntegrationTests 25)
 - **Steps:** 1 start ✓ · 2 checker + standard ✓ · 3 server ✓ · 4 engine ✓ · 5 tests ✓ · 6 Unity client ✓ · 7 scripts and other files ✓ · 8 workflow docs ✓ ·
   9 finish (details: the entry's Session 1 plan)
-- **Next step:** the owner's revision request, part 3: review the task's docs (parts 1, the checks, and 2, the comments, are done); then
-  the owner runs `/finish-task` (the AI can't start that skill) for the Definition of Done, build log `Done`, resume point and PR.
-- **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
-  executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); Dependabot PR #28.
+- **Next step:** the owner runs `/finish-task` (the AI can't start that skill): Definition of Done, self-review, Docs impact closed, build
+  log `Done`, resume point `IDLE`, the PR. The owner's revision request (checks, comments, docs) is done (build log, Session 2).
+- **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, build
+  log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
+  executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); Dependabot PR #28 and the 7
+  security alerts GitHub reports on `main`.
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
