@@ -12,13 +12,15 @@
 - **Planned steps:** 1. Application: `ICityTransactionRunner`, `CityTransaction`, `ConcurrencyConflictException`, `SettleCity` on the
   runner, fast tests; 2. Infrastructure: `FOR UPDATE`, `lock_timeout` (`Database:LockTimeoutMilliseconds`), exception mapping,
   integration tests; 3. docs (Docs impact in the entry)
-- **Done steps:** start (write-ahead)
-- **Next step:** step 1 (Application runner and its fast tests)
+- **Done steps:** start; step 1 (runner, transaction, conflict exception, lock and `lock_timeout` in Infrastructure, fast tests)
+- **Next step:** step 2: route `CityRepositoryDatabaseTests` through a transaction (assertions unchanged), then the new integration tests
+  (rollback, version mismatch, serialization, lock timeout, second city)
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7
   security alerts GitHub reports on `main`.
-- **Known broken / do not touch:** —
+- **Known broken / do not touch:** 4 tests of `CityRepositoryDatabaseTests` (`Category=Integration`) load outside a transaction, which
+  the repository now refuses; step 2 fixes them. The fast suite is green.
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 

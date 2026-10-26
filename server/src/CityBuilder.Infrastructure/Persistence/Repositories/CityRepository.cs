@@ -1,4 +1,5 @@
 using CityBuilder.Application.Cities;
+using CityBuilder.Application.Persistence;
 using CityBuilder.Domain.Commands;
 using CityBuilder.Domain.Ledger;
 using CityBuilder.Infrastructure.Persistence.Mapping;
@@ -10,7 +11,8 @@ namespace CityBuilder.Infrastructure.Persistence.Repositories;
 /// <summary>
 /// <see cref="ICityRepository"/> over <see cref="CityBuilderDbContext"/>: loads a city's rows tracked and maps them with
 /// <see cref="CityMapping"/>; <see cref="Save"/> merges the mapped rows into the tracked ones, so EF writes only what changed. Scoped, one
-/// per request, like the context. The row lock (<c>SELECT … FOR UPDATE</c>) and the transaction come with M0-22.
+/// per request, like the context. A load locks the city's row (<c>SELECT … FOR UPDATE</c>) for the rest of the request's transaction,
+/// which <see cref="Application.Cities.CityTransactionRunner"/> begins.
 /// </summary>
 /// <param name="db">The request's context.</param>
 /// <param name="timeProvider">The server clock; it stamps the wall times of the rows a save writes.</param>
@@ -25,13 +27,48 @@ public sealed class CityRepository(CityBuilderDbContext db, TimeProvider timePro
     /// <inheritdoc />
     public async Task<CityAggregate> LoadForUpdateAsync(Guid playerId, CancellationToken cancellationToken)
     {
-        CityRow city = await _db.Cities.SingleOrDefaultAsync(row => row.PlayerId == playerId, cancellationToken)
-            ?? throw new InvalidOperationException($"Player {playerId} has no city.");
+        if (_db.Database.CurrentTransaction is null)
+        {
+            // Outside a transaction the lock would end with the statement, and the write after it would be unguarded.
+            throw new InvalidOperationException("A city is loaded for update only inside the request's transaction (ICityTransactionRunner).");
+        }
+
+        if (_db.Cities.Local.Count > 0)
+        {
+            throw new InvalidOperationException("This request has already loaded a city: a request locks only the acting player's city, once.");
+        }
+
+        CityRow city = await LockAsync(playerId, cancellationToken) ?? throw new InvalidOperationException($"Player {playerId} has no city.");
         List<CityInventoryRow> inventory = await _db.CityInventory.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
         List<CityBuildingRow> buildings = await _db.CityBuildings.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
         List<CityResearchRow> research = await _db.CityResearch.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
 
         return CityMapping.ToAggregate(new CityRows(city, inventory, buildings, research));
+    }
+
+    /// <summary>
+    /// Locks the player's city row (<c>SELECT … FOR UPDATE</c>), waiting at most the transaction's lock timeout, and loads it tracked. The
+    /// rows of the city's other tables need no lock of their own: every write to them holds this one.
+    /// </summary>
+    /// <param name="playerId">The acting player.</param>
+    /// <param name="cancellationToken">Cancels the wait and the load.</param>
+    /// <returns>The city row, or <see langword="null"/> when the player has no city.</returns>
+    /// <exception cref="ConcurrencyConflictException">The lock wasn't granted within the lock timeout.</exception>
+    private async Task<CityRow?> LockAsync(Guid playerId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Not composed further (a SingleOrDefault would wrap it in a subquery): the statement is exactly the one of 06.
+            List<CityRow> rows = await _db.Cities
+                .FromSql($"SELECT * FROM cities WHERE player_id = {playerId} FOR UPDATE")
+                .ToListAsync(cancellationToken);
+            return rows.SingleOrDefault();
+        }
+        catch (Exception exception) when (LockTimeouts.IsLockTimeout(exception))
+        {
+            throw new ConcurrencyConflictException(
+                $"The city of player {playerId} stayed locked by another request for longer than the lock timeout.", exception);
+        }
     }
 
     /// <inheritdoc />

@@ -5,15 +5,21 @@ namespace CityBuilder.Application.Cities;
 
 /// <summary>
 /// The port to the stored cities (<c>core-instructions/03-architecture.md</c>, <c>06-data-model.md</c>). <see cref="Save"/> only stages
-/// the writes; <see cref="Persistence.IUnitOfWork.SaveChangesAsync"/> writes them. M0-22 adds the row lock and the transaction around both.
+/// the writes; <see cref="Persistence.IUnitOfWork.SaveChangesAsync"/> writes them. Only <see cref="CityTransactionRunner"/> uses it, inside the
+/// transaction that holds the city's row lock; use cases go through <see cref="ICityTransactionRunner"/>.
 /// </summary>
 public interface ICityRepository
 {
-    /// <summary>Loads the player's city to change it. Every player has a city: the first login creates it.</summary>
-    /// <param name="playerId">The acting player; a use case never loads another player's city.</param>
+    /// <summary>
+    /// Locks the player's city row for the rest of the transaction (<c>SELECT … FOR UPDATE</c>) and loads the city to change it. Every
+    /// player has a city: the first login creates it.
+    /// </summary>
+    /// <param name="playerId">The acting player; a request never locks another player's city.</param>
     /// <param name="cancellationToken">Cancels the load.</param>
     /// <returns>The player's city.</returns>
-    /// <exception cref="InvalidOperationException">The player has no city.</exception>
+    /// <exception cref="InvalidOperationException">The player has no city, no transaction is running, or this request has already loaded a
+    /// city.</exception>
+    /// <exception cref="Persistence.ConcurrencyConflictException">Another transaction held the lock for longer than the lock timeout.</exception>
     Task<CityAggregate> LoadForUpdateAsync(Guid playerId, CancellationToken cancellationToken);
 
     /// <summary>

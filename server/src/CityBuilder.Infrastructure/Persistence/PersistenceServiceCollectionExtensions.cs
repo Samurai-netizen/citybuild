@@ -13,21 +13,25 @@ public static class PersistenceServiceCollectionExtensions
     /// <summary>
     /// Registers <see cref="CityBuilderDbContext"/> (scoped, one per request) on the Npgsql provider, and the ports over it, scoped as well
     /// so the repositories and the unit of work of a request share its context: <see cref="ICityRepository"/>, <see cref="IPlayerRepository"/>
-    /// and <see cref="IUnitOfWork"/>. The repositories need a <see cref="TimeProvider"/>, which the Api registers. The connection string is
-    /// read when the first context is created, so the Api can take it from its validated options.
+    /// and <see cref="IUnitOfWork"/>; and <see cref="ICityTransactionRunner"/>, scoped, the one entry point of every city write. The
+    /// repositories need a <see cref="TimeProvider"/>, which the Api registers. The settings are read when they are first needed, so the Api
+    /// can build them from its validated options.
     /// </summary>
     /// <param name="services">The service collection.</param>
-    /// <param name="connectionString">Gives the connection string from the app's services.</param>
+    /// <param name="settings">Gives the persistence settings from the app's services.</param>
     /// <returns>The same service collection.</returns>
     public static IServiceCollection AddCityBuilderPersistence(
-        this IServiceCollection services, Func<IServiceProvider, string> connectionString)
+        this IServiceCollection services, Func<IServiceProvider, PersistenceSettings> settings)
     {
-        ArgumentNullException.ThrowIfNull(connectionString);
+        ArgumentNullException.ThrowIfNull(settings);
 
-        services.AddDbContext<CityBuilderDbContext>((provider, options) => options.UseNpgsql(connectionString(provider)));
+        services.AddSingleton<PersistenceSettings>(settings);
+        services.AddDbContext<CityBuilderDbContext>((provider, options) =>
+            options.UseNpgsql(provider.GetRequiredService<PersistenceSettings>().ConnectionString));
         services.AddScoped<ICityRepository, CityRepository>();
         services.AddScoped<IPlayerRepository, PlayerRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<ICityTransactionRunner, CityTransactionRunner>();
         return services;
     }
 }
