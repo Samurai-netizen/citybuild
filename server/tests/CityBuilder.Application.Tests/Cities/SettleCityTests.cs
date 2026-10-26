@@ -1,5 +1,6 @@
 using CityBuilder.Application.Cities;
 using CityBuilder.Application.Content;
+using CityBuilder.Simulation;
 using CityBuilder.Simulation.State;
 using Microsoft.Extensions.Time.Testing;
 using static CityBuilder.Application.Tests.Cities.SettleFixture;
@@ -188,9 +189,41 @@ public sealed class SettleCityTests
         FakeTimeProvider clock = ClockAtLastSettled();
         IContentProvider content = new FixedContent(SettleFixture.Content);
 
-        Assert.Throws<ArgumentNullException>("cities", () => new SettleCity(null!, content, clock));
-        Assert.Throws<ArgumentNullException>("content", () => new SettleCity(repository, null!, clock));
-        Assert.Throws<ArgumentNullException>("timeProvider", () => new SettleCity(repository, content, null!));
+        Assert.Throws<ArgumentNullException>("cities", () => new SettleCity(null!, repository, content, clock));
+        Assert.Throws<ArgumentNullException>("unitOfWork", () => new SettleCity(repository, null!, content, clock));
+        Assert.Throws<ArgumentNullException>("content", () => new SettleCity(repository, repository, null!, clock));
+        Assert.Throws<ArgumentNullException>("timeProvider", () => new SettleCity(repository, repository, content, null!));
+    }
+
+    /// <summary>
+    /// A research that completed during the settlement gets the clock it completed at, its end, not the clock the settlement reached: left
+    /// alone for 30 days, <c>forestry</c> completed at <see cref="ResearchEndsAt"/>.
+    /// </summary>
+    [Fact]
+    public async Task ExecuteAsync_ResearchCompletedDuringTheWindow_RecordsItsEndAsTheCompletionClock()
+    {
+        InMemoryCityRepository repository = Repository();
+        FakeTimeProvider clock = ClockAtLastSettled();
+        clock.Advance(TimeSpan.FromDays(30));
+
+        SettleCityResult result = await UseCase(repository, clock).ExecuteAsync(PlayerId, TestContext.Current.CancellationToken);
+
+        Assert.Equal(new Dictionary<ResearchId, long> { [Forestry] = ResearchEndsAt }, result.City.ResearchCompletedAt);
+    }
+
+    /// <summary>A settlement stages the city without ledger entries (they come with M0-23) or a receipt, and writes it once.</summary>
+    [Fact]
+    public async Task ExecuteAsync_AnySettlement_StagesWithoutLedgerOrReceiptAndWritesOnce()
+    {
+        InMemoryCityRepository repository = Repository();
+        FakeTimeProvider clock = ClockAtLastSettled();
+        clock.Advance(TimeSpan.FromSeconds(5));
+
+        await UseCase(repository, clock).ExecuteAsync(PlayerId, TestContext.Current.CancellationToken);
+
+        Assert.Empty(repository.LastLedger!);
+        Assert.Null(repository.LastReceipt);
+        Assert.Equal(1, repository.SaveChangesCount);
     }
 
     /// <summary>Settling saves the city once, with its new clock and last settled second.</summary>

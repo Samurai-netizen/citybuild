@@ -8,7 +8,8 @@ Tests protect **gameplay invariants**, not a coverage percentage. A feature with
 |---|---|---|---|
 | Simulation | `CityBuilder.Simulation.Tests` | ms | Engine rules, labor, research, invariants, golden scenarios, performance budget |
 | Domain/Application | `CityBuilder.Domain.Tests`, `CityBuilder.Application.Tests` | ms | Use cases with fakes: validation, pipeline order, idempotency logic, error codes |
-| Integration | `CityBuilder.IntegrationTests` | s | Real PostgreSQL (Testcontainers) + in-process API (`WebApplicationFactory`): persistence, locks, receipts, HTTP contract. Today it holds in-process tests only (host, content loading, the EF model against `06` and its migrations, without a database); PostgreSQL and the `Integration` category arrive with M0-21 *(planned)* |
+| Integration | `CityBuilder.IntegrationTests` | s | Real PostgreSQL (Testcontainers) + in-process API (`WebApplicationFactory`): persistence, locks, receipts, HTTP contract. Today it holds in-process tests only (host, content loading, the EF model against `06` and its migrations, the city mapping's
+round trip and what the repositories stage in EF's change tracker, all without a database); PostgreSQL and the `Integration` category arrive with M0-21 *(planned)* |
 | Repository | `CityBuilder.Repository.Tests` | ms | Checks over the whole source tree: every C# file says what it is for and every declaration has a doc comment, Unity scripts included (`14` → Documentation in code); each rule is tested on small samples |
 | Unity EditMode | `Assets/_Project/Tests/EditMode` | ms | DTO (de)serialization, client state store, grid math, retry policy, display prediction, view-models |
 | Unity PlayMode | `Assets/_Project/Tests/PlayMode` | s | Bootstrap starts; the city view builds from a snapshot |

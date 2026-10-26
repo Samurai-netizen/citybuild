@@ -4,8 +4,8 @@
 **References:** `CityBuilder.Simulation` ·
 **Referenced by:** `CityBuilder.Application`, `CityBuilder.Infrastructure`, `CityBuilder.Domain.Tests`
 
-> *Skeleton.* The project builds but has no types yet. The first ones arrive with persistence and the command
-> pipeline *(planned, M0-20 on; the persistence models of M0-19 are Infrastructure's row classes, not Domain types)*.
+> *Growing.* The player, the ledger entry and the command receipt exist (M0-20); the settlement record and the M2 concepts follow
+> *(planned)*. Their database rows are Infrastructure's row classes (M0-19), mapped explicitly (M0-20).
 
 ## Purpose
 Server-only concepts that the shared engine doesn't have: player, ledger entry, command receipt, settlement record
@@ -15,7 +15,10 @@ Game rules that the client also runs belong in `CityBuilder.Simulation`, not her
 ## Key types
 | Type | Responsibility |
 |---|---|
-| — | none yet |
+| `Players/Player` | A player of the M0 dev login: `Id` (not empty) and `DevName` (not blank). Real accounts come in M1 |
+| `Ledger/LedgerEntry` | One change of one item: `Item`, `Delta` (never 0), `BalanceAfter` (the quantities after and before are never below 0), `Reason`, and an optional reference (`RefType` and `RefId` both set or both null). The city and the wall time are added when it is stored |
+| `Ledger/LedgerReason` | The M0 ledger reasons of `06` (`StartingGrant` … `CostResearch`); Infrastructure stores each as its text (`STARTING_GRANT`) |
+| `Commands/CommandReceipt` | The stored answer to one successful command: `RequestId` (not empty), `CommandType`, `PayloadHash` (exactly 32 bytes, SHA-256, copied), `ResponseJson`. The player and the wall time are added when it is stored |
 
 ## Rules and invariants
 - May reference only `CityBuilder.Simulation` and the BCL, never ASP.NET Core or EF Core (`03` dependency table).
@@ -29,10 +32,10 @@ Add one public type per file, named after it, with XML docs (`14`). Its database
 `CityBuilder.Infrastructure`, never here (recipe "Database change" in `core-instructions/19-change-recipes.md`).
 
 ## Tests
-`server/tests/CityBuilder.Domain.Tests` (xUnit v3, milliseconds). Today it checks the dependency rule.
+`server/tests/CityBuilder.Domain.Tests` (xUnit v3, milliseconds): the dependency rule and the constructor rules of each type.
 Run: `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`.
 
 ## Known limitations
-- No types yet (skeleton).
+- No settlement record yet; the settle use case reports through the engine's `SettlementReport` (M0-23 decides).
 
-Last updated: M0-19
+Last updated: M0-20

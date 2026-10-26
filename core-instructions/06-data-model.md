@@ -1,8 +1,9 @@
 # Data Model (PostgreSQL 18)
 
 > **Built so far:** the tables below, with their keys, constraints and foreign keys, as the EF Core model and the migration `InitialCreate`
-> (M0-19; `docs/modules/CityBuilder.Infrastructure.md`), and PostgreSQL 18.6 in Docker. The mapping to the engine's city state comes
-> with M0-20, the locks and the write transaction with M0-22 *(planned)*. A task that builds a part updates this line.
+> (M0-19; `docs/modules/CityBuilder.Infrastructure.md`), and PostgreSQL 18.6 in Docker; the mapping to the engine's city state, the
+> repositories and the unit of work (M0-20). The locks and the write transaction come with M0-22 *(planned)*. A task that builds a part
+> updates this line.
 
 PostgreSQL is the only source of truth. Wall timestamps are `timestamptz` (UTC). Simulation times and labor
 are `bigint` city-clock seconds and worker-seconds. Quantities are `bigint`. Item, building, research and era ids are `text` from content.
@@ -23,6 +24,17 @@ Ledger reasons in M0: `STARTING_GRANT`, `SETTLEMENT_PRODUCED`, `SETTLEMENT_CONSU
 `REFUND_UPGRADE`, `COST_RESEARCH`. Later: `MARKET_ESCROW`, `MARKET_PROCEEDS`, `MARKET_FEE`, `MAILBOX_DELIVERY`, `ERA_CHARTER`.
 
 Derived on load, never stored: reserved outputs, stall reasons, workers provided/free, builders busy, effective caps and labor.
+
+**Mapping to the engine** (`CityMapping`, M0-20):
+- `city_buildings`: a nullable column is null exactly when the building's phase doesn't use it, where the engine keeps 0. Constructing uses
+  `phase_started_at`, `phase_ends_at`; Upgrading those and `target_level`; Idle none; Producing `phase_started_at`, `cycle_labor`,
+  `labor_remaining`, `segment_started_at`, and `phase_ends_at` unless the cycle is frozen (no workers). A cycle can start at clock 0, so 0
+  is never a stand-in for null. `phase` is the API's spelling (`Constructing`, `Upgrading`, `Idle`, `Producing`).
+- `cities.research_id`, `research_started_at`, `research_ends_at` are all set (a research is running) or all null.
+- `city_research.completed_at` is the city-clock second the research completed: its `research_ends_at`. The engine keeps only the ids;
+  the server's city aggregate keeps the clocks and records each one when an advance completes the research.
+- `city_inventory`: the engine drops an item at 0; its row stays, set to 0 (an upsert, never a delete).
+- A row that breaks these rules or the engine's fails the load; a broken city is never settled and saved over.
 
 A column without `null` in the table is `NOT NULL`; `ledger_entries.ref_type` and `ref_id` are nullable too (a `STARTING_GRANT` has no
 reference). `players.id` and `cities.id` are set by the application; `ledger_entries.id` is the only identity.

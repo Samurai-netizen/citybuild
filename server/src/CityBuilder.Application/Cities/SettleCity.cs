@@ -1,4 +1,5 @@
 using CityBuilder.Application.Content;
+using CityBuilder.Application.Persistence;
 using CityBuilder.Simulation.Settlement;
 
 namespace CityBuilder.Application.Cities;
@@ -10,13 +11,16 @@ namespace CityBuilder.Application.Cities;
 /// zero-length advance, the ledger rows and the transaction (M0-22).
 /// </summary>
 /// <param name="cities">The stored cities.</param>
+/// <param name="unitOfWork">Writes the saved city.</param>
 /// <param name="content">The game content.</param>
 /// <param name="timeProvider">The server clock, the only clock that drives progress.</param>
 /// <exception cref="ArgumentNullException">A parameter is null.</exception>
-public sealed class SettleCity(ICityRepository cities, IContentProvider content, TimeProvider timeProvider)
+public sealed class SettleCity(ICityRepository cities, IUnitOfWork unitOfWork, IContentProvider content, TimeProvider timeProvider)
 {
-    /// <summary>The stored cities: loads the acting player's city and saves it after the settle.</summary>
+    /// <summary>The stored cities: loads the acting player's city and stages it after the settle.</summary>
     private readonly ICityRepository _cities = cities ?? throw new ArgumentNullException(nameof(cities));
+    /// <summary>Writes the staged city at the end of the settle.</summary>
+    private readonly IUnitOfWork _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
     /// <summary>The game content every settle runs the engine with; the same for every request.</summary>
     private readonly IContentProvider _content = content ?? throw new ArgumentNullException(nameof(content));
     /// <summary>The server clock, read once per settle; the only clock that drives progress (principle 3).</summary>
@@ -34,10 +38,12 @@ public sealed class SettleCity(ICityRepository cities, IContentProvider content,
         // at the second the last one ended, so the dropped fractions are never lost, only counted by a later settlement.
         long nowUnixSec = _timeProvider.GetUtcNow().ToUnixTimeSeconds();
         SettlementWindow window = SettlementWindow.Compute(city.LastSettledUnixSec, nowUnixSec);
-        SettlementReport report = Simulator.Advance(city.State, _content.Content, window.ElapsedSeconds);
+        SettlementReport report = city.Advance(_content.Content, window.ElapsedSeconds);
         city.MarkSettled(window.NewLastSettledUnixSec);
 
-        await _cities.SaveAsync(city, cancellationToken);
+        // The settlement's ledger rows come with M0-23.
+        _cities.Save(city, [], receipt: null);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
         return new SettleCityResult(city, report, window);
     }
 }
