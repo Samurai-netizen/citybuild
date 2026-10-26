@@ -20,7 +20,8 @@ ASP.NET Core endpoint types.
 | `Content/ContentLoadException` | Every way a load fails: `FilePath`, `Errors` (one line each) and a message that lists them. A read or JSON problem is one error (with its JSON path and line); content that breaks rules gives every rule error (`ContentError.ToString()`: code, path, message) |
 | `Content/ContentProvider` | `IContentProvider` over content loaded once; the Api registers it as a singleton |
 | `Persistence/CityBuilderDbContext` | The EF Core context: one `DbSet` per table of `06` (`Players`, `Cities`, `CityInventory`, `CityBuildings`, `CityResearch`, `CommandReceipts`, `LedgerEntries`); applies each configuration by name |
-| `Persistence/Rows/*Row` | One persistence model per table (`PlayerRow`, `CityRow`, …): plain properties, one per column, documented with the column name. Not Simulation types; M0-20 maps them to `CityState` |
+| `Persistence/Rows/*Row` | One persistence model per table (`PlayerRow`, `CityRow`, …): plain properties, one per column, documented with the column name. Not Simulation types; `CityMapping` maps them |
+| `Persistence/Mapping/CityMapping`, `CityRows` | `ToRows(city)` and `ToAggregate(rows)`: a `CityAggregate` ↔ its `cities` row and its inventory, building and research rows, explicitly and without a database. Only the engine's own state is stored (derived values never). A building's nullable columns are null exactly when its phase doesn't use them; the phase is stored as the API spells it (`Producing`); a completed research needs its completion clock. Load rejects a row that breaks the engine's or the mapping's rules with `InvalidOperationException` naming the city |
 | `Persistence/Configurations/*Configuration` | One `IEntityTypeConfiguration` per table: every table, column, key, unique index, index, check constraint and foreign key named explicitly in snake_case (`pk_`, `ux_`, `ix_`, `fk_`, `ck_`); `cities.state_version` is the concurrency token |
 | `Persistence/PersistenceServiceCollectionExtensions` | `AddCityBuilderPersistence(services, connectionString)`: the context on Npgsql, scoped; the connection string comes from a callback, so this project reads no configuration |
 | `Persistence/DatabaseMigrator` | `MigrateAsync(services, token)`: applies the pending migrations in a scope of its own and returns their ids; the Api calls it at startup in Development only |
@@ -54,12 +55,14 @@ key, a wrong number type, a missing value and rule errors each fail as described
 and `InfrastructureDependencyTests` (the dependency rule). Persistence, still without a database: `Persistence/PersistenceModelTests` reads
 EF's relational model and checks every table, column (type, null rule), key, unique index, index, check, foreign key, the concurrency token,
 value generation and that every name is snake_case; `Persistence/MigrationTests` checks that no model change lacks a migration. Real
-PostgreSQL comes with the Testcontainers tests *(planned, M0-21)*; the mapping round-trip tests come with M0-20. M0-19 applied the
+PostgreSQL comes with the Testcontainers tests *(planned, M0-21)*. `Persistence/CityMappingTests` (no database) maps the cities of
+`Persistence/SampleCities` (every phase, a frozen cycle, a cycle started at clock 0, completed and running research, era 2; a new empty city) to
+rows and back and compares every value, checks the columns of each phase, and rejects each kind of broken row. M0-19 applied the
 migration to the compose database by hand (its build log → Verification).
 
 ## Known limitations
 - A JSON problem stops the reader, so a file with a syntax error and a rule error shows only the syntax error until it is fixed.
-- `city_buildings.phase` is free text: the database doesn't check that it names a phase of the engine; the mapping (M0-20) does.
+- `city_buildings.phase` is free text: the database doesn't check that it names a phase of the engine; `CityMapping` does on load.
 - Nothing reads or writes rows yet: no repository, no transaction, no row lock *(planned, M0-20, M0-22)*.
 
-Last updated: M0-19
+Last updated: M0-20
