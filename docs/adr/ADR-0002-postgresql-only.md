@@ -39,5 +39,7 @@ PostgreSQL 18 is the **only** place that holds game state, and the only stateful
   the PostgreSQL 18 Docker volume layout (`06`, Docker note).
 - **As built (M0-06):** no database yet. M0-19 adds the compose file, the EF Core model and the first migration; M0-21 adds the
   Testcontainers base. No other store exists either.
+- **As built (M0-19):** PostgreSQL 18.6 in Docker (`docker-compose.yml`, volume at `/var/lib/postgresql`), the EF Core model of the seven
+  M0 tables and the migration `InitialCreate`, applied at startup in Development only. Still the only store.
 - **Reversal:** a cache or shared rate limiter can be added later behind an Application port without moving the source of truth.
   Replacing PostgreSQL itself would be expensive (migrations, locks, SQL in tests).

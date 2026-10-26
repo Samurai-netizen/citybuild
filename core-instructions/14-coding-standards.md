@@ -73,7 +73,8 @@ anyone (owner directive OD-12). Worked examples for each kind: `docs/how-to/docu
 `08` and `.claude/rules/tests.md` are binding. New behaviour needs new tests in the same step. Engine rules are written test-first.
 
 ## Approved dependencies (anything else needs G-Dependency)
-Server: ASP.NET Core and EF Core 10 (Microsoft, incl. `Microsoft.AspNetCore.OpenApi`), `Npgsql.EntityFrameworkCore.PostgreSQL`, `Microsoft.AspNetCore.Authentication.JwtBearer`,
+Server: ASP.NET Core and EF Core 10 (Microsoft, incl. `Microsoft.AspNetCore.OpenApi`, `Microsoft.EntityFrameworkCore.Design` and the `dotnet-ef` tool,
+pinned in `dotnet-tools.json`), `Npgsql.EntityFrameworkCore.PostgreSQL`, `Microsoft.AspNetCore.Authentication.JwtBearer`,
 `Microsoft.CodeAnalysis.BannedApiAnalyzers`. Tests: `xunit.v3.mtp-off` (xUnit v3 for VSTest; replaces `xunit`, decision 019 in `12`),
 `xunit.runner.visualstudio`, `Microsoft.NET.Test.Sdk`, `Microsoft.AspNetCore.Mvc.Testing`,
 `Testcontainers.PostgreSql`, `Microsoft.Extensions.TimeProvider.Testing`, `coverlet.collector`, `Microsoft.CodeAnalysis.CSharp` (the parser

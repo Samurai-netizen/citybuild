@@ -1,8 +1,8 @@
 # Data Model (PostgreSQL 18)
 
-> **Built so far:** no database yet. The tables arrive with M0-19 (EF Core model, migrations, Docker), the mapping with M0-20 and the
-> locks and transaction with M0-22 *(planned)*. The engine's city state already has the fields the tables store
-> (`docs/modules/CityBuilder.Simulation.md`). A task that builds a part updates this line.
+> **Built so far:** the tables below, with their keys, constraints and foreign keys, as the EF Core model and the migration `InitialCreate`
+> (M0-19; `docs/modules/CityBuilder.Infrastructure.md`), and PostgreSQL 18.6 in Docker. The mapping to the engine's city state comes
+> with M0-20, the locks and the write transaction with M0-22 *(planned)*. A task that builds a part updates this line.
 
 PostgreSQL is the only source of truth. Wall timestamps are `timestamptz` (UTC). Simulation times and labor
 are `bigint` city-clock seconds and worker-seconds. Quantities are `bigint`. Item, building, research and era ids are `text` from content.
@@ -23,6 +23,16 @@ Ledger reasons in M0: `STARTING_GRANT`, `SETTLEMENT_PRODUCED`, `SETTLEMENT_CONSU
 `REFUND_UPGRADE`, `COST_RESEARCH`. Later: `MARKET_ESCROW`, `MARKET_PROCEEDS`, `MARKET_FEE`, `MAILBOX_DELIVERY`, `ERA_CHARTER`.
 
 Derived on load, never stored: reserved outputs, stall reasons, workers provided/free, builders busy, effective caps and labor.
+
+A column without `null` in the table is `NOT NULL`; `ledger_entries.ref_type` and `ref_id` are nullable too (a `STARTING_GRANT` has no
+reference). `players.id` and `cities.id` are set by the application; `ledger_entries.id` is the only identity.
+
+**Foreign keys:** `cities.player_id` → `players`; `city_inventory`, `city_buildings` and `city_research` → `cities` with `ON DELETE CASCADE`
+(the city owns its state); `ledger_entries.city_id` → `cities` and `command_receipts.player_id` → `players` with `ON DELETE RESTRICT` (the audit
+trail never disappears with what it belongs to), and `cities.player_id` is `RESTRICT` as well.
+
+**Names:** snake_case everywhere, constraints included: `pk_<table>`, `ux_<table>_<columns>` (unique), `ix_<table>_<columns>`,
+`fk_<table>_<principal>_<column>`, `ck_<table>_<column>`.
 
 ## Write transaction pattern
 
@@ -57,10 +67,13 @@ Effects for other players go to `mailbox_deliveries` and are applied by their ow
 ## EF Core conventions
 - Mappings live in `Infrastructure` (`IEntityTypeConfiguration<T>`); there are no attributes on domain types.
 - Persistence models are separate from Simulation types. Mapping is explicit and round-trip tested.
-- Use snake_case naming. Migrations are committed. Never edit an applied migration; add a new one.
+- Use snake_case naming, written out in each configuration. Migrations are committed. Never edit an applied migration; add a new one
+  (`docs/how-to/add-migration.md`).
+- Migrations are applied at startup only in Development (`Database:ApplyMigrationsAtStartup`); elsewhere on purpose, never as a side effect.
 - Read paths that don't settle (e.g. content) use `AsNoTracking()`.
 - Integration tests run against a real PostgreSQL 18.6 container (Testcontainers), never SQLite or InMemory.
 
 ## Docker note
 The official `postgres:18` images changed their data directory layout. Mount the volume at `/var/lib/postgresql`
-(not `/var/lib/postgresql/data`), and verify this against the image docs when setting up.
+(not `/var/lib/postgresql/data`), and verify this against the image docs when setting up. Verified for `postgres:18.6` in M0-19: the image
+declares `/var/lib/postgresql` as its volume and keeps the data in `/var/lib/postgresql/18/docker` (`docker-compose.yml`).

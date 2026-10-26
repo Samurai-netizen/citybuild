@@ -7,7 +7,7 @@ namespace CityBuilder.IntegrationTests;
 
 /// <summary>The OpenAPI document is served in Development only (core-instructions/05-api-contract.md).</summary>
 /// <param name="factory">The in-memory server; each test runs a copy of it in one environment.</param>
-public sealed class OpenApiEndpointTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
+public sealed class OpenApiEndpointTests(ApiFactory factory) : IClassFixture<ApiFactory>
 {
     /// <summary>Where the OpenAPI document is served.</summary>
     private static readonly Uri _openApiDocument = new("/openapi/v1.json", UriKind.Relative);

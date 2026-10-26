@@ -36,7 +36,7 @@ From Era II this matters even more: one duplication bug floods the shared market
 | Dev login in production | Endpoint mapped only when `Environment == Development`; startup guard throws otherwise | Production-mode test returns 404 |
 | Dev time scale left on | `Simulation:DevTimeScale` is honoured only in Development; startup throws if ≠ 1 elsewhere | Startup-guard test |
 | Overflow to wrap quantities | `checked` arithmetic, `long`, content validation of maxima | Overflow tests |
-| Secret leakage | Signing key from environment/user-secrets; never in Unity or the repo | Config review prompt |
+| Secret leakage | Signing key and the database connection string from environment/user-secrets; never in Unity or the repo (the compose password lives in the gitignored `.env`) | Config review prompt |
 | Information leakage in errors | ProblemDetails without stack traces outside Development | Error-mapping tests |
 | Probe server internals through `/health` (no auth) | The response is the status word only: no check details, versions or exception text | `GetHealth_AppRunning_Returns200WithStatusOnly` |
 | Read the full API description in production | OpenAPI (`/openapi/v1.json`) is mapped only in Development | `Security_OpenApiDocument_InProduction_IsNotServed` |

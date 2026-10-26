@@ -12,7 +12,7 @@ namespace CityBuilder.IntegrationTests.Content;
 /// content pipeline); in memory, no Docker.
 /// </summary>
 /// <param name="factory">The in-memory server with the default configuration; a test that needs another setting derives its own.</param>
-public sealed class ContentStartupTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>, IDisposable
+public sealed class ContentStartupTests(ApiFactory factory) : IClassFixture<ApiFactory>, IDisposable
 {
     /// <summary>The temporary directory for this test's content files.</summary>
     private readonly ContentFileDirectory _files = new();
