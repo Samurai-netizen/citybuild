@@ -58,6 +58,7 @@ Any key can be overridden with an environment variable (`:` becomes `__`) or a c
 | `Content:FilePath` | `content/mvp-content.json` | The content file the server loads at startup, absolute or relative to the app's base directory (the build copies `server/content/*.json` to `content/` there). Required; a blank value or invalid content stops the start with every error listed (`docs/how-to/add-building-or-item.md`) |
 | `ConnectionStrings:CityBuilder` | none (required) | The PostgreSQL connection string. It holds a password, so it lives in user-secrets (Development) or the environment variable `ConnectionStrings__CityBuilder`, never in a committed file. Missing or blank stops the start |
 | `Database:ApplyMigrationsAtStartup` | `false`; `true` in `appsettings.Development.json` | Apply pending migrations before the server accepts requests. Allowed only in Development: `true` in another environment stops the start (`docs/how-to/add-migration.md`) |
+| `Database:LockTimeoutMilliseconds` | `3000` | How long a request waits for its city's row lock before it fails with `CONCURRENCY_CONFLICT` and the client retries (`core-instructions/06-data-model.md`). Between 1 and 60000, or the start stops |
 | `Logging:LogLevel:*`, `AllowedHosts` | as in `appsettings.json` | ASP.NET Core's own keys |
 
 Secrets come from user-secrets or the environment, never a committed file: today the connection string; signing keys follow *(planned, M0-25)*.

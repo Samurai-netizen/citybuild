@@ -11,7 +11,7 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
-- [BL-20261026-05 · M0-22 · Transaction boundary and locking](2026/2026-10-26-05-M0-22.md) — In progress
+- [BL-20261026-05 · M0-22 · Transaction boundary and locking](2026/2026-10-26-05-M0-22.md) — Done
 - [BL-20261026-04 · M0-21 · Testcontainers integration base](2026/2026-10-26-04-M0-21.md) — In progress
 - [BL-20261026-03 · M0-20 · Repository and mapping](2026/2026-10-26-03-M0-20.md) — In progress
 - [BL-20261026-02 · M0-19 · EF Core model, migrations, Docker](2026/2026-10-26-02-M0-19.md) — Done

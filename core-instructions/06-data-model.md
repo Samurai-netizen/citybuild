@@ -2,8 +2,8 @@
 
 > **Built so far:** the tables below, with their keys, constraints and foreign keys, as the EF Core model and the migration `InitialCreate`
 > (M0-19; `docs/modules/CityBuilder.Infrastructure.md`), and PostgreSQL 18.6 in Docker; the mapping to the engine's city state, the
-> repositories and the unit of work (M0-20). The locks and the write transaction come with M0-22 *(planned)*. A task that builds a part
-> updates this line.
+> repositories and the unit of work (M0-20); the row lock and the write transaction, `ICityTransactionRunner` (M0-22). A task that builds a
+> part updates this line.
 
 PostgreSQL is the only source of truth. Wall timestamps are `timestamptz` (UTC). Simulation times and labor
 are `bigint` city-clock seconds and worker-seconds. Quantities are `bigint`. Item, building, research and era ids are `text` from content.
@@ -63,8 +63,15 @@ COMMIT
 - **Unexpected exception:** full rollback; nothing is committed.
 - **Unique violation on the receipt insert** (two identical requests raced): roll back, read the stored receipt, return it.
 - A lock wait timeout (configure ~3 s) → `CONCURRENCY_CONFLICT`; the client retries with the same `requestId`.
+  Built as `Database:LockTimeoutMilliseconds` (default 3000), set per transaction as `lock_timeout`.
 - The `FOR UPDATE` lock is the primary guard. The `state_version` check is a second guard that turns any unlocked
   write path (a bug) into a loud failure instead of a silent lost update.
+- **One entry point (M0-22):** a use case changes a city only through `ICityTransactionRunner.RunAsync(playerId, work)`: it begins the
+  transaction, takes the lock and loads the city, runs the work (which saves the city once, `CityTransaction.SaveAsync`), and commits when
+  the work returns; an exception rolls everything back. A request runs it once, so it never locks a second city; the repository also
+  refuses a load outside a transaction or of a second city. A lock timeout and a stale `state_version` both surface as
+  `ConcurrencyConflictException`, which the API maps to `CONCURRENCY_CONFLICT`. The modules: `docs/modules/CityBuilder.Application.md`,
+  `CityBuilder.Infrastructure.md`.
 
 ## Lock ordering (binding now, matters from M2)
 1. The acting player's own city row. **Never lock another player's city.**

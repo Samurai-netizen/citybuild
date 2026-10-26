@@ -4,9 +4,9 @@
 **References:** `CityBuilder.Domain`, `CityBuilder.Simulation` ·
 **Referenced by:** `CityBuilder.Api`, `CityBuilder.Infrastructure`, `CityBuilder.Application.Tests`
 
-> *Growing.* The ports `IContentProvider` (M0-07b), `ICityRepository`, `IPlayerRepository` and `IUnitOfWork` (M0-20) exist, and the settle
-> use case `SettleCity` as a skeleton (M0-13). The transaction (M0-22), the complete settle (M0-23), the commands and the command pipeline
-> follow *(planned)*.
+> *Growing.* The ports `IContentProvider` (M0-07b), `ICityRepository`, `IPlayerRepository` and `IUnitOfWork` (M0-20) exist, the city
+> transaction `ICityTransactionRunner` (M0-22), and the settle use case `SettleCity` as a skeleton on it (M0-13). The complete settle
+> (M0-23), the commands and the command pipeline follow *(planned)*.
 
 ## Purpose
 The use cases (`SettleCity`, `PlaceBuilding`, `UpgradeBuilding`, `AssignWorkers`, `StartResearch`), the ports they
@@ -18,15 +18,21 @@ need (`ICityRepository`, `IUnitOfWork`, `IContentProvider`) and the command pipe
 |---|---|
 | `Content/IContentProvider` | The port for the game content: `GameContent Content`, loaded and validated once before the server accepts requests and the same for every request. Implemented by `ContentProvider` in Infrastructure, registered by the Api |
 | `Cities/CityAggregate` | A player's city as the server keeps it: `CityId`, `PlayerId`, the engine's `State` (`CityState`), `LastSettledUnixSec` (the server second of the last settle, wall time, separate from the city clock; `06` `last_settled_unix`), `StateVersion` (as loaded), `ContentVersion`, and `ResearchCompletedAt`, the city-clock second each completed research completed (the engine keeps only the ids; `06` `city_research.completed_at`). `Advance(content, seconds)` runs `Simulator.Advance` and records the completion clock of the research that completed (its `EndsAt`); advance a city only through it. `MarkSettled` never lets the last settled second decrease |
-| `Cities/ICityRepository` | The port to the stored cities: `LoadForUpdateAsync(playerId)` (every player has a city) and `Save(city, ledger, receipt)`, which only stages the city, its `LedgerEntry` rows and the optional `CommandReceipt`; a city the repository didn't load is inserted. Implemented by `CityRepository` in Infrastructure; M0-22 adds the lock and the transaction |
+| `Cities/ICityRepository` | The port to the stored cities: `LoadForUpdateAsync(playerId)` locks the city row for the rest of the transaction and loads it (every player has a city; outside a transaction, or for a second city, it throws) and `Save(city, ledger, receipt)`, which only stages the city, its `LedgerEntry` rows and the optional `CommandReceipt`; a city the repository didn't load is inserted. Implemented by `CityRepository` in Infrastructure. Only the runner uses it |
+| `Cities/ICityTransactionRunner`, `Cities/CityTransactionRunner` | The one way a use case changes a city (`06`, write transaction pattern): `RunAsync(playerId, work)` begins the transaction (`IUnitOfWork.BeginTransactionAsync`), locks and loads the acting player's city, runs the work, and commits when it returns; any exception rolls everything back and propagates. Scoped, one per request, and it runs once: a second or nested run throws before it locks anything, so a request never locks a second city. Registered by Infrastructure's `AddCityBuilderPersistence` |
+| `Cities/CityTransaction` | What the work gets: the locked `City` and `SaveAsync(ledger, receipt)`, which stages the city and writes it inside the transaction (`state_version` + 1), once; after the work ends it throws |
+| `Persistence/ConcurrencyConflictException` | Another request got in the way: the lock wasn't granted within the lock timeout, or the stored `state_version` wasn't the loaded one. Nothing was committed; the API answers `CONCURRENCY_CONFLICT` (`05`; the mapping comes with the command pipeline, M0-26, and the catalogue, M0-34) |
 | `Players/IPlayerRepository` | The port to the stored players: `FindByDevNameAsync(devName)` and `Add(player)` (staged), for the dev login (M0-25). Implemented by `PlayerRepository` in Infrastructure |
-| `Persistence/IUnitOfWork` | `SaveChangesAsync()` writes everything the repositories staged, together. Implemented by `UnitOfWork` in Infrastructure |
-| `Cities/SettleCity`, `Cities/SettleCityResult` | `ExecuteAsync(playerId)`: loads the city, floors the `TimeProvider`'s now to whole Unix seconds, computes the `SettlementWindow` from the last settled second, advances the city (`CityAggregate.Advance`) by its elapsed seconds, records the new last settled second, stages the city and writes it through `IUnitOfWork`. The result carries the city, the `SettlementReport` and the window, whose `IsClockBehind` calls for the warning of `04` §1 |
+| `Persistence/IUnitOfWork`, `Persistence/IUnitOfWorkTransaction` | `SaveChangesAsync()` writes everything the repositories staged, together (a stale version or a lock timeout throws `ConcurrencyConflictException`); `BeginTransactionAsync()` begins the request's one transaction with the configured lock timeout and returns it: `CommitAsync()` commits, disposing it uncommitted rolls back. Implemented by `UnitOfWork` in Infrastructure |
+| `Cities/SettleCity`, `Cities/SettleCityResult` | `ExecuteAsync(playerId)`: in the city's transaction (`ICityTransactionRunner`), floors the `TimeProvider`'s now (read under the lock) to whole Unix seconds, computes the `SettlementWindow` from the last settled second, advances the city (`CityAggregate.Advance`) by its elapsed seconds, records the new last settled second and saves the city (`CityTransaction.SaveAsync`). The result carries the city, the `SettlementReport` and the window, whose `IsClockBehind` calls for the warning of `04` §1 |
 
 ## Rules and invariants
 - May reference only `CityBuilder.Domain`, `CityBuilder.Simulation` and the BCL, never ASP.NET Core or EF Core
   (`03` dependency table). `CityBuilder.Application.Tests` checks the assembly's references.
 - Use cases get content only through `IContentProvider`, never by reading a file; the content never changes while the server runs.
+- A use case changes a city only through `ICityTransactionRunner`, which locks only the acting player's city, once per request (`06`,
+  lock ordering). `ApplicationDependencyTests` checks that no Application type but the runner and its `CityTransaction` holds an
+  `ICityRepository`.
 - Time comes only from an injected `TimeProvider`, never `DateTime.UtcNow` (`.claude/rules/server.md`). Now is floored to whole seconds
   (`ToUnixTimeSeconds`), and every settle starts where the last one ended, so the dropped fractions are counted by a later settle, never lost
   and never counted twice.
@@ -42,17 +48,21 @@ need (`ICityRepository`, `IUnitOfWork`, `IContentProvider`) and the command pipe
 
 ## Tests
 `server/tests/CityBuilder.Application.Tests` (xUnit v3, milliseconds; use cases with fakes). It checks the dependency rule, on the
-assembly of `IContentProvider`, and `SettleCity` in `Cities/SettleCityTests` with `FakeTimeProvider` (`Microsoft.Extensions.TimeProvider.Testing`):
+assembly of `IContentProvider`, and that only the runner holds `ICityRepository`. `Cities/CityTransactionRunnerTests` checks the
+transaction's lifecycle on the fakes: begin, lock and load, work, write, commit in that order; a commit without writes when nothing was
+saved; a rollback after an exception, a conflict or a failed load; one save per transaction, none after the work; a second or nested run
+throwing before it locks anything. `SettleCity` in `Cities/SettleCityTests` with `FakeTimeProvider` (`Microsoft.Extensions.TimeProvider.Testing`):
 0 s, 1 s, exactly 8 h and 8 h + 1 s, 30 days (timers finish, no cycle starts after the cap), a timer completing at its second, the clock behind
 and catching up, null dependencies, 100 calls 300 ms apart (= one call at 29.7 s), the completion clock of a research completed in the window, and the
-save (staged without ledger or receipt, written once). `Cities/CityAggregateTests` checks the aggregate's constructor rules and `Advance`. `SettleFixture` is a small content in code (the production cap
-is the M0 value, 8 h) with a city built through `CityRules`; `InMemoryCityRepository` is the fake repository and unit of work in one. `FakeTimeProvider` can't go
+save (staged without ledger or receipt, written once, inside the transaction). `Cities/CityAggregateTests` checks the aggregate's constructor rules and `Advance`. `SettleFixture` is a small content in code (the production cap
+is the M0 value, 8 h) with a city built through `CityRules`; `InMemoryCityRepository` is the fake repository and unit of work in one: it records what happened in order and, like the real one, loads only
+inside a transaction; `SettleFixture.RunnerPerRequest` gives each call a new runner, as each request gets one. `FakeTimeProvider` can't go
 back in time, so a clock behind is a last settled second ahead of now. The content port's implementation and its registration are tested in
 `CityBuilder.IntegrationTests` (`Content/`). Run: `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`.
 
 ## Known limitations
-- `SettleCity` is a skeleton: no closing zero-length advance, no ledger rows, no transaction and no log line for a clock behind
-  *(planned, M0-23)*. `ContentVersion` keeps the loaded value until M0-23 sets it on settle. Nothing registers the use case in the Api yet.
-- No commands yet *(planned, M0-26 on)*.
+- `SettleCity` is a skeleton: no closing zero-length advance, no ledger rows and no log line for a clock behind *(planned, M0-23)*. `ContentVersion` keeps the loaded value until M0-23 sets it on settle. Nothing registers the use case in the Api yet.
+- No commands yet *(planned, M0-26 on)*. Nothing maps `ConcurrencyConflictException` to `CONCURRENCY_CONFLICT` yet *(planned, M0-26)*.
+- A new city (the first login, M0-25) has no row to lock yet; how it is created inside the one-city rule is M0-25's to decide.
 
-Last updated: M0-20
+Last updated: M0-22

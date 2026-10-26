@@ -17,7 +17,8 @@ and every 2 minutes in the foreground. Every command response carries the full a
 ## Request lifecycle (every city request)
 1. Authenticate → `PlayerId` from the token.
 2. Validate the request shape (before touching the database).
-3. `BEGIN` → `SELECT … FOR UPDATE` on the player's own city row → load buildings, inventory and research.
+3. `BEGIN` → `SELECT … FOR UPDATE` on the player's own city row → load buildings, inventory and research
+   (`ICityTransactionRunner`, the only way a use case reaches a city; `06` → write transaction pattern).
 4. Commands only: look up `(PlayerId, requestId)`. If found with the same payload hash, return the stored
    response and roll back. If found with a different hash → `IDEMPOTENCY_CONFLICT`.
 5. **Settle:** `Simulator.Advance(city, nowSec − LastSettledUnixSec)` → settlement report.
@@ -42,7 +43,8 @@ and every 2 minutes in the foreground. Every command response carries the full a
 - **Simulation:** content definitions (items, buildings, recipes, research, eras), city state, the `Simulator`, and pure mutation rules.
 - **Domain:** server-only concepts — player, ledger entry, command receipt, settlement record (later: market order, mailbox delivery).
 - **Application:** use cases (`SettleCity`, `PlaceBuilding`, `UpgradeBuilding`, `AssignWorkers`, `StartResearch`),
-  ports (`ICityRepository`, `IPlayerRepository`, `IUnitOfWork`, `IContentProvider`), and the command pipeline.
+  ports (`ICityRepository`, `IPlayerRepository`, `IUnitOfWork`, `IContentProvider`), the city transaction (`ICityTransactionRunner`, which
+  alone uses `ICityRepository`), and the command pipeline.
 - Architecture tests enforce this table by inspecting assembly references. Which cells are tested, and where, is listed in
   `docs/architecture/overview.md`.
 
