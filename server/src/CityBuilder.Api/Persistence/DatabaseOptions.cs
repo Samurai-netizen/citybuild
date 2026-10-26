@@ -17,4 +17,11 @@ public sealed class DatabaseOptions
     /// user-secrets or the environment variable <c>ConnectionStrings__CityBuilder</c>, never from a committed file.
     /// </summary>
     public string ConnectionString { get; set; } = string.Empty;
+
+    /// <summary>
+    /// <c>Database:ApplyMigrationsAtStartup</c>: apply the pending migrations before the server accepts requests. Only allowed in
+    /// Development (<c>true</c> in <c>appsettings.Development.json</c>, <c>false</c> in <c>appsettings.json</c>); <c>true</c> in any
+    /// other environment stops the start, because there the migrations are applied on purpose, never as a side effect.
+    /// </summary>
+    public bool ApplyMigrationsAtStartup { get; set; }
 }

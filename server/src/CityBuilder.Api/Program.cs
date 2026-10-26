@@ -38,11 +38,15 @@ builder.Services.AddSingleton<IContentProvider>(services =>
 
 // The database (core-instructions/06-data-model.md). The connection string holds a password: user-secrets or the environment only.
 builder.Services.AddOptions<DatabaseOptions>()
+    .Bind(builder.Configuration.GetSection(DatabaseOptions.SectionName))
     .Configure(options => options.ConnectionString =
         builder.Configuration.GetConnectionString(DatabaseOptions.ConnectionStringName) ?? string.Empty)
     .Validate(options => !string.IsNullOrWhiteSpace(options.ConnectionString),
         "ConnectionStrings:CityBuilder must hold the database connection string (user-secrets or the environment variable " +
         "ConnectionStrings__CityBuilder; docs/getting-started.md → Database).")
+    .Validate(options => !options.ApplyMigrationsAtStartup || builder.Environment.IsDevelopment(),
+        "Database:ApplyMigrationsAtStartup may be true only in Development; apply migrations elsewhere on purpose " +
+        "(docs/how-to/add-migration.md).")
     .ValidateOnStart();
 builder.Services.AddCityBuilderPersistence(services => services.GetRequiredService<IOptions<DatabaseOptions>>().Value.ConnectionString);
 
@@ -54,8 +58,15 @@ string contentFilePath = app.Services.GetRequiredService<IOptions<ContentOptions
 GameContent content = app.Services.GetRequiredService<IContentProvider>().Content;
 ContentLog.ContentLoaded(app.Logger, content.ContentVersion, contentFilePath);
 
-// Check the database settings before the server accepts requests, as for the content.
-_ = app.Services.GetRequiredService<IOptions<DatabaseOptions>>().Value;
+// Check the database settings before the server accepts requests, as for the content. In Development the pending migrations are
+// applied now; the validation above keeps that from happening anywhere else, and the environment check repeats the rule here.
+DatabaseOptions database = app.Services.GetRequiredService<IOptions<DatabaseOptions>>().Value;
+if (database.ApplyMigrationsAtStartup && app.Environment.IsDevelopment())
+{
+    IReadOnlyList<string> appliedMigrations = await DatabaseMigrator.MigrateAsync(app.Services, app.Lifetime.ApplicationStopping);
+    string appliedList = appliedMigrations.Count == 0 ? "none" : string.Join(", ", appliedMigrations);
+    DatabaseLog.MigrationsApplied(app.Logger, appliedMigrations.Count, appliedList);
+}
 
 if (app.Environment.IsDevelopment())
 {
