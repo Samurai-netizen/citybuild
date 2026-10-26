@@ -11,6 +11,7 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
+- [BL-20261026-03 · M0-20 · Repository and mapping](2026/2026-10-26-03-M0-20.md) — In progress
 - [BL-20261026-02 · M0-19 · EF Core model, migrations, Docker](2026/2026-10-26-02-M0-19.md) — Done
 - [BL-20261026-01 · DEP-PR28 · Handbook-site npm bump (react 19.3.1)](2026/2026-10-26-01-DEP-PR28.md) — Done
 - [BL-20261025-01 · CR-0003-T1 · Code documentation: every file and declaration](2026/2026-10-25-01-CR-0003-T1.md) — Done
