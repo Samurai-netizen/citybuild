@@ -15,6 +15,7 @@
 - **Next step:** the owner merges the PR; the workflow "Handbook site" then publishes https://samurai-netizen.github.io/citybuild/
   (check it once). Then `/model` → Opus 5.5 and `/start-task M0-19` (EF Core model, migrations, Docker, `[O]` `[PLAN]`: write ahead,
   present the plan, wait for approval); its start commit sets CR-0002 to `Done`. From now on every task fills a Docs impact table.
+- **Dependency PR:** #28 (handbook-site: react 19.3.1) builds green with its docs; the owner decides (G-Dependency), build log `2026-10-26-01-DEP-PR28.md`.
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up).
 - **Known broken / do not touch:** —

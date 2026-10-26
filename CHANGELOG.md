@@ -84,6 +84,9 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   entry, and `check-docs.sh --base` fails when a module's code changes without its module doc (or a reason) or a living doc still names a
   deleted or renamed file (`17` §5, §7; OD-11). A full audit of the docs against the code fixed every drift it found (CR-0002-T1).
 
+### Changed
+- Handbook site: react and react-dom 19.2.9 → 19.3.1, scheduler 0.28.0 (Dependabot PR #28, DEP-PR28).
+
 ### Fixed
 - Kit audit follow-ups A1, A2, A3, A9, A15, A16: `[PLAN]` tasks write ahead before the plan (no Plan Mode), the Bash guard no longer
   reads here-documents, comments or quoted text and checks each command on its own (new `scripts/dev/test-guard-bash.sh`),
