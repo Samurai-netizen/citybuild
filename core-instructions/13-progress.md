@@ -8,9 +8,9 @@
 - **Task:** M0-20 · Repository and mapping `[O]`
 - **Branch:** `task/M0-20-repository-mapping` (from `main` = `cafca28`)
 - **Build log entry:** `docs/build-log/2026/2026-10-26-03-M0-20.md`
-- **Last green commit:** the head of the branch (build 0 warnings, format clean, fast suite 22/872/21/23/83)
-- **Done steps:** write-ahead; step 1 (Domain types); step 2 (ports, `CityAggregate` completion clocks); step 3 (`CityMapping`, round-trip tests)
-- **Next step:** step 4, `CityRepository`, `PlayerRepository`, `UnitOfWork` over the DbContext, registered in `AddCityBuilderPersistence` (plan in the entry)
+- **Last green commit:** the head of the branch (build 0 warnings, format clean, fast suite 22/872/21/23/101)
+- **Done steps:** write-ahead; steps 1-4 (Domain types; ports and `CityAggregate` completion clocks; `CityMapping` with round-trip tests; repositories, unit of work, registration, checked once against the compose database)
+- **Next step:** step 5, docs (`06`, `03`, overview, testing README, CHANGELOG), then `/finish-task` (plan in the entry)
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7
