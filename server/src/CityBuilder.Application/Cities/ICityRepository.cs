@@ -18,8 +18,9 @@ public interface ICityRepository
 
     /// <summary>
     /// Stages the city as it is now, with the ledger entries and the receipt of what changed it, for the next
-    /// <see cref="Persistence.IUnitOfWork.SaveChangesAsync"/>. A city this repository didn't load is new and is inserted. Call it once per
-    /// city and unit of work: the stored version becomes <see cref="CityAggregate.StateVersion"/> + 1.
+    /// <see cref="Persistence.IUnitOfWork.SaveChangesAsync"/>. A city this repository didn't load is new and is inserted. The stored version
+    /// becomes <see cref="CityAggregate.StateVersion"/> + 1, so save an aggregate once after it was loaded or created; load the city again
+    /// for a further change.
     /// </summary>
     /// <param name="city">The city, loaded by <see cref="LoadForUpdateAsync"/> or new.</param>
     /// <param name="ledger">The ledger entries of the city's changes since it was loaded, in order; empty when there are none.</param>

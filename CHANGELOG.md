@@ -92,6 +92,9 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
 - Persistence: PostgreSQL 18.6 in Docker (`docker-compose.yml`, `.env.example`), the EF Core model of the seven M0 tables with every key,
   check, index and foreign key, the migration `InitialCreate` applied at startup in Development only, the connection string from
   user-secrets or the environment, the pinned `dotnet-ef` tool, model and migration tests, and `docs/how-to/add-migration.md` (M0-19).
+- Repository and mapping: Domain types `Player`, `LedgerEntry`, `CommandReceipt`; ports `ICityRepository.Save(city, ledger, receipt)`,
+  `IPlayerRepository`, `IUnitOfWork`; `CityAggregate` keeps research completion clocks; explicit `CityMapping` with round-trip tests;
+  `CityRepository`, `PlayerRepository`, `UnitOfWork` over EF Core, registered scoped (M0-20).
 
 ### Changed
 - Handbook site: react and react-dom 19.2.9 → 19.3.1, scheduler 0.28.0 (Dependabot PR #28, DEP-PR28).

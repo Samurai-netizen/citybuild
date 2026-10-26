@@ -11,7 +11,8 @@ serves its OpenAPI document in Development). The Unity client starts the `Bootst
 integer helpers, the content ids, the validated content model, the city state with its four mutations (`CityRules`), the settlement
 (`Simulator.Advance`) and the display helpers the client's screens will use (`Display/`, M0-17); the server's `SettleCity` skeleton calls the settlement (M0-13; settle on access, [ADR-0005](../adr/ADR-0005-settle-on-access.md)),
 with the full settle *(planned, M0-23)*. The database exists: PostgreSQL 18.6 in Docker, its seven tables created by the migration
-`InitialCreate`, which the server applies at startup in Development (M0-19); nothing reads or writes rows yet *(planned, M0-20, M0-22)*.
+`InitialCreate`, which the server applies at startup in Development (M0-19). Repositories map a city to its rows and back and stage the
+writes for one unit of work (M0-20); no use case runs against the database yet, and the row lock and transaction follow *(planned, M0-22)*.
 There is no game endpoint and no networking yet.
 Dashed parts in the diagram are planned.
 
@@ -27,9 +28,9 @@ flowchart LR
   end
   subgraph serverside["server - CityBuilder.slnx"]
     API["CityBuilder.Api<br/>health, OpenAPI in Development,<br/>content and migrations at startup"]
-    INF["CityBuilder.Infrastructure<br/>ContentFileLoader, ContentProvider,<br/>CityBuilderDbContext, migrations"]
-    APP["CityBuilder.Application<br/>IContentProvider, ICityRepository,<br/>SettleCity (skeleton)"]
-    DOM["CityBuilder.Domain<br/>no types yet"]
+    INF["CityBuilder.Infrastructure<br/>ContentFileLoader, ContentProvider,<br/>CityBuilderDbContext, migrations,<br/>CityMapping, repositories, UnitOfWork"]
+    APP["CityBuilder.Application<br/>IContentProvider, ICityRepository,<br/>IPlayerRepository, IUnitOfWork,<br/>CityAggregate, SettleCity (skeleton)"]
+    DOM["CityBuilder.Domain<br/>Player, LedgerEntry,<br/>CommandReceipt"]
   end
   DB[("PostgreSQL 18.6<br/>docker compose")]
   FILE[/"server/content/mvp-content.json"/]
@@ -62,14 +63,14 @@ ones fail the build of every server project and the engine (decision 037, `core-
 | Project | Path | References | Packages | Holds today | Doc |
 |---|---|---|---|---|---|
 | `CityBuilder.Api` | `server/src/` | Application, Infrastructure | `Microsoft.AspNetCore.OpenApi`; `Microsoft.EntityFrameworkCore.Design` (design time only) | `Program.cs`: JSON console logs, ProblemDetails, health check, `TimeProvider.System`, OpenAPI in Development, the content loaded before any request (`Content:FilePath`, `ContentOptions`, `ContentLog`), the database settings (`ConnectionStrings:CityBuilder`, `DatabaseOptions`) and the startup migration in Development (`DatabaseLog`); the build copies `server/content/*.json` to `content/` | [module](../modules/CityBuilder.Api.md) |
-| `CityBuilder.Application` | `server/src/` | Domain, Simulation | — | `IContentProvider`; `Cities/`: the `SettleCity` skeleton over a first `ICityRepository` and `CityAggregate` (M0-13) *(planned: more ports M0-20, pipeline M0-26)* | [module](../modules/CityBuilder.Application.md) |
-| `CityBuilder.Domain` | `server/src/` | Simulation | — | nothing yet *(planned, M0-20 on)* | [module](../modules/CityBuilder.Domain.md) |
-| `CityBuilder.Infrastructure` | `server/src/` | Application, Domain | `Npgsql.EntityFrameworkCore.PostgreSQL`, `Microsoft.EntityFrameworkCore.Relational` (EF Core 10) | the content loader: `ContentFileLoader`, `ContentLoadException`, `ContentProvider`; persistence (`Persistence/`): `CityBuilderDbContext`, row classes and configurations of the seven tables, `AddCityBuilderPersistence`, `DatabaseMigrator`, the migration `InitialCreate` *(planned: repository M0-20)* | [module](../modules/CityBuilder.Infrastructure.md) |
+| `CityBuilder.Application` | `server/src/` | Domain, Simulation | — | `IContentProvider`; `Cities/`: `CityAggregate` (with research completion clocks), `ICityRepository`, the `SettleCity` skeleton (M0-13); `Players/IPlayerRepository`, `Persistence/IUnitOfWork` (M0-20) *(planned: pipeline M0-26)* | [module](../modules/CityBuilder.Application.md) |
+| `CityBuilder.Domain` | `server/src/` | Simulation | — | `Players/Player`, `Ledger/LedgerEntry`, `Ledger/LedgerReason`, `Commands/CommandReceipt` (M0-20) | [module](../modules/CityBuilder.Domain.md) |
+| `CityBuilder.Infrastructure` | `server/src/` | Application, Domain | `Npgsql.EntityFrameworkCore.PostgreSQL`, `Microsoft.EntityFrameworkCore.Relational` (EF Core 10) | the content loader: `ContentFileLoader`, `ContentLoadException`, `ContentProvider`; persistence (`Persistence/`): `CityBuilderDbContext`, row classes and configurations of the seven tables, `AddCityBuilderPersistence`, `DatabaseMigrator`, the migration `InitialCreate`; `Mapping/` (`CityMapping`, `LedgerMapping`) and `Repositories/` (`CityRepository`, `PlayerRepository`, `UnitOfWork`, M0-20) | [module](../modules/CityBuilder.Infrastructure.md) |
 | `CityBuilder.Simulation` | `shared/Simulation.Build/` (.NET) and `shared/Simulation/` (Unity package) | the base class library only | — | `IntegerMath` (`CeilDiv`, `ApplyPermilleReduction`, `FloorDiv`); `ItemId`, `BuildingTypeId`, `ResearchId`, `EraId`; the content model (`Content/`: `*Data` → `GameContentFactory` → `GameContent`, `04` §14); the city state (`State/`: `CityState`, `Building`, `CityFactory`, `CityQueries`, `StallReason`), the mutations (`Rules/`: `CityRules`, `MutationResult`, `04` §8) and the settlement (`Settlement/`: `Simulator.Advance`, `SettlementReport`, `04` §7; `SettlementWindow`, `04` §1); the display helpers (`Display/`: `ProductionDisplay`, `ProgressDisplay`, `04` §15) | [module](../modules/CityBuilder.Simulation.md) |
-| `CityBuilder.Domain.Tests` | `server/tests/` | Domain | xUnit v3 (`xunit.v3.mtp-off`, runner, test SDK; decision 019) | 1 test | the Domain module doc → Tests |
-| `CityBuilder.Application.Tests` | `server/tests/` | Application | the same, plus `Microsoft.Extensions.TimeProvider.Testing` (`FakeTimeProvider`) | 14 tests: the dependency rule and `SettleCity` with a fake clock and repository | the Application module doc → Tests |
+| `CityBuilder.Domain.Tests` | `server/tests/` | Domain | xUnit v3 (`xunit.v3.mtp-off`, runner, test SDK; decision 019) | 21 tests: the dependency rule and the rules of the Domain types | the Domain module doc → Tests |
+| `CityBuilder.Application.Tests` | `server/tests/` | Application | the same, plus `Microsoft.Extensions.TimeProvider.Testing` (`FakeTimeProvider`) | 23 tests: the dependency rule, `CityAggregate`, and `SettleCity` with a fake clock and repository | the Application module doc → Tests |
 | `CityBuilder.Simulation.Tests` | `server/tests/` | Simulation | the same | 872 tests: engine helpers, content ids, content model and validation, city state, queries, stall reasons, mutations, `Simulator.Advance`, the settlement window, a rule test per engine rule, golden scenario #1, the property tests, the performance budget, the display helpers, and the architecture tests below | the Simulation module doc → Tests |
-| `CityBuilder.IntegrationTests` | `server/tests/` | Api | the same, plus `Microsoft.AspNetCore.Mvc.Testing` | 55 in-memory tests (no Docker): the API host, the content loader, the content and database startup, the EF model against `06` and its migrations; none in the `Integration` category yet *(planned, M0-21)* | the Api module doc → Tests |
+| `CityBuilder.IntegrationTests` | `server/tests/` | Api | the same, plus `Microsoft.AspNetCore.Mvc.Testing` | 101 in-memory tests (no Docker): the API host, the content loader, the content and database startup, the EF model against `06` and its migrations, the city mapping and the repositories' staged changes; none in the `Integration` category yet *(planned, M0-21)* | the Api module doc → Tests |
 | `CityBuilder.Repository.Tests` | `server/tests/` | — (it reads the source files) | the same, plus `Microsoft.CodeAnalysis.CSharp` (syntax only, decision 037) | 22 tests: the documentation check over every C# file of the repository, and the tests of its rules and of its file search | `core-instructions/14-coding-standards.md` → Documentation in code |
 
 ### Unity client

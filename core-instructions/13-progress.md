@@ -4,13 +4,15 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** M0-20 · Repository and mapping `[O]`
-- **Branch:** `task/M0-20-repository-mapping` (from `main` = `cafca28`)
-- **Build log entry:** `docs/build-log/2026/2026-10-26-03-M0-20.md`
-- **Last green commit:** the head of the branch (build 0 warnings, format clean, fast suite 22/872/21/23/101)
-- **Done steps:** write-ahead; steps 1-4 (Domain types; ports and `CityAggregate` completion clocks; `CityMapping` with round-trip tests; repositories, unit of work, registration, checked once against the compose database)
-- **Next step:** step 5, docs (`06`, `03`, overview, testing README, CHANGELOG), then `/finish-task` (plan in the entry)
+- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** — (last completed: M0-20 · Repository and mapping; PR open, the owner merges it)
+- **Branch:** `task/M0-20-repository-mapping` (from `main` = `cafca28`) until the owner merges
+- **Build log entry:** last: `docs/build-log/2026/2026-10-26-03-M0-20.md` (Done)
+- **Last green commit:** the head of `task/M0-20-repository-mapping` (build 0 warnings, format clean, fast suite: Repository 22, Simulation 872,
+  Domain 21, Application 23, IntegrationTests 101; repositories checked once against the compose database; handbook builds; `check-docs --base origin/main` OK)
+- **Done steps:** all of M0-20 (Domain types, ports with `Save(city, ledger, receipt)` and a unit of work, research completion clocks in
+  `CityAggregate`, explicit `CityMapping` with round-trip tests, EF repositories and registration, docs; details in the entry)
+- **Next step:** the owner merges the PR. Then `/start-task M0-21` (Testcontainers integration base, `[S]`); read the entry's Follow-ups first.
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7
@@ -20,7 +22,7 @@
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 19 / 85 (M0-20 in progress)
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 19 / 85 (M0-20 in review)
 
 | Area | State | Notes |
 |---|---|---|
@@ -28,7 +30,7 @@
 | Shared engine: content, research, labor | done | M0-03 merged (PR #7); the content model and its validation (M0-07a) merged (PR #14); the JSON file and server loading (M0-07b) merged (PR #15); city state and mutations (M0-08) merged (PR #16); `Simulator.Advance` (M0-09) merged (PR #17); rule tests (M0-10) merged (PR #18); golden scenario #1 (M0-11) merged (PR #19); engine review (M0-12) merged (PR #20) |
 | Shared engine: invariants, performance | done | settlement window and production cap (M0-13) merged (PR #21); property test harness (M0-14, with engine fix CR-0001) merged (PR #22); invariant properties (M0-15) merged (PR #23); performance budget M0-16 merged (PR #24; worst case ~37 ms per advance in Release); display helpers M0-17 merged (PR #25); spec sync and ADRs M0-18 merged (PR #26) |
 | Server skeleton | done | M0-02 merged (PR #6) |
-| Persistence (EF + PostgreSQL) | in progress | M0-19 (EF Core model, migrations, Docker) merged (PR #31); repository and mapping M0-20 in progress |
+| Persistence (EF + PostgreSQL) | in progress | M0-19 (EF Core model, migrations, Docker) merged (PR #31); repository and mapping M0-20 in review; Testcontainers M0-21 next |
 | Auth + command pipeline | not started | |
 | Commands: place / upgrade / assign workers / start research | not started | |
 | Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) and M0-05 (Unity tests, `test-unity.sh`) merged (PR #8, #12); networking is M0-37 |
