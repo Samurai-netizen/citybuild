@@ -4,29 +4,24 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: CR-0003-T1 · Code documentation: every file and declaration; PR open, the owner merges it)
-- **Branch:** `task/CR-0003-T1-code-docs` (from `main` = `a402563`) until the owner merges
-- **Build log entry:** last: `docs/build-log/2026/2026-10-25-01-CR-0003-T1.md` (Done)
-- **Last green commit:** the head of `task/CR-0003-T1-code-docs` (build 0 warnings, format clean, fast suite: Repository 22, Simulation 872,
-  Domain 1, Application 14, IntegrationTests 25; Unity EditMode 13, PlayMode 6; handbook builds; `check-docs --base origin/main` OK)
-- **Done steps:** all of CR-0003-T1 (every file and declaration documented, the checker `CityBuilder.Repository.Tests`, doc comment errors
-  in every server project, header and function checks in `check-docs.sh`, the workflow docs, and the owner's revision; details and
-  follow-ups in the entry)
-- **Next step:** the owner merges the PR. Then `/model` → Opus 5.5 and `/start-task M0-19` (EF Core model, migrations, Docker, `[O]`
-  `[PLAN]`: write ahead, present the plan, wait for approval); its start commit sets CR-0003 to `Done`. Every change now documents its
-  code (OD-12).
-- **Dependency PR:** #28 (handbook-site: react 19.3.1) builds with its docs; the owner decides (G-Dependency), build log `2026-10-26-01-DEP-PR28.md`.
+- **State:** AWAITING OWNER   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** M0-19 · EF Core model, migrations, Docker (`[O]` `[PLAN]`)
+- **Branch:** `task/M0-19-ef-core-docker` (from `main` = `2c724ae`)
+- **Build log entry:** `docs/build-log/2026/2026-10-26-02-M0-19.md`
+- **Last green commit:** `main` = `2c724ae` (CR-0003-T1 merged in #29, #28 merged; nothing changed in code yet)
+- **Done steps:** write-ahead: the plan (8 steps) in the build log, the Docs impact table, board row `In progress`, CR-0003 `Done`
+- **Next step:** the owner approves the plan (G-Plan) and answers its questions (build log → Session 1 → Plan). Then step 1, Docker
+  (`docker-compose.yml`, `.env.example`). Step 7 needs Docker Desktop running.
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
-  executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); Dependabot PR #28 and the 7
+  executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7
   security alerts GitHub reports on `main`.
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 18 / 85 (CR-0003-T1 in review)
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 18 / 85 (M0-19 in progress)
 
 | Area | State | Notes |
 |---|---|---|
@@ -34,14 +29,14 @@
 | Shared engine: content, research, labor | done | M0-03 merged (PR #7); the content model and its validation (M0-07a) merged (PR #14); the JSON file and server loading (M0-07b) merged (PR #15); city state and mutations (M0-08) merged (PR #16); `Simulator.Advance` (M0-09) merged (PR #17); rule tests (M0-10) merged (PR #18); golden scenario #1 (M0-11) merged (PR #19); engine review (M0-12) merged (PR #20) |
 | Shared engine: invariants, performance | done | settlement window and production cap (M0-13) merged (PR #21); property test harness (M0-14, with engine fix CR-0001) merged (PR #22); invariant properties (M0-15) merged (PR #23); performance budget M0-16 merged (PR #24; worst case ~37 ms per advance in Release); display helpers M0-17 merged (PR #25); spec sync and ADRs M0-18 merged (PR #26) |
 | Server skeleton | done | M0-02 merged (PR #6) |
-| Persistence (EF + PostgreSQL) | not started | |
+| Persistence (EF + PostgreSQL) | in progress | M0-19 (EF Core model, migrations, Docker): plan awaiting approval |
 | Auth + command pipeline | not started | |
 | Commands: place / upgrade / assign workers / start research | not started | |
 | Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) and M0-05 (Unity tests, `test-unity.sh`) merged (PR #8, #12); networking is M0-37 |
 | Unity city view + placement | not started | |
 | Inspector, worker stepper, research screen, HUD | not started | |
 | Resilience (limits, retries, logging) | not started | |
-| Docs automation (DocTools) + docs completeness | in progress | handbook, Pages, docs-as-code checks and a full audit: CR-0002 done (PR #27); code documentation CR-0003-T1 in review; DocTools is M0-61 |
+| Docs automation (DocTools) + docs completeness | in progress | handbook, Pages, docs-as-code checks and a full audit: CR-0002 done (PR #27); code documentation CR-0003 done (PR #29); DocTools is M0-61 |
 | Balance simulator | not started | |
 | E2E / security / concurrency suites | not started | |
 | Dev build + M0 close-out | not started | |

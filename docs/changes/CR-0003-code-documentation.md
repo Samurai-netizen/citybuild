@@ -1,6 +1,6 @@
 # CR-0003 — Code documentation: every file and every declaration described, and checked
 
-- **Status:** In progress
+- **Status:** Done
 - **Type:** Process
 - **Requested by:** owner · **Date:** 2026-10-26
 - **Milestone / era:** M0 (before M0-19) / —
@@ -78,7 +78,7 @@ and kept that way.
 ## Tasks (filled in after approval)
 | ID | Title | Model | Status |
 |---|---|---|---|
-| CR-0003-T1 | The standard, the checks, and the documentation of all existing code (one PR) | O | In review |
+| CR-0003-T1 | The standard, the checks, and the documentation of all existing code (one PR) | O | Done |
 
 ## Owner approval
 - Approved on: 2026-10-26 — the owner's request in chat: "I want additional documentation for the code itself. Each file, each function,
