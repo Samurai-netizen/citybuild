@@ -9,6 +9,7 @@ namespace CityBuilder.Client.Tests.EditMode
     /// </summary>
     public sealed class SimulationInUnityTests
     {
+        /// <summary>The package's <see cref="IntegerMath.CeilDiv"/> runs in Unity and rounds up: 180 / 4 = 45, 181 / 4 = 46, 1 / 1000 = 1, 0 / 7 = 0.</summary>
         [TestCase(180L, 4L, 45L)] // divides evenly: 180 worker-seconds of labor with 4 workers
         [TestCase(181L, 4L, 46L)] // a remainder rounds up, so a cycle never finishes early
         [TestCase(1L, 1000L, 1L)]

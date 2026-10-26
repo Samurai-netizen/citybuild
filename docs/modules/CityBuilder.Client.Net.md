@@ -28,6 +28,9 @@ ProblemDetails responses into an `ApiError`. It is **not** responsible for gamep
   except Unity event handlers.
 - IL2CPP may strip DTO members that only reflection uses; a `link.xml` that keeps this assembly belongs to the first DTOs (M0-37)
   (`09` → Device testing).
+- Every type and member, private ones included, has an XML doc comment (`core-instructions/14-coding-standards.md` → Documentation
+  in code). Unity's compiler doesn't check them, so `CityBuilder.Repository.Tests` (a server test project) checks every script
+  under `Assets/_Project`.
 
 ## How to extend
 A new endpoint or DTO: recipe "New command (player action)" in `core-instructions/19-change-recipes.md` (client intent in this assembly
@@ -41,4 +44,4 @@ plus UI in `CityBuilder.Client.Presentation`).
 ## Known limitations
 - No types yet (skeleton).
 
-Last updated: M0-04
+Last updated: CR-0003-T1

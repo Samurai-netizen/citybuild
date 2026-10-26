@@ -17,6 +17,7 @@ namespace CityBuilder.Client.Tests.EditMode
     /// </summary>
     public sealed class CityRulesInUnityTests
     {
+        /// <summary>Placing a camp on the starter city pays its cost, keeps the stock sorted, and starts the construction under the next id.</summary>
         [Test]
         public void PlaceBuilding_StarterCity_PaysAndConstructs()
         {
@@ -32,6 +33,7 @@ namespace CityBuilder.Client.Tests.EditMode
             Assert.That((camp!.Phase, camp.PhaseEndsAt, city.NextBuildingId), Is.EqualTo((BuildingPhase.Constructing, (long?)6, 2)));
         }
 
+        /// <summary>A placement on a taken tile is rejected with <c>TileOccupied</c> and changes nothing.</summary>
         [Test]
         public void PlaceBuilding_TileTaken_IsRejectedAndChangesNothing()
         {
@@ -45,6 +47,7 @@ namespace CityBuilder.Client.Tests.EditMode
             Assert.That((city.GetQuantity(new ItemId("gold")), city.Buildings.Count, city.NextBuildingId), Is.EqualTo((15L, 1, 2)));
         }
 
+        /// <summary>A worker change mid-cycle keeps the labor done and starts a new segment; taking every worker away freezes the cycle.</summary>
         [Test]
         public void AssignWorkers_MidCycle_KeepsProgressThenFreezes()
         {
@@ -62,7 +65,7 @@ namespace CityBuilder.Client.Tests.EditMode
             Assert.That((camp.LaborRemaining, camp.PhaseEndsAt), Is.EqualTo((10L, (long?)null)));
         }
 
-        // One era, a capped and an uncapped item, a house and a producer; the numbers are made up for this test.
+        /// <summary>One era, a capped and an uncapped item, a house and a producer; the numbers are made up for this test.</summary>
         private static GameContent SmallContent()
         {
             var data = new GameContentData

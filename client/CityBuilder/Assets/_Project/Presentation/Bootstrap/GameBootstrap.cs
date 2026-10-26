@@ -12,8 +12,11 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         /// <summary>The name of the scene that gets a <see cref="GameRoot"/> (<c>Assets/Scenes/Bootstrap.unity</c>).</summary>
         internal const string BootstrapSceneName = "Bootstrap";
 
-        // Runs once per start of the app or of Play Mode, before the first scene loads, so the handler also sees that first scene.
-        // Unsubscribing first keeps a single handler when Domain Reload is off and Play Mode starts again in the same domain.
+        /// <summary>
+        /// Registers <see cref="OnSceneLoaded"/>. It runs once per start of the app or of Play Mode, before the first scene loads, so the handler
+        /// also sees that first scene. Unsubscribing first keeps a single handler when Domain Reload is off and Play Mode starts again in the
+        /// same domain.
+        /// </summary>
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Register()
         {
@@ -21,6 +24,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
 
+        /// <summary>Adds a <see cref="GameRoot"/> to the Bootstrap scene when it loads without one; other scenes are left alone.</summary>
         private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             if (scene.name != BootstrapSceneName || ContainsGameRoot(scene))
@@ -34,6 +38,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             gameRootObject.AddComponent<GameRoot>();
         }
 
+        /// <summary>Whether the scene already has a <see cref="GameRoot"/> on any of its objects, inactive ones included.</summary>
         private static bool ContainsGameRoot(Scene scene)
         {
             foreach (GameObject rootObject in scene.GetRootGameObjects())

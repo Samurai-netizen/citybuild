@@ -9,10 +9,10 @@
 - **Branch:** `task/CR-0003-T1-code-docs` (from `main` = `a402563`)
 - **Build log entry:** `docs/build-log/2026/2026-10-25-01-CR-0003-T1.md`
 - **Last green commit:** the head of the branch (fast suite: Repository 20, Simulation 872, Domain 1, Application 14, IntegrationTests 25)
-- **Steps:** 1 start ✓ · 2 checker + standard ✓ · 3 server ✓ · 4 engine ✓ · 5 tests ✓ · 6 Unity client · 7 scripts and other files · 8 workflow docs ·
+- **Steps:** 1 start ✓ · 2 checker + standard ✓ · 3 server ✓ · 4 engine ✓ · 5 tests ✓ · 6 Unity client ✓ · 7 scripts and other files · 8 workflow docs ·
   9 finish (details: the entry's Session 1 plan)
-- **Next step:** step 6: the Unity client scripts and tests (`client/CityBuilder/Assets/_Project`, 36 problems); then remove the
-  `_notYetDocumented` list from `CodeDocumentationTests` and its mentions, and update the Client module docs.
+- **Next step:** step 7: header comments for the scripts, hooks, JavaScript, CSS and USS, workflows, MSBuild, UXML and config files,
+  a comment above every shell and JavaScript function (14 lack one), and the `check-docs.sh` checks for both, tested on failing cases.
 - **Open questions for the owner:** guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); Dependabot PR #28.
 - **Known broken / do not touch:** —

@@ -8,22 +8,15 @@ namespace CityBuilder.Repository.Tests.Documentation;
 public sealed class CodeDocumentationTests
 {
     /// <summary>
-    /// Folders that CR-0003-T1 has not documented yet. Each step of that task removes the folders it finished, and its last step removes
-    /// this list, after which nothing is skipped but the exempt folders of <see cref="SourceFiles"/>.
+    /// Every C# file of the repository passes every rule of <see cref="DocumentationRules"/>; only the exempt folders of
+    /// <see cref="SourceFiles"/> are skipped. The message lists all problems at once.
     /// </summary>
-    private static readonly string[] _notYetDocumented =
-    [
-        "client/CityBuilder/Assets/_Project",
-    ];
-
-    /// <summary>Every C# file of the repository passes every rule of <see cref="DocumentationRules"/>; the message lists all problems at once.</summary>
     [Fact]
     public void Check_EveryCSharpFileOfTheRepository_ReportsNoProblem()
     {
         string root = RepositoryPaths.Root;
 
         DocumentationProblem[] problems = SourceFiles.All(root)
-            .Where(path => !_notYetDocumented.Any(folder => path.StartsWith(folder + "/", StringComparison.Ordinal)))
             .SelectMany(path => DocumentationRules.Check(path, File.ReadAllText(Path.Combine(root, path))))
             .ToArray();
 
