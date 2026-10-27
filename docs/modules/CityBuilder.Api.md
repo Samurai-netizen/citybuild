@@ -100,7 +100,8 @@ Run them with the fast suite: `dotnet test server/CityBuilder.slnx --filter "Cat
 The `Integration` category runs the app on real PostgreSQL: `Postgres/PostgresApiFactory` is the same server on one test's own database
 (one `postgres:18.6` container per run, a fresh database per test, a `FakeTimeProvider` clock), and `Persistence/MigrationDatabaseTests`
 checks that the server in Development migrates an empty database at startup; `Persistence/SettleCityDatabaseTests` settles through the
-server's registered `SettleCity` (Infrastructure module doc → Tests); `Auth/DevLoginDatabaseTests` logs in over HTTP and checks the stored
+server's registered `SettleCity` (Infrastructure module doc → Tests); `Commands/` runs the server's registered `CommandPipeline` with test
+commands (Application module doc → Tests); `Auth/DevLoginDatabaseTests` logs in over HTTP and checks the stored
 player, city and starting grant, the same name again, two names, the token, and two first logins of one name racing. Docker must be running:
 `dotnet test server/CityBuilder.slnx --filter "Category=Integration"` (`docs/testing/README.md`).
 
@@ -115,4 +116,4 @@ player, city and starting grant, the same name again, two names, the token, and 
 - No command endpoint yet: `CommandPipeline` is registered, and the first endpoint, with the snapshot writer it passes, is M0-29 *(planned)*.
 - A failed start is reported by the runtime as an unhandled exception in plain text on stderr, not as a JSON log line.
 
-Last updated: M0-26
+Last updated: M0-27

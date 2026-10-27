@@ -116,6 +116,9 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   rejection commits only the settlement), the closing advance and one save of the city, its ledger (`COST_*`, `REFUND_*` between the
   settlement's rows) and the receipt; the receipt race answers from the stored receipt; SHA-256 of a canonical payload;
   `command_receipts.response_json` is now `json` (migration `ReceiptResponseAsJson`); tests with fakes and on PostgreSQL (M0-26).
+- Idempotency integration tests on PostgreSQL for the command pipeline, with test commands: a retry returns the stored response and writes
+  nothing (also after a host restart), conflicts, another player's request id, ten identical requests apply once, the receipt race through
+  the unique key, a rejection commits only the settlement (M0-27).
 
 ### Changed
 - Handbook site: react and react-dom 19.2.9 → 19.3.1, scheduler 0.28.0 (Dependabot PR #28, DEP-PR28).
