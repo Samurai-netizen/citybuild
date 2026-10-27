@@ -43,8 +43,11 @@ internal static class SettleFixture
     /// <summary>The server second the city was last settled at: a whole second, so the fake clock starts at t = 0 of the tests.</summary>
     public static readonly DateTimeOffset LastSettled = DateTimeOffset.FromUnixTimeSeconds(1_790_000_000);
 
-    /// <summary>The woodcutter's output.</summary>
+    /// <summary>The woodcutter's output and the sawmill's input.</summary>
     public static readonly ItemId Logs = new("logs");
+
+    /// <summary>The sawmill's output.</summary>
+    public static readonly ItemId Planks = new("planks");
 
     /// <summary>The research the player starts at clock 0.</summary>
     public static readonly ResearchId Forestry = new("forestry");
@@ -70,9 +73,37 @@ internal static class SettleFixture
         Simulator.Advance(state, Content, StartClock);
         Apply(state, CityRules.PlaceBuilding(state, Content, new BuildingTypeId("manor"), 2, 0));
 
+        return RepositoryWith(state, lastSettled);
+    }
+
+    /// <summary>
+    /// A repository with a sawmill city, built with the engine's rules from the starter city: at clock 0 the player places a cottage
+    /// (2 workers) and a woodcutter (1 log per 60 labor); at clock 60 both have completed, the woodcutter got its worker and started a cycle,
+    /// and the player places a sawmill (2 logs into 1 plank per 120 labor); at clock 120 it completes and gets the cottage's second worker,
+    /// but waits for logs: the woodcutter's first log has just come in. Settled then, at <see cref="LastSettled"/>.
+    /// </summary>
+    public static InMemoryCityRepository SawmillRepository()
+    {
+        CityState state = CityFactory.CreateStarterCity(Content);
+        Apply(state, CityRules.PlaceBuilding(state, Content, new BuildingTypeId("cottage"), 0, 0));
+        Apply(state, CityRules.PlaceBuilding(state, Content, new BuildingTypeId("woodcutter"), 1, 0));
+        Simulator.Advance(state, Content, StartClock);
+        Apply(state, CityRules.PlaceBuilding(state, Content, new BuildingTypeId("sawmill"), 2, 0));
+        Simulator.Advance(state, Content, StartClock);
+        Simulator.Advance(state, Content, 0);
+        return RepositoryWith(state);
+    }
+
+    /// <summary>A repository with the player's city in <paramref name="state"/>, at state version 0, with no completed research.</summary>
+    /// <param name="state">The city's state.</param>
+    /// <param name="lastSettled">The server second it was last settled at; <see cref="LastSettled"/> by default.</param>
+    /// <param name="contentVersion">The content version it was last settled with; the fixture's by default.</param>
+    public static InMemoryCityRepository RepositoryWith(CityState state, DateTimeOffset? lastSettled = null, string? contentVersion = null)
+    {
         var repository = new InMemoryCityRepository();
         repository.Add(new CityAggregate(
-            CityId, PlayerId, state, researchCompletedAt: [], (lastSettled ?? LastSettled).ToUnixTimeSeconds(), stateVersion: 0, Content.ContentVersion));
+            CityId, PlayerId, state, researchCompletedAt: [], (lastSettled ?? LastSettled).ToUnixTimeSeconds(), stateVersion: 0,
+            contentVersion ?? Content.ContentVersion));
         return repository;
     }
 
@@ -108,8 +139,8 @@ internal static class SettleFixture
     }
 
     /// <summary>
-    /// The fixture's content: a 4 × 4 grid, two houses (cottage and manor), the woodcutter, and the research <c>forestry</c> (−100 ‰ on the
-    /// woodcutter's labor). Invalid content fails the test with every error.
+    /// The fixture's content: a 4 × 4 grid, two houses (cottage and manor), the woodcutter, the sawmill (2 logs into 1 plank), and the
+    /// research <c>forestry</c> (−100 ‰ on the woodcutter's labor). Invalid content fails the test with every error.
     /// </summary>
     private static GameContent CreateContent()
     {
@@ -122,7 +153,7 @@ internal static class SettleFixture
                 GridHeight = 4,
                 BuilderSlots = 2,
                 ResearchSlots = 1,
-                BaseStorageCaps = new() { ["logs"] = 1000 },
+                BaseStorageCaps = new() { ["logs"] = 1000, ["planks"] = 1000 },
                 MaxOfflineProductionSeconds = ProductionCapSeconds,
                 MinCycleSeconds = 10,
                 MaxLaborReductionPermille = 500,
@@ -133,6 +164,7 @@ internal static class SettleFixture
             [
                 new ItemData { Id = "coins", Name = "Coins", Era = 1, Capped = false, Tradable = false },
                 new ItemData { Id = "logs", Name = "Logs", Era = 1, Capped = true, Tradable = true },
+                new ItemData { Id = "planks", Name = "Planks", Era = 1, Capped = true, Tradable = true },
             ],
             Buildings =
             [
@@ -147,6 +179,19 @@ internal static class SettleFixture
                         new BuildingLevelData
                         {
                             Level = 1, MaxWorkers = 1, Recipe = new RecipeData { Outputs = new() { ["logs"] = 1 }, Labor = CycleSeconds },
+                        },
+                    ],
+                },
+                new BuildingData
+                {
+                    Id = "sawmill", Name = "Sawmill", Kind = "producer", Era = 1, AvailableAtStart = true,
+                    Cost = new() { ["coins"] = 10 }, BuildSeconds = StartClock,
+                    Levels =
+                    [
+                        new BuildingLevelData
+                        {
+                            Level = 1, MaxWorkers = 1,
+                            Recipe = new RecipeData { Inputs = new() { ["logs"] = 2 }, Outputs = new() { ["planks"] = 1 }, Labor = 2 * CycleSeconds },
                         },
                     ],
                 },

@@ -33,13 +33,13 @@ public sealed class SettleCityTests
 
         SettleCityResult result = await UseCase(repository, clock).ExecuteAsync(PlayerId, TestContext.Current.CancellationToken);
 
-        Assert.Equal(seconds, result.Report.ElapsedSeconds);
-        Assert.Equal(productionSeconds, result.Report.ProductionSeconds);
+        Assert.Equal(seconds, result.Settlement.ElapsedSeconds);
+        Assert.Equal(productionSeconds, result.Settlement.ProductionSeconds);
         Assert.Equal(logs, result.City.State.GetQuantity(Logs));
         Assert.Equal(StartClock + seconds, result.City.State.Clock);
         Assert.Equal(LastSettled.ToUnixTimeSeconds() + seconds, result.City.LastSettledUnixSec);
-        Assert.Empty(result.Report.CompletedResearch);
-        Assert.Empty(result.Report.CompletedBuildings);
+        Assert.Empty(result.Settlement.CompletedResearch);
+        Assert.Empty(result.Settlement.CompletedBuildings);
     }
 
     /// <summary>At the cap and one second beyond, the woodcutter runs the cycle that started at the cap's last second.</summary>
@@ -62,10 +62,10 @@ public sealed class SettleCityTests
 
     /// <summary>
     /// After 30 days away the research and the manor have completed, 481 logs were made (480 cycles within the cap and the one that started at
-    /// its last second), and the woodcutter stands idle with its worker.
+    /// its last second), nothing started after the cap, and the closing zero-length advance has restarted the woodcutter at the settled clock.
     /// </summary>
     [Fact]
-    public async Task ExecuteAsync_ThirtyDaysAway_FinishesTheTimersAndStopsStartingCyclesAfterTheCap()
+    public async Task ExecuteAsync_ThirtyDaysAway_FinishesTheTimersStopsAfterTheCapAndRestartsAtTheEnd()
     {
         const long thirtyDays = 30 * 86_400;
         InMemoryCityRepository repository = Repository();
@@ -75,20 +75,21 @@ public sealed class SettleCityTests
         SettleCityResult result = await UseCase(repository, clock).ExecuteAsync(PlayerId, TestContext.Current.CancellationToken);
 
         CityState city = result.City.State;
-        Assert.Equal(thirtyDays, result.Report.ElapsedSeconds);
-        Assert.Equal(ProductionCapSeconds, result.Report.ProductionSeconds);
+        Assert.Equal(thirtyDays, result.Settlement.ElapsedSeconds);
+        Assert.Equal(ProductionCapSeconds, result.Settlement.ProductionSeconds);
         Assert.Equal(StartClock + thirtyDays, city.Clock);
-        Assert.Equal([Forestry], result.Report.CompletedResearch);
+        Assert.Equal([Forestry], result.Settlement.CompletedResearch);
         Assert.True(city.HasCompletedResearch(Forestry));
         Assert.Null(city.ActiveResearch);
-        Assert.Equal([ManorId], result.Report.CompletedBuildings);
+        Assert.Equal([ManorId], result.Settlement.CompletedBuildings);
         Assert.Equal(BuildingPhase.Idle, city.Buildings.Single(building => building.Id == ManorId).Phase);
 
         // 480 cycles end within the cap, and the one that started at its last second ends a minute later; then nothing starts.
         Assert.Equal(481, city.GetQuantity(Logs));
-        Assert.Equal(481, result.Report.Produced[Logs]);
+        Assert.Equal(481, result.Settlement.Produced[Logs]);
         Building woodcutter = city.Buildings.Single(building => building.Id == _woodcutterId);
-        Assert.Equal(BuildingPhase.Idle, woodcutter.Phase);
+        Assert.Equal(BuildingPhase.Producing, woodcutter.Phase);
+        Assert.Equal(StartClock + thirtyDays, woodcutter.PhaseStartedAt);
         Assert.Equal(1, woodcutter.AssignedWorkers);
     }
 
@@ -103,12 +104,12 @@ public sealed class SettleCityTests
 
         clock.Advance(TimeSpan.FromSeconds(secondsToResearchEnd - 1));
         SettleCityResult before = await settle.ExecuteAsync(PlayerId, TestContext.Current.CancellationToken);
-        Assert.Empty(before.Report.CompletedResearch);
+        Assert.Empty(before.Settlement.CompletedResearch);
         Assert.NotNull(before.City.State.ActiveResearch);
 
         clock.Advance(TimeSpan.FromSeconds(1));
         SettleCityResult at = await settle.ExecuteAsync(PlayerId, TestContext.Current.CancellationToken);
-        Assert.Equal([Forestry], at.Report.CompletedResearch);
+        Assert.Equal([Forestry], at.Settlement.CompletedResearch);
         Assert.Equal(ResearchEndsAt, at.City.State.Clock);
     }
 
@@ -122,10 +123,11 @@ public sealed class SettleCityTests
 
         SettleCityResult result = await UseCase(repository, clock).ExecuteAsync(PlayerId, TestContext.Current.CancellationToken);
 
-        Assert.True(result.Window.IsClockBehind);
-        Assert.Equal(0, result.Report.ElapsedSeconds);
+        Assert.True(result.Settlement.Window.IsClockBehind);
+        Assert.Equal(0, result.Settlement.ElapsedSeconds);
         Assert.Equal(StartClock, result.City.State.Clock);
         Assert.Equal(LastSettled.ToUnixTimeSeconds() + 60, result.City.LastSettledUnixSec);
+        Assert.False(result.Saved);
     }
 
     /// <summary>When the clock catches up after going back, only the seconds after the last settlement count: 30 of the 90.</summary>
@@ -140,8 +142,8 @@ public sealed class SettleCityTests
         clock.Advance(TimeSpan.FromSeconds(90));
         SettleCityResult result = await settle.ExecuteAsync(PlayerId, TestContext.Current.CancellationToken);
 
-        Assert.False(result.Window.IsClockBehind);
-        Assert.Equal(30, result.Report.ElapsedSeconds);
+        Assert.False(result.Settlement.Window.IsClockBehind);
+        Assert.Equal(30, result.Settlement.ElapsedSeconds);
         Assert.Equal(StartClock + 30, result.City.State.Clock);
     }
 
@@ -167,7 +169,7 @@ public sealed class SettleCityTests
             }
 
             last = await settle.ExecuteAsync(PlayerId, TestContext.Current.CancellationToken);
-            total += last.Report.ElapsedSeconds;
+            total += last.Settlement.ElapsedSeconds;
         }
 
         InMemoryCityRepository once = Repository();
@@ -176,7 +178,7 @@ public sealed class SettleCityTests
         SettleCityResult single = await UseCase(once, onceClock).ExecuteAsync(PlayerId, TestContext.Current.CancellationToken);
 
         Assert.Equal(29, total);
-        Assert.Equal(29, single.Report.ElapsedSeconds);
+        Assert.Equal(29, single.Settlement.ElapsedSeconds);
         Assert.Equal(single.City.LastSettledUnixSec, last!.City.LastSettledUnixSec);
         Assert.Equal(Describe(single.City.State), Describe(last.City.State));
     }
@@ -210,9 +212,9 @@ public sealed class SettleCityTests
         Assert.Equal(new Dictionary<ResearchId, long> { [Forestry] = ResearchEndsAt }, result.City.ResearchCompletedAt);
     }
 
-    /// <summary>A settlement stages the city without ledger entries (they come with M0-23) or a receipt, and writes it once.</summary>
+    /// <summary>A settlement that produced and consumed nothing (5 s into a 60 s cycle) stages the city without ledger rows or a receipt, and writes it once.</summary>
     [Fact]
-    public async Task ExecuteAsync_AnySettlement_StagesWithoutLedgerOrReceiptAndWritesOnce()
+    public async Task ExecuteAsync_NothingProducedOrConsumed_StagesNoLedgerRowsOrReceiptAndWritesOnce()
     {
         InMemoryCityRepository repository = Repository();
         FakeTimeProvider clock = ClockAtLastSettled();

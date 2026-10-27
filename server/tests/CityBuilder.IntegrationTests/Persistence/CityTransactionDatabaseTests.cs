@@ -52,7 +52,7 @@ public sealed class CityTransactionDatabaseTests(PostgresServer server) : Postgr
         InvalidOperationException thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => RunAsync<int>(
             Factory, PlayerId, async (transaction, services, ct) =>
             {
-                transaction.City.MarkSettled(transaction.City.LastSettledUnixSec + 60);
+                transaction.City.MarkSettled(transaction.City.LastSettledUnixSec + 60, transaction.City.ContentVersion);
                 await transaction.SaveAsync([new LedgerEntry(new ItemId("logs"), 1, 8, LedgerReason.SettlementProduced)], receipt, ct);
 
                 // The writes happened: the transaction sees them.
@@ -110,7 +110,7 @@ public sealed class CityTransactionDatabaseTests(PostgresServer server) : Postgr
         {
             firstLocked.SetResult();
             await releaseFirst.Task.WaitAsync(ct);
-            transaction.City.MarkSettled(firstSettled);
+            transaction.City.MarkSettled(firstSettled, transaction.City.ContentVersion);
             await transaction.SaveAsync([], receipt: null, ct);
             return 0;
         });

@@ -97,8 +97,8 @@ public sealed class CityAggregate
     /// <summary>The stored version of the city, as loaded; a save writes this plus 1, and the stored row must still have this one.</summary>
     public long StateVersion { get; }
 
-    /// <summary>The content version the city was last settled with.</summary>
-    public string ContentVersion { get; }
+    /// <summary>The content version the city was last settled with; <see cref="MarkSettled"/> records the next one.</summary>
+    public string ContentVersion { get; private set; }
 
     /// <summary>
     /// Advances the city by <paramref name="elapsedSeconds"/> with the engine (<see cref="Simulator.Advance"/>) and records the completion
@@ -126,11 +126,14 @@ public sealed class CityAggregate
         return report;
     }
 
-    /// <summary>Records the settlement that ended at <paramref name="lastSettledUnixSec"/>.</summary>
+    /// <summary>Records the settlement that ended at <paramref name="lastSettledUnixSec"/>, run with <paramref name="contentVersion"/>.</summary>
     /// <param name="lastSettledUnixSec">The new last settled second, from the settlement window.</param>
+    /// <param name="contentVersion">The version of the content the settlement ran with; not blank.</param>
     /// <exception cref="ArgumentOutOfRangeException">The second is before the current last settled second.</exception>
-    public void MarkSettled(long lastSettledUnixSec)
+    /// <exception cref="ArgumentException">The content version is null or blank.</exception>
+    public void MarkSettled(long lastSettledUnixSec, string contentVersion)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(contentVersion);
         if (lastSettledUnixSec < LastSettledUnixSec)
         {
             throw new ArgumentOutOfRangeException(
@@ -138,5 +141,6 @@ public sealed class CityAggregate
         }
 
         LastSettledUnixSec = lastSettledUnixSec;
+        ContentVersion = contentVersion;
     }
 }
