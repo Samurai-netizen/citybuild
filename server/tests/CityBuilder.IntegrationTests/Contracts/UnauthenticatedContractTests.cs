@@ -14,7 +14,7 @@ namespace CityBuilder.IntegrationTests.Contracts;
 public sealed class UnauthenticatedContractTests(ApiFactory factory) : IClassFixture<ApiFactory>
 {
     /// <summary>The game endpoints that read an access token.</summary>
-    public static TheoryData<string> Paths => new() { "/api/v1/content" };
+    public static TheoryData<string> Paths => new() { "/api/v1/content", "/api/v1/city" };
 
     /// <summary>The player the hand-built tokens are for.</summary>
     private static readonly Guid _playerId = Guid.Parse("0199a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b");
@@ -67,7 +67,7 @@ public sealed class UnauthenticatedContractTests(ApiFactory factory) : IClassFix
         Assert.Single(bodies);
     }
 
-    /// <summary>A valid token is not refused: the content endpoint answers 200.</summary>
+    /// <summary>A valid token is not refused: the content endpoint answers 200 (the city endpoint needs a city, which the snapshot tests give it).</summary>
     [Fact]
     public async Task Get_WithValidToken_IsNotRefused()
     {

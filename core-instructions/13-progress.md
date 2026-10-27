@@ -9,10 +9,11 @@
 - **Branch:** `task/M0-28-content-and-city-endpoints` (from `main` = `10e4486`)
 - **Build log entry:** `docs/build-log/2026/2026-10-27-06-M0-28.md` (Session 1)
 - **Last green commit:** the head of `task/M0-28-content-and-city-endpoints` (Release build 0 warnings, format clean, fast suite: Repository 22,
-  Domain 21, Application 72, IntegrationTests 154, Simulation 872)
-- **Done steps:** start; step 1 (`GET /api/v1/content`, raw-JSON contract tests); step 2 (the 401 as Problem Details, `BearerChallenge`)
-- **Next step:** step 3: `SettleCityResult` gets the server time and `StateVersion`; snapshot DTOs and mapper (reusable by M0-29);
-  `GET /api/v1/city` (`CityEndpoints`); mapper tests on hand-built cities (fast), HTTP tests on PostgreSQL; then docs and finish.
+  Domain 21, Application 74, IntegrationTests 162, Simulation 872; Integration 61 on `postgres:18.6`)
+- **Done steps:** start; step 1 (`GET /content`); step 2 (401 Problem Details); step 3 (`GET /city`, snapshot mapper, tests, docs of 05 / Api /
+  Application / ADRs / overview / testing / getting-started)
+- **Next step:** step 4: close the Docs impact rows, `docs-site.sh build`, `check-docs.sh --base origin/main`, `CHANGELOG`, line-by-line
+  self-review, build log Done, resume point IDLE, board `In review`, PR, report.
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7

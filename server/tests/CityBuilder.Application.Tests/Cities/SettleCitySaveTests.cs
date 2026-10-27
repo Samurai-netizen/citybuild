@@ -44,6 +44,39 @@ public sealed class SettleCitySaveTests
         Assert.Equal(1, repository.SaveCount);
     }
 
+    /// <summary>
+    /// A settle that saved the city reports the next <c>state_version</c> (the city itself keeps the loaded one) and the server time as the
+    /// clock gave it, not floored to the second.
+    /// </summary>
+    [Fact]
+    public async Task ExecuteAsync_SavedSettle_ReportsTheNextVersionAndTheClockReading()
+    {
+        InMemoryCityRepository repository = Repository();
+        FakeTimeProvider clock = ClockAtLastSettled();
+        clock.Advance(TimeSpan.FromMilliseconds(30_500));
+
+        SettleCityResult result = await UseCase(repository, clock).ExecuteAsync(PlayerId, TestContext.Current.CancellationToken);
+
+        Assert.True(result.Saved);
+        Assert.Equal(0, result.City.StateVersion);
+        Assert.Equal(1, result.StateVersion);
+        Assert.Equal(LastSettled.AddMilliseconds(30_500), result.ServerTime);
+    }
+
+    /// <summary>A settle that changed nothing and wasn't saved reports the version it loaded, because that is the stored one.</summary>
+    [Fact]
+    public async Task ExecuteAsync_UnsavedSettle_ReportsTheLoadedVersion()
+    {
+        InMemoryCityRepository repository = Repository();
+        FakeTimeProvider clock = ClockAtLastSettled();
+
+        SettleCityResult result = await UseCase(repository, clock).ExecuteAsync(PlayerId, TestContext.Current.CancellationToken);
+
+        Assert.False(result.Saved);
+        Assert.Equal(0, result.StateVersion);
+        Assert.Equal(LastSettled, result.ServerTime);
+    }
+
     /// <summary>A city last settled with other content is saved with the content version this settle ran with, even with no time elapsed.</summary>
     [Fact]
     public async Task ExecuteAsync_OtherContentVersion_SavesTheCurrentOne()

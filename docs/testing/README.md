@@ -56,8 +56,12 @@ flowchart LR
 - Requests that need a player: log in over HTTP (`POST /api/v1/auth/dev-login`, `Auth/DevLoginDatabaseTests`) and send the token as
   `Authorization: Bearer …`, or issue one with the server's own `AccessTokens` (`Factory.Services`). Both test factories set
   `Auth:SigningKey` to `Auth/TestTokens.SigningKey`; `TestTokens.Build` makes the tokens the server must refuse (another key, unsigned,
-  another issuer). Until the game endpoints exist (M0-28), `Auth/CurrentPlayerEndpoint` adds a test-only endpoint that requires a token
-  and answers with the acting player.
+  another issuer). `Auth/CurrentPlayerEndpoint` adds a test-only endpoint that requires a token and answers with the acting player, so the token checks run
+  without a game endpoint or a database. The game endpoints' contract tests are in `Contracts/`: `ApiClient` sends a request with a token the
+  server issued (or any header) and keeps the response as raw text; `JsonShape.AssertObject` checks an object's exact property names, JSON
+  types and allowed nulls; `ContractContent` is a small frozen content file; `FakeCityStore` serves hand-built cities to the real settle and
+  endpoint without a database. Exact-text tests (`ContentGoldenTests`, the every-phase city of `CitySnapshotContractTests`) compare the whole
+  body, written readable and compacted by `JsonNode`: review every value by hand against the rules before freezing it.
 - A race between two inserts of one key: hold the first in a transaction of the test's own (insert, `SaveChangesAsync`, no commit), start
   the second request, wait until PostgreSQL shows it waiting on the unique index, then commit (`PostDevLogin_SameNameCommittedFirstByAnotherRequest_ReturnsThatPlayer`).
 - A command without an endpoint (until M0-29): resolve `CommandPipeline` from a request scope and pass it a command and a response
@@ -81,7 +85,8 @@ flowchart LR
   straight through a context, refused by PostgreSQL), `Persistence/MigrationDatabaseTests` (the startup migration on an empty database; a row stored under
   an earlier migration, kept by a later one), `Persistence/CommandReceiptRepositoryDatabaseTests` (a receipt saved with its city, found
   as written), `Commands/` (the pipeline's idempotency: a retry, a host restart, conflicts, another player, ten identical requests queued
-  behind the lock, the receipt race, a rejection).
+  behind the lock, the receipt race, a rejection), `Contracts/CityContractDatabaseTests` (`GET /city` over HTTP against the stored city and
+  the request's ledger rows).
 
 ## Other test documents
 - `UNITY-SMOKE-TEST.md`: the manual smoke test of a real build *(planned, M0-72)*.
