@@ -1,4 +1,3 @@
-using System.Globalization;
 using CityBuilder.Application.Cities;
 using CityBuilder.Application.Persistence;
 using CityBuilder.Domain.Commands;
@@ -18,7 +17,7 @@ namespace CityBuilder.IntegrationTests.Persistence;
 /// <summary>
 /// The city transaction (<see cref="ICityTransactionRunner"/>, <c>core-instructions/06-data-model.md</c>, write transaction pattern) on
 /// PostgreSQL, through the server's registrations: an exception after the writes rolls everything back; a <c>state_version</c> changed
-/// without the lock is a conflict; two transactions on one city run one after the other, the second seeing what the first committed; a lock
+/// without the lock is a conflict, and the failed save leaves nothing staged for a later one; two transactions on one city run one after the other, the second seeing what the first committed; a lock
 /// wait beyond the lock timeout is a conflict; a request can't lock a second city. Each test starts with the sample city
 /// (<see cref="SampleCities.Full"/>) stored once, so at state version 8.
 /// </summary>
@@ -94,6 +93,36 @@ public sealed class CityTransactionDatabaseTests(PostgresServer server) : Postgr
     }
 
     /// <summary>
+    /// A rolled-back transaction leaves nothing staged in the request's context: after a save that failed (a conflict), a later save in the
+    /// same request writes nothing, so the failed city rows can't reach the database outside the transaction and without the lock.
+    /// </summary>
+    [Fact]
+    public async Task RunAsync_FailedSaveRolledBack_LeavesNothingForALaterSaveToWrite()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        await StoreSampleCityAsync();
+        await using AsyncServiceScope scope = Factory.Services.CreateAsyncScope();
+        CityBuilderDbContext db = scope.ServiceProvider.GetRequiredService<CityBuilderDbContext>();
+
+        await Assert.ThrowsAsync<ConcurrencyConflictException>(() => scope.ServiceProvider.GetRequiredService<ICityTransactionRunner>().RunAsync(
+            PlayerId,
+            async (transaction, ct) =>
+            {
+                await db.Database.ExecuteSqlAsync($"UPDATE cities SET state_version = state_version + 1 WHERE id = {CityId}", ct);
+                transaction.City.MarkSettled(transaction.City.LastSettledUnixSec + 60, transaction.City.ContentVersion);
+                await transaction.SaveAsync([new LedgerEntry(new ItemId("logs"), 1, 8, LedgerReason.SettlementProduced)], receipt: null, ct);
+                return 0;
+            },
+            cancellationToken));
+        Assert.False(db.ChangeTracker.HasChanges());
+        await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().SaveChangesAsync(cancellationToken);
+
+        Assert.Equal(_storedVersion, await StoredVersionAsync());
+        await using CityBuilderDbContext stored = Database.CreateContext();
+        Assert.Equal(0, await stored.LedgerEntries.CountAsync(cancellationToken));
+    }
+
+    /// <summary>
     /// Two transactions on one city run one after the other: while the first holds the lock, the second waits in PostgreSQL for it; once the
     /// first commits, the second gets the city as the first left it (its version and last settled second).
     /// </summary>
@@ -117,7 +146,7 @@ public sealed class CityTransactionDatabaseTests(PostgresServer server) : Postgr
         Task<(long Version, long LastSettled)> second = RunAsync(
             Factory, PlayerId, (transaction, _, _) => Task.FromResult((transaction.City.StateVersion, transaction.City.LastSettledUnixSec)));
 
-        await WaitUntilOneWaitsForALockAsync();
+        await DatabaseLocks.WaitUntilWaitingAsync(Database, sessions: 1);
         Assert.False(second.IsCompleted);
         releaseFirst.SetResult();
         await first;
@@ -242,34 +271,7 @@ public sealed class CityTransactionDatabaseTests(PostgresServer server) : Postgr
 
     /// <summary>A server like <see cref="PostgresTest.Factory"/> on the same database, with a lock timeout of 200 ms.</summary>
     /// <returns>The derived server; the test disposes it.</returns>
-    private WebApplicationFactory<Program> ShortLockTimeout() => Factory.WithWebHostBuilder(host =>
-        host.UseSetting("Database:LockTimeoutMilliseconds", _shortLockTimeoutMilliseconds.ToString(CultureInfo.InvariantCulture)));
-
-    /// <summary>
-    /// Waits until a session on the test's database waits for a lock in PostgreSQL (<c>pg_stat_activity</c>), so a test knows the second
-    /// transaction is blocked, not merely slow to start. Polls every 20 ms; fails after 500 polls (about 10 s).
-    /// </summary>
-    /// <returns>A task that completes when a session waits for a lock.</returns>
-    private async Task WaitUntilOneWaitsForALockAsync()
-    {
-        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
-        await using CityBuilderDbContext db = Database.CreateContext();
-        for (int poll = 0; poll < 500; poll++)
-        {
-            int waiting = await db.Database.SqlQuery<int>(
-                $"SELECT count(*)::int AS \"Value\" FROM pg_stat_activity WHERE datname = current_database() AND wait_event_type = 'Lock'")
-                .SingleAsync(cancellationToken);
-            if (waiting > 0)
-            {
-                return;
-            }
-
-            // A pause for another PostgreSQL session to get to its lock; it measures no game time.
-            await Task.Delay(TimeSpan.FromMilliseconds(20), cancellationToken);
-        }
-
-        Assert.Fail("No session waited for a lock within 500 polls (about 10 s).");
-    }
+    private WebApplicationFactory<Program> ShortLockTimeout() => DatabaseLocks.WithLockTimeout(Factory, _shortLockTimeoutMilliseconds);
 
     /// <summary>The exceptions an exception wraps, innermost last.</summary>
     /// <param name="exception">The outer exception.</param>

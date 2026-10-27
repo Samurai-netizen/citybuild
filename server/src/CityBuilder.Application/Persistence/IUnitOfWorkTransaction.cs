@@ -2,8 +2,9 @@ namespace CityBuilder.Application.Persistence;
 
 /// <summary>
 /// A database transaction begun by <see cref="IUnitOfWork.BeginTransactionAsync"/>: every write of the request between the begin and
-/// <see cref="CommitAsync"/> is committed together, and disposing it without a commit rolls all of them back
-/// (<c>core-instructions/06-data-model.md</c>, write transaction pattern). Only <see cref="Cities.CityTransactionRunner"/> begins one.
+/// <see cref="CommitAsync"/> is committed together, and disposing it without a commit rolls all of them back and leaves none of them staged
+/// for a later <see cref="IUnitOfWork.SaveChangesAsync"/> (<c>core-instructions/06-data-model.md</c>, write transaction pattern). Only
+/// <see cref="Cities.CityTransactionRunner"/> begins one.
 /// </summary>
 public interface IUnitOfWorkTransaction : IAsyncDisposable
 {

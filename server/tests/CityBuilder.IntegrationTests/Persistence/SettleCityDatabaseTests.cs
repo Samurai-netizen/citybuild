@@ -62,7 +62,7 @@ public sealed class SettleCityDatabaseTests(PostgresServer server) : PostgresTes
         Assert.Equal(saved ? _storedVersion + 1 : _storedVersion, after.StateVersion);
         Assert.Equal((seconds, before.LastSettledUnix + seconds), (after.ClockSeconds, after.LastSettledUnix));
         Assert.Equal(saved, after.UpdatedAt != before.UpdatedAt);
-        Assert.Empty(await LedgerAsync(_cityId));
+        Assert.Empty(await LedgerAsync(Database, _cityId));
         Assert.Equal(Describe(starter.State.Inventory), Describe(await InventoryAsync(_cityId)));
     }
 
@@ -92,7 +92,7 @@ public sealed class SettleCityDatabaseTests(PostgresServer server) : PostgresTes
         CityRow city = await CityRowAsync(_cityId);
         Assert.Equal((30 * 3600L, null, null, null), (city.ClockSeconds, city.ResearchId, city.ResearchStartedAt, city.ResearchEndsAt));
         Assert.NotEmpty(away.Settlement.Produced);
-        Assert.Equal(Totals(await LedgerAsync(_otherCityId)), Totals(await LedgerAsync(_cityId)));
+        Assert.Equal(Totals(await LedgerAsync(Database, _otherCityId)), Totals(await LedgerAsync(Database, _cityId)));
         Assert.Equal(Describe(afterCap.City.State.Inventory), Describe(away.City.State.Inventory));
     }
 
@@ -116,7 +116,7 @@ public sealed class SettleCityDatabaseTests(PostgresServer server) : PostgresTes
             settlements.Add((await SettleAsync(Factory, _playerId)).Settlement.Id);
         }
 
-        List<LedgerEntryRow> ledger = await LedgerAsync(_cityId);
+        List<LedgerEntryRow> ledger = await LedgerAsync(Database, _cityId);
         var stored = (await InventoryAsync(_cityId)).ToDictionary(row => row.ItemId, row => row.Quantity);
         Assert.NotEmpty(ledger);
         foreach (IGrouping<string, LedgerEntryRow> item in ledger.GroupBy(row => row.ItemId))
@@ -148,7 +148,7 @@ public sealed class SettleCityDatabaseTests(PostgresServer server) : PostgresTes
         await SettleAsync(Factory, _playerId);
         CityRow city = await CityRowAsync(_cityId);
         string stock = Describe(await InventoryAsync(_cityId));
-        int rows = (await LedgerAsync(_cityId)).Count;
+        int rows = (await LedgerAsync(Database, _cityId)).Count;
 
         SettleCityResult second = await SettleAsync(Factory, _playerId);
         SettleCityResult third = await SettleAsync(Factory, _playerId);
@@ -158,7 +158,7 @@ public sealed class SettleCityDatabaseTests(PostgresServer server) : PostgresTes
         CityRow again = await CityRowAsync(_cityId);
         Assert.Equal((city.StateVersion, city.UpdatedAt, city.ClockSeconds), (again.StateVersion, again.UpdatedAt, again.ClockSeconds));
         Assert.Equal(stock, Describe(await InventoryAsync(_cityId)));
-        Assert.Equal(rows, (await LedgerAsync(_cityId)).Count);
+        Assert.Equal(rows, (await LedgerAsync(Database, _cityId)).Count);
     }
 
     /// <summary>
@@ -185,7 +185,7 @@ public sealed class SettleCityDatabaseTests(PostgresServer server) : PostgresTes
         Assert.Equal(StateOf(once.City), StateOf(stored));
         Assert.Equal(StateOf(split.City), StateOf(stored));
         Assert.Equal(_storedVersion + 2, stored.StateVersion);
-        Assert.Equal(Totals(await LedgerAsync(_otherCityId)), Totals(await LedgerAsync(_cityId)));
+        Assert.Equal(Totals(await LedgerAsync(Database, _otherCityId)), Totals(await LedgerAsync(Database, _cityId)));
     }
 
     /// <summary>
@@ -221,24 +221,6 @@ public sealed class SettleCityDatabaseTests(PostgresServer server) : PostgresTes
         return [.. rows.OrderBy(row => row.ItemId, StringComparer.Ordinal)];
     }
 
-    /// <summary>The stored ledger rows of a city, in the order they were written.</summary>
-    /// <param name="cityId">The city.</param>
-    /// <returns>Its <c>ledger_entries</c> rows by ascending id.</returns>
-    private async Task<List<LedgerEntryRow>> LedgerAsync(Guid cityId)
-    {
-        await using CityBuilderDbContext db = Database.CreateContext();
-        return await db.LedgerEntries.AsNoTracking().Where(row => row.CityId == cityId).OrderBy(row => row.Id)
-            .ToListAsync(TestContext.Current.CancellationToken);
-    }
-
-    /// <summary>A ledger's total delta per item and reason, as text in ordinal order, so two cities' ledgers compare in one assertion.</summary>
-    /// <param name="ledger">The rows.</param>
-    /// <returns>One line per item and reason.</returns>
-    private static string Totals(IEnumerable<LedgerEntryRow> ledger) => string.Join("\n", ledger
-        .GroupBy(row => (row.ItemId, row.Reason))
-        .OrderBy(group => group.Key.ItemId, StringComparer.Ordinal).ThenBy(group => group.Key.Reason, StringComparer.Ordinal)
-        .Select(group => $"{group.Key.ItemId} {group.Key.Reason} {group.Sum(row => row.Delta)}"));
-
     /// <summary>A stock as text, one item per line, with 0 for an item stored at 0 or left out.</summary>
     /// <param name="stock">The quantities by item.</param>
     /// <returns>The items above 0 in ordinal order with their quantities.</returns>
@@ -250,13 +232,4 @@ public sealed class SettleCityDatabaseTests(PostgresServer server) : PostgresTes
     /// <returns>The items above 0 in ordinal order with their quantities.</returns>
     private static string Describe(IEnumerable<CityInventoryRow> rows) =>
         Describe(rows.Select(row => new KeyValuePair<ItemId, long>(new ItemId(row.ItemId), row.Quantity)));
-
-    /// <summary>
-    /// A city's settled state as text, without the ids and the version that tell two players' cities apart: the last settled second and
-    /// everything <see cref="SampleCities.Describe"/> lists after its first line.
-    /// </summary>
-    /// <param name="city">The city.</param>
-    /// <returns>The text.</returns>
-    private static string StateOf(CityAggregate city) =>
-        $"settled {city.LastSettledUnixSec} content {city.ContentVersion}\n" + string.Join("\n", SampleCities.Describe(city).Split('\n').Skip(1));
 }

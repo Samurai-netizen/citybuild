@@ -3,19 +3,24 @@ using CityBuilder.Application.Content;
 using CityBuilder.Application.Persistence;
 using CityBuilder.Application.Players;
 using CityBuilder.Domain.Players;
+using CityBuilder.Infrastructure.Persistence;
+using CityBuilder.Infrastructure.Persistence.Rows;
+using CityBuilder.IntegrationTests.Postgres;
 using CityBuilder.Simulation;
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.Rules;
 using CityBuilder.Simulation.Settlement;
 using CityBuilder.Simulation.State;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace CityBuilder.IntegrationTests.Persistence;
 
 /// <summary>
 /// Cities on a test's database, through a server's own registrations: storing a player with a new city, loading a city as a request would,
-/// settling it with <see cref="SettleCity"/>, and two cities on the server's content (<c>server/content/mvp-content.json</c>) to settle.
+/// settling it with <see cref="SettleCity"/>, two cities on the server's content (<c>server/content/mvp-content.json</c>) to settle, and the
+/// stored ledger and the settled state as values two cities compare by.
 /// </summary>
 internal static class DatabaseCities
 {
@@ -105,4 +110,32 @@ internal static class DatabaseCities
         Simulator.Advance(state, content, 0);
         return new CityAggregate(cityId, playerId, state, [new(SharpAxes, 0)], lastSettledUnixSec, 0, content.ContentVersion);
     }
+
+    /// <summary>The stored ledger rows of a city, in the order they were written, read by a context of the test's own.</summary>
+    /// <param name="database">The test's database.</param>
+    /// <param name="cityId">The city.</param>
+    /// <returns>Its <c>ledger_entries</c> rows by ascending id.</returns>
+    public static async Task<List<LedgerEntryRow>> LedgerAsync(TestDatabase database, Guid cityId)
+    {
+        await using CityBuilderDbContext db = database.CreateContext();
+        return await db.LedgerEntries.AsNoTracking().Where(row => row.CityId == cityId).OrderBy(row => row.Id)
+            .ToListAsync(TestContext.Current.CancellationToken);
+    }
+
+    /// <summary>A ledger's total delta per item and reason, as text in ordinal order, so two cities' ledgers compare in one assertion.</summary>
+    /// <param name="ledger">The rows.</param>
+    /// <returns>One line per item and reason.</returns>
+    public static string Totals(IEnumerable<LedgerEntryRow> ledger) => string.Join("\n", ledger
+        .GroupBy(row => (row.ItemId, row.Reason))
+        .OrderBy(group => group.Key.ItemId, StringComparer.Ordinal).ThenBy(group => group.Key.Reason, StringComparer.Ordinal)
+        .Select(group => $"{group.Key.ItemId} {group.Key.Reason} {group.Sum(row => row.Delta)}"));
+
+    /// <summary>
+    /// A city's settled state as text, without the ids and the version that tell two players' cities apart: the last settled second and
+    /// everything <see cref="SampleCities.Describe"/> lists after its first line.
+    /// </summary>
+    /// <param name="city">The city.</param>
+    /// <returns>The text.</returns>
+    public static string StateOf(CityAggregate city) =>
+        $"settled {city.LastSettledUnixSec} content {city.ContentVersion}\n" + string.Join("\n", SampleCities.Describe(city).Split('\n').Skip(1));
 }

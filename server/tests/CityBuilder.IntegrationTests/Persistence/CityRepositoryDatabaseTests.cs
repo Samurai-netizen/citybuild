@@ -70,6 +70,20 @@ public sealed class CityRepositoryDatabaseTests(PostgresServer server) : Postgre
     }
 
     /// <summary>
+    /// Times, labor and quantities beyond 32 bits (<see cref="SampleCities.BeyondThirtyTwoBits"/>) are stored and loaded unchanged: the city
+    /// clock and last settled second, the phase times, the cycle labor, the stock and the completion clock are <c>bigint</c> on PostgreSQL.
+    /// </summary>
+    [Fact]
+    public async Task LoadForUpdateAsync_SavedValuesBeyondThirtyTwoBits_AreTheSameValues()
+    {
+        await AddPlayerAsync();
+
+        await SaveAsync(BeyondThirtyTwoBits(), [], receipt: null);
+
+        Assert.Equal(Describe(Saved(BeyondThirtyTwoBits())), Describe(await LoadAsync()));
+    }
+
+    /// <summary>
     /// A save writes every table: a context of the test's own, outside the server, reads the city row with the server clock as both wall
     /// times, the inventory, building and research rows, the ledger entries in order and the receipt.
     /// </summary>
@@ -147,9 +161,11 @@ public sealed class CityRepositoryDatabaseTests(PostgresServer server) : Postgre
         await SaveAsync(Full(), [], receipt: null);
         await using AsyncServiceScope stale = Factory.Services.CreateAsyncScope();
         CityAggregate staleLoad;
-        await using (await stale.ServiceProvider.GetRequiredService<IUnitOfWork>().BeginTransactionAsync(cancellationToken))
+        await using (IUnitOfWorkTransaction load = await stale.ServiceProvider.GetRequiredService<IUnitOfWork>().BeginTransactionAsync(cancellationToken))
         {
+            // Committed, not rolled back: a rollback clears what the context tracks (M0-24), and the stale save needs the loaded rows.
             staleLoad = await stale.ServiceProvider.GetRequiredService<ICityRepository>().LoadForUpdateAsync(PlayerId, cancellationToken);
+            await load.CommitAsync(cancellationToken);
         }
 
         await InTransactionAsync(async first =>
