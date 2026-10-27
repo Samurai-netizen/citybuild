@@ -111,6 +111,11 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   the first login of a name creates the player and the starter city with `STARTING_GRANT` ledger rows in one transaction; every other
   `/api/v1` endpoint requires the token, and the acting player comes only from it (`ICurrentPlayer`); `Auth:SigningKey` (user-secrets,
   at least 32 bytes) and the dev login outside Development stop the start; tests over HTTP and on PostgreSQL (M0-25).
+- Command pipeline with idempotency: `CommandPipeline` runs every command (`ICityCommand`) through the shape check, the city's row lock,
+  the `(playerId, requestId)` receipt lookup (replay of the stored response, `IDEMPOTENCY_CONFLICT`), the settle, the engine mutation (a
+  rejection commits only the settlement), the closing advance and one save of the city, its ledger (`COST_*`, `REFUND_*` between the
+  settlement's rows) and the receipt; the receipt race answers from the stored receipt; SHA-256 of a canonical payload;
+  `command_receipts.response_json` is now `json` (migration `ReceiptResponseAsJson`); tests with fakes and on PostgreSQL (M0-26).
 
 ### Changed
 - Handbook site: react and react-dom 19.2.9 → 19.3.1, scheduler 0.28.0 (Dependabot PR #28, DEP-PR28).

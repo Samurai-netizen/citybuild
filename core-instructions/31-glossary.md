@@ -48,6 +48,8 @@ Use these names in code, docs and UI text. Consistent words keep Claude and the 
 | Mutation | The engine's rule for one command, applied at the city clock: `Ok`, or rejected with a code and no change (`04` §8) | `CityRules`, `MutationResult`, `MutationErrorCode` |
 | Request id | Client UUID for idempotent retries | `RequestId` |
 | Receipt | Stored response of a successful command | `CommandReceipt` |
+| Command pipeline | The one path every command takes: shape check, own-city lock, receipt check, settle, mutation, closing advance, one save with the ledger and the receipt (`03`, request lifecycle) | `CommandPipeline`, `ICityCommand` |
+| Canonical payload | The command type and the command's data in a fixed form, whose SHA-256 a receipt keeps: the same request id with another payload is a conflict (`05`, idempotency rules) | `CommandPayload` |
 | Ledger entry | Audit row for one item change | `LedgerEntry` |
 | Snapshot | Full authoritative city state sent to the client | `CitySnapshotDto` |
 | State version | Counter incremented on every persisted change | `StateVersion` |

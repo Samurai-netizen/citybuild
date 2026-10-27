@@ -6,7 +6,8 @@
 **Referenced by:** `CityBuilder.Api`
 
 > *Growing.* The content loader exists (M0-07b), the EF Core model with its first migration (M0-19), the mapping, repositories and
-> unit of work (M0-20), the row lock and the write transaction (M0-22), and the insert of a new player's city (M0-25).
+> unit of work (M0-20), the row lock and the write transaction (M0-22), the insert of a new player's city (M0-25), and the receipt lookup
+> with the migration that stores responses as `json` (M0-26).
 
 ## Purpose
 The implementations of the Application ports: loading content JSON, EF Core persistence on PostgreSQL, row locks and
@@ -23,16 +24,17 @@ ASP.NET Core endpoint types.
 | `Persistence/Rows/*Row` | One persistence model per table (`PlayerRow`, `CityRow`, …): plain properties, one per column, documented with the column name. Not Simulation types; `CityMapping` maps them |
 | `Persistence/Mapping/CityMapping`, `CityRows` | `ToRows(city)` and `ToAggregate(rows)`: a `CityAggregate` ↔ its `cities` row and its inventory, building and research rows, explicitly and without a database. Only the engine's own state is stored (derived values never). A building's nullable columns are null exactly when its phase doesn't use them; the phase is stored as the API spells it (`Producing`); a completed research needs its completion clock. Load rejects a row that breaks the engine's or the mapping's rules with `InvalidOperationException` naming the city |
 | `Persistence/Configurations/*Configuration` | One `IEntityTypeConfiguration` per table: every table, column, key, unique index, index, check constraint and foreign key named explicitly in snake_case (`pk_`, `ux_`, `ix_`, `fk_`, `ck_`); `cities.state_version` is the concurrency token |
-| `Persistence/Mapping/LedgerMapping` | `ToRow` for a `LedgerEntry` (with its city) and a `CommandReceipt` (with its player), both stamped with a given wall time; `ReasonText(reason)`: the `06` text of each ledger reason (`STARTING_GRANT` …) |
+| `Persistence/Mapping/LedgerMapping` | `ToRow` for a `LedgerEntry` (with its city) and a `CommandReceipt` (with its player), both stamped with a given wall time; `ToReceipt(row)`, the way back for a receipt (a retried command reads it); `ReasonText(reason)`: the `06` text of each ledger reason (`STARTING_GRANT` …) |
 | `Persistence/Repositories/CityRepository` | `ICityRepository`: `LoadForUpdateAsync` locks the city row by player with `SELECT * FROM cities WHERE player_id = … FOR UPDATE` (the statement of `06`, not composed further), then loads its child rows, tracked, and maps them; it throws outside a transaction (the lock would end with the statement) and for a second city in one context, and a lock timeout becomes `ConcurrencyConflictException`; `Save` maps the city and merges the rows into the tracked ones (changed values written, new rows inserted, a used-up item set to 0, a building or research no longer in the state deleted), inserts a city it doesn't track with all its rows, writes `state_version + 1` (the loaded version stays EF's original value, the concurrency check), and adds the ledger rows and the receipt; `created_at`/`updated_at` from one reading of `TimeProvider`. As `INewCityRepository`, `Add(city, startingGrant)` is that insert for a new city (state version 0, not loaded or staged yet, else it throws): the one city write without the lock (ADR-0009) |
+| `Persistence/Repositories/CommandReceiptRepository` | `ICommandReceiptRepository`: `FindAsync(playerId, requestId)`, one read of `command_receipts` by its primary key, not tracked, inside the request's transaction when one runs (the pipeline looks up under the city's lock, and again after a lost receipt race, outside one). `response_json` is `json`, so the text comes back as it was written (decision 041) |
 | `Persistence/Repositories/PlayerRepository` | `IPlayerRepository`: `FindByDevNameAsync` (not tracked) and `Add` (stamps `created_at`) |
 | `Persistence/Repositories/UnitOfWork` | `IUnitOfWork`: one `SaveChangesAsync` of the request's context; a stale `state_version` (EF's `DbUpdateConcurrencyException`) or a lock timeout throws `ConcurrencyConflictException` with EF's exception inside; a unique violation (`23505`) throws `DuplicateKeyException`, naming the constraint. `BeginTransactionAsync` begins the request's one transaction (read committed, PostgreSQL's default) and sets its `lock_timeout` from the settings with `set_config('lock_timeout', …, true)`, for this transaction only. Disposing the transaction without a commit rolls it back and clears the context's change tracker, so a failed save leaves nothing a later `SaveChangesAsync` could write outside the transaction (M0-24) |
 | `Persistence/PostgresErrors` | Whether the exception or one it wraps is a PostgreSQL error: `IsLockTimeout(exception)` for `lock_not_available` (`55P03`), `IsUniqueViolation(exception, out constraintName)` for `unique_violation` (`23505`). Was `LockTimeouts` until M0-25 |
 | `Persistence/PersistenceSettings` | The connection string and the lock timeout in milliseconds, built by the Api from `ConnectionStrings:CityBuilder` and `Database:LockTimeoutMilliseconds` |
-| `Persistence/PersistenceServiceCollectionExtensions` | `AddCityBuilderPersistence(services, settings)`: the `PersistenceSettings` (singleton), the context on Npgsql, the ports over it (`ICityRepository` and `INewCityRepository`, both `CityRepository`; `IPlayerRepository`; `IUnitOfWork`) and Application's `ICityTransactionRunner`, all scoped, so a request's repositories, unit of work and runner share one context; the repositories take the `TimeProvider` the Api registers. The settings come from a callback, so this project reads no configuration |
+| `Persistence/PersistenceServiceCollectionExtensions` | `AddCityBuilderPersistence(services, settings)`: the `PersistenceSettings` (singleton), the context on Npgsql, the ports over it (`ICityRepository` and `INewCityRepository`, both `CityRepository`; `IPlayerRepository`; `ICommandReceiptRepository`; `IUnitOfWork`) and Application's `ICityTransactionRunner`, all scoped, so a request's repositories, unit of work and runner share one context; the repositories take the `TimeProvider` the Api registers. The settings come from a callback, so this project reads no configuration |
 | `Persistence/DatabaseMigrator` | `MigrateAsync(services, token)`: applies the pending migrations in a scope of its own and returns their ids; the Api calls it at startup in Development only |
 | `Persistence/CityBuilderDbContextDesignTimeFactory` | The context for the dotnet-ef tool, with a placeholder connection string, so `migrations add` needs no settings and never starts the server |
-| `Persistence/Migrations/` | The migrations dotnet-ef generated (`20261026193554_InitialCreate`) and the model snapshot. Generated code: `.editorconfig` marks it, the doc checker skips it, nobody edits it by hand |
+| `Persistence/Migrations/` | The migrations dotnet-ef generated (`20261026193554_InitialCreate`; `20261027092603_ReceiptResponseAsJson`, M0-26: `command_receipts.response_json` from `jsonb` to `json`, its `Down` loses the stored formatting) and the model snapshot. Generated code: `.editorconfig` marks it, the doc checker skips it, nobody edits it by hand |
 
 ## Rules and invariants
 - May reference Application, Domain, Simulation, EF Core and Npgsql, never `CityBuilder.Api` (`03` dependency table).
@@ -66,10 +68,12 @@ value generation, that every name is snake_case, and the CLR types (wall times `
 rows and back and compares every value, checks the columns of each phase, and rejects each kind of broken row.
 `Persistence/CityRepositoryTests` reads EF's change tracker after `Save` (no database), and checks that a load outside a transaction throws: a new city inserted with every row, a loaded city
 (rows attached) merged row by row (city row, inventory, buildings, research), an unchanged city writing only the version and `updated_at`,
-ledger rows and the receipt stamped with now. `Persistence/PlayerAndLedgerPersistenceTests`: every reason's text, a new player's row, and the
+ledger rows and the receipt stamped with now. `Persistence/PlayerAndLedgerPersistenceTests`: every reason's text, a receipt's row and back, a new player's row, and the
 ports' registration.
 On real PostgreSQL (`Category=Integration`, Docker running; `docs/testing/README.md`): `Persistence/MigrationDatabaseTests` (the committed
-migrations on an empty database, once), `Persistence/CityRepositoryDatabaseTests` (through the server's registered ports, a scope per
+migrations on an empty database, once; a receipt stored under `InitialCreate` keeps its response through the change to `json`),
+`Persistence/CommandReceiptRepositoryDatabaseTests` (a receipt saved with its city is found with its text byte for byte; another request id
+or another player's key finds nothing), `Persistence/CityRepositoryDatabaseTests` (through the server's registered ports, a scope per
 request, loads inside a transaction: the content's starter city, the full sample city and one with every time, labor and quantity beyond 32 bits save and load equal; a save writes every table; a
 loaded city's changes merge, a used-up item staying as a 0 row; a stale `state_version` throws `ConcurrencyConflictException` with EF's
 exception inside), `Persistence/CityTransactionDatabaseTests` (the runner: an exception after the writes rolls back the city, the ledger and
@@ -92,4 +96,4 @@ tile index, `quantity >= 0` and `assigned_workers >= 0` refuse broken rows, by c
 - A deadlock (`40P01`) or a serialization failure isn't mapped to a conflict: with one row lock per transaction, taken first, neither can
   happen in M0. The market's lock ordering (M2, `06`) revisits it.
 
-Last updated: M0-25
+Last updated: M0-26

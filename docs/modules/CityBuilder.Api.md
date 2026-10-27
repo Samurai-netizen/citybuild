@@ -13,7 +13,7 @@ migrations at startup.
 ## Key types and files
 | Type / file | Responsibility |
 |---|---|
-| `Program.cs` | Builds the host: JSON console logging, ProblemDetails, OpenAPI, health checks, `TimeProvider.System`, the content (options, `IContentProvider`), the database (`DatabaseOptions`, `AddCityBuilderPersistence`), authentication (`AddCityBuilderAuthentication`), the use cases (`SettleCity`, `DevLogin`, scoped; `GET /city` maps `SettleCity` in M0-28); loads the content and checks the database and authentication settings before anything is mapped, and in Development applies the migrations; adds the authentication and authorization middleware; maps `/health`, in Development only `/openapi/v1.json`, and the `/api/v1` group, which requires an access token, with the dev login on it in Development when `Auth:DevLoginEnabled` is on |
+| `Program.cs` | Builds the host: JSON console logging, ProblemDetails, OpenAPI, health checks, `TimeProvider.System`, the content (options, `IContentProvider`), the database (`DatabaseOptions`, `AddCityBuilderPersistence`), authentication (`AddCityBuilderAuthentication`), the use cases (`SettleCity`, `DevLogin`, `CommandPipeline`, scoped; `GET /city` maps `SettleCity` in M0-28, the command endpoints call `CommandPipeline` from M0-29); loads the content and checks the database and authentication settings before anything is mapped, and in Development applies the migrations; adds the authentication and authorization middleware; maps `/health`, in Development only `/openapi/v1.json`, and the `/api/v1` group, which requires an access token, with the dev login on it in Development when `Auth:DevLoginEnabled` is on |
 | `Auth/AuthOptions` | Section `Auth`: `SigningKey` (required in every environment, at least 32 bytes as UTF-8; user-secrets or `Auth__SigningKey`), `TokenLifetimeMinutes` (default 720, 1 to 1440), `DevLoginEnabled` (only allowed in Development) |
 | `Auth/AuthServiceCollectionExtensions` | `AddCityBuilderAuthentication(configuration, environment)`: binds and validates `AuthOptions` on start, registers `AccessTokens`, the JWT bearer handler as the default scheme with `AccessTokens.ValidationParameters()` (claim names kept: `sub` stays `sub`), authorization, and `ICurrentPlayer` (scoped) |
 | `Auth/AccessTokens`, `Auth/AccessToken` | Issues a token for a player (`Issue(playerId)`: a JWT signed with HMAC-SHA256, `iss` and `aud` `citybuilder-api`, `sub` the player id, `iat` = `nbf` = now floored to the second, `exp` after the lifetime) and gives the rules that check one (`ValidationParameters()`: the key, HS256 only, signed tokens only, issuer, audience, `exp` required, lifetime checked against the server's `TimeProvider` with no clock skew). Singleton |
@@ -112,6 +112,7 @@ player, city and starting grant, the same name again, two names, the token, and 
 - A refused token gets an empty 401 with `WWW-Authenticate: Bearer`; the ProblemDetails body with `AUTHENTICATION_REQUIRED` comes with the
   first game endpoint and the error catalogue *(planned, M0-28, M0-34)*.
 - Unknown JSON properties in a body are not refused yet *(planned, M0-30, M0-34)*.
+- No command endpoint yet: `CommandPipeline` is registered, and the first endpoint, with the snapshot writer it passes, is M0-29 *(planned)*.
 - A failed start is reported by the runtime as an unhandled exception in plain text on stderr, not as a JSON log line.
 
-Last updated: M0-25
+Last updated: M0-26

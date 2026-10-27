@@ -18,7 +18,8 @@ Paths are the M0 layout (`03`). "Module doc" means `docs/modules/<Project>.md`.
 ## New command (player action)
 - Code:
   - engine mutation in `shared/Simulation/Runtime/Rules/`;
-  - use case in `server/src/CityBuilder.Application/Commands/<Name>/` (command, handler, validator);
+  - use case in `server/src/CityBuilder.Application/Commands/<Name>/`: a record implementing `ICityCommand` (its data, `ValidateShape`,
+    `Apply` calling the engine rule, its ledger reasons); `CommandPipeline` runs it, so there is no handler of its own (decision 042);
   - endpoint in `server/src/CityBuilder.Api/Endpoints/CommandEndpoints.cs`;
   - DTOs in `server/src/CityBuilder.Api/Contracts/`;
   - client intent in `CityBuilder.Client.Net` + UI.
