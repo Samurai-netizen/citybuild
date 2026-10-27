@@ -5,8 +5,8 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-22 · Transaction boundary and locking; PR #34, stacked on PR #33; the owner merges both, #33 first)
-- **Branch:** `task/M0-22-transaction-locking` (from `task/M0-21-testcontainers-base`) until the owner merges
+- **Task:** — (last completed: M0-22 · Transaction boundary and locking; PR #34; PR #33 is merged and `main` is merged into it)
+- **Branch:** `task/M0-22-transaction-locking` (from `task/M0-21-testcontainers-base`, `main` merged in) until the owner merges
 - **Build log entry:** last: `docs/build-log/2026/2026-10-26-05-M0-22.md` (Done)
 - **Last green commit:** the head of `task/M0-22-transaction-locking` (Release build 0 warnings, format clean, fast suite: Repository 22,
   Simulation 872, Domain 21, Application 37, IntegrationTests 105; Integration 23 on `postgres:18.6`; handbook builds; check-docs OK)
@@ -22,7 +22,7 @@
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 20 / 85 (M0-21 and M0-22 in review)
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 21 / 85 (M0-22 in review)
 
 | Area | State | Notes |
 |---|---|---|
@@ -30,7 +30,7 @@
 | Shared engine: content, research, labor | done | M0-03 merged (PR #7); the content model and its validation (M0-07a) merged (PR #14); the JSON file and server loading (M0-07b) merged (PR #15); city state and mutations (M0-08) merged (PR #16); `Simulator.Advance` (M0-09) merged (PR #17); rule tests (M0-10) merged (PR #18); golden scenario #1 (M0-11) merged (PR #19); engine review (M0-12) merged (PR #20) |
 | Shared engine: invariants, performance | done | settlement window and production cap (M0-13) merged (PR #21); property test harness (M0-14, with engine fix CR-0001) merged (PR #22); invariant properties (M0-15) merged (PR #23); performance budget M0-16 merged (PR #24; worst case ~37 ms per advance in Release); display helpers M0-17 merged (PR #25); spec sync and ADRs M0-18 merged (PR #26) |
 | Server skeleton | done | M0-02 merged (PR #6) |
-| Persistence (EF + PostgreSQL) | in progress | M0-19 (EF Core model, migrations, Docker) merged (PR #31); repository and mapping M0-20 merged (PR #32); Testcontainers M0-21 in review; locking M0-22 in review (stacked); settle M0-23 next |
+| Persistence (EF + PostgreSQL) | in progress | M0-19 (EF Core model, migrations, Docker) merged (PR #31); repository and mapping M0-20 merged (PR #32); Testcontainers M0-21 merged (PR #33); locking M0-22 in review (PR #34); settle M0-23 next |
 | Auth + command pipeline | not started | |
 | Commands: place / upgrade / assign workers / start research | not started | |
 | Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) and M0-05 (Unity tests, `test-unity.sh`) merged (PR #8, #12); networking is M0-37 |
