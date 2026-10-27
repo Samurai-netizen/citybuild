@@ -42,6 +42,7 @@ How to get from a clean machine to a running project. Every command here must wo
 | Add a migration | `dotnet ef migrations add <Name> --project server/src/CityBuilder.Infrastructure --startup-project server/src/CityBuilder.Api --output-dir Persistence/Migrations` (`docs/how-to/add-migration.md`) | M0-19 |
 | Run API (needs the connection string; in Development it applies pending migrations, so the database must be running) | `dotnet run --project server/src/CityBuilder.Api` → http://localhost:8080 (Development) | M0-02 |
 | Is the API up? | `curl http://localhost:8080/health` prints `Healthy`; OpenAPI (Development only): http://localhost:8080/openapi/v1.json | M0-02 |
+| Log in (Development; the API running) | `curl -X POST http://localhost:8080/api/v1/auth/dev-login -H 'Content-Type: application/json' -d '{"displayName":"dev1"}'` → `{"accessToken":"…","expiresAtUtc":"…"}`; the first login of a name creates the player and the starter city. Send the token as `Authorization: Bearer <accessToken>` | M0-25 |
 | Run the API with another content file (a draft) | `dotnet run --project server/src/CityBuilder.Api -- --Content:FilePath=/path/to/draft.json` | M0-07b |
 | Open the Unity project | Unity Hub → Add → `client/CityBuilder` (editor 6000.3.25f1); details and the Bootstrap scene steps: `client/README.md` | M0-04 |
 | Does the Unity project compile? (Editor closed) | `<UNITY> -batchmode -quit -projectPath client/CityBuilder -logFile -`, exit code 0 and no `error CS` (`client/README.md`) | M0-04 |
@@ -59,9 +60,12 @@ Any key can be overridden with an environment variable (`:` becomes `__`) or a c
 | `ConnectionStrings:CityBuilder` | none (required) | The PostgreSQL connection string. It holds a password, so it lives in user-secrets (Development) or the environment variable `ConnectionStrings__CityBuilder`, never in a committed file. Missing or blank stops the start |
 | `Database:ApplyMigrationsAtStartup` | `false`; `true` in `appsettings.Development.json` | Apply pending migrations before the server accepts requests. Allowed only in Development: `true` in another environment stops the start (`docs/how-to/add-migration.md`) |
 | `Database:LockTimeoutMilliseconds` | `3000` | How long a request waits for its city's row lock before it fails with `CONCURRENCY_CONFLICT` and the client retries (`core-instructions/06-data-model.md`). Between 1 and 60000, or the start stops |
+| `Auth:SigningKey` | none (required) | The secret the access tokens are signed and checked with (HMAC-SHA256), at least 32 bytes. Anyone who has it can act as any player, so it lives in user-secrets (Development) or the environment variable `Auth__SigningKey`, never in a committed file. Missing or shorter stops the start; changing it ends every token (`core-instructions/07-security-model.md`) |
+| `Auth:TokenLifetimeMinutes` | `720` | How long an access token is valid (12 h). Between 1 and 1440, or the start stops |
+| `Auth:DevLoginEnabled` | `false`; `true` in `appsettings.Development.json` | Map `POST /api/v1/auth/dev-login`, which logs anyone in by name alone. Allowed only in Development: `true` in another environment stops the start |
 | `Logging:LogLevel:*`, `AllowedHosts` | as in `appsettings.json` | ASP.NET Core's own keys |
 
-Secrets come from user-secrets or the environment, never a committed file: today the connection string; signing keys follow *(planned, M0-25)*.
+Secrets come from user-secrets or the environment, never a committed file: the connection string and the signing key.
 
 ## Database
 PostgreSQL 18.6 runs in Docker (`docker-compose.yml` at the repo root; `core-instructions/06-data-model.md`). Once per clone:
@@ -69,7 +73,8 @@ PostgreSQL 18.6 runs in Docker (`docker-compose.yml` at the repo root; `core-ins
    `POSTGRES_*` values).
 2. Give the API the same values (in one line):
    `dotnet user-secrets set ConnectionStrings:CityBuilder "Host=localhost;Port=5432;Database=citybuilder;Username=citybuilder;Password=<your password>" --project server/src/CityBuilder.Api`
-   (with the user and database from your `.env`).
+   (with the user and database from your `.env`), and a signing key of your own for the access tokens:
+   `dotnet user-secrets set Auth:SigningKey "$(openssl rand -base64 48)" --project server/src/CityBuilder.Api`.
 3. `docker compose up -d postgres`; `docker compose ps` shows it `healthy` after a few seconds.
 4. `dotnet run --project server/src/CityBuilder.Api`: in Development it applies the pending migrations and logs which ones
    ("Database migrated at startup: …").

@@ -29,7 +29,7 @@ The code is in `server/tests/CityBuilder.IntegrationTests/Postgres/`.
 |---|---|
 | `PostgresServer` | xUnit's assembly fixture: **one** `postgres:18.6` container per test run (Testcontainers). It starts when the first test asks for a database, so a run of only fast tests never starts Docker. It applies the committed migrations once, to a template database. |
 | `TestDatabase` | **A fresh database per test:** a copy of the migrated template (`CREATE DATABASE … TEMPLATE`), or an empty one for the migration tests. Disposing it drops it. Tests never share rows and can run in parallel. |
-| `PostgresApiFactory` | The in-memory server (`WebApplicationFactory`) on one test database: the server's own registrations, no migration at startup, and a `FakeTimeProvider` as the server clock (`Clock`). |
+| `PostgresApiFactory` | The in-memory server (`WebApplicationFactory`) on one test database: the server's own registrations, no migration at startup, the tests' signing key, and a `FakeTimeProvider` as the server clock (`Clock`). |
 | `PostgresTest` | The base class of a test class that needs PostgreSQL: creates `Database` before each test, offers `Factory`, and drops both afterwards. |
 
 ```mermaid
@@ -53,6 +53,13 @@ flowchart LR
   for one (`pg_stat_activity`, `wait_event_type = 'Lock'`), never for a fixed time; hold the first with a `TaskCompletionSource` the
   test releases. For a lock timeout, derive a server with a short `Database:LockTimeoutMilliseconds` (`Factory.WithWebHostBuilder`).
   `Persistence/DatabaseLocks` has all three (`WithLockTimeout`, `HoldAsync`, `WaitUntilWaitingAsync`).
+- Requests that need a player: log in over HTTP (`POST /api/v1/auth/dev-login`, `Auth/DevLoginDatabaseTests`) and send the token as
+  `Authorization: Bearer …`, or issue one with the server's own `AccessTokens` (`Factory.Services`). Both test factories set
+  `Auth:SigningKey` to `Auth/TestTokens.SigningKey`; `TestTokens.Build` makes the tokens the server must refuse (another key, unsigned,
+  another issuer). Until the game endpoints exist (M0-28), `Auth/CurrentPlayerEndpoint` adds a test-only endpoint that requires a token
+  and answers with the acting player.
+- A race between two inserts of one key: hold the first in a transaction of the test's own (insert, `SaveChangesAsync`, no commit), start
+  the second request, wait until PostgreSQL shows it waiting on the unique index, then commit (`PostDevLogin_SameNameCommittedFirstByAnotherRequest_ReturnsThatPlayer`).
 - Many requests at once: queue them behind a lock the test holds and wait until PostgreSQL shows them all waiting, so they really contend.
   A free race of `Task.Run` calls may never overlap and then proves nothing (M0-24, decision 1). To show that requests don't wait for
   each other, run them on a server with a lock timeout of a few hundred milliseconds: a wait then fails the test.
@@ -60,7 +67,8 @@ flowchart LR
   (the runner: rollback, version check, two transactions on one city, lock timeout), `Persistence/SettleCityDatabaseTests` (a use case
   through the server: `DatabaseCities` stores and settles cities; a twin city settled another way is the expected result, and a second
   `PostgresApiFactory` on the same database is a host restart), `Persistence/ConcurrencyDatabaseTests` (20 settles of one city end as
-  one settle; other cities never wait; ADR-0009), `Persistence/ConstraintDatabaseTests` (rows
+  one settle; other cities never wait; ADR-0009), `Auth/DevLoginDatabaseTests` (over HTTP: rows of the first login, the race),
+  `Persistence/ConstraintDatabaseTests` (rows
   straight through a context, refused by PostgreSQL), `Persistence/MigrationDatabaseTests` (the startup migration on an empty database).
 
 ## Other test documents

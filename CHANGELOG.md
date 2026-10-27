@@ -107,6 +107,10 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
 - Concurrency and persistence review: tests on PostgreSQL for 20 settles of one city (they end as one settle at the final time) and for
   other cities, which never wait for a held lock; the persistence audit in the build log; ADR-0009 (row lock on the own city, lock ordering
   for the market); tests for values beyond 32 bits and for wall-time types (M0-24).
+- Development authentication: `POST /api/v1/auth/dev-login` (Development only, `Auth:DevLoginEnabled`) returns a signed access token and on
+  the first login of a name creates the player and the starter city with `STARTING_GRANT` ledger rows in one transaction; every other
+  `/api/v1` endpoint requires the token, and the acting player comes only from it (`ICurrentPlayer`); `Auth:SigningKey` (user-secrets,
+  at least 32 bytes) and the dev login outside Development stop the start; tests over HTTP and on PostgreSQL (M0-25).
 
 ### Changed
 - Handbook site: react and react-dom 19.2.9 → 19.3.1, scheduler 0.28.0 (Dependabot PR #28, DEP-PR28).

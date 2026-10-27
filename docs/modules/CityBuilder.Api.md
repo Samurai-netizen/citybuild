@@ -13,15 +13,21 @@ migrations at startup.
 ## Key types and files
 | Type / file | Responsibility |
 |---|---|
-| `Program.cs` | Builds the host: JSON console logging, ProblemDetails, OpenAPI, health checks, `TimeProvider.System`, the content (options, `IContentProvider`), the database (`DatabaseOptions`, `AddCityBuilderPersistence`), the use cases (`SettleCity`, scoped; `GET /city` maps it in M0-28); loads the content and checks the database settings before anything is mapped, and in Development applies the migrations; maps `/health` and, in Development only, `/openapi/v1.json` |
+| `Program.cs` | Builds the host: JSON console logging, ProblemDetails, OpenAPI, health checks, `TimeProvider.System`, the content (options, `IContentProvider`), the database (`DatabaseOptions`, `AddCityBuilderPersistence`), authentication (`AddCityBuilderAuthentication`), the use cases (`SettleCity`, `DevLogin`, scoped; `GET /city` maps `SettleCity` in M0-28); loads the content and checks the database and authentication settings before anything is mapped, and in Development applies the migrations; adds the authentication and authorization middleware; maps `/health`, in Development only `/openapi/v1.json`, and the `/api/v1` group, which requires an access token, with the dev login on it in Development when `Auth:DevLoginEnabled` is on |
+| `Auth/AuthOptions` | Section `Auth`: `SigningKey` (required in every environment, at least 32 bytes as UTF-8; user-secrets or `Auth__SigningKey`), `TokenLifetimeMinutes` (default 720, 1 to 1440), `DevLoginEnabled` (only allowed in Development) |
+| `Auth/AuthServiceCollectionExtensions` | `AddCityBuilderAuthentication(configuration, environment)`: binds and validates `AuthOptions` on start, registers `AccessTokens`, the JWT bearer handler as the default scheme with `AccessTokens.ValidationParameters()` (claim names kept: `sub` stays `sub`), authorization, and `ICurrentPlayer` (scoped) |
+| `Auth/AccessTokens`, `Auth/AccessToken` | Issues a token for a player (`Issue(playerId)`: a JWT signed with HMAC-SHA256, `iss` and `aud` `citybuilder-api`, `sub` the player id, `iat` = `nbf` = now floored to the second, `exp` after the lifetime) and gives the rules that check one (`ValidationParameters()`: the key, HS256 only, signed tokens only, issuer, audience, `exp` required, lifetime checked against the server's `TimeProvider` with no clock skew). Singleton |
+| `Auth/HttpCurrentPlayer` | `ICurrentPlayer` of a request: the `sub` claim of the verified token as a GUID; throws when the request has no verified token with one (an endpoint that forgot to require a token) |
+| `Endpoints/AuthEndpoints` | `MapDevLogin()` on the `/api/v1` group: `POST /auth/dev-login`, open without a token; validates the display name (400 `INVALID_ARGUMENT` for a missing body or a name that isn't allowed), runs `DevLogin`, answers with a token |
+| `Contracts/DevLoginRequest`, `Contracts/DevLoginResponse` | The dev login's body `{ displayName }` and answer `{ accessToken, expiresAtUtc }` (`05` → Authentication) |
 | `Content/ContentOptions` | Section `Content`: `FilePath` (required, not blank; validated on start), resolved against the app's base directory when relative |
 | `Content/ContentLog` | The content log message (source-generated `[LoggerMessage]`): "Content {ContentVersion} loaded from {ContentFilePath}", event id 1000 |
 | `Persistence/DatabaseOptions` | `ConnectionString` from `ConnectionStrings:CityBuilder` (required, not blank) and section `Database`: `ApplyMigrationsAtStartup` (only allowed in Development) and `LockTimeoutMilliseconds` (default 3000, 1 to 60 000); validated on start, and passed to `AddCityBuilderPersistence` as `PersistenceSettings` |
 | `Persistence/DatabaseLog` | The database log message: "Database migrated at startup: {AppliedCount} migrations applied ({AppliedMigrations})", event id 2000 (ids 2000–2999 for database messages) |
 | `Properties/launchSettings.json` | `dotnet run` profile `http`: http://localhost:8080, `ASPNETCORE_ENVIRONMENT=Development` |
-| `appsettings.json` | Log levels, allowed hosts, `Content:FilePath` (`content/mvp-content.json`), `Database:ApplyMigrationsAtStartup` (`false`). No connection string: it holds a password |
-| `appsettings.Development.json` | `Database:ApplyMigrationsAtStartup` = `true` |
-| `CityBuilder.Api.csproj` | `UserSecretsId` `citybuilder-api` (where `dotnet user-secrets` keeps the connection string); `Microsoft.EntityFrameworkCore.Design` for dotnet-ef at design time only (`PrivateAssets=all`) |
+| `appsettings.json` | Log levels, allowed hosts, `Content:FilePath` (`content/mvp-content.json`), `Database:ApplyMigrationsAtStartup` (`false`), `Auth:DevLoginEnabled` (`false`). No connection string and no signing key: they are secrets |
+| `appsettings.Development.json` | `Database:ApplyMigrationsAtStartup` = `true`, `Auth:DevLoginEnabled` = `true` |
+| `CityBuilder.Api.csproj` | `UserSecretsId` `citybuilder-api` (where `dotnet user-secrets` keeps the connection string and the signing key); `Microsoft.AspNetCore.Authentication.JwtBearer` (checks the tokens; its IdentityModel dependency writes them); `Microsoft.EntityFrameworkCore.Design` for dotnet-ef at design time only (`PrivateAssets=all`) |
 | `server/content/*.json` (linked) | Copied by the build to `content/` in the output (and in a publish), next to the app |
 
 ## Endpoints
@@ -29,8 +35,10 @@ migrations at startup.
 |---|---|---|---|
 | GET | `/health` | all | `200`, `text/plain` body `Healthy`, no-cache headers. Liveness only: checks no dependencies |
 | GET | `/openapi/v1.json` | Development | The OpenAPI 3.1 document of the mapped API endpoints |
+| POST | `/api/v1/auth/dev-login` | Development, with `Auth:DevLoginEnabled` | `200` `{ accessToken, expiresAtUtc }`; the first login of a name creates the player and the starter city. `400` `INVALID_ARGUMENT` for a missing body or a name that isn't allowed |
 
-The contract is `core-instructions/05-api-contract.md`. The game endpoints (`/api/v1/…`) arrive from M0-25 on.
+The contract is `core-instructions/05-api-contract.md`. Every other `/api/v1/…` endpoint requires `Authorization: Bearer <accessToken>` (the
+group's `RequireAuthorization()`); without a valid token the answer is 401. The game endpoints arrive from M0-28 on.
 
 ## Startup
 The content is loaded once, right after the host is built and before any endpoint is mapped or a request accepted: `Program.cs` resolves
@@ -39,7 +47,10 @@ that can't be loaded (`ContentLoadException`, every error listed) is unhandled t
 runtime prints the message to stderr. On success the log has one line with the content version and the full file path.
 
 Then `Program.cs` reads `DatabaseOptions`: a missing or blank `ConnectionStrings:CityBuilder`, `Database:ApplyMigrationsAtStartup=true`
-outside Development, or a `Database:LockTimeoutMilliseconds` outside 1 to 60 000, fails the validation and stops the start the same way. In Development with the flag on, `DatabaseMigrator.MigrateAsync`
+outside Development, or a `Database:LockTimeoutMilliseconds` outside 1 to 60 000, fails the validation and stops the start the same way.
+So does `AuthOptions`, read right after: a missing or short `Auth:SigningKey`, a token lifetime outside 1 to 1440 minutes, or
+`Auth:DevLoginEnabled=true` outside Development (read before `Run`, the validation fails the same way every time; inside the host's start
+`WebApplicationFactory` sometimes reported an `ObjectDisposedException` instead). In Development with the flag on, `DatabaseMigrator.MigrateAsync`
 applies the pending migrations before any request; the log names them (event id 2000), and an unreachable database stops the start with
 an `NpgsqlException` (`docs/how-to/add-migration.md`). No other environment ever migrates at startup.
 
@@ -47,6 +58,11 @@ an `NpgsqlException` (`docs/how-to/add-migration.md`). No other environment ever
 - `TimeProvider` is registered once, as `TimeProvider.System`. Game code gets time only through it
   (`core-instructions/02-principles.md`, rule 3); tests replace it with `FakeTimeProvider`.
 - OpenAPI is mapped only in Development (`05`); a test checks that Production answers 404 (`07`).
+- Every endpoint of the `/api/v1` group requires an access token unless it opts out with `AllowAnonymous()` (only the dev login). There is
+  no fallback policy: it would also cover paths that match no endpoint, which would then answer 401 instead of 404.
+- The acting player comes only from `ICurrentPlayer` (the token's `sub`); no request type has a player id (`07`).
+- The dev login is mapped only in Development with `Auth:DevLoginEnabled` on, and the setting stops the start anywhere else (`07`).
+- The signing key never comes from a committed file: user-secrets in Development, `Auth__SigningKey` elsewhere.
 - The connection string never comes from a committed file: user-secrets in Development, the environment variable
   `ConnectionStrings__CityBuilder` elsewhere (`docs/getting-started.md` → Database).
 - Migrations run at startup only in Development: the options validation rejects the flag elsewhere, and `Program.cs` checks the
@@ -74,20 +90,28 @@ They cover the health endpoint, OpenAPI only in Development, the registered cloc
 the default configuration serves the real content through one `IContentProvider`; a file with rule errors, a missing file and a blank
 `Content:FilePath` each stop the start) and the database startup (`Persistence/DatabaseStartupTests`: a missing or blank connection string
 stops the start; the startup migration on in Production or Staging stops the start; a lock timeout of 0, below it or above a minute stops
-the start; in Development the server migrates before serving). The project also holds the content loader's tests and `InfrastructureDependencyTests` (the
+the start; in Development the server migrates before serving) and authentication (`Auth/`: `AuthenticationTests` over HTTP through the
+test-only `CurrentPlayerEndpoint`, a startup filter that puts an endpoint requiring a token in front of the server: a token the server issued,
+its last valid second, none, malformed, expired, wrongly signed, unsigned, another issuer; `AuthStartupTests`: no or short key, lifetime out of
+range, dev login on outside Development; `DevLoginEndpointTests`: 404 in Production and when disabled, refused bodies; `HttpCurrentPlayerTests`).
+Both factories set the tests' signing key (`Auth/TestTokens`). The project also holds the content loader's tests and `InfrastructureDependencyTests` (the
 Infrastructure module doc → Tests).
 Run them with the fast suite: `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`.
 The `Integration` category runs the app on real PostgreSQL: `Postgres/PostgresApiFactory` is the same server on one test's own database
 (one `postgres:18.6` container per run, a fresh database per test, a `FakeTimeProvider` clock), and `Persistence/MigrationDatabaseTests`
 checks that the server in Development migrates an empty database at startup; `Persistence/SettleCityDatabaseTests` settles through the
-server's registered `SettleCity` (Infrastructure module doc → Tests). Docker must be running:
+server's registered `SettleCity` (Infrastructure module doc → Tests); `Auth/DevLoginDatabaseTests` logs in over HTTP and checks the stored
+player, city and starting grant, the same name again, two names, the token, and two first logins of one name racing. Docker must be running:
 `dotnet test server/CityBuilder.slnx --filter "Category=Integration"` (`docs/testing/README.md`).
 
 ## Known limitations
 - Not every error is a ProblemDetails response yet: an unknown route returns an empty 404, and outside Development an
   unhandled exception returns an empty 500. The error catalogue and the global handler come in M0-34.
 - `/health` is not in the OpenAPI document: health-check endpoints carry no API description.
-- No authentication, rate limits or request correlation yet *(planned, M0-25, M0-34, M0-35)*.
+- No rate limits (the dev login's 10 per minute per IP included) or request correlation yet *(planned, M0-34, M0-35)*.
+- A refused token gets an empty 401 with `WWW-Authenticate: Bearer`; the ProblemDetails body with `AUTHENTICATION_REQUIRED` comes with the
+  first game endpoint and the error catalogue *(planned, M0-28, M0-34)*.
+- Unknown JSON properties in a body are not refused yet *(planned, M0-30, M0-34)*.
 - A failed start is reported by the runtime as an unhandled exception in plain text on stderr, not as a JSON log line.
 
-Last updated: M0-23
+Last updated: M0-25

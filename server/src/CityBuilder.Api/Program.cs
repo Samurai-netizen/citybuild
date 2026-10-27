@@ -1,10 +1,13 @@
-// Composition root of the server (core-instructions/03-architecture.md): hosting, logging, service registration and the startup steps
-// (content load; database settings and, in Development only, the migrations).
+// Composition root of the server (core-instructions/03-architecture.md): hosting, logging, service registration, authentication and the
+// startup steps (content load; database settings and, in Development only, the migrations).
 
+using CityBuilder.Api.Auth;
 using CityBuilder.Api.Content;
+using CityBuilder.Api.Endpoints;
 using CityBuilder.Api.Persistence;
 using CityBuilder.Application.Cities;
 using CityBuilder.Application.Content;
+using CityBuilder.Application.Players;
 using CityBuilder.Infrastructure.Content;
 using CityBuilder.Infrastructure.Persistence;
 using CityBuilder.Simulation.Content;
@@ -60,8 +63,12 @@ builder.Services.AddCityBuilderPersistence(services =>
     return new PersistenceSettings(options.ConnectionString, options.LockTimeoutMilliseconds);
 });
 
+// The access tokens: every /api/v1 endpoint needs one, and the acting player comes only from it (core-instructions/07-security-model.md).
+builder.Services.AddCityBuilderAuthentication(builder.Configuration, builder.Environment);
+
 // The use cases, scoped like the city transaction they run in (one per request). GET /city maps SettleCity in M0-28.
 builder.Services.AddScoped<SettleCity>();
+builder.Services.AddScoped<DevLogin>();
 
 var app = builder.Build();
 
@@ -81,11 +88,28 @@ if (database.ApplyMigrationsAtStartup && app.Environment.IsDevelopment())
     DatabaseLog.MigrationsApplied(app.Logger, appliedMigrations.Count, appliedList);
 }
 
+// Check the authentication settings before the server accepts requests, as for the database: a missing or short signing key, or the dev
+// login on outside Development, stops the start here.
+AuthOptions auth = app.Services.GetRequiredService<IOptions<AuthOptions>>().Value;
+
+app.UseAuthentication();
+app.UseAuthorization();
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
 app.MapHealthChecks("/health");
+
+// The game API. Every endpoint of the group requires an access token unless it opts out; the acting player comes only from the token.
+RouteGroupBuilder api = app.MapGroup("/api/v1").RequireAuthorization();
+
+// The dev login lets anyone in by name alone: mapped only in Development with Auth:DevLoginEnabled on (the start refuses the setting
+// anywhere else), so in Production the path answers 404.
+if (auth.DevLoginEnabled && app.Environment.IsDevelopment())
+{
+    api.MapDevLogin();
+}
 
 app.Run();

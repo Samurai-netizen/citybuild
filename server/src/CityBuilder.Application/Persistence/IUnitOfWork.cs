@@ -12,6 +12,7 @@ public interface IUnitOfWork
     /// <returns>A task that completes when the changes are written.</returns>
     /// <exception cref="ConcurrencyConflictException">A city's stored <c>state_version</c> isn't the one it was loaded with, or a lock
     /// wasn't granted in time.</exception>
+    /// <exception cref="DuplicateKeyException">A unique constraint refused a row: another request committed the same key first.</exception>
     Task SaveChangesAsync(CancellationToken cancellationToken);
 
     /// <summary>
