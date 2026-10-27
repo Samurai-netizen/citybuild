@@ -66,6 +66,10 @@ flowchart LR
   the second request, wait until PostgreSQL shows it waiting on the unique index, then commit (`PostDevLogin_SameNameCommittedFirstByAnotherRequest_ReturnsThatPlayer`).
 - A command over HTTP: `ApiClient.PostAsync` sends a raw body with a token the server issued (`PlaceBuildingContractTests` on a
   `FakeCityStore`, which also keeps receipts; `Commands/PlaceBuildingDatabaseTests` on PostgreSQL, checked against the stored rows).
+  `PostAsync` with an `HttpContent` and headers sends another content type or a header that claims a player.
+- An attack on the API (`Security/`, M0-30): `ApiAttackContractTests` in memory (`FakeCityStore.LockCount` shows whether the request got as
+  far as the city's lock), `ApiAttackDatabaseTests` on PostgreSQL. Let time pass before the attack (`Factory.Clock.Advance`): a request that
+  reached the settle would commit it, so a city stored unchanged proves nothing ran.
 - The pipeline without HTTP (its own tests): resolve `CommandPipeline` from a request scope and pass it a command and a response
   writer. On PostgreSQL, `Commands/DatabaseCommands` does it (`ExecuteAsync`, with test commands that call the engine's rules), stores a
   player with a city to send them to, and writes everything stored about the city as one text (`StoredAsync`), so one assertion shows that

@@ -9,10 +9,10 @@
 - **Branch:** `task/M0-30-api-attack-review` (from `main` = `184dd78`)
 - **Build log entry:** `docs/build-log/2026/2026-10-27-08-M0-30.md`
 - **Last green commit:** the head of the branch (Release build 0 warnings, format clean; fast suite: Repository 22, Domain 21,
-  Application 94, IntegrationTests 271, Simulation 872)
-- **Done steps:** start; step 1 (body limit `RequestLimits:MaxBodyBytes`, duplicate JSON properties refused, dev login body strict, id shape
-  check; `Security/ApiAttackContractTests`; `05` and module docs)
-- **Next step:** step 2 (`Security/ApiAttackDatabaseTests` on PostgreSQL); then 3 (`07`, testing README, overview), 4 (finish).
+  Application 94, IntegrationTests 271, Simulation 872; Integration 101 on `postgres:18.6`)
+- **Done steps:** start; 1 (body limit, duplicate properties, strict dev login body, id shape check, in-memory attack tests); 2
+  (`Security/ApiAttackDatabaseTests`); 3 (`07`, module docs, testing README, overview)
+- **Next step:** step 4: finish (Definition of Done, CHANGELOG, handbook build, line-by-line self-review, PR).
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7
