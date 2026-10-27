@@ -1,7 +1,6 @@
 using System.Globalization;
 using CityBuilder.Application.Cities;
 using CityBuilder.Application.Persistence;
-using CityBuilder.Application.Players;
 using CityBuilder.Domain.Commands;
 using CityBuilder.Domain.Ledger;
 using CityBuilder.Domain.Players;
@@ -52,7 +51,7 @@ public sealed class CityTransactionDatabaseTests(PostgresServer server) : Postgr
         InvalidOperationException thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => RunAsync<int>(
             Factory, PlayerId, async (transaction, services, ct) =>
             {
-                transaction.City.MarkSettled(transaction.City.LastSettledUnixSec + 60);
+                transaction.City.MarkSettled(transaction.City.LastSettledUnixSec + 60, transaction.City.ContentVersion);
                 await transaction.SaveAsync([new LedgerEntry(new ItemId("logs"), 1, 8, LedgerReason.SettlementProduced)], receipt, ct);
 
                 // The writes happened: the transaction sees them.
@@ -110,7 +109,7 @@ public sealed class CityTransactionDatabaseTests(PostgresServer server) : Postgr
         {
             firstLocked.SetResult();
             await releaseFirst.Task.WaitAsync(ct);
-            transaction.City.MarkSettled(firstSettled);
+            transaction.City.MarkSettled(firstSettled, transaction.City.ContentVersion);
             await transaction.SaveAsync([], receipt: null, ct);
             return 0;
         });
@@ -231,13 +230,7 @@ public sealed class CityTransactionDatabaseTests(PostgresServer server) : Postgr
     /// <summary>Stores a player and their new city (an insert: no lock to take), in a scope of its own.</summary>
     /// <param name="player">The player.</param>
     /// <param name="city">The player's new city.</param>
-    private async Task StoreAsync(Player player, CityAggregate city)
-    {
-        await using AsyncServiceScope scope = Factory.Services.CreateAsyncScope();
-        scope.ServiceProvider.GetRequiredService<IPlayerRepository>().Add(player);
-        scope.ServiceProvider.GetRequiredService<ICityRepository>().Save(city, [], receipt: null);
-        await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().SaveChangesAsync(TestContext.Current.CancellationToken);
-    }
+    private Task StoreAsync(Player player, CityAggregate city) => DatabaseCities.StoreAsync(Factory, player, city);
 
     /// <summary>The sample city's stored state version, read by a context of the test's own.</summary>
     /// <returns>The stored version.</returns>

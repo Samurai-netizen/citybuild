@@ -11,8 +11,9 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
+- [BL-20261027-01 · M0-23 · Settle use case end to end](2026/2026-10-27-01-M0-23.md) — Done
 - [BL-20261026-05 · M0-22 · Transaction boundary and locking](2026/2026-10-26-05-M0-22.md) — Done
-- [BL-20261026-04 · M0-21 · Testcontainers integration base](2026/2026-10-26-04-M0-21.md) — In progress
+- [BL-20261026-04 · M0-21 · Testcontainers integration base](2026/2026-10-26-04-M0-21.md) — Done
 - [BL-20261026-03 · M0-20 · Repository and mapping](2026/2026-10-26-03-M0-20.md) — In progress
 - [BL-20261026-02 · M0-19 · EF Core model, migrations, Docker](2026/2026-10-26-02-M0-19.md) — Done
 - [BL-20261026-01 · DEP-PR28 · Handbook-site npm bump (react 19.3.1)](2026/2026-10-26-01-DEP-PR28.md) — Done

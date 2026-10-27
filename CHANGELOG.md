@@ -101,6 +101,9 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
 - City transaction: `ICityTransactionRunner` is the one way a use case changes a city (begin, `SELECT … FOR UPDATE` on the acting
   player's city, work, commit; rollback on any exception; one city per request); `lock_timeout` from `Database:LockTimeoutMilliseconds`
   (default 3000); a lock timeout or a stale `state_version` is `ConcurrencyConflictException`; `SettleCity` runs on it (M0-22).
+- Settle end to end: `SettleCity` runs the closing zero-length advance, writes one `SETTLEMENT_PRODUCED` / `SETTLEMENT_CONSUMED` row per
+  item and direction (ref = the settlement's id), records research completions and the content version, and saves only when something
+  changed; registered in the Api; tests on PostgreSQL (M0-23).
 
 ### Changed
 - Handbook site: react and react-dom 19.2.9 → 19.3.1, scheduler 0.28.0 (Dependabot PR #28, DEP-PR28).

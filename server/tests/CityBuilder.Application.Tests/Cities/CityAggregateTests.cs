@@ -103,6 +103,28 @@ public sealed class CityAggregateTests
         Assert.NotNull(city.State.ActiveResearch);
     }
 
+    /// <summary><see cref="CityAggregate.MarkSettled"/> records the new last settled second and the content version the settlement ran with.</summary>
+    [Fact]
+    public void MarkSettled_LaterSecondAndContentVersion_RecordsBoth()
+    {
+        var city = new CityAggregate(CityId, PlayerId, StateWithMasonry(clock: 500), [new(_masonry, 1)], 100, 0, "v1");
+
+        city.MarkSettled(160, "v2");
+
+        Assert.Equal((160L, "v2"), (city.LastSettledUnixSec, city.ContentVersion));
+    }
+
+    /// <summary>An earlier second or a blank content version is rejected, and the city keeps what it had.</summary>
+    [Fact]
+    public void MarkSettled_EarlierSecondOrBlankContentVersion_ThrowsAndKeepsTheCity()
+    {
+        var city = new CityAggregate(CityId, PlayerId, StateWithMasonry(clock: 500), [new(_masonry, 1)], 100, 0, "v1");
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => city.MarkSettled(99, "v2"));
+        Assert.Throws<ArgumentException>(() => city.MarkSettled(160, " "));
+        Assert.Equal((100L, "v1"), (city.LastSettledUnixSec, city.ContentVersion));
+    }
+
     /// <summary>A city at clock <paramref name="clock"/> with no buildings or stock that completed <c>masonry</c> and runs nothing.</summary>
     private static CityState StateWithMasonry(long clock) => new(clock, 1, 1, [], [], [_masonry], activeResearch: null);
 }

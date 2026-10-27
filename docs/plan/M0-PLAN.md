@@ -266,8 +266,8 @@ The AI coder updates its row at start (`In progress`) and finish (`In review`). 
 | M0-19 | 4 | EF Core model, migrations, Docker | O PLAN | Done |
 | M0-20 | 4 | Repository and mapping | O | Done |
 | M0-21 | 4 | Testcontainers integration base | S | Done |
-| M0-22 | 4 | Transaction boundary and locking | O | In review |
-| M0-23 | 4 | Settle use case end to end | O | Todo |
+| M0-22 | 4 | Transaction boundary and locking | O | Done |
+| M0-23 | 4 | Settle use case end to end | O | In review |
 | M0-24 | 4 | Concurrency tests and persistence review | O | Todo |
 | M0-25 | 5 | Development authentication | S | Todo |
 | M0-26 | 5 | Command pipeline with idempotency | O PLAN | Todo |

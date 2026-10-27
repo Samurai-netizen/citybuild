@@ -13,7 +13,7 @@ migrations at startup.
 ## Key types and files
 | Type / file | Responsibility |
 |---|---|
-| `Program.cs` | Builds the host: JSON console logging, ProblemDetails, OpenAPI, health checks, `TimeProvider.System`, the content (options, `IContentProvider`), the database (`DatabaseOptions`, `AddCityBuilderPersistence`); loads the content and checks the database settings before anything is mapped, and in Development applies the migrations; maps `/health` and, in Development only, `/openapi/v1.json` |
+| `Program.cs` | Builds the host: JSON console logging, ProblemDetails, OpenAPI, health checks, `TimeProvider.System`, the content (options, `IContentProvider`), the database (`DatabaseOptions`, `AddCityBuilderPersistence`), the use cases (`SettleCity`, scoped; `GET /city` maps it in M0-28); loads the content and checks the database settings before anything is mapped, and in Development applies the migrations; maps `/health` and, in Development only, `/openapi/v1.json` |
 | `Content/ContentOptions` | Section `Content`: `FilePath` (required, not blank; validated on start), resolved against the app's base directory when relative |
 | `Content/ContentLog` | The content log message (source-generated `[LoggerMessage]`): "Content {ContentVersion} loaded from {ContentFilePath}", event id 1000 |
 | `Persistence/DatabaseOptions` | `ConnectionString` from `ConnectionStrings:CityBuilder` (required, not blank) and section `Database`: `ApplyMigrationsAtStartup` (only allowed in Development) and `LockTimeoutMilliseconds` (default 3000, 1 to 60 000); validated on start, and passed to `AddCityBuilderPersistence` as `PersistenceSettings` |
@@ -79,7 +79,8 @@ Infrastructure module doc → Tests).
 Run them with the fast suite: `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`.
 The `Integration` category runs the app on real PostgreSQL: `Postgres/PostgresApiFactory` is the same server on one test's own database
 (one `postgres:18.6` container per run, a fresh database per test, a `FakeTimeProvider` clock), and `Persistence/MigrationDatabaseTests`
-checks that the server in Development migrates an empty database at startup. Docker must be running:
+checks that the server in Development migrates an empty database at startup; `Persistence/SettleCityDatabaseTests` settles through the
+server's registered `SettleCity` (Infrastructure module doc → Tests). Docker must be running:
 `dotnet test server/CityBuilder.slnx --filter "Category=Integration"` (`docs/testing/README.md`).
 
 ## Known limitations
@@ -89,4 +90,4 @@ checks that the server in Development migrates an empty database at startup. Doc
 - No authentication, rate limits or request correlation yet *(planned, M0-25, M0-34, M0-35)*.
 - A failed start is reported by the runtime as an unhandled exception in plain text on stderr, not as a JSON log line.
 
-Last updated: M0-22
+Last updated: M0-23

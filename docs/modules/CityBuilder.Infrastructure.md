@@ -74,7 +74,11 @@ loaded city's changes merge, a used-up item staying as a 0 row; a stale `state_v
 exception inside), `Persistence/CityTransactionDatabaseTests` (the runner: an exception after the writes rolls back the city, the ledger and
 the receipt and frees the lock; a version changed without the lock is a conflict, rolled back; two transactions on one city serialize, the
 second seeing the first's commit; a lock wait beyond the timeout is a conflict caused by `55P03`; the default timeout is 3 s; a request can't
-lock a second city, through the runner or the repository; one transaction per request) and `Persistence/ConstraintDatabaseTests` (the unique
+lock a second city, through the runner or the repository; one transaction per request), `Persistence/SettleCityDatabaseTests` (`SettleCity`
+through the server: the starter city after 0 s, 30 s and 2 h, saved only when time passed; a 1-hour research left alone for 30 h, its
+`city_research` clock and the same ledger totals as a settle at 8 h 2 min; ledger sums equal the stock deltas over four settles; repeated settles
+at one instant change no row; a settle on a restarted host continues as one settle would; helpers in `Persistence/DatabaseCities`) and
+`Persistence/ConstraintDatabaseTests` (the unique
 tile index, `quantity >= 0` and `assigned_workers >= 0` refuse broken rows, by constraint name).
 
 ## Known limitations
@@ -83,4 +87,4 @@ tile index, `quantity >= 0` and `assigned_workers >= 0` refuse broken rows, by c
 - A deadlock (`40P01`) or a serialization failure isn't mapped to a conflict: with one row lock per transaction, taken first, neither can
   happen in M0. The market's lock ordering (M2, `06`) revisits it.
 
-Last updated: M0-22
+Last updated: M0-23

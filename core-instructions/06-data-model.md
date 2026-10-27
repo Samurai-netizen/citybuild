@@ -2,8 +2,8 @@
 
 > **Built so far:** the tables below, with their keys, constraints and foreign keys, as the EF Core model and the migration `InitialCreate`
 > (M0-19; `docs/modules/CityBuilder.Infrastructure.md`), and PostgreSQL 18.6 in Docker; the mapping to the engine's city state, the
-> repositories and the unit of work (M0-20); the row lock and the write transaction, `ICityTransactionRunner` (M0-22). A task that builds a
-> part updates this line.
+> repositories and the unit of work (M0-20); the row lock and the write transaction, `ICityTransactionRunner` (M0-22); the settle with its
+> ledger rows (M0-23). A task that builds a part updates this line.
 
 PostgreSQL is the only source of truth. Wall timestamps are `timestamptz` (UTC). Simulation times and labor
 are `bigint` city-clock seconds and worker-seconds. Quantities are `bigint`. Item, building, research and era ids are `text` from content.
@@ -22,6 +22,10 @@ are `bigint` city-clock seconds and worker-seconds. Quantities are `bigint`. Ite
 
 Ledger reasons in M0: `STARTING_GRANT`, `SETTLEMENT_PRODUCED`, `SETTLEMENT_CONSUMED`, `COST_PLACE`, `COST_UPGRADE`,
 `REFUND_UPGRADE`, `COST_RESEARCH`. Later: `MARKET_ESCROW`, `MARKET_PROCEEDS`, `MARKET_FEE`, `MAILBOX_DELIVERY`, `ERA_CHARTER`.
+A settlement writes, per item in ordinal order, one `SETTLEMENT_PRODUCED` row (its total output) and then one `SETTLEMENT_CONSUMED` row
+(its total input, negative), with `ref_type` = `settlement` and `ref_id` = the settlement's id, a UUID v7 made for it (there is no
+settlements table). Each `balance_after` runs on from the quantity before the settlement, so produced first keeps every balance ≥ 0, and the
+last one of an item equals its stock.
 
 Derived on load, never stored: reserved outputs, stall reasons, workers provided/free, builders busy, effective caps and labor.
 
@@ -59,6 +63,8 @@ BEGIN
 COMMIT
 ```
 
+- **Nothing changed** (no time elapsed, the same content, nothing produced, consumed, completed or started): nothing is written, so
+  `state_version` and `updated_at` stay; the transaction commits empty. Repeated settles at one instant are free of writes.
 - **Business-rule rejection:** the settlement is committed (time passed is real), but there is no mutation and no receipt.
 - **Unexpected exception:** full rollback; nothing is committed.
 - **Unique violation on the receipt insert** (two identical requests raced): roll back, read the stored receipt, return it.

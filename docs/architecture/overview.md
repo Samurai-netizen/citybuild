@@ -1,7 +1,7 @@
 # Architecture Overview (as built)
 
-> This page describes the system **as it exists** after M0-19: the server solution skeleton that loads the game content at startup,
-> holds the `SettleCity` skeleton and the EF Core model of the database with its first migration, the shared engine (content model, city state, mutations, settlement and display helpers), and the
+> This page describes the system **as it exists** after M0-23: the server solution that loads the game content at startup,
+> settles a city in its locked transaction (`SettleCity`) and stores it with EF Core in PostgreSQL, the shared engine (content model, city state, mutations, settlement and display helpers), and the
 > Unity client skeleton with its tests. Parts that are not built yet are marked *(planned, M0-NN)*. M0-63 completes the page.
 > The intended architecture is `core-instructions/03-architecture.md`; the decisions behind it are in [ADRs](../adr/README.md).
 
@@ -9,11 +9,11 @@
 Today the API host loads `server/content/mvp-content.json` at startup and refuses to start if it is invalid, then answers `GET /health` (and
 serves its OpenAPI document in Development). The Unity client starts the `Bootstrap` scene and shows "Not connected". The engine holds its
 integer helpers, the content ids, the validated content model, the city state with its four mutations (`CityRules`), the settlement
-(`Simulator.Advance`) and the display helpers the client's screens will use (`Display/`, M0-17); the server's `SettleCity` skeleton calls the settlement (M0-13; settle on access, [ADR-0005](../adr/ADR-0005-settle-on-access.md)),
-with the full settle *(planned, M0-23)*. The database exists: PostgreSQL 18.6 in Docker, its seven tables created by the migration
+(`Simulator.Advance`) and the display helpers the client's screens will use (`Display/`, M0-17); the server's `SettleCity` settles a city (settle on access, [ADR-0005](../adr/ADR-0005-settle-on-access.md)): in the city's transaction
+it advances it to now, runs the closing zero-length advance and stores it with its ledger rows, only if anything changed (M0-23). The database exists: PostgreSQL 18.6 in Docker, its seven tables created by the migration
 `InitialCreate`, which the server applies at startup in Development (M0-19). Repositories map a city to its rows and back and stage the
-writes for one unit of work (M0-20); no use case runs against the database yet, and the row lock and transaction follow *(planned, M0-22)*.
-There is no game endpoint and no networking yet.
+writes for one unit of work (M0-20); every city write runs in one transaction that row-locks the player's own city (`ICityTransactionRunner`,
+M0-22). There is no game endpoint yet (`GET /city` is M0-28) and no networking.
 Dashed parts in the diagram are planned.
 
 ```mermaid
@@ -29,7 +29,7 @@ flowchart LR
   subgraph serverside["server - CityBuilder.slnx"]
     API["CityBuilder.Api<br/>health, OpenAPI in Development,<br/>content and migrations at startup"]
     INF["CityBuilder.Infrastructure<br/>ContentFileLoader, ContentProvider,<br/>CityBuilderDbContext, migrations,<br/>CityMapping, repositories, UnitOfWork"]
-    APP["CityBuilder.Application<br/>IContentProvider, ICityRepository,<br/>IPlayerRepository, IUnitOfWork,<br/>CityAggregate, SettleCity (skeleton)"]
+    APP["CityBuilder.Application<br/>IContentProvider, ICityRepository,<br/>IPlayerRepository, IUnitOfWork,<br/>CityAggregate, Settlement, SettleCity"]
     DOM["CityBuilder.Domain<br/>Player, LedgerEntry,<br/>CommandReceipt"]
   end
   DB[("PostgreSQL 18.6<br/>docker compose")]
@@ -63,14 +63,14 @@ ones fail the build of every server project and the engine (decision 037, `core-
 | Project | Path | References | Packages | Holds today | Doc |
 |---|---|---|---|---|---|
 | `CityBuilder.Api` | `server/src/` | Application, Infrastructure | `Microsoft.AspNetCore.OpenApi`; `Microsoft.EntityFrameworkCore.Design` (design time only) | `Program.cs`: JSON console logs, ProblemDetails, health check, `TimeProvider.System`, OpenAPI in Development, the content loaded before any request (`Content:FilePath`, `ContentOptions`, `ContentLog`), the database settings (`ConnectionStrings:CityBuilder`, `DatabaseOptions`) and the startup migration in Development (`DatabaseLog`); the build copies `server/content/*.json` to `content/` | [module](../modules/CityBuilder.Api.md) |
-| `CityBuilder.Application` | `server/src/` | Domain, Simulation | — | `IContentProvider`; `Cities/`: `CityAggregate` (with research completion clocks), `ICityRepository`, the `SettleCity` skeleton (M0-13); `Players/IPlayerRepository`, `Persistence/IUnitOfWork` (M0-20) *(planned: pipeline M0-26)* | [module](../modules/CityBuilder.Application.md) |
+| `CityBuilder.Application` | `server/src/` | Domain, Simulation | — | `IContentProvider`; `Cities/`: `CityAggregate` (with research completion clocks), `ICityRepository`, `ICityTransactionRunner` (M0-22), `SettleCity` and its `Settlement` (M0-23); `Players/IPlayerRepository`, `Persistence/IUnitOfWork` (M0-20) *(planned: pipeline M0-26)* | [module](../modules/CityBuilder.Application.md) |
 | `CityBuilder.Domain` | `server/src/` | Simulation | — | `Players/Player`, `Ledger/LedgerEntry`, `Ledger/LedgerReason`, `Commands/CommandReceipt` (M0-20) | [module](../modules/CityBuilder.Domain.md) |
 | `CityBuilder.Infrastructure` | `server/src/` | Application, Domain | `Npgsql.EntityFrameworkCore.PostgreSQL`, `Microsoft.EntityFrameworkCore.Relational` (EF Core 10) | the content loader: `ContentFileLoader`, `ContentLoadException`, `ContentProvider`; persistence (`Persistence/`): `CityBuilderDbContext`, row classes and configurations of the seven tables, `AddCityBuilderPersistence`, `DatabaseMigrator`, the migration `InitialCreate`; `Mapping/` (`CityMapping`, `LedgerMapping`) and `Repositories/` (`CityRepository`, `PlayerRepository`, `UnitOfWork`, M0-20) | [module](../modules/CityBuilder.Infrastructure.md) |
 | `CityBuilder.Simulation` | `shared/Simulation.Build/` (.NET) and `shared/Simulation/` (Unity package) | the base class library only | — | `IntegerMath` (`CeilDiv`, `ApplyPermilleReduction`, `FloorDiv`); `ItemId`, `BuildingTypeId`, `ResearchId`, `EraId`; the content model (`Content/`: `*Data` → `GameContentFactory` → `GameContent`, `04` §14); the city state (`State/`: `CityState`, `Building`, `CityFactory`, `CityQueries`, `StallReason`), the mutations (`Rules/`: `CityRules`, `MutationResult`, `04` §8) and the settlement (`Settlement/`: `Simulator.Advance`, `SettlementReport`, `04` §7; `SettlementWindow`, `04` §1); the display helpers (`Display/`: `ProductionDisplay`, `ProgressDisplay`, `04` §15) | [module](../modules/CityBuilder.Simulation.md) |
 | `CityBuilder.Domain.Tests` | `server/tests/` | Domain | xUnit v3 (`xunit.v3.mtp-off`, runner, test SDK; decision 019) | 21 tests: the dependency rule and the rules of the Domain types | the Domain module doc → Tests |
-| `CityBuilder.Application.Tests` | `server/tests/` | Application | the same, plus `Microsoft.Extensions.TimeProvider.Testing` (`FakeTimeProvider`) | 37 tests: the dependency rule and the one-city-transaction rule, `CityAggregate`, the city transaction runner, and `SettleCity` with a fake clock and repository | the Application module doc → Tests |
+| `CityBuilder.Application.Tests` | `server/tests/` | Application | the same, plus `Microsoft.Extensions.TimeProvider.Testing` (`FakeTimeProvider`) | 46 tests: the dependency rule and the one-city-transaction rule, `CityAggregate`, the city transaction runner, and `SettleCity` with a fake clock and repository (window, cap, ledger rows, when it saves) | the Application module doc → Tests |
 | `CityBuilder.Simulation.Tests` | `server/tests/` | Simulation | the same | 872 tests: engine helpers, content ids, content model and validation, city state, queries, stall reasons, mutations, `Simulator.Advance`, the settlement window, a rule test per engine rule, golden scenario #1, the property tests, the performance budget, the display helpers, and the architecture tests below | the Simulation module doc → Tests |
-| `CityBuilder.IntegrationTests` | `server/tests/` | Api | the same, plus `Microsoft.AspNetCore.Mvc.Testing`, `Testcontainers.PostgreSql` and `Microsoft.Extensions.TimeProvider.Testing` | 105 in-memory tests (no Docker): the API host, the content loader, the content and database startup, the EF model against `06` and its migrations, the city mapping and the repositories' staged changes; 23 in the `Integration` category on a `postgres:18.6` container (Docker; `docs/testing/README.md`): the fixture, the migrations on an empty database, the repositories through the server, the city transaction (rollback, version check, lock, lock timeout, one city), the constraints | the Api module doc → Tests |
+| `CityBuilder.IntegrationTests` | `server/tests/` | Api | the same, plus `Microsoft.AspNetCore.Mvc.Testing`, `Testcontainers.PostgreSql` and `Microsoft.Extensions.TimeProvider.Testing` | 105 in-memory tests (no Docker): the API host, the content loader, the content and database startup, the EF model against `06` and its migrations, the city mapping and the repositories' staged changes; 30 in the `Integration` category on a `postgres:18.6` container (Docker; `docs/testing/README.md`): the fixture, the migrations on an empty database, the repositories through the server, the city transaction (rollback, version check, lock, lock timeout, one city), the settle end to end (clock, research completion, the cap, ledger sums, no change at one instant, a host restart), the constraints | the Api module doc → Tests |
 | `CityBuilder.Repository.Tests` | `server/tests/` | — (it reads the source files) | the same, plus `Microsoft.CodeAnalysis.CSharp` (syntax only, decision 037) | 22 tests: the documentation check over every C# file of the repository, and the tests of its rules and of its file search | `core-instructions/14-coding-standards.md` → Documentation in code |
 
 ### Unity client
