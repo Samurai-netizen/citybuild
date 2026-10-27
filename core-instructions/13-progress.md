@@ -8,10 +8,11 @@
 - **Task:** M0-26 · Command pipeline with idempotency (`[O]` `[PLAN]`)
 - **Branch:** `task/M0-26-command-pipeline` (from `main` = `48c7f84`)
 - **Build log entry:** `docs/build-log/2026/2026-10-27-04-M0-26.md` (In progress)
-- **Last green commit:** the step-1 checkpoint of the branch (fast suite: Repository 22, Simulation 872, Domain 21, Application 47,
-  IntegrationTests 144; Integration 42)
-- **Done steps:** start; the owner approved the plan (decision 3: `json`); step 1 (shared settle steps, `CitySettler`)
-- **Next step:** step 2 (command contract: `ICityCommand`, canonical payload + SHA-256, result type, `ICommandReceiptRepository`).
+- **Last green commit:** the steps 2-3 checkpoint of the branch (Release build 0 warnings; Application 71; Integration 42 at step 1)
+- **Done steps:** start; plan approved (decision 3: `json`); step 1 (`CitySettler`); steps 2-3 (`Commands/`: `ICityCommand`,
+  `CommandPayload`, `CommandResult`, `CommandSuccess`, `ICommandReceiptRepository`, `CommandPipeline`; Application tests with fakes)
+- **Next step:** mutation check M3 (drop the duplicate-key recovery → the race test must fail; not run yet), then step 4
+  (Infrastructure: `CommandReceiptRepository`, registration, migration `response_json` → `json`, database tests).
   Running the API locally needs `Auth:SigningKey` in user-secrets (`docs/getting-started.md`).
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
