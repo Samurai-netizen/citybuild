@@ -34,7 +34,7 @@ public sealed class SettleCity(ICityTransactionRunner transactions, IContentProv
     /// <param name="cancellationToken">Cancels the settle; nothing is committed then.</param>
     /// <returns>The settled city, the settlement, and whether the city was saved.</returns>
     /// <exception cref="ConcurrencyConflictException">Another request held the city's lock for too long; nothing was committed.</exception>
-    /// <exception cref="InvalidOperationException">The settlement's ledger doesn't add up to the city's stock (an engine bug); nothing was
+    /// <exception cref="InvalidOperationException">The settlement doesn't account for the city's stock (an engine bug); nothing was
     /// committed.</exception>
     public Task<SettleCityResult> ExecuteAsync(Guid playerId, CancellationToken cancellationToken) =>
         _transactions.RunAsync(playerId, SettleAsync, cancellationToken);
@@ -70,8 +70,8 @@ public sealed class SettleCity(ICityTransactionRunner transactions, IContentProv
             || !buildingsBefore.SequenceEqual(BuildingSnapshot.Of(city.State));
         if (changed)
         {
+            CheckStockAddsUp(quantitiesBefore, settlement, city.State);
             IReadOnlyList<LedgerEntry> ledger = settlement.LedgerEntries(quantitiesBefore);
-            CheckLedgerAddsUp(ledger, city.State);
             await transaction.SaveAsync(ledger, receipt: null, cancellationToken);
         }
 
@@ -80,20 +80,25 @@ public sealed class SettleCity(ICityTransactionRunner transactions, IContentProv
     }
 
     /// <summary>
-    /// Checks that the last balance of each item in <paramref name="ledger"/> is the city's quantity now: the ledger accounts for every change
-    /// of the settlement (<c>04</c> section 10, conservation). A mismatch is an engine bug and must not be stored.
+    /// Checks that the settlement accounts for every change of the city's stock (<c>04</c> section 10, conservation): for every item, the
+    /// quantity before plus what was produced minus what was consumed is the quantity now. The ledger rows are built from the same totals, so
+    /// their sums then equal the stock's deltas and each item's last balance is its stock. A mismatch is an engine bug and must not be stored.
     /// </summary>
-    /// <param name="ledger">The settlement's ledger rows, in order.</param>
+    /// <param name="quantitiesBefore">The stock before the settlement.</param>
+    /// <param name="settlement">The settlement.</param>
     /// <param name="city">The settled city.</param>
-    /// <exception cref="InvalidOperationException">An item's last balance isn't its quantity.</exception>
-    private static void CheckLedgerAddsUp(IReadOnlyList<LedgerEntry> ledger, CityState city)
+    /// <exception cref="InvalidOperationException">An item's quantity doesn't follow from the settlement.</exception>
+    private static void CheckStockAddsUp(IReadOnlyDictionary<ItemId, long> quantitiesBefore, Settlement settlement, CityState city)
     {
-        foreach (LedgerEntry last in ledger.GroupBy(entry => entry.Item).Select(entries => entries.Last()))
+        IEnumerable<ItemId> items = quantitiesBefore.Keys.Concat(city.Inventory.Keys).Concat(settlement.Produced.Keys).Concat(settlement.Consumed.Keys);
+        foreach (ItemId item in items.Distinct().Order())
         {
-            if (last.BalanceAfter != city.GetQuantity(last.Item))
+            long expected = checked(quantitiesBefore.GetValueOrDefault(item) + settlement.Produced.GetValueOrDefault(item)
+                - settlement.Consumed.GetValueOrDefault(item));
+            if (expected != city.GetQuantity(item))
             {
                 throw new InvalidOperationException(
-                    $"The settlement's ledger ends {last.Item} at {last.BalanceAfter}, but the city holds {city.GetQuantity(last.Item)}.");
+                    $"The settlement leaves {item} at {expected}, but the city holds {city.GetQuantity(item)}.");
             }
         }
     }

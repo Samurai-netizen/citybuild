@@ -12,8 +12,8 @@
 - **Steps:** 1. Application: `Settlement`, closing zero-length advance, ledger rows, save only when changed (fast tests) · 2. register
   `SettleCity`, `SettleCityDatabaseTests` on PostgreSQL · 3. docs, review, PR
 - **Done steps:** 1 (Application: `Settlement`, closing advance, ledger rows, save only when changed; Application tests 46); 2 (`SettleCity`
-  registered, `SettleCityDatabaseTests` 7, Integration 30)
-- **Next step:** step 3: the Docs impact rows, then Definition of Done, self-review, PR.
+  registered, `SettleCityDatabaseTests` 7, Integration 30); 3 up to the PR (docs closed, check-docs and handbook OK, self-review done)
+- **Next step:** `/finish-task` (the owner runs it; the skill can't be started by the AI): entry Done, resume point IDLE, board, PR.
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7
