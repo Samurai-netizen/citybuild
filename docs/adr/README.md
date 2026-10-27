@@ -15,5 +15,4 @@ ADRs are written by the tasks that make or confirm the decision (M0-06, M0-18, M
 | [ADR-0006](ADR-0006-production-cap-dormant-tail.md) | Production cap per absence: timers always run, production stops after the cap (decision 006) | Accepted |
 | [ADR-0007](ADR-0007-shared-engine.md) | One shared engine: the server runs it for authority, the client for display only (decision 007, with its fallback) | Accepted |
 | [ADR-0008](ADR-0008-labor-model.md) | Labor model: recipes cost worker-seconds, and reassigning workers keeps a cycle's progress (decision G4) | Accepted |
-
-Planned: ADR-0009 (row lock on the own city) in M0-24.
+| [ADR-0009](ADR-0009-row-lock-own-city.md) | Every write row-locks only the acting player's own city, with the lock ordering for the market (decision 008) | Accepted |

@@ -33,7 +33,7 @@ days simple, and it also makes throwaway alt accounts expensive to farm.
 ## Concurrency
 - Matching for an item is serialized with a transaction-scoped advisory lock per item
   (`pg_advisory_xact_lock(item_key)`).
-- Lock order is always **own city row → item lock → order rows in ascending id**. Never lock another city.
+- Lock order is always **own city row → item lock → order rows in ascending id**. Never lock another city (ADR-0009, `06`).
 - Every order command is idempotent (`requestId`). Every fill writes ledger rows on both sides plus a `market_trades` row.
 
 ## Economy controls

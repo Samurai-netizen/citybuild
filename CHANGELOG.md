@@ -104,6 +104,9 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
 - Settle end to end: `SettleCity` runs the closing zero-length advance, writes one `SETTLEMENT_PRODUCED` / `SETTLEMENT_CONSUMED` row per
   item and direction (ref = the settlement's id), records research completions and the content version, and saves only when something
   changed; registered in the Api; tests on PostgreSQL (M0-23).
+- Concurrency and persistence review: tests on PostgreSQL for 20 settles of one city (they end as one settle at the final time) and for
+  other cities, which never wait for a held lock; the persistence audit in the build log; ADR-0009 (row lock on the own city, lock ordering
+  for the market); tests for values beyond 32 bits and for wall-time types (M0-24).
 
 ### Changed
 - Handbook site: react and react-dom 19.2.9 → 19.3.1, scheduler 0.28.0 (Dependabot PR #28, DEP-PR28).
@@ -117,3 +120,5 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   instead of a `SortedDictionary`, whose lookups box the id key), a timer due exactly at the clock completes before cycles start (`04` §7,
   decision 033), a restored producing building's end must match its labor, labor subtraction is `checked`; `04` §4 and §8 say which
   buildings have no stall reason and which level's worker limit applies while upgrading (decision 034) (M0-12).
+- A rolled-back city transaction no longer leaves its failed writes staged in the request's context, where a later save would have written
+  them outside the transaction and without the city's lock (M0-24).

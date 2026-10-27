@@ -12,8 +12,8 @@
 - **Planned steps:** 1. concurrency tests (`ConcurrencyDatabaseTests`); 2. persistence audit and its gaps (a rollback leaves the context's
   writes staged: fix in `UnitOfWork`; values beyond 32 bits; wall-time types); 3. ADR-0009, docs, finish.
 - **Done steps:** 1 (`ConcurrencyDatabaseTests`, 4 tests); 2 (audit in the entry; rollback gap fixed in `UnitOfWork`; tests for 32 bits and CLR
-  types; Integration 36)
-- **Next step:** step 3: ADR-0009, its index row, decision 008's link, `06`, testing README, overview, `CHANGELOG`; then finish.
+  types; Integration 36); 3 (ADR-0009 and the docs)
+- **Next step:** finish (`/finish-task`, the owner runs it): Definition of Done, self-review, PR. Step 3's docs are done.
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7

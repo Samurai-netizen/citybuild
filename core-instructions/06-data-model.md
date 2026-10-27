@@ -75,7 +75,8 @@ COMMIT
 - **One entry point (M0-22):** a use case changes a city only through `ICityTransactionRunner.RunAsync(playerId, work)`: it begins the
   transaction, takes the lock and loads the city, runs the work (which saves the city once, `CityTransaction.SaveAsync`), and commits when
   the work returns; an exception rolls everything back. A request runs it once, so it never locks a second city; the repository also
-  refuses a load outside a transaction or of a second city. A lock timeout and a stale `state_version` both surface as
+  refuses a load outside a transaction or of a second city; a rollback leaves nothing staged for a later save (M0-24). A lock timeout and a
+  stale `state_version` both surface as
   `ConcurrencyConflictException`, which the API maps to `CONCURRENCY_CONFLICT`. The modules: `docs/modules/CityBuilder.Application.md`,
   `CityBuilder.Infrastructure.md`.
 
@@ -83,7 +84,8 @@ COMMIT
 1. The acting player's own city row. **Never lock another player's city.**
 2. Then shared aggregates (per-item market lock, guild row).
 3. Then rows inside them in ascending id.
-Effects for other players go to `mailbox_deliveries` and are applied by their own next settle.
+Effects for other players go to `mailbox_deliveries` and are applied by their own next settle. Why, and why this can't deadlock:
+`docs/adr/ADR-0009-row-lock-own-city.md`; concurrent settles are tested there (M0-24).
 
 ## Planned tables (not M0 — for orientation)
 `accounts` (M1), `market_orders`, `market_trades`, `mailbox_deliveries`, `item_price_history`, `guilds`,

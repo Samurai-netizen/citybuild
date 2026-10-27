@@ -29,7 +29,7 @@ Never silently reverse a decision; add a new row that supersedes it. New ids con
 | 005 | Deterministic discrete-event simulation, settled lazily on every city access (`GET /city` included) | No background ticking per city; exact offline progress; one code path | Accepted · [ADR-0005](../docs/adr/ADR-0005-settle-on-access.md) |
 | 006 | Integer city clock always advances fully; only production is capped per absence (dormant tail) | Long research must finish while away; cost stays bounded; replaces the earlier "pause the whole city" cap | Accepted (rev. 2026-10-04) · [ADR-0006](../docs/adr/ADR-0006-production-cap-dormant-tail.md) |
 | 007 | A shared engine (netstandard2.1, C# 9) is used by the server (authority) and the client (display only) | Progress bars and counters match the server without extra endpoints | Accepted; fallback below · [ADR-0007](../docs/adr/ADR-0007-shared-engine.md) |
-| 008 | Every write takes `SELECT … FOR UPDATE` on the acting player's city only, plus a `state_version` guard | Simplest correct serialization; no cross-city deadlocks | Accepted |
+| 008 | Every write takes `SELECT … FOR UPDATE` on the acting player's city only, plus a `state_version` guard | Simplest correct serialization; no cross-city deadlocks | Accepted · [ADR-0009](../docs/adr/ADR-0009-row-lock-own-city.md) |
 | 009 | UI Toolkit + code-built scenes, primitives for placeholder art | Text-based assets Claude can author and review | Accepted |
 | 010 | Errors as RFC 9457 Problem Details with a stable `code` | Standard shape, built into ASP.NET Core | Accepted |
 | 011 | Quantities, coins and labor are `long`; permille for modifiers; ceiling division for durations | Determinism across server, Mono and IL2CPP | Accepted |
