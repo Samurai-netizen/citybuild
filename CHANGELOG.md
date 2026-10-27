@@ -119,6 +119,11 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
 - Idempotency integration tests on PostgreSQL for the command pipeline, with test commands: a retry returns the stored response and writes
   nothing (also after a host restart), conflicts, another player's request id, ten identical requests apply once, the receipt race through
   the unique key, a rejection commits only the settlement (M0-27).
+- `GET /api/v1/content` (items, buildings with levels and recipes, research, eras, rules with `timeScale` 1, `startingCity`, sorted, the
+  same text every call) and `GET /api/v1/city` (settles the token's player's city and answers with the snapshot; `SettleCityResult` now
+  carries the server time and the stored version); a missing or bad token is a 401 Problem Details with `AUTHENTICATION_REQUIRED`. Contract
+  tests read the raw JSON (names, types, nulls, sorting, exact text on frozen content, the response rebuilding the content through the
+  validating factory) and run `GET /city` on hand-built cities without a database and on PostgreSQL against the stored rows (M0-28).
 
 ### Changed
 - Handbook site: react and react-dom 19.2.9 → 19.3.1, scheduler 0.28.0 (Dependabot PR #28, DEP-PR28).

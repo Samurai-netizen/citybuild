@@ -272,7 +272,7 @@ The AI coder updates its row at start (`In progress`) and finish (`In review`). 
 | M0-25 | 5 | Development authentication | S | Done |
 | M0-26 | 5 | Command pipeline with idempotency | O PLAN | Done |
 | M0-27 | 5 | Idempotency integration tests | O | Done |
-| M0-28 | 5 | Content and city endpoints | S | In progress |
+| M0-28 | 5 | Content and city endpoints | S | In review |
 | M0-29 | 5 | PlaceBuilding | O | Todo |
 | M0-30 | 5 | API attack review | O | Todo |
 | M0-31 | 6 | UpgradeBuilding | O | Todo |
