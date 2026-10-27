@@ -34,12 +34,13 @@ public sealed class ContentContractTests(ApiFactory factory) : IClassFixture<Api
     {
         JsonNode content = (await ApiClient.GetAsync(factory, "/api/v1/content", _playerId)).Json();
 
-        JsonShape.AssertObject(content, "contentVersion:string rules:object eras:array items:array buildings:array research:array", "$");
+        JsonShape.AssertObject(content, "contentVersion:string rules:object startingCity:object eras:array items:array buildings:array research:array", "$");
         JsonShape.AssertObject(
             content["rules"],
             "gridWidth:int gridHeight:int builderSlots:int researchSlots:int baseStorageCaps:object maxOfflineProductionSeconds:int " +
             "minCycleSeconds:int maxLaborReductionPermille:int timeScale:int",
             "$.rules");
+        JsonShape.AssertObject(content["startingCity"], "era:int inventory:object", "$.startingCity");
         AssertEach(content["eras"], "number:int id:string name:string", "$.eras");
         AssertEach(content["items"], "id:string name:string era:int capped:bool tradable:bool", "$.items");
         AssertEach(
@@ -122,6 +123,7 @@ public sealed class ContentContractTests(ApiFactory factory) : IClassFixture<Api
         AssertIdsAreOrdinal(content["buildings"]!);
         AssertIdsAreOrdinal(content["research"]!);
         AssertKeysAreOrdinal(content["rules"]!["baseStorageCaps"]!);
+        AssertKeysAreOrdinal(content["startingCity"]!["inventory"]!);
         foreach (JsonNode building in content["buildings"]!.AsArray().Select(node => node!))
         {
             AssertKeysAreOrdinal(building["cost"]!);
@@ -147,6 +149,18 @@ public sealed class ContentContractTests(ApiFactory factory) : IClassFixture<Api
             string[] prerequisites = research["prerequisites"]!.AsArray().Select(id => (string)id!).ToArray();
             Assert.Equal(prerequisites.Order(StringComparer.Ordinal), prerequisites);
         }
+    }
+
+    /// <summary>
+    /// The response holds everything the client's validating factory needs (M0-38): rebuilding a <c>GameContent</c> from it and writing that
+    /// back as a response gives the same text, so nothing the engine uses is lost on the way.
+    /// </summary>
+    [Fact]
+    public async Task Get_Response_RebuildsTheSameContentThroughTheFactory()
+    {
+        ApiResponse response = await ApiClient.GetAsync(factory, "/api/v1/content", _playerId);
+
+        Assert.Equal(ContentFromResponse.Normalize(response.Body), ContentFromResponse.ResponseOf(ContentFromResponse.Rebuild(response.Body)));
     }
 
     /// <summary>The same content gives the same text on every call, to the byte, and the time scale is 1 outside Development.</summary>

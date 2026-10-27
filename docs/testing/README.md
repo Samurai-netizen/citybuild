@@ -59,7 +59,7 @@ flowchart LR
   another issuer). `Auth/CurrentPlayerEndpoint` adds a test-only endpoint that requires a token and answers with the acting player, so the token checks run
   without a game endpoint or a database. The game endpoints' contract tests are in `Contracts/`: `ApiClient` sends a request with a token the
   server issued (or any header) and keeps the response as raw text; `JsonShape.AssertObject` checks an object's exact property names, JSON
-  types and allowed nulls; `ContractContent` is a small frozen content file; `FakeCityStore` serves hand-built cities to the real settle and
+  types and allowed nulls; `ContractContent` is a small frozen content file; `ContentFromResponse` rebuilds a `GameContent` from a `/content` body through the validating factory, as the client will; `FakeCityStore` serves hand-built cities to the real settle and
   endpoint without a database. Exact-text tests (`ContentGoldenTests`, the every-phase city of `CitySnapshotContractTests`) compare the whole
   body, written readable and compacted by `JsonNode`: review every value by hand against the rules before freezing it.
 - A race between two inserts of one key: hold the first in a transaction of the test's own (insert, `SaveChangesAsync`, no commit), start

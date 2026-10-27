@@ -20,6 +20,18 @@ public sealed class ContentGoldenTests(ApiFactory factory) : IClassFixture<ApiFa
     /// <summary>Deletes the frozen content file.</summary>
     public void Dispose() => _files.Dispose();
 
+    /// <summary>The frozen content, which lists everything out of order, also survives the client's way back through the factory.</summary>
+    [Fact]
+    public async Task Get_FrozenContent_RebuildsTheSameContentThroughTheFactory()
+    {
+        string path = _files.Write(ContractContent.Json);
+        await using WebApplicationFactory<Program> server = factory.WithWebHostBuilder(host => host.UseSetting("Content:FilePath", path));
+
+        ApiResponse response = await ApiClient.GetAsync(server, "/api/v1/content", Guid.NewGuid());
+
+        Assert.Equal(ContentFromResponse.Normalize(response.Body), ContentFromResponse.ResponseOf(ContentFromResponse.Rebuild(response.Body)));
+    }
+
     /// <summary>The frozen content produces exactly the contract's text, byte for byte.</summary>
     [Fact]
     public async Task Get_FrozenContent_ReturnsExactlyTheContractText()
@@ -43,6 +55,7 @@ public sealed class ContentGoldenTests(ApiFactory factory) : IClassFixture<ApiFa
             "baseStorageCaps": { "logs": 400, "planks": 300 },
             "maxOfflineProductionSeconds": 14400, "minCycleSeconds": 5, "maxLaborReductionPermille": 400, "timeScale": 1
           },
+          "startingCity": { "era": 1, "inventory": { "coins": 300, "logs": 60, "planks": 20 } },
           "eras": [ { "number": 1, "id": "dawn", "name": "Dawn" } ],
           "items": [
             { "id": "coins", "name": "Coins", "era": 1, "capped": false, "tradable": false },

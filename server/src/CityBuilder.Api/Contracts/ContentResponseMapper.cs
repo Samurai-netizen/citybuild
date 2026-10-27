@@ -24,6 +24,7 @@ public static class ContentResponseMapper
         return new ContentResponse(
             content.ContentVersion,
             ToRules(content.Rules, timeScale),
+            new ContentStartingCity(content.StartingCity.Era, ToAmounts(content.StartingCity.Inventory)),
             content.Eras.Select(era => new ContentEra(era.Number, era.Id.Value, era.Name)).ToArray(),
             content.Items.Select(item => new ContentItem(item.Id.Value, item.Name, item.Era, item.IsCapped, item.IsTradable)).ToArray(),
             content.Buildings.Select(ToBuilding).ToArray(),

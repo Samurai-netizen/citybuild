@@ -7,6 +7,7 @@ namespace CityBuilder.Api.Contracts;
 /// </summary>
 /// <param name="ContentVersion">The content's version, JSON <c>contentVersion</c>, for example <c>mvp-1</c>.</param>
 /// <param name="Rules">The rules that apply to every city, JSON <c>rules</c>.</param>
+/// <param name="StartingCity">What a new city starts with, JSON <c>startingCity</c>.</param>
 /// <param name="Eras">The eras, JSON <c>eras</c>, by ascending number.</param>
 /// <param name="Items">The items, JSON <c>items</c>, by id.</param>
 /// <param name="Buildings">The building types, JSON <c>buildings</c>, by id.</param>
@@ -14,6 +15,7 @@ namespace CityBuilder.Api.Contracts;
 public sealed record ContentResponse(
     string ContentVersion,
     ContentRules Rules,
+    ContentStartingCity StartingCity,
     IReadOnlyList<ContentEra> Eras,
     IReadOnlyList<ContentItem> Items,
     IReadOnlyList<ContentBuilding> Buildings,
