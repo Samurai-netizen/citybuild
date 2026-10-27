@@ -7,7 +7,7 @@ using CityBuilder.Simulation.State;
 namespace CityBuilder.Api.Contracts;
 
 /// <summary>
-/// Maps a settled city to the <see cref="CitySnapshot"/> of <c>GET /api/v1/city</c> and of the command endpoints (M0-29 on), which pass what
+/// Maps a settled city to the <see cref="CitySnapshot"/> of <c>GET /api/v1/city</c> and of the command endpoints (<c>CommandEndpoints</c>), which pass what
 /// their <c>CommandSuccess</c> holds. It only reads: every number comes from the city and the engine's queries (<see cref="CityQueries"/>,
 /// <see cref="StallReason"/>), so the client and the server never disagree on a derived value. Lists and maps are sorted explicitly, and
 /// the building phases have written wire names, like the content (<see cref="ContentResponseMapper"/>).

@@ -67,6 +67,22 @@ public sealed class UnauthenticatedContractTests(ApiFactory factory) : IClassFix
         Assert.Single(bodies);
     }
 
+    /// <summary>
+    /// A command without a token gets the same 401 answer before its body is read: a valid body changes nothing (the in-memory server has no
+    /// database, so a command that ran would fail with another status).
+    /// </summary>
+    [Fact]
+    public async Task Post_PlaceBuildingWithoutToken_ReturnsAuthenticationRequiredProblem()
+    {
+        ApiResponse response = await ApiClient.PostAsync(
+            factory,
+            "/api/v1/commands/place-building",
+            playerId: null,
+            """{"requestId":"0199a1b2-c3d4-7e5f-8a9b-00000000000a","buildingTypeId":"woodcutter","x":2,"y":3}""");
+
+        AssertAuthenticationRequired(response);
+    }
+
     /// <summary>A valid token is not refused: the content endpoint answers 200 (the city endpoint needs a city, which the snapshot tests give it).</summary>
     [Fact]
     public async Task Get_WithValidToken_IsNotRefused()

@@ -68,7 +68,7 @@ builder.Services.AddCityBuilderPersistence(services =>
 builder.Services.AddCityBuilderAuthentication(builder.Configuration, builder.Environment);
 
 // The use cases, scoped like the city transaction they run in (one per request). GET /city runs SettleCity; the command
-// endpoints (M0-29 on) run every command through CommandPipeline.
+// endpoints run every command through CommandPipeline.
 builder.Services.AddScoped<SettleCity>();
 builder.Services.AddScoped<CommandPipeline>();
 builder.Services.AddScoped<DevLogin>();
@@ -115,8 +115,9 @@ if (auth.DevLoginEnabled && app.Environment.IsDevelopment())
     api.MapDevLogin();
 }
 
-// The game endpoints: all of them require the token. The commands (M0-29 on) follow the content and the city.
+// The game endpoints: all of them require the token.
 api.MapContent();
 api.MapCity();
+api.MapCommands();
 
 app.Run();
