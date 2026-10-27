@@ -1,4 +1,3 @@
-using System.Globalization;
 using CityBuilder.Application.Cities;
 using CityBuilder.Application.Persistence;
 using CityBuilder.Domain.Commands;
@@ -117,7 +116,7 @@ public sealed class CityTransactionDatabaseTests(PostgresServer server) : Postgr
         Task<(long Version, long LastSettled)> second = RunAsync(
             Factory, PlayerId, (transaction, _, _) => Task.FromResult((transaction.City.StateVersion, transaction.City.LastSettledUnixSec)));
 
-        await WaitUntilOneWaitsForALockAsync();
+        await DatabaseLocks.WaitUntilWaitingAsync(Database, sessions: 1);
         Assert.False(second.IsCompleted);
         releaseFirst.SetResult();
         await first;
@@ -242,34 +241,7 @@ public sealed class CityTransactionDatabaseTests(PostgresServer server) : Postgr
 
     /// <summary>A server like <see cref="PostgresTest.Factory"/> on the same database, with a lock timeout of 200 ms.</summary>
     /// <returns>The derived server; the test disposes it.</returns>
-    private WebApplicationFactory<Program> ShortLockTimeout() => Factory.WithWebHostBuilder(host =>
-        host.UseSetting("Database:LockTimeoutMilliseconds", _shortLockTimeoutMilliseconds.ToString(CultureInfo.InvariantCulture)));
-
-    /// <summary>
-    /// Waits until a session on the test's database waits for a lock in PostgreSQL (<c>pg_stat_activity</c>), so a test knows the second
-    /// transaction is blocked, not merely slow to start. Polls every 20 ms; fails after 500 polls (about 10 s).
-    /// </summary>
-    /// <returns>A task that completes when a session waits for a lock.</returns>
-    private async Task WaitUntilOneWaitsForALockAsync()
-    {
-        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
-        await using CityBuilderDbContext db = Database.CreateContext();
-        for (int poll = 0; poll < 500; poll++)
-        {
-            int waiting = await db.Database.SqlQuery<int>(
-                $"SELECT count(*)::int AS \"Value\" FROM pg_stat_activity WHERE datname = current_database() AND wait_event_type = 'Lock'")
-                .SingleAsync(cancellationToken);
-            if (waiting > 0)
-            {
-                return;
-            }
-
-            // A pause for another PostgreSQL session to get to its lock; it measures no game time.
-            await Task.Delay(TimeSpan.FromMilliseconds(20), cancellationToken);
-        }
-
-        Assert.Fail("No session waited for a lock within 500 polls (about 10 s).");
-    }
+    private WebApplicationFactory<Program> ShortLockTimeout() => DatabaseLocks.WithLockTimeout(Factory, _shortLockTimeoutMilliseconds);
 
     /// <summary>The exceptions an exception wraps, innermost last.</summary>
     /// <param name="exception">The outer exception.</param>
