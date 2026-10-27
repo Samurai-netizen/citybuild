@@ -5,7 +5,7 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-29 · PlaceBuilding; the PR is open, the owner merges it)
+- **Task:** — (last completed: M0-29 · PlaceBuilding; PR #41, the owner merges it)
 - **Branch:** `task/M0-29-place-building` (from `main` = `2095c58`) until the owner merges
 - **Build log entry:** last: `docs/build-log/2026/2026-10-27-07-M0-29.md` (Done)
 - **Last green commit:** the head of `task/M0-29-place-building` (Release build 0 warnings, format clean, fast suite: Repository 22,
