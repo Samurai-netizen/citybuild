@@ -1,9 +1,9 @@
 # API Contract (v1)
 
 > **Built so far:** `GET /health` and the OpenAPI document in Development (M0-02, `docs/modules/CityBuilder.Api.md`); the dev login and the
-> access token check (M0-25); `GET /api/v1/content` and `GET /api/v1/city` (M0-28). The engine side of the commands exists (`CityRules`, `MutationErrorCode`,
-> M0-08), and so does the command pipeline with the idempotency rules below (`CommandPipeline`, M0-26), with no command endpoint on it yet.
-> The rest of `/api/v1/` is *(planned)*: the commands M0-29 and M0-31 to M0-33, the error catalogue M0-34. A task that builds a part
+> access token check (M0-25); `GET /api/v1/content` and `GET /api/v1/city` (M0-28); the command pipeline with the idempotency rules below
+> (`CommandPipeline`, M0-26) and its first endpoint, `POST /api/v1/commands/place-building`, with the Commands rules below (M0-29).
+> The rest of `/api/v1/` is *(planned)*: the commands M0-31 to M0-33, the error catalogue M0-34. A task that builds a part
 > updates this line.
 
 JSON in camelCase. Enums are strings, quantities are integers, and times are city-clock seconds.
@@ -54,6 +54,19 @@ One document, the same for every player: `contentVersion`; `rules` (`gridWidth`,
 
 `GET /city` is safe to repeat but **not side-effect free**: it materializes elapsed time ([ADR-0005](../docs/adr/ADR-0005-settle-on-access.md)).
 There is no "claim" command, because production and research complete on their own.
+
+## Commands (`POST /commands/*`)
+- **The body is the contract, exactly.** Every field is required; a property the body doesn't define (`cost`, `level`, `workers`,
+  `playerId`), a missing field, a number sent as a string, a bad GUID or broken JSON is refused with 400 before anything runs. No body or
+  JSON `null`, the all-zeros `requestId` and a blank id are `INVALID_ARGUMENT`. Until the error catalogue (M0-34) the binding's own 400s
+  (unknown, missing or mistyped fields, broken JSON) have no `code`.
+- **Success:** 200 with the snapshot below; its `requestId` is the command's. A replay (same `requestId`, same body) gets 200 with the
+  stored snapshot, byte for byte, even when the city has changed since.
+- **Refusal:** Problem Details with the code's status from the table below, `code`, and `requestId` when the request had one. A rule's
+  refusal commits the settlement of the elapsed time but stores no receipt (Idempotency rules).
+- `place-building` (`{ requestId, buildingTypeId, x, y }`) checks in the order of `04` §8: `UNKNOWN_BUILDING_TYPE`, `BUILDING_LOCKED`,
+  `OUT_OF_BOUNDS`, `TILE_OCCUPIED`, `NO_FREE_BUILDER`, `INSUFFICIENT_RESOURCE`. It pays the type's cost (`COST_PLACE` ledger rows) and
+  the building appears with the next id, level 1, `Constructing` until the clock plus the type's build seconds.
 
 ## Snapshot (every successful city/command response)
 

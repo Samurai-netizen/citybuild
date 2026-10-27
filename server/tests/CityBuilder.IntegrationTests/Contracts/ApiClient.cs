@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json.Nodes;
 using CityBuilder.Api.Auth;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -45,10 +46,43 @@ internal static class ApiClient
     /// <returns>The response as the test saw it.</returns>
     public static async Task<ApiResponse> GetAsync(WebApplicationFactory<Program> server, string path, AuthenticationHeaderValue? authorization)
     {
-        using HttpClient client = server.CreateClient();
         using var request = new HttpRequestMessage(HttpMethod.Get, path);
         request.Headers.Authorization = authorization;
+        return await SendAsync(server, request);
+    }
 
+    /// <summary>
+    /// Sends a POST request with a JSON body written by the test as text, so a test can send exactly the bytes a client (or an attacker)
+    /// would: unknown properties, wrong types, broken JSON.
+    /// </summary>
+    /// <param name="server">The server under test.</param>
+    /// <param name="path">The path, for example <c>/api/v1/commands/place-building</c>.</param>
+    /// <param name="playerId">The player to send a token for, or <see langword="null"/> for no token.</param>
+    /// <param name="body">The body text, sent as <c>application/json</c>; <see langword="null"/> sends no body.</param>
+    /// <returns>The response as the test saw it.</returns>
+    public static async Task<ApiResponse> PostAsync(WebApplicationFactory<Program> server, string path, Guid? playerId, string? body)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, path);
+        if (playerId is { } player)
+        {
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", server.Services.GetRequiredService<AccessTokens>().Issue(player).Token);
+        }
+
+        if (body is not null)
+        {
+            request.Content = new StringContent(body, Encoding.UTF8, "application/json");
+        }
+
+        return await SendAsync(server, request);
+    }
+
+    /// <summary>Sends a request and reads the whole response.</summary>
+    /// <param name="server">The server under test.</param>
+    /// <param name="request">The request.</param>
+    /// <returns>The response as the test saw it.</returns>
+    private static async Task<ApiResponse> SendAsync(WebApplicationFactory<Program> server, HttpRequestMessage request)
+    {
+        using HttpClient client = server.CreateClient();
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         using HttpResponseMessage response = await client.SendAsync(request, cancellationToken);
         return new ApiResponse(

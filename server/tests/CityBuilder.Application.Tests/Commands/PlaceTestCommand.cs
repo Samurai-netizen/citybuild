@@ -8,8 +8,9 @@ using CityBuilder.Simulation.State;
 namespace CityBuilder.Application.Tests.Commands;
 
 /// <summary>
-/// A test command that places a building through the engine's rule (<c>CityRules.PlaceBuilding</c>), as M0-29's command will: it pays
-/// <c>COST_PLACE</c> and never refunds. Its shape check refuses a blank type id.
+/// A test command that places a building through the engine's rule (<c>CityRules.PlaceBuilding</c>), like <c>PlaceBuildingCommand</c> but
+/// under a command type of its own, so the pipeline's tests don't depend on a real command: it pays <c>COST_PLACE</c> and never refunds. Its
+/// shape check refuses a blank type id.
 /// </summary>
 /// <param name="RequestId">The command's request id.</param>
 /// <param name="BuildingTypeId">The type to place.</param>

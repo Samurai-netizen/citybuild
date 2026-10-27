@@ -1,0 +1,116 @@
+using CityBuilder.Application.Cities;
+using CityBuilder.Application.Commands;
+using CityBuilder.Application.Commands.PlaceBuilding;
+using CityBuilder.Application.Tests.Cities;
+using CityBuilder.Domain.Commands;
+using CityBuilder.Domain.Ledger;
+using CityBuilder.Simulation;
+using CityBuilder.Simulation.Rules;
+using CityBuilder.Simulation.State;
+using static CityBuilder.Application.Tests.Cities.SettleFixture;
+
+namespace CityBuilder.Application.Tests.Commands;
+
+/// <summary>
+/// <see cref="PlaceBuildingCommand"/>: its shape check, its pinned canonical payload, its ledger reasons, that it applies the engine's rule
+/// (<see cref="CityRules.PlaceBuilding"/>) and nothing else, and one run through <see cref="CommandPipeline"/> over the in-memory fakes. The
+/// rule's checks are the engine's tests; the endpoint and PostgreSQL are the integration tests'.
+/// </summary>
+public sealed class PlaceBuildingCommandTests
+{
+    /// <summary>The request id of the tests.</summary>
+    private static readonly Guid _requestId = new("0199a1b2-c3d4-7e5f-8a9b-00000000000a");
+
+    /// <summary>A missing or blank type id is a wrong shape; any other text is left to the content.</summary>
+    /// <param name="typeId">The type id.</param>
+    /// <param name="valid">Whether the shape is fine.</param>
+    [Theory]
+    [InlineData("", false)]
+    [InlineData(" ", false)]
+    [InlineData("\t", false)]
+    [InlineData("woodcutter", true)]
+    [InlineData("no-such-building", true)]
+    public void ValidateShape_TypeId_RefusesOnlyBlank(string typeId, bool valid)
+    {
+        string? error = new PlaceBuildingCommand(_requestId, typeId, 2, 3).ValidateShape();
+
+        Assert.Equal(valid, error is null);
+    }
+
+    /// <summary>Coordinates are not a shape question: any integer passes, and the rule answers <c>OUT_OF_BOUNDS</c>.</summary>
+    [Fact]
+    public void ValidateShape_CoordinatesOutsideTheGrid_AreFine()
+    {
+        Assert.Null(new PlaceBuildingCommand(_requestId, "woodcutter", int.MinValue, int.MaxValue).ValidateShape());
+    }
+
+    /// <summary>
+    /// The canonical payload is <c>place-building</c> and the data in ordinal name order, and its hash is pinned (computed outside the code:
+    /// <c>printf 'place-building\n{…}' | shasum -a 256</c>), so a renamed property or command type, which would turn every stored receipt
+    /// into a conflict, fails here.
+    /// </summary>
+    [Fact]
+    public void Payload_IsTheCommandTypeAndTheDataWithAPinnedHash()
+    {
+        var command = new PlaceBuildingCommand(_requestId, "woodcutter", 2, 3);
+
+        Assert.Equal(
+            "place-building\n{\"BuildingTypeId\":\"woodcutter\",\"RequestId\":\"0199a1b2-c3d4-7e5f-8a9b-00000000000a\",\"X\":2,\"Y\":3}",
+            CommandPayload.Canonical(command));
+        Assert.Equal("151035b7bf09b19007c9c5e981cecbb6c4645db009f6533870d5882c21480285", Convert.ToHexStringLower(CommandPayload.Hash(command)));
+    }
+
+    /// <summary>Placing pays <c>COST_PLACE</c> and never refunds.</summary>
+    [Fact]
+    public void LedgerReasons_AreCostPlaceAndNoRefund()
+    {
+        var command = new PlaceBuildingCommand(_requestId, "woodcutter", 2, 3);
+
+        Assert.Equal((LedgerReason.CostPlace, (LedgerReason?)null), (command.CostReason, command.RefundReason));
+    }
+
+    /// <summary>Apply does exactly what the engine's rule does on a copy of the same city, for a placement and for a refusal.</summary>
+    /// <param name="typeId">The type to place.</param>
+    /// <param name="x">The column.</param>
+    /// <param name="y">The row.</param>
+    [Theory]
+    [InlineData("woodcutter", 2, 3)]
+    [InlineData("castle", 2, 3)]
+    [InlineData("woodcutter", -1, 3)]
+    public void Apply_DoesWhatTheEngineRuleDoes(string typeId, int x, int y)
+    {
+        CityState byCommand = CityFactory.CreateStarterCity(SettleFixture.Content);
+        CityState byRule = CityFactory.CreateStarterCity(SettleFixture.Content);
+
+        MutationResult commandResult = new PlaceBuildingCommand(_requestId, typeId, x, y).Apply(byCommand, SettleFixture.Content);
+        MutationResult ruleResult = CityRules.PlaceBuilding(byRule, SettleFixture.Content, new BuildingTypeId(typeId), x, y);
+
+        Assert.Equal(ruleResult.ToString(), commandResult.ToString());
+        Assert.Equal(ruleResult.Spent, commandResult.Spent);
+        Assert.Equal(Describe(byRule), Describe(byCommand));
+    }
+
+    /// <summary>
+    /// Through the pipeline, the command places the building, writes its cost under <c>COST_PLACE</c> with the request id as reference, and
+    /// stores a receipt of type <c>place-building</c> with the response.
+    /// </summary>
+    [Fact]
+    public async Task ExecuteAsync_PlaceWoodcutter_SavesTheBuildingTheCostAndTheReceipt()
+    {
+        InMemoryCityRepository repository = RepositoryWith(CityFactory.CreateStarterCity(SettleFixture.Content));
+        var command = new PlaceBuildingCommand(_requestId, "woodcutter", 2, 3);
+
+        CommandResult result = await PipelineFixture.Pipeline(repository, ClockAtLastSettled())
+            .ExecuteAsync(PlayerId, command, PipelineFixture.Writer(repository), TestContext.Current.CancellationToken);
+
+        Assert.Equal(CommandOutcome.Succeeded, result.Outcome);
+        CityAggregate stored = repository.Stored(PlayerId);
+        Building building = Assert.Single(stored.State.Buildings);
+        Assert.Equal(("woodcutter", 2, 3, BuildingPhase.Constructing), (building.TypeId.Value, building.X, building.Y, building.Phase));
+        LedgerEntry cost = Assert.Single(repository.LastLedger!);
+        Assert.Equal((LedgerReason.CostPlace, _requestId.ToString()), (cost.Reason, cost.RefId));
+        Assert.True(cost.Delta < 0);
+        CommandReceipt receipt = repository.StoredReceipt(PlayerId, _requestId)!;
+        Assert.Equal((PlaceBuildingCommand.Type, result.ResponseJson), (receipt.CommandType, receipt.ResponseJson));
+    }
+}

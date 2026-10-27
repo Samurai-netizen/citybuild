@@ -46,8 +46,9 @@ idempotency rules):
   and the `json` column that keeps the response as written are decisions 042 and 041 in `core-instructions/12-decisions.md`. Tested with
   fakes in `CityBuilder.Application.Tests` (`Commands/`) and the lookup on PostgreSQL. On PostgreSQL (M0-27, `CityBuilder.IntegrationTests`,
   `Commands/`, a test command): a retry writes nothing, also after a host restart; conflicts; another player's request id; ten identical
-  requests apply once; the receipt race through the unique key; a rejection commits only the settlement. Still to come: the first command
-  endpoint and its tests over HTTP (M0-29), the error mapping (M0-34), the client's command sender (M0-40), and the proof of idempotent
+  requests apply once; the receipt race through the unique key; a rejection commits only the settlement. Over HTTP (M0-29, place-building): a replay
+  is the same bytes and writes nothing; a conflict is 409 `IDEMPOTENCY_CONFLICT`; ten identical requests place one building; another player's
+  request id runs as a new command. Still to come: the error catalogue (M0-34), the client's command sender (M0-40), and the proof of idempotent
   retries (M0-56).
 - **Reversal:** storage details (for example a retention period) can change without touching the API. Dropping receipts would break
   rule 9 and is not an option while commands change state.

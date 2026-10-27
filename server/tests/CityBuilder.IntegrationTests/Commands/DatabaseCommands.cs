@@ -13,10 +13,10 @@ using static CityBuilder.IntegrationTests.Persistence.DatabaseCities;
 namespace CityBuilder.IntegrationTests.Commands;
 
 /// <summary>
-/// Commands on a test's database, through a server's own registrations, until the command endpoints exist (M0-29): a player with the frame
-/// saw city (<see cref="Persistence.DatabaseCities.WithFrameSawRunning"/>) to send them to, <see cref="CommandPipeline"/> run as one request,
-/// the response writer the endpoint will be (a short JSON of the success), and the stored receipts and the city as text, so a test can show
-/// that a request wrote nothing.
+/// Commands on a test's database, through a server's own registrations but without HTTP (the pipeline's own tests; the endpoints have theirs):
+/// a player with the frame saw city (<see cref="Persistence.DatabaseCities.WithFrameSawRunning"/>) to send them to, <see cref="CommandPipeline"/>
+/// run as one request, a response writer in place of the endpoint's snapshot (a short JSON of the success), and the stored receipts and the
+/// city as text, so a test can show that a request wrote nothing.
 /// </summary>
 internal static class DatabaseCommands
 {

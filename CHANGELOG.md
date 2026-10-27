@@ -124,6 +124,10 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   carries the server time and the stored version); a missing or bad token is a 401 Problem Details with `AUTHENTICATION_REQUIRED`. Contract
   tests read the raw JSON (names, types, nulls, sorting, exact text on frozen content, the response rebuilding the content through the
   validating factory) and run `GET /city` on hand-built cities without a database and on PostgreSQL against the stored rows (M0-28).
+- PlaceBuilding: `POST /api/v1/commands/place-building` through the command pipeline (`PlaceBuildingCommand`, `CommandEndpoints`), a body
+  that refuses unknown, missing and mistyped fields, the snapshot as the answer and the receipt, Problem Details with every engine code's `05`
+  status (`CommandResponses`); contract tests on the raw JSON, a table test of the error mapping, and PostgreSQL tests over HTTP (every rule
+  code, replay, conflict, concurrent retries, another player, settle before the mutation, auto-staffing); how-to `add-command.md` (M0-29).
 
 ### Changed
 - Handbook site: react and react-dom 19.2.9 → 19.3.1, scheduler 0.28.0 (Dependabot PR #28, DEP-PR28).
