@@ -98,8 +98,17 @@ internal static class DatabaseCommands
         CityAggregate city = await LoadAsync(factory, playerId);
         IEnumerable<string> ledger = (await LedgerAsync(database, cityId)).Select(row =>
             string.Create(CultureInfo.InvariantCulture, $"{row.Id} {row.ItemId} {row.Delta} {row.BalanceAfter} {row.Reason} {row.RefType} {row.RefId}"));
-        IEnumerable<string> receipts = (await ReceiptsAsync(database, playerId)).Select(row =>
-            $"{row.RequestId} {row.CommandType} {Convert.ToHexString(row.PayloadHash)} {row.ResponseJson}");
+        IEnumerable<string> receipts = (await ReceiptsAsync(database, playerId))
+            .Select(row => ReceiptLine(row.RequestId, row.CommandType, row.PayloadHash, row.ResponseJson));
         return string.Join("\n", [$"version {city.StateVersion}", StateOf(city), .. ledger, .. receipts]);
     }
+
+    /// <summary>The line <see cref="StoredAsync"/> writes for one receipt, so a test can name the receipt it expects there.</summary>
+    /// <param name="requestId">The receipt's request id.</param>
+    /// <param name="commandType">Its command type.</param>
+    /// <param name="payloadHash">Its payload hash.</param>
+    /// <param name="responseJson">Its response text.</param>
+    /// <returns>The line.</returns>
+    public static string ReceiptLine(Guid requestId, string commandType, byte[] payloadHash, string responseJson) =>
+        $"{requestId} {commandType} {Convert.ToHexString(payloadHash)} {responseJson}";
 }
