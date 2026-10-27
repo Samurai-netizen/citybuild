@@ -89,10 +89,17 @@ public sealed class UnitOfWork(CityBuilderDbContext db, PersistenceSettings sett
         /// <inheritdoc />
         public async ValueTask DisposeAsync()
         {
-            await transaction.DisposeAsync();
-            if (!_committed)
+            try
             {
-                db.ChangeTracker.Clear();
+                await transaction.DisposeAsync();
+            }
+            finally
+            {
+                // Also when the rollback itself fails (a broken connection): the rows are staged for nothing either way.
+                if (!_committed)
+                {
+                    db.ChangeTracker.Clear();
+                }
             }
         }
     }

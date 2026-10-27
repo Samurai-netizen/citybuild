@@ -17,7 +17,7 @@ namespace CityBuilder.IntegrationTests.Persistence;
 /// <summary>
 /// The city transaction (<see cref="ICityTransactionRunner"/>, <c>core-instructions/06-data-model.md</c>, write transaction pattern) on
 /// PostgreSQL, through the server's registrations: an exception after the writes rolls everything back; a <c>state_version</c> changed
-/// without the lock is a conflict; two transactions on one city run one after the other, the second seeing what the first committed; a lock
+/// without the lock is a conflict, and the failed save leaves nothing staged for a later one; two transactions on one city run one after the other, the second seeing what the first committed; a lock
 /// wait beyond the lock timeout is a conflict; a request can't lock a second city. Each test starts with the sample city
 /// (<see cref="SampleCities.Full"/>) stored once, so at state version 8.
 /// </summary>
