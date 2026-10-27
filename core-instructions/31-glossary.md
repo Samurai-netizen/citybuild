@@ -38,7 +38,7 @@ Use these names in code, docs and UI text. Consistent words keep Claude and the 
 | Production cap | Max seconds per settlement during which cycles may start | `Rules.MaxOfflineProductionSeconds` |
 | Dormant tail | Part of a settlement after the production cap: timers run, no new cycles | — |
 | Settlement report | What happened during a settle | `SettlementReport` |
-| Settlement | One settle on the server: the window's advance and the closing zero-length advance, with its id, totals and ledger rows (`ref_type` `settlement`) | `Settlement`, `SettleCityResult` |
+| Settlement | One settle on the server: the window's advance and the closing zero-length advance (a command's mutation runs between them), with its id, totals and ledger rows (`ref_type` `settlement`) | `Settlement`, `SettleCityResult`, `CitySettler` |
 | Zero-length advance | `Advance(city, 0)`: start eligible cycles at the current clock | `Simulator.Advance(city, content, 0)` |
 | Content | All game definitions loaded from JSON: as read, and validated (only the factory makes the latter) | `GameContentData`, `GameContent`, `GameContentFactory`, `contentVersion`; on the server `IContentProvider`, `ContentFileLoader`, `Content:FilePath` |
 | Content error | One problem found when content loads: a stable code, the path in the JSON, a message (`04` §14) | `ContentError`, `ContentErrorCode` |
