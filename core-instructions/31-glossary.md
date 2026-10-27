@@ -42,6 +42,8 @@ Use these names in code, docs and UI text. Consistent words keep Claude and the 
 | Zero-length advance | `Advance(city, 0)`: start eligible cycles at the current clock | `Simulator.Advance(city, content, 0)` |
 | Content | All game definitions loaded from JSON: as read, and validated (only the factory makes the latter) | `GameContentData`, `GameContent`, `GameContentFactory`, `contentVersion`; on the server `IContentProvider`, `ContentFileLoader`, `Content:FilePath` |
 | Content error | One problem found when content loads: a stable code, the path in the JSON, a message (`04` §14) | `ContentError`, `ContentErrorCode` |
+| Access token | The signed proof of who the player is: every `/api/v1` request but the dev login sends it, and the acting player comes only from it (`07`) | `AccessTokens`, `ICurrentPlayer`, `Auth:SigningKey` |
+| Dev login | M0's stand-in for accounts, Development only: a display name logs in and its first login creates the player and the starter city | `DevLogin`, `POST /api/v1/auth/dev-login` |
 | Command | A state-changing player intent | `PlaceBuilding`, `UpgradeBuilding`, `AssignWorkers`, `StartResearch` |
 | Mutation | The engine's rule for one command, applied at the city clock: `Ok`, or rejected with a code and no change (`04` §8) | `CityRules`, `MutationResult`, `MutationErrorCode` |
 | Request id | Client UUID for idempotent retries | `RequestId` |

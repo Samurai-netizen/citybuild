@@ -3,7 +3,7 @@
 > **Built so far:** the tables below, with their keys, constraints and foreign keys, as the EF Core model and the migration `InitialCreate`
 > (M0-19; `docs/modules/CityBuilder.Infrastructure.md`), and PostgreSQL 18.6 in Docker; the mapping to the engine's city state, the
 > repositories and the unit of work (M0-20); the row lock and the write transaction, `ICityTransactionRunner` (M0-22); the settle with its
-> ledger rows (M0-23). A task that builds a part updates this line.
+> ledger rows (M0-23); the first login's insert of a player and their city (M0-25). A task that builds a part updates this line.
 
 PostgreSQL is the only source of truth. Wall timestamps are `timestamptz` (UTC). Simulation times and labor
 are `bigint` city-clock seconds and worker-seconds. Quantities are `bigint`. Item, building, research and era ids are `text` from content.
@@ -79,6 +79,11 @@ COMMIT
   stale `state_version` both surface as
   `ConcurrencyConflictException`, which the API maps to `CONCURRENCY_CONFLICT`. The modules: `docs/modules/CityBuilder.Application.md`,
   `CityBuilder.Infrastructure.md`.
+
+**The first login (M0-25):** one transaction inserts the player, the starter city (all its rows, `state_version` 1) and one `STARTING_GRANT`
+ledger row per item of the starting stock, so the ledger reconciles with the stock from its first row. It is the one city write without the
+row lock (there is no row yet, ADR-0009) and goes through `INewCityRepository`, which only `DevLogin` holds. Two first logins of one name:
+`unique(dev_name)` refuses the second insert (`DuplicateKeyException`), and that login returns the first one's player.
 
 ## Lock ordering (binding now, matters from M2)
 1. The acting player's own city row. **Never lock another player's city.**

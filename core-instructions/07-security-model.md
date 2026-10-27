@@ -1,8 +1,9 @@
 # Security Model
 
-> **Built so far:** the rules the engine enforces (integers only, every mutation checked before it changes anything; M0-08 to M0-17) and
-> OpenAPI only in Development (tested). Authentication, the command pipeline, limits and the `Security_` tests arrive from M0-25 on
-> (review M0-30, attack suite M0-74, report M0-78) *(planned)*. A task that builds a part updates this line.
+> **Built so far:** the rules the engine enforces (integers only, every mutation checked before it changes anything; M0-08 to M0-17),
+> OpenAPI only in Development (tested), and authentication: signed access tokens, the dev login in Development only, `ICurrentPlayer`
+> (M0-25, tested). The command pipeline, limits and the rest of the `Security_` tests arrive from M0-26 on (review M0-30, attack suite M0-74,
+> report M0-78) *(planned)*. A task that builds a part updates this line.
 
 **Goal for M0:** a modified client, a replayed request or a wrong clock cannot create resources, skip costs,
 skip waiting, over-assign workers, skip research, or touch another player's city.
@@ -12,7 +13,7 @@ From Era II this matters even more: one duplication bug floods the shared market
 
 | Input | Trusted? | Rule |
 |---|---|---|
-| Access token | Verified | Signed JWT; `PlayerId` comes only from its claims |
+| Access token | Verified | Signed JWT (HMAC-SHA256 only, this server's issuer and audience, lifetime checked against the server clock); `PlayerId` comes only from its `sub` claim (`ICurrentPlayer`) |
 | Request body | No | Shape-validated, then only *intent* is read (type id, x, y, building id, worker count, research id) |
 | Client clock | Never used | Not accepted in any request |
 | Content numbers | Server only | Costs, recipes, labor, research times and effects come from server content |
@@ -33,7 +34,11 @@ From Era II this matters even more: one duplication bug floods the shared market
 | Act on another player's building | Building ids are resolved inside the caller's city only | `BUILDING_NOT_FOUND`, never a `FORBIDDEN` leak |
 | Spam requests or settle storms | Per-player rate limits | 429 tests |
 | Huge or malformed bodies | Body size limit; strict model validation before DB access | Malformed-input tests |
-| Dev login in production | Endpoint mapped only when `Environment == Development`; startup guard throws otherwise | Production-mode test returns 404 |
+| Dev login in production | Endpoint mapped only in Development with `Auth:DevLoginEnabled` on; the setting on outside Development stops the start | `Security_DevLoginInProduction_IsNotMapped` (404), `Security_DevLoginEnabledOutsideDevelopment_StopsTheStart` |
+| Act as another player without their token | Every `/api/v1` endpoint requires a token (route group); the player comes only from the token's `sub`, never from a body | `GetCurrentPlayer_TokenTheServerIssued_ReturnsItsPlayer`, `Security_RequestWithoutToken_IsRefused` |
+| Forge, alter or replay an old token | Signature checked with the server's key, HS256 only (unsigned tokens refused), issuer and audience checked, expiry by the server clock with no skew | `Security_TokenWithWrongSignature_IsRefused`, `Security_UnsignedToken_IsRefused`, `Security_TokenOfAnotherIssuer_IsRefused`, `Security_ExpiredToken_IsRefused`, `Security_MalformedToken_IsRefused` |
+| Weak or committed signing key | `Auth:SigningKey` required in every environment, at least 32 bytes, from user-secrets or the environment; the start stops otherwise | `Start_NoOrShortSigningKey_FailsValidation` |
+| Two first logins of one name create two players | `unique(dev_name)`; the second insert fails, and the login returns the first player | `PostDevLogin_SameNameCommittedFirstByAnotherRequest_ReturnsThatPlayer` |
 | Dev time scale left on | `Simulation:DevTimeScale` is honoured only in Development; startup throws if ≠ 1 elsewhere | Startup-guard test |
 | Overflow to wrap quantities | `checked` arithmetic, `long`, content validation of maxima | Overflow tests |
 | Secret leakage | Signing key and the database connection string from environment/user-secrets; never in Unity or the repo (the compose password lives in the gitignored `.env`) | Config review prompt |
@@ -55,7 +60,8 @@ Log: player id, request id, trace id, command type, result code, duration, settl
 Never log: tokens, signing keys, full request bodies in production, personal data.
 
 ## Known limitations in M0 (document, don't hide)
-- Dev auth only: no real account system and no token revocation.
+- Dev auth only: no real account system and no token revocation; a token stays valid until it expires (12 h by default), and changing
+  `Auth:SigningKey` is the only way to end every token at once.
 - No device attestation (Play Integrity / App Attest). A scripted client can automate play, but only within server rules,
   so it gains no more than a perfect human player would. That's acceptable for M0, but not once the market exists.
 - Rate limits are in-memory and single-instance.
