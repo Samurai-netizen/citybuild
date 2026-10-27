@@ -17,7 +17,9 @@ public sealed class CommandReceiptConfiguration : IEntityTypeConfiguration<Comma
         builder.Property(r => r.RequestId).HasColumnName("request_id");
         builder.Property(r => r.CommandType).HasColumnName("command_type");
         builder.Property(r => r.PayloadHash).HasColumnName("payload_hash");
-        builder.Property(r => r.ResponseJson).HasColumnName("response_json").HasColumnType("jsonb");
+        // json, not jsonb: json keeps the text as written, so a replay returns the response byte for byte (jsonb reorders keys and
+        // rewrites whitespace); nothing queries inside a receipt (decision 041).
+        builder.Property(r => r.ResponseJson).HasColumnName("response_json").HasColumnType("json");
         builder.Property(r => r.CreatedAt).HasColumnName("created_at");
 
         // Receipts are part of the audit trail: a player with receipts can't be deleted.

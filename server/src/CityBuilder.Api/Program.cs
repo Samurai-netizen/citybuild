@@ -6,6 +6,7 @@ using CityBuilder.Api.Content;
 using CityBuilder.Api.Endpoints;
 using CityBuilder.Api.Persistence;
 using CityBuilder.Application.Cities;
+using CityBuilder.Application.Commands;
 using CityBuilder.Application.Content;
 using CityBuilder.Application.Players;
 using CityBuilder.Infrastructure.Content;
@@ -66,8 +67,10 @@ builder.Services.AddCityBuilderPersistence(services =>
 // The access tokens: every /api/v1 endpoint needs one, and the acting player comes only from it (core-instructions/07-security-model.md).
 builder.Services.AddCityBuilderAuthentication(builder.Configuration, builder.Environment);
 
-// The use cases, scoped like the city transaction they run in (one per request). GET /city maps SettleCity in M0-28.
+// The use cases, scoped like the city transaction they run in (one per request). GET /city maps SettleCity in M0-28; the command
+// endpoints (M0-29 on) run every command through CommandPipeline.
 builder.Services.AddScoped<SettleCity>();
+builder.Services.AddScoped<CommandPipeline>();
 builder.Services.AddScoped<DevLogin>();
 
 var app = builder.Build();

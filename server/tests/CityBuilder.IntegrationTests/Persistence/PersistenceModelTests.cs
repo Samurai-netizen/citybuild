@@ -40,7 +40,7 @@ public sealed partial class PersistenceModelTests
         ["command_receipts"] =
         [
             ("player_id", "uuid", false), ("request_id", "uuid", false), ("command_type", "text", false), ("payload_hash", "bytea", false),
-            ("response_json", "jsonb", false), ("created_at", "timestamp with time zone", false),
+            ("response_json", "json", false), ("created_at", "timestamp with time zone", false),
         ],
         ["ledger_entries"] =
         [
