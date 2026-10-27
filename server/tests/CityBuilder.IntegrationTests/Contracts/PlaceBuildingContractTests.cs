@@ -201,6 +201,21 @@ public sealed class PlaceBuildingContractTests(ApiFactory factory) : IClassFixtu
         AssertNothingRan(store);
     }
 
+    /// <summary>
+    /// The OpenAPI document (Development) describes the endpoint for client authors: the request body is <c>PlaceBuildingRequest</c> and the
+    /// 200 body is the snapshot, <c>CitySnapshot</c>, although the handler writes the snapshot as text.
+    /// </summary>
+    [Fact]
+    public async Task OpenApi_PlaceBuilding_DescribesTheBodyAndTheSnapshot()
+    {
+        ApiResponse response = await ApiClient.GetAsync(factory, "/openapi/v1.json", playerId: null);
+
+        JsonNode post = response.Json()["paths"]![_path]!["post"]!;
+        // The body parameter is nullable (no body is INVALID_ARGUMENT), so the schema is oneOf null or the request.
+        Assert.Contains("\"#/components/schemas/PlaceBuildingRequest\"", post["requestBody"]!["content"]!["application/json"]!["schema"]!.ToJsonString(), StringComparison.Ordinal);
+        Assert.EndsWith("/CitySnapshot", (string)post["responses"]!["200"]!["content"]!["application/json"]!["schema"]!["$ref"]!, StringComparison.Ordinal);
+    }
+
     /// <summary>A server copy with a store holding the starter city, settled at <see cref="_settledAt"/>, and a fixed clock.</summary>
     /// <param name="now">The server time.</param>
     /// <returns>The store and the server; the caller disposes the server.</returns>

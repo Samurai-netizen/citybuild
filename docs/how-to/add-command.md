@@ -48,14 +48,15 @@ refuses anything that isn't the contract (400) before the pipeline runs:
 **4. The endpoint.** In `server/src/CityBuilder.Api/Endpoints/CommandEndpoints.cs`, one line in `MapCommands()` and a handler that only turns
 the body into the command:
 ```csharp
-commands.MapPost("/place-building", PlaceBuildingAsync);
+commands.MapPost("/place-building", PlaceBuildingAsync).Produces<CitySnapshot>(StatusCodes.Status200OK, "application/json");
 …
 var command = new PlaceBuildingCommand(request.RequestId, request.BuildingTypeId ?? string.Empty, request.X, request.Y);
 return await ExecuteAsync(command, player, pipeline, content, json, cancellationToken);
 ```
 `ExecuteAsync` is shared by every command: it runs the pipeline for the token's player with the snapshot as the response (`CitySnapshotMapper`,
 serialized inside the transaction and stored in the receipt as text) and maps the outcome with `CommandResponses.ToHttpResult`: 200 with
-the snapshot, also for a replay (the stored bytes); Problem Details with `code`, `requestId` and `traceId` otherwise.
+the snapshot, also for a replay (the stored bytes); Problem Details with `code`, `requestId` and `traceId` otherwise. The handler writes
+the snapshot as text, so `.Produces<CitySnapshot>` gives the OpenAPI document its 200 schema (a test checks the document).
 
 **5. The errors.** `CommandResponses.Of` maps every `MutationErrorCode` to its `05` code and status, so a command that only uses existing
 codes adds nothing there. A new code needs its row in `05`, its engine value, its mapping and its row in `CommandErrorMappingTests`, which

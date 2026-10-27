@@ -17,13 +17,16 @@ namespace CityBuilder.Api.Endpoints;
 /// </summary>
 public static class CommandEndpoints
 {
-    /// <summary>Maps the commands on a <c>/commands</c> group of the <c>/api/v1</c> group, which requires an access token.</summary>
+    /// <summary>
+    /// Maps the commands on a <c>/commands</c> group of the <c>/api/v1</c> group, which requires an access token. Each declares its 200 body,
+    /// the snapshot, for the OpenAPI document: the handler writes it as text, which carries no schema of its own.
+    /// </summary>
     /// <param name="api">The <c>/api/v1</c> route group.</param>
     /// <returns>The <c>/commands</c> group.</returns>
     public static RouteGroupBuilder MapCommands(this RouteGroupBuilder api)
     {
         RouteGroupBuilder commands = api.MapGroup("/commands");
-        commands.MapPost("/place-building", PlaceBuildingAsync);
+        commands.MapPost("/place-building", PlaceBuildingAsync).Produces<CitySnapshot>(StatusCodes.Status200OK, "application/json");
         return commands;
     }
 
