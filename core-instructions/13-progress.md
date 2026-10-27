@@ -4,15 +4,15 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** AWAITING OWNER   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M0-26 · Command pipeline with idempotency (`[O]` `[PLAN]`)
 - **Branch:** `task/M0-26-command-pipeline` (from `main` = `48c7f84`)
 - **Build log entry:** `docs/build-log/2026/2026-10-27-04-M0-26.md` (In progress)
 - **Last green commit:** `main` = `48c7f84` (M0-25 merged; fast suite: Repository 22, Simulation 872, Domain 21, Application 47,
   IntegrationTests 144; Integration 42)
-- **Done steps:** start only (branch, entry with the plan and decisions 1-10 *proposed*, board)
-- **Next step:** the owner approves the plan (and picks decision 3: `json` or `jsonb` for `response_json`); record it under Owner input,
-  then step 1 of the plan (shared settle steps). Running the API locally needs `Auth:SigningKey` in user-secrets (`docs/getting-started.md`).
+- **Done steps:** start; the owner approved the plan (decision 3: `json`)
+- **Next step:** step 1 of the plan (shared settle steps out of `SettleCity`; its tests stay unchanged). Running the API locally needs
+  `Auth:SigningKey` in user-secrets (`docs/getting-started.md`).
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7
