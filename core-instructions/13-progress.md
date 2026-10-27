@@ -5,7 +5,7 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-26 · Command pipeline with idempotency; the owner merges its PR)
+- **Task:** — (last completed: M0-26 · Command pipeline with idempotency; PR #38, the owner merges it)
 - **Branch:** `task/M0-26-command-pipeline` (from `main` = `48c7f84`) until the owner merges
 - **Build log entry:** last: `docs/build-log/2026/2026-10-27-04-M0-26.md` (Done)
 - **Last green commit:** the head of `task/M0-26-command-pipeline` (Release build 0 warnings, format clean, fast suite: Repository 22,
