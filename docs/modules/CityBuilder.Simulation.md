@@ -34,7 +34,7 @@ The `.csproj` sits beside the package, not inside it: Unity imports every file o
 ## Content: data in, validated content out
 ```mermaid
 flowchart LR
-  J["JSON (server file, later GET /content)"] -->|"any JSON library"| D["GameContentData<br/>(Content.Data: settable, all optional)"]
+  J["JSON (server file, or GET /content on the client)"] -->|"any JSON library"| D["GameContentData<br/>(Content.Data: settable, all optional)"]
   D --> F["GameContentFactory.Create"]
   F --> SH{"shape phase<br/>missing · ids · kinds · bounds"}
   SH -- errors --> R1["GameContentResult: every shape error"]
@@ -249,4 +249,4 @@ too, but guards the Unity client's asmdefs and manifest, not the engine (see `do
   depend on `Dictionary` or `HashSet` order (`04` §9).
 - Content error messages are English text for content authors; only `ContentErrorCode` and `Path` are stable.
 
-Last updated: CR-0003-T1
+Last updated: M0-28

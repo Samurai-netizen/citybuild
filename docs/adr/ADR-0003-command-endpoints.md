@@ -39,6 +39,6 @@ Every player action is its **own HTTP endpoint**, `POST /api/v1/commands/<action
 - **Watch:** settle load from polling (each poll settles and writes, ADR-0002); snapshot size; whether 2 minutes is still enough once
   the market exists.
 - **As built (M0-26):** `GET /health`, the OpenAPI document in Development, the dev login (M0-25), and the pipeline every command endpoint
-  will call (`CommandPipeline`, M0-26). The city and content endpoints come in M0-28, the first command in M0-29 and client polling in M0-41.
+  will call (`CommandPipeline`, M0-26). The city and content endpoints (M0-28) follow, then the first command in M0-29 and client polling in M0-41.
 - **Reversal:** a push channel can be added later for notifications only (for example "your order was filled"), while commands stay
   HTTP. Merging the endpoints into one would be a breaking change (`/api/v2`).

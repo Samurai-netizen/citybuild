@@ -11,6 +11,7 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
+- [BL-20261027-06 · M0-28 · Content and city endpoints](2026/2026-10-27-06-M0-28.md) — In progress
 - [BL-20261027-05 · M0-27 · Idempotency integration tests](2026/2026-10-27-05-M0-27.md) — Done
 - [BL-20261027-04 · M0-26 · Command pipeline with idempotency](2026/2026-10-27-04-M0-26.md) — Done
 - [BL-20261027-03 · M0-25 · Development authentication](2026/2026-10-27-03-M0-25.md) — Done

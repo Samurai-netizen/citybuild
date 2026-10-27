@@ -27,7 +27,7 @@ public sealed class SettleCity(ICityTransactionRunner transactions, IContentProv
     /// <summary>Settles the player's city to now and stores it if anything changed.</summary>
     /// <param name="playerId">The acting player.</param>
     /// <param name="cancellationToken">Cancels the settle; nothing is committed then.</param>
-    /// <returns>The settled city, the settlement, and whether the city was saved.</returns>
+    /// <returns>The settled city, the settlement, whether the city was saved, and the server time.</returns>
     /// <exception cref="ConcurrencyConflictException">Another request held the city's lock for too long; nothing was committed.</exception>
     /// <exception cref="InvalidOperationException">The settlement doesn't account for the city's stock (an engine bug); nothing was
     /// committed.</exception>
@@ -37,11 +37,12 @@ public sealed class SettleCity(ICityTransactionRunner transactions, IContentProv
     /// <summary>Settles the locked city to now and, if anything changed, saves it with the settlement's ledger rows in its transaction.</summary>
     /// <param name="transaction">The acting player's city, locked.</param>
     /// <param name="cancellationToken">Cancels the save.</param>
-    /// <returns>The settled city, the settlement, and whether the city was saved.</returns>
+    /// <returns>The settled city, the settlement, whether the city was saved, and the server time.</returns>
     private async Task<SettleCityResult> SettleAsync(CityTransaction transaction, CancellationToken cancellationToken)
     {
         // Now is read under the lock: a request that waited for it settles from where the one before it ended.
-        CitySettler settler = CitySettler.Begin(transaction.City, _content.Content, _timeProvider.GetUtcNow());
+        DateTimeOffset now = _timeProvider.GetUtcNow();
+        CitySettler settler = CitySettler.Begin(transaction.City, _content.Content, now);
         Settlement settlement = settler.Close();
         bool changed = settler.Changed;
         if (changed)
@@ -50,6 +51,6 @@ public sealed class SettleCity(ICityTransactionRunner transactions, IContentProv
         }
 
         // Nothing changed: no save, so state_version, updated_at and the ledger stay; the runner commits the empty transaction.
-        return new SettleCityResult(transaction.City, settlement, changed);
+        return new SettleCityResult(transaction.City, settlement, changed, now);
     }
 }

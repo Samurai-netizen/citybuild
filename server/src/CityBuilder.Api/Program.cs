@@ -67,7 +67,7 @@ builder.Services.AddCityBuilderPersistence(services =>
 // The access tokens: every /api/v1 endpoint needs one, and the acting player comes only from it (core-instructions/07-security-model.md).
 builder.Services.AddCityBuilderAuthentication(builder.Configuration, builder.Environment);
 
-// The use cases, scoped like the city transaction they run in (one per request). GET /city maps SettleCity in M0-28; the command
+// The use cases, scoped like the city transaction they run in (one per request). GET /city runs SettleCity; the command
 // endpoints (M0-29 on) run every command through CommandPipeline.
 builder.Services.AddScoped<SettleCity>();
 builder.Services.AddScoped<CommandPipeline>();
@@ -114,5 +114,9 @@ if (auth.DevLoginEnabled && app.Environment.IsDevelopment())
 {
     api.MapDevLogin();
 }
+
+// The game endpoints: all of them require the token. The commands (M0-29 on) follow the content and the city.
+api.MapContent();
+api.MapCity();
 
 app.Run();

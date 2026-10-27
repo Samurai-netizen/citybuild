@@ -77,7 +77,7 @@ of `CityState`. Every resource it adds or takes must appear in the `SettlementRe
 which changes the report and ledger contract (`05`, `06`): that needs approval like any contract change.
 
 **6. Content, server and client.** Use the type in `server/content/mvp-content.json` only when the content design (`23`) does, with a new
-`contentVersion`. `GET /content` carries research effects to the client *(planned, M0-28 and M0-38)*, and the research screen describes each
+`contentVersion`. `GET /content` carries research effects to the client (M0-28; the client reads them in M0-38): the mapper (`ContentResponseMapper`) switches on the effect type, so a new type needs a wire shape there, and an unknown type throws, and the research screen describes each
 type *(planned, M0-52)*: both get the new type.
 
 ## Tests

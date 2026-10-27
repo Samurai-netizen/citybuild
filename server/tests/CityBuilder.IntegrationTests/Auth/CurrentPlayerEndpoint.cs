@@ -9,9 +9,9 @@ namespace CityBuilder.IntegrationTests.Auth;
 
 /// <summary>
 /// A test-only endpoint, <see cref="Path"/>, that requires an access token and answers with <see cref="ICurrentPlayer.PlayerId"/> as text:
-/// the token checks and the player resolution are tested over HTTP before the game endpoints that need a token exist (M0-28). It runs in
-/// front of the server's own pipeline, with its own routing, authentication and authorization over the server's services; a request to any
-/// other path goes on to the server.
+/// the token checks and the player resolution are tested over HTTP on their own, without a game endpoint or a database (the game
+/// endpoints' 401 answer is tested in <c>Contracts/</c>). It runs in front of the server's own pipeline, with its own routing,
+/// authentication and authorization over the server's services; a request to any other path goes on to the server.
 /// </summary>
 internal sealed class CurrentPlayerEndpoint : IStartupFilter
 {

@@ -5,23 +5,25 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-27 · Idempotency integration tests; PR #39, the owner merges it)
-- **Branch:** `task/M0-27-idempotency-integration-tests` (from `main` = `eebd488`) until the owner merges
-- **Build log entry:** last: `docs/build-log/2026/2026-10-27-05-M0-27.md` (Done)
-- **Last green commit:** the head of `task/M0-27-idempotency-integration-tests` (Release build 0 warnings, format clean, fast suite:
-  Repository 22, Simulation 872, Domain 21, Application 72, IntegrationTests 145; Integration 57 on `postgres:18.6`; handbook builds; check-docs OK)
-- **Done steps:** all of M0-27 (`IntegrationTests/Commands/`: idempotency, concurrency and rejection on PostgreSQL)
-- **Next step:** the owner merges the PR. Then `/start-task M0-28` (content and city endpoints, `[S]`); read the M0-27 entry's Follow-ups.
+- **Task:** — (last completed: M0-28 · Content and city endpoints; PR #40, the owner merges it)
+- **Branch:** `task/M0-28-content-and-city-endpoints` (from `main` = `10e4486`) until the owner merges
+- **Build log entry:** last: `docs/build-log/2026/2026-10-27-06-M0-28.md` (Done)
+- **Last green commit:** the head of `task/M0-28-content-and-city-endpoints` (Release build 0 warnings, format clean, fast suite: Repository 22,
+  Domain 21, Application 74, IntegrationTests 164, Simulation 872; Integration 61 on `postgres:18.6`; handbook builds; check-docs OK)
+- **Done steps:** all of M0-28 (`GET /content`, the 401 Problem Details, `GET /city`, the snapshot mapper, raw-JSON contract tests)
+- **Next step:** the owner merges the PR. Then `/start-task M0-29` (PlaceBuilding, `[O]`: `/model` → Opus 5.5); read the M0-28 entry's Follow-ups
+  (the snapshot mapper and `FakeCityStore` are ready for it).
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7
-  security alerts GitHub reports on `main`.
+  security alerts GitHub reports on `main`; M0-28 decision 14: the clock-behind warning that docs
+  promised for `GET /city` moved to M0-35 (settlement logging): fine, or do it earlier?
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 26 / 85
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 27 / 85
 
 | Area | State | Notes |
 |---|---|---|
@@ -30,7 +32,7 @@
 | Shared engine: invariants, performance | done | settlement window and production cap (M0-13) merged (PR #21); property test harness (M0-14, with engine fix CR-0001) merged (PR #22); invariant properties (M0-15) merged (PR #23); performance budget M0-16 merged (PR #24; worst case ~37 ms per advance in Release); display helpers M0-17 merged (PR #25); spec sync and ADRs M0-18 merged (PR #26) |
 | Server skeleton | done | M0-02 merged (PR #6) |
 | Persistence (EF + PostgreSQL) | done | M0-19 (EF Core model, migrations, Docker) merged (PR #31); repository and mapping M0-20 merged (PR #32); Testcontainers M0-21 merged (PR #33); locking M0-22 merged (PR #34); settle M0-23 merged (PR #35); M0-24 merged (PR #36) |
-| Auth + command pipeline | in progress | dev auth M0-25 merged (PR #37); the pipeline M0-26 merged (PR #38); its integration tests M0-27 in review |
+| Auth + command pipeline | in progress | dev auth M0-25 merged (PR #37); the pipeline M0-26 merged (PR #38); its integration tests M0-27 merged (PR #39); content and city endpoints M0-28 in review |
 | Commands: place / upgrade / assign workers / start research | not started | |
 | Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) and M0-05 (Unity tests, `test-unity.sh`) merged (PR #8, #12); networking is M0-37 |
 | Unity city view + placement | not started | |
