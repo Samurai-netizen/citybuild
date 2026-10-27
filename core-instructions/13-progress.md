@@ -5,7 +5,7 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-27 · Idempotency integration tests; PR open, the owner merges it)
+- **Task:** — (last completed: M0-27 · Idempotency integration tests; PR #39, the owner merges it)
 - **Branch:** `task/M0-27-idempotency-integration-tests` (from `main` = `eebd488`) until the owner merges
 - **Build log entry:** last: `docs/build-log/2026/2026-10-27-05-M0-27.md` (Done)
 - **Last green commit:** the head of `task/M0-27-idempotency-integration-tests` (Release build 0 warnings, format clean, fast suite:
