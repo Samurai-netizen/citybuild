@@ -1,7 +1,6 @@
 using System.Globalization;
 using CityBuilder.Application.Cities;
 using CityBuilder.Application.Persistence;
-using CityBuilder.Application.Players;
 using CityBuilder.Domain.Commands;
 using CityBuilder.Domain.Ledger;
 using CityBuilder.Domain.Players;
@@ -231,13 +230,7 @@ public sealed class CityTransactionDatabaseTests(PostgresServer server) : Postgr
     /// <summary>Stores a player and their new city (an insert: no lock to take), in a scope of its own.</summary>
     /// <param name="player">The player.</param>
     /// <param name="city">The player's new city.</param>
-    private async Task StoreAsync(Player player, CityAggregate city)
-    {
-        await using AsyncServiceScope scope = Factory.Services.CreateAsyncScope();
-        scope.ServiceProvider.GetRequiredService<IPlayerRepository>().Add(player);
-        scope.ServiceProvider.GetRequiredService<ICityRepository>().Save(city, [], receipt: null);
-        await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().SaveChangesAsync(TestContext.Current.CancellationToken);
-    }
+    private Task StoreAsync(Player player, CityAggregate city) => DatabaseCities.StoreAsync(Factory, player, city);
 
     /// <summary>The sample city's stored state version, read by a context of the test's own.</summary>
     /// <returns>The stored version.</returns>

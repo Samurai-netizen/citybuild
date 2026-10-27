@@ -3,6 +3,7 @@
 
 using CityBuilder.Api.Content;
 using CityBuilder.Api.Persistence;
+using CityBuilder.Application.Cities;
 using CityBuilder.Application.Content;
 using CityBuilder.Infrastructure.Content;
 using CityBuilder.Infrastructure.Persistence;
@@ -58,6 +59,9 @@ builder.Services.AddCityBuilderPersistence(services =>
     DatabaseOptions options = services.GetRequiredService<IOptions<DatabaseOptions>>().Value;
     return new PersistenceSettings(options.ConnectionString, options.LockTimeoutMilliseconds);
 });
+
+// The use cases, scoped like the city transaction they run in (one per request). GET /city maps SettleCity in M0-28.
+builder.Services.AddScoped<SettleCity>();
 
 var app = builder.Build();
 

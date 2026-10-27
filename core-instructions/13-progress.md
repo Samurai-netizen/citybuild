@@ -8,11 +8,12 @@
 - **Task:** M0-23 · Settle use case end to end (`[O]`)
 - **Branch:** `task/M0-23-settle-end-to-end` (from `main` = `9559f92`)
 - **Build log entry:** `docs/build-log/2026/2026-10-27-01-M0-23.md`
-- **Last green commit:** step 1's commit (build 0 errors, format clean, fast suite: Application 46, others unchanged)
+- **Last green commit:** step 2's commit (Release 0 warnings, format clean, fast suite green, Integration 30 on `postgres:18.6`)
 - **Steps:** 1. Application: `Settlement`, closing zero-length advance, ledger rows, save only when changed (fast tests) · 2. register
   `SettleCity`, `SettleCityDatabaseTests` on PostgreSQL · 3. docs, review, PR
-- **Done steps:** 1 (Application: `Settlement`, closing advance, ledger rows, save only when changed; Application tests 46)
-- **Next step:** step 2: register `SettleCity` in `Program.cs`, then `SettleCityDatabaseTests` (plan in the entry).
+- **Done steps:** 1 (Application: `Settlement`, closing advance, ledger rows, save only when changed; Application tests 46); 2 (`SettleCity`
+  registered, `SettleCityDatabaseTests` 7, Integration 30)
+- **Next step:** step 3: the Docs impact rows, then Definition of Done, self-review, PR.
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7
