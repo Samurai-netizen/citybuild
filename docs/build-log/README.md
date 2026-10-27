@@ -11,6 +11,7 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
+- [BL-20261027-03 · M0-25 · Development authentication](2026/2026-10-27-03-M0-25.md) — In progress
 - [BL-20261027-02 · M0-24 · Concurrency tests and persistence review](2026/2026-10-27-02-M0-24.md) — Done
 - [BL-20261027-01 · M0-23 · Settle use case end to end](2026/2026-10-27-01-M0-23.md) — Done
 - [BL-20261026-05 · M0-22 · Transaction boundary and locking](2026/2026-10-26-05-M0-22.md) — Done
