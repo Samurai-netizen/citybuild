@@ -1,6 +1,7 @@
-// Composition root of the server (core-instructions/03-architecture.md): hosting, logging, service registration and the startup steps
-// (content load; database settings and, in Development only, the migrations).
+// Composition root of the server (core-instructions/03-architecture.md): hosting, logging, service registration, authentication and the
+// startup steps (content load; database settings and, in Development only, the migrations).
 
+using CityBuilder.Api.Auth;
 using CityBuilder.Api.Content;
 using CityBuilder.Api.Persistence;
 using CityBuilder.Application.Cities;
@@ -60,6 +61,9 @@ builder.Services.AddCityBuilderPersistence(services =>
     return new PersistenceSettings(options.ConnectionString, options.LockTimeoutMilliseconds);
 });
 
+// The access tokens: every /api/v1 endpoint needs one, and the acting player comes only from it (core-instructions/07-security-model.md).
+builder.Services.AddCityBuilderAuthentication(builder.Configuration, builder.Environment);
+
 // The use cases, scoped like the city transaction they run in (one per request). GET /city maps SettleCity in M0-28.
 builder.Services.AddScoped<SettleCity>();
 
@@ -80,6 +84,13 @@ if (database.ApplyMigrationsAtStartup && app.Environment.IsDevelopment())
     string appliedList = appliedMigrations.Count == 0 ? "none" : string.Join(", ", appliedMigrations);
     DatabaseLog.MigrationsApplied(app.Logger, appliedMigrations.Count, appliedList);
 }
+
+// Check the authentication settings before the server accepts requests, as for the database: a missing or short signing key, or the dev
+// login on outside Development, stops the start here.
+AuthOptions auth = app.Services.GetRequiredService<IOptions<AuthOptions>>().Value;
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 if (app.Environment.IsDevelopment())
 {

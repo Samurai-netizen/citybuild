@@ -7,6 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup Label="Api">
+    <!-- Validates the access tokens (core-instructions/07-security-model.md); the same patch as the ASP.NET Core runtime. -->
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.12" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
     <!-- Design-time support for the dotnet-ef tool (migrations); the tool's own version is pinned in dotnet-tools.json at the repo root. -->
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.14" />
