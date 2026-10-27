@@ -53,7 +53,9 @@ flowchart LR
   for one (`pg_stat_activity`, `wait_event_type = 'Lock'`), never for a fixed time; hold the first with a `TaskCompletionSource` the
   test releases. For a lock timeout, derive a server with a short `Database:LockTimeoutMilliseconds` (`Factory.WithWebHostBuilder`).
 - Examples: `Persistence/CityRepositoryDatabaseTests` (repositories through the server), `Persistence/CityTransactionDatabaseTests`
-  (the runner: rollback, version check, two transactions on one city, lock timeout), `Persistence/ConstraintDatabaseTests` (rows
+  (the runner: rollback, version check, two transactions on one city, lock timeout), `Persistence/SettleCityDatabaseTests` (a use case
+  through the server: `DatabaseCities` stores and settles cities; a twin city settled another way is the expected result, and a second
+  `PostgresApiFactory` on the same database is a host restart), `Persistence/ConstraintDatabaseTests` (rows
   straight through a context, refused by PostgreSQL), `Persistence/MigrationDatabaseTests` (the startup migration on an empty database).
 
 ## Other test documents

@@ -138,7 +138,9 @@ frozen cycle counts as running (its inputs are refunded). Workers on a house are
 Returned with every settled snapshot: `elapsedSeconds` (the simulated seconds, ≥ 0), `productionSeconds` (= `min(elapsed, cap)`),
 `produced{item:qty}` (outputs of completed cycles), `consumed{item:qty}` (inputs of started cycles), `completedBuildings[id]` (constructions
 and upgrades), `completedResearch[id]`, `eraChanged` (false until the era transition, M2). Ids ascending, items in ordinal order.
-It is persisted as aggregated ledger entries (one per item and direction per settlement).
+It is persisted as aggregated ledger entries (one per item and direction per settlement). On the server a settlement is the window's
+advance plus the request's closing zero-length advance (§7), so production restarted at the end of a long window counts in its report and
+its ledger rows (`Settlement`, M0-23).
 
 ## 12. Performance budget
 Worst case: 64 producers with 10 s cycles over the full 8 h cap ≈ 184k events, plus timers. Their cycles end on all ten seconds of every
