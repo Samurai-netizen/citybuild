@@ -8,13 +8,14 @@
 - **Task:** M0-29 · PlaceBuilding (`[O]`, Opus 5.5)
 - **Branch:** `task/M0-29-place-building` (from `main` = `2095c58`)
 - **Build log entry:** `docs/build-log/2026/2026-10-27-07-M0-29.md`
-- **Last green commit:** the head of the branch, step 1 (Release build 0 warnings, format clean; fast suite: Repository 22, Domain 21,
-  Application 86, IntegrationTests 215, Simulation 872; Integration not run since `main`: 61)
+- **Last green commit:** the head of the branch, step 2 (Release build 0 warnings, format clean; fast suite: Repository 22, Domain 21,
+  Application 86, IntegrationTests 215, Simulation 872; Integration 76 on `postgres:18.6`)
 - **Steps:** 1 the command and its endpoint (with fast tests) · 2 integration tests on PostgreSQL over HTTP · 3 docs (`add-command.md`) ·
   4 finish
-- **Done steps:** start; 1 (`PlaceBuildingCommand`, `PlaceBuildingRequest`, `CommandEndpoints`, `CommandResponses`, fast tests)
-- **Next step:** step 2: `PlaceBuildingDatabaseTests` on PostgreSQL over HTTP (Docker running): success, the six codes, replay, conflict,
-  other player, settlement before mutation, auto-staffing seen in a later `GET /city`
+- **Done steps:** start; 1 (`PlaceBuildingCommand`, `PlaceBuildingRequest`, `CommandEndpoints`, `CommandResponses`, fast tests);
+  2 (`PlaceBuildingDatabaseTests`, 15 on PostgreSQL)
+- **Next step:** step 3: docs: `docs/how-to/add-command.md` (PlaceBuilding as the worked example), `05`, `07`, module docs, the other
+  Docs impact rows
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7
