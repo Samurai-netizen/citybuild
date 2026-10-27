@@ -5,7 +5,7 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-23 · Settle use case end to end; PR open, the owner merges it)
+- **Task:** — (last completed: M0-23 · Settle use case end to end; PR #35, the owner merges it)
 - **Branch:** `task/M0-23-settle-end-to-end` (from `main` = `9559f92`) until the owner merges
 - **Build log entry:** last: `docs/build-log/2026/2026-10-27-01-M0-23.md` (Done)
 - **Last green commit:** the head of `task/M0-23-settle-end-to-end` (Release build 0 warnings, format clean, fast suite: Repository 22,
