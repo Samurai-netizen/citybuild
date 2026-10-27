@@ -5,7 +5,7 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-24 · Concurrency tests and persistence review; the PR waits for the owner's merge)
+- **Task:** — (last completed: M0-24 · Concurrency tests and persistence review; PR #36, the owner merges it)
 - **Branch:** `task/M0-24-concurrency-persistence-review` (from `main` = `b5d814a`) until the owner merges
 - **Build log entry:** last: `docs/build-log/2026/2026-10-27-02-M0-24.md` (Done)
 - **Last green commit:** the head of `task/M0-24-concurrency-persistence-review` (Release build 0 warnings, format clean, fast suite:
