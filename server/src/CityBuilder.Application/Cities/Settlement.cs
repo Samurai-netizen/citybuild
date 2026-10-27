@@ -24,6 +24,8 @@ public sealed class Settlement
     {
         Id = id;
         Window = window;
+        Advance = advance;
+        Closing = closing;
         ElapsedSeconds = advance.ElapsedSeconds;
         ProductionSeconds = advance.ProductionSeconds;
         Produced = Sum(advance.Produced, closing.Produced);
@@ -32,6 +34,12 @@ public sealed class Settlement
         CompletedResearch = advance.CompletedResearch.Concat(closing.CompletedResearch).Distinct().Order().ToArray();
         EraChanged = advance.EraChanged || closing.EraChanged;
     }
+
+    /// <summary>The report of the advance by the window's elapsed seconds: what happened before a command's mutation.</summary>
+    internal SettlementReport Advance { get; }
+
+    /// <summary>The report of the closing zero-length advance: what happened after a command's mutation.</summary>
+    internal SettlementReport Closing { get; }
 
     /// <summary>The settlement's id: the <c>ref_id</c> of its ledger rows.</summary>
     public Guid Id { get; }
@@ -77,25 +85,9 @@ public sealed class Settlement
     {
         ArgumentNullException.ThrowIfNull(quantitiesBefore);
 
-        string refId = Id.ToString();
-        var entries = new List<LedgerEntry>();
-        foreach (ItemId item in Produced.Keys.Union(Consumed.Keys).Order())
-        {
-            long balance = quantitiesBefore.GetValueOrDefault(item);
-            if (Produced.TryGetValue(item, out long produced))
-            {
-                balance = checked(balance + produced);
-                entries.Add(new LedgerEntry(item, produced, balance, LedgerReason.SettlementProduced, LedgerRefType, refId));
-            }
-
-            if (Consumed.TryGetValue(item, out long consumed))
-            {
-                balance = checked(balance - consumed);
-                entries.Add(new LedgerEntry(item, -consumed, balance, LedgerReason.SettlementConsumed, LedgerRefType, refId));
-            }
-        }
-
-        return entries;
+        var writer = new LedgerWriter(quantitiesBefore);
+        writer.AddProduction(Produced, Consumed, LedgerRefType, Id.ToString());
+        return writer.Entries;
     }
 
     /// <summary>The per-item sum of two totals, in ordinal item order.</summary>
