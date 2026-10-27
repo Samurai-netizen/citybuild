@@ -8,11 +8,11 @@
 - **Task:** M0-27 · Idempotency integration tests (`[O]`)
 - **Branch:** `task/M0-27-idempotency-integration-tests` (from `main` = `eebd488`)
 - **Build log entry:** `docs/build-log/2026/2026-10-27-05-M0-27.md`
-- **Last green commit:** `main` = `eebd488` (M0-26 merged; Release build 0 warnings, fast suite and Integration 46 green there)
+- **Last green commit:** the head of the branch (build 0 warnings, format clean, `CommandIdempotencyDatabaseTests` 6 green)
 - **Planned steps:** 1 helpers (test command, writer, runner) · 2 sequential retry, host restart, conflicts, other player · 3 ten
   concurrent identical requests, receipt race on PostgreSQL · 4 rejection commits the settlement only · 5 docs and finish
-- **Done steps:** start
-- **Next step:** step 1 (`server/tests/CityBuilder.IntegrationTests/Commands/`)
+- **Done steps:** start; 1 and 2 (`IntegrationTests/Commands/`: helpers, `CommandIdempotencyDatabaseTests`, 6 green)
+- **Next step:** step 3 (ten concurrent identical requests behind the held lock; the receipt race on PostgreSQL)
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7
