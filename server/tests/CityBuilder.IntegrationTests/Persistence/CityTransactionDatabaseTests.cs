@@ -93,6 +93,36 @@ public sealed class CityTransactionDatabaseTests(PostgresServer server) : Postgr
     }
 
     /// <summary>
+    /// A rolled-back transaction leaves nothing staged in the request's context: after a save that failed (a conflict), a later save in the
+    /// same request writes nothing, so the failed city rows can't reach the database outside the transaction and without the lock.
+    /// </summary>
+    [Fact]
+    public async Task RunAsync_FailedSaveRolledBack_LeavesNothingForALaterSaveToWrite()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        await StoreSampleCityAsync();
+        await using AsyncServiceScope scope = Factory.Services.CreateAsyncScope();
+        CityBuilderDbContext db = scope.ServiceProvider.GetRequiredService<CityBuilderDbContext>();
+
+        await Assert.ThrowsAsync<ConcurrencyConflictException>(() => scope.ServiceProvider.GetRequiredService<ICityTransactionRunner>().RunAsync(
+            PlayerId,
+            async (transaction, ct) =>
+            {
+                await db.Database.ExecuteSqlAsync($"UPDATE cities SET state_version = state_version + 1 WHERE id = {CityId}", ct);
+                transaction.City.MarkSettled(transaction.City.LastSettledUnixSec + 60, transaction.City.ContentVersion);
+                await transaction.SaveAsync([new LedgerEntry(new ItemId("logs"), 1, 8, LedgerReason.SettlementProduced)], receipt: null, ct);
+                return 0;
+            },
+            cancellationToken));
+        Assert.False(db.ChangeTracker.HasChanges());
+        await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().SaveChangesAsync(cancellationToken);
+
+        Assert.Equal(_storedVersion, await StoredVersionAsync());
+        await using CityBuilderDbContext stored = Database.CreateContext();
+        Assert.Equal(0, await stored.LedgerEntries.CountAsync(cancellationToken));
+    }
+
+    /// <summary>
     /// Two transactions on one city run one after the other: while the first holds the lock, the second waits in PostgreSQL for it; once the
     /// first commits, the second gets the city as the first left it (its version and last settled second).
     /// </summary>

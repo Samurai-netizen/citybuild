@@ -64,17 +64,36 @@ public sealed class UnitOfWork(CityBuilderDbContext db, PersistenceSettings sett
             throw;
         }
 
-        return new Transaction(transaction);
+        return new Transaction(transaction, _db);
     }
 
-    /// <summary>The request's EF Core transaction as the Application's port: disposing it uncommitted rolls it back.</summary>
+    /// <summary>
+    /// The request's EF Core transaction as the Application's port: disposing it uncommitted rolls it back and clears what the context
+    /// tracks, so the writes of a failed save stay staged nowhere: a later save in the request would write them outside the transaction,
+    /// without the city's lock.
+    /// </summary>
     /// <param name="transaction">The transaction EF Core began.</param>
-    private sealed class Transaction(IDbContextTransaction transaction) : IUnitOfWorkTransaction
+    /// <param name="db">The request's context, whose tracked rows belong to the transaction.</param>
+    private sealed class Transaction(IDbContextTransaction transaction, CityBuilderDbContext db) : IUnitOfWorkTransaction
     {
-        /// <inheritdoc />
-        public Task CommitAsync(CancellationToken cancellationToken) => transaction.CommitAsync(cancellationToken);
+        /// <summary>Whether the commit succeeded.</summary>
+        private bool _committed;
 
         /// <inheritdoc />
-        public ValueTask DisposeAsync() => transaction.DisposeAsync();
+        public async Task CommitAsync(CancellationToken cancellationToken)
+        {
+            await transaction.CommitAsync(cancellationToken);
+            _committed = true;
+        }
+
+        /// <inheritdoc />
+        public async ValueTask DisposeAsync()
+        {
+            await transaction.DisposeAsync();
+            if (!_committed)
+            {
+                db.ChangeTracker.Clear();
+            }
+        }
     }
 }

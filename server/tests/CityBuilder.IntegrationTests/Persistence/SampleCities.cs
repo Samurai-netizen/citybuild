@@ -92,6 +92,36 @@ internal static class SampleCities
         return new CityAggregate(full.CityId, full.PlayerId, state, completedAt, full.LastSettledUnixSec, stateVersion, full.ContentVersion);
     }
 
+    /// <summary>
+    /// A city whose times, labor and quantities are all beyond 32 bits (above <see cref="int.MaxValue"/>), so only <c>bigint</c> columns keep
+    /// them: city clock 5 000 000 420, a constructing building, a producing one with a cycle of 5 000 000 000 worker-seconds, a frozen one,
+    /// 9 000 000 000 coins, <c>masonry</c> completed at 4 999 999 000 and <c>forestry</c> running, last settled at 3 000 000 000 (a server
+    /// second in 2065). Ids as in <see cref="Full"/>.
+    /// </summary>
+    public static CityAggregate BeyondThirtyTwoBits()
+    {
+        const long clock = 5_000_000_420;
+        Building[] buildings =
+        [
+            new(ConstructingId, new BuildingTypeId("cottage"), 0, 0, 1, 0, BuildingPhase.Constructing, clock - 20, clock + 3_000_000_000, 0, 0, 0, 0),
+            new(ProducingId, new BuildingTypeId("woodcutter"), 3, 0, 1, 2, BuildingPhase.Producing, clock - 100, clock - 20 + 2_000_000_000, 0,
+                5_000_000_000, 4_000_000_000, clock - 20),
+            new(FrozenId, new BuildingTypeId("quarry"), 0, 1, 1, 0, BuildingPhase.Producing, clock - 50, null, 0, 4_500_000_000, 4_400_000_000,
+                clock - 50),
+        ];
+        var state = new CityState(
+            clock,
+            era: 2,
+            nextBuildingId: 9,
+            [new(new ItemId("coins"), 9_000_000_000), new(new ItemId("logs"), 2_200_000_000)],
+            buildings,
+            [new ResearchId("masonry")],
+            new ActiveResearch(new ResearchId("forestry"), clock - 300, clock + 2_500_000_000));
+
+        return new CityAggregate(
+            CityId, PlayerId, state, [new(new ResearchId("masonry"), 4_999_999_000)], 3_000_000_000, 7, "content-1");
+    }
+
     /// <summary>The city as a load returns it after one save: the same values with the next state version.</summary>
     /// <param name="city">The city that was saved.</param>
     public static CityAggregate Saved(CityAggregate city) =>

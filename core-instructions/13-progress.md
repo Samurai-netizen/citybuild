@@ -8,11 +8,12 @@
 - **Task:** M0-24 · Concurrency tests and persistence review (`[O]`)
 - **Branch:** `task/M0-24-concurrency-persistence-review` (from `main` = `b5d814a`)
 - **Build log entry:** `docs/build-log/2026/2026-10-27-02-M0-24.md`
-- **Last green commit:** the head of the branch (Release build 0 warnings, format clean, fast suite green, Integration 34)
+- **Last green commit:** the head of the branch (Release build 0 warnings, format clean, fast suite green, Integration 36)
 - **Planned steps:** 1. concurrency tests (`ConcurrencyDatabaseTests`); 2. persistence audit and its gaps (a rollback leaves the context's
   writes staged: fix in `UnitOfWork`; values beyond 32 bits; wall-time types); 3. ADR-0009, docs, finish.
-- **Done steps:** 1 (`ConcurrencyDatabaseTests`, 4 tests; Integration 34)
-- **Next step:** step 2: the persistence audit, findings into the build log; fix the rollback gap in `UnitOfWork` with a test.
+- **Done steps:** 1 (`ConcurrencyDatabaseTests`, 4 tests); 2 (audit in the entry; rollback gap fixed in `UnitOfWork`; tests for 32 bits and CLR
+  types; Integration 36)
+- **Next step:** step 3: ADR-0009, its index row, decision 008's link, `06`, testing README, overview, `CHANGELOG`; then finish.
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7

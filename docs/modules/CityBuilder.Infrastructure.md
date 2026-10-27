@@ -26,7 +26,7 @@ ASP.NET Core endpoint types.
 | `Persistence/Mapping/LedgerMapping` | `ToRow` for a `LedgerEntry` (with its city) and a `CommandReceipt` (with its player), both stamped with a given wall time; `ReasonText(reason)`: the `06` text of each ledger reason (`STARTING_GRANT` …) |
 | `Persistence/Repositories/CityRepository` | `ICityRepository`: `LoadForUpdateAsync` locks the city row by player with `SELECT * FROM cities WHERE player_id = … FOR UPDATE` (the statement of `06`, not composed further), then loads its child rows, tracked, and maps them; it throws outside a transaction (the lock would end with the statement) and for a second city in one context, and a lock timeout becomes `ConcurrencyConflictException`; `Save` maps the city and merges the rows into the tracked ones (changed values written, new rows inserted, a used-up item set to 0, a building or research no longer in the state deleted), inserts a city it doesn't track with all its rows, writes `state_version + 1` (the loaded version stays EF's original value, the concurrency check), and adds the ledger rows and the receipt; `created_at`/`updated_at` from one reading of `TimeProvider` |
 | `Persistence/Repositories/PlayerRepository` | `IPlayerRepository`: `FindByDevNameAsync` (not tracked) and `Add` (stamps `created_at`) |
-| `Persistence/Repositories/UnitOfWork` | `IUnitOfWork`: one `SaveChangesAsync` of the request's context; a stale `state_version` (EF's `DbUpdateConcurrencyException`) or a lock timeout throws `ConcurrencyConflictException` with EF's exception inside. `BeginTransactionAsync` begins the request's one transaction (read committed, PostgreSQL's default) and sets its `lock_timeout` from the settings with `set_config('lock_timeout', …, true)`, for this transaction only |
+| `Persistence/Repositories/UnitOfWork` | `IUnitOfWork`: one `SaveChangesAsync` of the request's context; a stale `state_version` (EF's `DbUpdateConcurrencyException`) or a lock timeout throws `ConcurrencyConflictException` with EF's exception inside. `BeginTransactionAsync` begins the request's one transaction (read committed, PostgreSQL's default) and sets its `lock_timeout` from the settings with `set_config('lock_timeout', …, true)`, for this transaction only. Disposing the transaction without a commit rolls it back and clears the context's change tracker, so a failed save leaves nothing a later `SaveChangesAsync` could write outside the transaction (M0-24) |
 | `Persistence/LockTimeouts` | `IsLockTimeout(exception)`: whether the exception or one it wraps is PostgreSQL's `lock_not_available` (`55P03`) |
 | `Persistence/PersistenceSettings` | The connection string and the lock timeout in milliseconds, built by the Api from `ConnectionStrings:CityBuilder` and `Database:LockTimeoutMilliseconds` |
 | `Persistence/PersistenceServiceCollectionExtensions` | `AddCityBuilderPersistence(services, settings)`: the `PersistenceSettings` (singleton), the context on Npgsql, the three ports over it and Application's `ICityTransactionRunner`, all scoped, so a request's repositories, unit of work and runner share one context; the repositories take the `TimeProvider` the Api registers. The settings come from a callback, so this project reads no configuration |
@@ -60,7 +60,8 @@ No test project of its own; its tests are in `server/tests/CityBuilder.Integrati
 key, a wrong number type, a missing value and rule errors each fail as described above; every broken file is the real one with one change)
 and `InfrastructureDependencyTests` (the dependency rule). Persistence, still without a database: `Persistence/PersistenceModelTests` reads
 EF's relational model and checks every table, column (type, null rule), key, unique index, index, check, foreign key, the concurrency token,
-value generation and that every name is snake_case; `Persistence/MigrationTests` checks that no model change lacks a migration. `Persistence/CityMappingTests` (no database) maps the cities of
+value generation, that every name is snake_case, and the CLR types (wall times `DateTimeOffset` on `timestamptz`, no `DateTime`, `bigint` ↔
+`long`); `Persistence/MigrationTests` checks that no model change lacks a migration. `Persistence/CityMappingTests` (no database) maps the cities of
 `Persistence/SampleCities` (every phase, a frozen cycle, a cycle started at clock 0, completed and running research, era 2; a new empty city) to
 rows and back and compares every value, checks the columns of each phase, and rejects each kind of broken row.
 `Persistence/CityRepositoryTests` reads EF's change tracker after `Save` (no database), and checks that a load outside a transaction throws: a new city inserted with every row, a loaded city
@@ -69,15 +70,18 @@ ledger rows and the receipt stamped with now. `Persistence/PlayerAndLedgerPersis
 ports' registration.
 On real PostgreSQL (`Category=Integration`, Docker running; `docs/testing/README.md`): `Persistence/MigrationDatabaseTests` (the committed
 migrations on an empty database, once), `Persistence/CityRepositoryDatabaseTests` (through the server's registered ports, a scope per
-request, loads inside a transaction: the content's starter city and the full sample city save and load equal; a save writes every table; a
+request, loads inside a transaction: the content's starter city, the full sample city and one with every time, labor and quantity beyond 32 bits save and load equal; a save writes every table; a
 loaded city's changes merge, a used-up item staying as a 0 row; a stale `state_version` throws `ConcurrencyConflictException` with EF's
 exception inside), `Persistence/CityTransactionDatabaseTests` (the runner: an exception after the writes rolls back the city, the ledger and
-the receipt and frees the lock; a version changed without the lock is a conflict, rolled back; two transactions on one city serialize, the
+the receipt and frees the lock; a version changed without the lock is a conflict, rolled back, and leaves nothing staged for a later save; two transactions on one city serialize, the
 second seeing the first's commit; a lock wait beyond the timeout is a conflict caused by `55P03`; the default timeout is 3 s; a request can't
 lock a second city, through the runner or the repository; one transaction per request), `Persistence/SettleCityDatabaseTests` (`SettleCity`
 through the server: the starter city after 0 s, 30 s and 2 h, saved only when time passed; a 1-hour research left alone for 30 h, its
 `city_research` clock and the same ledger totals as a settle at 8 h 2 min; ledger sums equal the stock deltas over four settles; repeated settles
-at one instant change no row; a settle on a restarted host continues as one settle would; helpers in `Persistence/DatabaseCities`) and
+at one instant change no row; a settle on a restarted host continues as one settle would; helpers in `Persistence/DatabaseCities`),
+`Persistence/ConcurrencyDatabaseTests` (ADR-0009: 20 settles of one city queued behind its lock, at once or in waves while the clock moves
+on, end as one settle at the final time; settles and transactions of other cities never wait for a held lock; helpers in
+`Persistence/DatabaseLocks`) and
 `Persistence/ConstraintDatabaseTests` (the unique
 tile index, `quantity >= 0` and `assigned_workers >= 0` refuse broken rows, by constraint name).
 
@@ -87,4 +91,4 @@ tile index, `quantity >= 0` and `assigned_workers >= 0` refuse broken rows, by c
 - A deadlock (`40P01`) or a serialization failure isn't mapped to a conflict: with one row lock per transaction, taken first, neither can
   happen in M0. The market's lock ordering (M2, `06`) revisits it.
 
-Last updated: M0-23
+Last updated: M0-24

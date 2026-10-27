@@ -73,6 +73,26 @@ public sealed partial class PersistenceModelTests
             table.Columns.Select(c => (c.Name, c.StoreType, c.IsNullable)).OrderBy(c => c.Name, StringComparer.Ordinal));
     }
 
+    /// <summary>
+    /// Wall times are <see cref="DateTimeOffset"/> on <c>timestamp with time zone</c> columns, and no property is a <see cref="DateTime"/>, whose
+    /// kind could be local or unspecified: Npgsql writes a <see cref="DateTimeOffset"/> to <c>timestamptz</c> only with offset 0, so a wall time
+    /// that isn't UTC fails the write instead of being stored shifted (06: wall timestamps are UTC). Every <c>bigint</c> column (simulation
+    /// times, labor, quantities, the version, the ledger id) is a <see cref="long"/>, so no value is cut to 32 bits on the way.
+    /// </summary>
+    [Fact]
+    public void ClrTypes_Model_WallTimesAreUtcOffsetsAndBigintsAreLongs()
+    {
+        var properties = Model().GetEntityTypes().SelectMany(e => e.GetProperties()
+            .Select(p => (Name: $"{e.ClrType.Name}.{p.Name}", Type: Nullable.GetUnderlyingType(p.ClrType) ?? p.ClrType, Column: p.GetColumnType())))
+            .ToList();
+
+        Assert.DoesNotContain(properties, p => p.Type == typeof(DateTime));
+        Assert.All(properties.Where(p => p.Column == "timestamp with time zone"), p => Assert.Equal(typeof(DateTimeOffset), p.Type));
+        Assert.All(properties.Where(p => p.Type == typeof(DateTimeOffset)), p => Assert.Equal("timestamp with time zone", p.Column));
+        Assert.All(properties.Where(p => p.Column == "bigint"), p => Assert.Equal(typeof(long), p.Type));
+        Assert.All(properties.Where(p => p.Type == typeof(long)), p => Assert.Equal("bigint", p.Column));
+    }
+
     /// <summary>Each table's primary key is the key of 06, in that column order.</summary>
     /// <param name="tableName">The table.</param>
     /// <param name="keyColumns">Its key columns, comma-separated.</param>
