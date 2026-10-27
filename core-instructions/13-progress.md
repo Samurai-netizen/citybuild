@@ -4,15 +4,14 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-29 · PlaceBuilding; PR #41, the owner merges it)
-- **Branch:** `task/M0-29-place-building` (from `main` = `2095c58`) until the owner merges
-- **Build log entry:** last: `docs/build-log/2026/2026-10-27-07-M0-29.md` (Done)
-- **Last green commit:** the head of `task/M0-29-place-building` (Release build 0 warnings, format clean, fast suite: Repository 22,
-  Domain 21, Application 86, IntegrationTests 216, Simulation 872; Integration 76 on `postgres:18.6`; handbook builds; check-docs OK)
-- **Done steps:** all of M0-29 (`PlaceBuildingCommand`, `POST /api/v1/commands/place-building`, the outcome mapping, contract and
-  PostgreSQL tests, `docs/how-to/add-command.md`)
-- **Next step:** the owner merges the PR. Then `/start-task M0-30` (API attack review, `[O]`: Opus 5.5); read the M0-29 entry's Follow-ups.
+- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** M0-30 · API attack review (`[O]`: Opus 5.5)
+- **Branch:** `task/M0-30-api-attack-review` (from `main` = `184dd78`)
+- **Build log entry:** `docs/build-log/2026/2026-10-27-08-M0-30.md`
+- **Last green commit:** `184dd78` on `main` (Release build, fast suite: Repository 22, Domain 21, Application 86, IntegrationTests 216,
+  Simulation 872)
+- **Done steps:** start (branch, build log entry with plan and Docs impact, board `In progress`)
+- **Next step:** step 1 (fixes with in-memory `Security_` tests); then 2 (PostgreSQL attack tests), 3 (docs), 4 (finish). Plan in the entry.
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7
@@ -24,7 +23,7 @@
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 28 / 85
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 29 / 85
 
 | Area | State | Notes |
 |---|---|---|
@@ -33,8 +32,8 @@
 | Shared engine: invariants, performance | done | settlement window and production cap (M0-13) merged (PR #21); property test harness (M0-14, with engine fix CR-0001) merged (PR #22); invariant properties (M0-15) merged (PR #23); performance budget M0-16 merged (PR #24; worst case ~37 ms per advance in Release); display helpers M0-17 merged (PR #25); spec sync and ADRs M0-18 merged (PR #26) |
 | Server skeleton | done | M0-02 merged (PR #6) |
 | Persistence (EF + PostgreSQL) | done | M0-19 (EF Core model, migrations, Docker) merged (PR #31); repository and mapping M0-20 merged (PR #32); Testcontainers M0-21 merged (PR #33); locking M0-22 merged (PR #34); settle M0-23 merged (PR #35); M0-24 merged (PR #36) |
-| Auth + command pipeline | in progress | dev auth M0-25 merged (PR #37); the pipeline M0-26 merged (PR #38); its integration tests M0-27 merged (PR #39); content and city endpoints M0-28 merged (PR #40); PlaceBuilding M0-29 in review |
-| Commands: place / upgrade / assign workers / start research | in progress | place-building M0-29 in review (`docs/how-to/add-command.md`) |
+| Auth + command pipeline | in progress | dev auth M0-25 merged (PR #37); the pipeline M0-26 merged (PR #38); its integration tests M0-27 merged (PR #39); content and city endpoints M0-28 merged (PR #40); PlaceBuilding M0-29 merged (PR #41); attack review M0-30 in progress |
+| Commands: place / upgrade / assign workers / start research | in progress | place-building M0-29 merged (PR #41; `docs/how-to/add-command.md`) |
 | Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) and M0-05 (Unity tests, `test-unity.sh`) merged (PR #8, #12); networking is M0-37 |
 | Unity city view + placement | not started | |
 | Inspector, worker stepper, research screen, HUD | not started | |
