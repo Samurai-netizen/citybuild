@@ -10,7 +10,7 @@ public static class AuthServiceCollectionExtensions
     /// Registers <see cref="AuthOptions"/> (validated on start: a signing key of at least <see cref="AuthOptions.MinSigningKeyBytes"/>
     /// bytes, a lifetime in range, and the dev login on only in Development), <see cref="AccessTokens"/>, the JWT bearer handler as the
     /// default scheme with <see cref="AccessTokens.ValidationParameters"/>, authorization, and <see cref="ICurrentPlayer"/>. The handler keeps
-    /// the token's claim names (<c>sub</c> stays <c>sub</c>).
+    /// the token's claim names (<c>sub</c> stays <c>sub</c>), and a refused request gets <see cref="BearerChallenge"/>'s Problem Details answer.
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <param name="configuration">The app's configuration; the section <see cref="AuthOptions.SectionName"/> is bound.</param>
@@ -42,6 +42,7 @@ public static class AuthServiceCollectionExtensions
             {
                 jwt.MapInboundClaims = false;
                 jwt.TokenValidationParameters = tokens.ValidationParameters();
+                jwt.Events = new JwtBearerEvents { OnChallenge = BearerChallenge.WriteProblemAsync };
             });
         services.AddAuthorization();
 

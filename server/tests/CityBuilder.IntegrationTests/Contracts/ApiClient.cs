@@ -30,14 +30,24 @@ internal static class ApiClient
     /// <param name="path">The path and query, for example <c>/api/v1/content</c>.</param>
     /// <param name="playerId">The player to send a token for (the server's own <see cref="AccessTokens"/> issues it), or <see langword="null"/> for no token.</param>
     /// <returns>The response as the test saw it.</returns>
-    public static async Task<ApiResponse> GetAsync(WebApplicationFactory<Program> server, string path, Guid? playerId)
+    public static Task<ApiResponse> GetAsync(WebApplicationFactory<Program> server, string path, Guid? playerId) =>
+        GetAsync(
+            server,
+            path,
+            playerId is { } player
+                ? new AuthenticationHeaderValue("Bearer", server.Services.GetRequiredService<AccessTokens>().Issue(player).Token)
+                : null);
+
+    /// <summary>Sends a GET request with the given <c>Authorization</c> header, for the tests that attack the token check.</summary>
+    /// <param name="server">The server under test.</param>
+    /// <param name="path">The path and query.</param>
+    /// <param name="authorization">The header, or <see langword="null"/> for none.</param>
+    /// <returns>The response as the test saw it.</returns>
+    public static async Task<ApiResponse> GetAsync(WebApplicationFactory<Program> server, string path, AuthenticationHeaderValue? authorization)
     {
         using HttpClient client = server.CreateClient();
         using var request = new HttpRequestMessage(HttpMethod.Get, path);
-        if (playerId is { } player)
-        {
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", server.Services.GetRequiredService<AccessTokens>().Issue(player).Token);
-        }
+        request.Headers.Authorization = authorization;
 
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         using HttpResponseMessage response = await client.SendAsync(request, cancellationToken);
