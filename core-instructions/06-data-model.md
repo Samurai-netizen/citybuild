@@ -3,7 +3,8 @@
 > **Built so far:** the tables below, with their keys, constraints and foreign keys, as the EF Core model and the migration `InitialCreate`
 > (M0-19; `docs/modules/CityBuilder.Infrastructure.md`), and PostgreSQL 18.6 in Docker; the mapping to the engine's city state, the
 > repositories and the unit of work (M0-20); the row lock and the write transaction, `ICityTransactionRunner` (M0-22); the settle with its
-> ledger rows (M0-23); the first login's insert of a player and their city (M0-25). A task that builds a part updates this line.
+> ledger rows (M0-23); the first login's insert of a player and their city (M0-25); the command receipts, their lookup, a command's ledger
+> rows and the migration `ReceiptResponseAsJson` (M0-26). A task that builds a part updates this line.
 
 PostgreSQL is the only source of truth. Wall timestamps are `timestamptz` (UTC). Simulation times and labor
 are `bigint` city-clock seconds and worker-seconds. Quantities are `bigint`. Item, building, research and era ids are `text` from content.
@@ -17,7 +18,7 @@ are `bigint` city-clock seconds and worker-seconds. Quantities are `bigint`. Ite
 | `city_inventory` | `(city_id, item_id) pk`, `quantity bigint` | `check (quantity >= 0)` |
 | `city_buildings` | `(city_id, building_id) pk`, `type_id`, `x smallint`, `y smallint`, `level smallint`, `assigned_workers smallint`, `phase text`, `phase_started_at bigint null`, `phase_ends_at bigint null`, `target_level smallint null`, `cycle_labor bigint null`, `labor_remaining bigint null`, `segment_started_at bigint null` | `unique(city_id, x, y)`; checks: `x, y >= 0`, `level >= 1`, `assigned_workers >= 0`, `labor_remaining >= 0` |
 | `city_research` | `(city_id, research_id) pk`, `completed_at bigint` | completed nodes only |
-| `command_receipts` | `(player_id, request_id) pk`, `command_type`, `payload_hash bytea`, `response_json jsonb`, `created_at` | Successful commands only; cleanup job later |
+| `command_receipts` | `(player_id, request_id) pk`, `command_type`, `payload_hash bytea`, `response_json json`, `created_at` | Successful commands only; `json`, not `jsonb`, keeps the response text as written (decision 041); cleanup job later |
 | `ledger_entries` | `id bigint identity pk`, `city_id`, `item_id`, `delta bigint`, `balance_after bigint`, `reason text`, `ref_type text`, `ref_id text`, `created_at` | `index (city_id, created_at)` |
 
 Ledger reasons in M0: `STARTING_GRANT`, `SETTLEMENT_PRODUCED`, `SETTLEMENT_CONSUMED`, `COST_PLACE`, `COST_UPGRADE`,
@@ -25,7 +26,10 @@ Ledger reasons in M0: `STARTING_GRANT`, `SETTLEMENT_PRODUCED`, `SETTLEMENT_CONSU
 A settlement writes, per item in ordinal order, one `SETTLEMENT_PRODUCED` row (its total output) and then one `SETTLEMENT_CONSUMED` row
 (its total input, negative), with `ref_type` = `settlement` and `ref_id` = the settlement's id, a UUID v7 made for it (there is no
 settlements table). Each `balance_after` runs on from the quantity before the settlement, so produced first keeps every balance ≥ 0, and the
-last one of an item equals its stock.
+last one of an item equals its stock. A command's rows go between its settlement's, in the order things happened (decision 042): the
+advance's rows, then the command's (`REFUND_*`, then `COST_*`, each per item in ordinal order, `ref_type` = `command`, `ref_id` = the
+`requestId`), then the closing zero-length advance's `SETTLEMENT_*` rows, with the settlement's reference. The closing advance can consume
+what an upgrade refunded, so its rows never come first.
 
 Derived on load, never stored: reserved outputs, stall reasons, workers provided/free, builders busy, effective caps and labor.
 
@@ -67,7 +71,11 @@ COMMIT
   `state_version` and `updated_at` stay; the transaction commits empty. Repeated settles at one instant are free of writes.
 - **Business-rule rejection:** the settlement is committed (time passed is real), but there is no mutation and no receipt.
 - **Unexpected exception:** full rollback; nothing is committed.
-- **Unique violation on the receipt insert** (two identical requests raced): roll back, read the stored receipt, return it.
+- **Unique violation on the receipt insert** (two identical requests raced): roll back, read the stored receipt, return it (a different
+  payload hash: `IDEMPOTENCY_CONFLICT`; no receipt behind it: the exception propagates).
+- **As built (M0-26, `CommandPipeline`):** the runner has loaded the child rows with the lock before the receipt lookup runs; a replay or a
+  conflict stages nothing, so its commit is empty, the same as a rollback. A successful command always saves, receipt included, even when
+  its mutation changed nothing.
 - A lock wait timeout (configure ~3 s) → `CONCURRENCY_CONFLICT`; the client retries with the same `requestId`.
   Built as `Database:LockTimeoutMilliseconds` (default 3000), set per transaction as `lock_timeout`.
 - The `FOR UPDATE` lock is the primary guard. The `state_version` check is a second guard that turns any unlocked

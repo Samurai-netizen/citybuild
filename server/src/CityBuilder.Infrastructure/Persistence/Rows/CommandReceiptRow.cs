@@ -18,7 +18,7 @@ public sealed class CommandReceiptRow
     /// <summary><c>payload_hash</c>: the SHA-256 hash of the command's payload; a retry with another payload is a conflict.</summary>
     public byte[] PayloadHash { get; set; } = [];
 
-    /// <summary><c>response_json</c> (<c>jsonb</c>): the response the command returned.</summary>
+    /// <summary><c>response_json</c> (<c>json</c>, kept as written): the response the command returned.</summary>
     public string ResponseJson { get; set; } = string.Empty;
 
     /// <summary><c>created_at</c>: when the command succeeded (UTC).</summary>

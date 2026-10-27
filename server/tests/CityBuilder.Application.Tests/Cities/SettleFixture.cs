@@ -139,8 +139,9 @@ internal static class SettleFixture
     }
 
     /// <summary>
-    /// The fixture's content: a 4 × 4 grid, two houses (cottage and manor), the woodcutter, the sawmill (2 logs into 1 plank), and the
-    /// research <c>forestry</c> (−100 ‰ on the woodcutter's labor). Invalid content fails the test with every error.
+    /// The fixture's content: a 4 × 4 grid, two houses (cottage and manor), the woodcutter, the sawmill (2 logs into 1 plank; a level 2 for
+    /// 10 coins and 60 s, for the upgrade tests), and the research <c>forestry</c> (−100 ‰ on the woodcutter's labor). Invalid content fails the
+    /// test with every error.
     /// </summary>
     private static GameContent CreateContent()
     {
@@ -191,6 +192,11 @@ internal static class SettleFixture
                         new BuildingLevelData
                         {
                             Level = 1, MaxWorkers = 1,
+                            Recipe = new RecipeData { Inputs = new() { ["logs"] = 2 }, Outputs = new() { ["planks"] = 1 }, Labor = 2 * CycleSeconds },
+                        },
+                        new BuildingLevelData
+                        {
+                            Level = 2, MaxWorkers = 1, UpgradeCost = new() { ["coins"] = 10 }, UpgradeSeconds = CycleSeconds,
                             Recipe = new RecipeData { Inputs = new() { ["logs"] = 2 }, Outputs = new() { ["planks"] = 1 }, Labor = 2 * CycleSeconds },
                         },
                     ],

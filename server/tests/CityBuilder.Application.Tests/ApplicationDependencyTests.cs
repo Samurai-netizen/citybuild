@@ -1,5 +1,6 @@
 using System.Reflection;
 using CityBuilder.Application.Cities;
+using CityBuilder.Application.Commands;
 using CityBuilder.Application.Content;
 using CityBuilder.Application.Players;
 
@@ -39,6 +40,17 @@ public sealed class ApplicationDependencyTests
     public void Types_OfApplication_OnlyTheRunnerDependsOnTheCityRepository()
     {
         Assert.Empty(HoldersOf(typeof(ICityRepository), typeof(CityTransactionRunner), typeof(CityTransaction)));
+    }
+
+    /// <summary>
+    /// Only <see cref="SettleCity"/> and <see cref="CommandPipeline"/> hold an <see cref="ICityTransactionRunner"/>: a command reaches a city
+    /// only through the pipeline (it implements <see cref="ICityCommand"/> and never sees the transaction), so no command can write without
+    /// the receipt check, the settle and the receipt (ADR-0004).
+    /// </summary>
+    [Fact]
+    public void Types_OfApplication_OnlyTheSettleAndThePipelineDependOnTheRunner()
+    {
+        Assert.Empty(HoldersOf(typeof(ICityTransactionRunner), typeof(SettleCity), typeof(CommandPipeline)));
     }
 
     /// <summary>

@@ -60,6 +60,10 @@ flowchart LR
   and answers with the acting player.
 - A race between two inserts of one key: hold the first in a transaction of the test's own (insert, `SaveChangesAsync`, no commit), start
   the second request, wait until PostgreSQL shows it waiting on the unique index, then commit (`PostDevLogin_SameNameCommittedFirstByAnotherRequest_ReturnsThatPlayer`).
+- A command without an endpoint (until M0-29): resolve `CommandPipeline` from a request scope and pass it a command and a response
+  writer, as the Application tests do (`CityBuilder.Application.Tests`, `Commands/PipelineFixture`, with test commands that call the
+  engine's rules). There, `InMemoryCityRepository` keeps receipts with a unique key, and `BeforeNextWrite` lets another request commit
+  between a lookup and a write: the receipt race without threads.
 - Many requests at once: queue them behind a lock the test holds and wait until PostgreSQL shows them all waiting, so they really contend.
   A free race of `Task.Run` calls may never overlap and then proves nothing (M0-24, decision 1). To show that requests don't wait for
   each other, run them on a server with a lock timeout of a few hundred milliseconds: a wait then fails the test.
@@ -69,7 +73,9 @@ flowchart LR
   `PostgresApiFactory` on the same database is a host restart), `Persistence/ConcurrencyDatabaseTests` (20 settles of one city end as
   one settle; other cities never wait; ADR-0009), `Auth/DevLoginDatabaseTests` (over HTTP: rows of the first login, the race),
   `Persistence/ConstraintDatabaseTests` (rows
-  straight through a context, refused by PostgreSQL), `Persistence/MigrationDatabaseTests` (the startup migration on an empty database).
+  straight through a context, refused by PostgreSQL), `Persistence/MigrationDatabaseTests` (the startup migration on an empty database; a row stored under
+  an earlier migration, kept by a later one), `Persistence/CommandReceiptRepositoryDatabaseTests` (a receipt saved with its city, found
+  as written).
 
 ## Other test documents
 - `UNITY-SMOKE-TEST.md`: the manual smoke test of a real build *(planned, M0-72)*.

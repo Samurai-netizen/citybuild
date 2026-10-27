@@ -1,6 +1,8 @@
 using CityBuilder.Application.Cities;
+using CityBuilder.Application.Commands;
 using CityBuilder.Application.Persistence;
 using CityBuilder.Application.Players;
+using CityBuilder.Domain.Commands;
 using CityBuilder.Domain.Ledger;
 using CityBuilder.Domain.Players;
 using CityBuilder.Infrastructure.Persistence;
@@ -13,8 +15,8 @@ using Microsoft.Extensions.DependencyInjection;
 namespace CityBuilder.IntegrationTests.Persistence;
 
 /// <summary>
-/// The rest of the persistence step without a database: the ledger reasons' texts, what <see cref="PlayerRepository.Add"/> stages, and
-/// the registration of the ports in the server.
+/// The rest of the persistence step without a database: the ledger reasons' texts, a receipt's mapping and back, what
+/// <see cref="PlayerRepository.Add"/> stages, and the registration of the ports in the server.
 /// </summary>
 public sealed class PlayerAndLedgerPersistenceTests
 {
@@ -39,6 +41,19 @@ public sealed class PlayerAndLedgerPersistenceTests
         Assert.Equal(7, Enum.GetValues<LedgerReason>().Length);
     }
 
+    /// <summary>A receipt mapped to its row and back is the same receipt: request id, command type, hash and response text.</summary>
+    [Fact]
+    public void ToReceipt_RowOfAReceipt_GivesTheReceiptBack()
+    {
+        byte[] hash = Enumerable.Range(0, CommandReceipt.PayloadHashLength).Select(value => (byte)value).ToArray();
+        var receipt = new CommandReceipt(new Guid("0b7e9c4a-0000-4000-8000-0000000000b1"), "place-building", hash, "{\"b\": 1}");
+
+        CommandReceipt back = LedgerMapping.ToReceipt(LedgerMapping.ToRow(Guid.NewGuid(), receipt, DateTimeOffset.UnixEpoch));
+
+        Assert.Equal((receipt.RequestId, receipt.CommandType, receipt.ResponseJson), (back.RequestId, back.CommandType, back.ResponseJson));
+        Assert.Equal(hash, back.PayloadHash.ToArray());
+    }
+
     /// <summary>A new player is staged as an insert with its id, name and now as <c>created_at</c>.</summary>
     [Fact]
     public void Add_NewPlayer_StagesItsRowWithNow()
@@ -53,7 +68,7 @@ public sealed class PlayerAndLedgerPersistenceTests
         Assert.Equal((id, "dev1", now), (row.Id, row.DevName, row.CreatedAt));
     }
 
-    /// <summary>The server resolves the three ports to the Infrastructure classes, scoped: within one request scope they share one context.</summary>
+    /// <summary>The server resolves the ports to the Infrastructure classes, scoped: within one request scope they share one context.</summary>
     [Fact]
     public void AddCityBuilderPersistence_InTheServer_RegistersThePortsScoped()
     {
@@ -64,6 +79,7 @@ public sealed class PlayerAndLedgerPersistenceTests
         Assert.IsType<CityRepository>(services.GetRequiredService<ICityRepository>());
         Assert.IsType<PlayerRepository>(services.GetRequiredService<IPlayerRepository>());
         Assert.IsType<UnitOfWork>(services.GetRequiredService<IUnitOfWork>());
+        Assert.IsType<CommandReceiptRepository>(services.GetRequiredService<ICommandReceiptRepository>());
         Assert.Same(services.GetRequiredService<ICityRepository>(), services.GetRequiredService<ICityRepository>());
         Assert.Same(services.GetRequiredService<CityBuilderDbContext>(), services.GetRequiredService<CityBuilderDbContext>());
     }

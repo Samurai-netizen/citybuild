@@ -20,7 +20,8 @@ and every 2 minutes in the foreground. Every command response carries the full a
 3. `BEGIN` → `SELECT … FOR UPDATE` on the player's own city row → load buildings, inventory and research
    (`ICityTransactionRunner`, the only way a use case reaches a city; `06` → write transaction pattern).
 4. Commands only: look up `(PlayerId, requestId)`. If found with the same payload hash, return the stored
-   response and roll back. If found with a different hash → `IDEMPOTENCY_CONFLICT`.
+   response and roll back. If found with a different hash → `IDEMPOTENCY_CONFLICT`. Steps 2 and 4 to 8 of a command are
+   `CommandPipeline` (M0-26), the only thing that runs a command.
 5. **Settle:** `Simulator.Advance(city, nowSec − LastSettledUnixSec)` → settlement report.
    (Later: mailbox deliveries are passed in as timed events, see `04` §13.)
 6. Commands only: apply the mutation via engine rules. On a rule failure, return the error code;

@@ -38,7 +38,7 @@ Use these names in code, docs and UI text. Consistent words keep Claude and the 
 | Production cap | Max seconds per settlement during which cycles may start | `Rules.MaxOfflineProductionSeconds` |
 | Dormant tail | Part of a settlement after the production cap: timers run, no new cycles | — |
 | Settlement report | What happened during a settle | `SettlementReport` |
-| Settlement | One settle on the server: the window's advance and the closing zero-length advance, with its id, totals and ledger rows (`ref_type` `settlement`) | `Settlement`, `SettleCityResult` |
+| Settlement | One settle on the server: the window's advance and the closing zero-length advance (a command's mutation runs between them), with its id, totals and ledger rows (`ref_type` `settlement`) | `Settlement`, `SettleCityResult`, `CitySettler` |
 | Zero-length advance | `Advance(city, 0)`: start eligible cycles at the current clock | `Simulator.Advance(city, content, 0)` |
 | Content | All game definitions loaded from JSON: as read, and validated (only the factory makes the latter) | `GameContentData`, `GameContent`, `GameContentFactory`, `contentVersion`; on the server `IContentProvider`, `ContentFileLoader`, `Content:FilePath` |
 | Content error | One problem found when content loads: a stable code, the path in the JSON, a message (`04` §14) | `ContentError`, `ContentErrorCode` |
@@ -48,6 +48,8 @@ Use these names in code, docs and UI text. Consistent words keep Claude and the 
 | Mutation | The engine's rule for one command, applied at the city clock: `Ok`, or rejected with a code and no change (`04` §8) | `CityRules`, `MutationResult`, `MutationErrorCode` |
 | Request id | Client UUID for idempotent retries | `RequestId` |
 | Receipt | Stored response of a successful command | `CommandReceipt` |
+| Command pipeline | The one path every command takes: shape check, own-city lock, receipt check, settle, mutation, closing advance, one save with the ledger and the receipt (`03`, request lifecycle) | `CommandPipeline`, `ICityCommand` |
+| Canonical payload | The command type and the command's data in a fixed form, whose SHA-256 a receipt keeps: the same request id with another payload is a conflict (`05`, idempotency rules) | `CommandPayload` |
 | Ledger entry | Audit row for one item change | `LedgerEntry` |
 | Snapshot | Full authoritative city state sent to the client | `CitySnapshotDto` |
 | State version | Counter incremented on every persisted change | `StateVersion` |

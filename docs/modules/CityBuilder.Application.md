@@ -6,11 +6,12 @@
 
 > *Growing.* The ports `IContentProvider` (M0-07b), `ICityRepository`, `IPlayerRepository` and `IUnitOfWork` (M0-20) exist, the city
 > transaction `ICityTransactionRunner` (M0-22), and the settle use case `SettleCity` on it (M0-13, complete with M0-23); the dev login
-> `DevLogin`, `ICurrentPlayer` and `INewCityRepository` (M0-25). The commands and the command pipeline follow *(planned, M0-26 on)*.
+> `DevLogin`, `ICurrentPlayer` and `INewCityRepository` (M0-25); the command pipeline `CommandPipeline` with `ICityCommand` and the receipt
+> port, and the settle's steps shared with it, `CitySettler` (M0-26). The commands themselves follow *(planned, M0-29 on)*.
 
 ## Purpose
 The use cases (`SettleCity`, `DevLogin`, `PlaceBuilding`, `UpgradeBuilding`, `AssignWorkers`, `StartResearch`), the ports they
-need (`ICityRepository`, `IUnitOfWork`, `IContentProvider`) and the command pipeline, as described in
+need (`ICityRepository`, `IUnitOfWork`, `IContentProvider`, `ICommandReceiptRepository`) and the command pipeline, as described in
 `core-instructions/03-architecture.md`. It decides what happens; it doesn't know about HTTP or databases.
 
 ## Key types
@@ -21,7 +22,7 @@ need (`ICityRepository`, `IUnitOfWork`, `IContentProvider`) and the command pipe
 | `Cities/ICityRepository` | The port to the stored cities: `LoadForUpdateAsync(playerId)` locks the city row for the rest of the transaction and loads it (every player has a city; outside a transaction, or for a second city, it throws) and `Save(city, ledger, receipt)`, which only stages the city, its `LedgerEntry` rows and the optional `CommandReceipt`; a city the repository didn't load is inserted. Implemented by `CityRepository` in Infrastructure. Only the runner uses it |
 | `Cities/ICityTransactionRunner`, `Cities/CityTransactionRunner` | The one way a use case changes a city (`06`, write transaction pattern): `RunAsync(playerId, work)` begins the transaction (`IUnitOfWork.BeginTransactionAsync`), locks and loads the acting player's city, runs the work, and commits when it returns; any exception rolls everything back and propagates. Scoped, one per request, and it runs once: a second or nested run throws before it locks anything, so a request never locks a second city. Registered by Infrastructure's `AddCityBuilderPersistence` |
 | `Cities/CityTransaction` | What the work gets: the locked `City` and `SaveAsync(ledger, receipt)`, which stages the city and writes it inside the transaction (`state_version` + 1), once; after the work ends it throws |
-| `Persistence/ConcurrencyConflictException` | Another request got in the way: the lock wasn't granted within the lock timeout, or the stored `state_version` wasn't the loaded one. Nothing was committed; the API answers `CONCURRENCY_CONFLICT` (`05`; the mapping comes with the command pipeline, M0-26, and the catalogue, M0-34) |
+| `Persistence/ConcurrencyConflictException` | Another request got in the way: the lock wasn't granted within the lock timeout, or the stored `state_version` wasn't the loaded one. Nothing was committed; the API answers `CONCURRENCY_CONFLICT` (`05`; the mapping comes with the error catalogue, M0-34); the pipeline lets it propagate |
 | `Players/IPlayerRepository` | The port to the stored players: `FindByDevNameAsync(devName)` and `Add(player)` (staged), for the dev login. Implemented by `PlayerRepository` in Infrastructure |
 | `Players/ICurrentPlayer` | The acting player of the request: `PlayerId`, taken only from the verified access token (never a body); it throws when the request has no verified token. Implemented by `HttpCurrentPlayer` in the Api |
 | `Players/DevLogin`, `Players/DevLoginResult` | The dev login (Development only, `05`): `IsValidDisplayName(name)` (1 to 32 ASCII letters, digits, `_`, `-`, `.`; compared exactly); `ExecuteAsync(displayName)` returns the player of the name and whether this login created them. The first login creates, in one transaction (`IUnitOfWork`), the player, the starter city (`CityFactory.CreateStarterCity`, clock 0, settled at the server's second, the content's version; ids UUID v7) through `INewCityRepository`, and one `STARTING_GRANT` ledger entry per item of the starting stock. A first login that loses a race on the name (`DuplicateKeyException`) returns the winner's player |
@@ -29,6 +30,12 @@ need (`ICityRepository`, `IUnitOfWork`, `IContentProvider`) and the command pipe
 | `Persistence/DuplicateKeyException` | A unique constraint refused a write: another request committed the same key first. The loser's transaction is rolled back; the use case reads what the winner stored |
 | `Persistence/IUnitOfWork`, `Persistence/IUnitOfWorkTransaction` | `SaveChangesAsync()` writes everything the repositories staged, together (a stale version or a lock timeout throws `ConcurrencyConflictException`, a unique violation `DuplicateKeyException`); `BeginTransactionAsync()` begins the request's one transaction with the configured lock timeout and returns it: `CommitAsync()` commits, disposing it uncommitted rolls back and leaves nothing staged for a later save. Implemented by `UnitOfWork` in Infrastructure |
 | `Cities/SettleCity`, `Cities/SettleCityResult` | `ExecuteAsync(playerId)`: in the city's transaction (`ICityTransactionRunner`), floors the `TimeProvider`'s now (read under the lock) to whole Unix seconds, computes the `SettlementWindow` from the last settled second, advances the city (`CityAggregate.Advance`) by its elapsed seconds, records the new last settled second and the content version, and runs the closing zero-length advance (`04` §7), which restarts production after a window longer than the cap. Only if anything changed (the last settled second, the content version, the totals, or a building, compared field by field) it saves the city with the settlement's ledger rows (`CityTransaction.SaveAsync`, so `state_version` + 1); otherwise the transaction commits without a write. Before the save it checks that each item's last ledger balance is the city's stock (an engine bug would throw and commit nothing). The result carries the city, the `Settlement` and `Saved`; `Settlement.Window.IsClockBehind` calls for the warning of `04` §1, which the endpoint logs (M0-28) |
+| `Cities/CitySettler` (internal), `Cities/LedgerWriter` (internal) | The settle's steps, shared by `SettleCity` and `CommandPipeline`, in a fixed order: `Begin(city, content, now)` records the city and advances it by the window; `RecordCommand(applied, costReason, refundReason, requestId)` takes an applied mutation's refunds and costs (once); `Close()` runs the closing zero-length advance and gives the `Settlement`; then `Changed` and `LedgerEntries()`, which first checks the stock adds up (with the command's lines) and then writes the rows in the order things happened: without a command one row per item and direction, with one the advance's rows, the command's (`ref_type` `command`, `ref_id` the request id; refunds before costs), then the closing advance's (`06`, decision 042). `LedgerWriter` keeps the running balances and leaves out a change of 0 |
+| `Commands/ICityCommand` | A command: `RequestId`, `CommandType` (stored in the receipt), `CostReason`, `RefundReason`, `ValidateShape()` (null or the `INVALID_ARGUMENT` detail) and `Apply(state, content)`, the mutation through `CityRules`. It never sees the transaction or a repository. Implement it as an immutable record whose properties are its data |
+| `Commands/CommandPayload` | `Canonical(command)`: the command type, `\n`, and the command's data as JSON with its properties in ordinal name order (the members of `ICityCommand` other than `RequestId` left out); `Hash(command)`: SHA-256 of its UTF-8 bytes (decision 042; a test pins the value) |
+| `Commands/CommandPipeline` | `ExecuteAsync(playerId, command, writeResponse)`: the shape check (an empty request id too) before the database; the city's transaction; the receipt lookup under the lock (same hash → `Replayed` with the stored text, another → `IdempotencyConflict`, both before the settle and writing nothing); the settle (`CitySettler`); `command.Apply`; on a rejection the closing advance, a save of the settlement only if it changed, no receipt (`Rejected` with the `MutationErrorCode`); otherwise the closing advance, the response from `writeResponse` (inside the transaction) and one save of the city, its ledger and the receipt (`Succeeded`). A `DuplicateKeyException` on the save reads the stored receipt after the rollback and answers from it (none: rethrown). Scoped; registered by the Api |
+| `Commands/CommandResult`, `Commands/CommandOutcome`, `Commands/CommandSuccess` | The pipeline's answer: `Outcome` (`Succeeded`, `Replayed`, `Rejected`, `InvalidArgument`, `IdempotencyConflict`) with `ResponseJson`, `ErrorCode` or `Detail`. `CommandSuccess` is what the response writer gets: request id, the saved city, the settlement, the new state version, the server time |
+| `Commands/ICommandReceiptRepository` | The port that reads a receipt: `FindAsync(playerId, requestId)` (the key includes the player). Implemented by `CommandReceiptRepository` in Infrastructure; receipts are written with the city (`CityTransaction.SaveAsync`) |
 | `Cities/Settlement` | One settlement: the window's advance and the closing zero-length advance as one. Its `Id` (a UUID v7 per settlement), `Window`, `ElapsedSeconds`, `ProductionSeconds`, and the totals of both advances (`Produced`, `Consumed`, `CompletedBuildings`, `CompletedResearch`, `EraChanged`; `IsEmpty`). `LedgerEntries(quantitiesBefore)` gives its ledger rows: per item in ordinal order `SETTLEMENT_PRODUCED`, then `SETTLEMENT_CONSUMED` (a negative delta), each balance running on from the quantity before; `ref_type` `settlement` (`LedgerRefType`), `ref_id` the id (`06`) |
 
 ## Rules and invariants
@@ -37,7 +44,10 @@ need (`ICityRepository`, `IUnitOfWork`, `IContentProvider`) and the command pipe
 - Use cases get content only through `IContentProvider`, never by reading a file; the content never changes while the server runs.
 - A use case changes a city only through `ICityTransactionRunner`, which locks only the acting player's city, once per request (`06`,
   lock ordering). `ApplicationDependencyTests` checks that no Application type but the runner and its `CityTransaction` holds an
-  `ICityRepository`, and that only `DevLogin` holds `INewCityRepository` (the insert of a new city, the one write without the lock).
+  `ICityRepository`, that only `DevLogin` holds `INewCityRepository` (the insert of a new city, the one write without the lock), and that
+  only `SettleCity` and `CommandPipeline` hold `ICityTransactionRunner`.
+- A command changes a city only through `CommandPipeline` (ADR-0004): it implements `ICityCommand` and gets the state and the content,
+  nothing that writes. A successful command always saves, its receipt included; a rejection never stores a receipt.
 - The acting player comes only from `ICurrentPlayer`, never from a request body (`07`).
 - Time comes only from an injected `TimeProvider`, never `DateTime.UtcNow` (`.claude/rules/server.md`). Now is floored to whole seconds
   (`ToUnixTimeSeconds`), and every settle starts where the last one ended, so the dropped fractions are counted by a later settle, never lost
@@ -47,14 +57,21 @@ need (`ICityRepository`, `IUnitOfWork`, `IContentProvider`) and the command pipe
 - Warnings are errors (`server/Directory.Build.props`, `src/` projects).
 
 ## How to extend
-- New command: recipe "New command" in `core-instructions/19-change-recipes.md`
-  (`Commands/<Name>/`: command, handler, validator).
+- New command: recipe "New command" in `core-instructions/19-change-recipes.md` (`Commands/<Name>/`): a record implementing `ICityCommand`
+  whose `Apply` calls the engine rule; the endpoint passes it to `CommandPipeline` with the snapshot writer. No handler of its own.
 - A new port is an interface here, in a folder named after its feature (like `Content/`), implemented in `CityBuilder.Infrastructure`
   (`14`: interfaces only at layer boundaries).
 
 ## Tests
 `server/tests/CityBuilder.Application.Tests` (xUnit v3, milliseconds; use cases with fakes). It checks the dependency rule, on the
-assembly of `IContentProvider`, that only the runner holds `ICityRepository`, and that only `DevLogin` holds `INewCityRepository`. `Cities/CityTransactionRunnerTests` checks the
+assembly of `IContentProvider`, that only the runner holds `ICityRepository`, that only `DevLogin` holds `INewCityRepository`, and that
+only `SettleCity` and `CommandPipeline` hold the runner. `Commands/` covers the pipeline on the fakes: `CommandPayloadTests` (the canonical
+text, the hash pinned to a value computed with `shasum`, declaration order, another value or type), `CommandPipelineTests` (the order of the
+steps, the receipt, what the response writer gets, the cost after the settlement's rows), `CommandPipelineIdempotencyTests` (replay, conflicts,
+another player's request id, the receipt race won by the same or another payload, a duplicate key without a receipt) and
+`CommandPipelineRuleTests` (shape, empty request id, a rejection commits only the settlement, a retried rejection runs again, settle before
+mutation, a refund the closing advance consumes). `PipelineFixture` runs the pipeline over the fakes with two test commands
+(`PlaceTestCommand`, `UpgradeTestCommand`) and a response writer that records `respond`. `Cities/CityTransactionRunnerTests` checks the
 transaction's lifecycle on the fakes: begin, lock and load, work, write, commit in that order; a commit without writes when nothing was
 saved; a rollback after an exception, a conflict or a failed load; one save per transaction, none after the work; a second or nested run
 throwing before it locks anything. `SettleCity` in `Cities/SettleCityTests` with `FakeTimeProvider` (`Microsoft.Extensions.TimeProvider.Testing`):
@@ -65,16 +82,18 @@ used in one window (produced before consumed, balances), their reference to the 
 `Cities/SettleCitySaveTests`: no save with no time elapsed or at the same instant again; a save for a new content version and for a stored city that
 isn't canonical. The expected numbers are worked out from the recipes in each test's comment. `Cities/CityAggregateTests` checks the aggregate's
 constructor rules, `Advance` and `MarkSettled`. `SettleFixture` is a small content in code (the production cap is the M0 value, 8 h) with cities
-built through `CityRules` (a woodcutter city, and a sawmill city whose logs are made and used in one window); `InMemoryCityRepository` is the fake repository and unit of work in one: it records what happened in order and, like the real one, loads only
-inside a transaction; `SettleFixture.RunnerPerRequest` gives each call a new runner, as each request gets one. `FakeTimeProvider` can't go
+built through `CityRules` (a woodcutter city, and a sawmill city whose logs are made and used in one window); `InMemoryCityRepository` is the fake repository, unit of work and receipt store in one: it records what happened in order and, like the real
+one, loads only inside a transaction; a receipt is visible once written, a second one with its key fails as `DuplicateKeyException`, and
+`BeforeNextWrite` lets another request commit between a lookup and a write; `SettleFixture.RunnerPerRequest` gives each call a new runner, as each request gets one. `FakeTimeProvider` can't go
 back in time, so a clock behind is a last settled second ahead of now. The content port's implementation and its registration are tested in
 `CityBuilder.IntegrationTests` (`Content/`). Run: `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`.
 
 ## Known limitations
 - No log line for a clock behind here: Application has no logging package (`14`); the endpoint that serves `GET /city` logs it *(planned, M0-28)*.
   The Api registers `SettleCity`, but no endpoint calls it yet *(planned, M0-28)*.
-- No commands yet *(planned, M0-26 on)*. Nothing maps `ConcurrencyConflictException` to `CONCURRENCY_CONFLICT` yet *(planned, M0-26)*.
+- No commands yet *(planned, M0-29 on)*: the pipeline is tested with test commands. Nothing maps `ConcurrencyConflictException` to
+  `CONCURRENCY_CONFLICT` yet *(planned, M0-34)*. The pipeline's integration tests over a real database are M0-27.
 - `DevLogin` has no tests with fakes: what it does is all persistence (one transaction, a unique index, a race), so it is tested on
   PostgreSQL (`CityBuilder.IntegrationTests`, `Auth/DevLoginDatabaseTests`).
 
-Last updated: M0-25
+Last updated: M0-26

@@ -6,7 +6,7 @@ namespace CityBuilder.Infrastructure.Persistence.Mapping;
 
 /// <summary>
 /// Maps the records a city change leaves, ledger entries and command receipts, to their rows (<c>core-instructions/06-data-model.md</c>),
-/// explicitly. They are only ever inserted, so there is no way back.
+/// explicitly. They are only ever inserted; only a receipt is read back (<see cref="ToReceipt"/>), when a command is retried.
 /// </summary>
 public static class LedgerMapping
 {
@@ -50,6 +50,16 @@ public static class LedgerMapping
             ResponseJson = receipt.ResponseJson,
             CreatedAt = createdAt,
         };
+    }
+
+    /// <summary>The receipt of a <c>command_receipts</c> row: the way back of <see cref="ToRow(Guid, CommandReceipt, DateTimeOffset)"/>.</summary>
+    /// <param name="row">The row.</param>
+    /// <returns>The receipt; the player and the wall time stay with the row.</returns>
+    /// <exception cref="ArgumentException">The row breaks a rule of <see cref="CommandReceipt"/> (a hash that isn't 32 bytes).</exception>
+    public static CommandReceipt ToReceipt(CommandReceiptRow row)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        return new CommandReceipt(row.RequestId, row.CommandType, row.PayloadHash, row.ResponseJson);
     }
 
     /// <summary>The <c>reason</c> text of a ledger reason, as <c>06</c> lists it.</summary>

@@ -241,7 +241,7 @@ namespace CityBuilder.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("ResponseJson")
                         .IsRequired()
-                        .HasColumnType("jsonb")
+                        .HasColumnType("json")
                         .HasColumnName("response_json");
 
                     b.HasKey("PlayerId", "RequestId")
