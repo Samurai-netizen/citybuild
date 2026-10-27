@@ -5,7 +5,7 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-30 · API attack review; the PR is open, the owner merges it)
+- **Task:** — (last completed: M0-30 · API attack review; PR #42, the owner merges it)
 - **Branch:** `task/M0-30-api-attack-review` (from `main` = `184dd78`) until the owner merges
 - **Build log entry:** last: `docs/build-log/2026/2026-10-27-08-M0-30.md` (Done)
 - **Last green commit:** the head of `task/M0-30-api-attack-review` (Release build 0 warnings, format clean, fast suite: Repository 22,
