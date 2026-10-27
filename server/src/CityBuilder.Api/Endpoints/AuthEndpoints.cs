@@ -33,6 +33,7 @@ public static class AuthEndpoints
         {
             // The catalogue's code for a malformed request (05); M0-34 moves the mapping of every code to one place.
             return TypedResults.Problem(
+                type: "urn:citybuilder:error:invalid-argument",
                 title: "Invalid argument",
                 detail: $"displayName must be 1 to {DevLogin.MaxDisplayNameLength} ASCII letters, digits, '_', '-' or '.'.",
                 statusCode: StatusCodes.Status400BadRequest,

@@ -60,7 +60,21 @@ internal static class ApiClient
     /// <param name="playerId">The player to send a token for, or <see langword="null"/> for no token.</param>
     /// <param name="body">The body text, sent as <c>application/json</c>; <see langword="null"/> sends no body.</param>
     /// <returns>The response as the test saw it.</returns>
-    public static async Task<ApiResponse> PostAsync(WebApplicationFactory<Program> server, string path, Guid? playerId, string? body)
+    public static Task<ApiResponse> PostAsync(WebApplicationFactory<Program> server, string path, Guid? playerId, string? body) =>
+        PostAsync(server, path, playerId, body is null ? null : new StringContent(body, Encoding.UTF8, "application/json"), headers: null);
+
+    /// <summary>
+    /// Sends a POST request with any content and extra headers, for the tests that attack what surrounds the body: another content type, a
+    /// header that claims a player.
+    /// </summary>
+    /// <param name="server">The server under test.</param>
+    /// <param name="path">The path and query.</param>
+    /// <param name="playerId">The player to send a token for, or <see langword="null"/> for no token.</param>
+    /// <param name="content">The body; <see langword="null"/> sends none. The request disposes it.</param>
+    /// <param name="headers">Extra request headers, or <see langword="null"/> for none.</param>
+    /// <returns>The response as the test saw it.</returns>
+    public static async Task<ApiResponse> PostAsync(
+        WebApplicationFactory<Program> server, string path, Guid? playerId, HttpContent? content, IReadOnlyDictionary<string, string>? headers)
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, path);
         if (playerId is { } player)
@@ -68,11 +82,12 @@ internal static class ApiClient
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", server.Services.GetRequiredService<AccessTokens>().Issue(player).Token);
         }
 
-        if (body is not null)
+        foreach ((string name, string value) in headers ?? new Dictionary<string, string>())
         {
-            request.Content = new StringContent(body, Encoding.UTF8, "application/json");
+            request.Headers.Add(name, value);
         }
 
+        request.Content = content;
         return await SendAsync(server, request);
     }
 

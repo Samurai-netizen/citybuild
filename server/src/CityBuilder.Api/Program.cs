@@ -1,9 +1,10 @@
-// Composition root of the server (core-instructions/03-architecture.md): hosting, logging, service registration, authentication and the
-// startup steps (content load; database settings and, in Development only, the migrations).
+// Composition root of the server (core-instructions/03-architecture.md): hosting, logging, service registration, request limits,
+// authentication and the startup steps (content load; database settings and, in Development only, the migrations).
 
 using CityBuilder.Api.Auth;
 using CityBuilder.Api.Content;
 using CityBuilder.Api.Endpoints;
+using CityBuilder.Api.Http;
 using CityBuilder.Api.Persistence;
 using CityBuilder.Application.Cities;
 using CityBuilder.Application.Commands;
@@ -28,6 +29,11 @@ builder.Logging.AddJsonConsole(options =>
 });
 
 builder.Services.AddProblemDetails();
+
+// What a request may send (core-instructions/07-security-model.md): no body above RequestLimits:MaxBodyBytes is read, and a JSON body that
+// names a property twice is refused instead of read as its last value, so every reader of the body sees the same values.
+builder.Services.AddRequestBodyLimit(builder.Configuration);
+builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.AllowDuplicateProperties = false);
 builder.Services.AddOpenApi();
 builder.Services.AddHealthChecks();
 
@@ -95,6 +101,8 @@ if (database.ApplyMigrationsAtStartup && app.Environment.IsDevelopment())
 // login on outside Development, stops the start here.
 AuthOptions auth = app.Services.GetRequiredService<IOptions<AuthOptions>>().Value;
 
+// First, so a body above the limit is refused before the token is checked or anything reads the body.
+app.UseRequestBodyLimit();
 app.UseAuthentication();
 app.UseAuthorization();
 
