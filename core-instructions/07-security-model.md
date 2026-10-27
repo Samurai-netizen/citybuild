@@ -2,8 +2,8 @@
 
 > **Built so far:** the rules the engine enforces (integers only, every mutation checked before it changes anything; M0-08 to M0-17),
 > OpenAPI only in Development (tested), and authentication: signed access tokens, the dev login in Development only, `ICurrentPlayer`
-> (M0-25, tested); the command pipeline with its receipts (M0-26, tested with fakes and on PostgreSQL). Command endpoints, limits and the
-> rest of the `Security_` tests arrive from M0-27 on (review M0-30, attack suite M0-74, report M0-78) *(planned)*. A task that builds a part
+> (M0-25, tested); the command pipeline with its receipts (M0-26, tested with fakes; M0-27, its idempotency on PostgreSQL). Command
+> endpoints, limits and the rest of the `Security_` tests arrive from M0-29 on (review M0-30, attack suite M0-74, report M0-78) *(planned)*. A task that builds a part
 > updates this line.
 
 **Goal for M0:** a modified client, a replayed request or a wrong clock cannot create resources, skip costs,
@@ -29,9 +29,9 @@ From Era II this matters even more: one duplication bug floods the shared market
 | Assign more workers than exist, or use workers twice | Server checks free workers and level limits; progress-preserving labor makes moving workers mid-cycle gain nothing | Worker attack tests; labor invariant (property tests) |
 | Place locked buildings or skip research prerequisites | Unlock and prerequisite checks in engine rules | `BUILDING_LOCKED`, `RESEARCH_LOCKED` tests |
 | Start two researches by racing | Row lock on the city; a single research slot is checked inside the lock | Concurrency suite |
-| Replay a successful command | `(playerId, requestId)` receipt with a unique constraint | Replay returns the same response, ledger unchanged: `ExecuteAsync_SameRequestAgain_ReturnsTheStoredResponse`, `ExecuteAsync_IdenticalRequestCommittedFirst_ReturnsItsResponse` (Application); over HTTP M0-27 |
-| Same `requestId`, different payload | Payload hash comparison (the command type is part of the payload) | `IDEMPOTENCY_CONFLICT`: `ExecuteAsync_SameRequestIdOtherPayload_IsAConflict`, `ExecuteAsync_SameRequestIdOtherCommand_IsAConflict` |
-| Read another player's response with their `requestId` | The receipt's key includes the player, from the token | `Security_AnotherPlayersRequestId_FindsNoReceipt`, `ExecuteAsync_AnotherPlayersRequestId_RunsAsNew` |
+| Replay a successful command | `(playerId, requestId)` receipt with a unique constraint | Replay returns the same response, ledger unchanged: `ExecuteAsync_SameRequestAgain_ReturnsTheStoredResponse`, `ExecuteAsync_IdenticalRequestCommittedFirst_ReturnsItsResponse` (Application); on PostgreSQL `ExecuteAsync_SameRequestAgain_ReturnsTheIdenticalResponseAndWritesNothing`, `ExecuteAsync_SameRequestAfterAHostRestart_ReturnsTheStoredResponse`, `ExecuteAsync_TenIdenticalRequestsAtOnce_ApplyOnceAndAllGetTheSameResponse`, `ExecuteAsync_IdenticalReceiptCommittedWhileItRuns_RollsBackAndReturnsThatResponse` (M0-27); over HTTP M0-29 |
+| Same `requestId`, different payload | Payload hash comparison (the command type is part of the payload) | `IDEMPOTENCY_CONFLICT`: `ExecuteAsync_SameRequestIdOtherPayload_IsAConflict`, `ExecuteAsync_SameRequestIdOtherCommand_IsAConflict`; on PostgreSQL the same two `…AndWritesNothing` and `ExecuteAsync_ReceiptOfAnotherPayloadCommittedWhileItRuns_RollsBackAndIsAConflict` (M0-27) |
+| Read another player's response with their `requestId` | The receipt's key includes the player, from the token | `Security_AnotherPlayersRequestId_FindsNoReceipt`, `ExecuteAsync_AnotherPlayersRequestId_RunsAsNew`, `Security_AnotherPlayersRequestId_NeverMatches` (PostgreSQL, M0-27) |
 | A command that writes without the receipt or the settle | Commands implement `ICityCommand` and see only the city state and content; only `SettleCity` and `CommandPipeline` hold the city transaction | `Types_OfApplication_OnlyTheSettleAndThePipelineDependOnTheRunner` |
 | Race two commands (double spend) | `FOR UPDATE` row lock + `state_version` guard | Concurrent integration tests |
 | Act on another player's building | Building ids are resolved inside the caller's city only | `BUILDING_NOT_FOUND`, never a `FORBIDDEN` leak |

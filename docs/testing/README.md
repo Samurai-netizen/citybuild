@@ -61,9 +61,14 @@ flowchart LR
 - A race between two inserts of one key: hold the first in a transaction of the test's own (insert, `SaveChangesAsync`, no commit), start
   the second request, wait until PostgreSQL shows it waiting on the unique index, then commit (`PostDevLogin_SameNameCommittedFirstByAnotherRequest_ReturnsThatPlayer`).
 - A command without an endpoint (until M0-29): resolve `CommandPipeline` from a request scope and pass it a command and a response
-  writer, as the Application tests do (`CityBuilder.Application.Tests`, `Commands/PipelineFixture`, with test commands that call the
-  engine's rules). There, `InMemoryCityRepository` keeps receipts with a unique key, and `BeforeNextWrite` lets another request commit
-  between a lookup and a write: the receipt race without threads.
+  writer. On PostgreSQL, `Commands/DatabaseCommands` does it (`ExecuteAsync`, with test commands that call the engine's rules), stores a
+  player with a city to send them to, and writes everything stored about the city as one text (`StoredAsync`), so one assertion shows that
+  a replay or a conflict wrote nothing. With fakes: `CityBuilder.Application.Tests`, `Commands/PipelineFixture`; there,
+  `InMemoryCityRepository` keeps receipts with a unique key, and `BeforeNextWrite` lets another request commit between a lookup and a
+  write: the receipt race without threads.
+- The receipt race on PostgreSQL: insert the receipt of the same key in a transaction of the test's own (no commit), send the command,
+  wait until PostgreSQL shows it waiting (on the unique key, after its settle and mutation), then commit. The command's whole transaction
+  rolls back and the committed receipt answers (`Commands/CommandConcurrencyDatabaseTests`).
 - Many requests at once: queue them behind a lock the test holds and wait until PostgreSQL shows them all waiting, so they really contend.
   A free race of `Task.Run` calls may never overlap and then proves nothing (M0-24, decision 1). To show that requests don't wait for
   each other, run them on a server with a lock timeout of a few hundred milliseconds: a wait then fails the test.
@@ -75,7 +80,8 @@ flowchart LR
   `Persistence/ConstraintDatabaseTests` (rows
   straight through a context, refused by PostgreSQL), `Persistence/MigrationDatabaseTests` (the startup migration on an empty database; a row stored under
   an earlier migration, kept by a later one), `Persistence/CommandReceiptRepositoryDatabaseTests` (a receipt saved with its city, found
-  as written).
+  as written), `Commands/` (the pipeline's idempotency: a retry, a host restart, conflicts, another player, ten identical requests queued
+  behind the lock, the receipt race, a rejection).
 
 ## Other test documents
 - `UNITY-SMOKE-TEST.md`: the manual smoke test of a real build *(planned, M0-72)*.

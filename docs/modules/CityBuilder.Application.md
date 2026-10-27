@@ -71,7 +71,11 @@ steps, the receipt, what the response writer gets, the cost after the settlement
 another player's request id, the receipt race won by the same or another payload, a duplicate key without a receipt) and
 `CommandPipelineRuleTests` (shape, empty request id, a rejection commits only the settlement, a retried rejection runs again, settle before
 mutation, a refund the closing advance consumes). `PipelineFixture` runs the pipeline over the fakes with two test commands
-(`PlaceTestCommand`, `UpgradeTestCommand`) and a response writer that records `respond`. `Cities/CityTransactionRunnerTests` checks the
+(`PlaceTestCommand`, `UpgradeTestCommand`) and a response writer that records `respond`. On PostgreSQL (M0-27), `CityBuilder.IntegrationTests`
+→ `Commands/` runs the server's registered pipeline with test commands of its own (`DatabaseCommands`): `CommandIdempotencyDatabaseTests` (a
+retry writes nothing, also on a restarted host; conflicts; another player's request id), `CommandConcurrencyDatabaseTests` (ten identical
+requests queued behind the lock apply once; the receipt race through the unique key, with the same or another payload) and
+`CommandRejectionDatabaseTests` (a rejection commits only the settlement; the same request runs again). `Cities/CityTransactionRunnerTests` checks the
 transaction's lifecycle on the fakes: begin, lock and load, work, write, commit in that order; a commit without writes when nothing was
 saved; a rollback after an exception, a conflict or a failed load; one save per transaction, none after the work; a second or nested run
 throwing before it locks anything. `SettleCity` in `Cities/SettleCityTests` with `FakeTimeProvider` (`Microsoft.Extensions.TimeProvider.Testing`):
@@ -92,8 +96,8 @@ back in time, so a clock behind is a last settled second ahead of now. The conte
 - No log line for a clock behind here: Application has no logging package (`14`); the endpoint that serves `GET /city` logs it *(planned, M0-28)*.
   The Api registers `SettleCity`, but no endpoint calls it yet *(planned, M0-28)*.
 - No commands yet *(planned, M0-29 on)*: the pipeline is tested with test commands. Nothing maps `ConcurrencyConflictException` to
-  `CONCURRENCY_CONFLICT` yet *(planned, M0-34)*. The pipeline's integration tests over a real database are M0-27.
+  `CONCURRENCY_CONFLICT` yet *(planned, M0-34)*.
 - `DevLogin` has no tests with fakes: what it does is all persistence (one transaction, a unique index, a race), so it is tested on
   PostgreSQL (`CityBuilder.IntegrationTests`, `Auth/DevLoginDatabaseTests`).
 
-Last updated: M0-26
+Last updated: M0-27
