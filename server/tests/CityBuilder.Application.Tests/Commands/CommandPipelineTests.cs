@@ -1,4 +1,5 @@
 using CityBuilder.Application.Commands;
+using CityBuilder.Application.Persistence;
 using CityBuilder.Application.Tests.Cities;
 using CityBuilder.Domain.Commands;
 using CityBuilder.Simulation;
@@ -89,5 +90,22 @@ public sealed class CommandPipelineTests
             ],
             repository.LastLedger!.Select(entry => (entry.Item.Value, entry.Delta, entry.BalanceAfter, entry.Reason.ToString(), entry.RefType)));
         Assert.Equal(RequestId.ToString(), repository.LastLedger![^1].RefId);
+    }
+
+    /// <summary>
+    /// A concurrency conflict on the save (a lock timeout, a stale version) propagates, with nothing committed and no receipt: the client
+    /// retries with the same request id (<c>05</c>, <c>CONCURRENCY_CONFLICT</c>).
+    /// </summary>
+    [Fact]
+    public async Task ExecuteAsync_ConcurrencyConflictOnTheSave_PropagatesAndCommitsNothing()
+    {
+        InMemoryCityRepository repository = Repository();
+        repository.FailNextWrite = new ConcurrencyConflictException();
+
+        await Assert.ThrowsAsync<ConcurrencyConflictException>(() => Pipeline(repository, ClockAtLastSettled())
+            .ExecuteAsync(PlayerId, PlaceCottage(), Writer(repository), TestContext.Current.CancellationToken));
+
+        Assert.Equal("rollback", repository.Events[^1]);
+        Assert.Null(repository.StoredReceipt(PlayerId, RequestId));
     }
 }
