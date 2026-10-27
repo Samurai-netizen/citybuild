@@ -64,7 +64,9 @@ flowchart LR
   body, written readable and compacted by `JsonNode`: review every value by hand against the rules before freezing it.
 - A race between two inserts of one key: hold the first in a transaction of the test's own (insert, `SaveChangesAsync`, no commit), start
   the second request, wait until PostgreSQL shows it waiting on the unique index, then commit (`PostDevLogin_SameNameCommittedFirstByAnotherRequest_ReturnsThatPlayer`).
-- A command without an endpoint (until M0-29): resolve `CommandPipeline` from a request scope and pass it a command and a response
+- A command over HTTP: `ApiClient.PostAsync` sends a raw body with a token the server issued (`PlaceBuildingContractTests` on a
+  `FakeCityStore`, which also keeps receipts; `Commands/PlaceBuildingDatabaseTests` on PostgreSQL, checked against the stored rows).
+- The pipeline without HTTP (its own tests): resolve `CommandPipeline` from a request scope and pass it a command and a response
   writer. On PostgreSQL, `Commands/DatabaseCommands` does it (`ExecuteAsync`, with test commands that call the engine's rules), stores a
   player with a city to send them to, and writes everything stored about the city as one text (`StoredAsync`), so one assertion shows that
   a replay or a conflict wrote nothing. With fakes: `CityBuilder.Application.Tests`, `Commands/PipelineFixture`; there,

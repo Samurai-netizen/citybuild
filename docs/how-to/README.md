@@ -10,7 +10,7 @@ creates the capability, and every later change to that area keeps it valid. The 
 | [`add-research-effect.md`](add-research-effect.md): a new effect type in the engine, with a worked example | M0-09 | done |
 | [`debug-determinism-failure.md`](debug-determinism-failure.md): from a failing property seed to a rule test and a fix | M0-15 | done |
 | [`add-migration.md`](add-migration.md): change the database schema, with a worked example | M0-19 | done |
-| `add-command.md`: a new player command end to end | M0-29 | planned |
+| [`add-command.md`](add-command.md): a new player command end to end, with PlaceBuilding as the worked example | M0-29 | done |
 | `add-ui-screen.md`: a UI Toolkit screen with a view-model | M0-45 | planned |
 | `run-balance-simulator.md`: test a content change | M0-67 | planned |
 | [`resume-interrupted-session.md`](resume-interrupted-session.md): recover after an AI session ended mid-task | M0-01 | done |

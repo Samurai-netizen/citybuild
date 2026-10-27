@@ -13,9 +13,8 @@
 - **Steps:** 1 the command and its endpoint (with fast tests) · 2 integration tests on PostgreSQL over HTTP · 3 docs (`add-command.md`) ·
   4 finish
 - **Done steps:** start; 1 (`PlaceBuildingCommand`, `PlaceBuildingRequest`, `CommandEndpoints`, `CommandResponses`, fast tests);
-  2 (`PlaceBuildingDatabaseTests`, 15 on PostgreSQL)
-- **Next step:** step 3: docs: `docs/how-to/add-command.md` (PlaceBuilding as the worked example), `05`, `07`, module docs, the other
-  Docs impact rows
+  2 (`PlaceBuildingDatabaseTests`, 15 on PostgreSQL); 3 (docs: `add-command.md`, `05`, `07`, module docs, ADRs, CHANGELOG)
+- **Next step:** step 4: `/finish-task`: Definition of Done, self-review line by line, close the Docs impact rows, PR
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7

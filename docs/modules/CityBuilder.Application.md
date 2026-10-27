@@ -7,7 +7,8 @@
 > *Growing.* The ports `IContentProvider` (M0-07b), `ICityRepository`, `IPlayerRepository` and `IUnitOfWork` (M0-20) exist, the city
 > transaction `ICityTransactionRunner` (M0-22), and the settle use case `SettleCity` on it (M0-13, complete with M0-23); the dev login
 > `DevLogin`, `ICurrentPlayer` and `INewCityRepository` (M0-25); the command pipeline `CommandPipeline` with `ICityCommand` and the receipt
-> port, and the settle's steps shared with it, `CitySettler` (M0-26). The commands themselves follow *(planned, M0-29 on)*.
+> port, and the settle's steps shared with it, `CitySettler` (M0-26); the first command, `PlaceBuildingCommand` (M0-29). The other commands
+> follow *(planned, M0-31 to M0-33)*.
 
 ## Purpose
 The use cases (`SettleCity`, `DevLogin`, `PlaceBuilding`, `UpgradeBuilding`, `AssignWorkers`, `StartResearch`), the ports they
@@ -36,6 +37,7 @@ need (`ICityRepository`, `IUnitOfWork`, `IContentProvider`, `ICommandReceiptRepo
 | `Commands/CommandPipeline` | `ExecuteAsync(playerId, command, writeResponse)`: the shape check (an empty request id too) before the database; the city's transaction; the receipt lookup under the lock (same hash → `Replayed` with the stored text, another → `IdempotencyConflict`, both before the settle and writing nothing); the settle (`CitySettler`); `command.Apply`; on a rejection the closing advance, a save of the settlement only if it changed, no receipt (`Rejected` with the `MutationErrorCode`); otherwise the closing advance, the response from `writeResponse` (inside the transaction) and one save of the city, its ledger and the receipt (`Succeeded`). A `DuplicateKeyException` on the save reads the stored receipt after the rollback and answers from it (none: rethrown). Scoped; registered by the Api |
 | `Commands/CommandResult`, `Commands/CommandOutcome`, `Commands/CommandSuccess` | The pipeline's answer: `Outcome` (`Succeeded`, `Replayed`, `Rejected`, `InvalidArgument`, `IdempotencyConflict`) with `ResponseJson`, `ErrorCode` or `Detail`. `CommandSuccess` is what the response writer gets: request id, the saved city, the settlement, the new state version, the server time |
 | `Commands/ICommandReceiptRepository` | The port that reads a receipt: `FindAsync(playerId, requestId)` (the key includes the player). Implemented by `CommandReceiptRepository` in Infrastructure; receipts are written with the city (`CityTransaction.SaveAsync`) |
+| `Commands/PlaceBuilding/PlaceBuildingCommand` | `place-building` (M0-29): `RequestId`, `BuildingTypeId`, `X`, `Y`; `Apply` is `CityRules.PlaceBuilding`; pays `COST_PLACE`, never refunds; `ValidateShape` refuses only a blank type id (coordinates outside the grid are the rule's `OUT_OF_BOUNDS`). Its payload hash is pinned in a test |
 | `Cities/Settlement` | One settlement: the window's advance and the closing zero-length advance as one. Its `Id` (a UUID v7 per settlement), `Window`, `ElapsedSeconds`, `ProductionSeconds`, and the totals of both advances (`Produced`, `Consumed`, `CompletedBuildings`, `CompletedResearch`, `EraChanged`; `IsEmpty`). `LedgerEntries(quantitiesBefore)` gives its ledger rows: per item in ordinal order `SETTLEMENT_PRODUCED`, then `SETTLEMENT_CONSUMED` (a negative delta), each balance running on from the quantity before; `ref_type` `settlement` (`LedgerRefType`), `ref_id` the id (`06`) |
 
 ## Rules and invariants
@@ -59,6 +61,7 @@ need (`ICityRepository`, `IUnitOfWork`, `IContentProvider`, `ICommandReceiptRepo
 ## How to extend
 - New command: recipe "New command" in `core-instructions/19-change-recipes.md` (`Commands/<Name>/`): a record implementing `ICityCommand`
   whose `Apply` calls the engine rule; the endpoint passes it to `CommandPipeline` with the snapshot writer. No handler of its own.
+  Worked example: `docs/how-to/add-command.md` (PlaceBuilding).
 - A new port is an interface here, in a folder named after its feature (like `Content/`), implemented in `CityBuilder.Infrastructure`
   (`14`: interfaces only at layer boundaries).
 
@@ -71,7 +74,8 @@ steps, the receipt, what the response writer gets, the cost after the settlement
 another player's request id, the receipt race won by the same or another payload, a duplicate key without a receipt) and
 `CommandPipelineRuleTests` (shape, empty request id, a rejection commits only the settlement, a retried rejection runs again, settle before
 mutation, a refund the closing advance consumes). `PipelineFixture` runs the pipeline over the fakes with two test commands
-(`PlaceTestCommand`, `UpgradeTestCommand`) and a response writer that records `respond`. On PostgreSQL (M0-27), `CityBuilder.IntegrationTests`
+(`PlaceTestCommand`, `UpgradeTestCommand`) and a response writer that records `respond`. `PlaceBuildingCommandTests` cover the real command:
+its shape check, its pinned payload and hash, its ledger reasons, `Apply` equal to the rule, one run through the pipeline. On PostgreSQL (M0-27), `CityBuilder.IntegrationTests`
 → `Commands/` runs the server's registered pipeline with test commands of its own (`DatabaseCommands`): `CommandIdempotencyDatabaseTests` (a
 retry writes nothing, also on a restarted host; conflicts; another player's request id), `CommandConcurrencyDatabaseTests` (ten identical
 requests queued behind the lock apply once; the receipt race through the unique key, with the same or another payload) and
@@ -94,9 +98,9 @@ back in time, so a clock behind is a last settled second ahead of now. The conte
 
 ## Known limitations
 - No log line for a clock behind here: Application has no logging package (`14`); settlement logging will log it *(planned, M0-35)*.
-- No commands yet *(planned, M0-29 on)*: the pipeline is tested with test commands. Nothing maps `ConcurrencyConflictException` to
+- One command so far (PlaceBuilding); the pipeline's own tests keep their test commands. Nothing maps `ConcurrencyConflictException` to
   `CONCURRENCY_CONFLICT` yet *(planned, M0-34)*.
 - `DevLogin` has no tests with fakes: what it does is all persistence (one transaction, a unique index, a race), so it is tested on
   PostgreSQL (`CityBuilder.IntegrationTests`, `Auth/DevLoginDatabaseTests`).
 
-Last updated: M0-28
+Last updated: M0-29
