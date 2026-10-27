@@ -5,7 +5,7 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-28 · Content and city endpoints; the PR is open, the owner merges it)
+- **Task:** — (last completed: M0-28 · Content and city endpoints; PR #40, the owner merges it)
 - **Branch:** `task/M0-28-content-and-city-endpoints` (from `main` = `10e4486`) until the owner merges
 - **Build log entry:** last: `docs/build-log/2026/2026-10-27-06-M0-28.md` (Done)
 - **Last green commit:** the head of `task/M0-28-content-and-city-endpoints` (Release build 0 warnings, format clean, fast suite: Repository 22,
