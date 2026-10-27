@@ -8,12 +8,12 @@
 - **Task:** M0-25 · Development authentication (`[S]`, run on Opus 5.5)
 - **Branch:** `task/M0-25-dev-auth` (from `main` = `222446d`)
 - **Build log entry:** `docs/build-log/2026/2026-10-27-03-M0-25.md`
-- **Last green commit:** step 1 (Release build 0 warnings, format clean, fast suite green with IntegrationTests 132, Integration 36)
+- **Last green commit:** step 2 (Release build 0 warnings, format clean, fast suite green: Application 47, IntegrationTests 144; Integration 42)
 - **Planned steps:** 1. tokens: `Auth` options and guards, JWT validation, token issuer, `ICurrentPlayer`, auth tests; 2. first login:
   `DevLogin` (player, starter city, `STARTING_GRANT` rows in one transaction), `POST /api/v1/auth/dev-login` in Development only, database
   tests; 3. docs, finish.
-- **Done steps:** 1 (tokens: options and guards, JWT validation, issuer, `ICurrentPlayer`, auth tests over a test-only endpoint)
-- **Next step:** step 2 (first login: `DevLogin`, the city insert port, the endpoint, database tests).
+- **Done steps:** 1 (tokens, `ICurrentPlayer`, auth tests); 2 (`DevLogin`, `INewCityRepository`, `DuplicateKeyException`, the endpoint, tests)
+- **Next step:** step 3 (docs per the Docs impact table, then `/finish-task`).
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7

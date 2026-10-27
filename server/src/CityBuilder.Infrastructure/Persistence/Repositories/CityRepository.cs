@@ -12,12 +12,13 @@ namespace CityBuilder.Infrastructure.Persistence.Repositories;
 /// <see cref="ICityRepository"/> over <see cref="CityBuilderDbContext"/>: loads a city's rows tracked and maps them with
 /// <see cref="CityMapping"/>; <see cref="Save"/> merges the mapped rows into the tracked ones, so EF writes only what changed. Scoped, one
 /// per request, like the context. A load locks the city's row (<c>SELECT … FOR UPDATE</c>) for the rest of the request's transaction,
-/// which <see cref="Application.Cities.CityTransactionRunner"/> begins.
+/// which <see cref="Application.Cities.CityTransactionRunner"/> begins. As <see cref="INewCityRepository"/> it inserts a new player's city, the
+/// one write without that lock (ADR-0009).
 /// </summary>
 /// <param name="db">The request's context.</param>
 /// <param name="timeProvider">The server clock; it stamps the wall times of the rows a save writes.</param>
 /// <exception cref="ArgumentNullException">A parameter is null.</exception>
-public sealed class CityRepository(CityBuilderDbContext db, TimeProvider timeProvider) : ICityRepository
+public sealed class CityRepository(CityBuilderDbContext db, TimeProvider timeProvider) : ICityRepository, INewCityRepository
 {
     /// <summary>The request's context; it tracks the loaded rows until the unit of work writes them.</summary>
     private readonly CityBuilderDbContext _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -64,7 +65,7 @@ public sealed class CityRepository(CityBuilderDbContext db, TimeProvider timePro
                 .ToListAsync(cancellationToken);
             return rows.SingleOrDefault();
         }
-        catch (Exception exception) when (LockTimeouts.IsLockTimeout(exception))
+        catch (Exception exception) when (PostgresErrors.IsLockTimeout(exception))
         {
             throw new ConcurrencyConflictException(
                 $"The city of player {playerId} stayed locked by another request for longer than the lock timeout.", exception);
@@ -110,6 +111,19 @@ public sealed class CityRepository(CityBuilderDbContext db, TimeProvider timePro
         {
             _db.CommandReceipts.Add(LedgerMapping.ToRow(city.PlayerId, receipt, now));
         }
+    }
+
+    /// <inheritdoc />
+    /// <remarks>The insert of <see cref="Save"/> for a city this context doesn't track.</remarks>
+    public void Add(CityAggregate city, IReadOnlyList<LedgerEntry> startingGrant)
+    {
+        ArgumentNullException.ThrowIfNull(city);
+        if (city.StateVersion != 0 || _db.Cities.Local.Any(row => row.Id == city.CityId))
+        {
+            throw new InvalidOperationException($"City {city.CityId} is not new: it is loaded or staged already, or its state version isn't 0.");
+        }
+
+        Save(city, startingGrant, receipt: null);
     }
 
     /// <summary>

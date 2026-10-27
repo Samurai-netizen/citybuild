@@ -8,7 +8,8 @@ namespace CityBuilder.Infrastructure.Persistence.Repositories;
 /// <summary>
 /// <see cref="IUnitOfWork"/> over <see cref="CityBuilderDbContext"/>: one <c>SaveChanges</c> writes what the repositories of the request
 /// staged in the shared, scoped context, inside the request's transaction when one was begun. A stale <c>state_version</c> (EF's
-/// concurrency check) and a lock timeout become <see cref="ConcurrencyConflictException"/>.
+/// concurrency check) and a lock timeout become <see cref="ConcurrencyConflictException"/>, a unique violation
+/// <see cref="DuplicateKeyException"/>.
 /// </summary>
 /// <param name="db">The request's context, the same one the repositories use.</param>
 /// <param name="settings">The persistence settings; the lock timeout of a transaction comes from them.</param>
@@ -33,9 +34,14 @@ public sealed class UnitOfWork(CityBuilderDbContext db, PersistenceSettings sett
             throw new ConcurrencyConflictException(
                 "The city's stored state_version is not the one it was loaded with: it was written without its row lock.", exception);
         }
-        catch (DbUpdateException exception) when (LockTimeouts.IsLockTimeout(exception))
+        catch (DbUpdateException exception) when (PostgresErrors.IsLockTimeout(exception))
         {
             throw new ConcurrencyConflictException("A write waited for a lock longer than the lock timeout.", exception);
+        }
+        catch (DbUpdateException exception) when (PostgresErrors.IsUniqueViolation(exception, out string? constraintName))
+        {
+            // Another request committed the same key first (two first logins of one name); the caller reads what it stored.
+            throw new DuplicateKeyException($"Another request stored the same key first ({constraintName}).", exception);
         }
     }
 
