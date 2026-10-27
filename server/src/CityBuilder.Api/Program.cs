@@ -115,4 +115,7 @@ if (auth.DevLoginEnabled && app.Environment.IsDevelopment())
     api.MapDevLogin();
 }
 
+// The game endpoints: all of them require the token. GET /city (M0-28) and the commands (M0-29 on) follow the content.
+api.MapContent();
+
 app.Run();
