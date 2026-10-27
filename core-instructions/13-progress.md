@@ -4,16 +4,15 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** M0-25 · Development authentication (`[S]`, run on Opus 5.5)
-- **Branch:** `task/M0-25-dev-auth` (from `main` = `222446d`)
-- **Build log entry:** `docs/build-log/2026/2026-10-27-03-M0-25.md`
-- **Last green commit:** step 2 (Release build 0 warnings, format clean, fast suite green: Application 47, IntegrationTests 144; Integration 42)
-- **Planned steps:** 1. tokens: `Auth` options and guards, JWT validation, token issuer, `ICurrentPlayer`, auth tests; 2. first login:
-  `DevLogin` (player, starter city, `STARTING_GRANT` rows in one transaction), `POST /api/v1/auth/dev-login` in Development only, database
-  tests; 3. docs, finish.
-- **Done steps:** 1 (tokens, `ICurrentPlayer`, auth tests); 2 (`DevLogin`, `INewCityRepository`, `DuplicateKeyException`, the endpoint, tests)
-- **Next step:** step 3 (docs per the Docs impact table, then `/finish-task`).
+- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** — (last completed: M0-25 · Development authentication; PR open, the owner merges it)
+- **Branch:** `task/M0-25-dev-auth` (from `main` = `222446d`) until the owner merges
+- **Build log entry:** last: `docs/build-log/2026/2026-10-27-03-M0-25.md` (Done)
+- **Last green commit:** the head of `task/M0-25-dev-auth` (Release build 0 warnings, format clean, fast suite: Repository 22,
+  Simulation 872, Domain 21, Application 47, IntegrationTests 144; Integration 42 on `postgres:18.6`; handbook builds; check-docs OK)
+- **Done steps:** all of M0-25 (access tokens, `ICurrentPlayer`, the dev login with the starter city; details in the entry)
+- **Next step:** the owner merges the PR. Then `/start-task M0-26` (command pipeline, `[O]` `[PLAN]`: plan first, owner approval); read
+  the M0-25 entry's Follow-ups. Running the API locally now needs `Auth:SigningKey` in user-secrets (`docs/getting-started.md`).
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7
@@ -32,7 +31,7 @@
 | Shared engine: invariants, performance | done | settlement window and production cap (M0-13) merged (PR #21); property test harness (M0-14, with engine fix CR-0001) merged (PR #22); invariant properties (M0-15) merged (PR #23); performance budget M0-16 merged (PR #24; worst case ~37 ms per advance in Release); display helpers M0-17 merged (PR #25); spec sync and ADRs M0-18 merged (PR #26) |
 | Server skeleton | done | M0-02 merged (PR #6) |
 | Persistence (EF + PostgreSQL) | done | M0-19 (EF Core model, migrations, Docker) merged (PR #31); repository and mapping M0-20 merged (PR #32); Testcontainers M0-21 merged (PR #33); locking M0-22 merged (PR #34); settle M0-23 merged (PR #35); M0-24 merged (PR #36) |
-| Auth + command pipeline | in progress | M0-25 in progress |
+| Auth + command pipeline | in progress | dev auth M0-25 in review; the pipeline is M0-26 |
 | Commands: place / upgrade / assign workers / start research | not started | |
 | Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) and M0-05 (Unity tests, `test-unity.sh`) merged (PR #8, #12); networking is M0-37 |
 | Unity city view + placement | not started | |
