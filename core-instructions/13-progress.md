@@ -5,14 +5,14 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-20 · Repository and mapping; PR #32 open, the owner merges it)
-- **Branch:** `task/M0-20-repository-mapping` (from `main` = `cafca28`) until the owner merges
-- **Build log entry:** last: `docs/build-log/2026/2026-10-26-03-M0-20.md` (Done)
-- **Last green commit:** the head of `task/M0-20-repository-mapping` (build 0 warnings, format clean, fast suite: Repository 22, Simulation 872,
-  Domain 21, Application 23, IntegrationTests 101; repositories checked once against the compose database; handbook builds; `check-docs --base origin/main` OK)
-- **Done steps:** all of M0-20 (Domain types, ports with `Save(city, ledger, receipt)` and a unit of work, research completion clocks in
-  `CityAggregate`, explicit `CityMapping` with round-trip tests, EF repositories and registration, docs; details in the entry)
-- **Next step:** the owner merges the PR. Then `/start-task M0-21` (Testcontainers integration base, `[S]`); read the entry's Follow-ups first.
+- **Task:** — (last completed: M0-21 · Testcontainers integration base; PR #33 open, the owner merges it)
+- **Branch:** `task/M0-21-testcontainers-base` (from `main` = `117407a`) until the owner merges
+- **Build log entry:** last: `docs/build-log/2026/2026-10-26-04-M0-21.md` (Done)
+- **Last green commit:** the head of `task/M0-21-testcontainers-base` (Release build 0 warnings, format clean, fast suite: Repository 22,
+  Simulation 872, Domain 21, Application 23, IntegrationTests 101; Integration 15 on `postgres:18.6`; handbook builds; `check-docs --base origin/main` OK)
+- **Done steps:** all of M0-21 (fixture: one container per run, a database per test from a migrated template, `PostgresApiFactory`; tests
+  for the migrations, the repositories through the server and the constraints; `docs/testing/README.md`; details in the entry)
+- **Next step:** the owner merges the PR. Then `/start-task M0-22` (transaction boundary and locking, `[O]`); read the entry's Follow-ups.
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7
@@ -22,7 +22,7 @@
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 19 / 85 (M0-20 in review)
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 20 / 85 (M0-21 in review)
 
 | Area | State | Notes |
 |---|---|---|
@@ -30,7 +30,7 @@
 | Shared engine: content, research, labor | done | M0-03 merged (PR #7); the content model and its validation (M0-07a) merged (PR #14); the JSON file and server loading (M0-07b) merged (PR #15); city state and mutations (M0-08) merged (PR #16); `Simulator.Advance` (M0-09) merged (PR #17); rule tests (M0-10) merged (PR #18); golden scenario #1 (M0-11) merged (PR #19); engine review (M0-12) merged (PR #20) |
 | Shared engine: invariants, performance | done | settlement window and production cap (M0-13) merged (PR #21); property test harness (M0-14, with engine fix CR-0001) merged (PR #22); invariant properties (M0-15) merged (PR #23); performance budget M0-16 merged (PR #24; worst case ~37 ms per advance in Release); display helpers M0-17 merged (PR #25); spec sync and ADRs M0-18 merged (PR #26) |
 | Server skeleton | done | M0-02 merged (PR #6) |
-| Persistence (EF + PostgreSQL) | in progress | M0-19 (EF Core model, migrations, Docker) merged (PR #31); repository and mapping M0-20 in review; Testcontainers M0-21 next |
+| Persistence (EF + PostgreSQL) | in progress | M0-19 (EF Core model, migrations, Docker) merged (PR #31); repository and mapping M0-20 merged (PR #32); Testcontainers M0-21 in review; locking M0-22 next |
 | Auth + command pipeline | not started | |
 | Commands: place / upgrade / assign workers / start research | not started | |
 | Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) and M0-05 (Unity tests, `test-unity.sh`) merged (PR #8, #12); networking is M0-37 |
@@ -57,7 +57,8 @@ All run in M0-06, the handbook in CR-0002-T1 (details and the "since" task: `doc
   `dotnet ef migrations add <Name> …` (`docs/how-to/add-migration.md`)
 - **Unity (Editor closed):** `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (`.ps1` on Windows, never run yet) · compile check
   `<UNITY> -batchmode -quit -projectPath client/CityBuilder -logFile -` (exit 0, no `error CS`; `client/README.md`)
-- **Not yet:** integration tests (the filter finds none until M0-21) · DocTools (M0-61) · `quality.sh` (M0-62) ·
+- **Integration tests (M0-21, Docker running):** `dotnet test server/CityBuilder.slnx --filter "Category=Integration"` (`docs/testing/README.md`)
+- **Not yet:** DocTools (M0-61) · `quality.sh` (M0-62) ·
   BalanceSim (M0-67)
 
 ## Open issues / tech debt

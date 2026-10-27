@@ -71,7 +71,7 @@ bash scripts/dev/test-guard-bash.sh             # after changing .claude/hooks/g
 dotnet build server/CityBuilder.slnx
 dotnet format server/CityBuilder.slnx --verify-no-changes   # as CI; part of Done
 dotnet test  server/CityBuilder.slnx --filter "Category!=Integration"  # fast suite
-dotnet test  server/CityBuilder.slnx --filter "Category=Integration"   # [M0-21] needs Docker
+dotnet test  server/CityBuilder.slnx --filter "Category=Integration"   # needs Docker (docs/testing/README.md)
 dotnet run   --project server/src/CityBuilder.Api                      # http://localhost:8080
 docker compose up -d postgres                                          # dev database; first .env from .env.example
 dotnet tool restore                                                    # once per clone: the pinned dotnet-ef

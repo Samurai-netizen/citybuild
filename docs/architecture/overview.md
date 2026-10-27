@@ -70,7 +70,7 @@ ones fail the build of every server project and the engine (decision 037, `core-
 | `CityBuilder.Domain.Tests` | `server/tests/` | Domain | xUnit v3 (`xunit.v3.mtp-off`, runner, test SDK; decision 019) | 21 tests: the dependency rule and the rules of the Domain types | the Domain module doc → Tests |
 | `CityBuilder.Application.Tests` | `server/tests/` | Application | the same, plus `Microsoft.Extensions.TimeProvider.Testing` (`FakeTimeProvider`) | 23 tests: the dependency rule, `CityAggregate`, and `SettleCity` with a fake clock and repository | the Application module doc → Tests |
 | `CityBuilder.Simulation.Tests` | `server/tests/` | Simulation | the same | 872 tests: engine helpers, content ids, content model and validation, city state, queries, stall reasons, mutations, `Simulator.Advance`, the settlement window, a rule test per engine rule, golden scenario #1, the property tests, the performance budget, the display helpers, and the architecture tests below | the Simulation module doc → Tests |
-| `CityBuilder.IntegrationTests` | `server/tests/` | Api | the same, plus `Microsoft.AspNetCore.Mvc.Testing` | 101 in-memory tests (no Docker): the API host, the content loader, the content and database startup, the EF model against `06` and its migrations, the city mapping and the repositories' staged changes; none in the `Integration` category yet *(planned, M0-21)* | the Api module doc → Tests |
+| `CityBuilder.IntegrationTests` | `server/tests/` | Api | the same, plus `Microsoft.AspNetCore.Mvc.Testing`, `Testcontainers.PostgreSql` and `Microsoft.Extensions.TimeProvider.Testing` | 101 in-memory tests (no Docker): the API host, the content loader, the content and database startup, the EF model against `06` and its migrations, the city mapping and the repositories' staged changes; 15 in the `Integration` category on a `postgres:18.6` container (Docker; `docs/testing/README.md`): the fixture, the migrations on an empty database, the repositories through the server, the constraints | the Api module doc → Tests |
 | `CityBuilder.Repository.Tests` | `server/tests/` | — (it reads the source files) | the same, plus `Microsoft.CodeAnalysis.CSharp` (syntax only, decision 037) | 22 tests: the documentation check over every C# file of the repository, and the tests of its rules and of its file search | `core-instructions/14-coding-standards.md` → Documentation in code |
 
 ### Unity client
@@ -116,4 +116,4 @@ short deny-list of name prefixes (ASP.NET Core, EF Core); M0-65 can widen it.
 *(planned, M0-63)* A sequence diagram of one command, from tap to snapshot, as implemented (the pipeline is M0-26). The intended steps are
 in `03` → Request lifecycle.
 
-Last updated: CR-0002-T1
+Last updated: M0-21

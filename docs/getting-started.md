@@ -34,7 +34,7 @@ How to get from a clean machine to a running project. Every command here must wo
 | Test the Claude Code Bash guard (after changing `.claude/hooks/guard-bash.sh`; `core-instructions/18-git-and-ci.md`) | `bash scripts/dev/test-guard-bash.sh` | KIT-AUDIT-FIXES |
 | Build server | `dotnet build server/CityBuilder.slnx` | M0-02 |
 | Fast tests | `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` | M0-02 |
-| Integration tests (Docker running) | `dotnet test server/CityBuilder.slnx --filter "Category=Integration"` (today it finds no test and exits 0) | *(planned, M0-21)* |
+| Integration tests (Docker running; `docs/testing/README.md`) | `dotnet test server/CityBuilder.slnx --filter "Category=Integration"` (one `postgres:18.6` container per run, removed afterwards) | M0-21 |
 | Format check (as CI) | `dotnet format server/CityBuilder.slnx --verify-no-changes` | M0-02 |
 | Restore exactly the locked package versions (as CI) | `dotnet restore server/CityBuilder.slnx --locked-mode` | M0-02 |
 | Database (Docker running; once: `.env` from `.env.example`) | `docker compose up -d postgres`; stop it with `docker compose stop postgres` (section Database below) | M0-19 |

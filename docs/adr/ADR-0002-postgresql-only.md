@@ -41,5 +41,7 @@ PostgreSQL 18 is the **only** place that holds game state, and the only stateful
   Testcontainers base. No other store exists either.
 - **As built (M0-19):** PostgreSQL 18.6 in Docker (`docker-compose.yml`, volume at `/var/lib/postgresql`), the EF Core model of the seven
   M0 tables and the migration `InitialCreate`, applied at startup in Development only. Still the only store.
+- **As built (M0-21):** the integration tests run on a real `postgres:18.6` container (Testcontainers), never SQLite or an in-memory
+  provider (`docs/testing/README.md`).
 - **Reversal:** a cache or shared rate limiter can be added later behind an Application port without moving the source of truth.
   Replacing PostgreSQL itself would be expensive (migrations, locks, SQL in tests).
