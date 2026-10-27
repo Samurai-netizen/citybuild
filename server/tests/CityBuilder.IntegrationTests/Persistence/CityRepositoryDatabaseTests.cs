@@ -19,7 +19,9 @@ namespace CityBuilder.IntegrationTests.Persistence;
 
 /// <summary>
 /// The server's repositories and unit of work on PostgreSQL: a city written in one request scope (one context) is what a later scope, or a
-/// context of the test's own, reads back, in every table; a loaded city's changes merge; a stale state version is refused.
+/// context of the test's own, reads back, in every table; a loaded city's changes merge; a stale state version is refused. A city is loaded
+/// for update only inside a transaction (M0-22), so the loads here begin one; the transaction runner itself is tested in
+/// <see cref="CityTransactionDatabaseTests"/>.
 /// </summary>
 /// <param name="server">The run's PostgreSQL server.</param>
 [Trait("Category", "Integration")]
@@ -118,7 +120,7 @@ public sealed class CityRepositoryDatabaseTests(PostgresServer server) : Postgre
         await AddPlayerAsync();
         await SaveAsync(Full(), [], receipt: null);
 
-        await InScopeAsync(async services =>
+        await InTransactionAsync(async services =>
         {
             CityAggregate loaded = await services.GetRequiredService<ICityRepository>().LoadForUpdateAsync(PlayerId, cancellationToken);
             services.GetRequiredService<ICityRepository>().Save(Later(loaded.StateVersion), [], receipt: null);
@@ -132,8 +134,10 @@ public sealed class CityRepositoryDatabaseTests(PostgresServer server) : Postgre
     }
 
     /// <summary>
-    /// Of two scopes that loaded the same version, the first save wins and the second fails with EF's concurrency exception
-    /// (<c>state_version</c> is the concurrency token, <c>06</c>); the stored city is the first save's.
+    /// Of two scopes that loaded the same version, the first save wins and the second fails with a concurrency conflict whose inner exception
+    /// is EF's (<c>state_version</c> is the concurrency token, <c>06</c>); the stored city is the first save's. The row lock keeps two
+    /// transactions from holding the same version, so the stale scope loads first and lets its transaction (and lock) go before the first
+    /// save, as a write path without the lock (a bug) would.
     /// </summary>
     [Fact]
     public async Task SaveChangesAsync_StaleStateVersion_ThrowsAndKeepsTheFirstSave()
@@ -141,17 +145,27 @@ public sealed class CityRepositoryDatabaseTests(PostgresServer server) : Postgre
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         await AddPlayerAsync();
         await SaveAsync(Full(), [], receipt: null);
-        await using AsyncServiceScope first = Factory.Services.CreateAsyncScope();
         await using AsyncServiceScope stale = Factory.Services.CreateAsyncScope();
-        CityAggregate firstLoad = await first.ServiceProvider.GetRequiredService<ICityRepository>().LoadForUpdateAsync(PlayerId, cancellationToken);
-        CityAggregate staleLoad = await stale.ServiceProvider.GetRequiredService<ICityRepository>().LoadForUpdateAsync(PlayerId, cancellationToken);
-        first.ServiceProvider.GetRequiredService<ICityRepository>().Save(Later(firstLoad.StateVersion), [], receipt: null);
-        await first.ServiceProvider.GetRequiredService<IUnitOfWork>().SaveChangesAsync(cancellationToken);
+        CityAggregate staleLoad;
+        await using (await stale.ServiceProvider.GetRequiredService<IUnitOfWork>().BeginTransactionAsync(cancellationToken))
+        {
+            staleLoad = await stale.ServiceProvider.GetRequiredService<ICityRepository>().LoadForUpdateAsync(PlayerId, cancellationToken);
+        }
+
+        await InTransactionAsync(async first =>
+        {
+            CityAggregate firstLoad = await first.GetRequiredService<ICityRepository>().LoadForUpdateAsync(PlayerId, cancellationToken);
+            first.GetRequiredService<ICityRepository>().Save(Later(firstLoad.StateVersion), [], receipt: null);
+            await first.GetRequiredService<IUnitOfWork>().SaveChangesAsync(cancellationToken);
+        });
+        await using IUnitOfWorkTransaction staleTransaction =
+            await stale.ServiceProvider.GetRequiredService<IUnitOfWork>().BeginTransactionAsync(cancellationToken);
         stale.ServiceProvider.GetRequiredService<ICityRepository>().Save(staleLoad, [], receipt: null);
 
-        await Assert.ThrowsAsync<DbUpdateConcurrencyException>(
+        ConcurrencyConflictException conflict = await Assert.ThrowsAsync<ConcurrencyConflictException>(
             () => stale.ServiceProvider.GetRequiredService<IUnitOfWork>().SaveChangesAsync(cancellationToken));
 
+        Assert.IsType<DbUpdateConcurrencyException>(conflict.InnerException);
         Assert.Equal(Describe(Saved(Later(stateVersion: 8))), Describe(await LoadAsync()));
     }
 
@@ -172,13 +186,29 @@ public sealed class CityRepositoryDatabaseTests(PostgresServer server) : Postgre
         await services.GetRequiredService<IUnitOfWork>().SaveChangesAsync(TestContext.Current.CancellationToken);
     });
 
-    /// <summary>Loads the sample cities' owner's city through the server's repository, in a new scope, so with a new context.</summary>
+    /// <summary>
+    /// Loads the sample cities' owner's city through the server's repository, in a new scope, so with a new context, inside a transaction
+    /// that is rolled back after the load.
+    /// </summary>
     /// <returns>The loaded city.</returns>
     private async Task<CityAggregate> LoadAsync()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         await using AsyncServiceScope scope = Factory.Services.CreateAsyncScope();
-        return await scope.ServiceProvider.GetRequiredService<ICityRepository>().LoadForUpdateAsync(PlayerId, TestContext.Current.CancellationToken);
+        await using IUnitOfWorkTransaction transaction =
+            await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().BeginTransactionAsync(cancellationToken);
+        return await scope.ServiceProvider.GetRequiredService<ICityRepository>().LoadForUpdateAsync(PlayerId, cancellationToken);
     }
+
+    /// <summary>Runs work in a new request scope inside a transaction, committed when the work returns, as the transaction runner does.</summary>
+    /// <param name="work">The work, given the scope's services.</param>
+    private Task InTransactionAsync(Func<IServiceProvider, Task> work) => InScopeAsync(async services =>
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        await using IUnitOfWorkTransaction transaction = await services.GetRequiredService<IUnitOfWork>().BeginTransactionAsync(cancellationToken);
+        await work(services);
+        await transaction.CommitAsync(cancellationToken);
+    });
 
     /// <summary>Runs work in a new request scope of the server, as one request would: its own context, repositories and unit of work.</summary>
     /// <param name="work">The work, given the scope's services.</param>

@@ -98,6 +98,9 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
 - Integration test base on real PostgreSQL: one `postgres:18.6` Testcontainers container per run, a fresh database per test from a
   migrated template, a `WebApplicationFactory` on it with a fake clock; tests for the migrations, the repositories and the constraints;
   `docs/testing/README.md` (M0-21).
+- City transaction: `ICityTransactionRunner` is the one way a use case changes a city (begin, `SELECT … FOR UPDATE` on the acting
+  player's city, work, commit; rollback on any exception; one city per request); `lock_timeout` from `Database:LockTimeoutMilliseconds`
+  (default 3000); a lock timeout or a stale `state_version` is `ConcurrencyConflictException`; `SettleCity` runs on it (M0-22).
 
 ### Changed
 - Handbook site: react and react-dom 19.2.9 → 19.3.1, scheduler 0.28.0 (Dependabot PR #28, DEP-PR28).

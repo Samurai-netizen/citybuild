@@ -48,8 +48,16 @@ builder.Services.AddOptions<DatabaseOptions>()
     .Validate(options => !options.ApplyMigrationsAtStartup || builder.Environment.IsDevelopment(),
         "Database:ApplyMigrationsAtStartup may be true only in Development; apply migrations elsewhere on purpose " +
         "(docs/how-to/add-migration.md).")
+    .Validate(options => options.LockTimeoutMilliseconds is >= DatabaseOptions.MinLockTimeoutMilliseconds
+            and <= DatabaseOptions.MaxLockTimeoutMilliseconds,
+        $"Database:LockTimeoutMilliseconds must be between {DatabaseOptions.MinLockTimeoutMilliseconds} and " +
+        $"{DatabaseOptions.MaxLockTimeoutMilliseconds}.")
     .ValidateOnStart();
-builder.Services.AddCityBuilderPersistence(services => services.GetRequiredService<IOptions<DatabaseOptions>>().Value.ConnectionString);
+builder.Services.AddCityBuilderPersistence(services =>
+{
+    DatabaseOptions options = services.GetRequiredService<IOptions<DatabaseOptions>>().Value;
+    return new PersistenceSettings(options.ConnectionString, options.LockTimeoutMilliseconds);
+});
 
 var app = builder.Build();
 

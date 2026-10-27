@@ -76,9 +76,12 @@ internal static class SettleFixture
         return repository;
     }
 
-    /// <summary>The settle use case over the repository (also its unit of work), the fixture's content and the clock.</summary>
+    /// <summary>
+    /// The settle use case over the repository (also its unit of work), the fixture's content and the clock. Each call is a request of its
+    /// own, with a new <see cref="CityTransactionRunner"/> (<see cref="RunnerPerRequest"/>), so a test can settle with it again and again.
+    /// </summary>
     public static SettleCity UseCase(InMemoryCityRepository repository, TimeProvider clock) =>
-        new(repository, repository, new FixedContent(Content), clock);
+        new(new RunnerPerRequest(repository), new FixedContent(Content), clock);
 
     /// <summary>The city's state as text, field by field, so two cities compare in one assertion that shows the first difference.</summary>
     public static string Describe(CityState city)
@@ -175,6 +178,19 @@ internal static class SettleFixture
         BuildSeconds = buildSeconds,
         Levels = [new BuildingLevelData { Level = 1, WorkersProvided = 2 }],
     };
+
+    /// <summary>
+    /// An <see cref="ICityTransactionRunner"/> that runs every call with a new <see cref="CityTransactionRunner"/> over the repository, as each
+    /// request gets its own scoped runner in the server; one runner runs once.
+    /// </summary>
+    /// <param name="repository">The repository and unit of work of every run.</param>
+    public sealed class RunnerPerRequest(InMemoryCityRepository repository) : ICityTransactionRunner
+    {
+        /// <summary>Runs the work with a new runner, as a new request would.</summary>
+        public Task<TResult> RunAsync<TResult>(
+            Guid playerId, Func<CityTransaction, CancellationToken, Task<TResult>> work, CancellationToken cancellationToken) =>
+            new CityTransactionRunner(repository, repository).RunAsync(playerId, work, cancellationToken);
+    }
 
     /// <summary>An <see cref="IContentProvider"/> that serves the given content.</summary>
     /// <param name="content">The content to serve.</param>

@@ -185,14 +185,13 @@ public sealed class SettleCityTests
     [Fact]
     public void Constructor_NullDependency_Throws()
     {
-        var repository = new InMemoryCityRepository();
+        var runner = new RunnerPerRequest(new InMemoryCityRepository());
         FakeTimeProvider clock = ClockAtLastSettled();
         IContentProvider content = new FixedContent(SettleFixture.Content);
 
-        Assert.Throws<ArgumentNullException>("cities", () => new SettleCity(null!, repository, content, clock));
-        Assert.Throws<ArgumentNullException>("unitOfWork", () => new SettleCity(repository, null!, content, clock));
-        Assert.Throws<ArgumentNullException>("content", () => new SettleCity(repository, repository, null!, clock));
-        Assert.Throws<ArgumentNullException>("timeProvider", () => new SettleCity(repository, repository, content, null!));
+        Assert.Throws<ArgumentNullException>("transactions", () => new SettleCity(null!, content, clock));
+        Assert.Throws<ArgumentNullException>("content", () => new SettleCity(runner, null!, clock));
+        Assert.Throws<ArgumentNullException>("timeProvider", () => new SettleCity(runner, content, null!));
     }
 
     /// <summary>
@@ -226,6 +225,19 @@ public sealed class SettleCityTests
         Assert.Equal(1, repository.SaveChangesCount);
     }
 
+    /// <summary>A settlement runs in the city's transaction: it locks and loads the city, saves and writes it, then commits.</summary>
+    [Fact]
+    public async Task ExecuteAsync_AnySettlement_RunsInTheCityTransaction()
+    {
+        InMemoryCityRepository repository = Repository();
+        FakeTimeProvider clock = ClockAtLastSettled();
+        clock.Advance(TimeSpan.FromSeconds(5));
+
+        await UseCase(repository, clock).ExecuteAsync(PlayerId, TestContext.Current.CancellationToken);
+
+        Assert.Equal(["begin", $"load {PlayerId}", "save", "write", "commit"], repository.Events);
+    }
+
     /// <summary>Settling saves the city once, with its new clock and last settled second.</summary>
     [Fact]
     public async Task ExecuteAsync_AnySettlement_SavesTheCity()
@@ -235,7 +247,7 @@ public sealed class SettleCityTests
         clock.Advance(TimeSpan.FromSeconds(5));
 
         await UseCase(repository, clock).ExecuteAsync(PlayerId, TestContext.Current.CancellationToken);
-        CityAggregate stored = await repository.LoadForUpdateAsync(PlayerId, TestContext.Current.CancellationToken);
+        CityAggregate stored = repository.Stored(PlayerId);
 
         Assert.Equal(1, repository.SaveCount);
         Assert.Equal(LastSettled.ToUnixTimeSeconds() + 5, stored.LastSettledUnixSec);

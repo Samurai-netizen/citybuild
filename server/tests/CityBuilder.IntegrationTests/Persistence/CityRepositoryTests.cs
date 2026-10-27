@@ -36,6 +36,19 @@ public sealed class CityRepositoryTests : IDisposable
     /// <summary>Disposes the context.</summary>
     public void Dispose() => _db.Dispose();
 
+    /// <summary>
+    /// A load for update outside a transaction throws before it reaches the database: without a transaction the row lock would end with the
+    /// statement (M0-22).
+    /// </summary>
+    [Fact]
+    public async Task LoadForUpdateAsync_OutsideATransaction_ThrowsWithoutQuerying()
+    {
+        InvalidOperationException exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _repository.LoadForUpdateAsync(PlayerId, TestContext.Current.CancellationToken));
+
+        Assert.Contains("transaction", exception.Message, StringComparison.Ordinal);
+    }
+
     /// <summary>A city the context doesn't track is inserted with every row, the next state version and now as both wall times.</summary>
     [Fact]
     public void Save_NewCity_InsertsEveryRowWithTheNextVersionAndNow()

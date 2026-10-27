@@ -24,4 +24,17 @@ public sealed class DatabaseOptions
     /// other environment stops the start, because there the migrations are applied on purpose, never as a side effect.
     /// </summary>
     public bool ApplyMigrationsAtStartup { get; set; }
+
+    /// <summary>The lowest allowed <see cref="LockTimeoutMilliseconds"/>: 0 would mean "wait forever" to PostgreSQL.</summary>
+    public const int MinLockTimeoutMilliseconds = 1;
+
+    /// <summary>The highest allowed <see cref="LockTimeoutMilliseconds"/>: a minute, far above any request's own work.</summary>
+    public const int MaxLockTimeoutMilliseconds = 60_000;
+
+    /// <summary>
+    /// <c>Database:LockTimeoutMilliseconds</c>: how long a request waits for its city's row lock (PostgreSQL's <c>lock_timeout</c>) before it
+    /// fails with <c>CONCURRENCY_CONFLICT</c> and the client retries (core-instructions/06-data-model.md: about 3 s). Default 3000; between
+    /// <see cref="MinLockTimeoutMilliseconds"/> and <see cref="MaxLockTimeoutMilliseconds"/>, or the start stops.
+    /// </summary>
+    public int LockTimeoutMilliseconds { get; set; } = 3000;
 }

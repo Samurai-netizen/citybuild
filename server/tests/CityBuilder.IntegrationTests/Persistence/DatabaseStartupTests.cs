@@ -46,6 +46,23 @@ public sealed class DatabaseStartupTests(ApiFactory factory) : IClassFixture<Api
             failure => failure.StartsWith("Database:ApplyMigrationsAtStartup may be true only in Development", StringComparison.Ordinal));
     }
 
+    /// <summary>A lock timeout of 0 (PostgreSQL's "wait forever"), below it, or above a minute fails the options validation at startup.</summary>
+    /// <param name="milliseconds">The setting's value.</param>
+    [Theory]
+    [InlineData("0")]
+    [InlineData("-1")]
+    [InlineData("60001")]
+    public void Start_LockTimeoutOutOfRange_FailsValidation(string milliseconds)
+    {
+        using WebApplicationFactory<Program> broken =
+            factory.WithWebHostBuilder(host => host.UseSetting("Database:LockTimeoutMilliseconds", milliseconds));
+
+        OptionsValidationException exception = Assert.Throws<OptionsValidationException>(() => broken.Services);
+
+        Assert.Contains(exception.Failures,
+            failure => failure.StartsWith("Database:LockTimeoutMilliseconds must be between 1 and 60000", StringComparison.Ordinal));
+    }
+
     /// <summary>
     /// In Development with the startup migration on, the server migrates before it accepts requests: with a database it can't reach,
     /// the start fails with the connection error instead of starting without a schema.
