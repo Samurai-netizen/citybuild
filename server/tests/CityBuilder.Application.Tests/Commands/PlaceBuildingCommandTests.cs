@@ -62,11 +62,25 @@ public sealed class PlaceBuildingCommandTests
         Assert.Equal(valid, error is null);
     }
 
-    /// <summary>Coordinates are not a shape question: any integer passes, and the rule answers <c>OUT_OF_BOUNDS</c>.</summary>
-    [Fact]
-    public void ValidateShape_CoordinatesOutsideTheGrid_AreFine()
+    /// <summary>
+    /// A negative coordinate is a wrong shape (the grid starts at 0, whatever the content), so it never locks the city (OD-13); a coordinate
+    /// past the grid passes, because the content sets the grid's size, and the rule answers <c>OUT_OF_BOUNDS</c>.
+    /// </summary>
+    /// <param name="x">The column.</param>
+    /// <param name="y">The row.</param>
+    /// <param name="valid">Whether the shape is fine.</param>
+    [Theory]
+    [InlineData(0, 0, true)]
+    [InlineData(8, 8, true)]
+    [InlineData(int.MaxValue, int.MaxValue, true)]
+    [InlineData(-1, 0, false)]
+    [InlineData(0, -1, false)]
+    [InlineData(int.MinValue, int.MaxValue, false)]
+    public void ValidateShape_Coordinates_RefusesNegativeOnes(int x, int y, bool valid)
     {
-        Assert.Null(new PlaceBuildingCommand(_requestId, "woodcutter", int.MinValue, int.MaxValue).ValidateShape());
+        string? error = new PlaceBuildingCommand(_requestId, "woodcutter", x, y).ValidateShape();
+
+        Assert.Equal(valid, error is null);
     }
 
     /// <summary>

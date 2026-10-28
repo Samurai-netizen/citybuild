@@ -2,6 +2,7 @@ using System.Text.Json;
 using CityBuilder.Api.Contracts;
 using CityBuilder.Application.Commands;
 using CityBuilder.Application.Commands.PlaceBuilding;
+using CityBuilder.Application.Commands.UpgradeBuilding;
 using CityBuilder.Application.Content;
 using CityBuilder.Application.Players;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -27,6 +28,7 @@ public static class CommandEndpoints
     {
         RouteGroupBuilder commands = api.MapGroup("/commands");
         commands.MapPost("/place-building", PlaceBuildingAsync).Produces<CitySnapshot>(StatusCodes.Status200OK, "application/json");
+        commands.MapPost("/upgrade-building", UpgradeBuildingAsync).Produces<CitySnapshot>(StatusCodes.Status200OK, "application/json");
         return commands;
     }
 
@@ -55,6 +57,34 @@ public static class CommandEndpoints
         }
 
         var command = new PlaceBuildingCommand(request.RequestId, request.BuildingTypeId ?? string.Empty, request.X, request.Y);
+        return await ExecuteAsync(command, player, pipeline, content, json, cancellationToken);
+    }
+
+    /// <summary>
+    /// Starts upgrading a building of the acting player's city (<see cref="UpgradeBuildingCommand"/>). The body names only the building; a
+    /// body with an unknown property, a missing field or a value of the wrong type is refused by the binding (400) before anything runs.
+    /// </summary>
+    /// <param name="request">The body, or <see langword="null"/> when there is none.</param>
+    /// <param name="player">The acting player, from the access token.</param>
+    /// <param name="pipeline">Runs the command.</param>
+    /// <param name="content">The server's content, for the snapshot.</param>
+    /// <param name="json">The HTTP JSON settings, so the snapshot reads as <c>GET /city</c>'s.</param>
+    /// <param name="cancellationToken">The request's cancellation; nothing is committed then.</param>
+    /// <returns>200 with the snapshot, or Problem Details.</returns>
+    private static async Task<Results<ContentHttpResult, ProblemHttpResult>> UpgradeBuildingAsync(
+        UpgradeBuildingRequest? request,
+        ICurrentPlayer player,
+        CommandPipeline pipeline,
+        IContentProvider content,
+        IOptions<HttpJsonOptions> json,
+        CancellationToken cancellationToken)
+    {
+        if (request is null)
+        {
+            return CommandResponses.Problem(CommandResponses.InvalidArgument("The body must be a JSON object."), Guid.Empty);
+        }
+
+        var command = new UpgradeBuildingCommand(request.RequestId, request.BuildingId);
         return await ExecuteAsync(command, player, pipeline, content, json, cancellationToken);
     }
 

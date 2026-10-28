@@ -83,6 +83,19 @@ public sealed class UnauthenticatedContractTests(ApiFactory factory) : IClassFix
         AssertAuthenticationRequired(response);
     }
 
+    /// <summary>An upgrade without a token gets the same 401 answer before its body is read, as every command does.</summary>
+    [Fact]
+    public async Task Post_UpgradeBuildingWithoutToken_ReturnsAuthenticationRequiredProblem()
+    {
+        ApiResponse response = await ApiClient.PostAsync(
+            factory,
+            "/api/v1/commands/upgrade-building",
+            playerId: null,
+            """{"requestId":"0199a1b2-c3d4-7e5f-8a9b-00000000000b","buildingId":1}""");
+
+        AssertAuthenticationRequired(response);
+    }
+
     /// <summary>A valid token is not refused: the content endpoint answers 200 (the city endpoint needs a city, which the snapshot tests give it).</summary>
     [Fact]
     public async Task Get_WithValidToken_IsNotRefused()

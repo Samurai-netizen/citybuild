@@ -84,7 +84,6 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
     [InlineData(new string[0], "castle", 0, 0, HttpStatusCode.UnprocessableEntity, "UNKNOWN_BUILDING_TYPE")]
     [InlineData(new string[0], "trading_post", 0, 0, HttpStatusCode.UnprocessableEntity, "BUILDING_LOCKED")]
     [InlineData(new string[0], "house", 8, 0, HttpStatusCode.UnprocessableEntity, "OUT_OF_BOUNDS")]
-    [InlineData(new string[0], "house", 0, -1, HttpStatusCode.UnprocessableEntity, "OUT_OF_BOUNDS")]
     [InlineData(new[] { "woodcutter 2 3" }, "house", 2, 3, HttpStatusCode.Conflict, "TILE_OCCUPIED")]
     [InlineData(new[] { "house 0 0", "house 1 0" }, "house", 2, 0, HttpStatusCode.Conflict, "NO_FREE_BUILDER")]
     [InlineData(new[] { "sawmill 0 0" }, "sawmill", 1, 0, HttpStatusCode.UnprocessableEntity, "INSUFFICIENT_RESOURCE")]

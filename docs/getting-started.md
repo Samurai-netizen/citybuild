@@ -45,6 +45,7 @@ How to get from a clean machine to a running project. Every command here must wo
 | Log in (Development; the API running) | `curl -X POST http://localhost:8080/api/v1/auth/dev-login -H 'Content-Type: application/json' -d '{"displayName":"dev1"}'` → `{"accessToken":"…","expiresAtUtc":"…"}`; the first login of a name creates the player and the starter city. Send the token as `Authorization: Bearer <accessToken>` | M0-25 |
 | Read the game content and your city (Development; after the login) | `curl http://localhost:8080/api/v1/content -H "Authorization: Bearer $TOKEN"` (the same for every player) and `curl http://localhost:8080/api/v1/city -H "Authorization: Bearer $TOKEN"` (settles your city to now, then shows it). Without a valid token both answer 401 `AUTHENTICATION_REQUIRED` | M0-28 |
 | Place a building (Development; after the login) | `curl http://localhost:8080/api/v1/commands/place-building -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d "{\"requestId\":\"$(uuidgen)\",\"buildingTypeId\":\"house\",\"x\":0,\"y\":0}"`: answers with the snapshot; the same `requestId` again answers the same; a refusal is Problem Details with a `code` (`05` → Commands) | M0-29 |
+| Upgrade a building (Development; after the login) | `curl http://localhost:8080/api/v1/commands/upgrade-building -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d "{\"requestId\":\"$(uuidgen)\",\"buildingId\":1}"`: the `id` is the building's in the snapshot; answers with the snapshot (the building `Upgrading`), or Problem Details such as `BUILDING_BUSY` while it is still being built | M0-31 |
 | Run the API with another content file (a draft) | `dotnet run --project server/src/CityBuilder.Api -- --Content:FilePath=/path/to/draft.json` | M0-07b |
 | Open the Unity project | Unity Hub → Add → `client/CityBuilder` (editor 6000.3.25f1); details and the Bootstrap scene steps: `client/README.md` | M0-04 |
 | Does the Unity project compile? (Editor closed) | `<UNITY> -batchmode -quit -projectPath client/CityBuilder -logFile -`, exit code 0 and no `error CS` (`client/README.md`) | M0-04 |
@@ -84,6 +85,21 @@ PostgreSQL 18.6 runs in Docker (`docker-compose.yml` at the repo root; `core-ins
 
 The data lives in the Docker volume `citybuild_postgres-data` and survives `docker compose down`; `docker compose down -v` deletes it.
 A shell in the database: `docker compose exec postgres psql -U citybuilder -d citybuilder`. Schema changes: `docs/how-to/add-migration.md`.
+
+**The test player.** Hand runs against the dev database (a task's check of the real server, a curl try) log in as one player, dev name
+`devtest`, instead of a new player per task (owner directive OD-14 in `core-instructions/15-change-control.md`). Its city carries over
+from run to run; a run that needs the starter city deletes the player first, which removes its city, rows, ledger and receipts:
+```
+docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1' <<'SQL'
+begin;
+delete from ledger_entries where city_id in (select c.id from cities c join players p on p.id = c.player_id where p.dev_name = 'devtest');
+delete from command_receipts where player_id in (select id from players where dev_name = 'devtest');
+delete from cities where player_id in (select id from players where dev_name = 'devtest');
+delete from players where dev_name = 'devtest';
+commit;
+SQL
+```
+The next dev login as `devtest` creates the player and a starter city again.
 From M0-61 this section links to the generated reference.
 
 ## Troubleshooting
