@@ -93,6 +93,7 @@ Decisions: build log `docs/build-log/2026/2026-10-19-06-M0-16.md`, decisions 8, 
 | `ItemId`, `BuildingTypeId`, `ResearchId` | `readonly struct`s that identify an item, a building type and a research node. Equality and ordering are ordinal, so they never depend on the machine's culture. `default` is the empty id: it equals only itself and sorts first. The constructor rejects null and empty text and keeps the text as given; the factory checks the format (a lowercase letter, then lowercase letters, digits or `_`, at most 64 characters) before it creates one |
 | `EraId` | The text id of an era (`early_medieval`): equality only, no order, because eras are ordered by number (decision 022). Everything else names an era by its number |
 | `GameContentFactory` | `Create(GameContentData)` → `GameContentResult`; `MaxQuantity` (10^12) bounds every quantity, cost, cap, duration and labor value, so sums of content numbers can't overflow a `long` |
+| `Content.ContentIds` | The format of every content id: a lowercase ASCII letter, then lowercase letters, digits or `_`, at most `MaxLength` (64) characters; `IsValid(text)`, `FormatDescription`. The content loader refuses other ids (`ContentErrorCode.InvalidId`); public since M0-30, so the server's command shape checks refuse text that can't be an id before a city is locked |
 | `GameContentResult`, `ContentError`, `ContentErrorCode` | Either `Content` or every error (code, path, message; `ToString()` gives all three on one line), in a fixed order: shape errors, or rule errors rule by rule in file order |
 | `GameContent` | `ContentVersion`, `Rules`, `StartingCity`, and the sorted lists `Eras` (by number), `Items`, `Buildings`, `Research` (by id), with `TryGetEra/Item/Building/Research`. Immutable; lists are read-only collections |
 | `GameRules` | Grid size, builder and research slots (research exactly 1 in M0), `BaseStorageCaps` (exactly the capped items) with `TryGetBaseStorageCap`, `MaxOfflineProductionSeconds`, `MinCycleSeconds`, `MaxLaborReductionPermille` |
@@ -249,4 +250,4 @@ too, but guards the Unity client's asmdefs and manifest, not the engine (see `do
   depend on `Dictionary` or `HashSet` order (`04` §9).
 - Content error messages are English text for content authors; only `ContentErrorCode` and `Path` are stable.
 
-Last updated: M0-28
+Last updated: M0-30

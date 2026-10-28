@@ -30,12 +30,14 @@ public sealed record PlaceBuildingCommand(Guid RequestId, string BuildingTypeId,
     public string CommandType => Type;
     public LedgerReason? CostReason => LedgerReason.CostPlace; // the ledger reason of Spent
     public LedgerReason? RefundReason => null;               // the ledger reason of Refunded (an upgrade has REFUND_UPGRADE)
-    public string? ValidateShape() => string.IsNullOrWhiteSpace(BuildingTypeId) ? "buildingTypeId must not be blank." : null;
+    public string? ValidateShape() =>                        // text that can't be a content id never locks the city
+        ContentIds.IsValid(BuildingTypeId) ? null : "buildingTypeId must be a content id: " + ContentIds.FormatDescription + ".";
     public MutationResult Apply(CityState city, GameContent content) =>
         CityRules.PlaceBuilding(city, content, new BuildingTypeId(BuildingTypeId), X, Y);
 }
 ```
-`ValidateShape` refuses only what no city state could make valid (a blank id). Everything else is the rule's job: coordinates outside the
+`ValidateShape` refuses only what no city state could make valid: an id that can't be a content id (`ContentIds`, the format the content
+loader enforces), checked before the lock (M0-30). Everything else is the rule's job: coordinates outside the
 grid are `OUT_OF_BOUNDS`, not a shape error. A renamed property or command type changes every stored hash, and an old request id then
 conflicts, so pin the payload in a test.
 

@@ -21,7 +21,10 @@ public sealed class PlaceBuildingCommandTests
     /// <summary>The request id of the tests.</summary>
     private static readonly Guid _requestId = new("0199a1b2-c3d4-7e5f-8a9b-00000000000a");
 
-    /// <summary>A missing or blank type id is a wrong shape; any other text is left to the content.</summary>
+    /// <summary>
+    /// A type id that can't be a content id is a wrong shape (missing, blank, too long, a character the id format doesn't have), so it
+    /// never locks the city; an id of the right form is left to the content, even one the content doesn't have.
+    /// </summary>
     /// <param name="typeId">The type id.</param>
     /// <param name="valid">Whether the shape is fine.</param>
     [Theory]
@@ -29,10 +32,32 @@ public sealed class PlaceBuildingCommandTests
     [InlineData(" ", false)]
     [InlineData("\t", false)]
     [InlineData("woodcutter", true)]
-    [InlineData("no-such-building", true)]
-    public void ValidateShape_TypeId_RefusesOnlyBlank(string typeId, bool valid)
+    [InlineData("no_such_building", true)]
+    [InlineData("no-such-building", false)]
+    [InlineData("Woodcutter", false)]
+    [InlineData("woodcutter ", false)]
+    [InlineData("1woodcutter", false)]
+    [InlineData("w\u00f6odcutter", false)]
+    public void ValidateShape_TypeId_RefusesWhatCantBeAContentId(string typeId, bool valid)
     {
         string? error = new PlaceBuildingCommand(_requestId, typeId, 2, 3).ValidateShape();
+
+        Assert.Equal(valid, error is null);
+    }
+
+    /// <summary>
+    /// The id format allows 64 characters: an id of 64 passes the shape check, one of 65 (or a megabyte of letters) is refused before the
+    /// city is locked.
+    /// </summary>
+    /// <param name="length">The id's length.</param>
+    /// <param name="valid">Whether the shape is fine.</param>
+    [Theory]
+    [InlineData(64, true)]
+    [InlineData(65, false)]
+    [InlineData(1_000_000, false)]
+    public void ValidateShape_TypeIdLength_AllowsTheIdFormatsSixtyFour(int length, bool valid)
+    {
+        string? error = new PlaceBuildingCommand(_requestId, new string('a', length), 2, 3).ValidateShape();
 
         Assert.Equal(valid, error is null);
     }

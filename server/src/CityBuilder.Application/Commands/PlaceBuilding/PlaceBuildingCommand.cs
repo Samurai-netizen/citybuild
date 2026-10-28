@@ -31,11 +31,13 @@ public sealed record PlaceBuildingCommand(Guid RequestId, string BuildingTypeId,
     public LedgerReason? RefundReason => null;
 
     /// <summary>
-    /// Refuses a missing or blank type id; any other text is a question for the content (<c>UNKNOWN_BUILDING_TYPE</c>), and coordinates
-    /// outside the grid are the rule's <c>OUT_OF_BOUNDS</c>.
+    /// Refuses a type id that can't be a content id (<see cref="ContentIds"/>: blank, too long, other characters), so such text never locks
+    /// the city; an id of the right form is a question for the content (<c>UNKNOWN_BUILDING_TYPE</c>), and coordinates outside the grid are
+    /// the rule's <c>OUT_OF_BOUNDS</c>.
     /// </summary>
     /// <returns><see langword="null"/>, or what is wrong.</returns>
-    public string? ValidateShape() => string.IsNullOrWhiteSpace(BuildingTypeId) ? "buildingTypeId must not be blank." : null;
+    public string? ValidateShape() =>
+        ContentIds.IsValid(BuildingTypeId) ? null : "buildingTypeId must be a content id: " + ContentIds.FormatDescription + ".";
 
     /// <inheritdoc />
     public MutationResult Apply(CityState city, GameContent content) =>

@@ -65,6 +65,7 @@ Any key can be overridden with an environment variable (`:` becomes `__`) or a c
 | `Auth:SigningKey` | none (required) | The secret the access tokens are signed and checked with (HMAC-SHA256), at least 32 bytes. Anyone who has it can act as any player, so it lives in user-secrets (Development) or the environment variable `Auth__SigningKey`, never in a committed file. Missing or shorter stops the start; changing it ends every token (`core-instructions/07-security-model.md`) |
 | `Auth:TokenLifetimeMinutes` | `720` | How long an access token is valid (12 h). Between 1 and 1440, or the start stops |
 | `Auth:DevLoginEnabled` | `false`; `true` in `appsettings.Development.json` | Map `POST /api/v1/auth/dev-login`, which logs anyone in by name alone. Allowed only in Development: `true` in another environment stops the start |
+| `RequestLimits:MaxBodyBytes` | `4096` | The largest request body the server reads, in bytes; a larger one is 400 `INVALID_ARGUMENT` before anything runs (`core-instructions/05-api-contract.md` → Request limits). Between 1024 and 1048576, or the start stops |
 | `Logging:LogLevel:*`, `AllowedHosts` | as in `appsettings.json` | ASP.NET Core's own keys |
 
 Secrets come from user-secrets or the environment, never a committed file: the connection string and the signing key.

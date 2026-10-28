@@ -128,6 +128,10 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   that refuses unknown, missing and mistyped fields, the snapshot as the answer and the receipt, Problem Details with every engine code's `05`
   status (`CommandResponses`); contract tests on the raw JSON, a table test of the error mapping, and PostgreSQL tests over HTTP (every rule
   code, replay, conflict, concurrent retries, another player, settle before the mutation, auto-staffing); how-to `add-command.md` (M0-29).
+- API attack review: a request body limit (`RequestLimits:MaxBodyBytes`, 4 KB; Kestrel's limit and a `Content-Length` check first), JSON
+  bodies that name a property twice refused, the dev login's body refusing unknown fields, a type id that can't be a content id refused
+  before the city is locked; `Security_` tests in memory and on PostgreSQL for forbidden fields, huge and malformed bodies, bad request ids,
+  coordinates outside the grid, a replay storm, no token and players named outside the token; `07` threat rows and limitations (M0-30).
 
 ### Changed
 - Handbook site: react and react-dom 19.2.9 → 19.3.1, scheduler 0.28.0 (Dependabot PR #28, DEP-PR28).

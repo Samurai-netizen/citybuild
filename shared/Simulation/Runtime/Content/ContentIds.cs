@@ -3,8 +3,12 @@ using System.Globalization;
 
 namespace CityBuilder.Simulation.Content
 {
-    /// <summary>The format of every content id: a lowercase ASCII letter, then lowercase letters, digits or <c>_</c>, at most 64 characters.</summary>
-    internal static class ContentIds
+    /// <summary>
+    /// The format of every content id: a lowercase ASCII letter, then lowercase letters, digits or <c>_</c>, at most 64 characters. The
+    /// content loader refuses any other id; the server's command shape checks use it too, so text that can't be an id is refused before a
+    /// city is locked.
+    /// </summary>
+    public static class ContentIds
     {
         /// <summary>The longest id text allowed. Ids are keys in JSON, URLs and database rows; 64 is plenty and keeps them short.</summary>
         public const int MaxLength = 64;

@@ -11,6 +11,7 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
+- [BL-20261027-08 · M0-30 · API attack review](2026/2026-10-27-08-M0-30.md) — Done
 - [BL-20261027-07 · M0-29 · PlaceBuilding](2026/2026-10-27-07-M0-29.md) — Done
 - [BL-20261027-06 · M0-28 · Content and city endpoints](2026/2026-10-27-06-M0-28.md) — In progress
 - [BL-20261027-05 · M0-27 · Idempotency integration tests](2026/2026-10-27-05-M0-27.md) — Done

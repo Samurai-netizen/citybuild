@@ -29,6 +29,9 @@ internal sealed class FakeCityStore : ICityRepository, IUnitOfWork, ICommandRece
     /// <summary>How often a city was saved.</summary>
     public int SaveCount { get; private set; }
 
+    /// <summary>How often a city was loaded for an update: where the real repository locks the city's row.</summary>
+    public int LockCount { get; private set; }
+
     /// <summary>The ledger rows of every save, in order.</summary>
     public List<LedgerEntry> Ledger { get; } = [];
 
@@ -68,10 +71,13 @@ internal sealed class FakeCityStore : ICityRepository, IUnitOfWork, ICommandRece
         });
 
     /// <inheritdoc />
-    public Task<CityAggregate> LoadForUpdateAsync(Guid playerId, CancellationToken cancellationToken) =>
-        Task.FromResult(_cities.TryGetValue(playerId, out CityAggregate? city)
+    public Task<CityAggregate> LoadForUpdateAsync(Guid playerId, CancellationToken cancellationToken)
+    {
+        LockCount++;
+        return Task.FromResult(_cities.TryGetValue(playerId, out CityAggregate? city)
             ? city
             : throw new InvalidOperationException($"Player {playerId} has no city."));
+    }
 
     /// <inheritdoc />
     public void Save(CityAggregate city, IReadOnlyList<LedgerEntry> ledger, CommandReceipt? receipt)
