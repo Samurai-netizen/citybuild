@@ -274,8 +274,8 @@ The AI coder updates its row at start (`In progress`) and finish (`In review`). 
 | M0-27 | 5 | Idempotency integration tests | O | Done |
 | M0-28 | 5 | Content and city endpoints | S | Done |
 | M0-29 | 5 | PlaceBuilding | O | Done |
-| M0-30 | 5 | API attack review | O | In review |
-| M0-31 | 6 | UpgradeBuilding | O | Todo |
+| M0-30 | 5 | API attack review | O | Done |
+| M0-31 | 6 | UpgradeBuilding | O | In progress |
 | M0-32 | 6 | AssignWorkers | O | Todo |
 | M0-33 | 6 | StartResearch | O | Todo |
 | M0-34 | 6 | Error catalogue, rate limits, input limits | S | Todo |
