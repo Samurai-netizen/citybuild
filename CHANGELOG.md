@@ -137,6 +137,12 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   raw JSON and PostgreSQL tests over HTTP (from Idle and Producing, the refund above the cap, workers kept, a house's workers on completion,
   every rule code, another player's building → 404, replay, conflict, concurrent requests); owner directive OD-13: a building id below 1
   and a negative coordinate (place-building too) are `INVALID_ARGUMENT` before the city is locked (M0-31).
+- AssignWorkers: `POST /api/v1/commands/assign-workers` (`{ requestId, buildingId, workers }`, an absolute count, 0 pauses) through the
+  command pipeline (`AssignWorkersCommand`, no ledger rows), the same strict body; a building id below 1 and a negative count are
+  `INVALID_ARGUMENT` before the lock (OD-13); contract tests on the raw JSON, PostgreSQL tests over HTTP (production starting in the same
+  response, progress kept on reassignment, freeze and resume, every rule code, while upgrading, another player's building → 404, the same
+  count twice, two assignments at once) and a seeded security property over HTTP (moving workers never makes more than the labor
+  delivered); the hand-built city helpers and the Problem Details check shared by the command tests (M0-32).
 
 ### Changed
 - Handbook site: react and react-dom 19.2.9 → 19.3.1, scheduler 0.28.0 (Dependabot PR #28, DEP-PR28).
