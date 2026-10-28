@@ -7,8 +7,8 @@
 > *Growing.* The ports `IContentProvider` (M0-07b), `ICityRepository`, `IPlayerRepository` and `IUnitOfWork` (M0-20) exist, the city
 > transaction `ICityTransactionRunner` (M0-22), and the settle use case `SettleCity` on it (M0-13, complete with M0-23); the dev login
 > `DevLogin`, `ICurrentPlayer` and `INewCityRepository` (M0-25); the command pipeline `CommandPipeline` with `ICityCommand` and the receipt
-> port, and the settle's steps shared with it, `CitySettler` (M0-26); the commands `PlaceBuildingCommand` (M0-29) and `UpgradeBuildingCommand`
-> (M0-31). The other commands follow *(planned, M0-32, M0-33)*.
+> port, and the settle's steps shared with it, `CitySettler` (M0-26); the commands `PlaceBuildingCommand` (M0-29), `UpgradeBuildingCommand`
+> (M0-31) and `AssignWorkersCommand` (M0-32). `StartResearch` follows *(planned, M0-33)*.
 
 ## Purpose
 The use cases (`SettleCity`, `DevLogin`, `PlaceBuilding`, `UpgradeBuilding`, `AssignWorkers`, `StartResearch`), the ports they
@@ -39,6 +39,7 @@ need (`ICityRepository`, `IUnitOfWork`, `IContentProvider`, `ICommandReceiptRepo
 | `Commands/ICommandReceiptRepository` | The port that reads a receipt: `FindAsync(playerId, requestId)` (the key includes the player). Implemented by `CommandReceiptRepository` in Infrastructure; receipts are written with the city (`CityTransaction.SaveAsync`) |
 | `Commands/PlaceBuilding/PlaceBuildingCommand` | `place-building` (M0-29): `RequestId`, `BuildingTypeId`, `X`, `Y`; `Apply` is `CityRules.PlaceBuilding`; pays `COST_PLACE`, never refunds; `ValidateShape` refuses a type id that can't be a content id (`ContentIds`: blank, over 64 characters, other characters; M0-30), and a negative coordinate (OD-13, M0-31), so neither ever locks the city (coordinates past the grid are the rule's `OUT_OF_BOUNDS`). Its payload hash is pinned in a test |
 | `Commands/UpgradeBuilding/UpgradeBuildingCommand` | `upgrade-building` (M0-31): `RequestId`, `BuildingId`; `Apply` is `CityRules.UpgradeBuilding`; pays `COST_UPGRADE` and gives a running cycle's inputs back as `REFUND_UPGRADE`; `ValidateShape` refuses an id below 1, which no city has (OD-13), so it never locks the city; an id of 1 or more the acting player's city doesn't have (ids count from 1 in each city) is the rule's `BUILDING_NOT_FOUND`. Its payload hash is pinned in a test |
+| `Commands/AssignWorkers/AssignWorkersCommand` | `assign-workers` (M0-32): `RequestId`, `BuildingId`, `Workers` (absolute, 0 pauses); `Apply` is `CityRules.AssignWorkers`; no ledger reasons (workers are no resource); `ValidateShape` refuses an id below 1 and a negative count (OD-13), so neither ever locks the city; a count above the level's max is the rule's `WORKER_LIMIT`, more than the free workers `INSUFFICIENT_WORKERS`. Its payload hash is pinned in a test |
 | `Cities/Settlement` | One settlement: the window's advance and the closing zero-length advance as one. Its `Id` (a UUID v7 per settlement), `Window`, `ElapsedSeconds`, `ProductionSeconds`, and the totals of both advances (`Produced`, `Consumed`, `CompletedBuildings`, `CompletedResearch`, `EraChanged`; `IsEmpty`). `LedgerEntries(quantitiesBefore)` gives its ledger rows: per item in ordinal order `SETTLEMENT_PRODUCED`, then `SETTLEMENT_CONSUMED` (a negative delta), each balance running on from the quantity before; `ref_type` `settlement` (`LedgerRefType`), `ref_id` the id (`06`) |
 
 ## Rules and invariants
@@ -75,9 +76,9 @@ steps, the receipt, what the response writer gets, the cost after the settlement
 another player's request id, the receipt race won by the same or another payload, a duplicate key without a receipt) and
 `CommandPipelineRuleTests` (shape, empty request id, a rejection commits only the settlement, a retried rejection runs again, settle before
 mutation, a refund the closing advance consumes). `PipelineFixture` runs the pipeline over the fakes with two test commands
-(`PlaceTestCommand`, `UpgradeTestCommand`) and a response writer that records `respond`. `PlaceBuildingCommandTests` and `UpgradeBuildingCommandTests` cover the real
-commands: the shape check, the pinned payload and hash, the ledger reasons, `Apply` equal to the rule, one run through the pipeline (the
-upgrade of a producing sawmill: its refund and cost rows). On PostgreSQL (M0-27), `CityBuilder.IntegrationTests`
+(`PlaceTestCommand`, `UpgradeTestCommand`) and a response writer that records `respond`. `PlaceBuildingCommandTests`, `UpgradeBuildingCommandTests` and `AssignWorkersCommandTests` cover
+the real commands: the shape check, the pinned payload and hash, the ledger reasons, `Apply` equal to the rule, one run through the pipeline
+(the upgrade of a producing sawmill: its refund and cost rows; 0 workers on a producing sawmill: frozen, no command ledger row). On PostgreSQL (M0-27), `CityBuilder.IntegrationTests`
 → `Commands/` runs the server's registered pipeline with test commands of its own (`DatabaseCommands`): `CommandIdempotencyDatabaseTests` (a
 retry writes nothing, also on a restarted host; conflicts; another player's request id), `CommandConcurrencyDatabaseTests` (ten identical
 requests queued behind the lock apply once; the receipt race through the unique key, with the same or another payload) and
@@ -100,9 +101,9 @@ back in time, so a clock behind is a last settled second ahead of now. The conte
 
 ## Known limitations
 - No log line for a clock behind here: Application has no logging package (`14`); settlement logging will log it *(planned, M0-35)*.
-- Two commands so far (PlaceBuilding, UpgradeBuilding); the pipeline's own tests keep their test commands. Nothing maps `ConcurrencyConflictException` to
+- Three commands so far (PlaceBuilding, UpgradeBuilding, AssignWorkers); the pipeline's own tests keep their test commands. Nothing maps `ConcurrencyConflictException` to
   `CONCURRENCY_CONFLICT` yet *(planned, M0-34)*.
 - `DevLogin` has no tests with fakes: what it does is all persistence (one transaction, a unique index, a race), so it is tested on
   PostgreSQL (`CityBuilder.IntegrationTests`, `Auth/DevLoginDatabaseTests`).
 
-Last updated: M0-31
+Last updated: M0-32
