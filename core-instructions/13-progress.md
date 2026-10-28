@@ -8,14 +8,14 @@
 - **Task:** M0-32 · AssignWorkers (`[O]`, Opus 5.5)
 - **Branch:** `task/M0-32-assign-workers` (from `main` = `8dfc962`)
 - **Build log entry:** `docs/build-log/2026/2026-10-28-02-M0-32.md`
-- **Last green commit:** step 2 on the branch (Release build 0 warnings, format clean; fast suite: Repository 22, Domain 21,
-  Application 135, IntegrationTests 354, Simulation 872; Integration 142 on `postgres:18.6`)
+- **Last green commit:** step 3 on the branch (Release build 0 warnings, format clean; fast suite: Repository 22, Domain 21,
+  Application 135, IntegrationTests 354, Simulation 872; Integration 147 on `postgres:18.6`)
 - **Planned steps:** 1 command + endpoint + tests without a database · 2 PostgreSQL tests over HTTP (shared hand-built city helper) ·
   3 security property loop over HTTP · 4 docs · 5 finish (hand run as `devtest`, OD-14)
 - **Done steps:** start; 1 (the command, the route, Application and contract tests, `05`, module docs); 2 (`HandBuiltCities`,
-  `AssignWorkersDatabaseTests`, 20 on PostgreSQL)
-- **Next step:** step 3: `Security/WorkerLaborDatabaseTests`, a seeded loop of waits and reassignments between two woodcutters over HTTP:
-  logs made ≤ worker-seconds delivered / 60, assigned ≤ provided and ≤ max at every step
+  `AssignWorkersDatabaseTests`, 20 on PostgreSQL); 3 (`Security/WorkerLaborDatabaseTests`, 5 seeds; `07`)
+- **Next step:** step 4: docs (the how-to, overview, ADR-0003/0005 As built, getting-started curl row, `04`, `15` OD-13 row, CHANGELOG),
+  then step 5 `/finish-task` (hand run as `devtest`, OD-14)
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7
