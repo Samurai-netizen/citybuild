@@ -17,8 +17,7 @@
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7
   security alerts GitHub reports on `main`; M0-28 decision 14: the clock-behind warning that docs
-  promised for `GET /city` moved to M0-35 (settlement logging): fine, or do it earlier? M0-29: the dev database keeps the check player
-  `m029check` (one house); delete it too? (`m031check` is deleted; hand runs use `devtest`, OD-14). M0-30: decisions 2 and 5 (400 for a too-big body, not the 413 my
+  promised for `GET /city` moved to M0-35 (settlement logging): fine, or do it earlier? M0-30: decisions 2 and 5 (400 for a too-big body, not the 413 my
   question named; malformed type ids 400 instead of 422).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
