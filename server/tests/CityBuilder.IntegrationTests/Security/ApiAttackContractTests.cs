@@ -245,21 +245,45 @@ public sealed class ApiAttackContractTests(ApiFactory factory) : IClassFixture<A
     }
 
     /// <summary>
-    /// Coordinates outside the 8 × 8 grid, negative or huge (the limits of <c>int</c> and of the stored <c>smallint</c>), are
-    /// <c>OUT_OF_BOUNDS</c> (422), and nothing is saved: no building is stored at a wrapped tile.
+    /// A negative coordinate (down to the limits of <c>int</c> and past the stored <c>smallint</c>) can never be on the grid, which starts at
+    /// 0, so it is <c>INVALID_ARGUMENT</c> (400) before the city is locked (owner directive OD-13; M0-30 answered <c>OUT_OF_BOUNDS</c> after
+    /// the lock), and nothing is saved.
     /// </summary>
     /// <param name="x">The column.</param>
     /// <param name="y">The row.</param>
     [Theory]
     [InlineData(-1, -1)]
-    [InlineData(8, 8)]
+    [InlineData(-1, 0)]
+    [InlineData(0, -1)]
     [InlineData(int.MinValue, 0)]
+    [InlineData(0, -32769)]
+    [InlineData(int.MinValue, int.MaxValue)]
+    public async Task Security_NegativeCoordinates_Are400BeforeTheCityIsLocked(int x, int y)
+    {
+        (FakeCityStore store, WebApplicationFactory<Program> server) = Serve();
+        await using WebApplicationFactory<Program> _ = server;
+
+        ApiResponse response = await ApiClient.PostAsync(server, _placeBuilding, _playerId, Place("\"woodcutter\"", x, y));
+
+        AssertInvalidArgument(response);
+        Assert.Equal(_requestId, (string)response.Json()["requestId"]!);
+        AssertNothingRan(store);
+    }
+
+    /// <summary>
+    /// Coordinates past the 8 × 8 grid, up to the limits of <c>int</c> and past the stored <c>smallint</c>, are <c>OUT_OF_BOUNDS</c> (422) by
+    /// the rule (the content sets the grid's size), and nothing is saved: no building is stored at a wrapped tile.
+    /// </summary>
+    /// <param name="x">The column.</param>
+    /// <param name="y">The row.</param>
+    [Theory]
+    [InlineData(8, 8)]
+    [InlineData(8, 0)]
     [InlineData(0, int.MaxValue)]
     [InlineData(32767, 0)]
     [InlineData(32768, 0)]
-    [InlineData(0, -32769)]
     [InlineData(65538, 65538)]
-    public async Task Security_CoordinatesOutsideTheGrid_AreOutOfBoundsAndSaveNothing(int x, int y)
+    public async Task Security_CoordinatesPastTheGrid_AreOutOfBoundsAndSaveNothing(int x, int y)
     {
         (FakeCityStore store, WebApplicationFactory<Program> server) = Serve();
         await using WebApplicationFactory<Program> _ = server;

@@ -102,19 +102,41 @@ public sealed class ApiAttackDatabaseTests(PostgresServer server) : PostgresTest
     }
 
     /// <summary>
-    /// Coordinates outside the 8 × 8 grid, negative or huge (past the <c>smallint</c> columns the tile is stored in, and the limits of
-    /// <c>int</c>), are <c>OUT_OF_BOUNDS</c> (422), and nothing is stored: no building row at a wrapped or clipped tile, no cost paid.
+    /// A negative coordinate (past the <c>smallint</c> columns the tile is stored in, down to the limits of <c>int</c>) is
+    /// <c>INVALID_ARGUMENT</c> (400) before the city is locked (owner directive OD-13), five minutes after the last settle, and nothing is
+    /// stored, not even the five minutes: no building row at a wrapped or clipped tile, no cost paid.
     /// </summary>
     /// <param name="x">The column.</param>
     /// <param name="y">The row.</param>
     [Theory]
     [InlineData(-1, -1)]
+    [InlineData(0, -32769)]
+    [InlineData(int.MinValue, int.MaxValue)]
+    public async Task Security_NegativeCoordinates_Are400AndStoreNothing(int x, int y)
+    {
+        (Guid player, Guid city) = await StoreStarterAsync("attacker");
+        Factory.Clock.Advance(TimeSpan.FromMinutes(5));
+        string stored = await StoredAsync(Factory, Database, player, city);
+
+        ApiResponse response = await ApiClient.PostAsync(
+            Factory, _path, player, $$"""{"requestId":"{{_requestId}}","buildingTypeId":"house","x":{{x}},"y":{{y}}}""");
+
+        Assert.Equal((HttpStatusCode.BadRequest, "INVALID_ARGUMENT"), (response.Status, (string)response.Json()["code"]!));
+        Assert.Equal(stored, await StoredAsync(Factory, Database, player, city));
+    }
+
+    /// <summary>
+    /// Coordinates past the 8 × 8 grid (past the <c>smallint</c> columns the tile is stored in, and the limits of <c>int</c>) are
+    /// <c>OUT_OF_BOUNDS</c> (422) by the rule, and nothing is stored: no building row at a wrapped or clipped tile, no cost paid.
+    /// </summary>
+    /// <param name="x">The column.</param>
+    /// <param name="y">The row.</param>
+    [Theory]
     [InlineData(8, 0)]
     [InlineData(32768, 0)]
-    [InlineData(0, -32769)]
     [InlineData(65536, 65536)]
-    [InlineData(int.MinValue, int.MaxValue)]
-    public async Task Security_CoordinatesOutsideTheGrid_AreOutOfBoundsAndStoreNothing(int x, int y)
+    [InlineData(0, int.MaxValue)]
+    public async Task Security_CoordinatesPastTheGrid_AreOutOfBoundsAndStoreNothing(int x, int y)
     {
         (Guid player, Guid city) = await StoreStarterAsync("attacker");
         string stored = await StoredAsync(Factory, Database, player, city);

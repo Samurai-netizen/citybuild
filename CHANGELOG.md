@@ -135,7 +135,8 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
 - UpgradeBuilding: `POST /api/v1/commands/upgrade-building` (`{ requestId, buildingId }`) through the command pipeline
   (`UpgradeBuildingCommand`: `COST_UPGRADE`, a running cycle's inputs back as `REFUND_UPGRADE`), the same strict body; contract tests on the
   raw JSON and PostgreSQL tests over HTTP (from Idle and Producing, the refund above the cap, workers kept, a house's workers on completion,
-  every rule code, another player's building → 404, replay, conflict, concurrent requests) (M0-31).
+  every rule code, another player's building → 404, replay, conflict, concurrent requests); owner directive OD-13: a building id below 1
+  and a negative coordinate (place-building too) are `INVALID_ARGUMENT` before the city is locked (M0-31).
 
 ### Changed
 - Handbook site: react and react-dom 19.2.9 → 19.3.1, scheduler 0.28.0 (Dependabot PR #28, DEP-PR28).

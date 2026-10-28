@@ -115,16 +115,14 @@ public sealed class UpgradeBuildingContractTests(ApiFactory factory) : IClassFix
 
     /// <summary>
     /// A rule's refusal is Problem Details with the rule's code and status and the request id; with no time elapsed nothing is saved. An id
-    /// the city doesn't have, whatever its value, is <c>BUILDING_NOT_FOUND</c> (404); the woodcutter still under construction is
-    /// <c>BUILDING_BUSY</c> (409).
+    /// of 1 or more the city doesn't have is <c>BUILDING_NOT_FOUND</c> (404); the woodcutter still under construction is <c>BUILDING_BUSY</c>
+    /// (409).
     /// </summary>
     /// <param name="buildingId">The building id sent.</param>
     /// <param name="status">The expected status.</param>
     /// <param name="code">The expected code.</param>
     [Theory]
     [InlineData(3, HttpStatusCode.NotFound, "BUILDING_NOT_FOUND")]
-    [InlineData(0, HttpStatusCode.NotFound, "BUILDING_NOT_FOUND")]
-    [InlineData(-1, HttpStatusCode.NotFound, "BUILDING_NOT_FOUND")]
     [InlineData(int.MaxValue, HttpStatusCode.NotFound, "BUILDING_NOT_FOUND")]
     [InlineData(2, HttpStatusCode.Conflict, "BUILDING_BUSY")]
     public async Task Post_RuleRefuses_IsProblemWithTheRulesCode(int buildingId, HttpStatusCode status, string code)
@@ -136,6 +134,27 @@ public sealed class UpgradeBuildingContractTests(ApiFactory factory) : IClassFix
 
         AssertProblem(response, status, code, _requestId);
         Assert.Equal(0, store.SaveCount);
+    }
+
+    /// <summary>
+    /// An id below 1, which no city has, is <c>INVALID_ARGUMENT</c> (400) with the request id before the city is locked (owner directive
+    /// OD-13): the store was never asked for the city, and nothing is saved.
+    /// </summary>
+    /// <param name="buildingId">The building id sent.</param>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(int.MinValue)]
+    public async Task Security_BuildingIdBelowOne_Is400BeforeTheCityIsLocked(int buildingId)
+    {
+        (FakeCityStore store, WebApplicationFactory<Program> server) = Serve(_settledAt);
+        await using WebApplicationFactory<Program> _ = server;
+
+        ApiResponse response = await ApiClient.PostAsync(server, _path, _playerId, $$"""{"requestId":"{{_requestId}}","buildingId":{{buildingId}}}""");
+
+        AssertProblem(response, HttpStatusCode.BadRequest, "INVALID_ARGUMENT", _requestId);
+        Assert.Equal(0, store.LockCount);
+        AssertNothingRan(store);
     }
 
     /// <summary>

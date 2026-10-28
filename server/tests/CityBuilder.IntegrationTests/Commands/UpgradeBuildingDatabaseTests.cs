@@ -151,18 +151,37 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
         Assert.Equal("1 house L2 Idle - target 0 workers 0", await BuildingAsync(city, 1));
     }
 
-    /// <summary>An id the city doesn't have, whatever its value, is <c>BUILDING_NOT_FOUND</c> (404) and stores nothing.</summary>
+    /// <summary>An id of 1 or more the city doesn't have is <c>BUILDING_NOT_FOUND</c> (404) and stores nothing.</summary>
     /// <param name="buildingId">The id sent.</param>
     [Theory]
     [InlineData(3)]
-    [InlineData(0)]
-    [InlineData(-1)]
     [InlineData(int.MaxValue)]
     public async Task Post_IdNotInTheCity_Is404AndStoresNothing(int buildingId)
     {
         (Guid player, Guid city) = await StoreCityAsync("upgrader", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
 
         await AssertRefusedAsync(player, city, buildingId, HttpStatusCode.NotFound, "BUILDING_NOT_FOUND");
+    }
+
+    /// <summary>
+    /// An id below 1, which no city has, is <c>INVALID_ARGUMENT</c> (400) before the city is locked (owner directive OD-13): five minutes after
+    /// the last settle, nothing is stored, not even the five minutes.
+    /// </summary>
+    /// <param name="buildingId">The id sent.</param>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(int.MinValue)]
+    public async Task Security_BuildingIdBelowOne_Is400AndStoresNothing(int buildingId)
+    {
+        (Guid player, Guid city) = await StoreCityAsync("attacker", 1000, 100, 50, House(1));
+        Factory.Clock.Advance(TimeSpan.FromMinutes(5));
+        string stored = await StoredAsync(Factory, Database, player, city);
+
+        ApiResponse response = await UpgradeAsync(player, _requestId, buildingId);
+
+        Assert.Equal((HttpStatusCode.BadRequest, "INVALID_ARGUMENT"), (response.Status, (string)response.Json()["code"]!));
+        Assert.Equal(stored, await StoredAsync(Factory, Database, player, city));
     }
 
     /// <summary>

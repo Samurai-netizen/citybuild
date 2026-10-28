@@ -29,11 +29,12 @@ public sealed record UpgradeBuildingCommand(Guid RequestId, int BuildingId) : IC
     public LedgerReason? RefundReason => LedgerReason.RefundUpgrade;
 
     /// <summary>
-    /// Refuses nothing: every integer is an id of the right form, and one that isn't in the acting player's city (0, a negative id, one only
-    /// another city has; ids count from 1 in each city) is the rule's <c>BUILDING_NOT_FOUND</c>.
+    /// Refuses an id below 1, which no city has (ids count from 1 in each city), so such a request never locks or settles the city (owner
+    /// directive OD-13). An id of 1 or more is looked up in the acting player's city only: one it doesn't have (one only another city has)
+    /// is the rule's <c>BUILDING_NOT_FOUND</c>.
     /// </summary>
-    /// <returns><see langword="null"/>.</returns>
-    public string? ValidateShape() => null;
+    /// <returns><see langword="null"/>, or what is wrong.</returns>
+    public string? ValidateShape() => BuildingId >= 1 ? null : "buildingId must be a building id: an integer of at least 1.";
 
     /// <inheritdoc />
     public MutationResult Apply(CityState city, GameContent content) => CityRules.UpgradeBuilding(city, content, BuildingId);

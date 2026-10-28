@@ -66,18 +66,19 @@ There is no "claim" command, because production and research complete on their o
 ## Commands (`POST /commands/*`)
 - **The body is the contract, exactly.** Every field is required; a property the body doesn't define (`cost`, `level`, `workers`,
   `playerId`), a missing field, a number sent as a string, a bad GUID or broken JSON is refused with 400 before anything runs. No body or
-  JSON `null`, the all-zeros `requestId` and an id that can't be a content id (blank, over 64 characters, anything but lowercase ASCII
-  letters, digits and `_` after a first letter) are `INVALID_ARGUMENT`, before the city is locked. Until the error catalogue (M0-34) the binding's own 400s
-  (unknown, missing or mistyped fields, broken JSON) have no `code`.
+  JSON `null`, the all-zeros `requestId`, an id that can't be a content id (blank, over 64 characters, anything but lowercase ASCII
+  letters, digits and `_` after a first letter), a building id below 1 and a negative coordinate are `INVALID_ARGUMENT`, before the city
+  is locked or settled: no city and no content could make them valid (owner directive OD-13 in `15`). Until the error catalogue (M0-34)
+  the binding's own 400s (unknown, missing or mistyped fields, broken JSON) have no `code`.
 - **Success:** 200 with the snapshot below; its `requestId` is the command's. A replay (same `requestId`, same body) gets 200 with the
   stored snapshot, byte for byte, even when the city has changed since.
 - **Refusal:** Problem Details with the code's status from the table below, `code`, and `requestId` when the request had one. A rule's
   refusal commits the settlement of the elapsed time but stores no receipt (Idempotency rules).
 - `place-building` (`{ requestId, buildingTypeId, x, y }`) checks in the order of `04` §8: `UNKNOWN_BUILDING_TYPE`, `BUILDING_LOCKED`,
-  `OUT_OF_BOUNDS`, `TILE_OCCUPIED`, `NO_FREE_BUILDER`, `INSUFFICIENT_RESOURCE`. It pays the type's cost (`COST_PLACE` ledger rows) and
+  `OUT_OF_BOUNDS` (past the grid's width or height; a negative coordinate is `INVALID_ARGUMENT`), `TILE_OCCUPIED`, `NO_FREE_BUILDER`, `INSUFFICIENT_RESOURCE`. It pays the type's cost (`COST_PLACE` ledger rows) and
   the building appears with the next id, level 1, `Constructing` until the clock plus the type's build seconds.
 - `upgrade-building` (`{ requestId, buildingId }`) checks in the order of `04` §8: `BUILDING_NOT_FOUND` (the id is looked up in **your**
-  city only; building ids count from 1 in each city, so 0, a negative id or one only another city has is not found), `BUILDING_BUSY`
+  city only; ids count from 1 in each city, so one only another city has is not found; below 1 is `INVALID_ARGUMENT`), `BUILDING_BUSY`
   (constructing or upgrading), `MAX_LEVEL`, `NO_FREE_BUILDER`, `INSUFFICIENT_RESOURCE` (the stock before any refund). A running or frozen
   cycle ends without output and its inputs come back (`REFUND_UPGRADE` rows, even above a storage cap); then the next level's upgrade cost
   is paid (`COST_UPGRADE` rows) and the building is `Upgrading` until the clock plus that level's upgrade seconds, still at its level. Its
@@ -133,10 +134,10 @@ There is no "claim" command, because production and research complete on their o
 | Code | HTTP | When |
 |---|---|---|
 | `AUTHENTICATION_REQUIRED` | 401 | Missing, invalid or expired token |
-| `INVALID_ARGUMENT` | 400 | Malformed JSON, unknown or missing field, bad GUID, body too large, workers on a building without a recipe |
+| `INVALID_ARGUMENT` | 400 | Malformed JSON, unknown or missing field, bad GUID, body too large, a value no city could make valid (OD-13: a building id below 1, a negative coordinate), workers on a building without a recipe |
 | `UNKNOWN_BUILDING_TYPE` | 422 | Type id not in content |
 | `BUILDING_LOCKED` | 422 | Type of a later era than the city's, or not unlocked by research yet |
-| `OUT_OF_BOUNDS` | 422 | Coordinates outside the grid |
+| `OUT_OF_BOUNDS` | 422 | Coordinates past the grid's width or height (negative ones are `INVALID_ARGUMENT`) |
 | `TILE_OCCUPIED` | 409 | Tile already has a building |
 | `INSUFFICIENT_RESOURCE` | 422 | Cost not affordable |
 | `INSUFFICIENT_WORKERS` | 422 | Not enough free workers for the requested assignment |

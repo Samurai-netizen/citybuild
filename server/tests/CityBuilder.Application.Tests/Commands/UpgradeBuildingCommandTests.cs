@@ -19,17 +19,23 @@ public sealed class UpgradeBuildingCommandTests
     /// <summary>The request id of the tests.</summary>
     private static readonly Guid _requestId = new("0199a1b2-c3d4-7e5f-8a9b-00000000000a");
 
-    /// <summary>Every integer is an id of the right form: one the city doesn't have is the rule's <c>BUILDING_NOT_FOUND</c>, not a shape error.</summary>
+    /// <summary>
+    /// An id below 1 is a wrong shape (no city has one), so it never locks the city (OD-13); an id of 1 or more passes, even one the city
+    /// doesn't have, which is the rule's <c>BUILDING_NOT_FOUND</c>.
+    /// </summary>
     /// <param name="buildingId">The building id.</param>
+    /// <param name="valid">Whether the shape is fine.</param>
     [Theory]
-    [InlineData(1)]
-    [InlineData(0)]
-    [InlineData(-1)]
-    [InlineData(int.MinValue)]
-    [InlineData(int.MaxValue)]
-    public void ValidateShape_AnyBuildingId_IsFine(int buildingId)
+    [InlineData(1, true)]
+    [InlineData(int.MaxValue, true)]
+    [InlineData(0, false)]
+    [InlineData(-1, false)]
+    [InlineData(int.MinValue, false)]
+    public void ValidateShape_BuildingId_RefusesIdsBelowOne(int buildingId, bool valid)
     {
-        Assert.Null(new UpgradeBuildingCommand(_requestId, buildingId).ValidateShape());
+        string? error = new UpgradeBuildingCommand(_requestId, buildingId).ValidateShape();
+
+        Assert.Equal(valid, error is null);
     }
 
     /// <summary>

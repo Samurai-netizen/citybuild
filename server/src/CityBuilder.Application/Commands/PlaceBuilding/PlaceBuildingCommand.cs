@@ -31,13 +31,21 @@ public sealed record PlaceBuildingCommand(Guid RequestId, string BuildingTypeId,
     public LedgerReason? RefundReason => null;
 
     /// <summary>
-    /// Refuses a type id that can't be a content id (<see cref="ContentIds"/>: blank, too long, other characters), so such text never locks
-    /// the city; an id of the right form is a question for the content (<c>UNKNOWN_BUILDING_TYPE</c>), and coordinates outside the grid are
-    /// the rule's <c>OUT_OF_BOUNDS</c>.
+    /// Refuses what no city and no content could make valid, so it never locks or settles the city (M0-30; owner directive OD-13): a type id
+    /// that can't be a content id (<see cref="ContentIds"/>: blank, too long, other characters) and a negative coordinate (the grid starts at
+    /// 0). An id of the right form is a question for the content (<c>UNKNOWN_BUILDING_TYPE</c>), and a coordinate past the grid's width or
+    /// height, which the content sets, is the rule's <c>OUT_OF_BOUNDS</c>.
     /// </summary>
     /// <returns><see langword="null"/>, or what is wrong.</returns>
-    public string? ValidateShape() =>
-        ContentIds.IsValid(BuildingTypeId) ? null : "buildingTypeId must be a content id: " + ContentIds.FormatDescription + ".";
+    public string? ValidateShape()
+    {
+        if (!ContentIds.IsValid(BuildingTypeId))
+        {
+            return "buildingTypeId must be a content id: " + ContentIds.FormatDescription + ".";
+        }
+
+        return X >= 0 && Y >= 0 ? null : "x and y must not be negative: the grid starts at 0.";
+    }
 
     /// <inheritdoc />
     public MutationResult Apply(CityState city, GameContent content) =>

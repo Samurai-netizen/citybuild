@@ -4,16 +4,15 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** M0-31 · UpgradeBuilding, session 2 (owner directive OD-13; PR #43 open, not merged)
-- **Branch:** `task/M0-31-upgrade-building` (from `main` = `86b9f75`)
-- **Build log entry:** `docs/build-log/2026/2026-10-28-01-M0-31.md` (Session 2)
-- **Last green commit:** `621cd5c` (Release build 0 warnings, format clean, fast suite: Repository 22, Domain 21, Application 107,
-  IntegrationTests 305, Simulation 872; Integration 121 on `postgres:18.6`; handbook builds; check-docs OK)
-- **Done steps:** all of session 1 (the task as first delivered)
-- **Planned steps (session 2):** 1. OD-13 in `15`; 2. `buildingId` < 1 → `INVALID_ARGUMENT` before the lock, with tests; 3. docs;
-  4. finish again (checks, build log, PR text)
-- **Next step:** step 1 (OD-13 in `15`)
+- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** — (last completed: M0-31 · UpgradeBuilding, with owner directive OD-13; PR #43, the owner merges it)
+- **Branch:** `task/M0-31-upgrade-building` (from `main` = `86b9f75`) until the owner merges
+- **Build log entry:** last: `docs/build-log/2026/2026-10-28-01-M0-31.md` (Done, 2 sessions)
+- **Last green commit:** the head of `task/M0-31-upgrade-building` (Release build 0 warnings, format clean, fast suite: Repository 22,
+  Domain 21, Application 112, IntegrationTests 311, Simulation 872; Integration 122 on `postgres:18.6`; handbook builds; check-docs OK)
+- **Done steps:** all of M0-31, and session 2: OD-13 (building ids below 1, negative coordinates refused before the lock)
+- **Next step:** the owner merges the PR. Then `/start-task M0-32` (AssignWorkers, `[O]`: Opus 5.5); read the M0-31 entry's Follow-ups
+  (OD-13: negative workers).
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7
@@ -36,7 +35,7 @@
 | Server skeleton | done | M0-02 merged (PR #6) |
 | Persistence (EF + PostgreSQL) | done | M0-19 (EF Core model, migrations, Docker) merged (PR #31); repository and mapping M0-20 merged (PR #32); Testcontainers M0-21 merged (PR #33); locking M0-22 merged (PR #34); settle M0-23 merged (PR #35); M0-24 merged (PR #36) |
 | Auth + command pipeline | in progress | dev auth M0-25 merged (PR #37); the pipeline M0-26 merged (PR #38); its integration tests M0-27 merged (PR #39); content and city endpoints M0-28 merged (PR #40); PlaceBuilding M0-29 merged (PR #41); attack review M0-30 merged (PR #42) |
-| Commands: place / upgrade / assign workers / start research | in progress | place-building M0-29 merged (PR #41; `docs/how-to/add-command.md`); upgrade-building M0-31 in progress (session 2, OD-13) |
+| Commands: place / upgrade / assign workers / start research | in progress | place-building M0-29 merged (PR #41; `docs/how-to/add-command.md`); upgrade-building M0-31 in review (PR #43; OD-13) |
 | Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) and M0-05 (Unity tests, `test-unity.sh`) merged (PR #8, #12); networking is M0-37 |
 | Unity city view + placement | not started | |
 | Inspector, worker stepper, research screen, HUD | not started | |

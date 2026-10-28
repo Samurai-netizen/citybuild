@@ -42,8 +42,11 @@ grid are `OUT_OF_BOUNDS`, not a shape error. A renamed property or command type 
 conflicts, so pin the payload in a test.
 
 `UpgradeBuildingCommand` (M0-31) is the same with `BuildingId` as its data, `COST_UPGRADE` and a refund reason, `REFUND_UPGRADE`, for a
-running cycle's inputs; its `ValidateShape` refuses nothing, since every integer is an id of the right form and the rule answers
-`BUILDING_NOT_FOUND` for one the city doesn't have.
+running cycle's inputs; its `ValidateShape` refuses an id below 1, which no city has, and the rule answers `BUILDING_NOT_FOUND` for an id
+of 1 or more that the city doesn't have. The rule for every command is owner directive OD-13 (`core-instructions/15-change-control.md`): a
+value that no city and no content could make valid (an id below 1, a negative coordinate or count, text that can't be a content id) is
+refused in `ValidateShape` or the binding, before the lock, with a test that the lock was never taken; whatever depends on the city or the
+content stays the rule's.
 
 **3. The request.** `server/src/CityBuilder.Api/Contracts/PlaceBuildingRequest.cs`: the body as a record with three attributes, so the binding
 refuses anything that isn't the contract (400) before the pipeline runs:

@@ -115,7 +115,6 @@ public sealed class PlaceBuildingContractTests(ApiFactory factory) : IClassFixtu
     [InlineData($$"""{"requestId":"{{_requestId}}","buildingTypeId":"castle","x":2,"y":3}""", HttpStatusCode.UnprocessableEntity, "UNKNOWN_BUILDING_TYPE")]
     [InlineData($$"""{"requestId":"{{_requestId}}","buildingTypeId":"trading_post","x":2,"y":3}""", HttpStatusCode.UnprocessableEntity, "BUILDING_LOCKED")]
     [InlineData($$"""{"requestId":"{{_requestId}}","buildingTypeId":"woodcutter","x":8,"y":3}""", HttpStatusCode.UnprocessableEntity, "OUT_OF_BOUNDS")]
-    [InlineData($$"""{"requestId":"{{_requestId}}","buildingTypeId":"woodcutter","x":-1,"y":3}""", HttpStatusCode.UnprocessableEntity, "OUT_OF_BOUNDS")]
     public async Task Post_RuleRefuses_IsProblemWithTheRulesCode(string body, HttpStatusCode status, string code)
     {
         (FakeCityStore store, WebApplicationFactory<Program> server) = Serve(_settledAt);
@@ -180,7 +179,7 @@ public sealed class PlaceBuildingContractTests(ApiFactory factory) : IClassFixtu
 
     /// <summary>
     /// A body that binds but can't be a command is <c>INVALID_ARGUMENT</c> (400) as Problem Details, before anything runs: no body, JSON
-    /// <c>null</c>, the all-zeros request id, a blank type.
+    /// <c>null</c>, the all-zeros request id, a blank type, a negative coordinate (OD-13).
     /// </summary>
     /// <param name="body">The body; <see langword="null"/> sends none.</param>
     /// <param name="requestId">The request id the answer echoes, or <see langword="null"/> when it has none.</param>
@@ -190,6 +189,8 @@ public sealed class PlaceBuildingContractTests(ApiFactory factory) : IClassFixtu
     [InlineData("""{"requestId":"00000000-0000-0000-0000-000000000000","buildingTypeId":"woodcutter","x":2,"y":3}""", null)]
     [InlineData($$"""{"requestId":"{{_requestId}}","buildingTypeId":" ","x":2,"y":3}""", _requestId)]
     [InlineData($$"""{"requestId":"{{_requestId}}","buildingTypeId":null,"x":2,"y":3}""", _requestId)]
+    [InlineData($$"""{"requestId":"{{_requestId}}","buildingTypeId":"woodcutter","x":-1,"y":3}""", _requestId)]
+    [InlineData($$"""{"requestId":"{{_requestId}}","buildingTypeId":"woodcutter","x":2,"y":-1}""", _requestId)]
     public async Task Post_BodyThatIsNoCommand_Is400InvalidArgument(string? body, string? requestId)
     {
         (FakeCityStore store, WebApplicationFactory<Program> server) = Serve(_settledAt);
