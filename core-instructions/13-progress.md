@@ -4,24 +4,21 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** M0-31 · UpgradeBuilding (`[O]`: Opus 5.5)
-- **Branch:** `task/M0-31-upgrade-building` (from `main` = `86b9f75`, M0-30 merged as PR #42)
-- **Build log entry:** `docs/build-log/2026/2026-10-28-01-M0-31.md`
-- **Last green commit:** the head of the branch (Release build 0 warnings, format clean; fast suite Repository 22, Domain 21,
-  Application 107, IntegrationTests 305, Simulation 872; Integration 121 on `postgres:18.6`)
-- **Done steps:** start; step 1 (command, request, endpoint, tests without a database, `05` and module docs); step 2
-  (`UpgradeBuildingDatabaseTests`, 20 on PostgreSQL; `07`); step 3 (docs)
-- **Planned steps:** 1. the command, the request and the endpoint, tests without a database; 2. `UpgradeBuildingDatabaseTests` on
-  PostgreSQL over HTTP (every case of the spec); 3. docs; 4. finish (DoD, self-review, PR)
-- **Next step:** step 4: the hand run (curl against the real server), the Definition of Done, `/finish-task`, the PR
+- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** — (last completed: M0-31 · UpgradeBuilding; PR open, the owner merges it)
+- **Branch:** `task/M0-31-upgrade-building` (from `main` = `86b9f75`) until the owner merges
+- **Build log entry:** last: `docs/build-log/2026/2026-10-28-01-M0-31.md` (Done)
+- **Last green commit:** the head of `task/M0-31-upgrade-building` (Release build 0 warnings, format clean, fast suite: Repository 22,
+  Domain 21, Application 107, IntegrationTests 305, Simulation 872; Integration 121 on `postgres:18.6`; handbook builds; check-docs OK)
+- **Done steps:** all of M0-31 (command, request, endpoint, contract and PostgreSQL tests, `05`, `07` and the docs)
+- **Next step:** the owner merges the PR. Then `/start-task M0-32` (AssignWorkers, `[O]`: Opus 5.5); read the M0-31 entry's Follow-ups.
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7
   security alerts GitHub reports on `main`; M0-28 decision 14: the clock-behind warning that docs
   promised for `GET /city` moved to M0-35 (settlement logging): fine, or do it earlier? M0-29: the dev database keeps the check player
   `m029check` (one house) from the hand run; delete it or keep it. M0-30: decisions 2 and 5 (400 for a too-big body, not the 413 my
-  question named; malformed type ids 400 instead of 422).
+  question named; malformed type ids 400 instead of 422). M0-31: the check player `m031check` in the dev database (like `m029check`).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
@@ -37,7 +34,7 @@
 | Server skeleton | done | M0-02 merged (PR #6) |
 | Persistence (EF + PostgreSQL) | done | M0-19 (EF Core model, migrations, Docker) merged (PR #31); repository and mapping M0-20 merged (PR #32); Testcontainers M0-21 merged (PR #33); locking M0-22 merged (PR #34); settle M0-23 merged (PR #35); M0-24 merged (PR #36) |
 | Auth + command pipeline | in progress | dev auth M0-25 merged (PR #37); the pipeline M0-26 merged (PR #38); its integration tests M0-27 merged (PR #39); content and city endpoints M0-28 merged (PR #40); PlaceBuilding M0-29 merged (PR #41); attack review M0-30 merged (PR #42) |
-| Commands: place / upgrade / assign workers / start research | in progress | place-building M0-29 merged (PR #41; `docs/how-to/add-command.md`); upgrade-building M0-31 in progress |
+| Commands: place / upgrade / assign workers / start research | in progress | place-building M0-29 merged (PR #41; `docs/how-to/add-command.md`); upgrade-building M0-31 in review |
 | Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) and M0-05 (Unity tests, `test-unity.sh`) merged (PR #8, #12); networking is M0-37 |
 | Unity city view + placement | not started | |
 | Inspector, worker stepper, research screen, HUD | not started | |
