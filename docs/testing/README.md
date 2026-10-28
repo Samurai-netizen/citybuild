@@ -67,8 +67,9 @@ flowchart LR
 - A command over HTTP: `ApiClient.PostAsync` sends a raw body with a token the server issued (`PlaceBuildingContractTests` on a
   `FakeCityStore`, which also keeps receipts; `Commands/PlaceBuildingDatabaseTests` on PostgreSQL, checked against the stored rows).
   A state the HTTP commands can't reach yet (a producing trading post, a stock at its cap) is a city built by hand with `Building` and
-  `CityState`, advanced by zero seconds and stored (`UpgradeBuildingDatabaseTests.StoreCityAsync`): the advance makes it canonical, so a
-  refusal with no time elapsed stores nothing.
+  `CityState`, advanced by zero seconds and stored (`Commands/HandBuiltCities`: `StoreCityAsync`, the `House`, `Woodcutter`, `Sawmill` and
+  `TradingPost` builders, and text views of the stored rows; M0-31, shared since M0-32): the advance makes it canonical, so a refusal with no
+  time elapsed stores nothing. Contract tests check Problem Details with `Contracts/ProblemAssert`.
   `PostAsync` with an `HttpContent` and headers sends another content type or a header that claims a player.
 - An attack on the API (`Security/`, M0-30): `ApiAttackContractTests` in memory (`FakeCityStore.LockCount` shows whether the request got as
   far as the city's lock), `ApiAttackDatabaseTests` on PostgreSQL. Let time pass before the attack (`Factory.Clock.Advance`): a request that
