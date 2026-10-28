@@ -4,15 +4,17 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-31 · UpgradeBuilding, with owner directive OD-13; PR #43, the owner merges it)
-- **Branch:** `task/M0-31-upgrade-building` (from `main` = `86b9f75`) until the owner merges
-- **Build log entry:** last: `docs/build-log/2026/2026-10-28-01-M0-31.md` (Done, 2 sessions)
-- **Last green commit:** the head of `task/M0-31-upgrade-building` (Release build 0 warnings, format clean, fast suite: Repository 22,
-  Domain 21, Application 112, IntegrationTests 311, Simulation 872; Integration 122 on `postgres:18.6`; handbook builds; check-docs OK)
-- **Done steps:** all of M0-31, and session 2: OD-13 (building ids below 1, negative coordinates refused before the lock)
-- **Next step:** the owner merges the PR. Then `/start-task M0-32` (AssignWorkers, `[O]`: Opus 5.5); read the M0-31 entry's Follow-ups
-  (OD-13: negative workers).
+- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** M0-32 · AssignWorkers (`[O]`, Opus 5.5)
+- **Branch:** `task/M0-32-assign-workers` (from `main` = `8dfc962`)
+- **Build log entry:** `docs/build-log/2026/2026-10-28-02-M0-32.md`
+- **Last green commit:** `main` = `8dfc962` (Release build 0 warnings; fast suite: Repository 22, Domain 21, Application 112,
+  IntegrationTests 311, Simulation 872)
+- **Planned steps:** 1 command + endpoint + tests without a database · 2 PostgreSQL tests over HTTP (shared hand-built city helper) ·
+  3 security property loop over HTTP · 4 docs · 5 finish (hand run as `devtest`, OD-14)
+- **Done steps:** start
+- **Next step:** step 1 (`AssignWorkersCommand`, `AssignWorkersRequest`, the route; OD-13: negative workers and ids below 1 → 400 before
+  the lock, decision 2)
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7
@@ -24,7 +26,7 @@
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 30 / 85
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 31 / 85
 
 | Area | State | Notes |
 |---|---|---|
@@ -34,7 +36,7 @@
 | Server skeleton | done | M0-02 merged (PR #6) |
 | Persistence (EF + PostgreSQL) | done | M0-19 (EF Core model, migrations, Docker) merged (PR #31); repository and mapping M0-20 merged (PR #32); Testcontainers M0-21 merged (PR #33); locking M0-22 merged (PR #34); settle M0-23 merged (PR #35); M0-24 merged (PR #36) |
 | Auth + command pipeline | in progress | dev auth M0-25 merged (PR #37); the pipeline M0-26 merged (PR #38); its integration tests M0-27 merged (PR #39); content and city endpoints M0-28 merged (PR #40); PlaceBuilding M0-29 merged (PR #41); attack review M0-30 merged (PR #42) |
-| Commands: place / upgrade / assign workers / start research | in progress | place-building M0-29 merged (PR #41; `docs/how-to/add-command.md`); upgrade-building M0-31 in review (PR #43; OD-13) |
+| Commands: place / upgrade / assign workers / start research | in progress | place-building M0-29 merged (PR #41; `docs/how-to/add-command.md`); upgrade-building M0-31 merged (PR #43; OD-13); assign-workers M0-32 in progress |
 | Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) and M0-05 (Unity tests, `test-unity.sh`) merged (PR #8, #12); networking is M0-37 |
 | Unity city view + placement | not started | |
 | Inspector, worker stepper, research screen, HUD | not started | |
