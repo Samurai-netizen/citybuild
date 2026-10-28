@@ -85,6 +85,21 @@ PostgreSQL 18.6 runs in Docker (`docker-compose.yml` at the repo root; `core-ins
 
 The data lives in the Docker volume `citybuild_postgres-data` and survives `docker compose down`; `docker compose down -v` deletes it.
 A shell in the database: `docker compose exec postgres psql -U citybuilder -d citybuilder`. Schema changes: `docs/how-to/add-migration.md`.
+
+**The test player.** Hand runs against the dev database (a task's check of the real server, a curl try) log in as one player, dev name
+`devtest`, instead of a new player per task (owner directive OD-14 in `core-instructions/15-change-control.md`). Its city carries over
+from run to run; a run that needs the starter city deletes the player first, which removes its city, rows, ledger and receipts:
+```
+docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1' <<'SQL'
+begin;
+delete from ledger_entries where city_id in (select c.id from cities c join players p on p.id = c.player_id where p.dev_name = 'devtest');
+delete from command_receipts where player_id in (select id from players where dev_name = 'devtest');
+delete from cities where player_id in (select id from players where dev_name = 'devtest');
+delete from players where dev_name = 'devtest';
+commit;
+SQL
+```
+The next dev login as `devtest` creates the player and a starter city again.
 From M0-61 this section links to the generated reference.
 
 ## Troubleshooting
