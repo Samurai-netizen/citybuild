@@ -8,12 +8,12 @@
 - **Task:** M0-31 · UpgradeBuilding (`[O]`: Opus 5.5)
 - **Branch:** `task/M0-31-upgrade-building` (from `main` = `86b9f75`, M0-30 merged as PR #42)
 - **Build log entry:** `docs/build-log/2026/2026-10-28-01-M0-31.md`
-- **Last green commit:** `main` = `86b9f75` (Release build 0 warnings; fast suite Repository 22, Domain 21, Application 94,
-  IntegrationTests 271, Simulation 872)
-- **Done steps:** start (branch, build log entry, resume point, board)
+- **Last green commit:** the head of the branch (Release build 0 warnings, format clean; fast suite Repository 22, Domain 21,
+  Application 107, IntegrationTests 305, Simulation 872)
+- **Done steps:** start; step 1 (command, request, endpoint, tests without a database, `05` and module docs)
 - **Planned steps:** 1. the command, the request and the endpoint, tests without a database; 2. `UpgradeBuildingDatabaseTests` on
   PostgreSQL over HTTP (every case of the spec); 3. docs; 4. finish (DoD, self-review, PR)
-- **Next step:** step 1 (`UpgradeBuildingCommand`, `UpgradeBuildingRequest`, the route in `CommandEndpoints`)
+- **Next step:** step 2 (`Commands/UpgradeBuildingDatabaseTests` on PostgreSQL over HTTP, every case of the spec)
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7

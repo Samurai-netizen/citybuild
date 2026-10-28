@@ -3,8 +3,8 @@
 > **Built so far:** `GET /health` and the OpenAPI document in Development (M0-02, `docs/modules/CityBuilder.Api.md`); the dev login and the
 > access token check (M0-25); `GET /api/v1/content` and `GET /api/v1/city` (M0-28); the command pipeline with the idempotency rules below
 > (`CommandPipeline`, M0-26) and its first endpoint, `POST /api/v1/commands/place-building`, with the Commands rules below (M0-29); the
-> request limits below and the stricter bodies of the attack review (M0-30).
-> The rest of `/api/v1/` is *(planned)*: the commands M0-31 to M0-33, the error catalogue M0-34. A task that builds a part
+> request limits below and the stricter bodies of the attack review (M0-30); `POST /api/v1/commands/upgrade-building` (M0-31).
+> The rest of `/api/v1/` is *(planned)*: the commands M0-32 and M0-33, the error catalogue M0-34. A task that builds a part
 > updates this line.
 
 JSON in camelCase. Enums are strings, quantities are integers, and times are city-clock seconds.
@@ -76,6 +76,13 @@ There is no "claim" command, because production and research complete on their o
 - `place-building` (`{ requestId, buildingTypeId, x, y }`) checks in the order of `04` §8: `UNKNOWN_BUILDING_TYPE`, `BUILDING_LOCKED`,
   `OUT_OF_BOUNDS`, `TILE_OCCUPIED`, `NO_FREE_BUILDER`, `INSUFFICIENT_RESOURCE`. It pays the type's cost (`COST_PLACE` ledger rows) and
   the building appears with the next id, level 1, `Constructing` until the clock plus the type's build seconds.
+- `upgrade-building` (`{ requestId, buildingId }`) checks in the order of `04` §8: `BUILDING_NOT_FOUND` (any id not in **your** city: 0,
+  negative, another player's), `BUILDING_BUSY` (constructing or upgrading), `MAX_LEVEL`, `NO_FREE_BUILDER`, `INSUFFICIENT_RESOURCE`
+  (the stock before any refund). A running or frozen cycle ends without output and its inputs come back (`REFUND_UPGRADE` rows, even
+  above a storage cap); then the next level's upgrade cost is paid (`COST_UPGRADE` rows) and the building is `Upgrading` until the clock
+  plus that level's upgrade seconds, still at its level. Its workers stay assigned and do nothing (`maxWorkers` reads 0 meanwhile); at the
+  end the level rises and the building is `Idle` with the same workers (a producer starts its next cycle when it can); the new level's
+  max workers and workers provided apply from then on.
 
 ## Snapshot (every successful city/command response)
 
