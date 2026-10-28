@@ -29,8 +29,8 @@ public sealed record UpgradeBuildingCommand(Guid RequestId, int BuildingId) : IC
     public LedgerReason? RefundReason => LedgerReason.RefundUpgrade;
 
     /// <summary>
-    /// Refuses nothing: every integer is an id of the right form, and one that isn't in the city (0, a negative id, another player's) is the
-    /// rule's <c>BUILDING_NOT_FOUND</c>.
+    /// Refuses nothing: every integer is an id of the right form, and one that isn't in the acting player's city (0, a negative id, one only
+    /// another city has; ids count from 1 in each city) is the rule's <c>BUILDING_NOT_FOUND</c>.
     /// </summary>
     /// <returns><see langword="null"/>.</returns>
     public string? ValidateShape() => null;

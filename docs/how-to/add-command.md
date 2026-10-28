@@ -41,6 +41,10 @@ loader enforces), checked before the lock (M0-30). Everything else is the rule's
 grid are `OUT_OF_BOUNDS`, not a shape error. A renamed property or command type changes every stored hash, and an old request id then
 conflicts, so pin the payload in a test.
 
+`UpgradeBuildingCommand` (M0-31) is the same with `BuildingId` as its data, `COST_UPGRADE` and a refund reason, `REFUND_UPGRADE`, for a
+running cycle's inputs; its `ValidateShape` refuses nothing, since every integer is an id of the right form and the rule answers
+`BUILDING_NOT_FOUND` for one the city doesn't have.
+
 **3. The request.** `server/src/CityBuilder.Api/Contracts/PlaceBuildingRequest.cs`: the body as a record with three attributes, so the binding
 refuses anything that isn't the contract (400) before the pipeline runs:
 - `[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]`: an unknown property (`cost`, `level`, `playerId`) is refused, not ignored;

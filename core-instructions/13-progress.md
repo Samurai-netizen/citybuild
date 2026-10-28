@@ -11,10 +11,10 @@
 - **Last green commit:** the head of the branch (Release build 0 warnings, format clean; fast suite Repository 22, Domain 21,
   Application 107, IntegrationTests 305, Simulation 872; Integration 121 on `postgres:18.6`)
 - **Done steps:** start; step 1 (command, request, endpoint, tests without a database, `05` and module docs); step 2
-  (`UpgradeBuildingDatabaseTests`, 20 on PostgreSQL; `07`)
+  (`UpgradeBuildingDatabaseTests`, 20 on PostgreSQL; `07`); step 3 (docs)
 - **Planned steps:** 1. the command, the request and the endpoint, tests without a database; 2. `UpgradeBuildingDatabaseTests` on
   PostgreSQL over HTTP (every case of the spec); 3. docs; 4. finish (DoD, self-review, PR)
-- **Next step:** step 3 (the remaining Docs impact rows: how-to, overview, ADRs, testing README, getting-started, CHANGELOG)
+- **Next step:** step 4: the hand run (curl against the real server), the Definition of Done, `/finish-task`, the PR
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7

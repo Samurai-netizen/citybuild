@@ -76,13 +76,13 @@ There is no "claim" command, because production and research complete on their o
 - `place-building` (`{ requestId, buildingTypeId, x, y }`) checks in the order of `04` §8: `UNKNOWN_BUILDING_TYPE`, `BUILDING_LOCKED`,
   `OUT_OF_BOUNDS`, `TILE_OCCUPIED`, `NO_FREE_BUILDER`, `INSUFFICIENT_RESOURCE`. It pays the type's cost (`COST_PLACE` ledger rows) and
   the building appears with the next id, level 1, `Constructing` until the clock plus the type's build seconds.
-- `upgrade-building` (`{ requestId, buildingId }`) checks in the order of `04` §8: `BUILDING_NOT_FOUND` (any id not in **your** city: 0,
-  negative, another player's), `BUILDING_BUSY` (constructing or upgrading), `MAX_LEVEL`, `NO_FREE_BUILDER`, `INSUFFICIENT_RESOURCE`
-  (the stock before any refund). A running or frozen cycle ends without output and its inputs come back (`REFUND_UPGRADE` rows, even
-  above a storage cap); then the next level's upgrade cost is paid (`COST_UPGRADE` rows) and the building is `Upgrading` until the clock
-  plus that level's upgrade seconds, still at its level. Its workers stay assigned and do nothing (`maxWorkers` stays the current level's); at the
-  end the level rises and the building is `Idle` with the same workers (a producer starts its next cycle when it can); the new level's
-  max workers and workers provided apply from then on.
+- `upgrade-building` (`{ requestId, buildingId }`) checks in the order of `04` §8: `BUILDING_NOT_FOUND` (the id is looked up in **your**
+  city only; building ids count from 1 in each city, so 0, a negative id or one only another city has is not found), `BUILDING_BUSY`
+  (constructing or upgrading), `MAX_LEVEL`, `NO_FREE_BUILDER`, `INSUFFICIENT_RESOURCE` (the stock before any refund). A running or frozen
+  cycle ends without output and its inputs come back (`REFUND_UPGRADE` rows, even above a storage cap); then the next level's upgrade cost
+  is paid (`COST_UPGRADE` rows) and the building is `Upgrading` until the clock plus that level's upgrade seconds, still at its level. Its
+  workers stay assigned and do nothing (`maxWorkers` stays the current level's); at the end the level rises and the building is `Idle` with
+  the same workers (a producer starts its next cycle when it can); the new level's max workers and workers provided apply from then on.
 
 ## Snapshot (every successful city/command response)
 
