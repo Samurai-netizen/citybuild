@@ -87,9 +87,13 @@ public sealed class WorkerLaborDatabaseTests(PostgresServer server) : PostgresTe
                 AssertSnapshotAgrees(response.Json(), assigned, at);
                 ok++;
             }
+            else if (actual == "WORKER_LIMIT")
+            {
+                workerLimit++;
+            }
             else
             {
-                (workerLimit, insufficient) = actual == "WORKER_LIMIT" ? (workerLimit + 1, insufficient) : (workerLimit, insufficient + 1);
+                insufficient++;
             }
         }
 

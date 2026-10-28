@@ -276,7 +276,7 @@ The AI coder updates its row at start (`In progress`) and finish (`In review`). 
 | M0-29 | 5 | PlaceBuilding | O | Done |
 | M0-30 | 5 | API attack review | O | Done |
 | M0-31 | 6 | UpgradeBuilding | O | Done |
-| M0-32 | 6 | AssignWorkers | O | In progress |
+| M0-32 | 6 | AssignWorkers | O | In review |
 | M0-33 | 6 | StartResearch | O | Todo |
 | M0-34 | 6 | Error catalogue, rate limits, input limits | S | Todo |
 | M0-35 | 6 | Logging, correlation, dev time scale | S | Todo |

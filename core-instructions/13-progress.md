@@ -4,17 +4,15 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** M0-32 · AssignWorkers (`[O]`, Opus 5.5)
-- **Branch:** `task/M0-32-assign-workers` (from `main` = `8dfc962`)
-- **Build log entry:** `docs/build-log/2026/2026-10-28-02-M0-32.md`
-- **Last green commit:** step 3 on the branch (Release build 0 warnings, format clean; fast suite: Repository 22, Domain 21,
-  Application 135, IntegrationTests 354, Simulation 872; Integration 147 on `postgres:18.6`)
-- **Planned steps:** 1 command + endpoint + tests without a database · 2 PostgreSQL tests over HTTP (shared hand-built city helper) ·
-  3 security property loop over HTTP · 4 docs · 5 finish (hand run as `devtest`, OD-14)
-- **Done steps:** start; 1 (the command, the route, Application and contract tests, `05`, module docs); 2 (`HandBuiltCities`,
-  `AssignWorkersDatabaseTests`, 20 on PostgreSQL); 3 (`Security/WorkerLaborDatabaseTests`, 5 seeds; `07`); 4 (docs, Docs impact closed)
-- **Next step:** step 5 `/finish-task` by hand: self-review of the branch diff, the hand run as `devtest` (OD-14), finalize, PR
+- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** — (last completed: M0-32 · AssignWorkers; the PR is open, the owner merges it)
+- **Branch:** `task/M0-32-assign-workers` (from `main` = `8dfc962`) until the owner merges
+- **Build log entry:** last: `docs/build-log/2026/2026-10-28-02-M0-32.md` (Done)
+- **Last green commit:** the head of `task/M0-32-assign-workers` (Release build 0 warnings, format clean, fast suite: Repository 22,
+  Domain 21, Application 135, IntegrationTests 354, Simulation 872; Integration 147 on `postgres:18.6`; handbook builds; check-docs OK)
+- **Done steps:** all of M0-32 (decision 2: OD-13 for negative workers instead of the spec's `WORKER_LIMIT`)
+- **Next step:** the owner merges the PR. Then `/start-task M0-33` (StartResearch, `[O]`: Opus 5.5); read the M0-32 entry's Follow-ups
+  (OD-13 for `researchId`); hand runs log in as `devtest` (it exists now, with a house and a woodcutter).
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7
@@ -36,7 +34,7 @@
 | Server skeleton | done | M0-02 merged (PR #6) |
 | Persistence (EF + PostgreSQL) | done | M0-19 (EF Core model, migrations, Docker) merged (PR #31); repository and mapping M0-20 merged (PR #32); Testcontainers M0-21 merged (PR #33); locking M0-22 merged (PR #34); settle M0-23 merged (PR #35); M0-24 merged (PR #36) |
 | Auth + command pipeline | in progress | dev auth M0-25 merged (PR #37); the pipeline M0-26 merged (PR #38); its integration tests M0-27 merged (PR #39); content and city endpoints M0-28 merged (PR #40); PlaceBuilding M0-29 merged (PR #41); attack review M0-30 merged (PR #42) |
-| Commands: place / upgrade / assign workers / start research | in progress | place-building M0-29 merged (PR #41; `docs/how-to/add-command.md`); upgrade-building M0-31 merged (PR #43; OD-13); assign-workers M0-32 in progress |
+| Commands: place / upgrade / assign workers / start research | in progress | place-building M0-29 merged (PR #41; `docs/how-to/add-command.md`); upgrade-building M0-31 merged (PR #43; OD-13); assign-workers M0-32 in review |
 | Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) and M0-05 (Unity tests, `test-unity.sh`) merged (PR #8, #12); networking is M0-37 |
 | Unity city view + placement | not started | |
 | Inspector, worker stepper, research screen, HUD | not started | |

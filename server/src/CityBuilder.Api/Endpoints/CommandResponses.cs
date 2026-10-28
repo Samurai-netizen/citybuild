@@ -84,7 +84,7 @@ public static class CommandResponses
             "The city has too few free workers for the requested count."),
         MutationErrorCode.WorkerLimit => new(
             "WORKER_LIMIT", StatusCodes.Status422UnprocessableEntity, "Worker limit",
-            "The requested count is negative or above the building's max workers."),
+            "The requested count is above the max workers of the building's level."),
         MutationErrorCode.NoFreeBuilder => new(
             "NO_FREE_BUILDER", StatusCodes.Status409Conflict, "No free builder", "Every builder slot is busy."),
         MutationErrorCode.BuildingNotFound => new(
