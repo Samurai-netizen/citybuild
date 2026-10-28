@@ -80,7 +80,7 @@ There is no "claim" command, because production and research complete on their o
   negative, another player's), `BUILDING_BUSY` (constructing or upgrading), `MAX_LEVEL`, `NO_FREE_BUILDER`, `INSUFFICIENT_RESOURCE`
   (the stock before any refund). A running or frozen cycle ends without output and its inputs come back (`REFUND_UPGRADE` rows, even
   above a storage cap); then the next level's upgrade cost is paid (`COST_UPGRADE` rows) and the building is `Upgrading` until the clock
-  plus that level's upgrade seconds, still at its level. Its workers stay assigned and do nothing (`maxWorkers` reads 0 meanwhile); at the
+  plus that level's upgrade seconds, still at its level. Its workers stay assigned and do nothing (`maxWorkers` stays the current level's); at the
   end the level rises and the building is `Idle` with the same workers (a producer starts its next cycle when it can); the new level's
   max workers and workers provided apply from then on.
 
@@ -113,7 +113,7 @@ There is no "claim" command, because production and research complete on their o
 - `requestId` is the command's, and `null` on `GET /city`, which is no command. `serverTimeUtc` is the server time of the request in whole
   seconds, UTC, with a literal `Z`. `stateVersion` is the stored version after the request: it rises only when the request changed the city.
 - `inventory` lists the items the city holds (an item it has none of is absent); `storageCaps` lists every capped item with its cap now (base
-  plus research). `maxWorkers` is the most workers the building's level takes (0 for houses, also while it is being built or upgraded).
+  plus research). `maxWorkers` is the most workers the building's current level takes, also while it is being built or upgraded (0 for houses).
   `phase` is `Constructing`, `Upgrading`, `Idle` or `Producing`; the timer fields a phase doesn't use are 0.
 - `settlement` is what the settlement **of this request** did, from the city's last settled second to now: a request seconds after another
   one reports only those seconds.
