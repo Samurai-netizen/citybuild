@@ -5,7 +5,7 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-33 · StartResearch; the PR is open, the owner merges it)
+- **Task:** — (last completed: M0-33 · StartResearch; PR #45, the owner merges it)
 - **Branch:** `task/M0-33-start-research` (from `main` = `48702d7`) until the owner merges
 - **Build log entry:** last: `docs/build-log/2026/2026-10-29-01-M0-33.md` (Done)
 - **Last green commit:** the head of `task/M0-33-start-research` (Release build 0 warnings, format clean, fast suite: Repository 22,
