@@ -5,14 +5,14 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-32 · AssignWorkers; PR #44, the owner merges it)
-- **Branch:** `task/M0-32-assign-workers` (from `main` = `8dfc962`) until the owner merges
-- **Build log entry:** last: `docs/build-log/2026/2026-10-28-02-M0-32.md` (Done)
-- **Last green commit:** the head of `task/M0-32-assign-workers` (Release build 0 warnings, format clean, fast suite: Repository 22,
-  Domain 21, Application 135, IntegrationTests 354, Simulation 872; Integration 147 on `postgres:18.6`; handbook builds; check-docs OK)
-- **Done steps:** all of M0-32 (decision 2: OD-13 for negative workers instead of the spec's `WORKER_LIMIT`)
-- **Next step:** the owner merges the PR. Then `/start-task M0-33` (StartResearch, `[O]`: Opus 5.5); read the M0-32 entry's Follow-ups
-  (OD-13 for `researchId`); hand runs log in as `devtest` (it exists now, with a house and a woodcutter).
+- **Task:** — (last completed: M0-33 · StartResearch; PR #45, the owner merges it)
+- **Branch:** `task/M0-33-start-research` (from `main` = `48702d7`) until the owner merges
+- **Build log entry:** last: `docs/build-log/2026/2026-10-29-01-M0-33.md` (Done)
+- **Last green commit:** the head of `task/M0-33-start-research` (Release build 0 warnings, format clean, fast suite: Repository 22,
+  Domain 21, Application 155, IntegrationTests 395, Simulation 872; Integration 165 on `postgres:18.6`; handbook builds; check-docs OK)
+- **Done steps:** all of M0-33 (decision 1: OD-13 for `researchId`; decision 2: the race tested with two different nodes)
+- **Next step:** the owner merges the PR. Then `/start-task M0-34` (error catalogue, rate limits, input limits, `[S]`: Sonnet 5.5); read
+  the M0-32 and M0-33 entries' Follow-ups. Run the two test categories separately: the unfiltered run hangs (M0-33 → Problems).
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7
@@ -24,7 +24,7 @@
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 31 / 85
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 32 / 85
 
 | Area | State | Notes |
 |---|---|---|
@@ -34,7 +34,7 @@
 | Server skeleton | done | M0-02 merged (PR #6) |
 | Persistence (EF + PostgreSQL) | done | M0-19 (EF Core model, migrations, Docker) merged (PR #31); repository and mapping M0-20 merged (PR #32); Testcontainers M0-21 merged (PR #33); locking M0-22 merged (PR #34); settle M0-23 merged (PR #35); M0-24 merged (PR #36) |
 | Auth + command pipeline | in progress | dev auth M0-25 merged (PR #37); the pipeline M0-26 merged (PR #38); its integration tests M0-27 merged (PR #39); content and city endpoints M0-28 merged (PR #40); PlaceBuilding M0-29 merged (PR #41); attack review M0-30 merged (PR #42) |
-| Commands: place / upgrade / assign workers / start research | in progress | place-building M0-29 merged (PR #41; `docs/how-to/add-command.md`); upgrade-building M0-31 merged (PR #43; OD-13); assign-workers M0-32 in review |
+| Commands: place / upgrade / assign workers / start research | in progress | place-building M0-29 merged (PR #41; `docs/how-to/add-command.md`); upgrade-building M0-31 merged (PR #43; OD-13); assign-workers M0-32 merged (PR #44); start-research M0-33 in review: the four commands of M0 |
 | Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) and M0-05 (Unity tests, `test-unity.sh`) merged (PR #8, #12); networking is M0-37 |
 | Unity city view + placement | not started | |
 | Inspector, worker stepper, research screen, HUD | not started | |

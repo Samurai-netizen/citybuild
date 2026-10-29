@@ -4,7 +4,7 @@
 > access token check (M0-25); `GET /api/v1/content` and `GET /api/v1/city` (M0-28); the command pipeline with the idempotency rules below
 > (`CommandPipeline`, M0-26) and its first endpoint, `POST /api/v1/commands/place-building`, with the Commands rules below (M0-29); the
 > request limits below and the stricter bodies of the attack review (M0-30); `POST /api/v1/commands/upgrade-building` (M0-31);
-> `POST /api/v1/commands/assign-workers` (M0-32). The rest of `/api/v1/` is *(planned)*: start-research M0-33, the error catalogue M0-34. A task that builds a part
+> `POST /api/v1/commands/assign-workers` (M0-32); `POST /api/v1/commands/start-research` (M0-33). The rest of `/api/v1/` is *(planned)*: the error catalogue M0-34. A task that builds a part
 > updates this line.
 
 JSON in camelCase. Enums are strings, quantities are integers, and times are city-clock seconds.
@@ -67,7 +67,7 @@ There is no "claim" command, because production and research complete on their o
 - **The body is the contract, exactly.** Every field is required; a property the body doesn't define (`cost`, `level`, `workers`,
   `playerId`), a missing field, a number sent as a string, a bad GUID or broken JSON is refused with 400 before anything runs. No body or
   JSON `null`, the all-zeros `requestId`, an id that can't be a content id (blank, over 64 characters, anything but lowercase ASCII
-  letters, digits and `_` after a first letter), a building id below 1, a negative coordinate and a negative worker count are `INVALID_ARGUMENT`, before the city
+  letters, digits and `_` after a first letter: a type id or a research id), a building id below 1, a negative coordinate and a negative worker count are `INVALID_ARGUMENT`, before the city
   is locked or settled: no city and no content could make them valid (owner directive OD-13 in `15`). Until the error catalogue (M0-34)
   the binding's own 400s (unknown, missing or mistyped fields, broken JSON) have no `code`.
 - **Success:** 200 with the snapshot below; its `requestId` is the command's. A replay (same `requestId`, same body) gets 200 with the
@@ -92,6 +92,13 @@ There is no "claim" command, because production and research complete on their o
   by it, and `phaseEndsAt` is the clock plus `ceil(laborRemaining / workers)`, or `null` with 0 workers (`stallReason` `NoWorkers`) until a
   later assignment resumes it. An idle producer that can start begins its cycle in the same response. The same count again succeeds and
   moves nothing a player sees (the end, the progress); like every successful command it is saved, so `stateVersion` rises.
+- `start-research` (`{ requestId, researchId }`) checks in the order of `04` §8: `UNKNOWN_RESEARCH` (an id of the content-id form the content
+  doesn't have; any other text is `INVALID_ARGUMENT` before the lock), `RESEARCH_COMPLETED`, `RESEARCH_IN_PROGRESS` (the one research slot
+  is busy), `RESEARCH_LOCKED` (a prerequisite not completed, or the node is of another era than the city's), `INSUFFICIENT_RESOURCE`. It pays
+  the node's whole cost up front (`COST_RESEARCH` ledger rows) and the snapshot's `research` block shows it running from the clock to the
+  clock plus its `durationSeconds`. It completes on its own in the settle of a later request at that second, before any building completes
+  then (`04` §5, §6): the node is added to `completed`, `settlement.completedResearch` names it, and its effects apply from that second (a
+  building it unlocks can be placed; a labor reduction shortens the cycles that start from that second on, running cycles keep theirs; a storage bonus raises `storageCaps`).
 
 ## Snapshot (every successful city/command response)
 
@@ -142,7 +149,7 @@ There is no "claim" command, because production and research complete on their o
 | Code | HTTP | When |
 |---|---|---|
 | `AUTHENTICATION_REQUIRED` | 401 | Missing, invalid or expired token |
-| `INVALID_ARGUMENT` | 400 | Malformed JSON, unknown or missing field, bad GUID, body too large, a value no city could make valid (OD-13: a building id below 1, a negative coordinate, a negative worker count), workers on a building without a recipe |
+| `INVALID_ARGUMENT` | 400 | Malformed JSON, unknown or missing field, bad GUID, body too large, a value no city could make valid (OD-13: a building id below 1, a negative coordinate, a negative worker count, a type or research id that can't be a content id), workers on a building without a recipe |
 | `UNKNOWN_BUILDING_TYPE` | 422 | Type id not in content |
 | `BUILDING_LOCKED` | 422 | Type of a later era than the city's, or not unlocked by research yet |
 | `OUT_OF_BOUNDS` | 422 | Coordinates past the grid's width or height (negative ones are `INVALID_ARGUMENT`) |
