@@ -8,11 +8,12 @@
 - **Task:** M0-33 · StartResearch (`[O]`, Opus 5.5)
 - **Branch:** `task/M0-33-start-research` (from `main` = `48702d7`, M0-32 merged)
 - **Build log entry:** `docs/build-log/2026/2026-10-29-01-M0-33.md` (the plan: 4 steps)
-- **Last green commit:** `main` = `48702d7` (Release build, fast suite: Repository 22, Domain 21, Application 135, IntegrationTests 354,
-  Simulation 872)
-- **Done steps:** start (branch, build log entry, board, this resume point)
-- **Next step:** step 1: `StartResearchCommand` (OD-13 content-id check, `COST_RESEARCH`), `StartResearchRequest`, the endpoint, the tests
-  without a database. Then step 2 (PostgreSQL tests), 3 (docs), 4 (finish). Hand runs log in as `devtest` (OD-14).
+- **Last green commit:** the head of `task/M0-33-start-research` (Release build 0 warnings, format clean, fast suite: Repository 22,
+  Domain 21, Application 155, IntegrationTests 395, Simulation 872; check-docs OK)
+- **Done steps:** start; step 1 (the command, request, endpoint, Application and contract tests, `05` and the module docs)
+- **Next step:** step 2: `server/tests/CityBuilder.IntegrationTests/Commands/StartResearchDatabaseTests.cs` on PostgreSQL over HTTP (the
+  build log's plan lists the cases; cities stored by hand with `Commands/HandBuiltCities`). Then step 3 (docs), 4 (finish). Hand runs log
+  in as `devtest` (OD-14).
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7
