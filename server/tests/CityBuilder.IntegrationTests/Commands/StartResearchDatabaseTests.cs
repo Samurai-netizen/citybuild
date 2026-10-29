@@ -206,13 +206,14 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
     /// <param name="coins">The coins in stock.</param>
     /// <param name="logs">The logs in stock.</param>
     /// <param name="researchId">The node sent.</param>
+    /// <param name="afterTradeCharter">Whether Trade Charter is researched first (150 coins, 600 s; the request then comes at 600).</param>
     [Theory]
-    [InlineData(249, 100, "sharp_axes")]
-    [InlineData(1000, 49, "storehouses")]
-    public async Task Post_CostNotCovered_Is422InsufficientResource(long coins, long logs, string researchId)
+    [InlineData(249, 100, "sharp_axes", false)]
+    [InlineData(1000, 49, "storehouses", true)]
+    public async Task Post_CostNotCovered_Is422InsufficientResource(long coins, long logs, string researchId, bool afterTradeCharter)
     {
         (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", coins, logs, 50, House(1));
-        if (researchId == "storehouses")
+        if (afterTradeCharter)
         {
             await StartAsync(player, Guid.CreateVersion7(), "trade_charter");
             Factory.Clock.Advance(TimeSpan.FromSeconds(600));
