@@ -13,7 +13,11 @@ migrations at startup.
 ## Key types and files
 | Type / file | Responsibility |
 |---|---|
-| `Program.cs` | Builds the host: JSON console logging, ProblemDetails, the exception handler (`ApiExceptionHandler`) and `RouteHandlerOptions.ThrowOnBadRequest` on in every environment, the request limits (`AddRequestBodyLimit`; HTTP JSON refuses a property named twice), the rate limits (`AddRateLimits`), OpenAPI, health checks, `TimeProvider.System`, the content (options, `IContentProvider`), the database (`DatabaseOptions`, `AddCityBuilderPersistence`), authentication (`AddCityBuilderAuthentication`), the use cases (`SettleCity`, `DevLogin`, `CommandPipeline`, scoped; `GET /city` runs `SettleCity`, the command endpoints `CommandPipeline`); loads the content and checks the database and authentication settings before anything is mapped, and in Development applies the migrations; adds, in this order, the exception handler (`UseExceptionHandler`), the status code pages (`UseStatusCodeProblems`), the body size check (`UseRequestBodyLimit`), the authentication and authorization middleware, then the rate limiter (`UseRateLimits`); maps `/health`, in Development only `/openapi/v1.json`, and the `/api/v1` group, which requires an access token, with the dev login on it in Development when `Auth:DevLoginEnabled` is on and the game endpoints (`MapContent()` and `MapCity()` from M0-28, `MapCommands()` from M0-29) |
+| `Program.cs` | Builds the host: JSON console logging, ProblemDetails, the exception handler (`ApiExceptionHandler`) and `RouteHandlerOptions.ThrowOnBadRequest` on in every environment, the request limits (`AddRequestBodyLimit`; HTTP JSON refuses a property named twice), the rate limits (`AddRateLimits`), OpenAPI, health checks, the server clock (`AddServerClock`), the content (options, `IContentProvider`), the database (`DatabaseOptions`, `AddCityBuilderPersistence`), authentication (`AddCityBuilderAuthentication`), the use cases (`SettleCity`, `DevLogin`, `CommandPipeline`, scoped; `GET /city` runs `SettleCity`, the command endpoints `CommandPipeline`); loads the content and checks the database and authentication settings before anything is mapped, and in Development applies the migrations; adds, in this order, the exception handler (`UseExceptionHandler`), the status code pages (`UseStatusCodeProblems`), the body size check (`UseRequestBodyLimit`), the authentication and authorization middleware, then the rate limiter (`UseRateLimits`); maps `/health`, in Development only `/openapi/v1.json`, and the `/api/v1` group, which requires an access token, with the dev login on it in Development when `Auth:DevLoginEnabled` is on and the game endpoints (`MapContent()` and `MapCity()` from M0-28, `MapCommands()` from M0-29) |
+| `Time/SimulationOptions` | Section `Simulation`: `DevTimeScale` (default 1, 1 to 1000, and exactly 1 outside Development; validated on start) |
+| `Time/ServerClock` | `AddServerClock(configuration, environment)`: binds and validates `SimulationOptions` and registers the one `TimeProvider`: `TimeProvider.System`, or a `ScaledTimeProvider` in Development with a scale above 1 (the environment checked again there). `TimeScaleOf(clock)`: the scale `GET /content` reports, 1 for any clock but a scaled one |
+| `Time/ScaledTimeProvider` | The Development fast clock: `now = Origin + (real now − Origin) × Scale`, `Origin` fixed at 2026-01-01T00:00:00Z, so the clock is the same after a restart with the same scale and moves when the scale changes (reset the dev database). Only `GetUtcNow` is scaled; timestamps and timers stay real |
+| `Time/ClockLog` | The startup warning of a fast clock (event id 7000) |
 | `Http/RequestLimitOptions` | Section `RequestLimits`: `MaxBodyBytes` (default 4096, 1024 to 1 048 576; validated on start) |
 | `Http/RequestBodyLimit` | `AddRequestBodyLimit(configuration)`: binds and validates `RequestLimitOptions` and sets Kestrel's `MaxRequestBodySize` to it (in place of about 30 MB), so no body is read past the limit, chunked ones included. `UseRequestBodyLimit()`: the first middleware; a `Content-Length` above the limit gets 400 Problem Details (`type` `urn:citybuilder:error:invalid-argument`, `code` `INVALID_ARGUMENT`) before the token check, the binding or a transaction (M0-30) |
 | `Auth/AuthOptions` | Section `Auth`: `SigningKey` (required in every environment, at least 32 bytes as UTF-8; user-secrets or `Auth__SigningKey`), `TokenLifetimeMinutes` (default 720, 1 to 1440), `DevLoginEnabled` (only allowed in Development) |
@@ -23,7 +27,7 @@ migrations at startup.
 | `Auth/HttpCurrentPlayer` | `ICurrentPlayer` of a request: the `sub` claim of the verified token as a GUID; throws when the request has no verified token with one (an endpoint that forgot to require a token) |
 | `Endpoints/AuthEndpoints` | `MapDevLogin()` on the `/api/v1` group: `POST /auth/dev-login`, open without a token; validates the display name (400 `INVALID_ARGUMENT` for a missing body or a name that isn't allowed), runs `DevLogin`, answers with a token |
 | `Contracts/DevLoginRequest`, `Contracts/DevLoginResponse` | The dev login's body `{ displayName }` (unknown properties refused, M0-30) and answer `{ accessToken, expiresAtUtc }` (`05` → Authentication) |
-| `Endpoints/ContentEndpoints` | `MapContent()` on the `/api/v1` group: `GET /content`, behind the token. Answers with `ContentResponseMapper.ToResponse` of the server's `IContentProvider` content and the time scale (the constant 1 until M0-35); reads no city and writes nothing |
+| `Endpoints/ContentEndpoints` | `MapContent()` on the `/api/v1` group: `GET /content`, behind the token. Answers with `ContentResponseMapper.ToResponse` of the server's `IContentProvider` content and the server clock's time scale (`ServerClock.TimeScaleOf`: above 1 only with a Development fast clock); reads no city and writes nothing |
 | `Endpoints/CityEndpoints` | `MapCity()` on the `/api/v1` group: `GET /city`, behind the token. Runs `SettleCity` for `ICurrentPlayer.PlayerId` (the token's player; nothing in the request names a city) and answers with `CitySnapshotMapper.ToSnapshot` of the result, `requestId` null. Safe to repeat, not free of side effects: it materializes the elapsed time and saves the city when anything changed |
 | `Contracts/CitySnapshot` and the `Snapshot*` records (`SnapshotCity`, `SnapshotWorkers`, `SnapshotBuilders`, `SnapshotResearch`, `SnapshotBuilding`, `SnapshotSettlement`) | The snapshot of `05`, the body of `GET /city` and of every successful command. Field order is the contract's; item maps are sorted dictionaries; nulls are written (`requestId`, the running research, `phaseEndsAt`, `stallReason`); `serverTimeUtc` is a string in whole seconds with a `Z` |
 | `Contracts/CitySnapshotMapper` | `ToSnapshot(requestId, city, settlement, stateVersion, serverTime, content)`: reads the settled city and builds the snapshot with the engine's own queries (`CityQueries` for workers, builders and caps, `StallReason.Of` for the stall text). The building phases have written wire names, like the content. The command endpoints call it with what their `CommandSuccess` holds |
@@ -80,13 +84,17 @@ Then `Program.cs` reads `DatabaseOptions`: a missing or blank `ConnectionStrings
 outside Development, or a `Database:LockTimeoutMilliseconds` outside 1 to 60 000, fails the validation and stops the start the same way.
 So does `AuthOptions`, read right after: a missing or short `Auth:SigningKey`, a token lifetime outside 1 to 1440 minutes, or
 `Auth:DevLoginEnabled=true` outside Development (read before `Run`, the validation fails the same way every time; inside the host's start
-`WebApplicationFactory` sometimes reported an `ObjectDisposedException` instead). In Development with the flag on, `DatabaseMigrator.MigrateAsync`
+`WebApplicationFactory` sometimes reported an `ObjectDisposedException` instead). Before it, `Program.cs` resolves the clock: a
+`Simulation:DevTimeScale` out of range, or other than 1 outside Development, fails the same way; a fast clock logs a warning with its scale
+and the server time (event id 7000). In Development with the flag on, `DatabaseMigrator.MigrateAsync`
 applies the pending migrations before any request; the log names them (event id 2000), and an unreachable database stops the start with
 an `NpgsqlException` (`docs/how-to/add-migration.md`). No other environment ever migrates at startup.
 
 ## Rules and invariants
-- `TimeProvider` is registered once, as `TimeProvider.System`. Game code gets time only through it
-  (`core-instructions/02-principles.md`, rule 3); tests replace it with `FakeTimeProvider`.
+- `TimeProvider` is registered once (`AddServerClock`): `TimeProvider.System`, or in Development with `Simulation:DevTimeScale` above 1 a
+  `ScaledTimeProvider`. Game code, the repositories' timestamps and the token times get time only through it
+  (`core-instructions/02-principles.md`, rule 3; `04` §1); tests replace it with `FakeTimeProvider`. A scale other than 1 outside
+  Development stops the start (`07`). The rate limiter and log durations use real time.
 - OpenAPI is mapped only in Development (`05`); a test checks that Production answers 404 (`07`).
 - Every endpoint of the `/api/v1` group requires an access token unless it opts out with `AllowAnonymous()` (only the dev login). There is
   no fallback policy: it would also cover paths that match no endpoint, which would then answer 401 instead of 404.
@@ -117,7 +125,7 @@ an `NpgsqlException` (`docs/how-to/add-migration.md`). No other environment ever
 ## Tests
 `server/tests/CityBuilder.IntegrationTests` starts the app in memory with `ApiFactory`, a `WebApplicationFactory<Program>` with a placeholder
 connection string and no startup migration; no Docker needed.
-They cover the health endpoint, OpenAPI only in Development, the registered clock, the content startup (`Content/ContentStartupTests`:
+They cover the health endpoint, OpenAPI only in Development, the registered clock and the dev time scale (`Time/`: `ScaledTimeProviderTests`, the arithmetic on a fake real clock; `DevTimeScaleTests`, the start stopped for a scale outside Development or out of range, the system clock and `timeScale` 1 in Production, a scaled clock and its `timeScale` in Development), the content startup (`Content/ContentStartupTests`:
 the default configuration serves the real content through one `IContentProvider`; a file with rule errors, a missing file and a blank
 `Content:FilePath` each stop the start) and the database startup (`Persistence/DatabaseStartupTests`: a missing or blank connection string
 stops the start; the startup migration on in Production or Staging stops the start; a lock timeout of 0, below it or above a minute stops
@@ -167,4 +175,4 @@ player, city and starting grant, the same name again, two names, the token, and 
 - `GET /city` does not log a clock behind the city's last settled second (`04` §1): settlement logging is M0-35 *(planned)*.
 - A failed start is reported by the runtime as an unhandled exception in plain text on stderr, not as a JSON log line.
 
-Last updated: M0-34
+Last updated: M0-35

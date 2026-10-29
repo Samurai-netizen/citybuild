@@ -54,7 +54,8 @@ One document, the same for every player: `contentVersion`; `rules` (`gridWidth`,
   `unlockedBy` of a building that needs no research. `maxWorkers` is 0 for houses and `workersProvided` is 0 for producers.
 - **Names:** `kind` is `House` or `Producer`. An effect is one flat object: `type` (`unlockBuilding`, `laborReduction`, `storageCapBonus`)
   and the fields that type uses (`building`, `permille`, `item`, `amount`); the other fields are `null`.
-- `rules.timeScale` is 1 (a scaled development clock arrives with M0-35).
+- `rules.timeScale` is the server clock's speed: server seconds per real second. Always 1 outside Development; a Development server with
+  `Simulation:DevTimeScale` above 1 reports that scale (M0-35, `04` §1).
 - **Complete for the client:** the client builds its `GameContent` from this document with the engine's validating factory, as the server does
   from its file. So the document holds everything the factory needs (`startingCity` included), under the content file's property names.
   The differences are the response's: `kind` is `House` or `Producer` (the file has `house`, `producer`), and it adds `unlockedBy` and `timeScale`,

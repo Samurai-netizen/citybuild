@@ -8,10 +8,11 @@
 - **Task:** M0-35 · logging, correlation, dev time scale (`[S]`; Opus 5.5 as the owner set it)
 - **Branch:** `task/M0-35-logging-time-scale` (from `main` = `bdedcb1`)
 - **Build log entry:** `docs/build-log/2026/2026-10-29-03-M0-35.md`
-- **Last green commit:** `main` = `bdedcb1` (M0-34 merged)
-- **Done steps:** start (branch, build log entry with plan and Docs impact, board row)
-- **Next step:** step 1 of the plan (dev time scale: `Api/Time/`, guard, `rules.timeScale`); then 2 (auth, rate-limit, error logs),
-  3 (command and settlement logs), 4 (docs, `docs/api/`), 5 (finish). Run the two test categories separately (M0-33 → Problems).
+- **Last green commit:** the head of the branch (step 1; Release build 0 warnings, format clean, fast suite: Repository 22, Domain 21,
+  Application 155, IntegrationTests 533, Simulation 872)
+- **Done steps:** start; step 1 (dev time scale: `Api/Time/`, guard, `rules.timeScale`, docs)
+- **Next step:** step 2 (auth, rate-limit, error logs; check the trace id in every line); then 3 (command and settlement logs),
+  4 (docs, `docs/api/`), 5 (finish). Run the two test categories separately (M0-33 → Problems).
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
