@@ -1,4 +1,5 @@
 using CityBuilder.IntegrationTests.Auth;
+using CityBuilder.IntegrationTests.RateLimits;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -11,7 +12,7 @@ namespace CityBuilder.IntegrationTests.Postgres;
 /// <summary>
 /// The in-memory server on one test's PostgreSQL database: the server's own registrations (repositories, unit of work, content), its
 /// connection string pointed at the database, the tests' token signing key (<see cref="TestTokens.SigningKey"/>), no migration at startup (the database is a migrated copy, or a test turns it on with
-/// <c>WithWebHostBuilder</c>), and <see cref="Clock"/> as the server clock.
+/// <c>WithWebHostBuilder</c>), every rate limit at its highest value (<see cref="TestRateLimits"/>), and <see cref="Clock"/> as the server clock.
 /// </summary>
 /// <param name="database">The test's database.</param>
 public sealed class PostgresApiFactory(TestDatabase database) : WebApplicationFactory<Program>
@@ -29,6 +30,7 @@ public sealed class PostgresApiFactory(TestDatabase database) : WebApplicationFa
         builder.UseSetting("ConnectionStrings:CityBuilder", database.ConnectionString);
         builder.UseSetting("Database:ApplyMigrationsAtStartup", "false");
         builder.UseSetting("Auth:SigningKey", TestTokens.SigningKey);
+        TestRateLimits.Relax(builder);
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<TimeProvider>();

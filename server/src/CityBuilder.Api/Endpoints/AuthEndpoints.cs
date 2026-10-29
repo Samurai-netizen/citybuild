@@ -1,6 +1,7 @@
 using CityBuilder.Api.Auth;
 using CityBuilder.Api.Contracts;
 using CityBuilder.Api.Errors;
+using CityBuilder.Api.Http;
 using CityBuilder.Application.Players;
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -16,7 +17,7 @@ public static class AuthEndpoints
     /// <param name="api">The <c>/api/v1</c> route group.</param>
     /// <returns>The endpoint's builder.</returns>
     public static RouteHandlerBuilder MapDevLogin(this RouteGroupBuilder api) =>
-        api.MapPost("/auth/dev-login", DevLoginAsync).AllowAnonymous();
+        api.MapPost("/auth/dev-login", DevLoginAsync).AllowAnonymous().RequireRateLimit(RateLimitClass.DevLogin);
 
     /// <summary>
     /// Logs the display name in (<see cref="DevLogin"/>: on the first login the player and the starter city are created) and answers with

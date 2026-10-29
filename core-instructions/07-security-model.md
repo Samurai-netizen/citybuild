@@ -8,8 +8,9 @@
 > `server/tests/CityBuilder.IntegrationTests/Security/` (M0-30); UpgradeBuilding with the same strict body and building ids resolved in the
 > caller's city only, and owner directive OD-13: building ids below 1 and negative coordinates refused before the lock (M0-31, tested over HTTP);
 > AssignWorkers with the same rules, negative counts refused before the lock, and the worker-moving property over HTTP (M0-32); StartResearch
-> with the same strict body, research ids that can't be content ids refused before the lock, and the research race over HTTP (M0-33). Rate limits (M0-34) and the rest of the
-> `Security_` tests are *(planned)* (attack suite M0-74, report M0-78). A task that builds a part updates this line.
+> with the same strict body, research ids that can't be content ids refused before the lock, and the research race over HTTP (M0-33); the error catalogue, the global exception handler (no exception text outside Development, no echoed
+> headers) and the per-player rate limits (M0-34, tested in memory and on PostgreSQL). The rest of the `Security_` tests are *(planned)*
+> (attack suite M0-74, report M0-78). A task that builds a part updates this line.
 
 **Goal for M0:** a modified client, a replayed request or a wrong clock cannot create resources, skip costs,
 skip waiting, over-assign workers, skip research, or touch another player's city.
@@ -41,7 +42,7 @@ From Era II this matters even more: one duplication bug floods the shared market
 | Race two commands (double spend) | `FOR UPDATE` row lock + `state_version` guard | Concurrent integration tests |
 | Act on another player's building | Building ids are resolved inside the caller's city only | `BUILDING_NOT_FOUND` (404), never a `FORBIDDEN` leak: `Security_AnotherPlayersBuildingId_Is404AndTouchesNeitherCity` (upgrade-building on PostgreSQL: the id exists only in the other city; neither city changes), and ids of 1 or more the city doesn't have are 404 too (`Post_IdNotInTheCity_Is404AndStoresNothing`, `Post_RuleRefuses_IsProblemWithTheRulesCode`); an id below 1 is 400 before the lock (`Security_BuildingIdBelowOne_Is400BeforeTheCityIsLocked`, `Security_BuildingIdBelowOne_Is400AndStoresNothing`; M0-31, OD-13). Assign-workers does the same (M0-32: `AssignWorkersDatabaseTests.Security_AnotherPlayersBuildingId_Is404AndTouchesNeitherCity`; ids below 1 in `Security_IdBelowOneOrNegativeWorkers_Is400BeforeTheCityIsLocked` and `…_Is400AndStoresNothing`) |
 | Place outside the grid to wrap or clip a stored tile | A negative coordinate is refused before the city is locked (OD-13); the engine's bounds check runs before the mutation; coordinates are `int` in the body and the stored `smallint` columns only ever get grid values | negative values, down to the `int` limit: `INVALID_ARGUMENT`, the lock never taken, nothing saved: `Security_NegativeCoordinates_Are400BeforeTheCityIsLocked` (in memory), `Security_NegativeCoordinates_Are400AndStoreNothing` (PostgreSQL, five minutes elapsed, M0-31); values past the grid, up to the `int` and past the `smallint` limits: `OUT_OF_BOUNDS`, nothing saved: `Security_CoordinatesPastTheGrid_AreOutOfBoundsAndSaveNothing`, `Security_CoordinatesPastTheGrid_AreOutOfBoundsAndStoreNothing` (M0-30) |
-| Spam requests or settle storms | Per-player rate limits | 429 tests |
+| Spam requests or settle storms | Per-player rate limits (`RateLimits:*`, `05` → Rate limits): commands 10/s and 120/min, `GET /city` 30/min, the dev login 10/min per address; a refused request is never bound or locked | `Post_CommandsPastTheBurstLimit_Are429BeforeTheCityIsLocked`, `Post_CommandsPastTheSustainedLimit_Are429`, `Post_AllCommandEndpoints_CountTogether`, `Get_CityPastItsLimit_Is429BeforeTheCityIsLocked`, `Security_OnePlayersSpam_DoesNotBlockAnotherOrTheirOtherBudget`, `Security_RequestsWithoutToken_Are401NotCounted`, `Post_DevLoginPastTheLimit_Is429PerAddress`, `Defaults_NormalPlay_IsNeverLimited_AndTheContractsNumbersHold`, `Security_EveryApiEndpoint_IsInItsLimitClass` (M0-34) |
 | Huge or malformed bodies | `RequestLimits:MaxBodyBytes` (4 KB): Kestrel reads no more, and a larger `Content-Length` is 400 `INVALID_ARGUMENT` before the token check; strict binding before DB access; JSON only (415); an id that can't be a content id (`ContentIds`: a type id, a research id), a building id below 1 and a negative coordinate are `INVALID_ARGUMENT` before the city is locked (OD-13) | place-building: `Post_BodyOfTheWrongShape_Is400AndRunsNothing` (broken JSON, wrong types, an `int` overflow, a missing field; M0-29); M0-30: `Security_BodyLargerThanTheLimit_Is400BeforeAnythingRuns`, `Security_BodyOfExactlyTheLimit_IsRead`, `Security_KestrelBodyLimit_IsTheSetting`, `Security_RequestIdThatIsNoUuid_Is400AndRunsNothing`, `Security_MalformedJson_Is400AndRunsNothing`, `Security_DeeplyNestedJson_Is400AndRunsNothing`, `Security_TypeIdThatCantBeAContentId_Is400BeforeTheCityIsLocked`, `Security_ResearchIdThatCantBeAContentId_Is400BeforeTheCityIsLocked` (M0-33; on PostgreSQL `…_Is400AndStoresNothing`), `Security_BodyNotSentAsJson_Is415AndRunsNothing`, `Security_DevLoginHugeDisplayName_Is400InvalidArgument`; on PostgreSQL `Security_BodyOfTheWrongForm_Is400AndStoresNothing`, `Security_MegabyteBody_Is400AndStoresNothing`, `Security_DevLoginRefusedBody_StoresNoPlayer` |
 | Dev login in production | Endpoint mapped only in Development with `Auth:DevLoginEnabled` on; the setting on outside Development stops the start | `Security_DevLoginInProduction_IsNotMapped` (404), `Security_DevLoginEnabledOutsideDevelopment_StopsTheStart` |
 | Act as another player without their token | Every `/api/v1` endpoint requires a token (route group); the player comes only from the token's `sub`, never from a body | `GetCurrentPlayer_TokenTheServerIssued_ReturnsItsPlayer`, `Security_RequestWithoutToken_IsRefused`; on the real endpoints, as the 401 `AUTHENTICATION_REQUIRED` Problem Details: `Get_WithoutToken_ReturnsAuthenticationRequiredProblem` (M0-28), `Post_PlaceBuildingWithoutToken_ReturnsAuthenticationRequiredProblem` (M0-29); on PostgreSQL `Security_PostWithoutToken_Is401AndStoresNothing`, and a player named in the query or a header is ignored: `Security_PlayerNamedOutsideTheToken_IsIgnored` (M0-30) |
@@ -51,7 +52,7 @@ From Era II this matters even more: one duplication bug floods the shared market
 | Dev time scale left on | `Simulation:DevTimeScale` is honoured only in Development; startup throws if ≠ 1 elsewhere | Startup-guard test |
 | Overflow to wrap quantities | `checked` arithmetic, `long`, content validation of maxima | Overflow tests |
 | Secret leakage | Signing key and the database connection string from environment/user-secrets; never in Unity or the repo (the compose password lives in the gitignored `.env`) | Config review prompt |
-| Information leakage in errors | ProblemDetails without stack traces outside Development | Error-mapping tests |
+| Information leakage in errors | Every error is the catalogue's Problem Details; the global handler gives no stack trace anywhere and no exception text outside Development (its type and message in `detail` there); the developer exception page, which echoed the request headers and so the bearer token, never answers; the 401 never says why | `Security_Throw_InProduction_SaysNothingAboutTheException`, `Throw_Unexpected_IsInternalErrorAndDevelopmentNamesTheException`, `Security_BodyThatDoesNotBind_InDevelopment_DoesNotEchoTheRequestHeaders`, `Post_BodyThatDoesNotBind_IsInvalidArgument`, `ErrorCatalogueTests` (M0-34) |
 | Probe server internals through `/health` (no auth) | The response is the status word only: no check details, versions or exception text | `GetHealth_AppRunning_Returns200WithStatusOnly` |
 | Read the full API description in production | OpenAPI (`/openapi/v1.json`) is mapped only in Development | `Security_OpenApiDocument_InProduction_IsNotServed` |
 
@@ -73,12 +74,17 @@ Never log: tokens, signing keys, full request bodies in production, personal dat
   `Auth:SigningKey` is the only way to end every token at once.
 - No device attestation (Play Integrity / App Attest). A scripted client can automate play, but only within server rules,
   so it gains no more than a perfect human player would. That's acceptable for M0, but not once the market exists.
-- Rate limits are in-memory and single-instance (from M0-34). Until then nothing limits how often a player calls: each replay of a storm
-  takes the player's own city lock and reads the receipt (it settles and writes nothing), so a storm slows only that player's city.
-- A body without a `Content-Length` (chunked) is stopped by Kestrel at the size limit; its answer, and the answer to a body that doesn't bind
-  (an unknown, missing, mistyped or repeated field, broken JSON), is the framework's 400 (Kestrel's limit may give 413) without `code`
-  until the error catalogue maps it (M0-34). The in-memory test server has no body limit of its own, so only the `Content-Length` check
-  and Kestrel's configured value are tested, not a chunked body against Kestrel.
+- Rate limits are in-memory and single-instance (M0-34): several server instances would each allow the full budget, and a restart resets
+  it. Fixed windows allow up to twice a limit across a window boundary. `Retry-After` is the window's length, an upper bound. `GET /content`
+  has no limit (it reads no city). The dev login is counted per remote address: behind a reverse proxy that is the proxy's until forwarded
+  headers are configured, and an IPv6 client can rotate addresses inside its prefix; the dev login exists in Development only. A replay
+  storm below the limits still takes the player's own city lock and reads the receipt (it settles and writes nothing), so it slows only
+  that player's city.
+- A body without a `Content-Length` (chunked) is stopped by Kestrel at the size limit; the exception handler answers that stop, and a body
+  that doesn't bind (an unknown, missing, mistyped or repeated field, broken JSON), as 400 `INVALID_ARGUMENT` (M0-34). The in-memory test
+  server has no body limit of its own, so only the `Content-Length` check, Kestrel's configured value and the handler's mapping of its 413
+  are tested, not a chunked body against Kestrel.
+- 404, 405 and 415 answers come from the framework with Problem Details but no `code` (`05` → Errors; M0-34 decision 3).
 - HTTP is allowed for localhost in development; production requires HTTPS.
 
 ## Rule for Claude

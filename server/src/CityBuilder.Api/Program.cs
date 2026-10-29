@@ -38,6 +38,7 @@ builder.Services.Configure<RouteHandlerOptions>(options => options.ThrowOnBadReq
 // What a request may send (core-instructions/07-security-model.md): no body above RequestLimits:MaxBodyBytes is read, and a JSON body that
 // names a property twice is refused instead of read as its last value, so every reader of the body sees the same values.
 builder.Services.AddRequestBodyLimit(builder.Configuration);
+builder.Services.AddRateLimits(builder.Configuration);
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.AllowDuplicateProperties = false);
 builder.Services.AddOpenApi();
 builder.Services.AddHealthChecks();
@@ -114,6 +115,9 @@ app.UseStatusCodePages();
 app.UseRequestBodyLimit();
 app.UseAuthentication();
 app.UseAuthorization();
+
+// After the token check, which gives it the player to count for: a request with no working token is 401 and counts against nothing.
+app.UseRateLimits();
 
 if (app.Environment.IsDevelopment())
 {

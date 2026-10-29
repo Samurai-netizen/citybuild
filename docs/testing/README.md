@@ -29,7 +29,7 @@ The code is in `server/tests/CityBuilder.IntegrationTests/Postgres/`.
 |---|---|
 | `PostgresServer` | xUnit's assembly fixture: **one** `postgres:18.6` container per test run (Testcontainers). It starts when the first test asks for a database, so a run of only fast tests never starts Docker. It applies the committed migrations once, to a template database. |
 | `TestDatabase` | **A fresh database per test:** a copy of the migrated template (`CREATE DATABASE … TEMPLATE`), or an empty one for the migration tests. Disposing it drops it. Tests never share rows and can run in parallel. |
-| `PostgresApiFactory` | The in-memory server (`WebApplicationFactory`) on one test database: the server's own registrations, no migration at startup, the tests' signing key, and a `FakeTimeProvider` as the server clock (`Clock`). |
+| `PostgresApiFactory` | The in-memory server (`WebApplicationFactory`) on one test database: the server's own registrations, no migration at startup, the tests' signing key, every rate limit at its highest value (`RateLimits/TestRateLimits`), and a `FakeTimeProvider` as the server clock (`Clock`). |
 | `PostgresTest` | The base class of a test class that needs PostgreSQL: creates `Database` before each test, offers `Factory`, and drops both afterwards. |
 
 ```mermaid
@@ -53,6 +53,10 @@ flowchart LR
   for one (`pg_stat_activity`, `wait_event_type = 'Lock'`), never for a fixed time; hold the first with a `TaskCompletionSource` the
   test releases. For a lock timeout, derive a server with a short `Database:LockTimeoutMilliseconds` (`Factory.WithWebHostBuilder`).
   `Persistence/DatabaseLocks` has all three (`WithLockTimeout`, `HoldAsync`, `WaitUntilWaitingAsync`).
+- Rate limits: both factories set every limit to its highest value (`RateLimits/TestRateLimits`), because a test sends requests far faster than
+  a player. A test about the limits derives a server with small numbers, `UseSetting("RateLimits:City:Limit", "3")`, and a 60-second window so
+  the window can't end inside the test (`RateLimits/RateLimitTests`); the real defaults are `RateLimits/DefaultRateLimitsApiFactory`. The test
+  server has no remote address: `RateLimits/RemoteAddressFilter` gives a request the one its `X-Test-Address` header names.
 - Requests that need a player: log in over HTTP (`POST /api/v1/auth/dev-login`, `Auth/DevLoginDatabaseTests`) and send the token as
   `Authorization: Bearer …`, or issue one with the server's own `AccessTokens` (`Factory.Services`). Both test factories set
   `Auth:SigningKey` to `Auth/TestTokens.SigningKey`; `TestTokens.Build` makes the tokens the server must refuse (another key, unsigned,

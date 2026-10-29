@@ -1,6 +1,7 @@
 using System.Text.Json;
 using CityBuilder.Api.Contracts;
 using CityBuilder.Api.Errors;
+using CityBuilder.Api.Http;
 using CityBuilder.Application.Commands;
 using CityBuilder.Application.Commands.AssignWorkers;
 using CityBuilder.Application.Commands.PlaceBuilding;
@@ -30,7 +31,7 @@ public static class CommandEndpoints
     /// <returns>The <c>/commands</c> group.</returns>
     public static RouteGroupBuilder MapCommands(this RouteGroupBuilder api)
     {
-        RouteGroupBuilder commands = api.MapGroup("/commands");
+        RouteGroupBuilder commands = api.MapGroup("/commands").RequireRateLimit(RateLimitClass.Commands);
         commands.MapPost("/place-building", PlaceBuildingAsync).Produces<CitySnapshot>(StatusCodes.Status200OK, "application/json");
         commands.MapPost("/upgrade-building", UpgradeBuildingAsync).Produces<CitySnapshot>(StatusCodes.Status200OK, "application/json");
         commands.MapPost("/assign-workers", AssignWorkersAsync).Produces<CitySnapshot>(StatusCodes.Status200OK, "application/json");
