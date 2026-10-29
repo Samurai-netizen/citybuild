@@ -11,7 +11,8 @@ namespace CityBuilder.IntegrationTests.Errors;
 /// <summary>
 /// A test-only path, <c>/test/throw?kind=…</c>, that throws what the query names: <c>internal</c> (an <see cref="InvalidOperationException"/>
 /// with a message that must never reach a client outside Development), <c>conflict</c> (<see cref="ConcurrencyConflictException"/>),
-/// <c>bad400</c> and <c>bad413</c> (<see cref="BadHttpRequestException"/> with that status, as the framework throws it). Unlike the other
+/// <c>bad400</c> and <c>bad413</c> (<see cref="BadHttpRequestException"/> with that status, as the framework throws it) and, without an
+/// exception, <c>status413</c> (an empty 413 answer, which is what the binding makes of a body Kestrel stops). Unlike the other
 /// test endpoints it is added <b>behind</b> the server's own pipeline, where an unmatched path ends, so the exception handler and the status
 /// code pages of the real server are in front of it.
 /// </summary>
@@ -31,6 +32,13 @@ internal sealed class ThrowingEndpoint : IStartupFilter
             if (!context.Request.Path.StartsWithSegments("/test/throw", StringComparison.Ordinal))
             {
                 return forward(context);
+            }
+
+            // Not an exception: what the binding does with a body Kestrel stops at its limit, an empty answer with this status.
+            if (context.Request.Query["kind"] == "status413")
+            {
+                context.Response.StatusCode = StatusCodes.Status413PayloadTooLarge;
+                return Task.CompletedTask;
             }
 
             throw context.Request.Query["kind"].ToString() switch

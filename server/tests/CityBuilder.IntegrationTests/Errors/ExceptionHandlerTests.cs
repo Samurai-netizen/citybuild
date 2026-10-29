@@ -150,6 +150,22 @@ public sealed class ExceptionHandlerTests(ApiFactory factory) : IClassFixture<Ap
     }
 
     /// <summary>
+    /// A body Kestrel stops at its limit ends the request with an empty 413 inside the binding, where no exception reaches the handler (found
+    /// by hand on the real server: it was 413 with no code). The status code pages answer it as the contract's 400 <c>INVALID_ARGUMENT</c>, the
+    /// same answer the <c>Content-Length</c> check gives.
+    /// </summary>
+    [Fact]
+    public async Task Request_BodyStoppedByKestrel_Is400InvalidArgumentNot413()
+    {
+        await using WebApplicationFactory<Program> server = Serve(production: true, new CapturingLogger());
+
+        ApiResponse response = await ApiClient.GetAsync(server, "/test/throw?kind=status413", playerId: null);
+
+        AssertProblem(response, HttpStatusCode.BadRequest, "INVALID_ARGUMENT", requestId: null);
+        Assert.Equal("The body must not be larger than 4096 bytes.", (string)response.Json()["detail"]!);
+    }
+
+    /// <summary>
     /// A valid token for a player the store has no city for (a reset development database) reaches the city lock, which throws: 500
     /// <c>INTERNAL_ERROR</c> from the real endpoint, in Development and Production alike.
     /// </summary>

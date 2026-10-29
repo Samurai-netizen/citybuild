@@ -8,13 +8,15 @@
 - **Task:** M0-34 · Error catalogue, rate limits, input limits (`[S]`, Sonnet 5.5)
 - **Branch:** `task/M0-34-error-catalogue-limits` (from `main` = `0f03d60`, PR #45 merged)
 - **Build log entry:** `docs/build-log/2026/2026-10-29-02-M0-34.md` (In progress)
-- **Last green commit:** the head of `task/M0-34-error-catalogue-limits` (Release build 0 warnings, format clean, fast suite: IntegrationTests 499;
+- **Last green commit:** the head of `task/M0-34-error-catalogue-limits` (Release build 0 warnings, format clean, fast suite: IntegrationTests 500;
   Integration 166 on `postgres:18.6`; check-docs OK)
 - **Done steps:** start; step 1 (the catalogue: `Api/Errors/`, the writers moved onto it, `ErrorCatalogueTests`); step 2 (the global handler:
   `ApiExceptionHandler`, `ThrowOnBadRequest`, status code pages, `ExceptionHandlerTests`, `CommandConflictDatabaseTests`);
-  step 3 (rate limits: `Http/RateLimits*`, `RateLimitTests`, the factories' relaxed limits)
-- **Next step:** step 4 of the plan: input limits (verify the 4 KB limit and the 413 mapping; the real server by hand as `devtest`, OD-14).
-  Then 5 (docs: 05 request-limits wording, ADR as-built lines, decisions rows, CHANGELOG; Definition of Done; self-review; PR). Run the two test categories separately (M0-33 → Problems).
+  step 3 (rate limits: `Http/RateLimits*`, `RateLimitTests`, the factories' relaxed limits); step 4 (input limits: `StatusCodeProblems`, the
+  real server by hand)
+- **Next step:** step 5: docs left (ADR-0003/0004 "still to come" lines, decision rows in `12`, `03`/`10`/Simulation mentions, `08`),
+  CHANGELOG, the Definition of Done, a line-by-line self-review (security), the handbook build, then the PR. Run the two test categories
+  separately (M0-33 → Problems).
 - **Open questions for the owner:** M0-34 decision 3 (no new codes for 404/405/415: fine?) and decision 6 (`GET /content` not limited: fine?);
   the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
