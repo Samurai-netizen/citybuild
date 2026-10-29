@@ -4,16 +4,16 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-33 · StartResearch; PR #45, the owner merges it)
-- **Branch:** `task/M0-33-start-research` (from `main` = `48702d7`) until the owner merges
-- **Build log entry:** last: `docs/build-log/2026/2026-10-29-01-M0-33.md` (Done)
-- **Last green commit:** the head of `task/M0-33-start-research` (Release build 0 warnings, format clean, fast suite: Repository 22,
-  Domain 21, Application 155, IntegrationTests 395, Simulation 872; Integration 165 on `postgres:18.6`; handbook builds; check-docs OK)
-- **Done steps:** all of M0-33 (decision 1: OD-13 for `researchId`; decision 2: the race tested with two different nodes)
-- **Next step:** the owner merges the PR. Then `/start-task M0-34` (error catalogue, rate limits, input limits, `[S]`: Sonnet 5.5); read
-  the M0-32 and M0-33 entries' Follow-ups. Run the two test categories separately: the unfiltered run hangs (M0-33 → Problems).
-- **Open questions for the owner:** the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, M0-21 build
+- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** M0-34 · Error catalogue, rate limits, input limits (`[S]`, Sonnet 5.5)
+- **Branch:** `task/M0-34-error-catalogue-limits` (from `main` = `0f03d60`, PR #45 merged)
+- **Build log entry:** `docs/build-log/2026/2026-10-29-02-M0-34.md` (In progress)
+- **Last green commit:** `main` `0f03d60` (baseline run at the start: see the build log)
+- **Done steps:** start only (write-ahead)
+- **Next step:** step 1 of the plan: `Api/Errors/` (`ApiError`, `ErrorCatalogue`, `ApiProblem`), the four writers moved onto it, the table-driven
+  tests. Then 2 (global handler), 3 (rate limits), 4 (input limits), 5 (docs, finish). Run the two test categories separately (M0-33 → Problems).
+- **Open questions for the owner:** M0-34 decision 3 (no new codes for 404/405/415: fine?) and decision 6 (`GET /content` not limited: fine?);
+  the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7
   security alerts GitHub reports on `main`; M0-28 decision 14: the clock-behind warning that docs
@@ -24,7 +24,7 @@
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 32 / 85
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 33 / 85
 
 | Area | State | Notes |
 |---|---|---|
