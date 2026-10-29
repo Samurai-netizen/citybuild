@@ -51,8 +51,9 @@ in it. `GET /city` settles too, so it is safe to repeat but not free of side eff
   closing zero-length advance, the ledger rows and a save only when something changed (M0-23); the command pipeline, which settles before
   each command's mutation with the same steps (`CitySettler`, M0-26); `GET /city` runs `SettleCity` and answers with the snapshot (M0-28);
   the first command endpoint, place-building, settles before its mutation (tested on PostgreSQL, M0-29), and so does upgrade-building (a
-  construction the settle completes can be upgraded in the same request, M0-31). Still to come: the warning for a
-  clock behind, with the settlement logs (M0-35), and the other command endpoints (M0-32, M0-33).
+  construction the settle completes can be upgraded in the same request, M0-31), and so does assign-workers (a construction
+  the settle completes takes workers in the same request, M0-32). Still to come: the warning for a clock behind, with the settlement logs
+  (M0-35), and start-research (M0-33).
 - **Fallback (agreed in advance, `12`):** if settle cost becomes a problem (not expected in M0), add a steady-state fast-forward inside the
   engine that computes a stretch of identical cycles at once, never a background ticker that writes every city. Record the switch in `12`.
 - **Reversal:** a ticker could call the same settle later without engine changes, at the costs above. Dropping lazy settlement is not planned.

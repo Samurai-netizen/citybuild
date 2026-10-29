@@ -3,8 +3,8 @@
 > **Built so far:** `GET /health` and the OpenAPI document in Development (M0-02, `docs/modules/CityBuilder.Api.md`); the dev login and the
 > access token check (M0-25); `GET /api/v1/content` and `GET /api/v1/city` (M0-28); the command pipeline with the idempotency rules below
 > (`CommandPipeline`, M0-26) and its first endpoint, `POST /api/v1/commands/place-building`, with the Commands rules below (M0-29); the
-> request limits below and the stricter bodies of the attack review (M0-30); `POST /api/v1/commands/upgrade-building` (M0-31).
-> The rest of `/api/v1/` is *(planned)*: the commands M0-32 and M0-33, the error catalogue M0-34. A task that builds a part
+> request limits below and the stricter bodies of the attack review (M0-30); `POST /api/v1/commands/upgrade-building` (M0-31);
+> `POST /api/v1/commands/assign-workers` (M0-32). The rest of `/api/v1/` is *(planned)*: start-research M0-33, the error catalogue M0-34. A task that builds a part
 > updates this line.
 
 JSON in camelCase. Enums are strings, quantities are integers, and times are city-clock seconds.
@@ -67,7 +67,7 @@ There is no "claim" command, because production and research complete on their o
 - **The body is the contract, exactly.** Every field is required; a property the body doesn't define (`cost`, `level`, `workers`,
   `playerId`), a missing field, a number sent as a string, a bad GUID or broken JSON is refused with 400 before anything runs. No body or
   JSON `null`, the all-zeros `requestId`, an id that can't be a content id (blank, over 64 characters, anything but lowercase ASCII
-  letters, digits and `_` after a first letter), a building id below 1 and a negative coordinate are `INVALID_ARGUMENT`, before the city
+  letters, digits and `_` after a first letter), a building id below 1, a negative coordinate and a negative worker count are `INVALID_ARGUMENT`, before the city
   is locked or settled: no city and no content could make them valid (owner directive OD-13 in `15`). Until the error catalogue (M0-34)
   the binding's own 400s (unknown, missing or mistyped fields, broken JSON) have no `code`.
 - **Success:** 200 with the snapshot below; its `requestId` is the command's. A replay (same `requestId`, same body) gets 200 with the
@@ -84,6 +84,14 @@ There is no "claim" command, because production and research complete on their o
   is paid (`COST_UPGRADE` rows) and the building is `Upgrading` until the clock plus that level's upgrade seconds, still at its level. Its
   workers stay assigned and do nothing (`maxWorkers` stays the current level's); at the end the level rises and the building is `Idle` with
   the same workers (a producer starts its next cycle when it can); the new level's max workers and workers provided apply from then on.
+- `assign-workers` (`{ requestId, buildingId, workers }`, an absolute count; 0 pauses) checks in the order of `04` §8: `BUILDING_NOT_FOUND`
+  (your city only, as above; an id below 1 is `INVALID_ARGUMENT`), `INVALID_ARGUMENT` (a house: no recipe), `BUILDING_BUSY` (constructing;
+  upgrading is allowed), `WORKER_LIMIT` (above the current level's `maxWorkers`; a negative count is `INVALID_ARGUMENT` before the lock),
+  `INSUFFICIENT_WORKERS` (the increase over the building's current count is more than `workers.free`; fewer workers always fit). It writes no
+  ledger rows. On a running cycle the labor done so far is kept (`04` §3): a new segment starts at the clock with `laborRemaining` reduced
+  by it, and `phaseEndsAt` is the clock plus `ceil(laborRemaining / workers)`, or `null` with 0 workers (`stallReason` `NoWorkers`) until a
+  later assignment resumes it. An idle producer that can start begins its cycle in the same response. The same count again succeeds and
+  moves nothing a player sees (the end, the progress); like every successful command it is saved, so `stateVersion` rises.
 
 ## Snapshot (every successful city/command response)
 
@@ -134,14 +142,14 @@ There is no "claim" command, because production and research complete on their o
 | Code | HTTP | When |
 |---|---|---|
 | `AUTHENTICATION_REQUIRED` | 401 | Missing, invalid or expired token |
-| `INVALID_ARGUMENT` | 400 | Malformed JSON, unknown or missing field, bad GUID, body too large, a value no city could make valid (OD-13: a building id below 1, a negative coordinate), workers on a building without a recipe |
+| `INVALID_ARGUMENT` | 400 | Malformed JSON, unknown or missing field, bad GUID, body too large, a value no city could make valid (OD-13: a building id below 1, a negative coordinate, a negative worker count), workers on a building without a recipe |
 | `UNKNOWN_BUILDING_TYPE` | 422 | Type id not in content |
 | `BUILDING_LOCKED` | 422 | Type of a later era than the city's, or not unlocked by research yet |
 | `OUT_OF_BOUNDS` | 422 | Coordinates past the grid's width or height (negative ones are `INVALID_ARGUMENT`) |
 | `TILE_OCCUPIED` | 409 | Tile already has a building |
 | `INSUFFICIENT_RESOURCE` | 422 | Cost not affordable |
 | `INSUFFICIENT_WORKERS` | 422 | Not enough free workers for the requested assignment |
-| `WORKER_LIMIT` | 422 | Requested workers above the building's max for its level (or negative) |
+| `WORKER_LIMIT` | 422 | Requested workers above the building's max for its level (a negative count is `INVALID_ARGUMENT`) |
 | `NO_FREE_BUILDER` | 409 | All builder slots busy |
 | `BUILDING_NOT_FOUND` | 404 | Id not in **your** city (also returned for other players' ids) |
 | `BUILDING_BUSY` | 409 | Upgrade: building is constructing or upgrading. Assign workers: building is still constructing |

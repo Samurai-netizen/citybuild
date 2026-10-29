@@ -1,19 +1,15 @@
 using System.Net;
 using System.Text.Json.Nodes;
-using CityBuilder.Application.Cities;
 using CityBuilder.Application.Commands;
 using CityBuilder.Application.Commands.UpgradeBuilding;
-using CityBuilder.Domain.Players;
 using CityBuilder.Infrastructure.Persistence;
 using CityBuilder.Infrastructure.Persistence.Rows;
 using CityBuilder.IntegrationTests.Contracts;
 using CityBuilder.IntegrationTests.Postgres;
-using CityBuilder.Simulation;
-using CityBuilder.Simulation.Content;
-using CityBuilder.Simulation.Settlement;
 using CityBuilder.Simulation.State;
 using Microsoft.EntityFrameworkCore;
 using static CityBuilder.IntegrationTests.Commands.DatabaseCommands;
+using static CityBuilder.IntegrationTests.Commands.HandBuiltCities;
 using static CityBuilder.IntegrationTests.Persistence.DatabaseCities;
 
 namespace CityBuilder.IntegrationTests.Commands;
@@ -45,7 +41,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     [Fact]
     public async Task Post_IdleWoodcutter_PaysStartsTheUpgradeAndStoresTheReceipt()
     {
-        (Guid player, Guid city) = await StoreCityAsync("upgrader", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
         long versionBefore = (await LoadAsync(Factory, player)).StateVersion;
 
         ApiResponse response = await UpgradeAsync(player, _requestId, 2);
@@ -56,9 +52,9 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
         CityRow row = await db.Cities.AsNoTracking().SingleAsync(TestContext.Current.CancellationToken);
         Assert.Equal((versionBefore + 1, 0L), (row.StateVersion, row.ClockSeconds));
         Assert.Equal(row.StateVersion, (long)snapshot["stateVersion"]!);
-        Assert.Equal("coins 850, logs 100, planks 30", await StockAsync(city));
+        Assert.Equal("coins 850, logs 100, planks 30", await StockAsync(Database, city));
         Assert.Equal("""{"slots":2,"busy":1}""", snapshot["city"]!["builders"]!.ToJsonString());
-        Assert.Equal("2 woodcutter L1 Upgrading 0-120 target 2 workers 0", await BuildingAsync(city, 2));
+        Assert.Equal("2 woodcutter L1 Upgrading 0-120 target 2 workers 0", await BuildingAsync(Database, city, 2));
 
         Assert.Equal(
             ["coins -150 850 COST_UPGRADE command " + _requestId, "planks -20 30 COST_UPGRADE command " + _requestId],
@@ -77,7 +73,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     [Fact]
     public async Task Post_ProducingSawmill_RefundsItsInputsAboveTheCapThenPays()
     {
-        (Guid player, Guid city) = await StoreCityAsync("upgrader", 1000, 500, 50, House(1), Sawmill(2));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, 500, 50, House(1), Sawmill(2));
 
         ApiResponse response = await UpgradeAsync(player, _requestId, 2);
 
@@ -85,8 +81,8 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
         JsonNode snapshot = response.Json();
         Assert.Equal("""{"coins":750,"logs":502,"planks":20}""", snapshot["city"]!["inventory"]!.ToJsonString());
         Assert.Equal(500L, (long)snapshot["city"]!["storageCaps"]!["logs"]!);
-        Assert.Equal("coins 750, logs 502, planks 20", await StockAsync(city));
-        Assert.Equal("2 sawmill L1 Upgrading 0-180 target 2 workers 2", await BuildingAsync(city, 2));
+        Assert.Equal("coins 750, logs 502, planks 20", await StockAsync(Database, city));
+        Assert.Equal("2 sawmill L1 Upgrading 0-180 target 2 workers 2", await BuildingAsync(Database, city, 2));
         Assert.Equal(
             [
                 "logs 2 502 REFUND_UPGRADE command " + _requestId,
@@ -105,7 +101,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     [Fact]
     public async Task Post_StaffedWoodcutter_KeepsItsWorkersAndHasTheHigherMaxAfter()
     {
-        (Guid player, Guid city) = await StoreCityAsync("upgrader", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Producing, workers: 2));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Producing, workers: 2));
         Factory.Clock.Advance(TimeSpan.FromSeconds(10));
         Assert.Equal(HttpStatusCode.OK, (await UpgradeAsync(player, _requestId, 2)).Status);
         Factory.Clock.Advance(TimeSpan.FromSeconds(50));
@@ -118,8 +114,8 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
         Assert.Equal("""{"provided":4,"assigned":2,"free":2}""", during["city"]!["workers"]!.ToJsonString());
         Assert.Equal(("Producing", 2, 2, 4), Seen(after));
         Assert.Equal("""{"provided":4,"assigned":2,"free":2}""", after["city"]!["workers"]!.ToJsonString());
-        Assert.Equal("2 woodcutter L2 Producing 130-160 target 0 workers 2", await BuildingAsync(city, 2));
-        Assert.Equal("coins 850, logs 100, planks 30", await StockAsync(city));
+        Assert.Equal("2 woodcutter L2 Producing 130-160 target 0 workers 2", await BuildingAsync(Database, city, 2));
+        Assert.Equal("coins 850, logs 100, planks 30", await StockAsync(Database, city));
 
         // The woodcutter in a snapshot: its phase, level, workers and max workers.
         static (string, int, int, int) Seen(JsonNode snapshot)
@@ -136,7 +132,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     [Fact]
     public async Task Post_House_RaisesTheWorkersProvidedWhenTheUpgradeCompletes()
     {
-        (Guid player, Guid city) = await StoreCityAsync("upgrader", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, 100, 50, House(1));
 
         JsonNode started = (await UpgradeAsync(player, _requestId, 1)).Json();
         Factory.Clock.Advance(TimeSpan.FromSeconds(89));
@@ -148,7 +144,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
         Assert.Equal((4, "Upgrading"), ((int)before["city"]!["workers"]!["provided"]!, (string)before["city"]!["buildings"]![0]!["phase"]!));
         Assert.Equal((6, "Idle", 2), ((int)completed["city"]!["workers"]!["provided"]!, (string)completed["city"]!["buildings"]![0]!["phase"]!, (int)completed["city"]!["buildings"]![0]!["level"]!));
         Assert.Equal("[1]", completed["settlement"]!["completedBuildings"]!.ToJsonString());
-        Assert.Equal("1 house L2 Idle - target 0 workers 0", await BuildingAsync(city, 1));
+        Assert.Equal("1 house L2 Idle - target 0 workers 0", await BuildingAsync(Database, city, 1));
     }
 
     /// <summary>An id of 1 or more the city doesn't have is <c>BUILDING_NOT_FOUND</c> (404) and stores nothing.</summary>
@@ -158,7 +154,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     [InlineData(int.MaxValue)]
     public async Task Post_IdNotInTheCity_Is404AndStoresNothing(int buildingId)
     {
-        (Guid player, Guid city) = await StoreCityAsync("upgrader", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
 
         await AssertRefusedAsync(player, city, buildingId, HttpStatusCode.NotFound, "BUILDING_NOT_FOUND");
     }
@@ -174,7 +170,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     [InlineData(int.MinValue)]
     public async Task Security_BuildingIdBelowOne_Is400AndStoresNothing(int buildingId)
     {
-        (Guid player, Guid city) = await StoreCityAsync("attacker", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "attacker", 1000, 100, 50, House(1));
         Factory.Clock.Advance(TimeSpan.FromMinutes(5));
         string stored = await StoredAsync(Factory, Database, player, city);
 
@@ -192,14 +188,14 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     [Fact]
     public async Task Security_AnotherPlayersBuildingId_Is404AndTouchesNeitherCity()
     {
-        (Guid owner, Guid ownerCity) = await StoreCityAsync("owner", 1000, 100, 50, House(1), House(2, x: 1), Woodcutter(3, BuildingPhase.Idle, workers: 0));
-        (Guid attacker, Guid attackerCity) = await StoreCityAsync("attacker", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
+        (Guid owner, Guid ownerCity) = await StoreCityAsync(Factory, "owner", 1000, 100, 50, House(1), House(2, x: 1), Woodcutter(3, BuildingPhase.Idle, workers: 0));
+        (Guid attacker, Guid attackerCity) = await StoreCityAsync(Factory, "attacker", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
         string ownerStored = await StoredAsync(Factory, Database, owner, ownerCity);
 
         await AssertRefusedAsync(attacker, attackerCity, 3, HttpStatusCode.NotFound, "BUILDING_NOT_FOUND");
 
         Assert.Equal(ownerStored, await StoredAsync(Factory, Database, owner, ownerCity));
-        Assert.Equal("3 woodcutter L1 Idle - target 0 workers 0", await BuildingAsync(ownerCity, 3));
+        Assert.Equal("3 woodcutter L1 Idle - target 0 workers 0", await BuildingAsync(Database, ownerCity, 3));
     }
 
     /// <summary>
@@ -210,7 +206,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     [Fact]
     public async Task Post_WhileConstructing_IsBusyUntilTheSettleCompletesTheConstruction()
     {
-        (Guid player, Guid city) = await StoreCityAsync("upgrader", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Constructing, workers: 0));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Constructing, workers: 0));
         Factory.Clock.Advance(TimeSpan.FromSeconds(59));
 
         ApiResponse tooEarly = await UpgradeAsync(player, Guid.CreateVersion7(), 2);
@@ -222,14 +218,14 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
         Assert.Contains("#2 woodcutter (1,1) L1 w0 Constructing 0..60", stored, StringComparison.Ordinal);
         Assert.Equal(HttpStatusCode.OK, response.Status);
         Assert.Equal("[2]", response.Json()["settlement"]!["completedBuildings"]!.ToJsonString());
-        Assert.Equal("2 woodcutter L1 Upgrading 60-180 target 2 workers 2", await BuildingAsync(city, 2));
+        Assert.Equal("2 woodcutter L1 Upgrading 60-180 target 2 workers 2", await BuildingAsync(Database, city, 2));
     }
 
     /// <summary>A building that is already upgrading is <c>BUILDING_BUSY</c> (409) for a second upgrade, which stores nothing.</summary>
     [Fact]
     public async Task Post_WhileUpgrading_Is409BuildingBusyAndStoresNothing()
     {
-        (Guid player, Guid city) = await StoreCityAsync("upgrader", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, 100, 50, House(1));
         Assert.Equal(HttpStatusCode.OK, (await UpgradeAsync(player, Guid.CreateVersion7(), 1)).Status);
 
         await AssertRefusedAsync(player, city, 1, HttpStatusCode.Conflict, "BUILDING_BUSY");
@@ -239,7 +235,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     [Fact]
     public async Task Post_AtMaxLevel_Is422MaxLevelAndStoresNothing()
     {
-        (Guid player, Guid city) = await StoreCityAsync("upgrader", 1000, 100, 50, House(1, level: 2));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, 100, 50, House(1, level: 2));
 
         await AssertRefusedAsync(player, city, 1, HttpStatusCode.UnprocessableEntity, "MAX_LEVEL");
     }
@@ -249,7 +245,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     public async Task Post_EveryBuilderBusy_Is409NoFreeBuilderAndStoresNothing()
     {
         (Guid player, Guid city) = await StoreCityAsync(
-            "upgrader", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Constructing, workers: 0), Woodcutter(3, BuildingPhase.Constructing, workers: 0, x: 2));
+            Factory, "upgrader", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Constructing, workers: 0), Woodcutter(3, BuildingPhase.Constructing, workers: 0, x: 2));
 
         await AssertRefusedAsync(player, city, 1, HttpStatusCode.Conflict, "NO_FREE_BUILDER");
     }
@@ -262,10 +258,10 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     [Fact]
     public async Task Post_CostCoveredOnlyWithTheRefund_Is422InsufficientResourceAndStoresNothing()
     {
-        (Guid player, Guid city) = await StoreCityAsync("upgrader", 1000, 100, 38, House(1), TradingPost(2));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, 100, 38, House(1), TradingPost(2));
 
         await AssertRefusedAsync(player, city, 2, HttpStatusCode.UnprocessableEntity, "INSUFFICIENT_RESOURCE");
-        Assert.Equal("2 trading_post L1 Producing 0-60 target 0 workers 2", await BuildingAsync(city, 2));
+        Assert.Equal("2 trading_post L1 Producing 0-60 target 0 workers 2", await BuildingAsync(Database, city, 2));
     }
 
     /// <summary>
@@ -275,7 +271,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     [Fact]
     public async Task Post_CostCoveredByTheStock_RefundsThenPays()
     {
-        (Guid player, Guid city) = await StoreCityAsync("upgrader", 1000, 100, 40, House(1), TradingPost(2));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, 100, 40, House(1), TradingPost(2));
 
         ApiResponse response = await UpgradeAsync(player, _requestId, 2);
 
@@ -287,7 +283,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
                 "planks -40 2 COST_UPGRADE command " + _requestId,
             ],
             (await LedgerAsync(Database, city)).Select(Line));
-        Assert.Equal("coins 600, logs 100, planks 2", await StockAsync(city));
+        Assert.Equal("coins 600, logs 100, planks 2", await StockAsync(Database, city));
     }
 
     /// <summary>
@@ -297,7 +293,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     [Fact]
     public async Task Post_SameRequestAgain_ReturnsTheSameBytesAndWritesNothing()
     {
-        (Guid player, Guid city) = await StoreCityAsync("upgrader", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, 100, 50, House(1));
         ApiResponse first = await UpgradeAsync(player, _requestId, 1);
         string stored = await StoredAsync(Factory, Database, player, city);
         Factory.Clock.Advance(TimeSpan.FromMinutes(1));
@@ -313,7 +309,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     [Fact]
     public async Task Post_SameRequestIdOnAnotherBuilding_Is409AndWritesNothing()
     {
-        (Guid player, Guid city) = await StoreCityAsync("upgrader", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
         await UpgradeAsync(player, _requestId, 1);
         string stored = await StoredAsync(Factory, Database, player, city);
 
@@ -330,14 +326,14 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     [Fact]
     public async Task Post_TenIdenticalRequestsAtOnce_UpgradeOnce()
     {
-        (Guid player, Guid city) = await StoreCityAsync("upgrader", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, 100, 50, House(1));
 
         ApiResponse[] responses = await Task.WhenAll(Enumerable.Range(0, 10).Select(_ => UpgradeAsync(player, _requestId, 1)));
 
         Assert.All(responses, response => Assert.Equal(HttpStatusCode.OK, response.Status));
         Assert.Single(responses.Select(response => response.Body).Distinct(StringComparer.Ordinal));
         Assert.Single(await ReceiptsAsync(Database, player));
-        Assert.Equal("coins 880, logs 70, planks 50", await StockAsync(city));
+        Assert.Equal("coins 880, logs 70, planks 50", await StockAsync(Database, city));
         Assert.Equal(2, (await LedgerAsync(Database, city)).Count);
     }
 
@@ -349,7 +345,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     public async Task Post_TwoUpgradesAtOnceWithOneFreeBuilder_ExactlyOneStarts()
     {
         (Guid player, Guid city) = await StoreCityAsync(
-            "upgrader", 1000, 100, 50, House(1), House(2, x: 1), Woodcutter(3, BuildingPhase.Constructing, workers: 0, x: 2));
+            Factory, "upgrader", 1000, 100, 50, House(1), House(2, x: 1), Woodcutter(3, BuildingPhase.Constructing, workers: 0, x: 2));
 
         ApiResponse[] responses = await Task.WhenAll(UpgradeAsync(player, Guid.CreateVersion7(), 1), UpgradeAsync(player, Guid.CreateVersion7(), 2));
 
@@ -358,7 +354,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
             responses.Select(response => response.Status == HttpStatusCode.OK ? "OK" : (string)response.Json()["code"]!).Order(StringComparer.Ordinal));
         Assert.Single((await LoadAsync(Factory, player)).State.Buildings, building => building.Phase == BuildingPhase.Upgrading);
         Assert.Single(await ReceiptsAsync(Database, player));
-        Assert.Equal("coins 880, logs 70, planks 50", await StockAsync(city));
+        Assert.Equal("coins 880, logs 70, planks 50", await StockAsync(Database, city));
     }
 
     /// <summary>
@@ -368,7 +364,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     [Fact]
     public async Task Security_PostWithALevelField_Is400AndStoresNothing()
     {
-        (Guid player, Guid city) = await StoreCityAsync("upgrader", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, 100, 50, House(1));
         Factory.Clock.Advance(TimeSpan.FromMinutes(5));
         string stored = await StoredAsync(Factory, Database, player, city);
 
@@ -399,71 +395,6 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
         Assert.Equal(stored, await StoredAsync(Factory, Database, player, city));
     }
 
-    /// <summary>
-    /// Stores a new player with a city at clock 0 on the server's content, era 1, no research, last settled at
-    /// <see cref="PostgresApiFactory.Start"/>. The zero-length advance a command ends with runs first, so the stored city is canonical and a
-    /// request with no time elapsed saves nothing of its own.
-    /// </summary>
-    /// <param name="name">The player's dev name.</param>
-    /// <param name="coins">The coins in stock.</param>
-    /// <param name="logs">The logs in stock.</param>
-    /// <param name="planks">The planks in stock.</param>
-    /// <param name="buildings">The buildings, with ids from 1 up.</param>
-    /// <returns>The player and their city.</returns>
-    private async Task<(Guid Player, Guid City)> StoreCityAsync(string name, long coins, long logs, long planks, params Building[] buildings)
-    {
-        GameContent content = ContentOf(Factory);
-        var state = new CityState(
-            0,
-            era: 1,
-            nextBuildingId: buildings.Length + 1,
-            [new(new ItemId("coins"), coins), new(new ItemId("logs"), logs), new(new ItemId("planks"), planks)],
-            buildings,
-            [],
-            activeResearch: null);
-        Simulator.Advance(state, content, 0);
-        (Guid player, Guid city) = (Guid.NewGuid(), Guid.NewGuid());
-        var aggregate = new CityAggregate(city, player, state, [], PostgresApiFactory.Start.ToUnixTimeSeconds(), 0, content.ContentVersion);
-        await StoreAsync(Factory, new Player(player, name), aggregate);
-        return (player, city);
-    }
-
-    /// <summary>A completed, idle house (4 workers at level 1, 6 at level 2) on row 0.</summary>
-    /// <param name="id">Its id.</param>
-    /// <param name="level">Its level.</param>
-    /// <param name="x">Its column.</param>
-    /// <returns>The building.</returns>
-    private static Building House(int id, int level = 1, int x = 0) =>
-        new(id, new BuildingTypeId("house"), x, 0, level, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
-
-    /// <summary>
-    /// A level-1 woodcutter on row 1: <c>Constructing</c> from 0 to its 60 seconds, <c>Idle</c>, or <c>Producing</c> a cycle of 60 labor
-    /// since clock 0 with its workers.
-    /// </summary>
-    /// <param name="id">Its id.</param>
-    /// <param name="phase">Its phase.</param>
-    /// <param name="workers">Its workers (0 unless producing).</param>
-    /// <param name="x">Its column.</param>
-    /// <returns>The building.</returns>
-    private static Building Woodcutter(int id, BuildingPhase phase, int workers, int x = 1) => phase switch
-    {
-        BuildingPhase.Constructing => new(id, new BuildingTypeId("woodcutter"), x, 1, 1, 0, phase, 0, 60, 0, 0, 0, 0),
-        BuildingPhase.Producing => new(id, new BuildingTypeId("woodcutter"), x, 1, 1, workers, phase, 0, 60 / workers, 0, 60, 60, 0),
-        _ => new(id, new BuildingTypeId("woodcutter"), x, 1, 1, workers, phase, 0, null, 0, 0, 0, 0),
-    };
-
-    /// <summary>A level-1 sawmill at (1,2) producing since clock 0 with 2 workers: 180 labor, ends at 90; its 2 logs are in the cycle.</summary>
-    /// <param name="id">Its id.</param>
-    /// <returns>The building.</returns>
-    private static Building Sawmill(int id) =>
-        new(id, new BuildingTypeId("sawmill"), 1, 2, 1, 2, BuildingPhase.Producing, 0, 90, 0, 180, 180, 0);
-
-    /// <summary>A level-1 trading post at (1,2) producing since clock 0 with 2 workers: 120 labor, ends at 60; its 2 planks are in the cycle.</summary>
-    /// <param name="id">Its id.</param>
-    /// <returns>The building.</returns>
-    private static Building TradingPost(int id) =>
-        new(id, new BuildingTypeId("trading_post"), 1, 2, 1, 2, BuildingPhase.Producing, 0, 60, 0, 120, 120, 0);
-
     /// <summary>Sends an upgrade over HTTP with the player's token.</summary>
     /// <param name="player">The acting player.</param>
     /// <param name="requestId">The request id.</param>
@@ -471,32 +402,4 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     /// <returns>The response.</returns>
     private Task<ApiResponse> UpgradeAsync(Guid player, Guid requestId, int buildingId) =>
         ApiClient.PostAsync(Factory, _path, player, $$"""{"requestId":"{{requestId}}","buildingId":{{buildingId}}}""");
-
-    /// <summary>A ledger row as text: item, delta, balance, reason, reference type and id.</summary>
-    /// <param name="row">The row.</param>
-    /// <returns>For example <c>coins -150 850 COST_UPGRADE command …</c>.</returns>
-    private static string Line(LedgerEntryRow row) => $"{row.ItemId} {row.Delta} {row.BalanceAfter} {row.Reason} {row.RefType} {row.RefId}";
-
-    /// <summary>A stored building row as text, read by a context of the test's own.</summary>
-    /// <param name="city">The city.</param>
-    /// <param name="buildingId">The building.</param>
-    /// <returns>For example <c>2 woodcutter L1 Upgrading 0-120 target 2 workers 0</c>.</returns>
-    private async Task<string> BuildingAsync(Guid city, int buildingId)
-    {
-        await using CityBuilderDbContext db = Database.CreateContext();
-        CityBuildingRow row = await db.CityBuildings.AsNoTracking()
-            .SingleAsync(building => building.CityId == city && building.BuildingId == buildingId, TestContext.Current.CancellationToken);
-        return $"{row.BuildingId} {row.TypeId} L{row.Level} {row.Phase} {row.PhaseStartedAt}-{row.PhaseEndsAt} target {row.TargetLevel ?? 0} workers {row.AssignedWorkers}";
-    }
-
-    /// <summary>A city's stored stock above 0 as text in ordinal item order, read by a context of the test's own.</summary>
-    /// <param name="city">The city.</param>
-    /// <returns>For example <c>coins 850, logs 100, planks 30</c>.</returns>
-    private async Task<string> StockAsync(Guid city)
-    {
-        await using CityBuilderDbContext db = Database.CreateContext();
-        List<CityInventoryRow> rows = await db.CityInventory.AsNoTracking().Where(row => row.CityId == city && row.Quantity > 0)
-            .ToListAsync(TestContext.Current.CancellationToken);
-        return string.Join(", ", rows.OrderBy(row => row.ItemId, StringComparer.Ordinal).Select(row => $"{row.ItemId} {row.Quantity}"));
-    }
 }
