@@ -57,6 +57,13 @@ flowchart LR
   a player. A test about the limits derives a server with small numbers, `UseSetting("RateLimits:City:Limit", "3")`, and a 60-second window so
   the window can't end inside the test (`RateLimits/RateLimitTests`); the real defaults are `RateLimits/DefaultRateLimitsApiFactory`. The test
   server has no remote address: `RateLimits/RemoteAddressFilter` gives a request the one its `X-Test-Address` header names.
+- Log lines: add a `Logging/CapturingLogger` to the server (`logs.AddTo(server)`) and read `logs.Events(id)`: each entry has the level, the
+  event id, the named values, the scope values (`Scope("TraceId")`) and the exception; `Logging:LogLevel` still applies, so a Debug line
+  needs `UseSetting("Logging:LogLevel:CityBuilder", "Debug")`. `RequestLogTests.AssertNowhere` checks that a text (a token, a name) is in
+  no line. The events: `docs/api/logs-and-correlation.md`.
+- The dev time scale: the factories replace the clock with a `FakeTimeProvider`, so a scale set with `UseSetting("Simulation:DevTimeScale", …)`
+  shows only where the server builds its own clock (`Time/DevTimeScaleTests`); the scaled clock's arithmetic is tested on a fake real
+  clock (`Time/ScaledTimeProviderTests`).
 - Requests that need a player: log in over HTTP (`POST /api/v1/auth/dev-login`, `Auth/DevLoginDatabaseTests`) and send the token as
   `Authorization: Bearer …`, or issue one with the server's own `AccessTokens` (`Factory.Services`). Both test factories set
   `Auth:SigningKey` to `Auth/TestTokens.SigningKey`; `TestTokens.Build` makes the tokens the server must refuse (another key, unsigned,

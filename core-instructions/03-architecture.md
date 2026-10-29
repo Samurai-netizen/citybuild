@@ -66,7 +66,7 @@ CityBuilder/
 ├── .githooks/ · .github/        # git hooks · CI workflow, PR template, dependabot
 ├── core-instructions/           # this folder (normative)
 ├── docs/                        # descriptive: plan/, build-log/, changes/, adr/, architecture/, modules/,
-│                                #   how-to/, reference/(generated/), testing/, security/, balance/
+│                                #   how-to/, api/, reference/(generated/), testing/, security/, balance/
 ├── shared/
 │   ├── Simulation/              # Unity local package: package.json, Runtime/*.asmdef, Runtime/**/*.cs
 │   └── Simulation.Build/        # CityBuilder.Simulation.csproj (compiles ../Simulation/Runtime/**/*.cs)

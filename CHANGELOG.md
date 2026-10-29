@@ -154,6 +154,11 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   outside Development and no stack trace anywhere, no developer page echoing the bearer token), the framework's 404/405/415 and Kestrel's 413 turned into the catalogue's codes and the contract's 400; per-player rate limits (commands 10/s and 120/min, `GET /city` and `GET /content` 30/min each, the dev login 10/min
   per address; `RateLimits:*`) answering 429 `RATE_LIMITED` with `Retry-After` before anything is bound or locked; tests in memory and on
   PostgreSQL, mutation runs, and the real server by hand (M0-34).
+- Logging, correlation and the dev time scale: structured log lines for authentication, commands (accepted, rejected with the code,
+  replayed, concurrency conflict), every settlement (elapsed and production seconds, events, research completed) and its clock-behind
+  warning, and rate-limit hits, each with the player, the request id, the command and the duration, and the request's trace id from the
+  framework's scope; never a token, body, display name or address (`docs/api/logs-and-correlation.md`). `Simulation:DevTimeScale` runs a
+  fast server clock in Development only (the start stops for any other scale elsewhere), reported as `rules.timeScale` (M0-35).
 
 ### Changed
 - Handbook site: react and react-dom 19.2.9 → 19.3.1, scheduler 0.28.0 (Dependabot PR #28, DEP-PR28).

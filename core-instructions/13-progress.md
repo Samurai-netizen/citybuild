@@ -8,11 +8,11 @@
 - **Task:** M0-35 · logging, correlation, dev time scale (`[S]`; Opus 5.5 as the owner set it)
 - **Branch:** `task/M0-35-logging-time-scale` (from `main` = `bdedcb1`)
 - **Build log entry:** `docs/build-log/2026/2026-10-29-03-M0-35.md`
-- **Last green commit:** the head of the branch (step 3; Release build 0 warnings, format clean, fast suite: Repository 22, Domain 21,
+- **Last green commit:** the head of the branch (step 4; Integration 167 on `postgres:18.6`; Release build 0 warnings, format clean, fast suite: Repository 22, Domain 21,
   Application 155, IntegrationTests 552, Simulation 872)
-- **Done steps:** start; step 1 (dev time scale: `Api/Time/`, guard, `rules.timeScale`, docs); step 2 (auth, rate-limit, conflict logs); step 3 (command, settlement, clock-behind logs)
-- **Next step:** step 4 (docs: `docs/api/` with traceId vs requestId and the event table, `03`, `docs/README.md`, sidebar, `07`,
-  module docs, ADR-0005/0009, decision rows); then 5 (finish). Run the two test categories separately (M0-33 → Problems).
+- **Done steps:** start; step 1 (dev time scale: `Api/Time/`, guard, `rules.timeScale`, docs); step 2 (auth, rate-limit, conflict logs); step 3 (command, settlement, clock-behind logs); step 4 (docs)
+- **Next step:** step 5 (finish: Definition of Done, self-review, the real server by hand as `devtest` (OD-14) with and without
+  `Simulation:DevTimeScale`, PR). Run the two test categories separately (M0-33 → Problems).
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never

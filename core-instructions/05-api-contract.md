@@ -174,7 +174,8 @@ There is no "claim" command, because production and research complete on their o
 | `METHOD_NOT_ALLOWED` | 405 | A method the endpoint doesn't take |
 | `UNSUPPORTED_MEDIA_TYPE` | 415 | A body that isn't `application/json` |
 
-`code` is for program logic. `title` and `detail` are for humans and may change.
+`code` is for program logic. `title` and `detail` are for humans and may change. `traceId` names the HTTP request (W3C trace context; its
+second part is the `TraceId` of every log line of the request), `requestId` the command across its retries: `docs/api/logs-and-correlation.md`.
 
 - One writer, one list: every code above is a member of `ErrorCatalogue` (`CityBuilder.Api/Errors/`), and `ApiProblem` writes every error answer
   with exactly these members: `type` (`urn:citybuilder:error:` and the code in kebab case), `title`, `status`, `detail`, `code`, `requestId` **only

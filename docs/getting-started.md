@@ -56,7 +56,8 @@ How to get from a clean machine to a running project. Every command here must wo
 
 ## Configuration
 The API reads `server/src/CityBuilder.Api/appsettings.json`, and `dotnet run` applies the launch profile `http`
-(`Properties/launchSettings.json`): http://localhost:8080 and `ASPNETCORE_ENVIRONMENT=Development`. Logs are JSON lines on the console.
+(`Properties/launchSettings.json`): http://localhost:8080 and `ASPNETCORE_ENVIRONMENT=Development`. Logs are JSON lines on the console; what each line means and how to find a request's lines:
+`docs/api/logs-and-correlation.md`.
 Any key can be overridden with an environment variable (`:` becomes `__`) or a command-line argument (`-- --Key=value` after `dotnet run`).
 
 | Key | Default | Meaning |

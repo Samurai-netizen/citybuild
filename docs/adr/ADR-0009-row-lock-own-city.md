@@ -56,7 +56,7 @@ locks another player's city. Effects on other players go to a mailbox that their
 - **Harder:** cross-player features can't change two cities atomically. They need escrow, a mailbox and timed deliveries (`26`, decision 016).
   A request holds its city's lock for its whole duration, so the settle must stay fast (`04` §12) and no work outside the database (HTTP
   calls, waits) may run inside the transaction.
-- **Watch:** lock timeouts and `CONCURRENCY_CONFLICT` counts in the logs (M0-35); connection pool size against parallel requests; a new use
+- **Watch:** lock timeouts and `CONCURRENCY_CONFLICT` counts in the logs (event ids 5003 for a command, 3002 for `GET /city`; M0-35); connection pool size against parallel requests; a new use
   case that needs another lock follows the ordering above or gets a new ADR.
 - **As built:**
   - M0-22: the runner and the guards.

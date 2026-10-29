@@ -68,6 +68,11 @@ From Era II this matters even more: one duplication bug floods the shared market
 ## Logging policy
 Log: player id, request id, trace id, command type, result code, duration, settlement size.
 Never log: tokens, signing keys, full request bodies in production, personal data.
+- As built (M0-35): no request body is logged in any environment; a 401 names only the kind of failure (never the token or the
+  validation message); the dev login logs the player, never the display name; a rate-limit hit on the dev login names no address. Every
+  event and its values: `docs/api/logs-and-correlation.md`. Tests: `Security_RefusedToken_LogsTheKindOfFailureNeverTheToken`,
+  `Security_DevLoginRefused_LogsTheCodeNotTheName`, `Security_DevLoginPastItsLimit_LogsNoAddress`, `Security_CommandRequest_LogsNoBody`,
+  `Security_PostDevLogin_LogsThePlayerNeverTheNameOrToken`.
 
 ## Known limitations in M0 (document, don't hide)
 - Dev auth only: no real account system and no token revocation; a token stays valid until it expires (12 h by default), and changing
