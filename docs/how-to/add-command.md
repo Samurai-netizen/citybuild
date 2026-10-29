@@ -71,9 +71,9 @@ serialized inside the transaction and stored in the receipt as text) and maps th
 the snapshot, also for a replay (the stored bytes); Problem Details with `code`, `requestId` and `traceId` otherwise. The handler writes
 the snapshot as text, so `.Produces<CitySnapshot>` gives the OpenAPI document its 200 schema (a test checks the document).
 
-**5. The errors.** `CommandResponses.Of` maps every `MutationErrorCode` to its `05` code and status, so a command that only uses existing
-codes adds nothing there. A new code needs its row in `05`, its engine value, its mapping and its row in `CommandErrorMappingTests`, which
-fails until both exist (recipe "New error code"). The M0-34 error catalogue takes over this mapping.
+**5. The errors.** `ErrorCatalogue.Of` (`Api/Errors/`) maps every `MutationErrorCode` to its `05` code and status, so a command that only
+uses existing codes adds nothing there. A new code needs its row in `05`, its engine value, its member in `ErrorCatalogue` and in `All`, and
+its rows in `CommandErrorMappingTests` and `ErrorCatalogueTests`, which fail until all exist (recipe "New error code").
 
 **6. Tests.** One file per level, each named after the command:
 - `CityBuilder.Application.Tests/Commands/PlaceBuildingCommandTests.cs`: the shape check, the pinned payload and hash (computed outside

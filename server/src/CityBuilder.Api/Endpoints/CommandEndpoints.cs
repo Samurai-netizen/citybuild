@@ -1,5 +1,6 @@
 using System.Text.Json;
 using CityBuilder.Api.Contracts;
+using CityBuilder.Api.Errors;
 using CityBuilder.Application.Commands;
 using CityBuilder.Application.Commands.AssignWorkers;
 using CityBuilder.Application.Commands.PlaceBuilding;
@@ -57,7 +58,7 @@ public static class CommandEndpoints
     {
         if (request is null)
         {
-            return CommandResponses.Problem(CommandResponses.InvalidArgument("The body must be a JSON object."), Guid.Empty);
+            return ApiProblem.Of(ErrorCatalogue.InvalidArgument.WithDetail("The body must be a JSON object."));
         }
 
         var command = new PlaceBuildingCommand(request.RequestId, request.BuildingTypeId ?? string.Empty, request.X, request.Y);
@@ -85,7 +86,7 @@ public static class CommandEndpoints
     {
         if (request is null)
         {
-            return CommandResponses.Problem(CommandResponses.InvalidArgument("The body must be a JSON object."), Guid.Empty);
+            return ApiProblem.Of(ErrorCatalogue.InvalidArgument.WithDetail("The body must be a JSON object."));
         }
 
         var command = new UpgradeBuildingCommand(request.RequestId, request.BuildingId);
@@ -114,7 +115,7 @@ public static class CommandEndpoints
     {
         if (request is null)
         {
-            return CommandResponses.Problem(CommandResponses.InvalidArgument("The body must be a JSON object."), Guid.Empty);
+            return ApiProblem.Of(ErrorCatalogue.InvalidArgument.WithDetail("The body must be a JSON object."));
         }
 
         var command = new AssignWorkersCommand(request.RequestId, request.BuildingId, request.Workers);
@@ -142,7 +143,7 @@ public static class CommandEndpoints
     {
         if (request is null)
         {
-            return CommandResponses.Problem(CommandResponses.InvalidArgument("The body must be a JSON object."), Guid.Empty);
+            return ApiProblem.Of(ErrorCatalogue.InvalidArgument.WithDetail("The body must be a JSON object."));
         }
 
         var command = new StartResearchCommand(request.RequestId, request.ResearchId ?? string.Empty);
