@@ -7,6 +7,7 @@ using CityBuilder.Application.Commands.PlaceBuilding;
 using CityBuilder.Application.Commands.StartResearch;
 using CityBuilder.Application.Commands.UpgradeBuilding;
 using CityBuilder.Application.Content;
+using CityBuilder.Application.Persistence;
 using CityBuilder.Application.Players;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Options;
@@ -152,7 +153,8 @@ public static class CommandEndpoints
 
     /// <summary>
     /// Runs a command through the pipeline for the token's player, with the snapshot as its response, and answers with what the pipeline did.
-    /// The snapshot is written to text inside the transaction and stored in the receipt as it is, so a replay answers with the same bytes.
+    /// The snapshot is written to text inside the transaction and stored in the receipt as it is, so a replay answers with the same bytes. A
+    /// lock timeout or a changed city (<see cref="ConcurrencyConflictException"/>) is <c>CONCURRENCY_CONFLICT</c> with the command's request id.
     /// </summary>
     /// <typeparam name="TCommand">The command's type; one helper serves every command endpoint.</typeparam>
     /// <param name="command">The command.</param>
@@ -172,14 +174,23 @@ public static class CommandEndpoints
         where TCommand : ICityCommand
     {
         JsonSerializerOptions options = json.Value.SerializerOptions;
-        CommandResult result = await pipeline.ExecuteAsync(
-            player.PlayerId,
-            command,
-            success => JsonSerializer.Serialize(
-                CitySnapshotMapper.ToSnapshot(
-                    success.RequestId, success.City, success.Settlement, success.StateVersion, success.ServerTime, content.Content),
-                options),
-            cancellationToken);
-        return CommandResponses.ToHttpResult(result, command.RequestId);
+        try
+        {
+            CommandResult result = await pipeline.ExecuteAsync(
+                player.PlayerId,
+                command,
+                success => JsonSerializer.Serialize(
+                    CitySnapshotMapper.ToSnapshot(
+                        success.RequestId, success.City, success.Settlement, success.StateVersion, success.ServerTime, content.Content),
+                    options),
+                cancellationToken);
+            return CommandResponses.ToHttpResult(result, command.RequestId);
+        }
+        catch (ConcurrencyConflictException)
+        {
+            // Another request had the city, or changed it (06): nothing was committed, so the client retries with the same request id, which
+            // the answer repeats. Every other exception is the global handler's (ApiExceptionHandler).
+            return ApiProblem.Of(ErrorCatalogue.ConcurrencyConflict, command.RequestId);
+        }
     }
 }

@@ -9,9 +9,10 @@
 - **Branch:** `task/M0-34-error-catalogue-limits` (from `main` = `0f03d60`, PR #45 merged)
 - **Build log entry:** `docs/build-log/2026/2026-10-29-02-M0-34.md` (In progress)
 - **Last green commit:** `main` `0f03d60` (baseline run at the start: see the build log)
-- **Done steps:** start; step 1 (the catalogue: `Api/Errors/`, the writers moved onto it, `ErrorCatalogueTests`)
-- **Next step:** step 2 of the plan: the global exception handler (`IExceptionHandler`, `ThrowOnBadRequest`, `UseStatusCodePages`) and its tests. Then
-  3 (rate limits), 4 (input limits), 5 (docs, finish). Run the two test categories separately (M0-33 → Problems).
+- **Done steps:** start; step 1 (the catalogue: `Api/Errors/`, the writers moved onto it, `ErrorCatalogueTests`); step 2 (the global handler:
+  `ApiExceptionHandler`, `ThrowOnBadRequest`, status code pages, `ExceptionHandlerTests`, `CommandConflictDatabaseTests`)
+- **Next step:** step 3 of the plan: rate limits (`RateLimits` options, the chained limiter, `RATE_LIMITED` + `Retry-After`, the test factories'
+  generous limits, `RateLimitTests`). Then 4 (input limits), 5 (docs, finish). Run the two test categories separately (M0-33 → Problems).
 - **Open questions for the owner:** M0-34 decision 3 (no new codes for 404/405/415: fine?) and decision 6 (`GET /content` not limited: fine?);
   the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
