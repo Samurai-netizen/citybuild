@@ -8,6 +8,7 @@ using CityBuilder.Application.Players;
 using CityBuilder.Domain.Players;
 using CityBuilder.Infrastructure.Persistence;
 using CityBuilder.Infrastructure.Persistence.Rows;
+using CityBuilder.IntegrationTests.Logging;
 using CityBuilder.IntegrationTests.Postgres;
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.State;
@@ -145,6 +146,27 @@ public sealed class DevLoginDatabaseTests(PostgresServer server) : PostgresTest(
         await using CityBuilderDbContext db = Database.CreateContext();
         Assert.Equal(1, await db.Players.CountAsync(cancellationToken));
         Assert.Equal(1, await db.Cities.CountAsync(cancellationToken));
+    }
+
+    /// <summary>
+    /// Each login is logged with the player and whether it created them (event id 4000): new the first time, known the second; neither the
+    /// display name nor the token is in any line.
+    /// </summary>
+    [Fact]
+    public async Task Security_PostDevLogin_LogsThePlayerNeverTheNameOrToken()
+    {
+        var logs = new CapturingLogger();
+        await using WebApplicationFactory<Program> server = logs.AddTo(Factory);
+        using HttpClient client = server.CreateClient();
+
+        DevLoginResponse first = await LoginAsync(client, "zz_logged_name");
+        DevLoginResponse second = await LoginAsync(client, "zz_logged_name");
+
+        IReadOnlyList<CapturingLogger.Entry> logins = logs.Events(4000);
+        Assert.Equal(2, logins.Count);
+        Assert.Equal(((object?)PlayerOf(first), (object?)true), (logins[0].Values["PlayerId"], logins[0].Values["IsNewPlayer"]));
+        Assert.Equal(((object?)PlayerOf(second), (object?)false), (logins[1].Values["PlayerId"], logins[1].Values["IsNewPlayer"]));
+        RequestLogTests.AssertNowhere(logs, ["zz_logged_name", .. first.AccessToken.Split('.'), .. second.AccessToken.Split('.')]);
     }
 
     /// <summary>Logs the name in through the test's server and reads the answer.</summary>

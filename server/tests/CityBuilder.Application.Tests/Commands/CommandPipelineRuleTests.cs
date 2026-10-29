@@ -43,7 +43,7 @@ public sealed class CommandPipelineRuleTests
 
     /// <summary>
     /// A rejection an hour later (the tile is taken) commits the settlement: one save with the settlement's rows and no receipt, the last
-    /// settled second moved on; the result carries the engine's code.
+    /// settled second moved on; the result carries the engine's code and the settlement (an hour), for the settlement log.
     /// </summary>
     [Fact]
     public async Task ExecuteAsync_RuleRejects_CommitsTheSettlementWithoutAReceipt()
@@ -56,6 +56,7 @@ public sealed class CommandPipelineRuleTests
             .ExecuteAsync(PlayerId, PlaceCottage() with { X = 0, Y = 0 }, Writer(repository), TestContext.Current.CancellationToken);
 
         Assert.Equal((CommandOutcome.Rejected, MutationErrorCode.TileOccupied), (result.Outcome, result.ErrorCode));
+        Assert.Equal(3600, result.Settlement?.ElapsedSeconds);
         Assert.Equal(["begin", $"load {PlayerId}", "find receipt", "save", "write", "commit"], repository.Events);
         Assert.Null(repository.LastReceipt);
         Assert.Null(repository.StoredReceipt(PlayerId, RequestId));

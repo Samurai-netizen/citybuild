@@ -124,6 +124,7 @@ public sealed class SettleCityTests
         SettleCityResult result = await UseCase(repository, clock).ExecuteAsync(PlayerId, TestContext.Current.CancellationToken);
 
         Assert.True(result.Settlement.Window.IsClockBehind);
+        Assert.Equal(60, result.Settlement.ClockBehindSeconds);
         Assert.Equal(0, result.Settlement.ElapsedSeconds);
         Assert.Equal(StartClock, result.City.State.Clock);
         Assert.Equal(LastSettled.ToUnixTimeSeconds() + 60, result.City.LastSettledUnixSec);
@@ -143,6 +144,7 @@ public sealed class SettleCityTests
         SettleCityResult result = await settle.ExecuteAsync(PlayerId, TestContext.Current.CancellationToken);
 
         Assert.False(result.Settlement.Window.IsClockBehind);
+        Assert.Equal(0, result.Settlement.ClockBehindSeconds);
         Assert.Equal(30, result.Settlement.ElapsedSeconds);
         Assert.Equal(StartClock + 30, result.City.State.Clock);
     }

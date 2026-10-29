@@ -18,12 +18,14 @@ public sealed class Settlement
     /// <summary>Combines the two advances of one settlement.</summary>
     /// <param name="id">The settlement's id, new for each settlement.</param>
     /// <param name="window">The server seconds the settlement covered.</param>
+    /// <param name="clockBehindSeconds">How far the server second was behind the last settled second; 0 unless the clock is behind.</param>
     /// <param name="advance">The report of the advance by the window's elapsed seconds.</param>
     /// <param name="closing">The report of the closing zero-length advance.</param>
-    internal Settlement(Guid id, SettlementWindow window, SettlementReport advance, SettlementReport closing)
+    internal Settlement(Guid id, SettlementWindow window, long clockBehindSeconds, SettlementReport advance, SettlementReport closing)
     {
         Id = id;
         Window = window;
+        ClockBehindSeconds = clockBehindSeconds;
         Advance = advance;
         Closing = closing;
         ElapsedSeconds = advance.ElapsedSeconds;
@@ -46,6 +48,12 @@ public sealed class Settlement
 
     /// <summary>The server seconds the settlement covered; <see cref="SettlementWindow.IsClockBehind"/> calls for a warning (<c>04</c> section 1).</summary>
     public SettlementWindow Window { get; }
+
+    /// <summary>
+    /// How many seconds the server clock was behind the city's last settled second (<see cref="SettlementWindow.IsClockBehind"/>); 0 when it
+    /// wasn't. The server logs it as a warning (<c>04</c> section 1); Application has no logger, so it carries the number out.
+    /// </summary>
+    public long ClockBehindSeconds { get; }
 
     /// <summary>The seconds the city clock moved (the closing advance moves it by none).</summary>
     public long ElapsedSeconds { get; }
