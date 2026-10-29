@@ -12,7 +12,7 @@ internal static class TestRateLimits
     /// <summary>The configuration key of every limit's <c>Limit</c>.</summary>
     public static readonly string[] LimitKeys =
     [
-        "RateLimits:Commands:Burst:Limit", "RateLimits:Commands:Sustained:Limit", "RateLimits:City:Limit", "RateLimits:DevLogin:Limit",
+        "RateLimits:Commands:Burst:Limit", "RateLimits:Commands:Sustained:Limit", "RateLimits:City:Limit", "RateLimits:Content:Limit", "RateLimits:DevLogin:Limit",
     ];
 
     /// <summary>Sets every limit to the highest the options allow.</summary>

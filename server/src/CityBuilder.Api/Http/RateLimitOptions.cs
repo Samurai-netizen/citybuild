@@ -17,7 +17,7 @@ public sealed class RateRule(int limit, int windowSeconds)
 
 /// <summary>
 /// The limits on what a player may do, the configuration section <c>RateLimits</c> (core-instructions/05-api-contract.md, rate limits;
-/// <c>07</c>, spam). Per player: the commands (a burst limit per second and a sustained limit per minute, both must hold) and <c>GET /city</c>;
+/// <c>07</c>, spam). Per player: the commands (a burst limit per second and a sustained limit per minute, both must hold), <c>GET /city</c> and <c>GET /content</c>;
 /// per address: the dev login. Validated on start: a limit or window out of range stops it. The defaults are the contract's numbers.
 /// </summary>
 public sealed class RateLimitOptions
@@ -36,6 +36,9 @@ public sealed class RateLimitOptions
 
     /// <summary><c>RateLimits:City</c>: <c>GET /city</c> per player. Default 30 per minute.</summary>
     public RateRule City { get; set; } = new(30, 60);
+
+    /// <summary><c>RateLimits:Content</c>: <c>GET /content</c> per player, a budget apart from the city's. Default 30 per minute.</summary>
+    public RateRule Content { get; set; } = new(30, 60);
 
     /// <summary><c>RateLimits:DevLogin</c>: the dev login per remote address. Default 10 per minute.</summary>
     public RateRule DevLogin { get; set; } = new(10, 60);

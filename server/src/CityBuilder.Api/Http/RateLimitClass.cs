@@ -11,6 +11,9 @@ public enum RateLimitClass
 
     /// <summary>The dev login: per remote address.</summary>
     DevLogin,
+
+    /// <summary><c>GET /content</c>: per player, a budget of its own.</summary>
+    Content,
 }
 
 /// <summary>

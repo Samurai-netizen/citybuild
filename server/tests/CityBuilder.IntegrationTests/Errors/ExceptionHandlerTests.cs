@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
-using System.Text.Json.Nodes;
 using CityBuilder.Api.Auth;
 using CityBuilder.Api.Errors;
 using CityBuilder.IntegrationTests.Contracts;
@@ -18,7 +17,7 @@ namespace CityBuilder.IntegrationTests.Errors;
 /// The global exception handler and the status code pages (<c>core-instructions/05-api-contract.md</c>, errors; <c>07</c>, information
 /// leakage): whatever a request throws is the catalogue's Problem Details, no answer holds a stack trace, outside Development none says
 /// anything about the exception, the exception is in the log, and the answers the framework writes empty (no route, wrong method, wrong
-/// content type) have a Problem Details body without a code. The paths are the real endpoints over a <see cref="FakeCityStore"/> and, for
+/// content type) have the catalogue's Problem Details with its code. The paths are the real endpoints over a <see cref="FakeCityStore"/> and, for
 /// exceptions no endpoint throws, <see cref="ThrowingEndpoint"/>. In memory, no Docker.
 /// </summary>
 /// <param name="factory">The in-memory server; each test derives a copy.</param>
@@ -254,19 +253,20 @@ public sealed class ExceptionHandlerTests(ApiFactory factory) : IClassFixture<Ap
     }
 
     /// <summary>
-    /// A path no endpoint has, a method an endpoint doesn't take and a body that isn't JSON get the framework's empty answers; they have a
-    /// Problem Details body now, with <c>type</c>, <c>title</c>, <c>status</c> and <c>traceId</c> and no <c>code</c>: the catalogue has none for
-    /// them (M0-34 decision 3).
+    /// A path no endpoint has, a method an endpoint doesn't take and a body that isn't JSON get the framework's empty answers; the status
+    /// code pages give them the catalogue's Problem Details with its code (M0-34 decision 3).
     /// </summary>
     /// <param name="method">The HTTP method.</param>
     /// <param name="path">The path.</param>
     /// <param name="contentType">The content type of the body to send, or <see langword="null"/> for none.</param>
     /// <param name="status">The expected status.</param>
+    /// <param name="code">The expected code.</param>
     [Theory]
-    [InlineData("GET", "/api/v1/nothing-here", null, HttpStatusCode.NotFound)]
-    [InlineData("GET", "/api/v1/commands/place-building", null, HttpStatusCode.MethodNotAllowed)]
-    [InlineData("POST", "/api/v1/commands/place-building", "text/plain", HttpStatusCode.UnsupportedMediaType)]
-    public async Task Request_NoEndpointMethodOrMediaType_HasAProblemBodyWithoutACode(string method, string path, string? contentType, HttpStatusCode status)
+    [InlineData("GET", "/api/v1/nothing-here", null, HttpStatusCode.NotFound, "NOT_FOUND")]
+    [InlineData("GET", "/api/v1/commands/place-building", null, HttpStatusCode.MethodNotAllowed, "METHOD_NOT_ALLOWED")]
+    [InlineData("POST", "/api/v1/commands/place-building", "text/plain", HttpStatusCode.UnsupportedMediaType, "UNSUPPORTED_MEDIA_TYPE")]
+    public async Task Request_NoEndpointMethodOrMediaType_HasTheCataloguesProblem(
+        string method, string path, string? contentType, HttpStatusCode status, string code)
     {
         await using WebApplicationFactory<Program> server = Serve(production: true, new CapturingLogger());
         using HttpClient client = server.CreateClient();
@@ -280,9 +280,6 @@ public sealed class ExceptionHandlerTests(ApiFactory factory) : IClassFixture<Ap
         using HttpResponseMessage raw = await client.SendAsync(request, TestContext.Current.CancellationToken);
         string body = await raw.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-        Assert.Equal(status, raw.StatusCode);
-        Assert.Equal("application/problem+json", raw.Content.Headers.ContentType?.MediaType);
-        JsonShape.AssertObject(JsonNode.Parse(body), "type:string title:string status:int traceId:string", "$");
-        Assert.Equal((int)status, (int)JsonNode.Parse(body)!["status"]!);
+        AssertProblem(new ApiResponse(raw.StatusCode, raw.Content.Headers.ContentType?.MediaType, raw.Headers, body), status, code, requestId: null);
     }
 }

@@ -11,7 +11,7 @@ namespace CityBuilder.Api.Http;
 /// <summary>
 /// The rate limits (core-instructions/05-api-contract.md, rate limits; <c>07</c>, spam): the framework's limiter, in memory, one process.
 /// Each request is counted by the limits of its endpoint's <see cref="RateLimitClass"/> (<see cref="RateLimitMetadata"/>): the commands and
-/// <c>GET /city</c> per player (the token's <c>sub</c>), the dev login per remote address, so one player's spam never uses up another's
+/// <c>GET /city</c> and <c>GET /content</c> per player (the token's <c>sub</c>), the dev login per remote address, so one player's spam never uses up another's
 /// budget. A request over a limit is refused with <c>RATE_LIMITED</c> (429) and <c>Retry-After</c> before the body is read or a city is
 /// locked. The limiter runs after the token check, so a request without a working token is 401 and counts against nothing.
 /// </summary>
@@ -74,6 +74,7 @@ public static class RateLimits
         ("Commands:Burst", all => all.Commands.Burst),
         ("Commands:Sustained", all => all.Commands.Sustained),
         ("City", all => all.City),
+        ("Content", all => all.Content),
         ("DevLogin", all => all.DevLogin),
     ];
 
@@ -83,7 +84,7 @@ public static class RateLimits
     private static bool IsValid(RateRule rule) =>
         rule.Limit is >= 1 and <= RateLimitOptions.MaxLimit && rule.WindowSeconds is >= 1 and <= RateLimitOptions.MaxWindowSeconds;
 
-    /// <summary>The four limiters chained: a request must pass every limiter that applies to it, and the others let it through.</summary>
+    /// <summary>The five limiters chained: a request must pass every limiter that applies to it, and the others let it through.</summary>
     /// <param name="limits">The configured limits.</param>
     /// <returns>The limiter to set as the global one.</returns>
     private static PartitionedRateLimiter<HttpContext> Chain(RateLimitOptions limits) =>
@@ -91,6 +92,7 @@ public static class RateLimits
             LimiterFor(RateLimitClass.Commands, limits.Commands.Burst, PlayerKey),
             LimiterFor(RateLimitClass.Commands, limits.Commands.Sustained, PlayerKey),
             LimiterFor(RateLimitClass.City, limits.City, PlayerKey),
+            LimiterFor(RateLimitClass.Content, limits.Content, PlayerKey),
             LimiterFor(RateLimitClass.DevLogin, limits.DevLogin, AddressKey));
 
     /// <summary>A limiter that counts the requests of one class, each partition (player or address) in its own fixed window.</summary>

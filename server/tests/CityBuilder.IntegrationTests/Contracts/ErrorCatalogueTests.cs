@@ -39,11 +39,14 @@ public sealed class ErrorCatalogueTests(ApiFactory factory) : IClassFixture<ApiF
         { "RATE_LIMITED", 429 },
         { "CONCURRENCY_CONFLICT", 409 },
         { "INTERNAL_ERROR", 500 },
+        { "NOT_FOUND", 404 },
+        { "METHOD_NOT_ALLOWED", 405 },
+        { "UNSUPPORTED_MEDIA_TYPE", 415 },
     };
 
     /// <summary>
     /// The codes no engine rule decides, each with the test class that proves a request produces it over HTTP: the token check, the shape and
-    /// request-id checks, the pipeline, the rate limiter and the exception handler.
+    /// request-id checks, the pipeline, the rate limiter, the exception handler and the status code pages.
     /// </summary>
     private static readonly Dictionary<string, string> _nonEngineCodes = new(StringComparer.Ordinal)
     {
@@ -53,6 +56,9 @@ public sealed class ErrorCatalogueTests(ApiFactory factory) : IClassFixture<ApiF
         ["RATE_LIMITED"] = "RateLimitTests",
         ["CONCURRENCY_CONFLICT"] = "ExceptionHandlerTests",
         ["INTERNAL_ERROR"] = "ExceptionHandlerTests",
+        ["NOT_FOUND"] = "ExceptionHandlerTests",
+        ["METHOD_NOT_ALLOWED"] = "ExceptionHandlerTests",
+        ["UNSUPPORTED_MEDIA_TYPE"] = "ExceptionHandlerTests",
     };
 
     /// <summary>A request id for the answers that carry one.</summary>

@@ -103,6 +103,18 @@ public static class ErrorCatalogue
     public static readonly ApiError InternalError = new(
         "INTERNAL_ERROR", StatusCodes.Status500InternalServerError, "Internal error", "The server could not handle the request.");
 
+    /// <summary>A path no endpoint has (also the dev login outside Development).</summary>
+    public static readonly ApiError NotFound = new(
+        "NOT_FOUND", StatusCodes.Status404NotFound, "Not found", "The API has no endpoint at this path.");
+
+    /// <summary>A method the endpoint doesn't take.</summary>
+    public static readonly ApiError MethodNotAllowed = new(
+        "METHOD_NOT_ALLOWED", StatusCodes.Status405MethodNotAllowed, "Method not allowed", "The endpoint doesn't take this HTTP method.");
+
+    /// <summary>A body that isn't <c>application/json</c>.</summary>
+    public static readonly ApiError UnsupportedMediaType = new(
+        "UNSUPPORTED_MEDIA_TYPE", StatusCodes.Status415UnsupportedMediaType, "Unsupported media type", "Send the body as application/json.");
+
     /// <summary>
     /// Every code of the catalogue, in the order of <c>05</c>'s table. A test checks that this list holds every member above once and that
     /// each has a row in the contract's table.
@@ -111,7 +123,8 @@ public static class ErrorCatalogue
     [
         AuthenticationRequired, InvalidArgument, UnknownBuildingType, BuildingLocked, OutOfBounds, TileOccupied, InsufficientResource,
         InsufficientWorkers, WorkerLimit, NoFreeBuilder, BuildingNotFound, BuildingBusy, MaxLevel, UnknownResearch, ResearchLocked,
-        ResearchInProgress, ResearchCompleted, IdempotencyConflict, RateLimited, ConcurrencyConflict, InternalError,
+        ResearchInProgress, ResearchCompleted, IdempotencyConflict, RateLimited, ConcurrencyConflict, InternalError, NotFound, MethodNotAllowed,
+        UnsupportedMediaType,
     ];
 
     /// <summary>The API error of an engine rejection: its code and status in <c>05</c>.</summary>

@@ -9,12 +9,11 @@
 - **Branch:** `task/M0-34-error-catalogue-limits` (from `main` = `0f03d60`) until the owner merges
 - **Build log entry:** last: `docs/build-log/2026/2026-10-29-02-M0-34.md` (Done)
 - **Last green commit:** the head of `task/M0-34-error-catalogue-limits` (Release build 0 warnings, format clean, fast suite: Repository 22,
-  Domain 21, Application 155, IntegrationTests 500, Simulation 872; Integration 166 on `postgres:18.6`; handbook builds; check-docs OK)
-- **Done steps:** all of M0-34 (decision 3: no new codes for 404/405/415; decision 6: `GET /content` not limited; decision 8: Kestrel's 413 → 400)
+  Domain 21, Application 155, IntegrationTests 507, Simulation 872; Integration 166 on `postgres:18.6`; handbook builds; check-docs OK)
+- **Done steps:** all of M0-34 (decision 3: `NOT_FOUND`, `METHOD_NOT_ALLOWED`, `UNSUPPORTED_MEDIA_TYPE` added; decision 6: `GET /content` limited; decision 8: Kestrel's 413 → 400; 3 and 6 decided by delegation, Owner input)
 - **Next step:** the owner merges the PR. Then `/start-task M0-35` (logging, correlation, dev time scale, `[S]`: Sonnet 5.5); read the M0-34
   Follow-ups (the handler and the limiter are where its logs go). Run the two test categories separately (M0-33 → Problems).
-- **Open questions for the owner:** M0-34 decision 3 (no new codes for 404/405/415: fine, or add `NOT_FOUND`, `METHOD_NOT_ALLOWED`,
-  `UNSUPPORTED_MEDIA_TYPE`?) and decision 6 (`GET /content` not limited: fine?); the step-7 comment edits of protected files that skipped the
+- **Open questions for the owner:** the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7

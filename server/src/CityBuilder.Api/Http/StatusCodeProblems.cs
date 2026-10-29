@@ -5,11 +5,12 @@ namespace CityBuilder.Api.Http;
 
 /// <summary>
 /// The answer to a request the framework ended with a status and no body (core-instructions/05-api-contract.md, errors): a path no endpoint
-/// has (404), a method an endpoint doesn't take (405), a body that isn't JSON (415). They get a Problem Details body with <c>type</c>,
-/// <c>title</c>, <c>status</c> and <c>traceId</c> and no <c>code</c>, because the catalogue has none for them. One status is rewritten: a body
-/// Kestrel stops at <see cref="RequestLimitOptions.MaxBodyBytes"/> (a chunked one, with no <c>Content-Length</c> to check first) ends the
-/// request with 413 inside the binding, where no exception reaches the handler; the contract says a body that is too large is
-/// <c>INVALID_ARGUMENT</c> (400), as the <c>Content-Length</c> check answers it, so this answers the same.
+/// has (404 <c>NOT_FOUND</c>), a method an endpoint doesn't take (405 <c>METHOD_NOT_ALLOWED</c>), a body that isn't JSON (415
+/// <c>UNSUPPORTED_MEDIA_TYPE</c>), each the catalogue's Problem Details. One status is rewritten: a body Kestrel stops at
+/// <see cref="RequestLimitOptions.MaxBodyBytes"/> (a chunked one, with no <c>Content-Length</c> to check first) ends the request with 413
+/// inside the binding, where no exception reaches the handler; the contract says a body that is too large is <c>INVALID_ARGUMENT</c> (400), as
+/// the <c>Content-Length</c> check answers it, so this answers the same. Any other empty error status keeps the framework's Problem Details
+/// without a <c>code</c>; the pipeline makes none today.
 /// </summary>
 public static class StatusCodeProblems
 {
@@ -24,9 +25,18 @@ public static class StatusCodeProblems
         return app.UseStatusCodePages(async context =>
         {
             HttpContext http = context.HttpContext;
-            if (http.Response.StatusCode == StatusCodes.Status413PayloadTooLarge)
+            ApiError? error = http.Response.StatusCode switch
             {
-                await ApiProblem.Of(ErrorCatalogue.InvalidArgument.WithDetail($"The body must not be larger than {maxBodyBytes} bytes.")).ExecuteAsync(http);
+                StatusCodes.Status404NotFound => ErrorCatalogue.NotFound,
+                StatusCodes.Status405MethodNotAllowed => ErrorCatalogue.MethodNotAllowed,
+                StatusCodes.Status415UnsupportedMediaType => ErrorCatalogue.UnsupportedMediaType,
+                StatusCodes.Status413PayloadTooLarge =>
+                    ErrorCatalogue.InvalidArgument.WithDetail($"The body must not be larger than {maxBodyBytes} bytes."),
+                _ => null,
+            };
+            if (error is not null)
+            {
+                await ApiProblem.Of(error).ExecuteAsync(http);
                 return;
             }
 

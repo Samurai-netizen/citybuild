@@ -169,6 +169,9 @@ There is no "claim" command, because production and research complete on their o
 | `RATE_LIMITED` | 429 | Too many requests |
 | `CONCURRENCY_CONFLICT` | 409 | Lock timeout or version mismatch; safe to retry |
 | `INTERNAL_ERROR` | 500 | Anything unexpected; no stack traces in responses |
+| `NOT_FOUND` | 404 | A path no endpoint has (also the dev login outside Development) |
+| `METHOD_NOT_ALLOWED` | 405 | A method the endpoint doesn't take |
+| `UNSUPPORTED_MEDIA_TYPE` | 415 | A body that isn't `application/json` |
 
 `code` is for program logic. `title` and `detail` are for humans and may change.
 
@@ -180,9 +183,9 @@ There is no "claim" command, because production and research complete on their o
   Development does `detail` also name the exception's type and message. The exception and its stack are logged (event id 3000).
 - A request that can't be read at all (broken JSON, a field the contract doesn't have, a body that doesn't bind) is 400 `INVALID_ARGUMENT` in
   Development and Production alike; the answer never echoes the request or its headers.
-- **Answers without a `code`:** the statuses the table has no code for come from the framework, with Problem Details (`type`, `title`,
-  `status`, `traceId`): 404 for a path no endpoint has (also the dev login outside Development), 405 for a method an endpoint doesn't take, 415
-  for a body that isn't `application/json`. A client branches on the status for them. *(M0-34 decision 3: no new codes without the owner.)*
+- **Every error answer has a `code`**, also the three the framework ends without a body (`NOT_FOUND`, `METHOD_NOT_ALLOWED`,
+  `UNSUPPORTED_MEDIA_TYPE`): the status code pages give them the catalogue's Problem Details. A body Kestrel stops at the size limit (an empty 413 inside
+  the binding) is rewritten to 400 `INVALID_ARGUMENT`. (M0-34, owner's delegated decision 3: add the three codes.)
 - `CONCURRENCY_CONFLICT` and `RATE_LIMITED` are retryable: the first with the same `requestId` at once, the second after `Retry-After`.
 
 ## Idempotency rules
@@ -206,13 +209,14 @@ Fixed windows, in memory, one process; the numbers are configuration (`RateLimit
 | Commands, burst | every command endpoint together, per player | 10 per second | `RateLimits:Commands:Burst:Limit`, `:WindowSeconds` |
 | Commands, sustained | the same requests, per player | 120 per minute | `RateLimits:Commands:Sustained:Limit`, `:WindowSeconds` |
 | `GET /city` | per player | 30 per minute | `RateLimits:City:Limit`, `:WindowSeconds` |
+| `GET /content` | per player, a budget of its own | 30 per minute | `RateLimits:Content:Limit`, `:WindowSeconds` |
 | Dev login | per remote address | 10 per minute | `RateLimits:DevLogin:Limit`, `:WindowSeconds` |
 
 - A command must pass both command limits. Every request counts, also one the binding or a rule refuses, so a script that sends junk is
   limited too. A refused request counts nothing twice and a limited one is never bound or locked.
 - The player is the token's `sub`; the limiter runs after the token check, so a request without a working token is 401 and counts for
-  nobody. One player's spam never uses up another player's budget, and `GET /city` and the commands have separate budgets.
-- `GET /content` has no limit of its own: it reads no city and a client fetches it once per content version (M0-34 decision 6).
+  nobody. One player's spam never uses up another player's budget, and `GET /city`, `GET /content` and the commands have separate budgets.
+- `GET /content` is limited too (M0-34, owner's delegated decision 6): it reads no city, but a loop on it costs the server CPU, and a client fetches it once per start and once per `contentVersion`, far below 30 a minute.
 - A normal client is far below the defaults: a poll every few seconds is 12 to 30 a minute, a tap is one command. A limit is a value from
   1 to 1 000 000 and a window from 1 to 3600 seconds, or the start stops.
 - Behind a reverse proxy the remote address is the proxy's until forwarded headers are configured *(planned, with the deployment)*; the

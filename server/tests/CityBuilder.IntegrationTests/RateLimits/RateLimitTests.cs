@@ -50,10 +50,13 @@ public sealed class RateLimitTests(ApiFactory factory, DefaultRateLimitsApiFacto
 
         Assert.Equal((10, 1, 120, 60), (limits.Commands.Burst.Limit, limits.Commands.Burst.WindowSeconds, limits.Commands.Sustained.Limit, limits.Commands.Sustained.WindowSeconds));
         Assert.Equal((30, 60), (limits.City.Limit, limits.City.WindowSeconds));
+        Assert.Equal((30, 60), (limits.Content.Limit, limits.Content.WindowSeconds));
         Assert.Equal((10, 60), (limits.DevLogin.Limit, limits.DevLogin.WindowSeconds));
         using var server = defaults.WithWebHostBuilder(_ => { });
         RateLimitOptions configured = server.Services.GetRequiredService<IOptions<RateLimitOptions>>().Value;
-        Assert.Equal((10, 120, 30, 10), (configured.Commands.Burst.Limit, configured.Commands.Sustained.Limit, configured.City.Limit, configured.DevLogin.Limit));
+        Assert.Equal(
+            (10, 120, 30, 30, 10),
+            (configured.Commands.Burst.Limit, configured.Commands.Sustained.Limit, configured.City.Limit, configured.Content.Limit, configured.DevLogin.Limit));
     }
 
     /// <summary>A limit or window out of range stops the start, naming the setting.</summary>
@@ -63,6 +66,7 @@ public sealed class RateLimitTests(ApiFactory factory, DefaultRateLimitsApiFacto
     [Theory]
     [InlineData("RateLimits:City:Limit", "0", "City")]
     [InlineData("RateLimits:City:WindowSeconds", "0", "City")]
+    [InlineData("RateLimits:Content:Limit", "0", "Content")]
     [InlineData("RateLimits:Commands:Burst:Limit", "-1", "Commands:Burst")]
     [InlineData("RateLimits:Commands:Sustained:WindowSeconds", "3601", "Commands:Sustained")]
     [InlineData("RateLimits:DevLogin:Limit", "1000001", "DevLogin")]
@@ -169,16 +173,23 @@ public sealed class RateLimitTests(ApiFactory factory, DefaultRateLimitsApiFacto
         Assert.Equal([429], otherAfter);
     }
 
-    /// <summary><c>GET /content</c> has no limit of its own (M0-34 decision 6): it reads no city, so it is not counted against <c>GET /city</c> either.</summary>
+    /// <summary>
+    /// <c>GET /content</c> has a budget of its own (M0-34 decision 6): past it the request is 429, and neither the polls of the city nor
+    /// the commands are touched by it, nor it by them.
+    /// </summary>
     [Fact]
-    public async Task Get_Content_IsNotLimited()
+    public async Task Get_ContentPastItsLimit_Is429AndLeavesTheOtherBudgetsAlone()
     {
-        (_, WebApplicationFactory<Program> server) = Serve(("RateLimits:City:Limit", "1"), ("RateLimits:City:WindowSeconds", "60"));
+        (_, WebApplicationFactory<Program> server) = Serve(("RateLimits:Content:Limit", "2"), ("RateLimits:Content:WindowSeconds", "60"));
         await using WebApplicationFactory<Program> served = server;
 
-        int[] statuses = await StatusesAsync(5, _ => ApiClient.GetAsync(server, "/api/v1/content", _playerA));
+        int[] statuses = await StatusesAsync(4, _ => ApiClient.GetAsync(server, "/api/v1/content", _playerA));
+        int[] other = await StatusesAsync(1, _ => ApiClient.GetAsync(server, "/api/v1/content", _playerB));
+        int[] city = await StatusesAsync(1, _ => ApiClient.GetAsync(server, "/api/v1/city", _playerA));
 
-        Assert.Equal([200, 200, 200, 200, 200], statuses);
+        Assert.Equal([200, 200, 429, 429], statuses);
+        Assert.Equal([200], other);
+        Assert.Equal([200], city);
     }
 
     /// <summary>
@@ -220,7 +231,7 @@ public sealed class RateLimitTests(ApiFactory factory, DefaultRateLimitsApiFacto
 
     /// <summary>
     /// With the default limits a player's normal pace is never limited: a poll of the city every few seconds for a minute and a run of ten taps
-    /// pass, and so does <c>GET /content</c> as often as a client could ask. The 31st poll in a minute is refused, the 11th dev login of an
+    /// pass, and so does <c>GET /content</c> 30 times. The 31st poll in a minute is refused, the 11th dev login of an
     /// address too: the contract's numbers.
     /// </summary>
     [Fact]
@@ -231,7 +242,7 @@ public sealed class RateLimitTests(ApiFactory factory, DefaultRateLimitsApiFacto
         await using WebApplicationFactory<Program> server = RemoteAddressFilter.AddTo(store.Serve(defaults, new FakeTimeProvider(_settledAt)));
 
         int[] taps = await StatusesAsync(10, index => ApiClient.PostAsync(server, _commandPaths[index % _commandPaths.Length], _playerA, "{"));
-        int[] content = await StatusesAsync(50, _ => ApiClient.GetAsync(server, "/api/v1/content", _playerA));
+        int[] content = await StatusesAsync(30, _ => ApiClient.GetAsync(server, "/api/v1/content", _playerA));
         int[] polls = await StatusesAsync(31, _ => ApiClient.GetAsync(server, "/api/v1/city", _playerA));
         int[] logins = await StatusesAsync(11, _ => LoginFromAsync(server, "10.0.0.9"));
 
@@ -244,8 +255,8 @@ public sealed class RateLimitTests(ApiFactory factory, DefaultRateLimitsApiFacto
     }
 
     /// <summary>
-    /// Every endpoint of the API is in a limit class except <c>GET /content</c>, and the class is the one the contract names, so a new
-    /// endpoint can't be added without a limit (or a decision to leave it out, which edits this table).
+    /// Every endpoint of the API is in a limit class, and the class is the one the contract names, so a new endpoint can't be added without
+    /// a limit (or a decision to leave it out, which edits this table).
     /// </summary>
     [Fact]
     public void Security_EveryApiEndpoint_IsInItsLimitClass()
@@ -254,7 +265,7 @@ public sealed class RateLimitTests(ApiFactory factory, DefaultRateLimitsApiFacto
         {
             ["/api/v1/auth/dev-login"] = RateLimitClass.DevLogin,
             ["/api/v1/city"] = RateLimitClass.City,
-            ["/api/v1/content"] = null,
+            ["/api/v1/content"] = RateLimitClass.Content,
             ["/api/v1/commands/place-building"] = RateLimitClass.Commands,
             ["/api/v1/commands/upgrade-building"] = RateLimitClass.Commands,
             ["/api/v1/commands/assign-workers"] = RateLimitClass.Commands,

@@ -148,11 +148,10 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   `INVALID_ARGUMENT` before the lock (OD-13); contract tests on the raw JSON and PostgreSQL tests over HTTP (the research block, completion
   in a later settle: the trading post placeable, the next woodcutter cycle shorter, the storage caps raised; every rule code, replay,
   conflict, two starts at once start exactly one) (M0-33).
-- Error catalogue, rate limits and input limits: every error is one of the 21 codes of `05` written by one place (`ErrorCatalogue`,
+- Error catalogue, rate limits and input limits: every error is one of the 24 codes of `05` (the 21 of the table and `NOT_FOUND`, `METHOD_NOT_ALLOWED`, `UNSUPPORTED_MEDIA_TYPE`) written by one place (`ErrorCatalogue`,
   `ApiProblem`) with a table-driven test per code (status, exact members over HTTP, a source); a global exception handler (409
   `CONCURRENCY_CONFLICT`, a coded 400 for a body that doesn't bind in every environment, a logged 500 `INTERNAL_ERROR` with no exception text
-  outside Development and no stack trace anywhere, no developer page echoing the bearer token), Problem Details bodies for 404/405/415 and
-  Kestrel's 413 turned into the contract's 400; per-player rate limits (commands 10/s and 120/min, `GET /city` 30/min, the dev login 10/min
+  outside Development and no stack trace anywhere, no developer page echoing the bearer token), the framework's 404/405/415 and Kestrel's 413 turned into the catalogue's codes and the contract's 400; per-player rate limits (commands 10/s and 120/min, `GET /city` and `GET /content` 30/min each, the dev login 10/min
   per address; `RateLimits:*`) answering 429 `RATE_LIMITED` with `Retry-After` before anything is bound or locked; tests in memory and on
   PostgreSQL, mutation runs, and the real server by hand (M0-34).
 
