@@ -11,6 +11,7 @@ public static class AuthServiceCollectionExtensions
     /// bytes, a lifetime in range, and the dev login on only in Development), <see cref="AccessTokens"/>, the JWT bearer handler as the
     /// default scheme with <see cref="AccessTokens.ValidationParameters"/>, authorization, and <see cref="ICurrentPlayer"/>. The handler keeps
     /// the token's claim names (<c>sub</c> stays <c>sub</c>), and a refused request gets <see cref="BearerChallenge"/>'s Problem Details answer.
+    /// Both outcomes are logged (<see cref="AuthLog"/>): an accepted token at Debug, a refusal with its kind, never the token.
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <param name="configuration">The app's configuration; the section <see cref="AuthOptions.SectionName"/> is bound.</param>
@@ -38,11 +39,30 @@ public static class AuthServiceCollectionExtensions
         services.AddSingleton<AccessTokens>();
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
         services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
-            .Configure<AccessTokens>((jwt, tokens) =>
+            .Configure<AccessTokens, ILoggerFactory>((jwt, tokens, loggers) =>
             {
+                ILogger logger = loggers.CreateLogger(typeof(BearerChallenge).FullName!);
                 jwt.MapInboundClaims = false;
                 jwt.TokenValidationParameters = tokens.ValidationParameters();
-                jwt.Events = new JwtBearerEvents { OnChallenge = BearerChallenge.WriteProblemAsync };
+                jwt.Events = new JwtBearerEvents
+                {
+                    OnTokenValidated = context =>
+                    {
+                        if (HttpCurrentPlayer.Find(context.Principal) is { } playerId)
+                        {
+                            AuthLog.TokenAccepted(logger, playerId);
+                        }
+
+                        return Task.CompletedTask;
+                    },
+                    OnChallenge = context =>
+                    {
+                        // The kind of failure only: the exception's message can quote parts of the token.
+                        string reason = context.AuthenticateFailure?.GetType().Name ?? "NoToken";
+                        AuthLog.TokenRefused(logger, context.Request.Method, context.Request.Path.Value ?? string.Empty, reason);
+                        return BearerChallenge.WriteProblemAsync(context);
+                    },
+                };
             });
         services.AddAuthorization();
 
