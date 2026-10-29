@@ -11,6 +11,7 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
+- [BL-20261029-01 · M0-33 · StartResearch](2026/2026-10-29-01-M0-33.md) — In progress
 - [BL-20261028-02 · M0-32 · AssignWorkers](2026/2026-10-28-02-M0-32.md) — Done
 - [BL-20261028-01 · M0-31 · UpgradeBuilding](2026/2026-10-28-01-M0-31.md) — Done
 - [BL-20261027-08 · M0-30 · API attack review](2026/2026-10-27-08-M0-30.md) — Done
