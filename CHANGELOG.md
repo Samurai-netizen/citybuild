@@ -143,6 +143,11 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   response, progress kept on reassignment, freeze and resume, every rule code, while upgrading, another player's building → 404, the same
   count twice, two assignments at once) and a seeded security property over HTTP (moving workers never makes more than the labor
   delivered); the hand-built city helpers and the Problem Details check shared by the command tests (M0-32).
+- StartResearch: `POST /api/v1/commands/start-research` (`{ requestId, researchId }`) through the command pipeline
+  (`StartResearchCommand`: the whole cost up front as `COST_RESEARCH`), the same strict body; a research id that can't be a content id is
+  `INVALID_ARGUMENT` before the lock (OD-13); contract tests on the raw JSON and PostgreSQL tests over HTTP (the research block, completion
+  in a later settle: the trading post placeable, the next woodcutter cycle shorter, the storage caps raised; every rule code, replay,
+  conflict, two starts at once start exactly one) (M0-33).
 
 ### Changed
 - Handbook site: react and react-dom 19.2.9 → 19.3.1, scheduler 0.28.0 (Dependabot PR #28, DEP-PR28).
