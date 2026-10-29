@@ -108,8 +108,8 @@ if (database.ApplyMigrationsAtStartup && app.Environment.IsDevelopment())
 AuthOptions auth = app.Services.GetRequiredService<IOptions<AuthOptions>>().Value;
 
 // The exception handler first, so it answers whatever the rest of the pipeline throws; the status code pages next, so an empty 404, 405 or
-// 415 gets a Problem Details body too (without a code: the catalogue has none for them), and Kestrel's 413 is the contract's 400. Then the body limit, so a body above it is refused
-// before the token is checked or anything reads the body.
+// 415 gets a Problem Details body too (without a code: the catalogue has none for them) and Kestrel's 413 is the contract's 400. Then the
+// body limit, so a body above it is refused before the token is checked or anything reads the body.
 app.UseExceptionHandler();
 app.UseStatusCodeProblems();
 app.UseRequestBodyLimit();

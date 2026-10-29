@@ -4,21 +4,18 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** M0-34 · Error catalogue, rate limits, input limits (`[S]`, Sonnet 5.5)
-- **Branch:** `task/M0-34-error-catalogue-limits` (from `main` = `0f03d60`, PR #45 merged)
-- **Build log entry:** `docs/build-log/2026/2026-10-29-02-M0-34.md` (In progress)
-- **Last green commit:** the head of `task/M0-34-error-catalogue-limits` (Release build 0 warnings, format clean, fast suite: IntegrationTests 500;
-  Integration 166 on `postgres:18.6`; check-docs OK)
-- **Done steps:** start; step 1 (the catalogue: `Api/Errors/`, the writers moved onto it, `ErrorCatalogueTests`); step 2 (the global handler:
-  `ApiExceptionHandler`, `ThrowOnBadRequest`, status code pages, `ExceptionHandlerTests`, `CommandConflictDatabaseTests`);
-  step 3 (rate limits: `Http/RateLimits*`, `RateLimitTests`, the factories' relaxed limits); step 4 (input limits: `StatusCodeProblems`, the
-  real server by hand)
-- **Next step:** step 5: docs left (ADR-0003/0004 "still to come" lines, decision rows in `12`, `03`/`10`/Simulation mentions, `08`),
-  CHANGELOG, the Definition of Done, a line-by-line self-review (security), the handbook build, then the PR. Run the two test categories
-  separately (M0-33 → Problems).
-- **Open questions for the owner:** M0-34 decision 3 (no new codes for 404/405/415: fine?) and decision 6 (`GET /content` not limited: fine?);
-  the step-7 comment edits of protected files that skipped the `ask` prompt (commit `9156324`, M0-21 build
+- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** — (last completed: M0-34 · error catalogue, rate limits, input limits; the PR is open, the owner merges it)
+- **Branch:** `task/M0-34-error-catalogue-limits` (from `main` = `0f03d60`) until the owner merges
+- **Build log entry:** last: `docs/build-log/2026/2026-10-29-02-M0-34.md` (Done)
+- **Last green commit:** the head of `task/M0-34-error-catalogue-limits` (Release build 0 warnings, format clean, fast suite: Repository 22,
+  Domain 21, Application 155, IntegrationTests 500, Simulation 872; Integration 166 on `postgres:18.6`; handbook builds; check-docs OK)
+- **Done steps:** all of M0-34 (decision 3: no new codes for 404/405/415; decision 6: `GET /content` not limited; decision 8: Kestrel's 413 → 400)
+- **Next step:** the owner merges the PR. Then `/start-task M0-35` (logging, correlation, dev time scale, `[S]`: Sonnet 5.5); read the M0-34
+  Follow-ups (the handler and the limiter are where its logs go). Run the two test categories separately (M0-33 → Problems).
+- **Open questions for the owner:** M0-34 decision 3 (no new codes for 404/405/415: fine, or add `NOT_FOUND`, `METHOD_NOT_ALLOWED`,
+  `UNSUPPORTED_MEDIA_TYPE`?) and decision 6 (`GET /content` not limited: fine?); the step-7 comment edits of protected files that skipped the
+  `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7
   security alerts GitHub reports on `main`; M0-28 decision 14: the clock-behind warning that docs
@@ -39,11 +36,11 @@
 | Server skeleton | done | M0-02 merged (PR #6) |
 | Persistence (EF + PostgreSQL) | done | M0-19 (EF Core model, migrations, Docker) merged (PR #31); repository and mapping M0-20 merged (PR #32); Testcontainers M0-21 merged (PR #33); locking M0-22 merged (PR #34); settle M0-23 merged (PR #35); M0-24 merged (PR #36) |
 | Auth + command pipeline | in progress | dev auth M0-25 merged (PR #37); the pipeline M0-26 merged (PR #38); its integration tests M0-27 merged (PR #39); content and city endpoints M0-28 merged (PR #40); PlaceBuilding M0-29 merged (PR #41); attack review M0-30 merged (PR #42) |
-| Commands: place / upgrade / assign workers / start research | in progress | place-building M0-29 merged (PR #41; `docs/how-to/add-command.md`); upgrade-building M0-31 merged (PR #43; OD-13); assign-workers M0-32 merged (PR #44); start-research M0-33 in review: the four commands of M0 |
+| Commands: place / upgrade / assign workers / start research | done | place-building M0-29 merged (PR #41; `docs/how-to/add-command.md`); upgrade-building M0-31 merged (PR #43; OD-13); assign-workers M0-32 merged (PR #44); start-research M0-33 merged (PR #45): the four commands of M0 |
 | Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) and M0-05 (Unity tests, `test-unity.sh`) merged (PR #8, #12); networking is M0-37 |
 | Unity city view + placement | not started | |
 | Inspector, worker stepper, research screen, HUD | not started | |
-| Resilience (limits, retries, logging) | not started | |
+| Resilience (limits, retries, logging) | in progress | error catalogue, global handler, rate limits and input limits M0-34 in review; logging M0-35 |
 | Docs automation (DocTools) + docs completeness | in progress | handbook, Pages, docs-as-code checks and a full audit: CR-0002 done (PR #27); code documentation CR-0003 done (PR #29); DocTools is M0-61 |
 | Balance simulator | not started | |
 | E2E / security / concurrency suites | not started | |

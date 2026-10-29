@@ -25,7 +25,6 @@ internal sealed class ApiExceptionHandler(
     /// <summary>Where an unexpected exception is logged.</summary>
     private readonly ILogger<ApiExceptionHandler> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-
     /// <summary>Whether the exception's type and message may go into the answer.</summary>
     private readonly bool _showExceptionText = (environment ?? throw new ArgumentNullException(nameof(environment))).IsDevelopment();
 

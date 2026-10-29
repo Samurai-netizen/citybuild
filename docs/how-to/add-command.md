@@ -70,6 +70,9 @@ return await ExecuteAsync(command, player, pipeline, content, json, cancellation
 serialized inside the transaction and stored in the receipt as text) and maps the outcome with `CommandResponses.ToHttpResult`: 200 with
 the snapshot, also for a replay (the stored bytes); Problem Details with `code`, `requestId` and `traceId` otherwise. The handler writes
 the snapshot as text, so `.Produces<CitySnapshot>` gives the OpenAPI document its 200 schema (a test checks the document).
+The `/commands` group is in the commands rate-limit class (`RequireRateLimit`, M0-34), so the new route is limited with the others and a
+concurrency conflict is already answered; `RateLimitTests.Security_EveryApiEndpoint_IsInItsLimitClass` lists the API's endpoints and fails
+until the new route is in its table.
 
 **5. The errors.** `ErrorCatalogue.Of` (`Api/Errors/`) maps every `MutationErrorCode` to its `05` code and status, so a command that only
 uses existing codes adds nothing there. A new code needs its row in `05`, its engine value, its member in `ErrorCatalogue` and in `All`, and
