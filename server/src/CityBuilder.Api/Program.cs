@@ -28,11 +28,17 @@ builder.Logging.AddJsonConsole(options =>
     options.TimestampFormat = LogTimestampFormat;
 });
 
+// Every error is Problem Details with a code from the catalogue (core-instructions/05-api-contract.md): a body that doesn't bind throws
+// BadHttpRequestException in every environment (by default only in Development, where the developer exception page would echo the
+// request headers, the token included), and ApiExceptionHandler answers it and every other exception.
 builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<ApiExceptionHandler>();
+builder.Services.Configure<RouteHandlerOptions>(options => options.ThrowOnBadRequest = true);
 
 // What a request may send (core-instructions/07-security-model.md): no body above RequestLimits:MaxBodyBytes is read, and a JSON body that
 // names a property twice is refused instead of read as its last value, so every reader of the body sees the same values.
 builder.Services.AddRequestBodyLimit(builder.Configuration);
+builder.Services.AddRateLimits(builder.Configuration);
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.AllowDuplicateProperties = false);
 builder.Services.AddOpenApi();
 builder.Services.AddHealthChecks();
@@ -101,10 +107,17 @@ if (database.ApplyMigrationsAtStartup && app.Environment.IsDevelopment())
 // login on outside Development, stops the start here.
 AuthOptions auth = app.Services.GetRequiredService<IOptions<AuthOptions>>().Value;
 
-// First, so a body above the limit is refused before the token is checked or anything reads the body.
+// The exception handler first, so it answers whatever the rest of the pipeline throws; the status code pages next, so an empty 404, 405 or
+// 415 gets a Problem Details body too (without a code: the catalogue has none for them) and Kestrel's 413 is the contract's 400. Then the
+// body limit, so a body above it is refused before the token is checked or anything reads the body.
+app.UseExceptionHandler();
+app.UseStatusCodeProblems();
 app.UseRequestBodyLimit();
 app.UseAuthentication();
 app.UseAuthorization();
+
+// After the token check, which gives it the player to count for: a request with no working token is 401 and counts against nothing.
+app.UseRateLimits();
 
 if (app.Environment.IsDevelopment())
 {

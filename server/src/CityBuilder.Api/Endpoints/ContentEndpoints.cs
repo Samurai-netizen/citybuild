@@ -1,4 +1,5 @@
 using CityBuilder.Api.Contracts;
+using CityBuilder.Api.Http;
 using CityBuilder.Application.Content;
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -16,7 +17,7 @@ public static class ContentEndpoints
     /// <summary>Maps <c>GET /content</c> on the <c>/api/v1</c> group, which requires an access token.</summary>
     /// <param name="api">The <c>/api/v1</c> route group.</param>
     /// <returns>The endpoint's builder.</returns>
-    public static RouteHandlerBuilder MapContent(this RouteGroupBuilder api) => api.MapGet("/content", GetContent);
+    public static RouteHandlerBuilder MapContent(this RouteGroupBuilder api) => api.MapGet("/content", GetContent).RequireRateLimit(RateLimitClass.Content);
 
     /// <summary>
     /// Answers with the game content the server runs on: items, buildings with their levels and recipes, the research tree, eras and rules.

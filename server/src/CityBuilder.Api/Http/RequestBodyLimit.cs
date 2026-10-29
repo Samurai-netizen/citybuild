@@ -1,3 +1,4 @@
+using CityBuilder.Api.Errors;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Options;
 
@@ -13,9 +14,6 @@ namespace CityBuilder.Api.Http;
 /// </summary>
 public static class RequestBodyLimit
 {
-    /// <summary>The stable error code of the answer (<c>05</c>).</summary>
-    public const string Code = "INVALID_ARGUMENT";
-
     /// <summary>
     /// Registers <see cref="RequestLimitOptions"/> (validated on start: <see cref="RequestLimitOptions.MaxBodyBytes"/> in range) and sets
     /// Kestrel's body limit to it, in place of Kestrel's default of about 30 MB.
@@ -52,12 +50,7 @@ public static class RequestBodyLimit
         {
             if (context.Request.ContentLength > maxBodyBytes)
             {
-                await Results.Problem(
-                        type: "urn:citybuilder:error:invalid-argument",
-                        title: "Invalid argument",
-                        statusCode: StatusCodes.Status400BadRequest,
-                        detail: $"The body must not be larger than {maxBodyBytes} bytes.",
-                        extensions: new Dictionary<string, object?> { ["code"] = Code })
+                await ApiProblem.Of(ErrorCatalogue.InvalidArgument.WithDetail($"The body must not be larger than {maxBodyBytes} bytes."))
                     .ExecuteAsync(context);
                 return;
             }

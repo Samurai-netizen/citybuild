@@ -69,6 +69,11 @@ Any key can be overridden with an environment variable (`:` becomes `__`) or a c
 | `Auth:TokenLifetimeMinutes` | `720` | How long an access token is valid (12 h). Between 1 and 1440, or the start stops |
 | `Auth:DevLoginEnabled` | `false`; `true` in `appsettings.Development.json` | Map `POST /api/v1/auth/dev-login`, which logs anyone in by name alone. Allowed only in Development: `true` in another environment stops the start |
 | `RequestLimits:MaxBodyBytes` | `4096` | The largest request body the server reads, in bytes; a larger one is 400 `INVALID_ARGUMENT` before anything runs (`core-instructions/05-api-contract.md` → Request limits). Between 1024 and 1048576, or the start stops |
+| `RateLimits:Commands:Burst:Limit`, `:WindowSeconds` | `10`, `1` | The most commands one player may send in a window of that many seconds (all command endpoints together). A command must pass this and the next limit; a refused request is 429 `RATE_LIMITED` with `Retry-After` (`core-instructions/05-api-contract.md` → Rate limits). A limit is 1 to 1000000, a window 1 to 3600 seconds, or the start stops |
+| `RateLimits:Commands:Sustained:Limit`, `:WindowSeconds` | `120`, `60` | The long window of the commands, per player |
+| `RateLimits:City:Limit`, `:WindowSeconds` | `30`, `60` | `GET /city` per player |
+| `RateLimits:Content:Limit`, `:WindowSeconds` | `30`, `60` | `GET /content` per player, a budget apart from the city's |
+| `RateLimits:DevLogin:Limit`, `:WindowSeconds` | `10`, `60` | The dev login per remote address |
 | `Logging:LogLevel:*`, `AllowedHosts` | as in `appsettings.json` | ASP.NET Core's own keys |
 
 Secrets come from user-secrets or the environment, never a committed file: the connection string and the signing key.

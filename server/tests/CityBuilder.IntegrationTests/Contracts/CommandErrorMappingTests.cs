@@ -1,13 +1,13 @@
-using CityBuilder.Api.Endpoints;
+using CityBuilder.Api.Errors;
 using CityBuilder.Simulation.Rules;
-using Microsoft.AspNetCore.Http;
 
 namespace CityBuilder.IntegrationTests.Contracts;
 
 /// <summary>
-/// The answer of every engine rejection (<see cref="CommandResponses.Of"/>) against the error table of
+/// The answer of every engine rejection (<see cref="ErrorCatalogue.Of"/>) against the error table of
 /// <c>core-instructions/05-api-contract.md</c>: each engine code has its API code and HTTP status, written out here from the table, and no
-/// code is left unmapped or mapped twice. The endpoints that reach each code over HTTP test it there (PlaceBuilding's on PostgreSQL).
+/// code is left unmapped or mapped twice. The endpoints that reach each code over HTTP test it there (PlaceBuilding's on PostgreSQL); <see cref="ErrorCatalogueTests"/> holds every
+/// code of the catalogue, the engine's and the others, to the table and the shape.
 /// </summary>
 public sealed class CommandErrorMappingTests
 {
@@ -40,7 +40,7 @@ public sealed class CommandErrorMappingTests
     [MemberData(nameof(Table))]
     public void Of_EngineCode_IsTheContractsCodeAndStatus(MutationErrorCode engineCode, string code, int status)
     {
-        CommandError error = CommandResponses.Of(engineCode);
+        ApiError error = ErrorCatalogue.Of(engineCode);
 
         Assert.Equal((code, status), (error.Code, error.Status));
         Assert.Equal("urn:citybuilder:error:" + code.Replace('_', '-').ToLowerInvariant(), error.Type);
@@ -55,14 +55,6 @@ public sealed class CommandErrorMappingTests
         MutationErrorCode[] inTable = Table.Select(row => row.Data.Item1).ToArray();
 
         Assert.Equal(Enum.GetValues<MutationErrorCode>().Order(), inTable.Order());
-        Assert.Equal(inTable.Length, inTable.Select(row => CommandResponses.Of(row).Code).Distinct(StringComparer.Ordinal).Count());
-    }
-
-    /// <summary>The two codes the pipeline decides without the engine have the contract's statuses.</summary>
-    [Fact]
-    public void PipelineErrors_HaveTheContractsCodesAndStatuses()
-    {
-        Assert.Equal(("IDEMPOTENCY_CONFLICT", StatusCodes.Status409Conflict), (CommandResponses.IdempotencyConflict.Code, CommandResponses.IdempotencyConflict.Status));
-        Assert.Equal(("INVALID_ARGUMENT", StatusCodes.Status400BadRequest), (CommandResponses.InvalidArgument("x").Code, CommandResponses.InvalidArgument("x").Status));
+        Assert.Equal(inTable.Length, inTable.Select(row => ErrorCatalogue.Of(row).Code).Distinct(StringComparer.Ordinal).Count());
     }
 }

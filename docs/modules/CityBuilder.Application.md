@@ -23,7 +23,7 @@ need (`ICityRepository`, `IUnitOfWork`, `IContentProvider`, `ICommandReceiptRepo
 | `Cities/ICityRepository` | The port to the stored cities: `LoadForUpdateAsync(playerId)` locks the city row for the rest of the transaction and loads it (every player has a city; outside a transaction, or for a second city, it throws) and `Save(city, ledger, receipt)`, which only stages the city, its `LedgerEntry` rows and the optional `CommandReceipt`; a city the repository didn't load is inserted. Implemented by `CityRepository` in Infrastructure. Only the runner uses it |
 | `Cities/ICityTransactionRunner`, `Cities/CityTransactionRunner` | The one way a use case changes a city (`06`, write transaction pattern): `RunAsync(playerId, work)` begins the transaction (`IUnitOfWork.BeginTransactionAsync`), locks and loads the acting player's city, runs the work, and commits when it returns; any exception rolls everything back and propagates. Scoped, one per request, and it runs once: a second or nested run throws before it locks anything, so a request never locks a second city. Registered by Infrastructure's `AddCityBuilderPersistence` |
 | `Cities/CityTransaction` | What the work gets: the locked `City` and `SaveAsync(ledger, receipt)`, which stages the city and writes it inside the transaction (`state_version` + 1), once; after the work ends it throws |
-| `Persistence/ConcurrencyConflictException` | Another request got in the way: the lock wasn't granted within the lock timeout, or the stored `state_version` wasn't the loaded one. Nothing was committed; the API answers `CONCURRENCY_CONFLICT` (`05`; the mapping comes with the error catalogue, M0-34); the pipeline lets it propagate |
+| `Persistence/ConcurrencyConflictException` | Another request got in the way: the lock wasn't granted within the lock timeout, or the stored `state_version` wasn't the loaded one. Nothing was committed; the API answers `CONCURRENCY_CONFLICT` (`05`; the command endpoints and the global handler map it, M0-34); the pipeline lets it propagate |
 | `Players/IPlayerRepository` | The port to the stored players: `FindByDevNameAsync(devName)` and `Add(player)` (staged), for the dev login. Implemented by `PlayerRepository` in Infrastructure |
 | `Players/ICurrentPlayer` | The acting player of the request: `PlayerId`, taken only from the verified access token (never a body); it throws when the request has no verified token. Implemented by `HttpCurrentPlayer` in the Api |
 | `Players/DevLogin`, `Players/DevLoginResult` | The dev login (Development only, `05`): `IsValidDisplayName(name)` (1 to 32 ASCII letters, digits, `_`, `-`, `.`; compared exactly); `ExecuteAsync(displayName)` returns the player of the name and whether this login created them. The first login creates, in one transaction (`IUnitOfWork`), the player, the starter city (`CityFactory.CreateStarterCity`, clock 0, settled at the server's second, the content's version; ids UUID v7) through `INewCityRepository`, and one `STARTING_GRANT` ledger entry per item of the starting stock. A first login that loses a race on the name (`DuplicateKeyException`) returns the winner's player |
@@ -102,9 +102,8 @@ back in time, so a clock behind is a last settled second ahead of now. The conte
 
 ## Known limitations
 - No log line for a clock behind here: Application has no logging package (`14`); settlement logging will log it *(planned, M0-35)*.
-- The four commands of M0 (PlaceBuilding, UpgradeBuilding, AssignWorkers, StartResearch); the pipeline's own tests keep their test commands. Nothing maps `ConcurrencyConflictException` to
-  `CONCURRENCY_CONFLICT` yet *(planned, M0-34)*.
+- The four commands of M0 (PlaceBuilding, UpgradeBuilding, AssignWorkers, StartResearch); the pipeline's own tests keep their test commands.
 - `DevLogin` has no tests with fakes: what it does is all persistence (one transaction, a unique index, a race), so it is tested on
   PostgreSQL (`CityBuilder.IntegrationTests`, `Auth/DevLoginDatabaseTests`).
 
-Last updated: M0-33
+Last updated: M0-34

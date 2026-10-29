@@ -1,5 +1,7 @@
 using CityBuilder.Api.Auth;
 using CityBuilder.Api.Contracts;
+using CityBuilder.Api.Errors;
+using CityBuilder.Api.Http;
 using CityBuilder.Application.Players;
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -15,7 +17,7 @@ public static class AuthEndpoints
     /// <param name="api">The <c>/api/v1</c> route group.</param>
     /// <returns>The endpoint's builder.</returns>
     public static RouteHandlerBuilder MapDevLogin(this RouteGroupBuilder api) =>
-        api.MapPost("/auth/dev-login", DevLoginAsync).AllowAnonymous();
+        api.MapPost("/auth/dev-login", DevLoginAsync).AllowAnonymous().RequireRateLimit(RateLimitClass.DevLogin);
 
     /// <summary>
     /// Logs the display name in (<see cref="DevLogin"/>: on the first login the player and the starter city are created) and answers with
@@ -31,13 +33,8 @@ public static class AuthEndpoints
     {
         if (request is null || !DevLogin.IsValidDisplayName(request.DisplayName))
         {
-            // The catalogue's code for a malformed request (05); M0-34 moves the mapping of every code to one place.
-            return TypedResults.Problem(
-                type: "urn:citybuilder:error:invalid-argument",
-                title: "Invalid argument",
-                detail: $"displayName must be 1 to {DevLogin.MaxDisplayNameLength} ASCII letters, digits, '_', '-' or '.'.",
-                statusCode: StatusCodes.Status400BadRequest,
-                extensions: new Dictionary<string, object?> { ["code"] = "INVALID_ARGUMENT" });
+            return ApiProblem.Of(ErrorCatalogue.InvalidArgument.WithDetail(
+                $"displayName must be 1 to {DevLogin.MaxDisplayNameLength} ASCII letters, digits, '_', '-' or '.'."));
         }
 
         DevLoginResult result = await devLogin.ExecuteAsync(request.DisplayName, cancellationToken);

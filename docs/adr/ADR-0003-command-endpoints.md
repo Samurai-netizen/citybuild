@@ -41,6 +41,7 @@ Every player action is its **own HTTP endpoint**, `POST /api/v1/commands/<action
 - **As built (M0-26):** `GET /health`, the OpenAPI document in Development, the dev login (M0-25), and the pipeline every command endpoint
   will call (`CommandPipeline`, M0-26). Then the city and content endpoints (M0-28) and the first command endpoint,
   `POST /api/v1/commands/place-building` (M0-29, `CommandEndpoints`), `upgrade-building` (M0-31), `assign-workers` (M0-32) and
-  `start-research` (M0-33) on the same pipeline: the four commands of M0. Client polling follows in M0-41.
+  `start-research` (M0-33) on the same pipeline: the four commands of M0. Client polling follows in M0-41. The `/commands` group is one
+  rate-limit class (M0-34), so a new command is limited by being in the group, and every error answer is the error catalogue's.
 - **Reversal:** a push channel can be added later for notifications only (for example "your order was filled"), while commands stay
   HTTP. Merging the endpoints into one would be a breaking change (`/api/v2`).

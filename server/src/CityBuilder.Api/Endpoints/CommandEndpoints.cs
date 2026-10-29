@@ -1,11 +1,14 @@
 using System.Text.Json;
 using CityBuilder.Api.Contracts;
+using CityBuilder.Api.Errors;
+using CityBuilder.Api.Http;
 using CityBuilder.Application.Commands;
 using CityBuilder.Application.Commands.AssignWorkers;
 using CityBuilder.Application.Commands.PlaceBuilding;
 using CityBuilder.Application.Commands.StartResearch;
 using CityBuilder.Application.Commands.UpgradeBuilding;
 using CityBuilder.Application.Content;
+using CityBuilder.Application.Persistence;
 using CityBuilder.Application.Players;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Options;
@@ -28,7 +31,7 @@ public static class CommandEndpoints
     /// <returns>The <c>/commands</c> group.</returns>
     public static RouteGroupBuilder MapCommands(this RouteGroupBuilder api)
     {
-        RouteGroupBuilder commands = api.MapGroup("/commands");
+        RouteGroupBuilder commands = api.MapGroup("/commands").RequireRateLimit(RateLimitClass.Commands);
         commands.MapPost("/place-building", PlaceBuildingAsync).Produces<CitySnapshot>(StatusCodes.Status200OK, "application/json");
         commands.MapPost("/upgrade-building", UpgradeBuildingAsync).Produces<CitySnapshot>(StatusCodes.Status200OK, "application/json");
         commands.MapPost("/assign-workers", AssignWorkersAsync).Produces<CitySnapshot>(StatusCodes.Status200OK, "application/json");
@@ -57,7 +60,7 @@ public static class CommandEndpoints
     {
         if (request is null)
         {
-            return CommandResponses.Problem(CommandResponses.InvalidArgument("The body must be a JSON object."), Guid.Empty);
+            return ApiProblem.Of(ErrorCatalogue.InvalidArgument.WithDetail("The body must be a JSON object."));
         }
 
         var command = new PlaceBuildingCommand(request.RequestId, request.BuildingTypeId ?? string.Empty, request.X, request.Y);
@@ -85,7 +88,7 @@ public static class CommandEndpoints
     {
         if (request is null)
         {
-            return CommandResponses.Problem(CommandResponses.InvalidArgument("The body must be a JSON object."), Guid.Empty);
+            return ApiProblem.Of(ErrorCatalogue.InvalidArgument.WithDetail("The body must be a JSON object."));
         }
 
         var command = new UpgradeBuildingCommand(request.RequestId, request.BuildingId);
@@ -114,7 +117,7 @@ public static class CommandEndpoints
     {
         if (request is null)
         {
-            return CommandResponses.Problem(CommandResponses.InvalidArgument("The body must be a JSON object."), Guid.Empty);
+            return ApiProblem.Of(ErrorCatalogue.InvalidArgument.WithDetail("The body must be a JSON object."));
         }
 
         var command = new AssignWorkersCommand(request.RequestId, request.BuildingId, request.Workers);
@@ -142,7 +145,7 @@ public static class CommandEndpoints
     {
         if (request is null)
         {
-            return CommandResponses.Problem(CommandResponses.InvalidArgument("The body must be a JSON object."), Guid.Empty);
+            return ApiProblem.Of(ErrorCatalogue.InvalidArgument.WithDetail("The body must be a JSON object."));
         }
 
         var command = new StartResearchCommand(request.RequestId, request.ResearchId ?? string.Empty);
@@ -151,7 +154,8 @@ public static class CommandEndpoints
 
     /// <summary>
     /// Runs a command through the pipeline for the token's player, with the snapshot as its response, and answers with what the pipeline did.
-    /// The snapshot is written to text inside the transaction and stored in the receipt as it is, so a replay answers with the same bytes.
+    /// The snapshot is written to text inside the transaction and stored in the receipt as it is, so a replay answers with the same bytes. A
+    /// lock timeout or a changed city (<see cref="ConcurrencyConflictException"/>) is <c>CONCURRENCY_CONFLICT</c> with the command's request id.
     /// </summary>
     /// <typeparam name="TCommand">The command's type; one helper serves every command endpoint.</typeparam>
     /// <param name="command">The command.</param>
@@ -171,14 +175,23 @@ public static class CommandEndpoints
         where TCommand : ICityCommand
     {
         JsonSerializerOptions options = json.Value.SerializerOptions;
-        CommandResult result = await pipeline.ExecuteAsync(
-            player.PlayerId,
-            command,
-            success => JsonSerializer.Serialize(
-                CitySnapshotMapper.ToSnapshot(
-                    success.RequestId, success.City, success.Settlement, success.StateVersion, success.ServerTime, content.Content),
-                options),
-            cancellationToken);
-        return CommandResponses.ToHttpResult(result, command.RequestId);
+        try
+        {
+            CommandResult result = await pipeline.ExecuteAsync(
+                player.PlayerId,
+                command,
+                success => JsonSerializer.Serialize(
+                    CitySnapshotMapper.ToSnapshot(
+                        success.RequestId, success.City, success.Settlement, success.StateVersion, success.ServerTime, content.Content),
+                    options),
+                cancellationToken);
+            return CommandResponses.ToHttpResult(result, command.RequestId);
+        }
+        catch (ConcurrencyConflictException)
+        {
+            // Another request had the city, or changed it (06): nothing was committed, so the client retries with the same request id, which
+            // the answer repeats. Every other exception is the global handler's (ApiExceptionHandler).
+            return ApiProblem.Of(ErrorCatalogue.ConcurrencyConflict, command.RequestId);
+        }
     }
 }

@@ -11,6 +11,7 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
+- [BL-20261029-02 · M0-34 · Error catalogue, rate limits, input limits](2026/2026-10-29-02-M0-34.md) — Done
 - [BL-20261029-01 · M0-33 · StartResearch](2026/2026-10-29-01-M0-33.md) — Done
 - [BL-20261028-02 · M0-32 · AssignWorkers](2026/2026-10-28-02-M0-32.md) — Done
 - [BL-20261028-01 · M0-31 · UpgradeBuilding](2026/2026-10-28-01-M0-31.md) — Done

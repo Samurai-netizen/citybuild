@@ -1,4 +1,5 @@
 using CityBuilder.Api.Contracts;
+using CityBuilder.Api.Http;
 using CityBuilder.Application.Cities;
 using CityBuilder.Application.Content;
 using CityBuilder.Application.Players;
@@ -12,7 +13,7 @@ public static class CityEndpoints
     /// <summary>Maps <c>GET /city</c> on the <c>/api/v1</c> group, which requires an access token.</summary>
     /// <param name="api">The <c>/api/v1</c> route group.</param>
     /// <returns>The endpoint's builder.</returns>
-    public static RouteHandlerBuilder MapCity(this RouteGroupBuilder api) => api.MapGet("/city", GetCityAsync);
+    public static RouteHandlerBuilder MapCity(this RouteGroupBuilder api) => api.MapGet("/city", GetCityAsync).RequireRateLimit(RateLimitClass.City);
 
     /// <summary>
     /// Settles the acting player's city to now (<see cref="SettleCity"/>: in the city's transaction, saved only if anything changed) and answers

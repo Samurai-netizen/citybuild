@@ -48,7 +48,8 @@ idempotency rules):
   `Commands/`, a test command): a retry writes nothing, also after a host restart; conflicts; another player's request id; ten identical
   requests apply once; the receipt race through the unique key; a rejection commits only the settlement. Over HTTP (M0-29, place-building): a replay
   is the same bytes and writes nothing; a conflict is 409 `IDEMPOTENCY_CONFLICT`; ten identical requests place one building; another player's
-  request id runs as a new command. Still to come: the error catalogue (M0-34), the client's command sender (M0-40), and the proof of idempotent
-  retries (M0-56).
+  request id runs as a new command. M0-34: `IDEMPOTENCY_CONFLICT` is a member of the error catalogue like every code, and a retry after
+  `CONCURRENCY_CONFLICT` (a lock timeout) reuses the request id and succeeds (`CommandConflictDatabaseTests`). Still to come: the client's command
+  sender (M0-40) and the proof of idempotent retries (M0-56).
 - **Reversal:** storage details (for example a retention period) can change without touching the API. Dropping receipts would break
   rule 9 and is not an option while commands change state.

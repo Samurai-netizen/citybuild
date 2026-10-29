@@ -17,7 +17,7 @@ PostgreSQL 18 is the **only** place that holds game state, and the only stateful
 - All state, the ledger and the receipts live in one database, and one transaction per request writes them (`06`, write transaction pattern).
 - Concurrency is handled by the database: `SELECT … FOR UPDATE` on the own city row plus the `state_version` guard (decision 008; ADR-0009,
   planned in M0-24); later the market's per-item advisory locks (`26`).
-- Rate limits are in memory, for one server instance (`core-instructions/07-security-model.md`, known limitations).
+- Rate limits are in memory, for one server instance (`core-instructions/07-security-model.md`, known limitations; built in M0-34).
 - Data access goes through EF Core 10 and Npgsql (approved in `core-instructions/14-coding-standards.md`).
 - Integration tests run against a real PostgreSQL 18.6 container (Testcontainers), never SQLite or an in-memory provider (`06`).
 - Another store comes only when measurements show the need, through G-Dependency and a new decision row that supersedes #002.

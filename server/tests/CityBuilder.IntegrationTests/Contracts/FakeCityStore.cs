@@ -32,6 +32,12 @@ internal sealed class FakeCityStore : ICityRepository, IUnitOfWork, ICommandRece
     /// <summary>How often a city was loaded for an update: where the real repository locks the city's row.</summary>
     public int LockCount { get; private set; }
 
+    /// <summary>
+    /// Whether loading a city for an update fails as the real repository does when the row lock isn't granted in time or the city changed:
+    /// <see cref="ConcurrencyConflictException"/>, nothing committed.
+    /// </summary>
+    public bool ConflictOnLock { get; set; }
+
     /// <summary>The ledger rows of every save, in order.</summary>
     public List<LedgerEntry> Ledger { get; } = [];
 
@@ -74,6 +80,11 @@ internal sealed class FakeCityStore : ICityRepository, IUnitOfWork, ICommandRece
     public Task<CityAggregate> LoadForUpdateAsync(Guid playerId, CancellationToken cancellationToken)
     {
         LockCount++;
+        if (ConflictOnLock)
+        {
+            throw new ConcurrencyConflictException();
+        }
+
         return Task.FromResult(_cities.TryGetValue(playerId, out CityAggregate? city)
             ? city
             : throw new InvalidOperationException($"Player {playerId} has no city."));
