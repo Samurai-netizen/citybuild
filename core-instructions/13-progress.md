@@ -8,11 +8,11 @@
 - **Task:** M0-36 · server golden E2E over HTTP (`[O]`, Opus 5.5)
 - **Branch:** `task/M0-36-golden-e2e-http` (from `main` = `b31baa2`)
 - **Build log entry:** `docs/build-log/2026/2026-10-30-01-M0-36.md`
-- **Last green commit:** `main` = `b31baa2` (M0-35 merged)
+- **Last green commit:** the head of the branch (build 0 warnings, format clean, fast suite green, Integration 171 incl. the 4 new)
 - **Planned steps:** 1. golden scenario #1 over HTTP (every table row via `GET /city`, stored city = engine replay, ledger = stock);
   2. the Trading Post at 1 worker for an hour (coins within 10, one more free worker); 3. `docs/api/smoke.http` and docs; 4. finish, PR
-- **Done steps:** start
-- **Next step:** step 1 (`server/tests/CityBuilder.IntegrationTests/Golden/`)
+- **Done steps:** start; 1 and 2 (`IntegrationTests/Golden/`, 4 tests, all green; `05` needs no change)
+- **Next step:** step 3: `docs/api/smoke.http` (as `devtest`), then the Docs impact pages (testing README, `docs/api/README.md`, `08`, getting-started, `docs/README.md`)
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
