@@ -32,8 +32,8 @@ public sealed class ClientAssemblyTests
     public static TheoryData<string, string[]> RuntimeReferences => new()
     {
         { "Core", ["CityBuilder.Simulation"] },
-        { "Net", ["CityBuilder.Client.Core"] },
-        { "Presentation", ["CityBuilder.Client.Core", "CityBuilder.Client.Net", "Unity.InputSystem"] },
+        { "Net", ["CityBuilder.Client.Core", "CityBuilder.Simulation"] },
+        { "Presentation", ["CityBuilder.Client.Core", "CityBuilder.Client.Net", "CityBuilder.Simulation", "Unity.InputSystem"] },
     };
 
     /// <summary>The folders of the three runtime assemblies, for the theories that check each.</summary>
@@ -79,7 +79,7 @@ public sealed class ClientAssemblyTests
     [MemberData(nameof(RuntimeReferences))]
     public void RuntimeAssembly_References_AreExactlyTheDependencyTable(string folder, string[] expected)
     {
-        // Core may use only Simulation, Net only Core, Presentation only Core, Net and the Input System. A server project or a test
+        // Core may use only Simulation, Net only Core and Simulation, Presentation only Core, Net, Simulation and the Input System. A server project or a test
         // assembly in this list would break the direction of 03.
         JsonObject asmdef = ReadAsmdef(folder);
 

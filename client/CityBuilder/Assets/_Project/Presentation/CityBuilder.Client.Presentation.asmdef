@@ -4,6 +4,7 @@
   "references": [
     "CityBuilder.Client.Core",
     "CityBuilder.Client.Net",
+    "CityBuilder.Simulation",
     "Unity.InputSystem"
   ],
   "includePlatforms": [],

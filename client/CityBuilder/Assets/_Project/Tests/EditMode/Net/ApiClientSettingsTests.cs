@@ -18,6 +18,16 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(settings.RequestTimeoutSeconds, Is.EqualTo(15));
         }
 
+        /// <summary>The asset names the dev player the client logs in as, in the form the server accepts (<c>05</c>: 1 to 32 letters, digits, <c>_</c>, <c>-</c>, <c>.</c>).</summary>
+        [Test]
+        public void TheAsset_NamesAValidDevPlayer()
+        {
+            ApiClientSettings settings = Resources.Load<ApiClientSettings>("Config/ApiClientSettings");
+
+            Assert.That(settings.DevDisplayName, Is.EqualTo("dev1"));
+            Assert.That(settings.DevDisplayName, Does.Match("^[A-Za-z0-9_.-]{1,32}$"));
+        }
+
         /// <summary>The asset's values are accepted by <see cref="ApiClient"/>, which refuses a wrong URL or timeout at construction.</summary>
         [Test]
         public void TheAssetsValues_BuildAClient()

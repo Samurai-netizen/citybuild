@@ -12,9 +12,9 @@ errors. Since M0-37 `Net` has scripts, so the Console shows no "will not be comp
 client/CityBuilder/
 ├── Assets/_Project/
 │   ├── Core/            CityBuilder.Client.Core           client state, display prediction (skeleton)
-│   ├── Net/             CityBuilder.Client.Net            API client, DTOs, error parsing (M0-37)
-│   ├── Presentation/    CityBuilder.Client.Presentation   GameRoot, bootstrap, screens
-│   ├── Resources/       UI/ (PanelSettings.asset, UXML and USS the code loads by name), Config/ApiClientSettings.asset (server URL, timeout)
+│   ├── Net/             CityBuilder.Client.Net            API client, DTOs, error parsing (M0-37); login, token stores, content loading (M0-38)
+│   ├── Presentation/    CityBuilder.Client.Presentation   GameRoot, bootstrap, startup flow, status screens
+│   ├── Resources/       UI/ (PanelSettings.asset, UXML and USS the code loads by name), Config/ApiClientSettings.asset (server URL, timeout, dev player name)
 │   └── Tests/EditMode · Tests/PlayMode                    test assemblies (AppInfo, engine-in-Unity and Bootstrap scene tests, M0-05; Net/ tests, M0-37); Tests/Fixtures/ real server answers
 ├── Assets/Scenes/       Bootstrap.unity (made by hand, scene 0 in the build list; steps below); SampleScene is the template's, unticked
 ├── Packages/manifest.json   "com.citybuilder.simulation": "file:../../../shared/Simulation" (relative to Packages/), Newtonsoft 3.2.2, Input System 1.20.0, the module com.unity.modules.unitywebrequest
@@ -59,7 +59,7 @@ Claude cannot use the Editor GUI, and a scene file is never hand-edited. The sce
 3. **File → Save As…** → folder `Assets/Scenes`, name **`Bootstrap`** (exactly; the name triggers the bootstrap) → Save.
 4. **File → Build Profiles** (older Editors: **Build Settings**) → **Scene List**. With Bootstrap open click **Add Open Scenes**, drag
    `Scenes/Bootstrap` to the top so its number is **0**, and untick `Scenes/SampleScene` (the template's sample).
-5. Press **Play** with Bootstrap open. Expected: a dark rounded label "Not connected" at the top left of the Game view; in the Hierarchy a
+5. Press **Play** with Bootstrap open. Expected: a dark rounded label at the top left of the Game view: "Not connected: Cannot reach the server (CLIENT_NETWORK_ERROR)" when no API runs, or "Connected - Early Middle Ages - Coins: 700" when the dev API runs (`docs/getting-started.md`; the client logs in as the player named in `Resources/Config/ApiClientSettings.asset`, `dev1`, and keeps the token in `PlayerPrefs` in the Editor and development builds); in the Hierarchy a
    `GameRoot` with one child `UI`; no red messages in the Console. The Game
    view may print "No cameras rendering": that is
    expected, the scene has no camera until M0-43, and the UI overlay does not need one. Press Play again to stop.
