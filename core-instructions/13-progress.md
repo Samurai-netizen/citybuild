@@ -11,8 +11,9 @@
 - **Last green commit:** the head of the branch (build 0 warnings, format clean, fast suite green, Integration 171 incl. the 4 new)
 - **Planned steps:** 1. golden scenario #1 over HTTP (every table row via `GET /city`, stored city = engine replay, ledger = stock);
   2. the Trading Post at 1 worker for an hour (coins within 10, one more free worker); 3. `docs/api/smoke.http` and docs; 4. finish, PR
-- **Done steps:** start; 1 and 2 (`IntegrationTests/Golden/`, 4 tests, all green; `05` needs no change); 3 (`docs/api/smoke.http`, docs)
-- **Next step:** step 4: run the smoke requests against the real server as `devtest` (OD-14; a throwaway `Auth__SigningKey`), then `/finish-task`
+- **Done steps:** start; 1 and 2 (`IntegrationTests/Golden/`, 4 tests, all green; `05` needs no change); 3 (`docs/api/smoke.http`, docs);
+  4 (the smoke requests by curl on the real server: every row exact, refusals as documented)
+- **Next step:** `/finish-task` (the owner starts it): Definition of Done, self-review, PR
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
