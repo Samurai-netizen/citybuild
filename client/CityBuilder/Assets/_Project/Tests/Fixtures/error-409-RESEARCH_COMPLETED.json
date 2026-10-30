@@ -1,0 +1,1 @@
+{"type":"urn:citybuilder:error:research-completed","title":"Research completed","status":409,"detail":"The research is already completed.","code":"RESEARCH_COMPLETED","requestId":"426a0585-6066-407b-9072-92dd7e2e2fe4","traceId":"00-6f496e759ba0da56861c9621b8b6a8f7-cab8af93633d5c37-00"}

@@ -16,5 +16,5 @@ Modules are added by the tasks that create them (M0-02, M0-03, M0-04, M0-61, M0-
 | `CityBuilder.Infrastructure` | .NET project, `server/src/` (port implementations; skeleton) | [CityBuilder.Infrastructure.md](CityBuilder.Infrastructure.md) |
 | `CityBuilder.Simulation` | Unity package `shared/Simulation/` + .NET project `shared/Simulation.Build/` (the deterministic engine: content, city state, mutations, settlement) | [CityBuilder.Simulation.md](CityBuilder.Simulation.md) |
 | `CityBuilder.Client.Core` | Unity assembly, `client/CityBuilder/Assets/_Project/Core/` (client state and display prediction; skeleton) | [CityBuilder.Client.Core.md](CityBuilder.Client.Core.md) |
-| `CityBuilder.Client.Net` | Unity assembly, `client/CityBuilder/Assets/_Project/Net/` (API client and DTOs; skeleton) | [CityBuilder.Client.Net.md](CityBuilder.Client.Net.md) |
+| `CityBuilder.Client.Net` | Unity assembly, `client/CityBuilder/Assets/_Project/Net/` (API client, DTOs, error parsing) | [CityBuilder.Client.Net.md](CityBuilder.Client.Net.md) |
 | `CityBuilder.Client.Presentation` | Unity assembly, `client/CityBuilder/Assets/_Project/Presentation/` (composition root, UI Toolkit screens, input) | [CityBuilder.Client.Presentation.md](CityBuilder.Client.Presentation.md) |

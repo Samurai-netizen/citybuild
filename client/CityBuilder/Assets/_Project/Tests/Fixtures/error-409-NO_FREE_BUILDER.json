@@ -1,0 +1,1 @@
+{"type":"urn:citybuilder:error:no-free-builder","title":"No free builder","status":409,"detail":"Every builder slot is busy.","code":"NO_FREE_BUILDER","requestId":"b50dca90-bb3e-4ea1-a6e8-b3d9bfe96464","traceId":"00-d44fe1d2946c4f8b837b5069ae8cb1a7-8f99c43c3fb3301b-00"}

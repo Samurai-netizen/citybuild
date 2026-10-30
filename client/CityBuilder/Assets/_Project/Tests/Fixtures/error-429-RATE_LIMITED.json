@@ -1,0 +1,1 @@
+{"type":"urn:citybuilder:error:rate-limited","title":"Too many requests","status":429,"detail":"Too many requests; wait for the number of seconds in the Retry-After header and try again.","code":"RATE_LIMITED","traceId":"00-bb5304f5f8e0667366114663a02b0f5a-5a325c947f68a907-00"}

@@ -1,0 +1,1 @@
+{"type":"urn:citybuilder:error:method-not-allowed","title":"Method not allowed","status":405,"detail":"The endpoint doesn't take this HTTP method.","code":"METHOD_NOT_ALLOWED","traceId":"00-372172be29d067804a1d8d2be2e63d4e-e497631f0566d5a3-00"}

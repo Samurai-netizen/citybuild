@@ -1,0 +1,1 @@
+{"type":"urn:citybuilder:error:insufficient-resource","title":"Not enough resources","status":422,"detail":"The city can't pay the cost.","code":"INSUFFICIENT_RESOURCE","requestId":"78d10967-63cc-4820-852f-cf460d852de5","traceId":"00-a63c03d7171018eddb267e3f2f3cbfb2-3522a59a7a853f2f-00"}

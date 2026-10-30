@@ -1,0 +1,1 @@
+{"type":"urn:citybuilder:error:invalid-argument","title":"Invalid argument","status":400,"detail":"The building takes no workers.","code":"INVALID_ARGUMENT","requestId":"c85ca09a-94cb-432b-9cb0-79d7f22b1bd1","traceId":"00-896589aea942b1d3aa059bbe645f8440-505098bdf953ec50-00"}
