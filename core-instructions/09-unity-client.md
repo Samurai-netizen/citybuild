@@ -35,8 +35,8 @@ It never decides outcomes.
 |---|---|---|
 | `CityBuilder.Simulation` | `shared/Simulation/Runtime` (local package, `noEngineReferences: true`) | — |
 | `CityBuilder.Client.Core` | `Assets/_Project/Core` | Simulation |
-| `CityBuilder.Client.Net` | `Assets/_Project/Net` | Core, Newtonsoft |
-| `CityBuilder.Client.Presentation` | `Assets/_Project/Presentation` | Core, Net, Input System (UI Toolkit is an engine module: no entry) |
+| `CityBuilder.Client.Net` | `Assets/_Project/Net` | Core, Simulation, Newtonsoft |
+| `CityBuilder.Client.Presentation` | `Assets/_Project/Presentation` | Core, Net, Simulation, Input System (UI Toolkit is an engine module: no entry) |
 | `CityBuilder.Client.Tests.EditMode` / `.PlayMode` | `Assets/_Project/Tests/…` | as needed |
 
 Local package line in `Packages/manifest.json`:

@@ -8,10 +8,11 @@
 - **Task:** M0-38 · Auth and content on the client (`[S]`, Sonnet 5.5)
 - **Branch:** `task/M0-38-auth-content-client` (from `main` = `0a5f7c4`, M0-37 merged as PR #49)
 - **Build log entry:** `docs/build-log/2026/2026-10-30-03-M0-38.md` (In progress)
-- **Last green commit:** the head of `task/M0-38-auth-content-client` (Unity EditMode 158, PlayMode 6; Repository 22; check-docs OK)
-- **Done steps:** write-ahead; step 1 (auth: `AuthService`, token stores, `DevDisplayName`, 24 tests)
-- **Next step:** step 2 of the plan (content: Simulation reference in the Net and Presentation asmdefs + `09` table + `ClientAssemblyTests`,
-  `ContentMapper`, `ContentService`, tests); then 3 (startup flow, `GameRoot`), 4 (docs, Unity tests, walk against the dev server as `devtest`)
+- **Last green commit:** the head of `task/M0-38-auth-content-client` (Unity EditMode 170, PlayMode 6; Repository 22; ClientAssemblyTests 21; check-docs OK)
+- **Done steps:** write-ahead; step 1 (auth: `AuthService`, token stores, `DevDisplayName`, 24 tests); step 2 (`ContentMapper`, `ContentService`, Simulation references)
+- **Next step:** step 3 of the plan: `StartupFlow` (Presentation/Bootstrap), `GameRoot` runs it and shows the status, `FatalError.uxml/.uss`,
+  EditMode tests with `FakeTransport`, update the PlayMode scene test (decision to log: the label is no longer always "Not connected"); then 4
+  (docs, Unity tests, walk against the dev server as `devtest`)
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never

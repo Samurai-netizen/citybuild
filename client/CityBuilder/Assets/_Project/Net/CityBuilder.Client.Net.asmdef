@@ -2,7 +2,8 @@
   "name": "CityBuilder.Client.Net",
   "rootNamespace": "CityBuilder.Client.Net",
   "references": [
-    "CityBuilder.Client.Core"
+    "CityBuilder.Client.Core",
+    "CityBuilder.Simulation"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
