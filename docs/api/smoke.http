@@ -5,8 +5,11 @@
 # Start the server first (`docs/getting-started.md` → Run): Development, the database up. Log in as `devtest` (owner directive OD-14 in
 # `core-instructions/15-change-control.md`): its city carries over between runs, so the golden walk needs the starter city first
 # (delete the player as `docs/getting-started.md` → "The test player" shows; the next login creates it again).
-# The golden walk waits real seconds between steps: 30, then until t=750 (wait more and the numbers move on as the table's last note says).
-# With `Simulation:DevTimeScale` 60 the waits are 0.5 s and 12.5 s. Compare each `GET /city` with the table in `23`.
+# The golden walk runs on the real clock: the city clock counts server seconds from the login. The table's exact numbers need each
+# group of commands (t=0, t=30, t=750) inside one second; by hand they land a few seconds late, the buildings finish as much later, and
+# a t=30 command sent before both Cottages are done is 409 `NO_FREE_BUILDER` (send it when `GET /city` shows them `Idle`). So by hand,
+# check the course (costs paid, phases, stock moving), not the table's seconds: the exact table over HTTP is the integration test
+# `GoldenScenario1HttpTests` (`docs/testing/README.md`). Waiting longer than t=750 only moves the numbers on, as the table's last note says.
 
 @baseUrl = http://localhost:8080
 @displayName = devtest
@@ -53,7 +56,7 @@ Content-Type: application/json
 
 { "requestId": "{{$guid}}", "buildingTypeId": "house", "x": 1, "y": 0 }
 
-### Golden t=30 (wait 30 s): Woodcutter's Hut 3 at (2, 0)
+### Golden t=30 (both Cottages done, 30 s after the second one): Woodcutter's Hut 3 at (2, 0)
 POST {{baseUrl}}/api/v1/commands/place-building
 Authorization: Bearer {{token}}
 Content-Type: application/json
