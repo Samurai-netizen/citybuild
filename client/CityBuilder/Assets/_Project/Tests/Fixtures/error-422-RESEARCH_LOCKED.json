@@ -1,0 +1,1 @@
+{"type":"urn:citybuilder:error:research-locked","title":"Research locked","status":422,"detail":"A prerequisite is not completed, or the research belongs to another era.","code":"RESEARCH_LOCKED","requestId":"ded84593-492e-4fc4-be17-af939b746429","traceId":"00-31dabb450210c6c1da663592fd49d0c1-0c3bac3b5e148913-00"}

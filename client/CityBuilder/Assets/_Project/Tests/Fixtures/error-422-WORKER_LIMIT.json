@@ -1,0 +1,1 @@
+{"type":"urn:citybuilder:error:worker-limit","title":"Worker limit","status":422,"detail":"The requested count is above the max workers of the building's level.","code":"WORKER_LIMIT","requestId":"8922b09a-516f-4e07-af70-5d528070e4ee","traceId":"00-4be95066533e95008abe4dc29f10300a-c76e4e06559302a7-00"}

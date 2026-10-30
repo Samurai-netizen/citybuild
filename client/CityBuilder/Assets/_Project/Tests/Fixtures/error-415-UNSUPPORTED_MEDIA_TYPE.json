@@ -1,0 +1,1 @@
+{"type":"urn:citybuilder:error:unsupported-media-type","title":"Unsupported media type","status":415,"detail":"Send the body as application/json.","code":"UNSUPPORTED_MEDIA_TYPE","traceId":"00-680fdef8ff11c2f92cd0baca18338fa4-2ab2b146b6710614-00"}

@@ -1,0 +1,1 @@
+{"type":"urn:citybuilder:error:building-not-found","title":"Building not found","status":404,"detail":"Your city has no building with this id.","code":"BUILDING_NOT_FOUND","requestId":"fed0291f-8f29-4e47-b77a-7a2d34c7d457","traceId":"00-1468a4015c2ee4602f34e67a6ebb149d-9f2ee7a28fd9095c-00"}

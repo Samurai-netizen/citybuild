@@ -8,10 +8,11 @@
 - **Task:** M0-37 · API client and DTOs (`[S]`, Sonnet 5.5; last completed: M0-36, merged as PR #48)
 - **Branch:** `task/M0-37-api-client-dtos` (from `main` = `3555c8a`)
 - **Build log entry:** `docs/build-log/2026/2026-10-30-02-M0-37.md` (In progress)
-- **Last green commit:** `3555c8a` on `main` (M0-36 merged; Unity code of M0-37 not started)
-- **Done steps:** start (branch, log entry with plan and Docs impact, board)
-- **Next step:** plan step 1: DTOs, `ApiError`, `ApiJson`, `ApiResponseParser` in `Assets/_Project/Net/`, fixtures captured from the real
-  server into `Tests/Fixtures/`, EditMode tests. Then step 2 (`ApiClient`, transport seam, settings asset, `link.xml`), then step 3 (docs).
+- **Last green commit:** the head of `task/M0-37-api-client-dtos` after this checkpoint (Unity: EditMode 134, PlayMode 6; fast server suite
+  green: Repository 22, Simulation 874, Domain 21, Application 155, IntegrationTests 553; format clean)
+- **Done steps:** plan steps 1 and 2 (fixtures, DTOs, `ApiError`, parser, `ApiClient`, transports, settings asset, tests, `link.xml`)
+- **Next step:** plan step 3: docs (module doc `CityBuilder.Client.Net.md`, `09`, `client/README.md`, `docs/testing/README.md`, CHANGELOG, a
+  README in `Tests/Fixtures`), close the Docs impact rows, walk `UnityWebRequestTransport` once against the real server, then `/finish-task`.
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never

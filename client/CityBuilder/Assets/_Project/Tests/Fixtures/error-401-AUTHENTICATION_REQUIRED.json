@@ -1,0 +1,1 @@
+{"type":"urn:citybuilder:error:authentication-required","title":"Authentication required","status":401,"detail":"Send a valid access token as 'Authorization: Bearer <accessToken>'; log in again if it has expired.","code":"AUTHENTICATION_REQUIRED","traceId":"00-00b97c1c8eb3f83c8a182c29d4880730-bdf7ab411f35f918-00"}

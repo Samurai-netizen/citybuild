@@ -1,0 +1,1 @@
+{"type":"urn:citybuilder:error:idempotency-conflict","title":"Request id already used","status":409,"detail":"This requestId was used before with another command or payload; a new command needs a new requestId.","code":"IDEMPOTENCY_CONFLICT","requestId":"1602a0c9-8b34-4fa5-b5c6-9289f50c1f33","traceId":"00-5d371d75efc5e50a46dbf51b9099bdf4-910dc83c7028382b-00"}

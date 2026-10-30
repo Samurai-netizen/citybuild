@@ -1,0 +1,1 @@
+{"type":"urn:citybuilder:error:building-locked","title":"Building locked","status":422,"detail":"The building type belongs to a later era, or the research that unlocks it is not completed.","code":"BUILDING_LOCKED","requestId":"c966bc34-0602-48ee-b328-4d94be40598a","traceId":"00-7283dc5ca7e3c4c71364a91b81113cb1-ba032ec98f709a03-00"}

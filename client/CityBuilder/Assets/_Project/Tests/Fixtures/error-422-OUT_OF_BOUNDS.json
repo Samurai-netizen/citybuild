@@ -1,0 +1,1 @@
+{"type":"urn:citybuilder:error:out-of-bounds","title":"Out of bounds","status":422,"detail":"The tile is outside the grid.","code":"OUT_OF_BOUNDS","requestId":"d97acbc4-f541-4816-a982-9f7be90d1196","traceId":"00-53e9b9cf7d77c5ab2ae23db96ea94743-6f5320ea5010ed39-00"}

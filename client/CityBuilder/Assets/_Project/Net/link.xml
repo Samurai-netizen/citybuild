@@ -1,0 +1,5 @@
+<!-- Keeps the whole CityBuilder.Client.Net assembly out of IL2CPP's code stripping: Newtonsoft reads and writes the DTOs only through
+     reflection, and stripping would remove constructors and properties no C# code calls (core-instructions/09 Device testing). -->
+<linker>
+  <assembly fullname="CityBuilder.Client.Net" preserve="all"/>
+</linker>

@@ -1,0 +1,1 @@
+{"type":"urn:citybuilder:error:tile-occupied","title":"Tile occupied","status":409,"detail":"A building already stands on the tile.","code":"TILE_OCCUPIED","requestId":"afa9f91e-c2ab-47f1-ac2b-cdc8978614b0","traceId":"00-f1817385b302fe1e5566d66963491deb-de639cfb874d29a0-00"}

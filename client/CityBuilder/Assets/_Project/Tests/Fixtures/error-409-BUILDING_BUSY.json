@@ -1,0 +1,1 @@
+{"type":"urn:citybuilder:error:building-busy","title":"Building busy","status":409,"detail":"The building is being built or upgraded.","code":"BUILDING_BUSY","requestId":"d1830126-e0fe-4e6e-b4b8-79000d918b86","traceId":"00-df16487319048519afe533079a9c9baa-095599e1896d6c43-00"}
