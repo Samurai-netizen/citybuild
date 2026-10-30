@@ -16,8 +16,8 @@ a request and lists the events of the server's own code (M0-35). The rules for w
   `TraceId` scope value. Every line of that request has it: the settlement, the command's outcome, a refusal, an exception.
 - **A command that "didn't work":** search the named value `RequestId` for the command's request id. It finds every attempt (accepted,
   rejected, replayed, conflict); each attempt's `TraceId` then finds the rest of its lines.
-- **Not the same `RequestId`:** ASP.NET Core adds a scope value of its own also called `RequestId` (the connection's request number, such as
-  `0HNPLQPQGB5G1`) next to `RequestPath`. It is not the command's. The command's request id is in the line's named values (`State` in the
+- **Not the same `RequestId`:** ASP.NET Core adds a scope value of its own also called `RequestId` (the connection id and the request's number on it, such as
+  `0HNPLR6VF35BD:00000001`) next to `RequestPath`. It is not the command's. The command's request id is in the line's named values (`State` in the
   JSON), the framework's in its `Scopes`.
 - A successful `GET /city` or `GET /content` answer carries no trace id; its lines are found by `PlayerId` and time.
 
@@ -43,7 +43,7 @@ to 0.1 ms; a Development fast clock doesn't change it.
 | 5003 | Warning | A command hit `CONCURRENCY_CONFLICT` (nothing committed) | `Command`, `RequestId`, `PlayerId`, `DurationMs` |
 | 6000 | Information | A city was settled (every `GET /city`, and every command that got past the receipt check, before its 5000 or 5001 line) | `PlayerId`, `Trigger` (`city` or the command type), `ElapsedSeconds`, `ProductionSeconds`, `Events` (constructions, upgrades and research completed, an era entered), `ResearchCompleted` (ids, comma-separated), `DurationMs` |
 | 6001 | Warning | The server clock was behind the city's last settled second, so nothing elapsed (`04` §1) | `PlayerId`, `SecondsBehind` |
-| 7000 | Warning | The Development fast clock is on (startup) | `TimeScale`, `ServerTime` |
+| 7000 | Warning | The Development fast clock is on (startup) | `TimeScale`, `ServerTimeUtc` (ISO 8601 with `Z`) |
 
 Not logged by the server's code: a body that doesn't bind (the answer says what is wrong; the framework logs it at Debug), an accepted token
 at the default level (Information), anything of a request body. The framework's own lines (`Microsoft.*`) follow `Logging:LogLevel`.

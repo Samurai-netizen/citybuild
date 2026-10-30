@@ -108,9 +108,11 @@ if (database.ApplyMigrationsAtStartup && app.Environment.IsDevelopment())
 // Build the clock before the server accepts requests, as for the database: a time scale out of range, or other than 1 outside Development,
 // stops the start here. A fast clock is logged as a warning.
 TimeProvider clock = app.Services.GetRequiredService<TimeProvider>();
-if (ServerClock.TimeScaleOf(clock) > 1)
+int timeScale = ServerClock.TimeScaleOf(clock);
+if (timeScale > 1)
 {
-    ClockLog.ScaledClock(app.Logger, ServerClock.TimeScaleOf(clock), clock.GetUtcNow());
+    string serverTimeUtc = clock.GetUtcNow().UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", System.Globalization.CultureInfo.InvariantCulture);
+    ClockLog.ScaledClock(app.Logger, timeScale, serverTimeUtc);
 }
 
 // Check the authentication settings before the server accepts requests, as for the database: a missing or short signing key, or the dev

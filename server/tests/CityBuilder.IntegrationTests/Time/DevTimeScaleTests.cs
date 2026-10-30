@@ -1,9 +1,11 @@
 using System.Net;
 using CityBuilder.Api.Time;
 using CityBuilder.IntegrationTests.Contracts;
+using CityBuilder.IntegrationTests.Logging;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace CityBuilder.IntegrationTests.Time;
@@ -92,6 +94,27 @@ public sealed class DevTimeScaleTests(ApiFactory factory) : IClassFixture<ApiFac
         ScaledTimeProvider clock = Assert.IsType<ScaledTimeProvider>(fast.Services.GetRequiredService<TimeProvider>());
         Assert.Equal(scale, clock.Scale);
         Assert.Equal(scale, (int)response.Json()["rules"]!["timeScale"]!);
+    }
+
+    /// <summary>
+    /// A fast clock is logged at startup as a warning with its scale and the server time in ISO 8601 UTC (event id 7000); real time logs
+    /// nothing about the clock.
+    /// </summary>
+    [Fact]
+    public void Start_DevelopmentWithAScale_LogsTheFastClock()
+    {
+        var fastLogs = new CapturingLogger();
+        var realLogs = new CapturingLogger();
+        using WebApplicationFactory<Program> fast = fastLogs.AddTo(factory.WithWebHostBuilder(host => host.UseSetting("Simulation:DevTimeScale", "60")));
+        using WebApplicationFactory<Program> real = realLogs.AddTo(factory);
+
+        _ = fast.Services;
+        _ = real.Services;
+
+        CapturingLogger.Entry warning = Assert.Single(fastLogs.Events(7000));
+        Assert.Equal((LogLevel.Warning, (object?)60), (warning.Level, warning.Values["TimeScale"]));
+        Assert.Matches(@"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$", (string)warning.Values["ServerTimeUtc"]!);
+        Assert.Empty(realLogs.Events(7000));
     }
 
     /// <summary>The time scale of any clock but a scaled one is 1.</summary>

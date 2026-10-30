@@ -10,8 +10,9 @@ internal static partial class ClockLog
     /// </summary>
     /// <param name="logger">The logger of the class that built the clock.</param>
     /// <param name="timeScale">Server seconds per real second.</param>
-    /// <param name="serverTime">The server time at startup.</param>
+    /// <param name="serverTimeUtc">The server time at startup in ISO 8601 UTC with a literal <c>Z</c>, as the log timestamps (a <c>+</c> would
+    /// be escaped by the JSON writer, and a <see cref="DateTimeOffset"/> value would be written in the machine's culture).</param>
     [LoggerMessage(EventId = 7000, Level = LogLevel.Warning,
-        Message = "Development clock runs {TimeScale} times as fast as real time; server time is {ServerTime}")]
-    public static partial void ScaledClock(ILogger logger, int timeScale, DateTimeOffset serverTime);
+        Message = "Development clock runs {TimeScale} times as fast as real time; server time is {ServerTimeUtc}")]
+    public static partial void ScaledClock(ILogger logger, int timeScale, string serverTimeUtc);
 }

@@ -4,15 +4,15 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** M0-35 · logging, correlation, dev time scale (`[S]`; Opus 5.5 as the owner set it)
-- **Branch:** `task/M0-35-logging-time-scale` (from `main` = `bdedcb1`)
-- **Build log entry:** `docs/build-log/2026/2026-10-29-03-M0-35.md`
-- **Last green commit:** the head of the branch (step 4; Integration 167 on `postgres:18.6`; Release build 0 warnings, format clean, fast suite: Repository 22, Domain 21,
-  Application 155, IntegrationTests 552, Simulation 872)
-- **Done steps:** start; step 1 (dev time scale: `Api/Time/`, guard, `rules.timeScale`, docs); step 2 (auth, rate-limit, conflict logs); step 3 (command, settlement, clock-behind logs); step 4 (docs)
-- **Next step:** step 5 (finish: Definition of Done, self-review, the real server by hand as `devtest` (OD-14) with and without
-  `Simulation:DevTimeScale`, PR). Run the two test categories separately (M0-33 → Problems).
+- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** — (last completed: M0-35 · logging, correlation, dev time scale; the PR is open, the owner merges it)
+- **Branch:** `task/M0-35-logging-time-scale` (from `main` = `bdedcb1`) until the owner merges
+- **Build log entry:** last: `docs/build-log/2026/2026-10-29-03-M0-35.md` (Done)
+- **Last green commit:** the head of `task/M0-35-logging-time-scale` (Release build 0 warnings, format clean, fast suite: Repository 22,
+  Domain 21, Application 155, IntegrationTests 553, Simulation 872; Integration 167 on `postgres:18.6`; handbook builds; check-docs OK)
+- **Done steps:** all of M0-35 (`docs/api/logs-and-correlation.md` lists every event; decision rows 045, 046)
+- **Next step:** the owner merges the PR. Then `/start-task M0-36` (server golden E2E over HTTP, `[O]`: Opus 5.5); read the M0-35
+  Follow-ups. Run the two test categories separately (M0-33 → Problems).
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
@@ -38,7 +38,7 @@
 | Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) and M0-05 (Unity tests, `test-unity.sh`) merged (PR #8, #12); networking is M0-37 |
 | Unity city view + placement | not started | |
 | Inspector, worker stepper, research screen, HUD | not started | |
-| Resilience (limits, retries, logging) | in progress | error catalogue, global handler, rate limits and input limits M0-34 merged (PR #46); logging M0-35 in progress |
+| Resilience (limits, retries, logging) | in progress | error catalogue, global handler, rate limits and input limits M0-34 merged (PR #46); logging, correlation and the dev time scale M0-35 in review |
 | Docs automation (DocTools) + docs completeness | in progress | handbook, Pages, docs-as-code checks and a full audit: CR-0002 done (PR #27); code documentation CR-0003 done (PR #29); DocTools is M0-61 |
 | Balance simulator | not started | |
 | E2E / security / concurrency suites | not started | |
