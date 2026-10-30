@@ -280,7 +280,7 @@ The AI coder updates its row at start (`In progress`) and finish (`In review`). 
 | M0-33 | 6 | StartResearch | O | Done |
 | M0-34 | 6 | Error catalogue, rate limits, input limits | S | Done |
 | M0-35 | 6 | Logging, correlation, dev time scale | S | Done |
-| M0-36 | 6 | Server golden E2E over HTTP | O | In progress |
+| M0-36 | 6 | Server golden E2E over HTTP | O | In review |
 | M0-37 | 7 | API client and DTOs | S | Todo |
 | M0-38 | 7 | Auth and content on the client | S | Todo |
 | M0-39 | 7 | Client city store and display prediction | O | Todo |

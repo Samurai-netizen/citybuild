@@ -12,7 +12,8 @@ namespace CityBuilder.IntegrationTests.Golden;
 /// Golden scenario #1 (<c>core-instructions/23-mvp-content.md</c>) for the tests over HTTP: the frozen content it was checked against, the
 /// script as HTTP commands, and the same script on the engine alone, to compare the stored city with. The script is the engine test's
 /// (<c>CityBuilder.Simulation.Tests/Golden/GoldenScenario1</c>): at t=0 StartResearch <c>trade_charter</c> and two Cottages (ids 1 and 2), at
-/// t=30 a Woodcutter's Hut (3) and a Sawmill (4), at t=750 a Trading Post (5), standing in a row from tile (0, 0).
+/// t=30 a Woodcutter's Hut (3) and a Sawmill (4), at t=750 a Trading Post (5), standing in a row from tile (0, 0). A change to the script
+/// there changes both copies here.
 /// </summary>
 internal static class GoldenScenario1Http
 {

@@ -11,6 +11,8 @@ namespace CityBuilder.Simulation.Tests.Golden;
 /// city runs the script: at t=0 StartResearch <c>trade_charter</c> and two Cottages (ids 1 and 2), at t=30 a Woodcutter's Hut (3) and a
 /// Sawmill (4), at t=750 a Trading Post (5); nothing else. Each action runs as the server runs a command: the city is settled to the action's
 /// time, the mutation must succeed, and a zero-length advance follows. The table doesn't name tiles; the buildings stand in a row from (0, 0).
+/// The integration tests play the same script over HTTP and replay it on the engine (<c>CityBuilder.IntegrationTests/Golden/GoldenScenario1Http</c>,
+/// M0-36): a change to the script here changes it there too.
 /// </summary>
 internal static class GoldenScenario1
 {
