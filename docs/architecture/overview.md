@@ -8,7 +8,7 @@
 ## System
 Today the API host loads `server/content/mvp-content.json` at startup and refuses to start if it is invalid, then answers `GET /health` (and
 serves its OpenAPI document and the dev login, which creates a player and their starter city and returns an access token, in Development;
-every other `/api/v1` endpoint will require that token). The Unity client starts the `Bootstrap` scene and shows "Not connected". The engine holds its
+every other `/api/v1` endpoint will require that token). The Unity client starts the `Bootstrap` scene, logs in as a dev player, loads and validates the content, fetches the city and shows "Connected" with the era and the coins (or why it could not). The engine holds its
 integer helpers, the content ids, the validated content model, the city state with its four mutations (`CityRules`), the settlement
 (`Simulator.Advance`) and the display helpers the client's screens will use (`Display/`, M0-17); the server's `SettleCity` settles a city (settle on access, [ADR-0005](../adr/ADR-0005-settle-on-access.md)): in the city's transaction
 it advances it to now, runs the closing zero-length advance and stores it with its ledger rows, only if anything changed (M0-23). The database exists: PostgreSQL 18.6 in Docker, its seven tables created by the migration
@@ -46,7 +46,7 @@ flowchart LR
   APP --> DOM
   APP --> SIM
   DOM --> SIM
-  NET -.->|"HTTP JSON; the game calls it from M0-38"| API
+  NET -.->|"HTTP JSON; the game calls it at start (M0-38)"| API
   INF -->|"EF Core: migrations"| DB
   INF -->|"reads at startup"| FILE
   classDef planned stroke-dasharray: 4 4
@@ -82,14 +82,15 @@ server, for display only.
 | Assembly | Path under `client/CityBuilder/Assets/_Project/` | References | Holds today | Doc |
 |---|---|---|---|---|
 | `CityBuilder.Client.Core` | `Core/` | Simulation | `AppInfo` (the build version) | [module](../modules/CityBuilder.Client.Core.md) |
-| `CityBuilder.Client.Net` | `Net/` | Core, Newtonsoft (precompiled DLL) | `ApiClient`, `IApiTransport` and `UnityWebRequestTransport`, the DTOs of `05`, `ApiError`, `ApiResult<T>`, `ApiResponseParser`, `ApiClientSettings` (M0-37) | [module](../modules/CityBuilder.Client.Net.md) |
-| `CityBuilder.Client.Presentation` | `Presentation/` | Core, Net, Input System | `GameBootstrap`, `GameRoot`; UXML and USS in `Resources/UI/` | [module](../modules/CityBuilder.Client.Presentation.md) |
+| `CityBuilder.Client.Net` | `Net/` | Core, Simulation, Newtonsoft (precompiled DLL) | `ApiClient`, `IApiTransport` and `UnityWebRequestTransport`, the DTOs of `05`, `ApiError`, `ApiResult<T>`, `ApiResponseParser`, `ApiClientSettings` (M0-37); `AuthService`, the token stores, `ContentService` and `ContentMapper` (M0-38) | [module](../modules/CityBuilder.Client.Net.md) |
+| `CityBuilder.Client.Presentation` | `Presentation/` | Core, Net, Simulation, Input System | `GameBootstrap`, `GameRoot`, `StartupFlow`, `ConnectionStatusModel`; UXML and USS in `Resources/UI/` | [module](../modules/CityBuilder.Client.Presentation.md) |
 | `CityBuilder.Client.Tests.EditMode` / `.PlayMode` | `Tests/EditMode`, `Tests/PlayMode` | the four runtime assemblies, the test runner and NUnit | `AppInfoTests`, the `Net/` tests of the API client (M0-37), `SimulationInUnityTests`, `ContentInUnityTests`, `CityRulesInUnityTests`, `SimulatorInUnityTests` (EditMode), `BootstrapSceneTests` (PlayMode); run by `scripts/dev/test-unity.sh` (M0-05) | the Core and Presentation module docs → Tests |
 
 The runtime scene is `Bootstrap`: the owner made it by hand ([MANUAL], `client/README.md`), it stays empty and is scene 0 of the build list
 (the template's `SampleScene` is unticked and would get no `GameRoot`). When the scene loads, `GameBootstrap` creates the
-`GameRoot` composition root, and `GameRoot` shows the UI Toolkit label "Not connected" (UXML and USS from `Assets/_Project/Resources/UI/`).
-The client's networking is built and tested (`ApiClient` and the DTOs, M0-37) but `GameRoot` does not call it yet *(planned, M0-38)*.
+`GameRoot` composition root. `GameRoot` shows a UI Toolkit status label (UXML and USS from `Assets/_Project/Resources/UI/`) and runs `StartupFlow`:
+restore or get a dev token, `GET /content` through the engine's validating factory, `GET /city`, then "Connected - <era> - Coins: <n>". Content the factory
+refuses ends on the fatal error screen. The snapshot is only shown once: the client's city store comes with M0-39 *(planned)*.
 
 ## Dependency rules and where they are tested
 These cells of the dependency table in `core-instructions/03-architecture.md` are enforced by tests that read the references of the

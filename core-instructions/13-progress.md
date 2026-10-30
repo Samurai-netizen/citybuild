@@ -4,20 +4,21 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** M0-38 · Auth and content on the client (`[S]`, Sonnet 5.5)
-- **Branch:** `task/M0-38-auth-content-client` (from `main` = `0a5f7c4`, M0-37 merged as PR #49)
-- **Build log entry:** `docs/build-log/2026/2026-10-30-03-M0-38.md` (In progress)
-- **Last green commit:** the head of `task/M0-38-auth-content-client` (Unity EditMode 195, PlayMode 7; Repository 22; ClientAssemblyTests 21; check-docs OK)
-- **Done steps:** write-ahead; step 1 (auth: `AuthService`, token stores, `DevDisplayName`, 24 tests); step 2 (`ContentMapper`, `ContentService`, Simulation references); step 3 (`StartupFlow`, `ConnectionStatusModel`, `GameRoot`, fatal screen, 25 tests)
-- **Next step:** step 4: walk the real flow once against the dev server as `devtest` (OD-14), then the docs of the Docs impact table, then `/finish-task`.
-  Owner questions to raise in the report: decision 1 (Simulation reference), decision 5 (PlayMode test changed).
+- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** — (last completed: M0-38 · Auth and content on the client; the PR is open, the owner merges it)
+- **Branch:** `task/M0-38-auth-content-client` (from `main` = `0a5f7c4`) until the owner merges
+- **Build log entry:** last: `docs/build-log/2026/2026-10-30-03-M0-38.md` (Done)
+- **Last green commit:** the head of `task/M0-38-auth-content-client` (Debug and Release builds 0 warnings, format clean, fast suite: Repository
+  22, Domain 21, Application 155, IntegrationTests 553, Simulation 874; Unity EditMode 197, PlayMode 7; handbook builds; check-docs OK)
+- **Done steps:** all of M0-38 (`AuthService`, token stores, `ContentService`, `StartupFlow`, `GameRoot` connects, fatal error screen)
+- **Next step:** the owner merges the PR. Then `/start-task M0-39` (client city store and display prediction, `[O]`: Opus 5.5); read the M0-38 Follow-ups.
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7
   security alerts GitHub reports on `main`; M0-30: decisions 2 and 5 (400 for a too-big body, not the 413 my
-  question named; malformed type ids 400 instead of 422); M0-38 decision 1 (Net and Presentation reference Simulation).
+  question named; malformed type ids 400 instead of 422); M0-38: decision 1 (Net and Presentation reference Simulation), decision 5 (the
+  PlayMode scene test changed), the stray `dev1` player in the dev database.
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
@@ -34,7 +35,7 @@
 | Persistence (EF + PostgreSQL) | done | M0-19 (EF Core model, migrations, Docker) merged (PR #31); repository and mapping M0-20 merged (PR #32); Testcontainers M0-21 merged (PR #33); locking M0-22 merged (PR #34); settle M0-23 merged (PR #35); M0-24 merged (PR #36) |
 | Auth + command pipeline | in progress | dev auth M0-25 merged (PR #37); the pipeline M0-26 merged (PR #38); its integration tests M0-27 merged (PR #39); content and city endpoints M0-28 merged (PR #40); PlaceBuilding M0-29 merged (PR #41); attack review M0-30 merged (PR #42) |
 | Commands: place / upgrade / assign workers / start research | done | place-building M0-29 merged (PR #41; `docs/how-to/add-command.md`); upgrade-building M0-31 merged (PR #43; OD-13); assign-workers M0-32 merged (PR #44); start-research M0-33 merged (PR #45): the four commands of M0 |
-| Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) and M0-05 (Unity tests, `test-unity.sh`) merged (PR #8, #12); API client and DTOs M0-37 merged (PR #49); auth and content on the client M0-38 in progress |
+| Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) and M0-05 (Unity tests, `test-unity.sh`) merged (PR #8, #12); API client and DTOs M0-37 merged (PR #49); auth and content on the client M0-38 in review (login, content through the engine's factory, startup flow); the city store is M0-39 |
 | Unity city view + placement | not started | |
 | Inspector, worker stepper, research screen, HUD | not started | |
 | Resilience (limits, retries, logging) | in progress | error catalogue, global handler, rate limits and input limits M0-34 merged (PR #46); logging, correlation and the dev time scale M0-35 merged (PR #47) |

@@ -165,6 +165,10 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   `UnityWebRequest` transport, DTOs mirroring the contract, Problem Details parsed into `ApiError` (with three `CLIENT_` codes for a lost
   connection, a timeout and an answer that is not the contract's, such as a proxy's 502 page), the `ApiClientSettings` asset, `link.xml`
   for IL2CPP, and 30 real server answers as test fixtures with 112 new EditMode tests (M0-37).
+- Unity client connects at start: `AuthService` (dev login, token in memory and, in development builds only, in `PlayerPrefs`), `ContentService`
+  (`GET /content` through the engine's validating factory), `StartupFlow` and `GameRoot` (login, content, city; "Connected" with era and coins,
+  messages for failures, a fatal error screen for invalid content), the dev player name in `ApiClientSettings`; `Net` and `Presentation` reference the
+  engine package; 63 new EditMode tests (M0-38).
 
 ### Changed
 - `/finish-task` can be run by the AI coder itself once every planned step is done (owner directive OD-15; M0-36).

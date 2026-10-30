@@ -49,6 +49,6 @@ display clock, snapping to every new snapshot and never sending a predicted valu
 - **As built (M0-18):** the package, the `.NET` project with its build guard and the architecture tests (M0-03); the Unity project with the
   local package (M0-04); Unity EditMode tests that run content validation, mutations and `Advance` in Unity (`SimulationInUnityTests`,
   `ContentInUnityTests`, `CityRulesInUnityTests`, `SimulatorInUnityTests`; M0-05 on); the display helpers (M0-17). The client's content
-  (M0-38) and its store with the display prediction (M0-39) come next. The fallback has not been needed.
+  (M0-38: built through the same factory) and its store with the display prediction (M0-39) come next. The fallback has not been needed.
 - **Reversal:** the client can switch to the fallback at any time, because the server never depends on the client's engine; the cost is
   jumpier numbers between polls.
