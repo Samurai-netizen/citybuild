@@ -1,0 +1,8 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+  <!-- The fatal error screen that GameRoot shows when the server's content is invalid (docs/modules/CityBuilder.Client.Presentation.md); its style is FatalError.uss. -->
+  <Style src="FatalError.uss" />
+  <ui:VisualElement name="fatal-error" class="fatal-error">
+    <ui:Label name="fatal-error-title" class="fatal-error-title" text="Cannot start" />
+    <ui:Label name="fatal-error-details" class="fatal-error-details" text="" />
+  </ui:VisualElement>
+</ui:UXML>

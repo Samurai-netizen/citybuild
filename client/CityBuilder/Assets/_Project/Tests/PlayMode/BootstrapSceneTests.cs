@@ -74,9 +74,14 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(gameRoot.gameObject.scene.name, Is.EqualTo(BootstrapSceneName));
         }
 
-        /// <summary>The connection status label reads <c>Not connected</c>.</summary>
+        /// <summary>
+        /// The connection status label shows a status of the start screen (M0-38 replaced the fixed "Not connected"): "Connecting..." while the
+        /// flow runs, "Connected - ..." when a Development server answers, or "Not connected: ..." when none does. Which of them depends on
+        /// whether a server runs on this machine, so the test accepts those three and nothing else; the flow itself is tested in EditMode
+        /// (<c>StartupFlowTests</c>) against a fake wire.
+        /// </summary>
         [Test]
-        public void ConnectionStatus_WhenBootstrapSceneIsLoaded_ReadsNotConnected()
+        public void ConnectionStatus_WhenBootstrapSceneIsLoaded_ShowsAStartScreenStatus()
         {
             var document = FindGameRoots()[0].GetComponentInChildren<UIDocument>();
             Assert.That(document, Is.Not.Null, "GameRoot has no UIDocument.");
@@ -85,7 +90,14 @@ namespace CityBuilder.Client.Tests.PlayMode
             var label = document.rootVisualElement.Q<Label>(ConnectionStatusElementName);
 
             Assert.That(label, Is.Not.Null, $"No label named '{ConnectionStatusElementName}' in the UI tree.");
-            Assert.That(label.text, Is.EqualTo("Not connected"));
+            Assert.That(label.text, Does.StartWith("Connecting...").Or.StartWith("Connected - ").Or.StartWith("Not connected: "));
+        }
+
+        /// <summary>With no server, or a valid one, the start never ends on the fatal error screen: that screen is only for invalid content (the "no errors logged" test above covers the log).</summary>
+        [Test]
+        public void GameRoot_WhenBootstrapSceneIsLoaded_IsNotShowingTheFatalErrorScreen()
+        {
+            Assert.That(FindGameRoots()[0].IsFatalErrorShown, Is.False);
         }
 
         /// <summary>Loading the scene a second time still leaves exactly one <see cref="GameRoot"/>.</summary>
