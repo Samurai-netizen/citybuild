@@ -99,6 +99,13 @@ flowchart LR
 - Many requests at once: queue them behind a lock the test holds and wait until PostgreSQL shows them all waiting, so they really contend.
   A free race of `Task.Run` calls may never overlap and then proves nothing (M0-24, decision 1). To show that requests don't wait for
   each other, run them on a server with a lock timeout of a few hundred milliseconds: a wait then fails the test.
+- A whole session over HTTP (`Golden/`, M0-36): golden scenario #1 played the way the client will play it. `GoldenHttpPlayer` logs in with
+  the dev login and sends every request with that token and every command with a new request id (anything but 200 fails with the body);
+  `GoldenScenario1Http` serves the engine test's frozen `content-golden-v1.json` (linked by the project file, never copied) through
+  `Content:FilePath`, sends the script's commands, and replays the same script on the engine alone. `GoldenScenario1HttpTests` walks the
+  clock through the actions and the table's rows and checks each row's snapshot (as one line of text, so a failure names the row), the
+  stored city against the replay (`SampleCities.Describe`), and the ledger against the stock. If a row fails there but the engine's golden
+  test passes, the difference is in the server. The same requests by hand: `docs/api/smoke.http`.
 - Examples: `Persistence/CityRepositoryDatabaseTests` (repositories through the server), `Persistence/CityTransactionDatabaseTests`
   (the runner: rollback, version check, two transactions on one city, lock timeout), `Persistence/SettleCityDatabaseTests` (a use case
   through the server: `DatabaseCities` stores and settles cities; a twin city settled another way is the expected result, and a second

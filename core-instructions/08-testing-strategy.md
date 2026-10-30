@@ -23,7 +23,9 @@ Mark integration tests with `[Trait("Category", "Integration")]` so the fast sui
   storage cap, labor ÷ workers with ceiling, worker change mid-cycle, frozen cycle, auto-staffing, research effects
   (unlock, labor reduction, storage bonus), upgrade refund, dormant tail after the production cap.
 - **Golden scenarios:** scripted cities with exact expected values at exact clock times. Golden scenario #1 is
-  the first-session table in `23-mvp-content.md`. Golden tests use a **frozen** content file.
+  the first-session table in `23-mvp-content.md`. Golden tests use a **frozen** content file. Golden scenario #1 also runs
+  end to end through the HTTP API on PostgreSQL (Integration layer, M0-36): every row via `GET /city`, the stored city equal
+  to the engine's, and the ledger reconciled with the stock.
 - **Property tests:** seeded random cities and random elapsed splits (fixed seeds, ≥ 500 cases each), covering
   determinism, split invariance, timer invariance, conservation, non-negativity, caps, worker limits, labor accounting,
   builder/research slots, and no starts after the cap. Print the seed and the operation list on failure.
