@@ -16,6 +16,7 @@ in chapters, with every backticked path and spec number as a link (`website/READ
 | make a common change | `core-instructions/19-change-recipes.md`, [how-to/](how-to/README.md) |
 | look up API, errors, content, config, schema | [reference/](reference/README.md) |
 | find a request in the logs, or what a log line means | [api/](api/README.md) |
+| try the API by hand, request by request | `docs/api/smoke.http` |
 | work on this repo as an AI coder | `AGENTS.md` (entry point), `core-instructions/16-session-protocol.md` |
 | work on this repo as a person | `CONTRIBUTING.md` |
 | add or move a documentation page | `core-instructions/19-change-recipes.md` → "New documentation page", `website/README.md` |
@@ -36,6 +37,6 @@ in chapters, with every backticked path and spec number as a link (`website/READ
 | `modules/` | One doc per project or assembly | AI, kept current (enforced) |
 | `how-to/` | Worked guides for common changes | AI, kept current |
 | `reference/` | Generated reference (from M0-61) | `tools/DocTools` |
-| `api/` | Running the API: logs and correlation (`traceId` vs `requestId`, every event id) | AI, kept current |
+| `api/` | Running the API: logs and correlation (`traceId` vs `requestId`, every event id), requests to try by hand (`smoke.http`) | AI, kept current |
 | `testing/` | How to run the test suites (integration tests need Docker), test checklists | AI, kept current |
 | `security/`, `balance/` *(planned: M0-78, M0-68)* | Security report, balance reports | AI, per task |

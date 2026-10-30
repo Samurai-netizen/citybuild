@@ -1,7 +1,6 @@
 ---
 name: finish-task
-description: Complete the current task - Definition of Done, docs per change recipe, checks, self-review, build log, PR, and the task report.
-disable-model-invocation: true
+description: Complete the current task - Definition of Done, docs per change recipe, checks, self-review, build log, PR, and the task report. Run it yourself when every planned step of the task is done and checkpointed (owner directive OD-15).
 ---
 
 ## Branch diff

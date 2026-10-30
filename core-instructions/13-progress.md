@@ -5,14 +5,13 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-35 · logging, correlation, dev time scale; the PR is open, the owner merges it)
-- **Branch:** `task/M0-35-logging-time-scale` (from `main` = `bdedcb1`) until the owner merges
-- **Build log entry:** last: `docs/build-log/2026/2026-10-29-03-M0-35.md` (Done)
-- **Last green commit:** the head of `task/M0-35-logging-time-scale` (Release build 0 warnings, format clean, fast suite: Repository 22,
-  Domain 21, Application 155, IntegrationTests 553, Simulation 872; Integration 167 on `postgres:18.6`; handbook builds; check-docs OK)
-- **Done steps:** all of M0-35 (`docs/api/logs-and-correlation.md` lists every event; decision rows 045, 046)
-- **Next step:** the owner merges the PR. Then `/start-task M0-36` (server golden E2E over HTTP, `[O]`: Opus 5.5); read the M0-35
-  Follow-ups. Run the two test categories separately (M0-33 → Problems).
+- **Task:** — (last completed: M0-36 · server golden E2E over HTTP; the PR is open, the owner merges it)
+- **Branch:** `task/M0-36-golden-e2e-http` (from `main` = `b31baa2`) until the owner merges
+- **Build log entry:** last: `docs/build-log/2026/2026-10-30-01-M0-36.md` (Done)
+- **Last green commit:** the head of `task/M0-36-golden-e2e-http` (Debug and Release builds 0 warnings, format clean, fast suite: Repository
+  22, Domain 21, Application 155, IntegrationTests 553, Simulation 872; Integration 171 on `postgres:18.6`; handbook builds; check-docs OK)
+- **Done steps:** all of M0-36 (`IntegrationTests/Golden/`, `docs/api/smoke.http`; `05` unchanged: nothing differed)
+- **Next step:** the owner merges the PR. Then `/start-task M0-37` (API client and DTOs, `[S]`: Sonnet 5.5); read the M0-36 Follow-ups.
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
@@ -24,7 +23,7 @@
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 34 / 85
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 35 / 85
 
 | Area | State | Notes |
 |---|---|---|
@@ -38,10 +37,10 @@
 | Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) and M0-05 (Unity tests, `test-unity.sh`) merged (PR #8, #12); networking is M0-37 |
 | Unity city view + placement | not started | |
 | Inspector, worker stepper, research screen, HUD | not started | |
-| Resilience (limits, retries, logging) | in progress | error catalogue, global handler, rate limits and input limits M0-34 merged (PR #46); logging, correlation and the dev time scale M0-35 in review |
+| Resilience (limits, retries, logging) | in progress | error catalogue, global handler, rate limits and input limits M0-34 merged (PR #46); logging, correlation and the dev time scale M0-35 merged (PR #47) |
 | Docs automation (DocTools) + docs completeness | in progress | handbook, Pages, docs-as-code checks and a full audit: CR-0002 done (PR #27); code documentation CR-0003 done (PR #29); DocTools is M0-61 |
 | Balance simulator | not started | |
-| E2E / security / concurrency suites | not started | |
+| E2E / security / concurrency suites | in progress | server golden E2E over HTTP M0-36 in review |
 | Dev build + M0 close-out | not started | |
 
 States: `not started` · `in progress` · `done` · `blocked (reason)`

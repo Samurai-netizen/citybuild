@@ -1,0 +1,123 @@
+# Hand checks of the API (M0-36): every endpoint of `core-instructions/05-api-contract.md`, then golden scenario #1
+# (`core-instructions/23-mvp-content.md`) request by request, then a replay and a few refusals. A REST client file in the format of
+# VS Code's REST Client (humao.rest-client): `###` separates requests, `# @name` names one, `{{$guid}}` is a new GUID per send.
+# Other clients: the requests are plain HTTP; copy the token from the login answer into @token by hand.
+# Start the server first (`docs/getting-started.md` → Run): Development, the database up. Log in as `devtest` (owner directive OD-14 in
+# `core-instructions/15-change-control.md`): its city carries over between runs, so the golden walk needs the starter city first
+# (delete the player as `docs/getting-started.md` → "The test player" shows; the next login creates it again).
+# The golden walk runs on the real clock: the city clock counts server seconds from the login. The table's exact numbers need each
+# group of commands (t=0, t=30, t=750) inside one second; by hand they land a few seconds late, the buildings finish as much later, and
+# a t=30 command sent before both Cottages are done is 409 `NO_FREE_BUILDER` (send it when `GET /city` shows them `Idle`). So by hand,
+# check the course (costs paid, phases, stock moving), not the table's seconds: the exact table over HTTP is the integration test
+# `GoldenScenario1HttpTests` (`docs/testing/README.md`). Waiting longer than t=750 only moves the numbers on, as the table's last note says.
+
+@baseUrl = http://localhost:8080
+@displayName = devtest
+
+### Liveness: `Healthy`, no token needed
+GET {{baseUrl}}/health
+
+### Log in (Development only): the first login of a name creates the player and the starter city
+# @name login
+POST {{baseUrl}}/api/v1/auth/dev-login
+Content-Type: application/json
+
+{ "displayName": "{{displayName}}" }
+
+###
+@token = {{login.response.body.$.accessToken}}
+
+### The game content, the same for every player (`rules.timeScale` is the server clock's speed)
+GET {{baseUrl}}/api/v1/content
+Authorization: Bearer {{token}}
+
+### Your city, settled to now (starter city: coins 700, logs 40, planks 10, clock 0)
+GET {{baseUrl}}/api/v1/city
+Authorization: Bearer {{token}}
+
+### Golden t=0: start Trade Charter (150 coins, 600 s)
+POST {{baseUrl}}/api/v1/commands/start-research
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}", "researchId": "trade_charter" }
+
+### Golden t=0: Cottage 1 at (0, 0)
+POST {{baseUrl}}/api/v1/commands/place-building
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}", "buildingTypeId": "house", "x": 0, "y": 0 }
+
+### Golden t=0: Cottage 2 at (1, 0); the city now has coins 450, logs 40, planks 10, free workers 0
+POST {{baseUrl}}/api/v1/commands/place-building
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}", "buildingTypeId": "house", "x": 1, "y": 0 }
+
+### Golden t=30 (both Cottages done, 30 s after the second one): Woodcutter's Hut 3 at (2, 0)
+POST {{baseUrl}}/api/v1/commands/place-building
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}", "buildingTypeId": "woodcutter", "x": 2, "y": 0 }
+
+### Golden t=30: Sawmill 4 at (3, 0); coins 220, logs 10, planks 10, free workers 8
+POST {{baseUrl}}/api/v1/commands/place-building
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}", "buildingTypeId": "sawmill", "x": 3, "y": 0 }
+
+### Golden t=750 (Trade Charter done at 600; planks 20 by 750): Trading Post 5 at (4, 0); coins 20, planks 0
+POST {{baseUrl}}/api/v1/commands/place-building
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}", "buildingTypeId": "trading_post", "x": 4, "y": 0 }
+
+### After the Trading Post is built (t=930): one worker earns as much as two and frees a worker
+POST {{baseUrl}}/api/v1/commands/assign-workers
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}", "buildingId": 5, "workers": 1 }
+
+### Upgrade a Cottage (120 coins + 30 logs, 90 s): `INSUFFICIENT_RESOURCE` (422) until the city has them
+POST {{baseUrl}}/api/v1/commands/upgrade-building
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}", "buildingId": 1 }
+
+### Replay: send this twice. The second answer is the first one, byte for byte (a fixed requestId; change it for a new command)
+POST {{baseUrl}}/api/v1/commands/assign-workers
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "5e1f0000-0000-4000-8000-000000000001", "buildingId": 5, "workers": 2 }
+
+### The same requestId with another body: 409 `IDEMPOTENCY_CONFLICT`
+POST {{baseUrl}}/api/v1/commands/assign-workers
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "5e1f0000-0000-4000-8000-000000000001", "buildingId": 5, "workers": 1 }
+
+### Refusal: a type the content doesn't have, 422 `UNKNOWN_BUILDING_TYPE`
+POST {{baseUrl}}/api/v1/commands/place-building
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}", "buildingTypeId": "castle", "x": 7, "y": 7 }
+
+### Refusal: a field the contract doesn't have, 400 `INVALID_ARGUMENT`
+POST {{baseUrl}}/api/v1/commands/place-building
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}", "buildingTypeId": "house", "x": 7, "y": 7, "cost": 0 }
+
+### Refusal: no token, 401 `AUTHENTICATION_REQUIRED`
+GET {{baseUrl}}/api/v1/city
