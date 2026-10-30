@@ -1,11 +1,13 @@
+using CityBuilder.Application.Cities;
 using CityBuilder.Simulation.Rules;
 
 namespace CityBuilder.Application.Commands;
 
 /// <summary>
 /// What <see cref="CommandPipeline"/> did with a command: the outcome and what goes with it. A success or a replay carries the response JSON
-/// (the same text both times, from the receipt on a replay); a rejection its engine error code; an invalid argument what is wrong. The
-/// endpoint maps it to the HTTP response (<c>core-instructions/05-api-contract.md</c>). Immutable.
+/// (the same text both times, from the receipt on a replay); a rejection its engine error code; an invalid argument what is wrong. A success
+/// and a rejection settled the city first and carry that <see cref="Cities.Settlement"/>, for the settlement log. The endpoint maps it to the
+/// HTTP response (<c>core-instructions/05-api-contract.md</c>). Immutable.
 /// </summary>
 public sealed class CommandResult
 {
@@ -14,12 +16,14 @@ public sealed class CommandResult
     /// <param name="responseJson">The response, for a success or a replay.</param>
     /// <param name="errorCode">The engine's code, for a rejection.</param>
     /// <param name="detail">What is wrong, for an invalid argument.</param>
-    private CommandResult(CommandOutcome outcome, string? responseJson, MutationErrorCode? errorCode, string? detail)
+    /// <param name="settlement">The settlement the command ran after, for a success or a rejection.</param>
+    private CommandResult(CommandOutcome outcome, string? responseJson, MutationErrorCode? errorCode, string? detail, Settlement? settlement)
     {
         Outcome = outcome;
         ResponseJson = responseJson;
         ErrorCode = errorCode;
         Detail = detail;
+        Settlement = settlement;
     }
 
     /// <summary>How the command ended.</summary>
@@ -34,29 +38,41 @@ public sealed class CommandResult
     /// <summary>What is wrong with the shape, for <see cref="CommandOutcome.InvalidArgument"/>; otherwise null.</summary>
     public string? Detail { get; }
 
+    /// <summary>
+    /// The settlement of the city before the command, for <see cref="CommandOutcome.Succeeded"/> and <see cref="CommandOutcome.Rejected"/>;
+    /// null for the outcomes decided before the settle (a replay, an idempotency conflict, an invalid argument).
+    /// </summary>
+    public Settlement? Settlement { get; }
+
     /// <summary>The command was applied now; <paramref name="responseJson"/> is stored in its receipt.</summary>
     /// <param name="responseJson">The response; not blank.</param>
+    /// <param name="settlement">The settlement the command ran after.</param>
     /// <returns>The result.</returns>
-    public static CommandResult Succeeded(string responseJson) => new(CommandOutcome.Succeeded, Required(responseJson), null, null);
+    /// <exception cref="ArgumentNullException"><paramref name="settlement"/> is null.</exception>
+    public static CommandResult Succeeded(string responseJson, Settlement settlement) =>
+        new(CommandOutcome.Succeeded, Required(responseJson), null, null, settlement ?? throw new ArgumentNullException(nameof(settlement)));
 
     /// <summary>The command succeeded before; <paramref name="responseJson"/> is its stored response.</summary>
     /// <param name="responseJson">The stored response; not blank.</param>
     /// <returns>The result.</returns>
-    public static CommandResult Replayed(string responseJson) => new(CommandOutcome.Replayed, Required(responseJson), null, null);
+    public static CommandResult Replayed(string responseJson) => new(CommandOutcome.Replayed, Required(responseJson), null, null, null);
 
     /// <summary>A business rule refused the command.</summary>
     /// <param name="errorCode">The engine's code.</param>
+    /// <param name="settlement">The settlement the command ran after; it is committed although the command was refused (decision 014).</param>
     /// <returns>The result.</returns>
-    public static CommandResult Rejected(MutationErrorCode errorCode) => new(CommandOutcome.Rejected, null, errorCode, null);
+    /// <exception cref="ArgumentNullException"><paramref name="settlement"/> is null.</exception>
+    public static CommandResult Rejected(MutationErrorCode errorCode, Settlement settlement) =>
+        new(CommandOutcome.Rejected, null, errorCode, null, settlement ?? throw new ArgumentNullException(nameof(settlement)));
 
     /// <summary>The command's shape is wrong.</summary>
     /// <param name="detail">What is wrong; not blank.</param>
     /// <returns>The result.</returns>
-    public static CommandResult InvalidArgument(string detail) => new(CommandOutcome.InvalidArgument, null, null, Required(detail));
+    public static CommandResult InvalidArgument(string detail) => new(CommandOutcome.InvalidArgument, null, null, Required(detail), null);
 
     /// <summary>The request id was used before with another payload.</summary>
     /// <returns>The result.</returns>
-    public static CommandResult IdempotencyConflict() => new(CommandOutcome.IdempotencyConflict, null, null, null);
+    public static CommandResult IdempotencyConflict() => new(CommandOutcome.IdempotencyConflict, null, null, null, null);
 
     /// <inheritdoc />
     public override string ToString() => Outcome + (ErrorCode is { } code ? ": " + code : Detail is null ? string.Empty : ": " + Detail);

@@ -21,24 +21,29 @@ public static class AuthEndpoints
 
     /// <summary>
     /// Logs the display name in (<see cref="DevLogin"/>: on the first login the player and the starter city are created) and answers with
-    /// an access token for the player. A missing body or a name that isn't allowed is <c>INVALID_ARGUMENT</c> (400).
+    /// an access token for the player. A missing body or a name that isn't allowed is <c>INVALID_ARGUMENT</c> (400). Both are logged
+    /// (<see cref="AuthLog"/>) with the player or the code, never the name or the token.
     /// </summary>
     /// <param name="request">The body, or <see langword="null"/> when there is none.</param>
     /// <param name="devLogin">The use case.</param>
     /// <param name="tokens">Issues the token.</param>
+    /// <param name="loggers">Gives the logger of this class, where the login is logged.</param>
     /// <param name="cancellationToken">The request's cancellation.</param>
     /// <returns>200 with the token, or 400 with ProblemDetails.</returns>
     private static async Task<Results<Ok<DevLoginResponse>, ProblemHttpResult>> DevLoginAsync(
-        DevLoginRequest? request, DevLogin devLogin, AccessTokens tokens, CancellationToken cancellationToken)
+        DevLoginRequest? request, DevLogin devLogin, AccessTokens tokens, ILoggerFactory loggers, CancellationToken cancellationToken)
     {
+        ILogger logger = loggers.CreateLogger(typeof(AuthEndpoints).FullName!);
         if (request is null || !DevLogin.IsValidDisplayName(request.DisplayName))
         {
+            AuthLog.DevLoginRefused(logger, ErrorCatalogue.InvalidArgument.Code);
             return ApiProblem.Of(ErrorCatalogue.InvalidArgument.WithDetail(
                 $"displayName must be 1 to {DevLogin.MaxDisplayNameLength} ASCII letters, digits, '_', '-' or '.'."));
         }
 
         DevLoginResult result = await devLogin.ExecuteAsync(request.DisplayName, cancellationToken);
         AccessToken token = tokens.Issue(result.PlayerId);
+        AuthLog.DevLoginSucceeded(logger, result.PlayerId, result.IsNewPlayer);
         return TypedResults.Ok(new DevLoginResponse(token.Token, token.ExpiresAt));
     }
 }

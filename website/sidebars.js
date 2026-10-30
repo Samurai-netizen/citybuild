@@ -55,7 +55,13 @@ const handbook = [
     page('shared/README.md', 'shared/ folder'),
     folder('Modules', 'docs/modules'),
   ]),
-  chapter('Server, API and data', [spec('05'), spec('06'), spec('07'), page('server/README.md', 'server/ folder')]),
+  chapter('Server, API and data', [
+    spec('05'),
+    spec('06'),
+    spec('07'),
+    folder('API operations', 'docs/api'),
+    page('server/README.md', 'server/ folder'),
+  ]),
   chapter('Client', [spec('09'), page('client/README.md', 'Unity project (client/)')]),
   chapter('Development guide', [
     spec('19'),

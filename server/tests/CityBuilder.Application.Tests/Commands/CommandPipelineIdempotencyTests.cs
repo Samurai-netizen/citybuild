@@ -33,6 +33,7 @@ public sealed class CommandPipelineIdempotencyTests
             .ExecuteAsync(PlayerId, PlaceCottage(), Writer(repository), TestContext.Current.CancellationToken);
 
         Assert.Equal((CommandOutcome.Replayed, first.ResponseJson), (again.Outcome, again.ResponseJson));
+        Assert.Null(again.Settlement);
         Assert.Equal(["begin", $"load {PlayerId}", "find receipt", "commit"], repository.Events);
         Assert.Equal(1, repository.SaveCount);
         Assert.Equal(LastSettled.ToUnixTimeSeconds(), repository.Stored(PlayerId).LastSettledUnixSec);

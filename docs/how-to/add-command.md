@@ -64,11 +64,13 @@ the body into the command:
 commands.MapPost("/place-building", PlaceBuildingAsync).Produces<CitySnapshot>(StatusCodes.Status200OK, "application/json");
 …
 var command = new PlaceBuildingCommand(request.RequestId, request.BuildingTypeId ?? string.Empty, request.X, request.Y);
-return await ExecuteAsync(command, player, pipeline, content, json, cancellationToken);
+return await ExecuteAsync(command, player, pipeline, content, json, loggers, cancellationToken);
 ```
 `ExecuteAsync` is shared by every command: it runs the pipeline for the token's player with the snapshot as the response (`CitySnapshotMapper`,
 serialized inside the transaction and stored in the receipt as text) and maps the outcome with `CommandResponses.ToHttpResult`: 200 with
-the snapshot, also for a replay (the stored bytes); Problem Details with `code`, `requestId` and `traceId` otherwise. The handler writes
+the snapshot, also for a replay (the stored bytes); Problem Details with `code`, `requestId` and `traceId` otherwise. It also writes the
+command's log lines (the settlement, then accepted, rejected with the code, replayed or conflict; `docs/api/logs-and-correlation.md`), so a
+new command is logged with no code of its own. The handler writes
 the snapshot as text, so `.Produces<CitySnapshot>` gives the OpenAPI document its 200 schema (a test checks the document).
 The `/commands` group is in the commands rate-limit class (`RequireRateLimit`, M0-34), so the new route is limited with the others and a
 concurrency conflict is already answered; `RateLimitTests.Security_EveryApiEndpoint_IsInItsLimitClass` lists the API's endpoints and fails

@@ -50,7 +50,7 @@ public sealed class CommandPipelineTests
 
     /// <summary>
     /// The writer gets the city as saved, after the settle (a minute: clock 60 → 120), the mutation (a fourth building) and the closing
-    /// advance, with the next state version (0 → 1) and the server second.
+    /// advance, with the next state version (0 → 1) and the server second. The result carries that settlement (a minute), for the log.
     /// </summary>
     [Fact]
     public async Task ExecuteAsync_NewCommand_GivesTheWriterTheSavedCity()
@@ -66,6 +66,7 @@ public sealed class CommandPipelineTests
         Assert.Equal(
             $"{{\"requestId\":\"{RequestId}\",\"stateVersion\":1,\"clock\":120,\"serverTime\":{serverSecond},\"buildings\":4}}",
             result.ResponseJson);
+        Assert.Equal(60, result.Settlement?.ElapsedSeconds);
         Building placed = repository.Stored(PlayerId).State.Buildings.Single(building => building.Id == 4);
         Assert.Equal((new BuildingTypeId("cottage"), 1, 1, BuildingPhase.Constructing), (placed.TypeId, placed.X, placed.Y, placed.Phase));
     }

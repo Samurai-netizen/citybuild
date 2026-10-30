@@ -19,15 +19,21 @@ public sealed class HttpCurrentPlayer(IHttpContextAccessor httpContextAccessor) 
     {
         get
         {
-            System.Security.Claims.ClaimsPrincipal? user = _httpContextAccessor.HttpContext?.User;
-            string? claim = user?.Identity?.IsAuthenticated == true ? user.FindFirst(AccessTokens.PlayerIdClaim)?.Value : null;
-            if (!Guid.TryParseExact(claim, "D", out Guid playerId) || playerId == Guid.Empty)
-            {
-                throw new InvalidOperationException(
+            return Find(_httpContextAccessor.HttpContext?.User)
+                ?? throw new InvalidOperationException(
                     "The request has no verified access token with a player id: the endpoint must require authorization.");
-            }
-
-            return playerId;
         }
+    }
+
+    /// <summary>
+    /// The player of a request's user: the <see cref="AccessTokens.PlayerIdClaim"/> claim of a verified token as a GUID other than all zeros.
+    /// For the log lines of code that runs whether or not a request has a token (the rate limiter, the exception handler).
+    /// </summary>
+    /// <param name="user">The request's user, or <see langword="null"/>.</param>
+    /// <returns>The player id, or <see langword="null"/> when the request has no verified token with one.</returns>
+    public static Guid? Find(System.Security.Claims.ClaimsPrincipal? user)
+    {
+        string? claim = user?.Identity?.IsAuthenticated == true ? user.FindFirst(AccessTokens.PlayerIdClaim)?.Value : null;
+        return Guid.TryParseExact(claim, "D", out Guid playerId) && playerId != Guid.Empty ? playerId : null;
     }
 }

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using CityBuilder.Api.Contracts;
 using CityBuilder.Api.Http;
 using CityBuilder.Application.Cities;
@@ -18,17 +19,26 @@ public static class CityEndpoints
     /// <summary>
     /// Settles the acting player's city to now (<see cref="SettleCity"/>: in the city's transaction, saved only if anything changed) and answers
     /// with the snapshot. Safe to repeat, but not free of side effects: it materializes the elapsed time (ADR-0005). The city is the token's
-    /// player's; nothing in the request names one.
+    /// player's; nothing in the request names one. The settlement is logged (<see cref="SettlementLog"/>) with the real time the request took.
     /// </summary>
     /// <param name="player">The acting player, from the access token.</param>
     /// <param name="settleCity">The use case.</param>
     /// <param name="content">The server's content.</param>
+    /// <param name="loggers">Gives the logger of the settlement line.</param>
     /// <param name="cancellationToken">The request's cancellation; nothing is committed then.</param>
     /// <returns>200 with the snapshot; its <c>requestId</c> is null, because a read is no command.</returns>
     private static async Task<Ok<CitySnapshot>> GetCityAsync(
-        ICurrentPlayer player, SettleCity settleCity, IContentProvider content, CancellationToken cancellationToken)
+        ICurrentPlayer player, SettleCity settleCity, IContentProvider content, ILoggerFactory loggers, CancellationToken cancellationToken)
     {
-        SettleCityResult result = await settleCity.ExecuteAsync(player.PlayerId, cancellationToken);
+        long startedAt = Stopwatch.GetTimestamp();
+        Guid playerId = player.PlayerId;
+        SettleCityResult result = await settleCity.ExecuteAsync(playerId, cancellationToken);
+        SettlementLog.Write(
+            loggers.CreateLogger(typeof(CityEndpoints).FullName!),
+            playerId,
+            SettlementLog.CityTrigger,
+            result.Settlement,
+            RequestDuration.MillisecondsSince(startedAt));
         return TypedResults.Ok(CitySnapshotMapper.ToSnapshot(
             requestId: null, result.City, result.Settlement, result.StateVersion, result.ServerTime, content.Content));
     }

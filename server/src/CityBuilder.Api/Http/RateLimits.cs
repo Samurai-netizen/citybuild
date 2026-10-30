@@ -13,7 +13,7 @@ namespace CityBuilder.Api.Http;
 /// Each request is counted by the limits of its endpoint's <see cref="RateLimitClass"/> (<see cref="RateLimitMetadata"/>): the commands and
 /// <c>GET /city</c> and <c>GET /content</c> per player (the token's <c>sub</c>), the dev login per remote address, so one player's spam never uses up another's
 /// budget. A request over a limit is refused with <c>RATE_LIMITED</c> (429) and <c>Retry-After</c> before the body is read or a city is
-/// locked. The limiter runs after the token check, so a request without a working token is 401 and counts against nothing.
+/// locked, and logged as a warning (<see cref="ErrorLog.RateLimited"/>). The limiter runs after the token check, so a request without a working token is 401 and counts against nothing.
 /// </summary>
 public static class RateLimits
 {
@@ -133,7 +133,8 @@ public static class RateLimits
 
     /// <summary>
     /// Writes the 429 answer: <c>Retry-After</c> in whole seconds (the window's length, which is when the player is sure to have a new budget;
-    /// at least 1) and the Problem Details of <see cref="ErrorCatalogue.RateLimited"/>.
+    /// at least 1) and the Problem Details of <see cref="ErrorCatalogue.RateLimited"/>, and logs the refusal with the class and the player (never
+    /// the address).
     /// </summary>
     /// <param name="context">The refused request and the lease that refused it.</param>
     /// <param name="cancellationToken">Cancels the write.</param>
@@ -143,6 +144,15 @@ public static class RateLimits
         int retryAfterSeconds = context.Lease.TryGetMetadata(MetadataName.RetryAfter, out TimeSpan retryAfter)
             ? Math.Max(1, (int)Math.Ceiling(retryAfter.TotalSeconds))
             : 1;
+        HttpContext http = context.HttpContext;
+        string limitClass = http.GetEndpoint()?.Metadata.GetMetadata<RateLimitMetadata>()?.Class.ToString() ?? "None";
+        ErrorLog.RateLimited(
+            http.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger(typeof(RateLimits).FullName!),
+            limitClass,
+            http.Request.Method,
+            http.Request.Path.Value ?? string.Empty,
+            HttpCurrentPlayer.Find(http.User),
+            retryAfterSeconds);
         context.HttpContext.Response.Headers.RetryAfter = retryAfterSeconds.ToString(CultureInfo.InvariantCulture);
         return new ValueTask(ApiProblem.Of(ErrorCatalogue.RateLimited).ExecuteAsync(context.HttpContext));
     }

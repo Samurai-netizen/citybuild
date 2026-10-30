@@ -109,13 +109,13 @@ public sealed class CommandPipeline(
         if (mutation.ErrorCode is { } errorCode)
         {
             // Time passed is never undone (decision 014): the settlement is committed, but no receipt, so a new attempt needs a new id.
-            settler.Close();
+            Settlement rejectedAfter = settler.Close();
             if (settler.Changed)
             {
                 await transaction.SaveAsync(settler.LedgerEntries(), receipt: null, cancellationToken);
             }
 
-            return CommandResult.Rejected(errorCode);
+            return CommandResult.Rejected(errorCode, rejectedAfter);
         }
 
         settler.RecordCommand(mutation, command.CostReason, command.RefundReason, command.RequestId);
@@ -125,7 +125,7 @@ public sealed class CommandPipeline(
 
         // A successful command always saves, also when it changed nothing: its receipt describes the saved state.
         await transaction.SaveAsync(ledger, new CommandReceipt(command.RequestId, command.CommandType, payloadHash, response), cancellationToken);
-        return CommandResult.Succeeded(response);
+        return CommandResult.Succeeded(response, settlement);
     }
 
     /// <summary>The answer of a stored receipt: its response for the same payload, a conflict for another.</summary>

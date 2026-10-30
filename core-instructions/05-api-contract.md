@@ -54,7 +54,8 @@ One document, the same for every player: `contentVersion`; `rules` (`gridWidth`,
   `unlockedBy` of a building that needs no research. `maxWorkers` is 0 for houses and `workersProvided` is 0 for producers.
 - **Names:** `kind` is `House` or `Producer`. An effect is one flat object: `type` (`unlockBuilding`, `laborReduction`, `storageCapBonus`)
   and the fields that type uses (`building`, `permille`, `item`, `amount`); the other fields are `null`.
-- `rules.timeScale` is 1 (a scaled development clock arrives with M0-35).
+- `rules.timeScale` is the server clock's speed: server seconds per real second. Always 1 outside Development; a Development server with
+  `Simulation:DevTimeScale` above 1 reports that scale (M0-35, `04` §1).
 - **Complete for the client:** the client builds its `GameContent` from this document with the engine's validating factory, as the server does
   from its file. So the document holds everything the factory needs (`startingCity` included), under the content file's property names.
   The differences are the response's: `kind` is `House` or `Producer` (the file has `house`, `producer`), and it adds `unlockedBy` and `timeScale`,
@@ -173,7 +174,8 @@ There is no "claim" command, because production and research complete on their o
 | `METHOD_NOT_ALLOWED` | 405 | A method the endpoint doesn't take |
 | `UNSUPPORTED_MEDIA_TYPE` | 415 | A body that isn't `application/json` |
 
-`code` is for program logic. `title` and `detail` are for humans and may change.
+`code` is for program logic. `title` and `detail` are for humans and may change. `traceId` names the HTTP request (W3C trace context; its
+second part is the `TraceId` of every log line of the request), `requestId` the command across its retries: `docs/api/logs-and-correlation.md`.
 
 - One writer, one list: every code above is a member of `ErrorCatalogue` (`CityBuilder.Api/Errors/`), and `ApiProblem` writes every error answer
   with exactly these members: `type` (`urn:citybuilder:error:` and the code in kebab case), `title`, `status`, `detail`, `code`, `requestId` **only

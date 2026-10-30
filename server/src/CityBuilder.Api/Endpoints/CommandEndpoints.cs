@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using CityBuilder.Api.Contracts;
 using CityBuilder.Api.Errors;
@@ -48,6 +49,7 @@ public static class CommandEndpoints
     /// <param name="pipeline">Runs the command.</param>
     /// <param name="content">The server's content, for the snapshot.</param>
     /// <param name="json">The HTTP JSON settings, so the snapshot reads as <c>GET /city</c>'s.</param>
+    /// <param name="loggers">Gives the logger of the command lines.</param>
     /// <param name="cancellationToken">The request's cancellation; nothing is committed then.</param>
     /// <returns>200 with the snapshot, or Problem Details.</returns>
     private static async Task<Results<ContentHttpResult, ProblemHttpResult>> PlaceBuildingAsync(
@@ -56,6 +58,7 @@ public static class CommandEndpoints
         CommandPipeline pipeline,
         IContentProvider content,
         IOptions<HttpJsonOptions> json,
+        ILoggerFactory loggers,
         CancellationToken cancellationToken)
     {
         if (request is null)
@@ -64,7 +67,7 @@ public static class CommandEndpoints
         }
 
         var command = new PlaceBuildingCommand(request.RequestId, request.BuildingTypeId ?? string.Empty, request.X, request.Y);
-        return await ExecuteAsync(command, player, pipeline, content, json, cancellationToken);
+        return await ExecuteAsync(command, player, pipeline, content, json, loggers, cancellationToken);
     }
 
     /// <summary>
@@ -76,6 +79,7 @@ public static class CommandEndpoints
     /// <param name="pipeline">Runs the command.</param>
     /// <param name="content">The server's content, for the snapshot.</param>
     /// <param name="json">The HTTP JSON settings, so the snapshot reads as <c>GET /city</c>'s.</param>
+    /// <param name="loggers">Gives the logger of the command lines.</param>
     /// <param name="cancellationToken">The request's cancellation; nothing is committed then.</param>
     /// <returns>200 with the snapshot, or Problem Details.</returns>
     private static async Task<Results<ContentHttpResult, ProblemHttpResult>> UpgradeBuildingAsync(
@@ -84,6 +88,7 @@ public static class CommandEndpoints
         CommandPipeline pipeline,
         IContentProvider content,
         IOptions<HttpJsonOptions> json,
+        ILoggerFactory loggers,
         CancellationToken cancellationToken)
     {
         if (request is null)
@@ -92,7 +97,7 @@ public static class CommandEndpoints
         }
 
         var command = new UpgradeBuildingCommand(request.RequestId, request.BuildingId);
-        return await ExecuteAsync(command, player, pipeline, content, json, cancellationToken);
+        return await ExecuteAsync(command, player, pipeline, content, json, loggers, cancellationToken);
     }
 
     /// <summary>
@@ -105,6 +110,7 @@ public static class CommandEndpoints
     /// <param name="pipeline">Runs the command.</param>
     /// <param name="content">The server's content, for the snapshot.</param>
     /// <param name="json">The HTTP JSON settings, so the snapshot reads as <c>GET /city</c>'s.</param>
+    /// <param name="loggers">Gives the logger of the command lines.</param>
     /// <param name="cancellationToken">The request's cancellation; nothing is committed then.</param>
     /// <returns>200 with the snapshot, or Problem Details.</returns>
     private static async Task<Results<ContentHttpResult, ProblemHttpResult>> AssignWorkersAsync(
@@ -113,6 +119,7 @@ public static class CommandEndpoints
         CommandPipeline pipeline,
         IContentProvider content,
         IOptions<HttpJsonOptions> json,
+        ILoggerFactory loggers,
         CancellationToken cancellationToken)
     {
         if (request is null)
@@ -121,7 +128,7 @@ public static class CommandEndpoints
         }
 
         var command = new AssignWorkersCommand(request.RequestId, request.BuildingId, request.Workers);
-        return await ExecuteAsync(command, player, pipeline, content, json, cancellationToken);
+        return await ExecuteAsync(command, player, pipeline, content, json, loggers, cancellationToken);
     }
 
     /// <summary>
@@ -133,6 +140,7 @@ public static class CommandEndpoints
     /// <param name="pipeline">Runs the command.</param>
     /// <param name="content">The server's content, for the snapshot.</param>
     /// <param name="json">The HTTP JSON settings, so the snapshot reads as <c>GET /city</c>'s.</param>
+    /// <param name="loggers">Gives the logger of the command lines.</param>
     /// <param name="cancellationToken">The request's cancellation; nothing is committed then.</param>
     /// <returns>200 with the snapshot, or Problem Details.</returns>
     private static async Task<Results<ContentHttpResult, ProblemHttpResult>> StartResearchAsync(
@@ -141,6 +149,7 @@ public static class CommandEndpoints
         CommandPipeline pipeline,
         IContentProvider content,
         IOptions<HttpJsonOptions> json,
+        ILoggerFactory loggers,
         CancellationToken cancellationToken)
     {
         if (request is null)
@@ -149,13 +158,15 @@ public static class CommandEndpoints
         }
 
         var command = new StartResearchCommand(request.RequestId, request.ResearchId ?? string.Empty);
-        return await ExecuteAsync(command, player, pipeline, content, json, cancellationToken);
+        return await ExecuteAsync(command, player, pipeline, content, json, loggers, cancellationToken);
     }
 
     /// <summary>
     /// Runs a command through the pipeline for the token's player, with the snapshot as its response, and answers with what the pipeline did.
     /// The snapshot is written to text inside the transaction and stored in the receipt as it is, so a replay answers with the same bytes. A
     /// lock timeout or a changed city (<see cref="ConcurrencyConflictException"/>) is <c>CONCURRENCY_CONFLICT</c> with the command's request id.
+    /// Every way it ends writes one line (<see cref="CommandLog"/>), and a command that settled the city first writes the settlement's line
+    /// before it (<see cref="SettlementLog"/>), all with the player and the real time the request took.
     /// </summary>
     /// <typeparam name="TCommand">The command's type; one helper serves every command endpoint.</typeparam>
     /// <param name="command">The command.</param>
@@ -163,6 +174,7 @@ public static class CommandEndpoints
     /// <param name="pipeline">Runs the command.</param>
     /// <param name="content">The server's content, for the snapshot.</param>
     /// <param name="json">The HTTP JSON settings.</param>
+    /// <param name="loggers">Gives the logger of the command lines.</param>
     /// <param name="cancellationToken">The request's cancellation.</param>
     /// <returns>200 with the snapshot, or Problem Details.</returns>
     private static async Task<Results<ContentHttpResult, ProblemHttpResult>> ExecuteAsync<TCommand>(
@@ -171,27 +183,61 @@ public static class CommandEndpoints
         CommandPipeline pipeline,
         IContentProvider content,
         IOptions<HttpJsonOptions> json,
+        ILoggerFactory loggers,
         CancellationToken cancellationToken)
         where TCommand : ICityCommand
     {
+        long startedAt = Stopwatch.GetTimestamp();
+        ILogger logger = loggers.CreateLogger(typeof(CommandEndpoints).FullName!);
+        Guid playerId = player.PlayerId;
         JsonSerializerOptions options = json.Value.SerializerOptions;
         try
         {
             CommandResult result = await pipeline.ExecuteAsync(
-                player.PlayerId,
+                playerId,
                 command,
                 success => JsonSerializer.Serialize(
                     CitySnapshotMapper.ToSnapshot(
                         success.RequestId, success.City, success.Settlement, success.StateVersion, success.ServerTime, content.Content),
                     options),
                 cancellationToken);
+            Log(logger, command, playerId, result, RequestDuration.MillisecondsSince(startedAt));
             return CommandResponses.ToHttpResult(result, command.RequestId);
         }
         catch (ConcurrencyConflictException)
         {
             // Another request had the city, or changed it (06): nothing was committed, so the client retries with the same request id, which
             // the answer repeats. Every other exception is the global handler's (ApiExceptionHandler).
+            CommandLog.Conflict(logger, command.CommandType, command.RequestId, playerId, RequestDuration.MillisecondsSince(startedAt));
             return ApiProblem.Of(ErrorCatalogue.ConcurrencyConflict, command.RequestId);
+        }
+    }
+
+    /// <summary>Writes the lines of a command the pipeline ran: the settlement's, if it settled the city, then how the command ended.</summary>
+    /// <param name="logger">The logger of the command endpoints.</param>
+    /// <param name="command">The command.</param>
+    /// <param name="playerId">The acting player.</param>
+    /// <param name="result">What the pipeline did.</param>
+    /// <param name="durationMs">How long the request took, in milliseconds.</param>
+    private static void Log(ILogger logger, ICityCommand command, Guid playerId, CommandResult result, double durationMs)
+    {
+        if (result.Settlement is { } settlement)
+        {
+            SettlementLog.Write(logger, playerId, command.CommandType, settlement, durationMs);
+        }
+
+        switch (result.Outcome)
+        {
+            case CommandOutcome.Succeeded:
+                CommandLog.Accepted(logger, command.CommandType, command.RequestId, playerId, durationMs);
+                break;
+            case CommandOutcome.Replayed:
+                CommandLog.Replayed(logger, command.CommandType, command.RequestId, playerId, durationMs);
+                break;
+            default:
+                string code = CommandResponses.ErrorOf(result)!.Code;
+                CommandLog.Rejected(logger, command.CommandType, command.RequestId, playerId, code, durationMs);
+                break;
         }
     }
 }

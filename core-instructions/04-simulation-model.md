@@ -11,8 +11,10 @@ runs authoritatively on the server, and runs on the client for display only.
   (`SettlementWindow.Compute`; the engine computes, the server logs). Each settle starts where the last one ended, so floored fractions are never lost.
 - Every settlement advances the clock by the **full** elapsed time.
 - Client time is never an input.
-- Development servers may run a scaled `TimeProvider` (`Simulation:DevTimeScale`, e.g. 60 = one hour per minute).
-  The engine doesn't know about it; startup refuses any scale ≠ 1 outside Development.
+- Development servers may run a scaled `TimeProvider` (`Simulation:DevTimeScale`, e.g. 60 = one hour per minute, 1 to 1000).
+  The engine doesn't know about it; startup refuses any scale ≠ 1 outside Development. It counts from a fixed origin
+  (`now = origin + (real now − origin) × scale`), so it continues across restarts; changing the scale moves it, so the dev database is
+  reset after a change (`docs/getting-started.md` → Configuration).
 
 ## 2. Offline production cap (dormant tail)
 A settlement covers the window `[T0, T0 + elapsed]`.

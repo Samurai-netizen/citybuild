@@ -138,7 +138,8 @@ internal sealed class CitySettler
         }
 
         SettlementReport closing = _city.Advance(_content, 0);
-        _settlement = new Settlement(Guid.CreateVersion7(_now), _window, _advance, closing);
+        long clockBehindSeconds = _window.IsClockBehind ? checked(_settledBefore - _now.ToUnixTimeSeconds()) : 0;
+        _settlement = new Settlement(Guid.CreateVersion7(_now), _window, clockBehindSeconds, _advance, closing);
         return _settlement;
     }
 

@@ -5,27 +5,26 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-34 · error catalogue, rate limits, input limits; the PR is open, the owner merges it)
-- **Branch:** `task/M0-34-error-catalogue-limits` (from `main` = `0f03d60`) until the owner merges
-- **Build log entry:** last: `docs/build-log/2026/2026-10-29-02-M0-34.md` (Done)
-- **Last green commit:** the head of `task/M0-34-error-catalogue-limits` (Release build 0 warnings, format clean, fast suite: Repository 22,
-  Domain 21, Application 155, IntegrationTests 507, Simulation 872; Integration 166 on `postgres:18.6`; handbook builds; check-docs OK)
-- **Done steps:** all of M0-34 (decision 3: `NOT_FOUND`, `METHOD_NOT_ALLOWED`, `UNSUPPORTED_MEDIA_TYPE` added; decision 6: `GET /content` limited; decision 8: Kestrel's 413 → 400; 3 and 6 decided by delegation, Owner input)
-- **Next step:** the owner merges the PR. Then `/start-task M0-35` (logging, correlation, dev time scale, `[S]`: Sonnet 5.5); read the M0-34
-  Follow-ups (the handler and the limiter are where its logs go). Run the two test categories separately (M0-33 → Problems).
+- **Task:** — (last completed: M0-35 · logging, correlation, dev time scale; the PR is open, the owner merges it)
+- **Branch:** `task/M0-35-logging-time-scale` (from `main` = `bdedcb1`) until the owner merges
+- **Build log entry:** last: `docs/build-log/2026/2026-10-29-03-M0-35.md` (Done)
+- **Last green commit:** the head of `task/M0-35-logging-time-scale` (Release build 0 warnings, format clean, fast suite: Repository 22,
+  Domain 21, Application 155, IntegrationTests 553, Simulation 872; Integration 167 on `postgres:18.6`; handbook builds; check-docs OK)
+- **Done steps:** all of M0-35 (`docs/api/logs-and-correlation.md` lists every event; decision rows 045, 046)
+- **Next step:** the owner merges the PR. Then `/start-task M0-36` (server golden E2E over HTTP, `[O]`: Opus 5.5); read the M0-35
+  Follow-ups. Run the two test categories separately (M0-33 → Problems).
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); the 7
-  security alerts GitHub reports on `main`; M0-28 decision 14: the clock-behind warning that docs
-  promised for `GET /city` moved to M0-35 (settlement logging): fine, or do it earlier? M0-30: decisions 2 and 5 (400 for a too-big body, not the 413 my
+  security alerts GitHub reports on `main`; M0-30: decisions 2 and 5 (400 for a too-big body, not the 413 my
   question named; malformed type ids 400 instead of 422).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 33 / 85
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 34 / 85
 
 | Area | State | Notes |
 |---|---|---|
@@ -39,7 +38,7 @@
 | Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) and M0-05 (Unity tests, `test-unity.sh`) merged (PR #8, #12); networking is M0-37 |
 | Unity city view + placement | not started | |
 | Inspector, worker stepper, research screen, HUD | not started | |
-| Resilience (limits, retries, logging) | in progress | error catalogue, global handler, rate limits and input limits M0-34 in review; logging M0-35 |
+| Resilience (limits, retries, logging) | in progress | error catalogue, global handler, rate limits and input limits M0-34 merged (PR #46); logging, correlation and the dev time scale M0-35 in review |
 | Docs automation (DocTools) + docs completeness | in progress | handbook, Pages, docs-as-code checks and a full audit: CR-0002 done (PR #27); code documentation CR-0003 done (PR #29); DocTools is M0-61 |
 | Balance simulator | not started | |
 | E2E / security / concurrency suites | not started | |

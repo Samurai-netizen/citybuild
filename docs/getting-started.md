@@ -56,7 +56,8 @@ How to get from a clean machine to a running project. Every command here must wo
 
 ## Configuration
 The API reads `server/src/CityBuilder.Api/appsettings.json`, and `dotnet run` applies the launch profile `http`
-(`Properties/launchSettings.json`): http://localhost:8080 and `ASPNETCORE_ENVIRONMENT=Development`. Logs are JSON lines on the console.
+(`Properties/launchSettings.json`): http://localhost:8080 and `ASPNETCORE_ENVIRONMENT=Development`. Logs are JSON lines on the console; what each line means and how to find a request's lines:
+`docs/api/logs-and-correlation.md`.
 Any key can be overridden with an environment variable (`:` becomes `__`) or a command-line argument (`-- --Key=value` after `dotnet run`).
 
 | Key | Default | Meaning |
@@ -74,6 +75,7 @@ Any key can be overridden with an environment variable (`:` becomes `__`) or a c
 | `RateLimits:City:Limit`, `:WindowSeconds` | `30`, `60` | `GET /city` per player |
 | `RateLimits:Content:Limit`, `:WindowSeconds` | `30`, `60` | `GET /content` per player, a budget apart from the city's |
 | `RateLimits:DevLogin:Limit`, `:WindowSeconds` | `10`, `60` | The dev login per remote address |
+| `Simulation:DevTimeScale` | `1`; `1` in `appsettings.Development.json` | Development only: how many seconds of server time pass per real second (60 = one hour per minute), for playing a long scenario by hand; `GET /content` reports it as `rules.timeScale` and the start logs a warning. 1 to 1000; anything but 1 outside Development stops the start (`core-instructions/04-simulation-model.md` §1). The clock is the same after a restart with the same scale, but **reset the dev database after changing the scale** (`docker compose down -v`, then start again): a higher scale jumps every city years ahead, a lower one leaves them all behind the clock, frozen. Access tokens age at the same speed (12 hours last 12 minutes at 60), so the client logs in more often |
 | `Logging:LogLevel:*`, `AllowedHosts` | as in `appsettings.json` | ASP.NET Core's own keys |
 
 Secrets come from user-secrets or the environment, never a committed file: the connection string and the signing key.

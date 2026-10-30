@@ -1,3 +1,4 @@
+using CityBuilder.Api.Auth;
 using CityBuilder.Api.Errors;
 using CityBuilder.Application.Persistence;
 using Microsoft.AspNetCore.Diagnostics;
@@ -13,7 +14,8 @@ namespace CityBuilder.Api.Http;
 /// environment for a body that doesn't bind (<c>RouteHandlerOptions.ThrowOnBadRequest</c>) and Kestrel for a body past its limit, is
 /// <c>INVALID_ARGUMENT</c> (400); anything else is <c>INTERNAL_ERROR</c> (500). The response never holds a stack trace; outside Development it
 /// holds no exception text either; an unexpected exception is logged with its stack (<see cref="ErrorLog"/>), because the framework
-/// logs nothing for an exception a handler answers.
+/// logs nothing for an exception a handler answers, and a conflict is logged as a warning. A body that doesn't bind is not logged: the
+/// answer says what is wrong, and the framework logs it at Debug.
 /// </summary>
 /// <param name="environment">Tells whether the exception's type and message may go into the answer (Development only).</param>
 /// <param name="limits">The body limit, named in the answer for a body that is too large.</param>
@@ -42,9 +44,16 @@ internal sealed class ApiExceptionHandler(
         ArgumentNullException.ThrowIfNull(exception);
 
         ApiError error = ErrorFor(exception);
-        if (exception is not (ConcurrencyConflictException or BadHttpRequestException))
+        string method = httpContext.Request.Method;
+        string path = httpContext.Request.Path.Value ?? string.Empty;
+        Guid? playerId = HttpCurrentPlayer.Find(httpContext.User);
+        if (exception is ConcurrencyConflictException)
         {
-            ErrorLog.UnhandledException(_logger, exception, httpContext.Request.Method, httpContext.Request.Path.Value ?? string.Empty);
+            ErrorLog.ConcurrencyConflict(_logger, method, path, playerId);
+        }
+        else if (exception is not BadHttpRequestException)
+        {
+            ErrorLog.UnhandledException(_logger, exception, method, path, playerId);
         }
 
         await ApiProblem.Of(error).ExecuteAsync(httpContext);

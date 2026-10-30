@@ -1,11 +1,12 @@
-// Composition root of the server (core-instructions/03-architecture.md): hosting, logging, service registration, request limits,
-// authentication and the startup steps (content load; database settings and, in Development only, the migrations).
+// Composition root of the server (core-instructions/03-architecture.md): hosting, logging, the server clock, service registration, request
+// limits, authentication and the startup steps (content load; database settings and, in Development only, the migrations; the clock).
 
 using CityBuilder.Api.Auth;
 using CityBuilder.Api.Content;
 using CityBuilder.Api.Endpoints;
 using CityBuilder.Api.Http;
 using CityBuilder.Api.Persistence;
+using CityBuilder.Api.Time;
 using CityBuilder.Application.Cities;
 using CityBuilder.Application.Commands;
 using CityBuilder.Application.Content;
@@ -43,8 +44,9 @@ builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.A
 builder.Services.AddOpenApi();
 builder.Services.AddHealthChecks();
 
-// The server clock is the only clock that drives game progress (core-instructions/02-principles.md, rule 3).
-builder.Services.AddSingleton(TimeProvider.System);
+// The server clock is the only clock that drives game progress (core-instructions/02-principles.md, rule 3): the system clock, or in
+// Development a fast one (Simulation:DevTimeScale; any other scale outside Development stops the start).
+builder.Services.AddServerClock(builder.Configuration, builder.Environment);
 
 // The content is loaded and validated once (core-instructions/03-architecture.md, content pipeline).
 builder.Services.AddOptions<ContentOptions>()
@@ -101,6 +103,16 @@ if (database.ApplyMigrationsAtStartup && app.Environment.IsDevelopment())
     IReadOnlyList<string> appliedMigrations = await DatabaseMigrator.MigrateAsync(app.Services, app.Lifetime.ApplicationStopping);
     string appliedList = appliedMigrations.Count == 0 ? "none" : string.Join(", ", appliedMigrations);
     DatabaseLog.MigrationsApplied(app.Logger, appliedMigrations.Count, appliedList);
+}
+
+// Build the clock before the server accepts requests, as for the database: a time scale out of range, or other than 1 outside Development,
+// stops the start here. A fast clock is logged as a warning.
+TimeProvider clock = app.Services.GetRequiredService<TimeProvider>();
+int timeScale = ServerClock.TimeScaleOf(clock);
+if (timeScale > 1)
+{
+    string serverTimeUtc = clock.GetUtcNow().UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", System.Globalization.CultureInfo.InvariantCulture);
+    ClockLog.ScaledClock(app.Logger, timeScale, serverTimeUtc);
 }
 
 // Check the authentication settings before the server accepts requests, as for the database: a missing or short signing key, or the dev

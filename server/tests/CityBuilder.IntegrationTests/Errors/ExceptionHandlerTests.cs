@@ -4,6 +4,7 @@ using System.Text;
 using CityBuilder.Api.Auth;
 using CityBuilder.Api.Errors;
 using CityBuilder.IntegrationTests.Contracts;
+using CityBuilder.IntegrationTests.Logging;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;

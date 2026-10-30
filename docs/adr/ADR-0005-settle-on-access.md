@@ -44,7 +44,7 @@ in it. `GET /city` settles too, so it is safe to repeat but not free of side eff
 - **Harder:** every request writes the city and its ledger rows in a transaction, polls included. The settle's cost lands on the request
   (budget < 50 ms in the worst case, `04` §12). The stored state is only as fresh as the last request, so anything that reads many cities at
   once (rankings, analytics, admin tools) must settle them or use only values that don't change with time.
-- **Watch:** settle duration and event counts in the logs (M0-35); the write load of polling (ADR-0002, ADR-0003); `state_version` rises
+- **Watch:** settle duration and event counts in the logs (event id 6000 per settle, M0-35; `docs/api/logs-and-correlation.md`); the write load of polling (ADR-0002, ADR-0003); `state_version` rises
   only when the state changed (M0-23); the dev time scale changes the server clock only, never the engine (`04` §1, M0-35).
 - **As built (M0-18):** `SettlementWindow.Compute` and the `SettleCity` skeleton with an in-memory repository (M0-13); `Simulator.Advance`
   (M0-09) with a timer queue since M0-16, measured at about 37 ms for the worst case in Release. Since then: the transaction (M0-22); the
@@ -54,7 +54,8 @@ in it. `GET /city` settles too, so it is safe to repeat but not free of side eff
   construction the settle completes can be upgraded in the same request, M0-31), and so does assign-workers (a construction
   the settle completes takes workers in the same request, M0-32), and so does start-research (M0-33); a research completes in the settle
   of the first request at or after its end, and that request's mutation already sees its effect (the trading post placed at the second
-  Trade Charter completes, tested on PostgreSQL). Still to come: the warning for a clock behind, with the settlement logs (M0-35).
+  Trade Charter completes, tested on PostgreSQL). Every settle writes a log line with its size and duration, and a clock behind a city a
+  warning (M0-35); the Development fast clock is the server's `TimeProvider`, which the engine never sees (M0-35).
 - **Fallback (agreed in advance, `12`):** if settle cost becomes a problem (not expected in M0), add a steady-state fast-forward inside the
   engine that computes a stretch of identical cycles at once, never a background ticker that writes every city. Record the switch in `12`.
 - **Reversal:** a ticker could call the same settle later without engine changes, at the costs above. Dropping lazy settlement is not planned.
