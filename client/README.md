@@ -5,18 +5,17 @@ The Unity project is `client/CityBuilder/` (Unity **6000.3.25f1**, 6.3 LTS, Univ
 
 ## Open it
 Unity Hub → **Add** → `client/CityBuilder` → editor 6000.3.25f1. The first import takes a few minutes. The Console should show no red
-errors. A yellow "Assembly for Assembly Definition File … will not be compiled, because it has no scripts associated with it" warning
-for `Net` is expected until that assembly gets its first script (M0-37).
+errors. Since M0-37 `Net` has scripts, so the Console shows no "will not be compiled" warning for it any more.
 
 ## Layout
 ```
 client/CityBuilder/
 ├── Assets/_Project/
 │   ├── Core/            CityBuilder.Client.Core           client state, display prediction (skeleton)
-│   ├── Net/             CityBuilder.Client.Net            API client, DTOs (skeleton)
+│   ├── Net/             CityBuilder.Client.Net            API client, DTOs, error parsing (M0-37)
 │   ├── Presentation/    CityBuilder.Client.Presentation   GameRoot, bootstrap, screens
-│   ├── Resources/UI/    PanelSettings.asset, UXML and USS the code loads by name
-│   └── Tests/EditMode · Tests/PlayMode                    test assemblies (AppInfo, engine-in-Unity and Bootstrap scene tests, M0-05)
+│   ├── Resources/       UI/ (PanelSettings.asset, UXML and USS the code loads by name), Config/ApiClientSettings.asset (server URL, timeout)
+│   └── Tests/EditMode · Tests/PlayMode                    test assemblies (AppInfo, engine-in-Unity and Bootstrap scene tests, M0-05; Net/ tests, M0-37); Tests/Fixtures/ real server answers
 ├── Assets/Scenes/       Bootstrap.unity (made by hand, scene 0 in the build list; steps below); SampleScene is the template's, unticked
 ├── Packages/manifest.json   "com.citybuilder.simulation": "file:../../../shared/Simulation" (relative to Packages/), Newtonsoft 3.2.2, Input System 1.20.0, the module com.unity.modules.unitywebrequest
 └── ProjectSettings/     Force Text, Visible Meta Files, Input System, HTTP allowed in development builds
@@ -61,7 +60,7 @@ Claude cannot use the Editor GUI, and a scene file is never hand-edited. The sce
 4. **File → Build Profiles** (older Editors: **Build Settings**) → **Scene List**. With Bootstrap open click **Add Open Scenes**, drag
    `Scenes/Bootstrap` to the top so its number is **0**, and untick `Scenes/SampleScene` (the template's sample).
 5. Press **Play** with Bootstrap open. Expected: a dark rounded label "Not connected" at the top left of the Game view; in the Hierarchy a
-   `GameRoot` with one child `UI`; no red messages in the Console (the yellow "no scripts" warnings above are expected). The Game
+   `GameRoot` with one child `UI`; no red messages in the Console. The Game
    view may print "No cameras rendering": that is
    expected, the scene has no camera until M0-43, and the UI overlay does not need one. Press Play again to stop.
 6. **File → Save**, close the Editor. Then either commit the files yourself on the current task branch, before you merge its PR (the

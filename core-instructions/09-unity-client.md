@@ -1,7 +1,7 @@
 # Unity Client
 
 > **Built so far:** the project, its four assemblies and their tests, and the `Bootstrap` scene that shows "Not connected" (M0-04, M0-05;
-> `client/README.md`). Networking comes with M0-37, the city view with M0-43, the screens from M0-45 *(planned)*. A task that builds a
+> `client/README.md`). The API client, the DTOs and the error parsing (`CityBuilder.Client.Net`, M0-37) are built and tested, but `GameRoot` does not call them before M0-38; the city view with M0-43, the screens from M0-45 *(planned)*. A task that builds a
 > part updates this line.
 
 The client renders the latest authoritative snapshot and makes waiting feel alive.
@@ -51,8 +51,11 @@ Local package line in `Packages/manifest.json`:
   (`timeScale` is 1 except on Development servers using `DevTimeScale`). For counters and
   progress bars, run `Simulator.Advance` on a **copy** of the snapshot, and use the `Simulation.Display` helpers (`04` §15) for rates,
   bars and countdowns. Never send predicted values anywhere.
-- **Net:** `ApiClient` (UnityWebRequest wrapped in `Awaitable`/`Task`), timeouts, cancellation via
-  `destroyCancellationToken`, ProblemDetails parsing into `ApiError { Code, Status, Detail }`.
+- **Net:** `ApiClient` (`UnityWebRequest` wrapped in a `Task` that continues on the main thread; base URL and timeout from the
+  `ApiClientSettings` asset), one method per endpoint of `05`, each returning an `ApiResult<T>`: the DTO or an
+  `ApiError { Code, Status, Detail, TraceId, RequestId, RetryAfterSeconds }` parsed from Problem Details. A rule's refusal, a lost
+  connection (`CLIENT_NETWORK_ERROR`), a timeout (`CLIENT_TIMEOUT`) and a body that is not the contract's, such as a proxy's 502 page
+  (`CLIENT_INVALID_RESPONSE`), are results; only a cancelled token throws (cancel with `destroyCancellationToken`).
 - **Commands:** `CommandSender` creates the `requestId` once per player intent and reuses it on retry.
   Retries only on network errors, timeouts, 5xx, `CONCURRENCY_CONFLICT` (max 3, backoff 0.5/1/2 s).
 - **Polling:** `GET /city` on start, on `OnApplicationPause(false)`, after reconnect, every 120 s in foreground.

@@ -21,7 +21,7 @@ Dashed parts in the diagram are planned.
 flowchart LR
   subgraph clientside["client/CityBuilder - Unity 6000.3.25f1"]
     PRES["Client.Presentation<br/>GameBootstrap, GameRoot"]
-    NET["Client.Net<br/>no scripts yet"]
+    NET["Client.Net<br/>ApiClient, DTOs, ApiError"]
     CORE["Client.Core<br/>AppInfo"]
   end
   subgraph sharedside["shared"]
@@ -46,7 +46,7 @@ flowchart LR
   APP --> DOM
   APP --> SIM
   DOM --> SIM
-  NET -.->|"HTTPS JSON, planned M0-37"| API
+  NET -.->|"HTTP JSON; the game calls it from M0-38"| API
   INF -->|"EF Core: migrations"| DB
   INF -->|"reads at startup"| FILE
   classDef planned stroke-dasharray: 4 4
@@ -82,14 +82,14 @@ server, for display only.
 | Assembly | Path under `client/CityBuilder/Assets/_Project/` | References | Holds today | Doc |
 |---|---|---|---|---|
 | `CityBuilder.Client.Core` | `Core/` | Simulation | `AppInfo` (the build version) | [module](../modules/CityBuilder.Client.Core.md) |
-| `CityBuilder.Client.Net` | `Net/` | Core, Newtonsoft (precompiled DLL) | no scripts *(planned, M0-37)* | [module](../modules/CityBuilder.Client.Net.md) |
+| `CityBuilder.Client.Net` | `Net/` | Core, Newtonsoft (precompiled DLL) | `ApiClient`, `IApiTransport` and `UnityWebRequestTransport`, the DTOs of `05`, `ApiError`, `ApiResult<T>`, `ApiResponseParser`, `ApiClientSettings` (M0-37) | [module](../modules/CityBuilder.Client.Net.md) |
 | `CityBuilder.Client.Presentation` | `Presentation/` | Core, Net, Input System | `GameBootstrap`, `GameRoot`; UXML and USS in `Resources/UI/` | [module](../modules/CityBuilder.Client.Presentation.md) |
-| `CityBuilder.Client.Tests.EditMode` / `.PlayMode` | `Tests/EditMode`, `Tests/PlayMode` | the four runtime assemblies, the test runner and NUnit | `AppInfoTests`, `SimulationInUnityTests`, `ContentInUnityTests`, `CityRulesInUnityTests`, `SimulatorInUnityTests` (EditMode), `BootstrapSceneTests` (PlayMode); run by `scripts/dev/test-unity.sh` (M0-05) | the Core and Presentation module docs → Tests |
+| `CityBuilder.Client.Tests.EditMode` / `.PlayMode` | `Tests/EditMode`, `Tests/PlayMode` | the four runtime assemblies, the test runner and NUnit | `AppInfoTests`, the `Net/` tests of the API client (M0-37), `SimulationInUnityTests`, `ContentInUnityTests`, `CityRulesInUnityTests`, `SimulatorInUnityTests` (EditMode), `BootstrapSceneTests` (PlayMode); run by `scripts/dev/test-unity.sh` (M0-05) | the Core and Presentation module docs → Tests |
 
 The runtime scene is `Bootstrap`: the owner made it by hand ([MANUAL], `client/README.md`), it stays empty and is scene 0 of the build list
 (the template's `SampleScene` is unticked and would get no `GameRoot`). When the scene loads, `GameBootstrap` creates the
 `GameRoot` composition root, and `GameRoot` shows the UI Toolkit label "Not connected" (UXML and USS from `Assets/_Project/Resources/UI/`).
-There is no networking yet *(planned, M0-37)*.
+The client's networking is built and tested (`ApiClient` and the DTOs, M0-37) but `GameRoot` does not call it yet *(planned, M0-38)*.
 
 ## Dependency rules and where they are tested
 These cells of the dependency table in `core-instructions/03-architecture.md` are enforced by tests that read the references of the

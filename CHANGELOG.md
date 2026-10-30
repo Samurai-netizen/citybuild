@@ -161,6 +161,10 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   fast server clock in Development only (the start stops for any other scale elsewhere), reported as `rules.timeScale` (M0-35).
 - Golden scenario #1 end to end over HTTP on PostgreSQL (dev login, the four commands, `GET /city` at every table row, the stored city
   equal to the engine's, the ledger reconciled with the stock, the Trading Post at 1 worker) and `docs/api/smoke.http` for hand checks (M0-36).
+- Unity API client (`CityBuilder.Client.Net`): `ApiClient` with one method per endpoint of `05`, timeouts and cancellation over a
+  `UnityWebRequest` transport, DTOs mirroring the contract, Problem Details parsed into `ApiError` (with three `CLIENT_` codes for a lost
+  connection, a timeout and an answer that is not the contract's, such as a proxy's 502 page), the `ApiClientSettings` asset, `link.xml`
+  for IL2CPP, and 30 real server answers as test fixtures with 112 new EditMode tests (M0-37).
 
 ### Changed
 - `/finish-task` can be run by the AI coder itself once every planned step is done (owner directive OD-15; M0-36).

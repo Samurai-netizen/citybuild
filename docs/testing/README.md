@@ -9,7 +9,7 @@ How to run each test suite and how the PostgreSQL integration tests work. What e
 | Fast (everything not in the `Integration` category) | `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` | the .NET SDK |
 | Integration (real PostgreSQL) | `dotnet test server/CityBuilder.slnx --filter "Category=Integration"` | the .NET SDK and **Docker running** |
 
-CI runs both, the fast suite first (`.github/workflows/ci.yml`). Unity's tests: `client/README.md`.
+CI runs both, the fast suite first (`.github/workflows/ci.yml`). Unity's tests: `client/README.md`. The Unity client's API tests (`Tests/EditMode/Net/`, M0-37) read real answers of the development server from `Tests/Fixtures/` (how they were captured: `docs/modules/CityBuilder.Client.Net.md` → Tests); `ClientErrorCodesTests` (a fast .NET test) holds the client's error code list to the table of `05`.
 
 ## Integration tests (Docker required)
 1. Start Docker (Docker Desktop on macOS and Windows). `docker version` must show a server.
