@@ -18,10 +18,21 @@ namespace CityBuilder.Client.Net
         [SerializeField]
         private int requestTimeoutSeconds = 15;
 
+        /// <summary>
+        /// The dev player's name the client logs in as (<c>POST /auth/dev-login</c>, Development servers only, <c>05</c>): 1 to 32 ASCII letters,
+        /// digits, <c>_</c>, <c>-</c> or <c>.</c>. Another name is another player with its own city. An asset saved before this field existed
+        /// reads the default.
+        /// </summary>
+        [SerializeField]
+        private string devDisplayName = "dev1";
+
         /// <summary>The server's address without a path.</summary>
         public string BaseUrl => baseUrl;
 
         /// <summary>Seconds one request may take before it counts as lost.</summary>
         public int RequestTimeoutSeconds => requestTimeoutSeconds;
+
+        /// <summary>The dev player's name the client logs in as.</summary>
+        public string DevDisplayName => devDisplayName;
     }
 }

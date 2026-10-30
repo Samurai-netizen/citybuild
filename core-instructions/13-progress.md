@@ -8,10 +8,10 @@
 - **Task:** M0-38 · Auth and content on the client (`[S]`, Sonnet 5.5)
 - **Branch:** `task/M0-38-auth-content-client` (from `main` = `0a5f7c4`, M0-37 merged as PR #49)
 - **Build log entry:** `docs/build-log/2026/2026-10-30-03-M0-38.md` (In progress)
-- **Last green commit:** `0a5f7c4` on `main` (M0-37); nothing of M0-38 yet except the write-ahead
-- **Done steps:** write-ahead (log entry, plan, Docs impact, this resume point, board row)
-- **Next step:** step 1 of the plan: `AuthService`, token stores, `ApiClientSettings.DevDisplayName`, EditMode tests; then 2 (content),
-  3 (startup flow, `GameRoot`), 4 (docs, Unity tests, walk against the dev server as `devtest`)
+- **Last green commit:** the head of `task/M0-38-auth-content-client` (Unity EditMode 158, PlayMode 6; Repository 22; check-docs OK)
+- **Done steps:** write-ahead; step 1 (auth: `AuthService`, token stores, `DevDisplayName`, 24 tests)
+- **Next step:** step 2 of the plan (content: Simulation reference in the Net and Presentation asmdefs + `09` table + `ClientAssemblyTests`,
+  `ContentMapper`, `ContentService`, tests); then 3 (startup flow, `GameRoot`), 4 (docs, Unity tests, walk against the dev server as `devtest`)
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
