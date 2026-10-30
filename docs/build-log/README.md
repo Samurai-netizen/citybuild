@@ -11,6 +11,7 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
+- [BL-20261030-04 · M0-39 · Client city store and display prediction](2026/2026-10-30-04-M0-39.md) — In progress
 - [BL-20261030-03 · M0-38 · Auth and content on the client](2026/2026-10-30-03-M0-38.md) — In progress
 - [BL-20261030-02 · M0-37 · API client and DTOs](2026/2026-10-30-02-M0-37.md) — Done
 - [BL-20261030-01 · M0-36 · Server golden E2E over HTTP](2026/2026-10-30-01-M0-36.md) — Done
