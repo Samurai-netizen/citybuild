@@ -154,17 +154,26 @@ namespace CityBuilder.Client.Presentation.City
         /// <summary>Creates the primitive of one part under <paramref name="body"/>, without a collider and with the part's colour.</summary>
         private void CreatePart(Transform body, BuildingPart part)
         {
+            CreatePrimitive(body, part, MaterialFor(part.Color));
+        }
+
+        /// <summary>
+        /// Creates the primitive of one part under <paramref name="parent"/>, without a collider, drawn with <paramref name="material"/>. Shared
+        /// with <see cref="PlacementGhosts"/>, which draws the same look in a translucent material.
+        /// </summary>
+        internal static void CreatePrimitive(Transform parent, BuildingPart part, Material material)
+        {
             GameObject primitive = GameObject.CreatePrimitive(part.Shape);
             PlaceholderArt.Destroy(primitive.GetComponent<Collider>());
             primitive.name = part.Shape.ToString();
-            primitive.transform.SetParent(body, false);
+            primitive.transform.SetParent(parent, false);
             primitive.transform.localPosition = part.Center;
             primitive.transform.localRotation = Quaternion.Euler(part.EulerAngles);
 
             // Unity's cylinder is 2 units long, its cube 1: the part's size is the real extent.
             float lengthScale = part.Shape == PrimitiveType.Cylinder ? 0.5f : 1f;
             primitive.transform.localScale = new Vector3(part.Size.x, part.Size.y * lengthScale, part.Size.z);
-            primitive.GetComponent<Renderer>().sharedMaterial = MaterialFor(part.Color);
+            primitive.GetComponent<Renderer>().sharedMaterial = material;
         }
 
         /// <summary>The factory's material of one colour, created on first use.</summary>
