@@ -2,7 +2,6 @@
 
 using System;
 using UnityEngine;
-using Object = UnityEngine.Object;
 
 namespace CityBuilder.Client.Presentation.City
 {
@@ -66,8 +65,8 @@ namespace CityBuilder.Client.Presentation.City
             Root = new GameObject("Ground");
             Root.transform.SetParent(parent, false);
 
-            Material lightMaterial = _materials[0] = CreateMaterial(LightGround);
-            Material darkMaterial = _materials[1] = CreateMaterial(DarkGround);
+            Material lightMaterial = _materials[0] = PlaceholderArt.CreateMaterial(LightGround);
+            Material darkMaterial = _materials[1] = PlaceholderArt.CreateMaterial(DarkGround);
             for (int y = 0; y < grid.Height; y++)
             {
                 for (int x = 0; x < grid.Width; x++)
@@ -78,8 +77,8 @@ namespace CityBuilder.Client.Presentation.City
                 }
             }
 
-            HoverMarker = CreateMarker("Hover marker", _materials[2] = CreateMaterial(HoverColor), 0f);
-            SelectionMarker = CreateMarker("Selection marker", _materials[3] = CreateMaterial(SelectionColor), MarkerThickness);
+            HoverMarker = CreateMarker("Hover marker", _materials[2] = PlaceholderArt.CreateMaterial(HoverColor), 0f);
+            SelectionMarker = CreateMarker("Selection marker", _materials[3] = PlaceholderArt.CreateMaterial(SelectionColor), MarkerThickness);
 
             _selection.Changed += ShowSelection;
             ShowSelection();
@@ -107,10 +106,10 @@ namespace CityBuilder.Client.Presentation.City
 
             _destroyed = true;
             _selection.Changed -= ShowSelection;
-            DestroyObject(Root);
+            PlaceholderArt.Destroy(Root);
             foreach (Material material in _materials)
             {
-                DestroyObject(material);
+                PlaceholderArt.Destroy(material);
             }
         }
 
@@ -152,41 +151,11 @@ namespace CityBuilder.Client.Presentation.City
         {
             GameObject block = GameObject.CreatePrimitive(PrimitiveType.Cube);
             block.name = name;
-            DestroyObject(block.GetComponent<Collider>());
+            PlaceholderArt.Destroy(block.GetComponent<Collider>());
             block.transform.SetParent(Root.transform, false);
             block.transform.localScale = new Vector3(fill * CityGrid.TileSize, thickness, fill * CityGrid.TileSize);
             block.transform.localPosition = new Vector3(position.x, centerY, position.z);
             return block;
-        }
-
-        /// <summary>
-        /// Creates a material of one colour from the render pipeline's default look: a copy of the material a new primitive gets, so no
-        /// shader is looked up by name (a lookup could be stripped from a device build).
-        /// </summary>
-        private static Material CreateMaterial(Color color)
-        {
-            GameObject sample = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            var material = new Material(sample.GetComponent<Renderer>().sharedMaterial) { color = color };
-            DestroyObject(sample);
-            return material;
-        }
-
-        /// <summary>Destroys an object the way the current mode needs: a delayed destroy in play mode, an immediate one in the Editor's edit mode (tests).</summary>
-        private static void DestroyObject(Object? target)
-        {
-            if (target == null)
-            {
-                return;
-            }
-
-            if (Application.isPlaying)
-            {
-                Object.Destroy(target);
-            }
-            else
-            {
-                Object.DestroyImmediate(target);
-            }
         }
     }
 }
