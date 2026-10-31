@@ -1,5 +1,6 @@
 #nullable enable
 
+using CityBuilder.Simulation.State;
 using UnityEngine;
 
 namespace CityBuilder.Client.Presentation.City
@@ -7,9 +8,9 @@ namespace CityBuilder.Client.Presentation.City
     /// <summary>
     /// The city's place in the scene: the camera and a light, made from code as soon as the object exists (so the screen is cleared even
     /// before the server answers), and, once <see cref="ShowGrid"/> is called with the grid size from the content's rules, the ground
-    /// tiles, the camera controls and the tile selection. A thin component: the logic is in <see cref="CityCameraModel"/>,
-    /// <see cref="CityCameraRig"/>, <see cref="CityInputReader"/>, <see cref="TileSelection"/> and <see cref="GroundTiles"/>.
-    /// The building views of M0-44 will hang under it. <c>GameRoot</c> creates it.
+    /// tiles, the camera controls and the tile selection, and, with <see cref="ShowCity"/>, the buildings. A thin component: the logic is in
+    /// <see cref="CityCameraModel"/>, <see cref="CityCameraRig"/>, <see cref="CityInputReader"/>, <see cref="TileSelection"/>,
+    /// <see cref="GroundTiles"/> and <see cref="CityView"/>. <c>GameRoot</c> creates it.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CityWorld : MonoBehaviour
@@ -22,6 +23,9 @@ namespace CityBuilder.Client.Presentation.City
 
         /// <summary>The input reader, or null before <see cref="ShowGrid"/>.</summary>
         private CityInputReader? _input;
+
+        /// <summary>The building views, or null before <see cref="ShowGrid"/>.</summary>
+        private CityView? _buildings;
 
         /// <summary>The camera that shows the city; made in <c>Awake</c>.</summary>
         public Camera Camera { get; private set; } = null!;
@@ -37,6 +41,9 @@ namespace CityBuilder.Client.Presentation.City
 
         /// <summary>The ground tiles; null before <see cref="ShowGrid"/>.</summary>
         public GroundTiles? Ground => _ground;
+
+        /// <summary>The building views; null before <see cref="ShowGrid"/>.</summary>
+        public CityView? Buildings => _buildings;
 
         /// <summary>Unity calls it once, right after the component is created: it makes the camera and the light.</summary>
         private void Awake()
@@ -59,18 +66,27 @@ namespace CityBuilder.Client.Presentation.City
         }
 
         /// <summary>
-        /// Builds the ground, the selection and the camera controls for a grid, and frames the camera on it. Calling it again replaces the
-        /// earlier ground (a new city size).
+        /// Builds the ground, the selection, the camera controls and the (empty) building views for a grid, and frames the camera on it.
+        /// Calling it again replaces the earlier ground and buildings (a new city size); <see cref="ShowCity"/> then fills the buildings.
         /// </summary>
         /// <param name="grid">The grid from the content's rules.</param>
         public void ShowGrid(CityGrid grid)
         {
             _ground?.Destroy();
+            _buildings?.Destroy();
             Grid = grid;
             Selection = new TileSelection(grid);
             _ground = new GroundTiles(grid, Selection, transform);
+            _buildings = new CityView(grid, transform);
             Rig = new CityCameraRig(Camera, grid, Selection);
             _input = new CityInputReader(Rig, Screen.dpi);
+        }
+
+        /// <summary>Makes the building views match a city (<see cref="CityView.Show"/>). Does nothing before <see cref="ShowGrid"/>.</summary>
+        /// <param name="city">The displayed city.</param>
+        public void ShowCity(CityState city)
+        {
+            _buildings?.Show(city);
         }
 
         /// <summary>Unity calls it every frame: the player's input moves the camera and the selection.</summary>
@@ -79,10 +95,11 @@ namespace CityBuilder.Client.Presentation.City
             _input?.Tick();
         }
 
-        /// <summary>Unity calls it when the object is destroyed: the ground takes its listener off the selection.</summary>
+        /// <summary>Unity calls it when the object is destroyed: the ground takes its listener off the selection, and the buildings' materials go.</summary>
         private void OnDestroy()
         {
             _ground?.Destroy();
+            _buildings?.Destroy();
         }
     }
 }

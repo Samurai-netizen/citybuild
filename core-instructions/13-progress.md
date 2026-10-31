@@ -8,9 +8,9 @@
 - **Task:** M0-44 · Building views from state (`[S]`, Sonnet 5.5)
 - **Branch:** `task/M0-44-building-views` (from `main` = `9c46d11`, M0-43 merged as PR #58)
 - **Build log entry:** `docs/build-log/2026/2026-10-31-06-M0-44.md`
-- **Last green commit:** `main` `9c46d11` (nothing built yet on this branch)
-- **Done steps:** write-ahead only
-- **Next step:** step 1 of the log's plan: `BuildingLooks` (code table) and `BuildingViewFactory`, with EditMode tests. Then `CityView` and `BuildingView`, the wiring in `CityWorld`/`GameRoot`, the PlayMode `CityViewTests`, docs. The owner should still run `docs/testing/LOCAL-E2E.md` step 3 in the Editor (M0-43's ground, drag, wheel, click).
+- **Last green commit:** the head of `task/M0-44-building-views` (Unity EditMode 519 / 519 and PlayMode 32 / 32 in a mirror project; Repository tests and check-docs OK)
+- **Done steps:** steps 1 to 4 (looks, factory, views, `CityView`, wiring, tests)
+- **Next step:** step 5: close the Docs impact rows (09 line and a "Building views (M0-44)" bullet, the Presentation module doc, architecture overview, LOCAL-E2E step 3 and the server panel line, testing README, client README, 08, CHANGELOG), then the full fast .NET suite, the handbook build, and `/finish-task`.
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never

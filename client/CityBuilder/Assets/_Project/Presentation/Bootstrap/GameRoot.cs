@@ -5,6 +5,7 @@ using CityBuilder.Client.Core;
 using CityBuilder.Client.Net;
 using CityBuilder.Client.Presentation.City;
 using CityBuilder.Simulation.Content;
+using CityBuilder.Simulation.State;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -16,7 +17,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
     /// It shows the connection status, builds the API client from the settings asset, runs <see cref="StartupFlow"/> (login, content, city)
     /// and shows how it ended: "Connected" with the era and the coins, a message when the server cannot be used, or the fatal error screen
     /// when the server's content is invalid. Once connected it owns the city store, keeps the display city up to date for the views and builds the command sender they use.
-    /// It creates the city's camera first (<see cref="CityWorld"/>, so the screen is cleared at once) and, once connected, shows the ground for the grid size of the rules.
+    /// It creates the city's camera first (<see cref="CityWorld"/>, so the screen is cleared at once) and, once connected, shows the ground for the grid size of the rules and the buildings of the displayed city (<see cref="CityView"/>).
     /// It also drives the connection monitor: it polls the city, goes quiet while the app is paused, and the screen says how the connection stands.
     /// </summary>
     [DisallowMultipleComponent]
@@ -124,6 +125,8 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                     _commandSender = new CommandSender(_api!, _cityStore, CommandPolicy.Default);
                     _content = outcome.Content;
                     _world!.ShowGrid(new CityGrid(outcome.Content!.Rules.GridWidth, outcome.Content.Rules.GridHeight));
+                    _displayCity.Changed += ShowBuildings;
+                    ShowBuildings();
                     _monitor = new ConnectionMonitor(
                         _api!,
                         _auth!,
@@ -173,10 +176,25 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         /// <summary>Unity calls it when the object is destroyed: the monitor no longer reports to a screen that is gone.</summary>
         private void OnDestroy()
         {
+            if (_displayCity != null)
+            {
+                _displayCity.Changed -= ShowBuildings;
+            }
+
             if (_monitor != null)
             {
                 _monitor.StateChanged -= OnConnectionChanged;
                 _cityStore.SnapshotChanged -= OnConnectionChanged;
+            }
+        }
+
+        /// <summary>The displayed city changed (a new snapshot, or a whole second of prediction): the building views follow it.</summary>
+        private void ShowBuildings()
+        {
+            CityState? city = _displayCity?.Current;
+            if (city != null)
+            {
+                _world!.ShowCity(city);
             }
         }
 
