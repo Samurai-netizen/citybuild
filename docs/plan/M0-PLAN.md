@@ -285,7 +285,7 @@ The AI coder updates its row at start (`In progress`) and finish (`In review`). 
 | M0-38 | 7 | Auth and content on the client | S | Done |
 | M0-39 | 7 | Client city store and display prediction | O | Done |
 | M0-40 | 7 | Command sender and retry policy | S | Done |
-| M0-41 | 7 | Polling and lifecycle | S | In progress |
+| M0-41 | 7 | Polling and lifecycle | S | In review |
 | M0-42 | 7 | End-to-end checkpoint | O MANUAL | Todo |
 | M0-43 | 8 | Grid and camera | S | Todo |
 | M0-44 | 8 | Building views from state | S | Todo |

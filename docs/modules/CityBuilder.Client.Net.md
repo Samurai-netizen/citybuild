@@ -27,6 +27,7 @@ client directly (`.claude/rules/unity.md`). `GameRoot` builds it and runs the st
 | `CommandSender`, `CommandIntent`, `CommandKind` | The one way to give the server a command. `CommandIntent` is what the player wants (`PlaceBuilding`, `UpgradeBuilding`, `AssignWorkers`, `StartResearch` factories; equal kind and arguments are the same intent). `SendAsync(intent, token)` makes the request id once, sends it with every attempt, gives the snapshot of an accepted command to the `ClientCityStore` through `SnapshotMapper.Apply`, and returns a `CommandOutcome` |
 | `CommandPolicy` | The client's behaviour numbers: 3 requests per intent at most, waits of 0.5 s and 1 s between them (the default also holds a 2 s entry for a 4th), stepper debounce 400 ms; `IsRetryable(error)` is the one test of which failure is repeated |
 | `PendingCommand`, `CommandPhase`, `CommandOutcome`, `CommandOutcomeKind` | What the UI shows while an intent is on its way: `CommandSender.Pending` (replaced on every change; `PendingChanged` says when) lists each intent with its `Phase` (`Waiting`, `Sending`, `Retrying`) and `Attempts`. An intent ends as `Succeeded`, `Failed` (with the last `ApiError`) or `Superseded` (a newer worker target replaced it before it was sent) |
+| `ConnectionMonitor` | Polls `GET /city` into the `ClientCityStore` when the `PollScheduler` says so and turns every answer into a `ConnectionState` (`State`, `LastError`, `StateChanged`). `TickAsync` is called every frame (no task allocated when nothing is due; never throws), `SetPaused` pauses and resumes the polling, `RequestPoll` asks for one now, `PollAsync` polls whatever the scheduler says. `StateFor(error, duringLogin)` is the one table from failure to state |
 | `Dtos/*Dto` | The records of `05` as immutable classes: snapshot (`CitySnapshotDto` …), content (`ContentResponseDto` …), the dev login and the four command bodies; three enums |
 
 ## Rules and invariants
@@ -46,6 +47,7 @@ client directly (`.claude/rules/unity.md`). `GameRoot` builds it and runs the st
   result (a double tap sends once). `AssignWorkers` targets are coalesced per building: a new target replaces a waiting one, is sent after the
   debounce, and waits for the building's earlier target to end. An intent leaves `Pending` before its outcome is reported. Nothing is
   optimistic: only the server's snapshot changes the city.
+- **Polling (M0-41).** A usable snapshot of the loaded content is `Connected`. No answer (`CLIENT_NETWORK_ERROR`, `CLIENT_TIMEOUT`) is `Offline`. A 5xx, a proxy's page or an unexpected refusal is `ServerError`. A 2xx answer that is not the contract's, or a snapshot whose `contentVersion` is not the loaded content's (it is not applied), is `IncompatibleVersion`. `AUTHENTICATION_REQUIRED` forgets the token, logs in once and repeats `GET /city` once; a second refusal or a refused login is `Unauthorized` (a login with no answer is `Offline`). A rate-limited poll changes nothing. Every state ends with the next usable answer, so polling never stops. The monitor is built after a successful start and does not poll before it.
 - The sender runs on the main thread (its tasks continue there under Unity's context); waits and request ids are injected (`Func`s) so tests
   take no time.
 - Failures are results, not exceptions; only a cancelled token throws `OperationCanceledException`. The timeout is the client's
@@ -73,6 +75,7 @@ captured from the real server, and the round-trip test. A new error code: add it
 - `CommandIntentTests`, `CommandPolicyTests`, `CommandSenderTests` (real `ApiClient`, `FakeTransport`, `FakeDelay`): endpoint and body of each command; the same
   request id on every retry and the waits; 422 and the other refusals not repeated; success after two timeouts applies one snapshot; five rapid
   stepper taps send one command with the final value; the order of two targets of one building; cancellation leaves nothing pending.
+- `ConnectionMonitorTests` (real `ApiClient`, `FakeTransport`, a fake clock): each answer's state, the single new login and its three requests, a second refusal, a refused or unreachable login, a rate limit, when `StateChanged` fires, the store untouched by other content, ticks that poll only when due, pause and resume, a network that comes back, a cancel.
 - `SnapshotDtoTests`, `ContentDtoTests`, `RequestDtoTests`: every fixture reads, writes back to the same text, holds the expected values;
   a missing required member and an unknown phase are refused; request bodies have exactly their members.
 - `ApiResponseParserTests`: every `error-*.json` fixture parses to its code and status, all 24 server codes parse, `Retry-After`,
@@ -92,9 +95,11 @@ captured from the real server, and the round-trip test. A new error code: add it
 
 ## Known limitations
 - No view uses `CommandSender` yet (M0-44 onwards), and there is no complete error message table (M0-47 *(planned)*);
-  `ConnectionStatusModel` words only the failures of starting up.
+  `ConnectionStatusModel` words the start and the six connection states, not other errors.
+- A server that goes down while the device still has a network is found by the next 120 s poll, not sooner. A refused command (`AUTHENTICATION_REQUIRED`) does not yet ask the monitor for a poll: the views of M0-44 on call `RequestPoll`.
+- Content that changes while the app runs is not refetched (`05` Versioning): the state is `IncompatibleVersion` until the app restarts.
 - An unknown enum value or a missing member fails the whole answer; a server and a client of different versions during M0 need
   matching builds.
 - The real transport was walked against a running server once (M0-37 build log); it is not in CI (Unity tests are not).
 
-Last updated: M0-40
+Last updated: M0-41

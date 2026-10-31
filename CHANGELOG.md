@@ -175,6 +175,9 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
 - Unity client sends commands: `CommandSender` (one request id per intent, reused on every retry; repeats only network errors, timeouts, 5xx and
   `CONCURRENCY_CONFLICT`, up to 3 requests with 0.5 s and 1 s waits; the snapshot of an accepted command goes to the city store), a pending list
   for the UI, and worker-stepper targets coalesced per building behind a 400 ms debounce; 55 new EditMode tests (M0-40).
+- Unity client keeps itself current: `ConnectionMonitor` polls `GET /city` every 120 s in the foreground, on resuming from the background and when the
+  network returns (never while paused), and tracks a `ConnectionState` (`Connected`, `Offline`, `Unauthorized`, `ServerError`, `IncompatibleVersion`) the
+  status label shows; a refused token gets one new login; `PollScheduler` holds the timing rules; 57 new EditMode tests (M0-41).
 
 ### Changed
 - `/finish-task` can be run by the AI coder itself once every planned step is done (owner directive OD-15; M0-36).

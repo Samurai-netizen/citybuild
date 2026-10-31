@@ -1,7 +1,7 @@
 # Unity Client
 
 > **Built so far:** the project, its four assemblies and their tests, and the `Bootstrap` scene that shows "Not connected" (M0-04, M0-05;
-> `client/README.md`). The API client, the DTOs and the error parsing (`CityBuilder.Client.Net`, M0-37) and the start of the game (login, content through the engine's factory, the first `GET /city`, "Connected" or the fatal error screen: `AuthService`, `ContentService`, `StartupFlow`, `GameRoot`, M0-38) and the city store with its display prediction (`ClientCityStore`, `DisplayClock`, `DisplayCity`, M0-39) and the command sender with its retry policy (`CommandSender`, M0-40) are built and tested; the city view with M0-43, the screens from M0-45 *(planned)*. A task that builds a
+> `client/README.md`). The API client, the DTOs and the error parsing (`CityBuilder.Client.Net`, M0-37) and the start of the game (login, content through the engine's factory, the first `GET /city`, "Connected" or the fatal error screen: `AuthService`, `ContentService`, `StartupFlow`, `GameRoot`, M0-38) and the city store with its display prediction (`ClientCityStore`, `DisplayClock`, `DisplayCity`, M0-39) and the command sender with its retry policy (`CommandSender`, M0-40) and the polling with the connection state (`ConnectionMonitor`, `PollScheduler`, M0-41) are built and tested; the city view with M0-43, the screens from M0-45 *(planned)*. A task that builds a
 > part updates this line.
 
 The client renders the latest authoritative snapshot and makes waiting feel alive.
@@ -71,7 +71,10 @@ Local package line in `Packages/manifest.json`:
   through `SnapshotMapper.Apply`. `Pending` lists the intents on their way (`Waiting`, `Sending`, `Retrying`) for ghosts and disabled buttons;
   a repeat of a pending intent shares its result. `AssignWorkers` targets are coalesced per building: a new target replaces a not-yet-sent one,
   is sent after a 400 ms pause with no newer one, and waits for the building's earlier target to end. `GameRoot` builds the sender once connected.
-- **Polling:** `GET /city` on start, on `OnApplicationPause(false)`, after reconnect, every 120 s in foreground.
+- **Polling (M0-41):** `GET /city` on start (the start flow's own), on `OnApplicationPause(false)`, after the device's network comes back, and every 120 s in the
+  foreground; nothing while paused, one poll at a time (`PollScheduler`). `ConnectionMonitor` (Net) puts each snapshot in the store and holds the
+  `ConnectionState` (`Connecting`, `Connected`, `Offline`, `Unauthorized`, `ServerError`, `IncompatibleVersion`): a refused token gets one new login and one
+  repeat, then `Unauthorized`; content of another version is `IncompatibleVersion` and is not applied. `GameRoot` ticks it in `Update` and shows the state.
 
 ## M0 screens (UI Toolkit)
 HUD (item chips with stock/cap/net rate per hour, workers free/total, builders, research ring, era badge) ·
