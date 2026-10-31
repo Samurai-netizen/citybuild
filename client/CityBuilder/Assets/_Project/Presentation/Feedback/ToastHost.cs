@@ -95,10 +95,10 @@ namespace CityBuilder.Client.Presentation.Feedback
             return host;
         }
 
-        /// <summary>The time the queue counts in: whole milliseconds of unscaled play time, so a paused or sped-up game does not stretch a toast.</summary>
+        /// <summary>The time the queue counts in: whole milliseconds of unscaled play time (a double, so a long session keeps its precision), so a paused or sped-up game does not stretch a toast.</summary>
         public static long NowMilliseconds()
         {
-            return (long)(Time.unscaledTime * 1000f);
+            return (long)(Time.unscaledTimeAsDouble * 1000d);
         }
 
         /// <summary>Unity calls it before the first frame: the document's tree exists now, so the list is found and the queue is shown.</summary>
