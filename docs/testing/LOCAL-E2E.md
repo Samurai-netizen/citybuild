@@ -36,12 +36,14 @@ In a second terminal, run `curl http://localhost:8080/health`. It answers `Healt
 
 Behind the label the Game view is dark blue-grey, and a green chessboard of 8 by 8 tiles shows in a diamond (the city's ground, M0-43). The Console has no red messages. Try the controls: hold the left mouse button and drag to move the view (it stops at the edge of the grid), turn the mouse wheel to zoom, move the pointer to mark a tile in yellow, and click a tile to mark it in orange (click it again to clear it).
 
-A new city has no buildings, so the ground is empty. To see the building views (M0-44), place a Cottage with the command line (the client has no build menu until M0-45). Do it before pressing Play, or press Play again afterwards (the client asks for the city every 120 s, so a wait of up to two minutes shows it too):
+A new city has no buildings, so the ground is empty. To see the building views (M0-44), place a Cottage with the command line (the build menu of M0-45 only shows the cards; placing from it comes with M0-46). Do it before pressing Play, or press Play again afterwards (the client asks for the city every 120 s, so a wait of up to two minutes shows it too):
 ```
 TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/dev-login -H 'Content-Type: application/json' -d '{"displayName":"dev1"}' | sed 's/.*"accessToken":"\([^"]*\)".*/\1/')
 curl -X POST http://localhost:8080/api/v1/commands/place-building -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d "{\"requestId\":\"$(uuidgen)\",\"buildingTypeId\":\"house\",\"x\":3,\"y\":3}"
 ```
 The tile at column 3, row 3 shows a low flat block while the Cottage is under construction, and a small cream box with a red pitched roof once it is built. Other `buildingTypeId` values: `woodcutter` (low box and a log pile), `sawmill` (long box with a wheel), `trading_post` (box with a red awning). The Console shows no red messages.
+
+The build menu (M0-45): a green "Build" button sits at the bottom left. Click it: a dark sheet opens above it with one card per building type, side by side (scroll it sideways if they do not fit), and the button reads "Close". Each card shows the name, the cost, the build time (such as "2m"), the most workers and what it makes, for example "2 Logs → 1 Planks · 60/h at 3 workers" for the Sawmill. The Trading Post is dimmed and says "Requires: Trade Charter"; clicking it does nothing. Click another card: its border turns gold (click it again to clear it). With 700 coins every card is affordable and has no orange warning line. Clicking a card or the button must not mark a tile on the ground behind it. Placing a building from the menu is not built yet (M0-46).
 
 The local server can also be started and stopped from a small menu, `server-panel/README.md`.
 

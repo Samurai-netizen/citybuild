@@ -1,0 +1,11 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+  <!-- The build menu that BuildMenu shows (docs/how-to/add-ui-screen.md): a "Build" button that opens a bottom sheet with one card per
+       building type; BuildCard.uxml is the card and its cards go into build-cards. Its style is BuildMenu.uss. -->
+  <Style src="BuildMenu.uss" />
+  <ui:VisualElement name="build-root" class="build-root" picking-mode="Ignore">
+    <ui:VisualElement name="build-panel" class="build-panel build-panel--hidden">
+      <ui:ScrollView name="build-cards" class="build-cards" mode="Horizontal" />
+    </ui:VisualElement>
+    <ui:Button name="build-toggle" class="build-toggle" text="Build" />
+  </ui:VisualElement>
+</ui:UXML>

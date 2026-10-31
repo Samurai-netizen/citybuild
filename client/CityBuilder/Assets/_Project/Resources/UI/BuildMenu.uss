@@ -1,0 +1,89 @@
+/* The build menu (docs/how-to/add-ui-screen.md): a button at the bottom left and, above it, a sheet of cards. M0-45. Sizes are in panel
+   units (the reference resolution is 1200 x 800), so a 64 button is well over the 48 dp touch target. */
+.build-root {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  padding: 16px;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+}
+
+.build-toggle {
+  min-width: 160px;
+  min-height: 64px;
+  margin: 0;
+  padding: 8px 24px;
+  border-radius: 8px;
+  background-color: rgb(46, 98, 56);
+  color: rgb(255, 255, 255);
+  font-size: 26px;
+  -unity-font-style: bold;
+}
+
+.build-panel {
+  align-self: stretch;
+  margin-bottom: 12px;
+  padding: 8px;
+  border-radius: 10px;
+  background-color: rgba(0, 0, 0, 0.75);
+}
+
+.build-panel--hidden {
+  display: none;
+}
+
+.build-cards {
+  min-height: 250px;
+}
+
+.build-card {
+  width: 300px;
+  margin: 6px;
+  padding: 12px;
+  border-width: 3px;
+  border-radius: 8px;
+  border-color: rgb(70, 70, 70);
+  background-color: rgb(40, 44, 52);
+}
+
+.build-card--selected {
+  border-color: rgb(240, 200, 60);
+}
+
+.build-card--locked {
+  opacity: 0.5;
+}
+
+.card-name {
+  margin-bottom: 6px;
+  color: rgb(255, 255, 255);
+  font-size: 26px;
+  -unity-font-style: bold;
+}
+
+.card-line {
+  color: rgb(220, 220, 220);
+  font-size: 18px;
+  white-space: normal;
+}
+
+.card-recipe {
+  margin-top: 4px;
+  color: rgb(170, 220, 170);
+}
+
+.card-lock {
+  color: rgb(255, 150, 130);
+  font-size: 18px;
+  white-space: normal;
+}
+
+.card-hint {
+  color: rgb(255, 200, 90);
+  font-size: 18px;
+  white-space: normal;
+}
