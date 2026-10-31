@@ -9,8 +9,8 @@
 - **Branch:** `task/CR-0004-T1-audit-fixes` (from `main` = `008637c`)
 - **Build log entry:** `docs/build-log/2026/2026-10-31-03-CR-0004-T1.md`
 - **Last green commit:** `main` = `008637c` (Release build, fast suite: Repository 22, Domain 21, Application 155, IntegrationTests 553, Simulation 874)
-- **Done steps:** 1 (audit; the defects are the CR's table)
-- **Next step:** 2, the server fixes (defects 1, 11, 12, 13); then 3 engine, 4 client, 5 handbook packages, 6 docs and PR. See the build log's plan.
+- **Done steps:** 1 (audit; the defects are the CR's table), 2 (server: defects 1, 11, 12, 13)
+- **Next step:** 3, the engine's content limit (defect 14); then 4 client, 5 handbook packages, 6 docs and PR. See the build log's plan.
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never

@@ -48,9 +48,14 @@ public static class AuthServiceCollectionExtensions
                 {
                     OnTokenValidated = context =>
                     {
+                        // A signed token that names no player is as useless as an unsigned one: the same 401, not a 500 at the first read of the player.
                         if (HttpCurrentPlayer.Find(context.Principal) is { } playerId)
                         {
                             AuthLog.TokenAccepted(logger, playerId);
+                        }
+                        else
+                        {
+                            context.Fail("The token names no player.");
                         }
 
                         return Task.CompletedTask;

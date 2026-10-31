@@ -39,6 +39,7 @@ builder.Services.Configure<RouteHandlerOptions>(options => options.ThrowOnBadReq
 // What a request may send (core-instructions/07-security-model.md): no body above RequestLimits:MaxBodyBytes is read, and a JSON body that
 // names a property twice is refused instead of read as its last value, so every reader of the body sees the same values.
 builder.Services.AddRequestBodyLimit(builder.Configuration);
+builder.Services.AddResponseHeaders();
 builder.Services.AddRateLimits(builder.Configuration);
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.AllowDuplicateProperties = false);
 builder.Services.AddOpenApi();
@@ -119,9 +120,10 @@ if (timeScale > 1)
 // login on outside Development, stops the start here.
 AuthOptions auth = app.Services.GetRequiredService<IOptions<AuthOptions>>().Value;
 
-// The exception handler first, so it answers whatever the rest of the pipeline throws; the status code pages next, so an empty 404, 405 or
+// The response headers first, so every answer has them. Then the exception handler, so it answers whatever the rest of the pipeline throws; the status code pages next, so an empty 404, 405 or
 // 415 gets a Problem Details body too (without a code: the catalogue has none for them) and Kestrel's 413 is the contract's 400. Then the
 // body limit, so a body above it is refused before the token is checked or anything reads the body.
+app.UseResponseHeaders();
 app.UseExceptionHandler();
 app.UseStatusCodeProblems();
 app.UseRequestBodyLimit();
@@ -136,7 +138,8 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.MapHealthChecks("/health");
+// GET in the contract, HEAD for a load balancer: any other method is 405, as on every other path.
+app.MapHealthChecks("/health").WithMetadata(new HttpMethodMetadata([HttpMethods.Get, HttpMethods.Head]));
 
 // The game API. Every endpoint of the group requires an access token unless it opts out; the acting player comes only from the token.
 RouteGroupBuilder api = app.MapGroup("/api/v1").RequireAuthorization();
