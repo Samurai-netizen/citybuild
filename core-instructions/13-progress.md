@@ -5,24 +5,24 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-42 · End-to-end checkpoint; the PR is open, the owner merges it)
-- **Branch:** `task/M0-42-e2e-checkpoint` (from `main` = `53e9ab6`) until the owner merges
-- **Build log entry:** last: `docs/build-log/2026/2026-10-31-04-M0-42.md` (Done)
-- **Last green commit:** the head of `task/M0-42-e2e-checkpoint` (docs only; handbook builds; check-docs OK; the owner's Editor run works)
-- **Done steps:** all of M0-42
-- **Next step:** the owner merges the PR. Then `/start-task M0-43` (grid and camera, `[S]`: Sonnet 5.5); read the M0-42 Follow-ups.
+- **Task:** — (last completed: M0-43 · Grid and camera; the PR is open, the owner merges it)
+- **Branch:** `task/M0-43-grid-camera` (from `main` = `17fef65`) until the owner merges
+- **Build log entry:** last: `docs/build-log/2026/2026-10-31-05-M0-43.md` (Done)
+- **Last green commit:** the head of `task/M0-43-grid-camera` (fast .NET suite green; Unity EditMode 496 / 496 and PlayMode 25 / 25 in a mirror project; check-docs OK; handbook builds)
+- **Done steps:** all of M0-43
+- **Next step:** the owner merges the PR. Then `/start-task M0-44` (building views, `[S]`: Sonnet 5.5). The owner should run `docs/testing/LOCAL-E2E.md` step 3 in the Editor (the ground, drag, wheel, click) and confirm the old "Offline" text no longer shows behind "Connected".
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); M0-30: decisions 2 and 5 (400 for a too-big body, not the 413 my
   question named; malformed type ids 400 instead of 422); M0-38: decision 1 (Net and Presentation reference Simulation), decision 5 (the
-  PlayMode scene test changed), the stray `dev1` player in the dev database; M0-39: decision 4 (the store also ignores the same version with the same or an earlier clock); M0-40: decision 2 (3 requests in all, not 3 retries), decision 3 (`RATE_LIMITED` is not retried); M0-41: decision 4 (what `IncompatibleVersion` means), decision 7 (no faster retry while `Offline`); CR-0004-T1 Follow-ups: the coin soft-lock (G-Design), `ci.yml` permissions (G-Rules), the handbook's remaining advisories (G-Dependency).
+  PlayMode scene test changed), the stray `dev1` player in the dev database; M0-39: decision 4 (the store also ignores the same version with the same or an earlier clock); M0-43: decision 5 (Unity ran in a mirror project because your Editor was open), decision 13 (wheel = one ×0.9 step per event), decision 15 (UI-overlap and rotation not handled yet); M0-40: decision 2 (3 requests in all, not 3 retries), decision 3 (`RATE_LIMITED` is not retried); M0-41: decision 4 (what `IncompatibleVersion` means), decision 7 (no faster retry while `Offline`); CR-0004-T1 Follow-ups: the coin soft-lock (G-Design), `ci.yml` permissions (G-Rules), the handbook's remaining advisories (G-Dependency).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 42 / 85
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 43 / 85
 
 | Area | State | Notes |
 |---|---|---|
@@ -33,8 +33,8 @@
 | Persistence (EF + PostgreSQL) | done | M0-19 (EF Core model, migrations, Docker) merged (PR #31); repository and mapping M0-20 merged (PR #32); Testcontainers M0-21 merged (PR #33); locking M0-22 merged (PR #34); settle M0-23 merged (PR #35); M0-24 merged (PR #36) |
 | Auth + command pipeline | in progress | dev auth M0-25 merged (PR #37); the pipeline M0-26 merged (PR #38); its integration tests M0-27 merged (PR #39); content and city endpoints M0-28 merged (PR #40); PlaceBuilding M0-29 merged (PR #41); attack review M0-30 merged (PR #42) |
 | Commands: place / upgrade / assign workers / start research | done | place-building M0-29 merged (PR #41; `docs/how-to/add-command.md`); upgrade-building M0-31 merged (PR #43; OD-13); assign-workers M0-32 merged (PR #44); start-research M0-33 merged (PR #45): the four commands of M0 |
-| Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) and M0-05 (Unity tests, `test-unity.sh`) merged (PR #8, #12); API client and DTOs M0-37 merged (PR #49); auth and content on the client M0-38 merged (PR #50); the city store and display prediction M0-39 merged (PR #51); the command sender M0-40 merged (PR #52); polling and lifecycle M0-41 merged (PR #53); end-to-end check M0-42 in review (`docs/testing/LOCAL-E2E.md`) |
-| Unity city view + placement | not started | |
+| Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) and M0-05 (Unity tests, `test-unity.sh`) merged (PR #8, #12); API client and DTOs M0-37 merged (PR #49); auth and content on the client M0-38 merged (PR #50); the city store and display prediction M0-39 merged (PR #51); the command sender M0-40 merged (PR #52); polling and lifecycle M0-41 merged (PR #53); end-to-end check M0-42 merged (PR #57; `docs/testing/LOCAL-E2E.md`) |
+| Unity city view + placement | in progress | grid, ground and camera M0-43 in review (`CityWorld`, drag/pinch/wheel/tap, tile selection) |
 | Inspector, worker stepper, research screen, HUD | not started | |
 | Resilience (limits, retries, logging) | in progress | error catalogue, global handler, rate limits and input limits M0-34 merged (PR #46); logging, correlation and the dev time scale M0-35 merged (PR #47) |
 | Docs automation (DocTools) + docs completeness | in progress | handbook, Pages, docs-as-code checks and a full audit: CR-0002 done (PR #27); code documentation CR-0003 done (PR #29); DocTools is M0-61 |

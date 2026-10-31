@@ -179,6 +179,9 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   network returns (never while paused), and tracks a `ConnectionState` (`Connected`, `Offline`, `Unauthorized`, `ServerError`, `IncompatibleVersion`) the
   status label shows; a refused token gets one new login; `PollScheduler` holds the timing rules; 57 new EditMode tests (M0-41).
 - The local end-to-end check of the Unity client against the real server, run in the Editor: `docs/testing/LOCAL-E2E.md` (M0-42).
+- Unity city ground and camera: `CityWorld` (made by `GameRoot`: the only camera, a light, the 8 by 8 ground of primitives from the content's grid size), the angled
+  3/4 `CityCameraModel` (pan clamped to the grid, zoom limits), `CityInputReader` (drag, pinch, wheel, tap and hover through the Input System), `CityGrid` and `GridCoordinate`
+  (world and tile conversions), `TileSelection`; 93 new tests (75 EditMode, 18 PlayMode; the PlayMode ones use the Input System's fake devices) (M0-43).
 
 ### Changed
 - `/finish-task` can be run by the AI coder itself once every planned step is done (owner directive OD-15; M0-36).

@@ -3,6 +3,7 @@
 using System;
 using CityBuilder.Client.Core;
 using CityBuilder.Client.Net;
+using CityBuilder.Client.Presentation.City;
 using CityBuilder.Simulation.Content;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -15,6 +16,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
     /// It shows the connection status, builds the API client from the settings asset, runs <see cref="StartupFlow"/> (login, content, city)
     /// and shows how it ended: "Connected" with the era and the coins, a message when the server cannot be used, or the fatal error screen
     /// when the server's content is invalid. Once connected it owns the city store, keeps the display city up to date for the views and builds the command sender they use.
+    /// It creates the city's camera first (<see cref="CityWorld"/>, so the screen is cleared at once) and, once connected, shows the ground for the grid size of the rules.
     /// It also drives the connection monitor: it polls the city, goes quiet while the app is paused, and the screen says how the connection stands.
     /// </summary>
     [DisallowMultipleComponent]
@@ -69,6 +71,9 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         /// <summary>Polls the city and tracks the connection state; null until the start has connected.</summary>
         private ConnectionMonitor? _monitor;
 
+        /// <summary>The city's camera, light and ground; made in <c>Awake</c>, its ground once the content's grid size is known.</summary>
+        private CityWorld? _world;
+
         /// <summary>The text the screen shows now, for tests and logs.</summary>
         public string CurrentStatusText { get; private set; } = string.Empty;
 
@@ -78,12 +83,19 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         /// <summary>The connection monitor the views read the state from (<c>09</c> Polling); null until the start has connected.</summary>
         internal ConnectionMonitor? Connection => _monitor;
 
+        /// <summary>The city's camera and ground (<c>09</c> City view); null only before <c>Awake</c> has run.</summary>
+        internal CityWorld? World => _world;
+
         /// <summary>Whether the fatal error screen is up.</summary>
         public bool IsFatalErrorShown { get; private set; }
 
-        /// <summary>Unity calls it once, right after the component is created: it creates the UI.</summary>
+        /// <summary>Unity calls it once, right after the component is created: it creates the city's camera and the UI.</summary>
         private void Awake()
         {
+            // The camera comes first: it clears the screen, so an earlier text never shows through the status label.
+            var worldObject = new GameObject("World");
+            worldObject.transform.SetParent(transform, false);
+            _world = worldObject.AddComponent<CityWorld>();
             CreateConnectionStatus();
         }
 
@@ -111,6 +123,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                     _displayCity = new DisplayCity(_cityStore, new DisplayClock(_cityStore, outcome.TimeScale), outcome.Content!);
                     _commandSender = new CommandSender(_api!, _cityStore, CommandPolicy.Default);
                     _content = outcome.Content;
+                    _world!.ShowGrid(new CityGrid(outcome.Content!.Rules.GridWidth, outcome.Content.Rules.GridHeight));
                     _monitor = new ConnectionMonitor(
                         _api!,
                         _auth!,

@@ -142,20 +142,28 @@ public sealed class ClientAssemblyTests
         Assert.Empty(Strings(ReadAsmdef("Tests/PlayMode"), "includePlatforms"));
     }
 
-    /// <summary>A test assembly references the engine and the three runtime assemblies besides the test runner, and nothing on the server.</summary>
+    /// <summary>
+    /// A test assembly references the engine and the three runtime assemblies besides the test runner, and nothing on the server. The PlayMode
+    /// assembly may also reference the Input System and its test framework (M0-43, owner-approved G-Tests change): the city's input reader
+    /// is tested with the package's fake mouse and touch screen. The EditMode assembly stays exact.
+    /// </summary>
     [Theory]
     [MemberData(nameof(TestFolders))]
     public void TestAssembly_References_NameTheSimulationAndTheThreeRuntimeAssemblies(string folder)
     {
         // The tests exist to test these four. No test assembly refers to the other one or to anything on the server.
+        string[] expected = ["CityBuilder.Client.Core", "CityBuilder.Client.Net", "CityBuilder.Client.Presentation", "CityBuilder.Simulation"];
+        if (folder == "Tests/PlayMode")
+        {
+            expected = [.. expected, "Unity.InputSystem", "Unity.InputSystem.TestFramework"];
+        }
+
         string[] references = Strings(ReadAsmdef(folder), "references")
             .Where(reference => !reference.EndsWith("TestRunner", StringComparison.Ordinal))
             .Order(StringComparer.Ordinal)
             .ToArray();
 
-        Assert.Equal(
-            ["CityBuilder.Client.Core", "CityBuilder.Client.Net", "CityBuilder.Client.Presentation", "CityBuilder.Simulation"],
-            references);
+        Assert.Equal(expected, references);
     }
 
     // ----- Packages/manifest.json -----
