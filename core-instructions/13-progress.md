@@ -4,14 +4,14 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-39 · Client city store and display prediction; the PR is open, the owner merges it)
-- **Branch:** `task/M0-39-city-store-prediction` (from `main` = `3b8b3c3`) until the owner merges
-- **Build log entry:** last: `docs/build-log/2026/2026-10-30-04-M0-39.md` (Done)
-- **Last green commit:** the head of `task/M0-39-city-store-prediction` (Debug and Release builds 0 warnings, format clean, fast suite: Repository
-  22, Domain 21, Application 155, IntegrationTests 553, Simulation 874; Unity EditMode 298, PlayMode 7; handbook builds; check-docs OK)
-- **Done steps:** all of M0-39 (`CitySnapshot`, `ClientCityStore`, `SnapshotMapper`, `DisplayClock`, `DisplayCity`; `StartupFlow` fills the store)
-- **Next step:** the owner merges the PR. Then `/start-task M0-40` (command sender and retry policy, `[S]`: Sonnet 5.5); read the M0-39 Follow-ups.
+- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** M0-40 · Command sender and retry policy (`[S]`, Sonnet 5.5)
+- **Branch:** `task/M0-40-command-sender-retry` (from `main` = `34addbe`)
+- **Build log entry:** `docs/build-log/2026/2026-10-31-01-M0-40.md` (In progress)
+- **Last green commit:** `34addbe` on `main` (M0-39 merged, PR #51)
+- **Done steps:** write-ahead only
+- **Next step:** step 1 of the plan: the vocabulary types in `CityBuilder.Client.Net` (`CommandKind`, `CommandIntent`, `CommandPolicy`, `CommandPhase`,
+  `PendingCommand`, `CommandOutcome`) with tests; then `CommandSender` (steps 2 and 3), `GameRoot` (4), docs and finish (5).
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
@@ -24,7 +24,7 @@
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 38 / 85
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 39 / 85
 
 | Area | State | Notes |
 |---|---|---|
@@ -35,7 +35,7 @@
 | Persistence (EF + PostgreSQL) | done | M0-19 (EF Core model, migrations, Docker) merged (PR #31); repository and mapping M0-20 merged (PR #32); Testcontainers M0-21 merged (PR #33); locking M0-22 merged (PR #34); settle M0-23 merged (PR #35); M0-24 merged (PR #36) |
 | Auth + command pipeline | in progress | dev auth M0-25 merged (PR #37); the pipeline M0-26 merged (PR #38); its integration tests M0-27 merged (PR #39); content and city endpoints M0-28 merged (PR #40); PlaceBuilding M0-29 merged (PR #41); attack review M0-30 merged (PR #42) |
 | Commands: place / upgrade / assign workers / start research | done | place-building M0-29 merged (PR #41; `docs/how-to/add-command.md`); upgrade-building M0-31 merged (PR #43; OD-13); assign-workers M0-32 merged (PR #44); start-research M0-33 merged (PR #45): the four commands of M0 |
-| Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) and M0-05 (Unity tests, `test-unity.sh`) merged (PR #8, #12); API client and DTOs M0-37 merged (PR #49); auth and content on the client M0-38 merged (PR #50); the city store and display prediction M0-39 in review |
+| Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) and M0-05 (Unity tests, `test-unity.sh`) merged (PR #8, #12); API client and DTOs M0-37 merged (PR #49); auth and content on the client M0-38 merged (PR #50); the city store and display prediction M0-39 merged (PR #51); the command sender M0-40 in progress |
 | Unity city view + placement | not started | |
 | Inspector, worker stepper, research screen, HUD | not started | |
 | Resilience (limits, retries, logging) | in progress | error catalogue, global handler, rate limits and input limits M0-34 merged (PR #46); logging, correlation and the dev time scale M0-35 merged (PR #47) |
