@@ -13,7 +13,7 @@ the repositories stage in EF's change tracker. In the `Integration` category, on
 per test (how to run: `docs/testing/README.md`): migrations on an empty database, the repositories through the server, the constraints |
 | Repository | `CityBuilder.Repository.Tests` | ms | Checks over the whole source tree: every C# file says what it is for and every declaration has a doc comment, Unity scripts included (`14` → Documentation in code); each rule is tested on small samples |
 | Unity EditMode | `Assets/_Project/Tests/EditMode` | ms | DTO (de)serialization, client state store, grid math, retry policy, display prediction, view-models |
-| Unity PlayMode | `Assets/_Project/Tests/PlayMode` | s | Bootstrap starts; the city view builds from a snapshot; the build menu builds its cards from the content |
+| Unity PlayMode | `Assets/_Project/Tests/PlayMode` | s | Bootstrap starts; the city view builds from a snapshot; the build menu builds its cards from the content; the placement flow draws tile hints and a pending ghost and ends in a building or an error |
 | Manual smoke | `docs/testing/UNITY-SMOKE-TEST.md` *(planned, M0-72)* | min | Full loop on a real build |
 
 Mark integration tests with `[Trait("Category", "Integration")]` so the fast suite runs without Docker.

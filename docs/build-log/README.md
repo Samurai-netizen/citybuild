@@ -11,7 +11,7 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
-- [BL-20261031-08 · M0-46 · Placement flow](2026/2026-10-31-08-M0-46.md) — In progress
+- [BL-20261031-08 · M0-46 · Placement flow](2026/2026-10-31-08-M0-46.md) — Done
 - [BL-20261031-07 · M0-45 · Build menu](2026/2026-10-31-07-M0-45.md) — Done
 - [BL-20261031-06 · M0-44 · Building views from state](2026/2026-10-31-06-M0-44.md) — Done
 - [BL-20261031-05 · M0-43 · Grid and camera](2026/2026-10-31-05-M0-43.md) — Done
