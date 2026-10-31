@@ -25,6 +25,24 @@ namespace CityBuilder.Client.Net
         /// <returns>Null when the answer held a usable snapshot (also one the store ignored as old); otherwise why it didn't.</returns>
         public static ApiError? Apply(ClientCityStore store, ApiResult<CitySnapshotDto> response)
         {
+            return Give(store, response, replace: false);
+        }
+
+        /// <summary>
+        /// Like <see cref="Apply"/>, but the store takes the snapshot whatever it holds (<see cref="ClientCityStore.Replace"/>): for the answer right after a
+        /// new login, which may be another city.
+        /// </summary>
+        /// <param name="store">The store that takes the snapshot.</param>
+        /// <param name="response">The API's answer.</param>
+        /// <returns>Null when the answer was a valid city, otherwise why it wasn't.</returns>
+        public static ApiError? Replace(ClientCityStore store, ApiResult<CitySnapshotDto> response)
+        {
+            return Give(store, response, replace: true);
+        }
+
+        /// <summary>Maps the answer and hands it to the store, unless the answer is a failure or no valid city.</summary>
+        private static ApiError? Give(ClientCityStore store, ApiResult<CitySnapshotDto> response, bool replace)
+        {
             if (store == null)
             {
                 throw new ArgumentNullException(nameof(store));
@@ -46,7 +64,15 @@ namespace CityBuilder.Client.Net
                 return snapshot.Error;
             }
 
-            store.Apply(snapshot.Value!);
+            if (replace)
+            {
+                store.Replace(snapshot.Value!);
+            }
+            else
+            {
+                store.Apply(snapshot.Value!);
+            }
+
             return null;
         }
 

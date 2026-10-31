@@ -87,7 +87,7 @@ internal sealed class FakeCityStore : ICityRepository, IUnitOfWork, ICommandRece
 
         return Task.FromResult(_cities.TryGetValue(playerId, out CityAggregate? city)
             ? city
-            : throw new InvalidOperationException($"Player {playerId} has no city."));
+            : throw new CityNotFoundException($"Player {playerId} has no city."));
     }
 
     /// <inheritdoc />

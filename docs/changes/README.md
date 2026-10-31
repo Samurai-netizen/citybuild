@@ -19,3 +19,4 @@ as a CR. That's how the owner keeps control over what gets built (`core-instruct
 | [CR-0001](CR-0001-start-pass-repeats.md) | A start frees cap room: the start pass repeats until nothing starts | Bug | Done |
 | [CR-0002](CR-0002-docs-site.md) | Project handbook: a Docusaurus site over the docs, kept current by every task | Process | Done |
 | [CR-0003](CR-0003-code-documentation.md) | Code documentation: every file and every declaration described, and checked | Process | Done |
+| [CR-0004](CR-0004-code-audit-fixes.md) | Whole-code audit: bugs, edge cases and security fixes | Bug | In progress |

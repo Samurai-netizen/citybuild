@@ -158,7 +158,7 @@ not hard-coded, so this is an additive change.
 ## 14. Content rules (checked when content loads)
 Content becomes a `GameContent` only through `GameContentFactory`, and the engine relies on every rule below. The factory checks the shape
 first (required values present, ids `[a-z][a-z0-9_]*` of at most 64 characters, known kinds and effect types, no value where none belongs,
-quantities, durations and labor ≤ 10¹²), then every rule, and lists every error with a stable code (`docs/modules/CityBuilder.Simulation.md`).
+quantities, durations and labor ≤ 10¹²; grid size and worker counts ≤ 32767, the `smallint` columns of `06`), then every rule, and lists every error with a stable code (`docs/modules/CityBuilder.Simulation.md`).
 1. Recipe and bonus amounts, labor, durations, base caps, grid size and slots > 0; cost and starting amounts ≥ 0; an effect's permille
    1..1000; `MaxLaborReductionPermille` 0..1000; exactly one research slot (§5).
 2. Ids are unique per kind; era numbers are 1..n; every reference (era, item, building type, research node) exists.

@@ -36,7 +36,7 @@ to 0.1 ms; a Development fast clock doesn't change it.
 | 4000 | Information | A dev login issued a token | `PlayerId`, `IsNewPlayer` |
 | 4001 | Information | A dev login was refused for its body | `Code` |
 | 4002 | Debug | A request's access token was accepted | `PlayerId` |
-| 4003 | Warning | A request was refused with 401 | `Method`, `Path`, `Reason` (`NoToken`, or the validation failure's type, such as `SecurityTokenInvalidLifetimeException` for an expired token) |
+| 4003 | Warning | A request was refused with 401 | `Method`, `Path`, `Reason` (`NoToken`, `NoCity` for a token whose player has no city, or the validation failure's type, such as `SecurityTokenInvalidLifetimeException` for an expired token, or `AuthenticationFailureException` for a token that names no player) |
 | 5000 | Information | A command was applied and stored | `Command`, `RequestId`, `PlayerId`, `DurationMs` |
 | 5001 | Information | A command was refused | `Command`, `RequestId`, `PlayerId`, `Code` (a rule's code, `INVALID_ARGUMENT` or `IDEMPOTENCY_CONFLICT`), `DurationMs` |
 | 5002 | Information | A retried command was answered from its receipt (nothing ran) | `Command`, `RequestId`, `PlayerId`, `DurationMs` |

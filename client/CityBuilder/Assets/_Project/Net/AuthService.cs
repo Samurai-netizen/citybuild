@@ -67,6 +67,7 @@ namespace CityBuilder.Client.Net
         /// <exception cref="ArgumentException"><paramref name="displayName"/> is null or empty.</exception>
         /// <exception cref="InvalidOperationException">A login is already in progress.</exception>
         /// <exception cref="OperationCanceledException">The token was cancelled.</exception>
+        /// <exception cref="Exception">Anything else unexpected; the service is then <see cref="AuthState.LoggedOut"/>.</exception>
         public async Task<AuthState> LoginAsync(string displayName, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(displayName))
@@ -78,33 +79,33 @@ namespace CityBuilder.Client.Net
             Drop();
             State = AuthState.LoggingIn;
 
-            ApiResult<DevLoginResponseDto> result;
             try
             {
-                result = await _api.DevLoginAsync(displayName, cancellationToken);
+                ApiResult<DevLoginResponseDto> result = await _api.DevLoginAsync(displayName, cancellationToken);
+                if (!result.IsSuccess)
+                {
+                    return Fail(result.Error!);
+                }
+
+                string accessToken = result.Value!.AccessToken;
+                if (string.IsNullOrEmpty(accessToken))
+                {
+                    // The DTO requires the member, but an empty text still decodes; a login without a token is a broken answer.
+                    return Fail(new ApiError(ApiErrorCodes.ClientInvalidResponse, 200, "The login answer holds no access token.", null, null, null));
+                }
+
+                _api.SetAccessToken(accessToken);
+                _store.Save(new StoredLogin(displayName, accessToken));
+                State = AuthState.LoggedIn;
+                return State;
             }
-            catch (OperationCanceledException)
+            catch
             {
+                // A cancel, or something unexpected. Never left LoggingIn: every later login and Forget would refuse with "already in progress".
+                _api.SetAccessToken(null);
                 State = AuthState.LoggedOut;
                 throw;
             }
-
-            if (!result.IsSuccess)
-            {
-                return Fail(result.Error!);
-            }
-
-            string accessToken = result.Value!.AccessToken;
-            if (string.IsNullOrEmpty(accessToken))
-            {
-                // The DTO requires the member, but an empty text still decodes; a login without a token is a broken answer.
-                return Fail(new ApiError(ApiErrorCodes.ClientInvalidResponse, 200, "The login answer holds no access token.", null, null, null));
-            }
-
-            _api.SetAccessToken(accessToken);
-            _store.Save(new StoredLogin(displayName, accessToken));
-            State = AuthState.LoggedIn;
-            return State;
         }
 
         /// <summary>Drops the token from the client and the store and goes back to <see cref="AuthState.LoggedOut"/>; used when the server refused it.</summary>

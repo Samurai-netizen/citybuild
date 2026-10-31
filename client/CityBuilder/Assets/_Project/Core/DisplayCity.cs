@@ -96,7 +96,7 @@ namespace CityBuilder.Client.Core
             {
                 Simulator.Advance(city, _content, elapsed);
             }
-            catch (InvalidOperationException exception)
+            catch (Exception exception) when (exception is InvalidOperationException || exception is ArgumentException || exception is OverflowException)
             {
                 Debug.LogError($"DisplayCity: cannot predict state version {snapshot.StateVersion} (content {snapshot.ContentVersion}): {exception.Message}");
                 _predictionFailed = true;

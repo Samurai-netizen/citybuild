@@ -19,4 +19,22 @@ public sealed class HealthEndpointTests(ApiFactory factory) : IClassFixture<ApiF
         // Only the status word: no check details, versions or exception text leak to anonymous callers (07).
         Assert.Equal("Healthy", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
     }
+
+    /// <summary><c>/health</c> is a GET in the contract, and HEAD for a load balancer; any other method is 405, as on every other path.</summary>
+    /// <param name="method">The HTTP method.</param>
+    /// <param name="status">The expected status.</param>
+    [Theory]
+    [InlineData("GET", HttpStatusCode.OK)]
+    [InlineData("HEAD", HttpStatusCode.OK)]
+    [InlineData("POST", HttpStatusCode.MethodNotAllowed)]
+    [InlineData("DELETE", HttpStatusCode.MethodNotAllowed)]
+    public async Task Health_Methods_AreGetAndHeadOnly(string method, HttpStatusCode status)
+    {
+        using HttpClient client = factory.CreateClient();
+        using var request = new HttpRequestMessage(new HttpMethod(method), "/health");
+
+        using HttpResponseMessage response = await client.SendAsync(request, TestContext.Current.CancellationToken);
+
+        Assert.Equal(status, response.StatusCode);
+    }
 }

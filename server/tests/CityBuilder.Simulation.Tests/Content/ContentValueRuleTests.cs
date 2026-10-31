@@ -43,10 +43,19 @@ public sealed class ContentValueRuleTests
         ["research[better_saws].cost.boards"] = data => Research(data, "better_saws").Cost!["boards"] = -1,
     };
 
-    /// <summary>Two research slots and permille above 1000, by the expected error path.</summary>
+    /// <summary>Two research slots, permille above 1000, and a grid or a worker count past <see cref="GameContentFactory.MaxStoredSmallValue"/>, by the expected error path.</summary>
     private static readonly Dictionary<string, Action<GameContentData>> _tooLarge = new()
     {
         ["rules.researchSlots"] = data => RulesOf(data).ResearchSlots = 2,
+        ["rules.gridWidth"] = data => RulesOf(data).GridWidth = GameContentFactory.MaxStoredSmallValue + 1,
+        ["rules.gridHeight"] = data => RulesOf(data).GridHeight = int.MaxValue,
+        ["buildings[hut].levels[2].workersProvided"] = data => Level(data, "hut", 2).WorkersProvided = GameContentFactory.MaxStoredSmallValue + 1,
+        ["buildings[lumber_camp].levels[2].maxWorkers"] = data =>
+        {
+            // The labor grows with the workers, so the only broken rule is the limit: not the shortest cycle.
+            Level(data, "lumber_camp", 2).MaxWorkers = GameContentFactory.MaxStoredSmallValue + 1;
+            Level(data, "lumber_camp", 2).Recipe!.Labor = GameContentFactory.MaxQuantity;
+        },
         ["rules.maxLaborReductionPermille"] = data => RulesOf(data).MaxLaborReductionPermille = 1001,
         ["research[better_saws].effects[#0].permille"] = data => Research(data, "better_saws").Effects![0]!.Permille = 1001,
     };
@@ -72,11 +81,23 @@ public sealed class ContentValueRuleTests
     public void Create_CostStockOrLimitBelowZero_ReportsNegative(string path) =>
         ContentAssert.SingleError(ValidWith(_negative[path]), ContentErrorCode.Negative, path);
 
-    /// <summary>More than one research slot, or permille above 1000, gives one <see cref="ContentErrorCode.ValueTooLarge"/>.</summary>
+    /// <summary>More than one research slot, permille above 1000, or a grid or a worker count too big to store, gives one <see cref="ContentErrorCode.ValueTooLarge"/>.</summary>
     [Theory]
     [MemberData(nameof(TooLargePaths))]
     public void Create_SlotsOrPermilleAboveTheirLimit_ReportsValueTooLarge(string path) =>
         ContentAssert.SingleError(ValidWith(_tooLarge[path]), ContentErrorCode.ValueTooLarge, path);
+
+    /// <summary>A grid and a worker count of exactly the limit are allowed: the limit is the largest value a <c>smallint</c> column holds.</summary>
+    [Fact]
+    public void Create_GridAndWorkersAtTheLimit_AreAccepted()
+    {
+        GameContentData data = Valid();
+        RulesOf(data).GridWidth = GameContentFactory.MaxStoredSmallValue;
+        RulesOf(data).GridHeight = GameContentFactory.MaxStoredSmallValue;
+        Level(data, "hut", 2).WorkersProvided = GameContentFactory.MaxStoredSmallValue;
+
+        Assert.True(GameContentFactory.Create(data).IsValid);
+    }
 
     /// <summary>Zero costs, zero stock and a limit of 1000 ‰ are allowed.</summary>
     [Fact]

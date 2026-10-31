@@ -4,6 +4,7 @@ using System.Text.Json.Nodes;
 using CityBuilder.Api.Http;
 using CityBuilder.Application.Cities;
 using CityBuilder.IntegrationTests.Contracts;
+using CityBuilder.IntegrationTests.Errors;
 using CityBuilder.Simulation.Content;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
@@ -115,6 +116,45 @@ public sealed class ApiAttackContractTests(ApiFactory factory) : IClassFixture<A
             : factory.WithWebHostBuilder(host => host.UseSetting("RequestLimits:MaxBodyBytes", setting));
 
         Assert.Equal(expected, server.Services.GetRequiredService<IOptions<KestrelServerOptions>>().Value.Limits.MaxRequestBodySize);
+    }
+
+    /// <summary>The answers don't name the server software: Kestrel's <c>Server</c> header is off.</summary>
+    [Fact]
+    public void Security_KestrelServerHeader_IsOff()
+    {
+        Assert.False(factory.Services.GetRequiredService<IOptions<KestrelServerOptions>>().Value.AddServerHeader);
+    }
+
+    /// <summary>
+    /// No answer may be cached or sniffed: a snapshot or a token is for one player only, also on an error answer and on a path no endpoint has.
+    /// </summary>
+    /// <param name="path">The path.</param>
+    [Theory]
+    [InlineData("/health")]
+    [InlineData("/api/v1/nothing-here")]
+    [InlineData("/api/v1/city")]
+    public async Task Security_EveryAnswer_ForbidsCachingAndSniffing(string path)
+    {
+        using HttpClient client = factory.CreateClient();
+
+        using HttpResponseMessage response = await client.GetAsync(new Uri(path, UriKind.Relative), TestContext.Current.CancellationToken);
+
+        Assert.True(response.Headers.CacheControl?.NoStore, path + " has no Cache-Control: no-store");
+        Assert.Equal("nosniff", Assert.Single(response.Headers.GetValues("X-Content-Type-Options")));
+    }
+
+    /// <summary>The headers are there on the handler's answer to an exception too, which clears what was set before it.</summary>
+    [Fact]
+    public async Task Security_AnswerToAnException_ForbidsCachingAndSniffing()
+    {
+        await using WebApplicationFactory<Program> server = ThrowingEndpoint.AddTo(factory);
+        using HttpClient client = server.CreateClient();
+
+        using HttpResponseMessage response = await client.GetAsync(new Uri("/test/throw?kind=internal", UriKind.Relative), TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        Assert.True(response.Headers.CacheControl?.NoStore);
+        Assert.Equal("nosniff", Assert.Single(response.Headers.GetValues("X-Content-Type-Options")));
     }
 
     /// <summary>A body limit below 1024 bytes or above a mebibyte fails the options validation at startup, naming the setting.</summary>
