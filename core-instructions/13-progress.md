@@ -8,9 +8,9 @@
 - **Task:** M0-41 · Polling and lifecycle `[S]`
 - **Branch:** `task/M0-41-polling-lifecycle` (from `main` = `c865421`)
 - **Build log entry:** `docs/build-log/2026/2026-10-31-02-M0-41.md`
-- **Last green commit:** step 1 of M0-41 (head of the branch; `PollSchedulerTests` 14 of 14 in Unity EditMode)
-- **Done steps:** write-ahead; step 1 (`ConnectionState`, `PollScheduler`)
-- **Next step:** step 2: `ConnectionMonitor` in Net (poll, state machine, one re-login), tests over `FakeTransport` (plan in the build log)
+- **Last green commit:** step 2 of M0-41 (head of the branch; `PollSchedulerTests` 14, `ConnectionMonitorTests` 35 in Unity EditMode)
+- **Done steps:** write-ahead; step 1 (`ConnectionState`, `PollScheduler`); step 2 (`ConnectionMonitor`)
+- **Next step:** step 3: `GameRoot` drives the monitor (Update, OnApplicationPause, reachability); `ConnectionStatusModel` words the states, with tests
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
