@@ -1,6 +1,6 @@
 # CR-0004 — Whole-code audit: bugs, edge cases and security fixes
 
-- **Status:** In progress
+- **Status:** Done
 - **Type:** Bug
 - **Requested by:** owner · **Date:** 2026-10-31
 - **Milestone / era:** M0 / Era I
@@ -70,7 +70,7 @@ Fix each defect with a regression test, in small steps. No game rule changes. Co
 ## Tasks (filled in after approval)
 | ID | Title | Model | Status |
 |---|---|---|---|
-| CR-0004-T1 | The fixes of the whole-code audit | O | In review |
+| CR-0004-T1 | The fixes of the whole-code audit | O | Done |
 
 ## Owner approval
 - Approved on: 2026-10-31. "Scan the whole code, whole systems one by one, and try to find and fix as many bugs, errors, edge-cases, security vulnerabilities as possible."

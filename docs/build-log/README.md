@@ -11,6 +11,7 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
+- [BL-20261031-04 · M0-42 · End-to-end checkpoint](2026/2026-10-31-04-M0-42.md) — In progress
 - [BL-20261031-03 · CR-0004-T1 · The fixes of the whole-code audit](2026/2026-10-31-03-CR-0004-T1.md) — Done
 - [BL-20261031-02 · M0-41 · Polling and lifecycle](2026/2026-10-31-02-M0-41.md) — In progress
 - [BL-20261031-01 · M0-40 · Command sender and retry policy](2026/2026-10-31-01-M0-40.md) — In progress

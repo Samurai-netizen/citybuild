@@ -4,14 +4,13 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: CR-0004-T1 · The fixes of the whole-code audit; the PR is open, the owner merges it)
-- **Branch:** `task/CR-0004-T1-audit-fixes` (from `main` = `008637c`) until the owner merges
-- **Build log entry:** last: `docs/build-log/2026/2026-10-31-03-CR-0004-T1.md` (Done)
-- **Last green commit:** the head of `task/CR-0004-T1-audit-fixes` (Release build 0 warnings, format clean, all tests: Repository 22, Domain 21,
-  Application 155, IntegrationTests 740, Simulation 879; Unity EditMode 421, PlayMode 7; handbook builds; check-docs OK)
-- **Done steps:** all of CR-0004-T1 (the defects are the CR's table)
-- **Next step:** the owner merges the PR, then sets CR-0004 to Done. Then `/start-task M0-42` (end-to-end checkpoint, `[O]` and `[MANUAL]`: Opus 5.5); read the CR-0004-T1 Follow-ups.
+- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** M0-42 · End-to-end checkpoint (`[O]`, `[MANUAL]`)
+- **Branch:** `task/M0-42-e2e-checkpoint` (from `main` = `53e9ab6`)
+- **Build log entry:** `docs/build-log/2026/2026-10-31-04-M0-42.md`
+- **Last green commit:** `main` = `53e9ab6` (CR-0004-T1 merged, PR #54)
+- **Done steps:** write-ahead
+- **Next step:** step 1 of the plan: preflight of the real API with no Editor
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
