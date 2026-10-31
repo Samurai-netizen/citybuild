@@ -50,7 +50,7 @@ How to get from a clean machine to a running project. Every command here must wo
 | Start research (Development; after the login) | `curl http://localhost:8080/api/v1/commands/start-research -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d "{\"requestId\":\"$(uuidgen)\",\"researchId\":\"trade_charter\"}"`: the ids are in `GET /content` → `research`; answers with the snapshot (`research.activeId` and `endsAt`, the cost paid), or Problem Details such as `RESEARCH_LOCKED` or `RESEARCH_IN_PROGRESS`; it completes on its own in a later request at `endsAt` | M0-33 |
 | Try every endpoint by hand (Development; the API running) | open `docs/api/smoke.http` in a REST client (VS Code's REST Client: "Send Request" above each request): the login, the content, the city, golden scenario #1 command by command, a replay and refusals; its header says how to start from the starter city | M0-36 |
 | Run the API with another content file (a draft) | `dotnet run --project server/src/CityBuilder.Api -- --Content:FilePath=/path/to/draft.json` | M0-07b |
-| Run the client against the dev API (API running, Editor) | Press Play in `Bootstrap`: the client logs in as the dev player named in `client/CityBuilder/Assets/_Project/Resources/Config/ApiClientSettings.asset` (`devDisplayName`, default `dev1`) and shows "Connected - Early Middle Ages - Coins: 700" (`client/README.md`) | M0-38 |
+| Run the client against the dev API (API running, Editor) | Press Play in `Bootstrap`: the client logs in as the dev player named in `client/CityBuilder/Assets/_Project/Resources/Config/ApiClientSettings.asset` (`devDisplayName`, default `dev1`) and shows "Connected - Early Middle Ages - Coins: 700" (`client/README.md`; the whole check, with the server stopped and started: `docs/testing/LOCAL-E2E.md`) | M0-38 |
 | Open the Unity project | Unity Hub → Add → `client/CityBuilder` (editor 6000.3.25f1); details and the Bootstrap scene steps: `client/README.md` | M0-04 |
 | Does the Unity project compile? (Editor closed) | `<UNITY> -batchmode -quit -projectPath client/CityBuilder -logFile -`, exit code 0 and no `error CS` (`client/README.md`) | M0-04 |
 | Unity tests (Editor closed; set `UNITY_EDITOR` first, `client/README.md` → Run the tests) | `bash scripts/dev/test-unity.sh` (Windows: `pwsh scripts/dev/test-unity.ps1`) | M0-05 |
@@ -116,6 +116,7 @@ From M0-61 this section links to the generated reference.
 ## Troubleshooting
 Added whenever a setup problem is solved (the build log entry links here).
 - **The API stops at startup with "ConnectionStrings:CityBuilder must hold the database connection string":** set it (Database, step 2).
+- **The API stops at startup with "Auth:SigningKey must hold the token signing key":** set it (Database, step 2; M0-42).
 - **The API stops at startup with an `NpgsqlException`:** the database isn't running (`docker compose up -d postgres`) or the
   connection string doesn't match `.env` (M0-19).
 - **`docker compose up` says "required variable POSTGRES_PASSWORD is missing a value":** create `.env` from `.env.example` (M0-19).

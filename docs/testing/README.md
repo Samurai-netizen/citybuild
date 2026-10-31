@@ -119,4 +119,5 @@ flowchart LR
   the request's ledger rows).
 
 ## Other test documents
+- `LOCAL-E2E.md`: the manual check of the Unity client against the real server on one machine (M0-42).
 - `UNITY-SMOKE-TEST.md`: the manual smoke test of a real build *(planned, M0-72)*.
