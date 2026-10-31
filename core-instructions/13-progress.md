@@ -8,9 +8,9 @@
 - **Task:** M0-45 · Build menu (`[S]`, Sonnet 5.5)
 - **Branch:** `task/M0-45-build-menu` (from `main` = `d8372ef`, M0-44 merged as PR #59)
 - **Build log entry:** `docs/build-log/2026/2026-10-31-07-M0-45.md`
-- **Last green commit:** `main` `d8372ef` (nothing built yet on this branch)
-- **Done steps:** write-ahead only
-- **Next step:** step 1 of the log's plan: `DurationText`, `BuildCardModel` and `BuildMenuModel` under `Presentation/Build/`, with EditMode tests. Then the layout, `BuildMenu` and the `GameRoot` wiring, the PlayMode test, `add-ui-screen.md` and the docs. The owner should still run `docs/testing/LOCAL-E2E.md` step 3 in the Editor (M0-43's controls, M0-44's place-a-Cottage recipe).
+- **Last green commit:** the head of `task/M0-45-build-menu` after `feat(M0-45): build card and menu models` (fast .NET suite not affected; Unity EditMode 560 / 560 in a mirror project)
+- **Done steps:** write-ahead; step 1 (`DurationText`, `BuildHint`, `BuildCardModel`, `BuildMenuModel`, 41 EditMode tests)
+- **Next step:** step 2 of the log's plan: `BuildMenu.uxml`, `BuildCard.uxml`, `BuildMenu.uss` in `Resources/UI/` and a layout test (like `StartScreenLayoutTests`). Then step 3: thin `BuildMenu` component + `GameRoot` wiring (cards judged by `DisplayCity.Current`; ignore pointers over the menu in `CityInputReader`, log it), step 4 PlayMode test, step 5 docs. Unity runs in a mirror project (the owner's Editor is open): script `scratchpad/run-unity.sh EditMode|PlayMode` rsyncs the repo into it; copy new `.meta` files back if the Editor did not write them.
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
