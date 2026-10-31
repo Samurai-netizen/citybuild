@@ -11,7 +11,8 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
-- [BL-20261031-05 · M0-43 · Grid and camera](2026/2026-10-31-05-M0-43.md) — In progress
+- [BL-20261031-06 · M0-44 · Building views from state](2026/2026-10-31-06-M0-44.md) — In progress
+- [BL-20261031-05 · M0-43 · Grid and camera](2026/2026-10-31-05-M0-43.md) — Done
 - [BL-20261031-04 · M0-42 · End-to-end checkpoint](2026/2026-10-31-04-M0-42.md) — In progress
 - [BL-20261031-03 · CR-0004-T1 · The fixes of the whole-code audit](2026/2026-10-31-03-CR-0004-T1.md) — Done
 - [BL-20261031-02 · M0-41 · Polling and lifecycle](2026/2026-10-31-02-M0-41.md) — In progress

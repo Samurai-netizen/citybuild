@@ -4,13 +4,13 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-43 · Grid and camera; the PR is open, the owner merges it)
-- **Branch:** `task/M0-43-grid-camera` (from `main` = `17fef65`) until the owner merges
-- **Build log entry:** last: `docs/build-log/2026/2026-10-31-05-M0-43.md` (Done)
-- **Last green commit:** the head of `task/M0-43-grid-camera` (fast .NET suite green; Unity EditMode 496 / 496 and PlayMode 25 / 25 in a mirror project; check-docs OK; handbook builds)
-- **Done steps:** all of M0-43
-- **Next step:** the owner merges the PR. Then `/start-task M0-44` (building views, `[S]`: Sonnet 5.5). The owner should run `docs/testing/LOCAL-E2E.md` step 3 in the Editor (the ground, drag, wheel, click) and confirm the old "Offline" text no longer shows behind "Connected".
+- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** M0-44 · Building views from state (`[S]`, Sonnet 5.5)
+- **Branch:** `task/M0-44-building-views` (from `main` = `9c46d11`, M0-43 merged as PR #58)
+- **Build log entry:** `docs/build-log/2026/2026-10-31-06-M0-44.md`
+- **Last green commit:** `main` `9c46d11` (nothing built yet on this branch)
+- **Done steps:** write-ahead only
+- **Next step:** step 1 of the log's plan: `BuildingLooks` (code table) and `BuildingViewFactory`, with EditMode tests. Then `CityView` and `BuildingView`, the wiring in `CityWorld`/`GameRoot`, the PlayMode `CityViewTests`, docs. The owner should still run `docs/testing/LOCAL-E2E.md` step 3 in the Editor (M0-43's ground, drag, wheel, click).
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
@@ -34,7 +34,7 @@
 | Auth + command pipeline | in progress | dev auth M0-25 merged (PR #37); the pipeline M0-26 merged (PR #38); its integration tests M0-27 merged (PR #39); content and city endpoints M0-28 merged (PR #40); PlaceBuilding M0-29 merged (PR #41); attack review M0-30 merged (PR #42) |
 | Commands: place / upgrade / assign workers / start research | done | place-building M0-29 merged (PR #41; `docs/how-to/add-command.md`); upgrade-building M0-31 merged (PR #43; OD-13); assign-workers M0-32 merged (PR #44); start-research M0-33 merged (PR #45): the four commands of M0 |
 | Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) and M0-05 (Unity tests, `test-unity.sh`) merged (PR #8, #12); API client and DTOs M0-37 merged (PR #49); auth and content on the client M0-38 merged (PR #50); the city store and display prediction M0-39 merged (PR #51); the command sender M0-40 merged (PR #52); polling and lifecycle M0-41 merged (PR #53); end-to-end check M0-42 merged (PR #57; `docs/testing/LOCAL-E2E.md`) |
-| Unity city view + placement | in progress | grid, ground and camera M0-43 in review (`CityWorld`, drag/pinch/wheel/tap, tile selection) |
+| Unity city view + placement | in progress | grid, ground and camera M0-43 merged (PR #58; `CityWorld`, drag/pinch/wheel/tap, tile selection); building views M0-44 in progress |
 | Inspector, worker stepper, research screen, HUD | not started | |
 | Resilience (limits, retries, logging) | in progress | error catalogue, global handler, rate limits and input limits M0-34 merged (PR #46); logging, correlation and the dev time scale M0-35 merged (PR #47) |
 | Docs automation (DocTools) + docs completeness | in progress | handbook, Pages, docs-as-code checks and a full audit: CR-0002 done (PR #27); code documentation CR-0003 done (PR #29); DocTools is M0-61 |
