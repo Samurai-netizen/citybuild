@@ -30,7 +30,7 @@ The card implements `IEquatable`, so the view redraws only what changed.
 
 **2. The state: `BuildMenuModel`.** It holds the cards (one per `content.Buildings` entry, in content order) and `Selected`. `Update(city)`
 makes the cards again and raises `CardsChanged` only when one differs; `TryToggle(typeId)` selects or deselects and refuses a locked or
-unknown type. Selecting is display state: the placement flow (M0-46) reads `Selected`. Test both classes in EditMode with the real content
+unknown type. Selecting is display state: the placement flow (M0-46) reads `Selected` through `PlacementFlow`, which also closes the sheet when a card is picked. Test both classes in EditMode with the real content
 of `Tests/Fixtures/content.json` (`Tests/EditMode/Presentation/Build/`): every sentence, the lock, each hint, the selection rules.
 
 **3. The layout.** `BuildMenu.uxml` is a root (`picking-mode="Ignore"`, so empty space passes taps to the ground), a closed sheet with a
@@ -54,7 +54,7 @@ new stock shows within a second. No singleton, no `Find*` call.
 **6. Do not let taps fall through.** The ground reads the Input System directly, so a tap on a card would also select the tile behind it.
 `BuildMenu.IsOverUi(screenPosition)` asks the panel (`panel.Pick`, after `ScreenPoint.ToTopLeft`: the Input System counts pixels from the bottom left, a panel from the top left, and `ScreenToPanel` does not flip), `GameRoot` hands it to `CityWorld.IsPointerOverUi`, and
 `CityInputReader` leaves a press that started over the UI to the UI. Any screen with elements that take taps needs its area covered by
-that predicate: a second screen means extending it, not replacing it.
+that predicate: a second screen means extending it, not replacing it: `GameRoot.IsOverUi` ors the menu's and the placement bar's `IsOverUi`, and both use `UiRoot.IsOver` / `UiRoot.PadBySafeArea` (`Presentation/Ui/`).
 
 **7. Respect the safe area.** `SafeAreaInsets.From(Screen.safeArea, …)` turns the notch and the bars into panel units; the component adds
 them to its root padding when the layout is computed (`GeometryChangedEvent`).

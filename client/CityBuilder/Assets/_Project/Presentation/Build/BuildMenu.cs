@@ -180,15 +180,7 @@ namespace CityBuilder.Client.Presentation.Build
         /// </summary>
         public bool IsOverUi(Vector2 screenPosition)
         {
-            VisualElement? root = Root;
-            if (root == null || root.panel == null)
-            {
-                return false;
-            }
-
-            // The panel counts from the top left and the Input System from the bottom left; ScreenToPanel only scales.
-            Vector2 topLeft = ScreenPoint.ToTopLeft(screenPosition, Screen.height);
-            return root.panel.Pick(RuntimePanelUtils.ScreenToPanel(root.panel, topLeft)) != null;
+            return UiRoot.IsOver(Root, screenPosition);
         }
 
         /// <summary>Unity calls it before the first frame: the document's tree exists now, so the cards are built into it.</summary>
@@ -223,7 +215,7 @@ namespace CityBuilder.Client.Presentation.Build
             }
 
             _toggle.clicked += () => SetOpen(!IsOpen);
-            root.RegisterCallback<GeometryChangedEvent>(_ => ApplySafeArea(root));
+            root.RegisterCallback<GeometryChangedEvent>(_ => UiRoot.PadBySafeArea(root, BasePadding));
             for (int index = 0; index < model.Cards.Count; index++)
             {
                 BuildingTypeId typeId = model.Cards[index].TypeId;
@@ -303,17 +295,6 @@ namespace CityBuilder.Client.Presentation.Build
         {
             label.text = text;
             label.style.display = text.Length == 0 ? DisplayStyle.None : DisplayStyle.Flex;
-        }
-
-        /// <summary>Pads the root by the screen's safe area on top of the base padding, in panel units.</summary>
-        private static void ApplySafeArea(VisualElement root)
-        {
-            SafeAreaInsets insets = SafeAreaInsets.From(
-                Screen.safeArea, Screen.width, Screen.height, root.resolvedStyle.width, root.resolvedStyle.height);
-            root.style.paddingLeft = BasePadding + insets.Left;
-            root.style.paddingTop = BasePadding + insets.Top;
-            root.style.paddingRight = BasePadding + insets.Right;
-            root.style.paddingBottom = BasePadding + insets.Bottom;
         }
     }
 }

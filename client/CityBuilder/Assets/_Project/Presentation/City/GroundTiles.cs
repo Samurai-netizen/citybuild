@@ -36,6 +36,12 @@ namespace CityBuilder.Client.Presentation.City
         /// <summary>The colour of the marker on the selected tile.</summary>
         private static readonly Color SelectionColor = new Color(0.95f, 0.55f, 0.20f);
 
+        /// <summary>The colour of a free tile while the player picks where to build: brighter than the ground, so it reads as lit.</summary>
+        private static readonly Color FreeHintColor = new Color(0.30f, 0.90f, 0.35f);
+
+        /// <summary>The colour of an occupied tile while the player picks where to build.</summary>
+        private static readonly Color OccupiedHintColor = new Color(0.85f, 0.20f, 0.20f);
+
         /// <summary>The grid the tiles follow.</summary>
         private readonly CityGrid _grid;
 
@@ -43,7 +49,13 @@ namespace CityBuilder.Client.Presentation.City
         private readonly TileSelection _selection;
 
         /// <summary>The materials this object created, destroyed with it.</summary>
-        private readonly Material[] _materials = new Material[4];
+        private readonly Material[] _materials = new Material[6];
+
+        /// <summary>The tile blocks, row by row (<c>y * width + x</c>), so a hint can change a tile's material.</summary>
+        private readonly Renderer[] _tileRenderers;
+
+        /// <summary>The hint each tile shows now, row by row; null while the tile shows its ground colour.</summary>
+        private readonly TileHint?[] _shownHints;
 
         /// <summary>Whether <see cref="Destroy"/> has run.</summary>
         private bool _destroyed;
@@ -65,6 +77,8 @@ namespace CityBuilder.Client.Presentation.City
             Root = new GameObject("Ground");
             Root.transform.SetParent(parent, false);
 
+            _tileRenderers = new Renderer[grid.Width * grid.Height];
+            _shownHints = new TileHint?[grid.Width * grid.Height];
             Material lightMaterial = _materials[0] = PlaceholderArt.CreateMaterial(LightGround);
             Material darkMaterial = _materials[1] = PlaceholderArt.CreateMaterial(DarkGround);
             for (int y = 0; y < grid.Height; y++)
@@ -73,12 +87,16 @@ namespace CityBuilder.Client.Presentation.City
                 {
                     var tile = new GridCoordinate(x, y);
                     GameObject block = CreateBlock("Tile " + tile, TileFill, TileThickness, -TileThickness * 0.5f, grid.ToWorldCenter(tile));
-                    block.GetComponent<Renderer>().sharedMaterial = (x + y) % 2 == 0 ? lightMaterial : darkMaterial;
+                    Renderer renderer = block.GetComponent<Renderer>();
+                    renderer.sharedMaterial = (x + y) % 2 == 0 ? lightMaterial : darkMaterial;
+                    _tileRenderers[y * grid.Width + x] = renderer;
                 }
             }
 
             HoverMarker = CreateMarker("Hover marker", _materials[2] = PlaceholderArt.CreateMaterial(HoverColor), 0f);
             SelectionMarker = CreateMarker("Selection marker", _materials[3] = PlaceholderArt.CreateMaterial(SelectionColor), MarkerThickness);
+            _materials[4] = PlaceholderArt.CreateMaterial(FreeHintColor);
+            _materials[5] = PlaceholderArt.CreateMaterial(OccupiedHintColor);
 
             _selection.Changed += ShowSelection;
             ShowSelection();
@@ -95,6 +113,45 @@ namespace CityBuilder.Client.Presentation.City
 
         /// <summary>The number of tile blocks: the grid's width times its height.</summary>
         public int TileCount => _grid.Width * _grid.Height;
+
+        /// <summary>
+        /// Paints the tiles by their hints while the player picks where to build: a free tile green, an occupied one red. <c>null</c> gives
+        /// every tile its ground colour back. A tile whose hint did not change is not touched, so calling it each second allocates nothing.
+        /// A hint array of the wrong size is a programming mistake.
+        /// </summary>
+        /// <param name="hints">One hint per tile, row by row (<c>y * width + x</c>), or null to show none.</param>
+        /// <exception cref="ArgumentException"><paramref name="hints"/> does not have one hint per tile.</exception>
+        public void ShowHints(TileHint[]? hints)
+        {
+            if (hints != null && hints.Length != _tileRenderers.Length)
+            {
+                throw new ArgumentException("There must be one hint per tile (" + _tileRenderers.Length + ").", nameof(hints));
+            }
+
+            for (int y = 0; y < _grid.Height; y++)
+            {
+                for (int x = 0; x < _grid.Width; x++)
+                {
+                    int index = y * _grid.Width + x;
+                    TileHint? hint = hints == null ? (TileHint?)null : hints[index];
+                    if (_shownHints[index] == hint)
+                    {
+                        continue;
+                    }
+
+                    _shownHints[index] = hint;
+                    _tileRenderers[index].sharedMaterial = hint == null
+                        ? ((x + y) % 2 == 0 ? _materials[0] : _materials[1])
+                        : (hint == TileHint.Occupied ? _materials[5] : _materials[4]);
+                }
+            }
+        }
+
+        /// <summary>The hint a tile shows now, or null when it shows its ground colour (or is outside the grid).</summary>
+        public TileHint? ShownHintAt(GridCoordinate tile)
+        {
+            return _grid.Contains(tile) ? _shownHints[tile.Y * _grid.Width + tile.X] : null;
+        }
 
         /// <summary>Stops listening to the selection and destroys every object and material this created. Safe to call twice.</summary>
         public void Destroy()

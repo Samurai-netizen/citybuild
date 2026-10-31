@@ -5,13 +5,13 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-45 · Build menu; the PR is open, the owner merges it)
-- **Branch:** `task/M0-45-build-menu` (from `main` = `d8372ef`) until the owner merges
-- **Build log entry:** last: `docs/build-log/2026/2026-10-31-07-M0-45.md` (Done)
-- **Last green commit:** the head of `task/M0-45-build-menu` (fast .NET suite green; Unity EditMode 574 / 574 and PlayMode 46 / 46 in a mirror project; check-docs OK; handbook builds)
-- **Done steps:** all of M0-45
-- **Next step:** the owner merges the PR. Then `/start-task M0-46` (placement flow, `[S]`: Sonnet 5.5). The owner should run `docs/testing/LOCAL-E2E.md` step 3 in the Editor (the Build button, the cards, the locked Trading Post; M0-43's controls; M0-44's place-a-Cottage recipe).
-- **Open questions for the owner:** M0-45: decision 1 (item names are plural, so `1 Planks`; a singular name in the content is your call), decision 8 (cards use the displayed city, not the raw snapshot), decision 11 (I changed M0-43's `CityInputReader`/`CityWorld` so a press on the menu never reaches the ground); the step-7 comment edits of protected files that skipped the
+- **Task:** — (last completed: M0-46 · Placement flow; the PR is open, the owner merges it)
+- **Branch:** `task/M0-46-placement-flow` (from `main` = `d1bdce1`) until the owner merges
+- **Build log entry:** last: `docs/build-log/2026/2026-10-31-08-M0-46.md` (Done)
+- **Last green commit:** the head of `task/M0-46-placement-flow` (fast .NET suite green; Unity EditMode 599 / 599 and PlayMode 73 / 73 in a mirror project; check-docs OK; handbook builds)
+- **Done steps:** all of M0-46
+- **Next step:** the owner merges the PR. Then `/start-task M0-47` (feedback for every result: toasts and the error-code message table, `[S]`: Sonnet 5.5; it replaces the bar's `CODE: sentence` line and must give `CLIENT_COMMAND_FAILED` a message). The owner should run `docs/testing/LOCAL-E2E.md` step 3 in the Editor (the placement recipe: green and red tiles, the bar, the ghost, a red tile that cannot be placed, a refusal, cancel).
+- **Open questions for the owner:** M0-46: the ghost's transparent shader variant on a device build (follow-up); M0-45: decision 1 (item names are plural, so `1 Planks`; a singular name in the content is your call), decision 8 (cards use the displayed city, not the raw snapshot), decision 11 (I changed M0-43's `CityInputReader`/`CityWorld` so a press on the menu never reaches the ground); the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); M0-30: decisions 2 and 5 (400 for a too-big body, not the 413 my
@@ -22,7 +22,7 @@
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 45 / 85
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 46 / 85
 
 | Area | State | Notes |
 |---|---|---|
@@ -34,7 +34,7 @@
 | Auth + command pipeline | in progress | dev auth M0-25 merged (PR #37); the pipeline M0-26 merged (PR #38); its integration tests M0-27 merged (PR #39); content and city endpoints M0-28 merged (PR #40); PlaceBuilding M0-29 merged (PR #41); attack review M0-30 merged (PR #42) |
 | Commands: place / upgrade / assign workers / start research | done | place-building M0-29 merged (PR #41; `docs/how-to/add-command.md`); upgrade-building M0-31 merged (PR #43; OD-13); assign-workers M0-32 merged (PR #44); start-research M0-33 merged (PR #45): the four commands of M0 |
 | Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) and M0-05 (Unity tests, `test-unity.sh`) merged (PR #8, #12); API client and DTOs M0-37 merged (PR #49); auth and content on the client M0-38 merged (PR #50); the city store and display prediction M0-39 merged (PR #51); the command sender M0-40 merged (PR #52); polling and lifecycle M0-41 merged (PR #53); end-to-end check M0-42 merged (PR #57; `docs/testing/LOCAL-E2E.md`) |
-| Unity city view + placement | in progress | grid, ground and camera M0-43 merged (PR #58; `CityWorld`, drag/pinch/wheel/tap, tile selection); building views M0-44 merged (PR #59; `CityView`, `BuildingLooks`, `BuildingViewFactory`); build menu M0-45 in review (`BuildMenu`, `BuildCardModel`, `BuildMenuModel`; a press over the UI stays off the ground) |
+| Unity city view + placement | in progress | grid, ground and camera M0-43 merged (PR #58; `CityWorld`, drag/pinch/wheel/tap, tile selection); building views M0-44 merged (PR #59; `CityView`, `BuildingLooks`, `BuildingViewFactory`); build menu M0-45 merged (PR #60; `BuildMenu`, `BuildCardModel`, `BuildMenuModel`; a press over the UI stays off the ground); placement flow M0-46 in review (`PlacementFlow`, `PlacementFlowModel`, `PlacementBar`, `PlacementGhosts`) |
 | Inspector, worker stepper, research screen, HUD | not started | |
 | Resilience (limits, retries, logging) | in progress | error catalogue, global handler, rate limits and input limits M0-34 merged (PR #46); logging, correlation and the dev time scale M0-35 merged (PR #47) |
 | Docs automation (DocTools) + docs completeness | in progress | handbook, Pages, docs-as-code checks and a full audit: CR-0002 done (PR #27); code documentation CR-0003 done (PR #29); DocTools is M0-61 |

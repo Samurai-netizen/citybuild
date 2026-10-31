@@ -1,6 +1,8 @@
 #nullable enable
 
 using System;
+using System.Collections.Generic;
+using CityBuilder.Client.Net;
 using CityBuilder.Simulation.State;
 using UnityEngine;
 
@@ -9,9 +11,10 @@ namespace CityBuilder.Client.Presentation.City
     /// <summary>
     /// The city's place in the scene: the camera and a light, made from code as soon as the object exists (so the screen is cleared even
     /// before the server answers), and, once <see cref="ShowGrid"/> is called with the grid size from the content's rules, the ground
-    /// tiles, the camera controls and the tile selection, and, with <see cref="ShowCity"/>, the buildings. A thin component: the logic is in
+    /// tiles, the camera controls and the tile selection, and, with <see cref="ShowCity"/>, the buildings, and, with <see cref="ShowGhosts"/>, the
+    /// translucent buildings of commands on their way. A thin component: the logic is in
     /// <see cref="CityCameraModel"/>, <see cref="CityCameraRig"/>, <see cref="CityInputReader"/>, <see cref="TileSelection"/>,
-    /// <see cref="GroundTiles"/> and <see cref="CityView"/>. <c>GameRoot</c> creates it.
+    /// <see cref="GroundTiles"/>, <see cref="CityView"/> and <see cref="PlacementGhosts"/>. <c>GameRoot</c> creates it.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CityWorld : MonoBehaviour
@@ -27,6 +30,9 @@ namespace CityBuilder.Client.Presentation.City
 
         /// <summary>The building views, or null before <see cref="ShowGrid"/>.</summary>
         private CityView? _buildings;
+
+        /// <summary>The pending-building ghosts, or null before <see cref="ShowGrid"/>.</summary>
+        private PlacementGhosts? _ghosts;
 
         /// <summary>
         /// Tells whether a screen position (pixels, origin bottom left) is over the UI, so a press there is the UI's and not the ground's; set by
@@ -51,6 +57,9 @@ namespace CityBuilder.Client.Presentation.City
 
         /// <summary>The building views; null before <see cref="ShowGrid"/>.</summary>
         public CityView? Buildings => _buildings;
+
+        /// <summary>The ghosts of buildings on their way; null before <see cref="ShowGrid"/>.</summary>
+        public PlacementGhosts? Ghosts => _ghosts;
 
         /// <summary>Unity calls it once, right after the component is created: it makes the camera and the light.</summary>
         private void Awake()
@@ -81,10 +90,12 @@ namespace CityBuilder.Client.Presentation.City
         {
             _ground?.Destroy();
             _buildings?.Destroy();
+            _ghosts?.Destroy();
             Grid = grid;
             Selection = new TileSelection(grid);
             _ground = new GroundTiles(grid, Selection, transform);
             _buildings = new CityView(grid, transform);
+            _ghosts = new PlacementGhosts(grid, transform);
             Rig = new CityCameraRig(Camera, grid, Selection);
             _input = new CityInputReader(Rig, Screen.dpi, position => IsPointerOverUi != null && IsPointerOverUi(position));
         }
@@ -96,17 +107,33 @@ namespace CityBuilder.Client.Presentation.City
             _buildings?.Show(city);
         }
 
+        /// <summary>Paints the tiles green or red by their hints, or gives them their ground colour back (<see cref="GroundTiles.ShowHints"/>). Does nothing before <see cref="ShowGrid"/>.</summary>
+        /// <param name="hints">One hint per tile, row by row, or null to show none.</param>
+        public void ShowHints(TileHint[]? hints)
+        {
+            _ground?.ShowHints(hints);
+        }
+
+        /// <summary>Makes the ghosts match the commands on their way (<see cref="PlacementGhosts.Show"/>). Does nothing before <see cref="ShowGrid"/>.</summary>
+        /// <param name="pending">The command sender's pending commands.</param>
+        /// <param name="era">The city's era.</param>
+        public void ShowGhosts(IReadOnlyList<PendingCommand> pending, int era)
+        {
+            _ghosts?.Show(pending, era);
+        }
+
         /// <summary>Unity calls it every frame: the player's input moves the camera and the selection.</summary>
         private void Update()
         {
             _input?.Tick();
         }
 
-        /// <summary>Unity calls it when the object is destroyed: the ground takes its listener off the selection, and the buildings' materials go.</summary>
+        /// <summary>Unity calls it when the object is destroyed: the ground takes its listener off the selection, and the buildings' and ghosts' materials go.</summary>
         private void OnDestroy()
         {
             _ground?.Destroy();
             _buildings?.Destroy();
+            _ghosts?.Destroy();
         }
     }
 }
