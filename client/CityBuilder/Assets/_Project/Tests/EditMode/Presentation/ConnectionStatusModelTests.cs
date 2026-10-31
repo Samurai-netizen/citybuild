@@ -4,8 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using CityBuilder.Client.Core;
 using CityBuilder.Client.Net;
 using CityBuilder.Client.Presentation.Bootstrap;
+using CityBuilder.Client.Tests.EditMode.Core;
 using CityBuilder.Client.Tests.EditMode.Net;
 using CityBuilder.Simulation.Content;
 using NUnit.Framework;
@@ -114,6 +116,54 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation
 
             Assert.That(model.IsFatal, Is.True);
             Assert.That(model.Details.Single(), Is.EqualTo("The API client settings are wrong: the URL is not absolute"));
+        }
+
+        /// <summary>The connected text of the polling (M0-41) names the era and the coins of the latest snapshot, the same way the start does.</summary>
+        [Test]
+        public void ForConnection_Connected_NamesTheEraAndTheCoinsOfTheSnapshot()
+        {
+            CitySnapshot snapshot = CityTestData.Snapshot("snapshot-city-start.json");
+
+            ConnectionStatusModel model = ConnectionStatusModel.ForConnection(ConnectionState.Connected, null, _content, snapshot);
+
+            Assert.That(model.Headline, Is.EqualTo("Connected - Early Middle Ages - Coins: 700"));
+            Assert.That(model.IsFatal, Is.False);
+        }
+
+        /// <summary>Connected without any snapshot does not fail: the era falls back to its number and the coins to zero.</summary>
+        [Test]
+        public void ForConnection_Connected_WithoutASnapshot_FallsBack()
+        {
+            ConnectionStatusModel model = ConnectionStatusModel.ForConnection(ConnectionState.Connected, null, _content, null);
+
+            Assert.That(model.Headline, Is.EqualTo("Connected - Era 0 - Coins: 0"));
+        }
+
+        /// <summary>Every state that is not connected has its own sentence, none is fatal, and the error's code ends it.</summary>
+        [TestCase(ConnectionState.Offline, ApiErrorCodes.ClientNetworkError, "Offline: cannot reach the server (CLIENT_NETWORK_ERROR)")]
+        [TestCase(ConnectionState.Offline, ApiErrorCodes.ClientTimeout, "Offline: the server did not answer in time (CLIENT_TIMEOUT)")]
+        [TestCase(ConnectionState.Unauthorized, ApiErrorCodes.AuthenticationRequired, "Signed out: the server did not accept the login (AUTHENTICATION_REQUIRED)")]
+        [TestCase(ConnectionState.ServerError, ApiErrorCodes.InternalError, "Server problem: the server could not be used (INTERNAL_ERROR)")]
+        [TestCase(ConnectionState.IncompatibleVersion, ApiErrorCodes.ClientInvalidResponse, "Update needed: this game does not match the server (CLIENT_INVALID_RESPONSE)")]
+        public void ForConnection_NotConnected_HasASentenceAndTheCode(ConnectionState state, string code, string expected)
+        {
+            var error = new ApiError(code, 0, "detail", null, null, null);
+
+            ConnectionStatusModel model = ConnectionStatusModel.ForConnection(state, error, _content, null);
+
+            Assert.That(model.Headline, Is.EqualTo(expected));
+            Assert.That(model.IsFatal, Is.False);
+            Assert.That(model.Details, Is.Empty);
+        }
+
+        /// <summary>Other content has no error: the sentence says so instead of a code. Connecting is the start text.</summary>
+        [Test]
+        public void ForConnection_OtherContent_AndConnecting_HaveTheirOwnText()
+        {
+            Assert.That(
+                ConnectionStatusModel.ForConnection(ConnectionState.IncompatibleVersion, null, _content, null).Headline,
+                Is.EqualTo("Update needed: this game does not match the server (other content version)"));
+            Assert.That(ConnectionStatusModel.ForConnection(ConnectionState.Connecting, null, _content, null).Headline, Is.EqualTo("Connecting..."));
         }
 
         /// <summary>Reads a snapshot fixture.</summary>

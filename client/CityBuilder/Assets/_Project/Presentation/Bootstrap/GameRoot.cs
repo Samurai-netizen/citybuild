@@ -3,6 +3,7 @@
 using System;
 using CityBuilder.Client.Core;
 using CityBuilder.Client.Net;
+using CityBuilder.Simulation.Content;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -14,6 +15,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
     /// It shows the connection status, builds the API client from the settings asset, runs <see cref="StartupFlow"/> (login, content, city)
     /// and shows how it ended: "Connected" with the era and the coins, a message when the server cannot be used, or the fatal error screen
     /// when the server's content is invalid. Once connected it owns the city store, keeps the display city up to date for the views and builds the command sender they use.
+    /// It also drives the connection monitor: it polls the city, goes quiet while the app is paused, and the screen says how the connection stands.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class GameRoot : MonoBehaviour
@@ -55,11 +57,26 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         /// <summary>The way every view gives the server a command; null until the start has connected.</summary>
         private CommandSender? _commandSender;
 
+        /// <summary>The login service the start flow and the connection monitor share; null until the settings were read.</summary>
+        private AuthService? _auth;
+
+        /// <summary>The content the start loaded; the status words and the monitor's content version come from it. Null until connected.</summary>
+        private GameContent? _content;
+
+        /// <summary>The dev player's name from the settings, for a new login; empty until the settings were read.</summary>
+        private string _displayName = string.Empty;
+
+        /// <summary>Polls the city and tracks the connection state; null until the start has connected.</summary>
+        private ConnectionMonitor? _monitor;
+
         /// <summary>The text the screen shows now, for tests and logs.</summary>
         public string CurrentStatusText { get; private set; } = string.Empty;
 
         /// <summary>The command sender the views use (<c>09</c> Commands); null until the start has connected.</summary>
         internal CommandSender? CommandSender => _commandSender;
+
+        /// <summary>The connection monitor the views read the state from (<c>09</c> Polling); null until the start has connected.</summary>
+        internal ConnectionMonitor? Connection => _monitor;
 
         /// <summary>Whether the fatal error screen is up.</summary>
         public bool IsFatalErrorShown { get; private set; }
@@ -93,6 +110,16 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                 {
                     _displayCity = new DisplayCity(_cityStore, new DisplayClock(_cityStore, outcome.TimeScale), outcome.Content!);
                     _commandSender = new CommandSender(_api!, _cityStore, CommandPolicy.Default);
+                    _content = outcome.Content;
+                    _monitor = new ConnectionMonitor(
+                        _api!,
+                        _auth!,
+                        _cityStore,
+                        outcome.Content!.ContentVersion,
+                        _displayName,
+                        new PollScheduler(() => Time.realtimeSinceStartupAsDouble, PollScheduler.DefaultIntervalSeconds),
+                        () => Application.internetReachability != NetworkReachability.NotReachable);
+                    _monitor.StateChanged += OnConnectionChanged;
                 }
                 else
                 {
@@ -112,10 +139,40 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             }
         }
 
-        /// <summary>Unity calls it every frame: the display city predicts again when a whole second has passed, and otherwise does nothing.</summary>
+        /// <summary>
+        /// Unity calls it every frame: the display city predicts again when a whole second has passed, and the connection monitor polls the
+        /// city when its schedule says so. Both do nothing on most frames.
+        /// </summary>
         private void Update()
         {
             _displayCity?.Refresh();
+            _ = _monitor?.TickAsync(destroyCancellationToken);
+        }
+
+        /// <summary>Unity calls it when the app goes to the background (<paramref name="pauseStatus"/> true) or comes back: no polling in the background, a poll at once on return.</summary>
+        private void OnApplicationPause(bool pauseStatus)
+        {
+            _monitor?.SetPaused(pauseStatus);
+        }
+
+        /// <summary>Unity calls it when the object is destroyed: the monitor no longer reports to a screen that is gone.</summary>
+        private void OnDestroy()
+        {
+            if (_monitor != null)
+            {
+                _monitor.StateChanged -= OnConnectionChanged;
+            }
+        }
+
+        /// <summary>The monitor's state or error changed: the screen says how the connection stands now.</summary>
+        private void OnConnectionChanged()
+        {
+            if (_monitor == null || _content == null)
+            {
+                return;
+            }
+
+            Show(ConnectionStatusModel.ForConnection(_monitor.State, _monitor.LastError, _content, _cityStore.Snapshot));
         }
 
         /// <summary>
@@ -145,8 +202,9 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             }
 
             // Only the Editor and development players keep the token on the device (M0-38).
-            var auth = new AuthService(api, AccessTokenStores.For(Debug.isDebugBuild));
-            return new StartupFlow(auth, new ContentService(api), api, settings.DevDisplayName, _cityStore);
+            _displayName = settings.DevDisplayName;
+            var auth = _auth = new AuthService(api, AccessTokenStores.For(Debug.isDebugBuild));
+            return new StartupFlow(auth, new ContentService(api), api, _displayName, _cityStore);
         }
 
         /// <summary>
