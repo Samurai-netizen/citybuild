@@ -9,8 +9,15 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.City
     /// <summary>Tap or drag for one pointer, and the pinch's zoom factor (M0-43).</summary>
     public sealed class PointerGestureTests
     {
-        /// <summary>A reader with a 10 pixel threshold.</summary>
-        private readonly PointerGesture _gesture = new PointerGesture(10f);
+        /// <summary>A reader with a 10 pixel threshold; a new one for each test, because NUnit uses one fixture object for all of them.</summary>
+        private PointerGesture _gesture = null!;
+
+        /// <summary>Before each test: creates the reader.</summary>
+        [SetUp]
+        public void CreateGesture()
+        {
+            _gesture = new PointerGesture(10f);
+        }
 
         /// <summary>A press and release without movement is a tap.</summary>
         [Test]
