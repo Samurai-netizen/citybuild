@@ -40,10 +40,10 @@ Fix each defect with a regression test, in small steps. No game rule changes. Co
 401 a client can act on, and to the 415 the contract already promises.
 
 ## Acceptance criteria
-- [ ] Each defect above has a test that failed before its fix, except where the build log says why that isn't possible.
-- [ ] Build, format check, fast suite, integration suite and Unity tests pass; `check-docs.sh` and the handbook build pass.
-- [ ] `05`, `07`, `04` and the module docs describe the new behaviour.
-- [ ] The task report lists what was fixed, what was only reported and what couldn't be verified.
+- [x] Each defect above has a test that failed before its fix, except where the build log says why that isn't possible.
+- [x] Build, format check, fast suite, integration suite and Unity tests pass; `check-docs.sh` and the handbook build pass.
+- [x] `05`, `07`, `04` and the module docs describe the new behaviour.
+- [x] The task report lists what was fixed, what was only reported and what couldn't be verified.
 
 ## Out of scope
 - Protected files (`15`): `.github/workflows/**`, `scripts/dev/**`, hooks. Findings there are reported and wait for the owner.
@@ -70,7 +70,7 @@ Fix each defect with a regression test, in small steps. No game rule changes. Co
 ## Tasks (filled in after approval)
 | ID | Title | Model | Status |
 |---|---|---|---|
-| CR-0004-T1 | The fixes of the whole-code audit | O | In progress |
+| CR-0004-T1 | The fixes of the whole-code audit | O | In review |
 
 ## Owner approval
 - Approved on: 2026-10-31. "Scan the whole code, whole systems one by one, and try to find and fix as many bugs, errors, edge-cases, security vulnerabilities as possible."
