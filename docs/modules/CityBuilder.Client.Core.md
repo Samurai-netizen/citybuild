@@ -15,7 +15,7 @@ structure). It is **not** responsible for talking to the server (`CityBuilder.Cl
 |---|---|
 | `AppInfo` | static, read-only facts about this build. `Version` is `Application.version`, the "Version" field of Project Settings → Player (`bundleVersion`, `0.1.0` today); M0-58 sends it to the server |
 | `CitySnapshot` | One server snapshot in the engine's terms: version, content version, clock, and a city that only leaves as a copy (`CopyCity()`), so the state the store holds cannot change. `SnapshotMapper` (Net) builds it, because Core cannot name the DTOs |
-| `ClientCityStore` | The last snapshot and its receive time. `Apply` takes a snapshot whose `(stateVersion, clock)` is greater than the held one's and raises `SnapshotChanged`; anything else is ignored. The default constructor reads `Time.realtimeSinceStartupAsDouble`, tests pass their own clock |
+| `ClientCityStore` | The last snapshot and its receive time. `Apply` takes a snapshot whose `(stateVersion, clock)` is greater than the held one's and raises `SnapshotChanged`; anything else is ignored. `Replace` takes one whatever is held, for the answer right after a new login, which may be another city (CR-0004). The default constructor reads `Time.realtimeSinceStartupAsDouble`, tests pass their own clock |
 | `DisplayClock` | `snapshot.clock + whole seconds since receipt × timeScale`, for display only |
 | `ConnectionState` | How the client stands with the server: `Connecting`, `Connected`, `Offline`, `Unauthorized`, `ServerError`, `IncompatibleVersion`. Only the names; the rules that move between them are `ConnectionMonitor`'s (Net) |
 | `PollScheduler` | When to ask for the city again (M0-41): due 120 s after the last poll ended (`DefaultIntervalSeconds`), at once after `Resume()` or `RequestPoll()`, never while `Pause()`d or while a poll runs. The caller does `TryBegin()` then `End()`. Reads an injected real-time clock, so tests move time by hand; `MarkFetched()` restarts the interval when someone else fetched the city |
@@ -31,7 +31,7 @@ structure). It is **not** responsible for talking to the server (`CityBuilder.Cl
 - A snapshot with a lower `stateVersion` than the one held is ignored, and so is the same version with the same or an earlier clock (build log
   M0-39, decision 4); predicted values never leave the client.
 - Each prediction starts again from the snapshot, never from the last prediction: the 8-hour production cap counts from the start of an advance.
-- When the engine refuses a city, `DisplayCity` logs one error and shows the snapshot unadvanced until the next one arrives.
+- When the engine refuses a city (an unknown type or level, a timer before the clock, an overflow), `DisplayCity` logs one error and shows the snapshot unadvanced until the next one arrives. It never throws, because it runs from `Update` and from the store's event, inside whoever gave the store the snapshot (CR-0004).
 - Unity compiles this as C# 9: no file-scoped namespaces, no global usings.
 - Every type and member, private ones included, has an XML doc comment (`core-instructions/14-coding-standards.md` → Documentation
   in code). Unity's compiler doesn't check them, so `CityBuilder.Repository.Tests` (a server test project) checks every script
@@ -57,4 +57,4 @@ folder area follows the recipe "New project, assembly or folder area" in `core-i
   (`PollScheduler`, M0-41) replaces the snapshot, so this lasts only until that answer arrives.
 - `CitySnapshot` has no settlement block yet; the welcome-back report adds it (M0-53 *(planned)*).
 
-Last updated: M0-41
+Last updated: CR-0004-T1

@@ -30,6 +30,7 @@ defects it confirmed; the build log entry has the evidence for each.
 | 12 | Server | `/health` takes every method, the answers name the server software, and nothing forbids caching a response made for one player | Contract mismatch and needless information; a shared cache could keep a player's snapshot |
 | 13 | Engine | Content values that reach `smallint` columns (grid size, workers) have no upper limit | Content that loads can fail with a 500 on the first save |
 | 14 | Handbook | Known vulnerabilities in the site's npm packages | Build-time only, the published site is static; 31 reported by `npm audit` |
+| 15 | Tests | Every test server watches `appsettings.json` | On macOS `dotnet test server/CityBuilder.slnx` without a filter hangs for good at 100 % CPU; CI and the docs use the filters |
 
 The audit also suspected that `UnityWebRequest.Abort` fails when a timer cancels the request on another thread. Measured against a server that
 never answers: the request ended in 0.21 s with no error in the log, in the Editor. So that is no defect, and its test stays as coverage.

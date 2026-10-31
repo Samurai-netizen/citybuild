@@ -14,6 +14,7 @@ public static class ResponseHeaders
     /// <returns>The same collection, for chaining.</returns>
     public static IServiceCollection AddResponseHeaders(this IServiceCollection services)
     {
+        ArgumentNullException.ThrowIfNull(services);
         services.AddOptions<KestrelServerOptions>().Configure(kestrel => kestrel.AddServerHeader = false);
         return services;
     }

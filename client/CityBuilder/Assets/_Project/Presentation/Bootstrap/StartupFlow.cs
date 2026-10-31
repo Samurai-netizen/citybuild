@@ -111,6 +111,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             return StartupOutcome.Connected(content.Content!, content.TimeScale, city.Value!);
         }
 
+        /// <summary>Logs in; returns the failed outcome, or null when logged in.</summary>
         private async Task<StartupOutcome?> LoginAsync(CancellationToken cancellationToken)
         {
             AuthState state = await _auth.LoginAsync(_displayName, cancellationToken);

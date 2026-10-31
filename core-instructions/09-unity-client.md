@@ -74,7 +74,9 @@ Local package line in `Packages/manifest.json`:
 - **Polling (M0-41):** `GET /city` on start (the start flow's own), on `OnApplicationPause(false)`, after the device's network comes back, and every 120 s in the
   foreground; nothing while paused, one poll at a time (`PollScheduler`). `ConnectionMonitor` (Net) puts each snapshot in the store and holds the
   `ConnectionState` (`Connecting`, `Connected`, `Offline`, `Unauthorized`, `ServerError`, `IncompatibleVersion`): a refused token gets one new login and one
-  repeat, then `Unauthorized`; content of another version is `IncompatibleVersion` and is not applied. `GameRoot` ticks it in `Update` and shows the state.
+  repeat, then `Unauthorized`, and the answer to that repeat replaces the city whatever its version (it may be a new city, CR-0004); content of another version is `IncompatibleVersion` and is not applied. `GameRoot` ticks it in `Update` and shows the state.
+- **The start (`StartupFlow`):** a kept token refused by `GET /content` or by `GET /city` gets one new login and one repeat; a refusal after a fresh login is a failure.
+- **The wire:** no redirect is followed, because the API never sends one and the bearer token must go to no one else (CR-0004).
 
 ## M0 screens (UI Toolkit)
 HUD (item chips with stock/cap/net rate per hour, workers free/total, builders, research ring, era badge) ·
