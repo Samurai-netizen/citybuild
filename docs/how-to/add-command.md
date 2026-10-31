@@ -92,7 +92,12 @@ its rows in `CommandErrorMappingTests` and `ErrorCatalogueTests`, which fail unt
 - Add the path to `UnauthenticatedContractTests` (401 without a token).
 - Mutate the code once (a wrong ledger reason, swapped coordinates) and see a test fail; restore it.
 
-**7. Docs.** `05` (endpoint, body, errors), `07` (threat rows that name the `Security_` tests), `04` §8 if the rule changed, the module docs of
+**7. The client half.** In `CityBuilder.Client.Net`: the request DTO (the server's member order, a round-trip test), the endpoint method on `ApiClient`, a
+`CommandKind` member, a factory on `CommandIntent` and its branch in `CommandIntent.SendAsync`. `CommandSender` needs no change: it makes the request id,
+repeats what is worth repeating (`CommandPolicy.IsRetryable`) and hands the snapshot to the store. Add the new endpoint to the `EachCommand_IsSentToItsEndpoint`
+test. A command that behaves like the worker stepper (many quick changes, only the last counts) needs its own lane in `CommandSender`; discuss it first.
+
+**8. Docs.** `05` (endpoint, body, errors), `07` (threat rows that name the `Security_` tests), `04` §8 if the rule changed, the module docs of
 Application and Api, `CHANGELOG.md`, and this guide if a step changed.
 
 ## Common mistakes

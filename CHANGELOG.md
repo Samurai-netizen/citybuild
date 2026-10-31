@@ -172,6 +172,9 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
 - Unity client keeps the city: `ClientCityStore` (the last snapshot, older answers ignored, a refused command changes nothing), `SnapshotMapper`, and
   display prediction (`DisplayClock`, `DisplayCity`: the shared engine on a copy, at most once per second, replaced by every new snapshot); 101 new
   EditMode tests (M0-39).
+- Unity client sends commands: `CommandSender` (one request id per intent, reused on every retry; repeats only network errors, timeouts, 5xx and
+  `CONCURRENCY_CONFLICT`, up to 3 requests with 0.5 s and 1 s waits; the snapshot of an accepted command goes to the city store), a pending list
+  for the UI, and worker-stepper targets coalesced per building behind a 400 ms debounce; 55 new EditMode tests (M0-40).
 
 ### Changed
 - `/finish-task` can be run by the AI coder itself once every planned step is done (owner directive OD-15; M0-36).
