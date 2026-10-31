@@ -2,6 +2,7 @@
 
 using System;
 using CityBuilder.Client.Net;
+using CityBuilder.Client.Presentation.Feedback;
 using CityBuilder.Client.Presentation.City;
 using CityBuilder.Simulation;
 using CityBuilder.Simulation.Content;
@@ -58,7 +59,7 @@ namespace CityBuilder.Client.Presentation.Build
         /// <summary>The tile picked, or null when none is.</summary>
         public GridCoordinate? Tile { get; private set; }
 
-        /// <summary>The words of the last failure (code and sentence), or empty; cleared by the next pick, confirm or cancel.</summary>
+        /// <summary>The words of the last failure (<see cref="FeedbackMessages"/>'s sentence for its code, never the code or the server's text), or empty; cleared by the next pick, confirm or cancel.</summary>
         public string ErrorText { get; private set; } = string.Empty;
 
         /// <summary>Where the player is.</summary>
@@ -259,7 +260,7 @@ namespace CityBuilder.Client.Presentation.Build
 
             _sending = null;
             Tile = null;
-            ErrorText = error.Code + ": " + error.Detail;
+            ErrorText = FeedbackMessages.ForError(error);
             Changed?.Invoke();
         }
 

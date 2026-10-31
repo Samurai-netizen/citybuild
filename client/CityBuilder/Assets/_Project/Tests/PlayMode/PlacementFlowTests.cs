@@ -314,8 +314,8 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(_world.Ghosts!.Count, Is.EqualTo(0));
             Assert.That(_world.Buildings!.Count, Is.EqualTo(0));
             Assert.That(_display.Current!.Inventory[new ItemId("coins")], Is.EqualTo(700));
-            Assert.That(_flow.Model.ErrorText, Does.StartWith("TILE_OCCUPIED"));
-            Assert.That(Element<Label>(PlacementBar.ErrorName).text, Does.StartWith("TILE_OCCUPIED"));
+            Assert.That(_flow.Model.ErrorText, Is.EqualTo("That tile is already taken"));
+            Assert.That(Element<Label>(PlacementBar.ErrorName).text, Is.EqualTo("That tile is already taken"));
             Assert.That(_menu.Selected, Is.EqualTo(House));
             Assert.That(_world.Selection!.Selected, Is.Null);
             Assert.That(_bar.IsShown, Is.True);
@@ -359,7 +359,7 @@ namespace CityBuilder.Client.Tests.PlayMode
             }
 
             yield return WaitForPhase(PlacementPhase.PickingTile);
-            Assert.That(_flow.Model.ErrorText, Does.StartWith("CLIENT_NETWORK_ERROR"));
+            Assert.That(_flow.Model.ErrorText, Is.EqualTo("No connection. Check your network and try again"));
             Assert.That(_world.Ghosts!.Count, Is.EqualTo(0));
         }
 

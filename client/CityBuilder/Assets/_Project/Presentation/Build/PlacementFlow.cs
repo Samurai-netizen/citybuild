@@ -4,6 +4,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using CityBuilder.Client.Net;
+using CityBuilder.Client.Presentation.Feedback;
 using CityBuilder.Client.Presentation.City;
 using CityBuilder.Simulation;
 using CityBuilder.Simulation.State;
@@ -21,9 +22,6 @@ namespace CityBuilder.Client.Presentation.Build
     /// </summary>
     public sealed class PlacementFlow : IDisposable
     {
-        /// <summary>The code shown when a command ended without a server answer to show, or the flow itself failed: a client-side code, like the <c>CLIENT_</c> ones of <see cref="ApiErrorCodes"/>.</summary>
-        private const string UnfinishedCode = "CLIENT_COMMAND_FAILED";
-
         /// <summary>The flow's state and words.</summary>
         private readonly PlacementFlowModel _model;
 
@@ -215,7 +213,7 @@ namespace CityBuilder.Client.Presentation.Build
                 }
                 else
                 {
-                    Fail(outcome.Error ?? new ApiError(UnfinishedCode, 0, "The command did not finish.", null, null, null));
+                    Fail(outcome.Error ?? new ApiError(FeedbackMessages.CommandFailedCode, 0, "The command did not finish.", null, null, null));
                 }
             }
             catch (OperationCanceledException)
@@ -228,7 +226,7 @@ namespace CityBuilder.Client.Presentation.Build
                 Debug.LogException(exception);
                 if (!_disposed)
                 {
-                    Fail(new ApiError(UnfinishedCode, 0, exception.Message, null, null, null));
+                    Fail(new ApiError(FeedbackMessages.CommandFailedCode, 0, exception.Message, null, null, null));
                 }
             }
         }

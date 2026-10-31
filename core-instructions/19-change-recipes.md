@@ -29,8 +29,8 @@ Paths are the M0 layout (`03`). "Module doc" means `docs/modules/<Project>.md`.
   generated API/error reference, how-to `docs/how-to/add-command.md` stays valid, `CHANGELOG`.
 
 ## New error code
-- Code: the error catalogue (one place), ProblemDetails mapping, client message table.
-- Tests: the mapping table test and the client "every code has a message" test.
+- Code: the error catalogue (one place), ProblemDetails mapping, the client message table (`FeedbackMessages` in `Presentation/Feedback/`; the client constant in `ApiErrorCodes`).
+- Tests: the mapping table test, `ClientErrorCodesTests` and the client "every code has a message" test (`FeedbackMessagesTests.EveryErrorCode_HasAMessage`).
 - Docs: `05` error table (until generated), `07` if security-related.
 
 ## Database change

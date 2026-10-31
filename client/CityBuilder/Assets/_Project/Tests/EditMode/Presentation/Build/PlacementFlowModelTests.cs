@@ -309,7 +309,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Build
             Assert.That(_flow.Phase, Is.EqualTo(PlacementPhase.PickingTile));
             Assert.That(_flow.TypeId, Is.EqualTo(Sawmill));
             Assert.That(_flow.Tile, Is.Null);
-            Assert.That(_flow.ErrorText, Is.EqualTo("TILE_OCCUPIED: Something the server said."));
+            Assert.That(_flow.ErrorText, Is.EqualTo("That tile is already taken"));
             Assert.That(_ended, Is.EqualTo(0));
 
             _flow.SetTile(new GridCoordinate(0, 0));

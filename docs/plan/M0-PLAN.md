@@ -290,8 +290,8 @@ The AI coder updates its row at start (`In progress`) and finish (`In review`). 
 | M0-43 | 8 | Grid and camera | S | Done |
 | M0-44 | 8 | Building views from state | S | Done |
 | M0-45 | 8 | Build menu | S | Done |
-| M0-46 | 8 | Placement flow | S | In review |
-| M0-47 | 8 | Feedback for every result | S | Todo |
+| M0-46 | 8 | Placement flow | S | Done |
+| M0-47 | 8 | Feedback for every result | S | In review |
 | M0-48 | 8 | Client review | O | Todo |
 | M0-49 | 9 | HUD | S | Todo |
 | M0-50 | 9 | Building status visuals | S | Todo |

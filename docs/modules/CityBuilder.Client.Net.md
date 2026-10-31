@@ -26,7 +26,7 @@ client directly (`.claude/rules/unity.md`). `GameRoot` builds it and runs the st
 | `SnapshotMapper` | A snapshot answer to the engine's terms (`CitySnapshot`), and `Apply(store, result)`, the one way from an answer to the `ClientCityStore`: a failure returns the error and leaves the store alone. `Replace(store, result)` does the same with `ClientCityStore.Replace`, for the answer right after a new login (CR-0004). The answer has no target level (level + 1 while upgrading) and no next building id (highest id + 1; only the server places buildings). The engine's constructors check the rest: an impossible city is `CLIENT_INVALID_RESPONSE` |
 | `CommandSender`, `CommandIntent`, `CommandKind` | The one way to give the server a command. `CommandIntent` is what the player wants (`PlaceBuilding`, `UpgradeBuilding`, `AssignWorkers`, `StartResearch` factories; equal kind and arguments are the same intent). `SendAsync(intent, token)` makes the request id once, sends it with every attempt, gives the snapshot of an accepted command to the `ClientCityStore` through `SnapshotMapper.Apply`, and returns a `CommandOutcome`. A listener of `PendingChanged` that throws is logged and leaves the command and its lane unharmed (CR-0004) |
 | `CommandPolicy` | The client's behaviour numbers: 3 requests per intent at most, waits of 0.5 s and 1 s between them (the default also holds a 2 s entry for a 4th), stepper debounce 400 ms; `IsRetryable(error)` is the one test of which failure is repeated |
-| `PendingCommand`, `CommandPhase`, `CommandOutcome`, `CommandOutcomeKind` | What the UI shows while an intent is on its way: `CommandSender.Pending` (replaced on every change; `PendingChanged` says when) lists each intent with its `Phase` (`Waiting`, `Sending`, `Retrying`) and `Attempts`. An intent ends as `Succeeded`, `Failed` (with the last `ApiError`) or `Superseded` (a newer worker target replaced it before it was sent) |
+| `PendingCommand`, `CommandPhase`, `CommandOutcome`, `CommandOutcomeKind` | What the UI shows while an intent is on its way: `CommandSender.Pending` (replaced on every change; `PendingChanged` says when; `Completed` is raised once for every intent that ended with the server's answer or an error, after the list let go of it, and not for a replaced target or a cancelled caller: the one place the feedback of M0-47 listens to) lists each intent with its `Phase` (`Waiting`, `Sending`, `Retrying`) and `Attempts`. An intent ends as `Succeeded`, `Failed` (with the last `ApiError`) or `Superseded` (a newer worker target replaced it before it was sent) |
 | `ConnectionMonitor` | Polls `GET /city` into the `ClientCityStore` when the `PollScheduler` says so and turns every answer into a `ConnectionState` (`State`, `LastError`, `StateChanged`). `TickAsync` is called every frame (no task allocated when nothing is due; never throws: a cancel ends it quietly and anything unexpected is logged, CR-0004), `SetPaused` pauses and resumes the polling, `RequestPoll` asks for one now, `PollAsync` polls whatever the scheduler says. `StateFor(error, duringLogin)` is the one table from failure to state |
 | `Dtos/*Dto` | The records of `05` as immutable classes: snapshot (`CitySnapshotDto` …), content (`ContentResponseDto` …), the dev login and the four command bodies; three enums |
 
@@ -74,7 +74,7 @@ captured from the real server, and the round-trip test. A new error code: add it
 `Assets/_Project/Tests/EditMode/Net/` (`CityBuilder.Client.Tests.EditMode`), run by `scripts/dev/test-unity.sh`:
 - `CommandIntentTests`, `CommandPolicyTests`, `CommandSenderTests` (real `ApiClient`, `FakeTransport`, `FakeDelay`): endpoint and body of each command; the same
   request id on every retry and the waits; 422 and the other refusals not repeated; success after two timeouts applies one snapshot; five rapid
-  stepper taps send one command with the final value; the order of two targets of one building; cancellation leaves nothing pending.
+  stepper taps send one command with the final value; the order of two targets of one building; cancellation leaves nothing pending; `Completed` (M0-47) fires once for a success, a refusal and a lost connection, not for a replaced target or a cancel, and a throwing listener is logged.
 - `ConnectionMonitorTests` (real `ApiClient`, `FakeTransport`, a fake clock): each answer's state, the single new login and its three requests, a second refusal, a refused or unreachable login, a rate limit, when `StateChanged` fires, the store untouched by other content, ticks that poll only when due, pause and resume, a network that comes back, a cancel.
 - `SnapshotDtoTests`, `ContentDtoTests`, `RequestDtoTests`: every fixture reads, writes back to the same text, holds the expected values;
   a missing required member and an unknown phase are refused; request bodies have exactly their members.
@@ -94,7 +94,7 @@ captured from the real server, and the round-trip test. A new error code: add it
   `server/tests/CityBuilder.Simulation.Tests`, run with `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`.
 
 ## Known limitations
-- No view uses `CommandSender` yet (M0-44 onwards), and there is no complete error message table (M0-47 *(planned)*);
+- Only the placement flow uses `CommandSender` for now (the other screens come from M0-49 on). The table from error code to message is `FeedbackMessages` in `CityBuilder.Client.Presentation` (M0-47);
   `ConnectionStatusModel` words the start and the six connection states, not other errors.
 - A server that goes down while the device still has a network is found by the next 120 s poll, not sooner. A refused command (`AUTHENTICATION_REQUIRED`) does not yet ask the monitor for a poll: the views of M0-44 on call `RequestPoll`.
 - Content that changes while the app runs is not refetched (`05` Versioning): the state is `IncompatibleVersion` until the app restarts.
@@ -102,4 +102,4 @@ captured from the real server, and the round-trip test. A new error code: add it
   matching builds.
 - The real transport was walked against a running server once (M0-37 build log); it is not in CI (Unity tests are not).
 
-Last updated: CR-0004-T1
+Last updated: M0-47

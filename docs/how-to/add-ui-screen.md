@@ -67,6 +67,7 @@ updates the cards, that the sheet opens. Click a card with the component's `Tap`
 - [ ] Texts and flags in a plain class with EditMode tests; no game number written in code.
 - [ ] Layout in `Resources/UI/`, a comment at the top of each file, a layout test for the names the component looks up.
 - [ ] Component thin: no rule, no `ApiClient`, no allocation per frame (refresh on events, not in `Update`).
+- [ ] A result needs no code of its own: a command's success or error is shown as a toast by `CommandFeedback` (`FeedbackMessages` holds the sentences); a screen shows an error line only when the player must see it next to the buttons, and then the same sentence, never the code or the server's text.
 - [ ] Hints are hints: the server's check decides; nothing is subtracted or spawned before it answers.
 - [ ] Touch targets of at least 48 dp, the safe area respected, pointers over the screen kept from the ground.
 - [ ] Every type and member has an XML doc comment (the repository tests check it); new `.meta` files committed.
