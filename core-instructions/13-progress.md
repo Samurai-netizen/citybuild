@@ -4,14 +4,14 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **State:** AWAITING OWNER   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M0-42 · End-to-end checkpoint (`[O]`, `[MANUAL]`)
 - **Branch:** `task/M0-42-e2e-checkpoint` (from `main` = `53e9ab6`)
 - **Build log entry:** `docs/build-log/2026/2026-10-31-04-M0-42.md`
 - **Last green commit:** `main` = `53e9ab6` (CR-0004-T1 merged, PR #54)
-- **Done steps:** write-ahead
-- **Next step:** step 1 of the plan: preflight of the real API with no Editor
-- **Open questions for the owner:** the step-7 comment edits of protected files that skipped the
+- **Done steps:** 1 preflight of the API, 2 headless run of the real `GameRoot` (passed, offline and reconnect included), 3 `docs/testing/LOCAL-E2E.md`
+- **Next step:** the owner runs `docs/testing/LOCAL-E2E.md` in the Editor and reports the label; first sets `Auth:SigningKey` in user-secrets (missing). If it passes: `/finish-task`. If not: debug and fix the blocker.
+- **Open questions for the owner:** M0-42: the result of the manual run; the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); M0-30: decisions 2 and 5 (400 for a too-big body, not the 413 my
