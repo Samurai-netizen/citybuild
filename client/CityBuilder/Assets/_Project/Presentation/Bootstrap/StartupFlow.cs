@@ -2,12 +2,13 @@
 
 using System.Threading;
 using System.Threading.Tasks;
+using CityBuilder.Client.Core;
 using CityBuilder.Client.Net;
 
 namespace CityBuilder.Client.Presentation.Bootstrap
 {
     /// <summary>
-    /// What the client does when it starts (M0-38): log in, load the content, fetch the city. A plain class over the Net services so a test
+    /// What the client does when it starts (M0-38): log in, load the content, fetch the city and put it in the city store. A plain class over the Net services so a test
     /// runs it against a fake wire; <see cref="GameRoot"/> runs it and shows the outcome. It calls the services, never the views.
     /// <para>
     /// A kept token is tried first (development builds). If the server refuses it, because it expired or the server was reset, the token is
@@ -28,17 +29,22 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         /// <summary>The dev player to be.</summary>
         private readonly string _displayName;
 
+        /// <summary>Receives the first snapshot.</summary>
+        private readonly ClientCityStore _store;
+
         /// <summary>Creates the flow.</summary>
         /// <param name="auth">The auth service over <paramref name="api"/>.</param>
         /// <param name="content">The content service over <paramref name="api"/>.</param>
         /// <param name="api">The client; the city is fetched with it.</param>
         /// <param name="displayName">The dev player's name (<c>ApiClientSettings.DevDisplayName</c>).</param>
-        public StartupFlow(AuthService auth, ContentService content, ApiClient api, string displayName)
+        /// <param name="store">Receives the first snapshot.</param>
+        public StartupFlow(AuthService auth, ContentService content, ApiClient api, string displayName, ClientCityStore store)
         {
             _auth = auth;
             _content = content;
             _api = api;
             _displayName = displayName;
+            _store = store;
         }
 
         /// <summary>Runs login, content and city in that order and stops at the first step that fails.</summary>
@@ -82,12 +88,13 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             }
 
             ApiResult<CitySnapshotDto> city = await _api.GetCityAsync(cancellationToken);
-            if (!city.IsSuccess)
+            ApiError? refused = SnapshotMapper.Apply(_store, city);
+            if (refused != null)
             {
-                return StartupOutcome.Failed(city.Error!);
+                return StartupOutcome.Failed(refused);
             }
 
-            return StartupOutcome.Connected(content.Content!, city.Value!);
+            return StartupOutcome.Connected(content.Content!, content.TimeScale, city.Value!);
         }
 
         /// <summary>Logs in; returns the failed outcome, or null when logged in.</summary>

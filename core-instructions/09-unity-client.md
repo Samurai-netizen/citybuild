@@ -1,7 +1,7 @@
 # Unity Client
 
 > **Built so far:** the project, its four assemblies and their tests, and the `Bootstrap` scene that shows "Not connected" (M0-04, M0-05;
-> `client/README.md`). The API client, the DTOs and the error parsing (`CityBuilder.Client.Net`, M0-37) and the start of the game (login, content through the engine's factory, the first `GET /city`, "Connected" or the fatal error screen: `AuthService`, `ContentService`, `StartupFlow`, `GameRoot`, M0-38) are built and tested; the city store with M0-39, the city view with M0-43, the screens from M0-45 *(planned)*. A task that builds a
+> `client/README.md`). The API client, the DTOs and the error parsing (`CityBuilder.Client.Net`, M0-37) and the start of the game (login, content through the engine's factory, the first `GET /city`, "Connected" or the fatal error screen: `AuthService`, `ContentService`, `StartupFlow`, `GameRoot`, M0-38) and the city store with its display prediction (`ClientCityStore`, `DisplayClock`, `DisplayCity`, M0-39) are built and tested; the city view with M0-43, the screens from M0-45 *(planned)*. A task that builds a
 > part updates this line.
 
 The client renders the latest authoritative snapshot and makes waiting feel alive.
@@ -46,10 +46,13 @@ Local package line in `Packages/manifest.json`:
 - **Composition root:** `GameRoot` builds services by hand (no DI framework, no singletons, no static mutable state).
   `GameBootstrap` (a `sceneLoaded` handler registered before the first scene) creates it when the `Bootstrap` scene loads.
 - **Core:** `ClientCityStore` holds the last snapshot + receive time; raises `SnapshotChanged`.
-  Ignores snapshots whose `stateVersion` is lower than the current one (out-of-order responses).
-- **Display prediction:** `DisplayClock` = `snapshot.clock + secondsSinceReceived × rules.timeScale`
+  Ignores snapshots whose `stateVersion` is lower than the current one (out-of-order responses), and the same version with the same or an
+  earlier clock (the same city, for example a late replay: taking it would move the display clock back). The snapshot's city never leaves it
+  uncopied: readers get `CopyCity()`. `SnapshotMapper.Apply` (Net) is the way from an answer to the store; a refused command never changes it.
+- **Display prediction:** `DisplayClock` = `snapshot.clock + whole secondsSinceReceived × rules.timeScale`
   (`timeScale` is 1 except on Development servers using `DevTimeScale`). For counters and
-  progress bars, run `Simulator.Advance` on a **copy** of the snapshot, and use the `Simulation.Display` helpers (`04` §15) for rates,
+  progress bars, `DisplayCity` runs `Simulator.Advance` on a **copy** of the snapshot, at most once per second and always from the snapshot, so it
+  equals one advance of the whole time (the production cap counts from the start of an advance). A new snapshot replaces it at once. Views use the `Simulation.Display` helpers (`04` §15) for rates,
   bars and countdowns. Never send predicted values anywhere.
 - **Net:** `ApiClient` (`UnityWebRequest` wrapped in a `Task` that continues on the main thread; base URL and timeout from the
   `ApiClientSettings` asset), one method per endpoint of `05`, each returning an `ApiResult<T>`: the DTO or an
@@ -58,7 +61,7 @@ Local package line in `Packages/manifest.json`:
   (`CLIENT_INVALID_RESPONSE`), are results; only a cancelled token throws (cancel with `destroyCancellationToken`).
 - **Start (M0-38):** `GameRoot.Start` runs `StartupFlow`: `AuthService` takes a kept token for the configured dev player or calls the dev
   login, `ContentService` turns `GET /content` into `GameContent` through `GameContentFactory` (so the client trusts no content its own
-  engine would refuse), then `GET /city`. The token is in memory; the Editor and development players also keep it in `PlayerPrefs`
+  engine would refuse), then `GET /city`, whose snapshot goes into the store (`GameRoot` then builds `DisplayCity` and refreshes it in `Update`). The token is in memory; the Editor and development players also keep it in `PlayerPrefs`
   (keys `CityBuilder.DevLogin.*`), never a snapshot or a balance. A kept token the server refuses (`AUTHENTICATION_REQUIRED`) is dropped
   and the flow logs in once more. Invalid content shows the fatal error screen (`UI/FatalError`); a failed request shows "Not connected"
   with a sentence and the code. The dev player's name is `devDisplayName` in `ApiClientSettings`.

@@ -90,7 +90,7 @@ The runtime scene is `Bootstrap`: the owner made it by hand ([MANUAL], `client/R
 (the template's `SampleScene` is unticked and would get no `GameRoot`). When the scene loads, `GameBootstrap` creates the
 `GameRoot` composition root. `GameRoot` shows a UI Toolkit status label (UXML and USS from `Assets/_Project/Resources/UI/`) and runs `StartupFlow`:
 restore or get a dev token, `GET /content` through the engine's validating factory, `GET /city`, then "Connected - <era> - Coins: <n>". Content the factory
-refuses ends on the fatal error screen. The snapshot is only shown once: the client's city store comes with M0-39 *(planned)*.
+refuses ends on the fatal error screen. The snapshot goes into `ClientCityStore`, and `DisplayCity` predicts from it between snapshots with the shared engine (M0-39); no view reads the prediction yet (M0-43, M0-45 *(planned)*).
 
 ## Dependency rules and where they are tested
 These cells of the dependency table in `core-instructions/03-architecture.md` are enforced by tests that read the references of the

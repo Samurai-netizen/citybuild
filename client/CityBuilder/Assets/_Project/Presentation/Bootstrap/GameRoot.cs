@@ -1,6 +1,7 @@
 #nullable enable
 
 using System;
+using CityBuilder.Client.Core;
 using CityBuilder.Client.Net;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -12,7 +13,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
     /// (core-instructions/09, "Runtime structure"). <see cref="GameBootstrap"/> creates exactly one when the Bootstrap scene loads.
     /// It shows the connection status, builds the API client from the settings asset, runs <see cref="StartupFlow"/> (login, content, city)
     /// and shows how it ended: "Connected" with the era and the coins, a message when the server cannot be used, or the fatal error screen
-    /// when the server's content is invalid.
+    /// when the server's content is invalid. Once connected it owns the city store and keeps the display city up to date for the views.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class GameRoot : MonoBehaviour
@@ -41,6 +42,12 @@ namespace CityBuilder.Client.Presentation.Bootstrap
 
         /// <summary>The fatal error layout, kept to swap in; null when it is missing.</summary>
         private VisualTreeAsset? _fatalErrorLayout;
+
+        /// <summary>Holds the last snapshot; the flow and, later, the command sender and the polling give it to this one store.</summary>
+        private readonly ClientCityStore _cityStore = new ClientCityStore();
+
+        /// <summary>The predicted city; null until the start has connected.</summary>
+        private DisplayCity? _displayCity;
 
         /// <summary>The text the screen shows now, for tests and logs.</summary>
         public string CurrentStatusText { get; private set; } = string.Empty;
@@ -73,7 +80,11 @@ namespace CityBuilder.Client.Presentation.Bootstrap
 
                 StartupOutcome outcome = await flow.RunAsync(destroyCancellationToken);
                 Show(ConnectionStatusModel.From(outcome));
-                if (outcome.Kind != StartupResultKind.Connected)
+                if (outcome.Kind == StartupResultKind.Connected)
+                {
+                    _displayCity = new DisplayCity(_cityStore, new DisplayClock(_cityStore, outcome.TimeScale), outcome.Content!);
+                }
+                else
                 {
                     // A failed connection is expected when no server runs: a warning, so a scene test or a player's log is not an error.
                     string reason = outcome.Error != null ? outcome.Error.ToString() : outcome.ContentErrors.Count + " content error(s)";
@@ -89,6 +100,12 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                 Debug.LogException(exception);
                 Show(ConnectionStatusModel.BadSettings("an unexpected error, see the log"));
             }
+        }
+
+        /// <summary>Unity calls it every frame: the display city predicts again when a whole second has passed, and otherwise does nothing.</summary>
+        private void Update()
+        {
+            _displayCity?.Refresh();
         }
 
         /// <summary>
@@ -119,7 +136,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
 
             // Only the Editor and development players keep the token on the device (M0-38).
             var auth = new AuthService(api, AccessTokenStores.For(Debug.isDebugBuild));
-            return new StartupFlow(auth, new ContentService(api), api, settings.DevDisplayName);
+            return new StartupFlow(auth, new ContentService(api), api, settings.DevDisplayName, _cityStore);
         }
 
         /// <summary>

@@ -42,7 +42,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation
         [Test]
         public void Connected_NamesTheEraAndTheCoins()
         {
-            StartupOutcome outcome = StartupOutcome.Connected(_content, City(Fixtures.Read("snapshot-city-start.json")));
+            StartupOutcome outcome = StartupOutcome.Connected(_content, 1, City(Fixtures.Read("snapshot-city-start.json")));
 
             ConnectionStatusModel model = ConnectionStatusModel.From(outcome);
 
@@ -56,7 +56,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation
         {
             string odd = Fixtures.Read("snapshot-city-start.json").Replace("\"era\":1,", "\"era\":9,").Replace("\"coins\":700,", string.Empty);
 
-            ConnectionStatusModel model = ConnectionStatusModel.From(StartupOutcome.Connected(_content, City(odd)));
+            ConnectionStatusModel model = ConnectionStatusModel.From(StartupOutcome.Connected(_content, 1, City(odd)));
 
             Assert.That(model.Headline, Is.EqualTo("Connected - Era 9 - Coins: 0"));
         }

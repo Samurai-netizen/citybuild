@@ -3,6 +3,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using CityBuilder.Client.Core;
 using CityBuilder.Client.Net;
 using CityBuilder.Client.Presentation.Bootstrap;
 using CityBuilder.Client.Tests.EditMode.Net;
@@ -25,6 +26,9 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation
         /// <summary>The store the flow's auth service writes to.</summary>
         private MemoryAccessTokenStore _store = null!;
 
+        /// <summary>The city store the flow fills.</summary>
+        private ClientCityStore _cityStore = null!;
+
         /// <summary>The flow under test, for the dev player <c>dev1</c>.</summary>
         private StartupFlow _flow = null!;
 
@@ -35,7 +39,8 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation
             _transport = new FakeTransport();
             _store = new MemoryAccessTokenStore();
             var api = new ApiClient("http://localhost:8080", 15, _transport);
-            _flow = new StartupFlow(new AuthService(api, _store), new ContentService(api), api, "dev1");
+            _cityStore = new ClientCityStore(() => 0);
+            _flow = new StartupFlow(new AuthService(api, _store), new ContentService(api), api, "dev1", _cityStore);
         }
 
         /// <summary>A first start logs in, loads the content and fetches the city, in that order, each with the token it needs.</summary>
@@ -204,6 +209,34 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation
             Assert.That(outcome.Kind, Is.EqualTo(StartupResultKind.Failed));
             Assert.That(outcome.Error!.Code, Is.EqualTo(ApiErrorCodes.ClientNetworkError));
             Assert.That(outcome.Content, Is.Null);
+        }
+
+        /// <summary>A connected start leaves the first snapshot in the city store, and the outcome carries the clock's speed.</summary>
+        [Test]
+        public async Task Run_Connected_FillsTheCityStore()
+        {
+            _transport.Answer(200, LoginAnswer).Answer(200, Fixtures.Read("content.json")).Answer(200, Fixtures.Read("snapshot-city-producing.json"));
+
+            StartupOutcome outcome = await _flow.RunAsync(CancellationToken.None);
+
+            Assert.That(outcome.Kind, Is.EqualTo(StartupResultKind.Connected));
+            Assert.That(outcome.TimeScale, Is.EqualTo(1));
+            Assert.That(_cityStore.Snapshot!.StateVersion, Is.EqualTo(25L));
+            Assert.That(_cityStore.Snapshot.Clock, Is.EqualTo(199L));
+        }
+
+        /// <summary>A snapshot whose values form no city is a failed start, not a connected one, and the store stays empty.</summary>
+        [Test]
+        public async Task Run_ASnapshotThatIsNoCity_Fails()
+        {
+            string broken = Fixtures.Read("snapshot-city-producing.json").Replace("\"clock\":199", "\"clock\":-1");
+            _transport.Answer(200, LoginAnswer).Answer(200, Fixtures.Read("content.json")).Answer(200, broken);
+
+            StartupOutcome outcome = await _flow.RunAsync(CancellationToken.None);
+
+            Assert.That(outcome.Kind, Is.EqualTo(StartupResultKind.Failed));
+            Assert.That(outcome.Error!.Code, Is.EqualTo(ApiErrorCodes.ClientInvalidResponse));
+            Assert.That(_cityStore.Snapshot, Is.Null);
         }
 
         /// <summary>A cancelled start throws, whichever request was open.</summary>

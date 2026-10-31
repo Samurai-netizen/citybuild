@@ -36,7 +36,16 @@ namespace CityBuilder.Client.Net
             }
 
             GameContentResult built = GameContentFactory.Create(ContentMapper.ToData(response.Value!));
-            return built.IsValid ? ContentLoadResult.Success(built.Content!) : ContentLoadResult.Invalid(built.Errors);
+            if (!built.IsValid)
+            {
+                return ContentLoadResult.Invalid(built.Errors);
+            }
+
+            // The factory doesn't see the time scale (it is not content), and the display clock cannot run on one below 1.
+            int timeScale = response.Value!.Rules.TimeScale;
+            return timeScale >= 1
+                ? ContentLoadResult.Success(built.Content!, timeScale)
+                : ContentLoadResult.RequestFailed(new ApiError(ApiErrorCodes.ClientInvalidResponse, 200, "The content's time scale is " + timeScale + ", below 1.", null, null, null));
         }
     }
 }

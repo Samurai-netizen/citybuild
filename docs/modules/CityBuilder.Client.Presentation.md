@@ -15,8 +15,8 @@ for balances or for any decision: it only displays server state.
 ## Key types
 | Type | Responsibility |
 |---|---|
-| `GameRoot` (`Bootstrap/`) | The composition root, a thin `MonoBehaviour`: the one place that builds services by hand. `Awake` creates the UI object (a `UIDocument` with `UI/PanelSettings` and the tree `UI/ConnectionStatus`); `Start` builds `ApiClient`, `AuthService` and `ContentService` from `Config/ApiClientSettings`, runs `StartupFlow` with `destroyCancellationToken`, and shows the outcome. Missing assets are logged as one error that names them (the root stays alive without UI); a failed connection is logged as a warning only |
-| `StartupFlow`, `StartupOutcome` (`Bootstrap/`) | Plain classes: restore a kept token or log in, load the content, fetch the city. When the server refuses a kept token the flow drops it and logs in once more; a refusal after a fresh login is a failure. The outcome is `Connected` (content and first snapshot), `Failed` (an `ApiError`) or `InvalidContent` (the factory's errors). Nothing is stored: the city store is M0-39 |
+| `GameRoot` (`Bootstrap/`) | The composition root, a thin `MonoBehaviour`: the one place that builds services by hand. It owns the `ClientCityStore`, builds `DisplayClock` and `DisplayCity` once connected, and refreshes the display city in `Update`. `Awake` creates the UI object (a `UIDocument` with `UI/PanelSettings` and the tree `UI/ConnectionStatus`); `Start` builds `ApiClient`, `AuthService` and `ContentService` from `Config/ApiClientSettings`, runs `StartupFlow` with `destroyCancellationToken`, and shows the outcome. Missing assets are logged as one error that names them (the root stays alive without UI); a failed connection is logged as a warning only |
+| `StartupFlow`, `StartupOutcome` (`Bootstrap/`) | Plain classes: restore a kept token or log in, load the content, fetch the city and put its snapshot in the `ClientCityStore`. When the server refuses a kept token the flow drops it and logs in once more; a refusal after a fresh login is a failure. The outcome is `Connected` (content and first snapshot), `Failed` (an `ApiError`) or `InvalidContent` (the factory's errors). Nothing is stored: the city store is M0-39 |
 | `ConnectionStatusModel` (`Bootstrap/`) | The sentences of the start screen as plain data: `Connecting...`, `Connected - <era name> - <item name>: <coins>` (names from the content, fallbacks `Era 9` and `0`), one sentence per kind of failed request ending in its code, and for invalid content or bad settings a fatal screen with the lines. The id of the coins item is `ConnectionStatusModel.CoinsItemId` |
 | `GameBootstrap` (`Bootstrap/`) | `internal static`. Registers a `SceneManager.sceneLoaded` handler before the first scene loads (`RuntimeInitializeOnLoadMethod`, `BeforeSceneLoad`); when the scene named `Bootstrap` loads, it creates one `GameRoot` in that scene. A `GameRoot` already in the scene (a root or any descendant) is kept and nothing is added. It holds no field |
 
@@ -62,4 +62,4 @@ Those two are **not** tests: both need a second scene asset that a test can load
   camera until M0-43, so the Editor may print "No cameras rendering"; the UI Toolkit overlay does not need one.
 - The label has a fixed top-left position; safe-area padding and touch-target sizes come with M0-59.
 
-Last updated: M0-38
+Last updated: M0-39

@@ -49,6 +49,30 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(_transport.Requests[0].AccessToken, Is.EqualTo("tok-1"));
         }
 
+        /// <summary>The server clock's speed comes along: it is not content, and the display clock needs it.</summary>
+        [Test]
+        public async Task Load_TheRealAnswer_CarriesTheTimeScale()
+        {
+            _transport.Answer(200, Fixtures.Read("content.json").Replace("\"timeScale\":1", "\"timeScale\":60"));
+
+            ContentLoadResult result = await _service.LoadAsync(CancellationToken.None);
+
+            Assert.That(result.IsSuccess, Is.True, Describe(result));
+            Assert.That(result.TimeScale, Is.EqualTo(60));
+        }
+
+        /// <summary>A time scale the display clock cannot run on is an answer outside the contract.</summary>
+        [Test]
+        public async Task Load_ATimeScaleBelowOne_IsAnInvalidResponse()
+        {
+            _transport.Answer(200, Fixtures.Read("content.json").Replace("\"timeScale\":1", "\"timeScale\":0"));
+
+            ContentLoadResult result = await _service.LoadAsync(CancellationToken.None);
+
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.ApiError!.Code, Is.EqualTo(ApiErrorCodes.ClientInvalidResponse));
+        }
+
         /// <summary>The content carries the numbers of the answer: version, rules, the starter city, the era and the items.</summary>
         [Test]
         public async Task Load_TheRealAnswer_CarriesRulesStartingCityEraAndItems()

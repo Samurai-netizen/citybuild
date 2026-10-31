@@ -22,7 +22,8 @@ client directly (`.claude/rules/unity.md`). `GameRoot` builds it and runs the st
 | `ApiClientSettings` | `ScriptableObject` with the server URL, the timeout and the dev player's name (`DevDisplayName`, default `dev1`); the asset is `Resources/Config/ApiClientSettings.asset` |
 | `AuthService`, `AuthState` | The login state machine (`LoggedOut`, `LoggingIn`, `LoggedIn`, `Failed`): `TryRestore(name)` takes a kept token for that player without asking the server, `LoginAsync(name)` calls the dev login and hands the token to `ApiClient`, `Forget()` drops it. A failure is `State == Failed` plus `LastError`, not an exception; only a cancel throws. It never decides that a token is still good: the server does |
 | `IAccessTokenStore`, `StoredLogin`, `PlayerPrefsAccessTokenStore`, `NullAccessTokenStore`, `AccessTokenStores` | Where the token lives between runs. `StoredLogin` is the token and the display name it was issued for, nothing else (no snapshot, no balance, no expiry). `AccessTokenStores.For(isDevelopmentBuild)` gives `PlayerPrefs` (keys `CityBuilder.DevLogin.AccessToken` and `.DisplayName`) to the Editor and development players, and a store that keeps nothing to every other build |
-| `ContentService`, `ContentMapper`, `ContentLoadResult` | `GET /content` to the engine's `GameContent`: `ContentMapper` copies the answer into `GameContentData` (the one respelling: kind `House` to `house`), `GameContentFactory.Create` validates it exactly as the server does. The result is one of three: the content, a failed request (`ApiError`), or the factory's error list (the answer arrived but is invalid) |
+| `ContentService`, `ContentMapper`, `ContentLoadResult` | `GET /content` to the engine's `GameContent` plus the server clock's `TimeScale` (not content; below 1 is `CLIENT_INVALID_RESPONSE`): `ContentMapper` copies the answer into `GameContentData` (the one respelling: kind `House` to `house`), `GameContentFactory.Create` validates it exactly as the server does. The result is one of three: the content, a failed request (`ApiError`), or the factory's error list (the answer arrived but is invalid) |
+| `SnapshotMapper` | A snapshot answer to the engine's terms (`CitySnapshot`), and `Apply(store, result)`, the one way from an answer to the `ClientCityStore`: a failure returns the error and leaves the store alone. The answer has no target level (level + 1 while upgrading) and no next building id (highest id + 1; only the server places buildings). The engine's constructors check the rest: an impossible city is `CLIENT_INVALID_RESPONSE` |
 | `Dtos/*Dto` | The records of `05` as immutable classes: snapshot (`CitySnapshotDto` …), content (`ContentResponseDto` …), the dev login and the four command bodies; three enums |
 
 ## Rules and invariants
@@ -82,4 +83,4 @@ captured from the real server, and the round-trip test. A new error code: add it
   matching builds.
 - The real transport was walked against a running server once (M0-37 build log); it is not in CI (Unity tests are not).
 
-Last updated: M0-38
+Last updated: M0-39
