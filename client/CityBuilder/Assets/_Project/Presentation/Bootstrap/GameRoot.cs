@@ -5,6 +5,7 @@ using CityBuilder.Client.Core;
 using CityBuilder.Client.Net;
 using CityBuilder.Client.Presentation.Build;
 using CityBuilder.Client.Presentation.City;
+using CityBuilder.Client.Presentation.Feedback;
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.State;
 using UnityEngine;
@@ -87,6 +88,15 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         /// <summary>The placement flow (pick a card, a tile, confirm); null until the start has connected, or when the menu or the bar is missing.</summary>
         private PlacementFlow? _placement;
 
+        /// <summary>The toasts on the screen; null until the start has connected.</summary>
+        private ToastQueue? _toasts;
+
+        /// <summary>Shows the toasts; null until the start has connected, or when its assets are missing.</summary>
+        private ToastHost? _toastHost;
+
+        /// <summary>Turns every command result into a toast; null until the start has connected.</summary>
+        private CommandFeedback? _feedback;
+
         /// <summary>The text the screen shows now, for tests and logs.</summary>
         public string CurrentStatusText { get; private set; } = string.Empty;
 
@@ -95,6 +105,12 @@ namespace CityBuilder.Client.Presentation.Bootstrap
 
         /// <summary>The connection monitor the views read the state from (<c>09</c> Polling); null until the start has connected.</summary>
         internal ConnectionMonitor? Connection => _monitor;
+
+        /// <summary>The toasts (<c>09</c> Feedback); null until the start has connected.</summary>
+        internal ToastQueue? Toasts => _toasts;
+
+        /// <summary>The toast screen (<c>09</c> Feedback); null until the start has connected, or when its assets are missing.</summary>
+        internal ToastHost? ToastHost => _toastHost;
 
         /// <summary>The build menu (<c>09</c> Build menu); null until the start has connected, or when its assets are missing.</summary>
         internal BuildMenu? BuildMenu => _buildMenu;
@@ -145,6 +161,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                     _displayCity = new DisplayCity(_cityStore, new DisplayClock(_cityStore, outcome.TimeScale), outcome.Content!);
                     _commandSender = new CommandSender(_api!, _cityStore, CommandPolicy.Default);
                     _content = outcome.Content;
+                    CreateFeedback();
                     _world!.ShowGrid(new CityGrid(outcome.Content!.Rules.GridWidth, outcome.Content.Rules.GridHeight));
                     _displayCity.Changed += ShowBuildings;
                     CreateBuildMenu(outcome.Content!);
@@ -200,6 +217,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         private void OnDestroy()
         {
             _placement?.Dispose();
+            _feedback?.Dispose();
             if (_displayCity != null)
             {
                 _displayCity.Changed -= ShowBuildings;
@@ -222,6 +240,17 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                 _buildMenu?.Model?.Update(city);
                 _placement?.Update(city);
             }
+        }
+
+        /// <summary>
+        /// Makes the toast queue and its screen, and the feedback that fills it from the command sender, so every command result is shown
+        /// (<c>09</c> UX rules). The feedback works without the screen: a missing asset logs an error and the queue still fills.
+        /// </summary>
+        private void CreateFeedback()
+        {
+            _toasts = new ToastQueue();
+            _toastHost = ToastHost.Create(transform, _toasts);
+            _feedback = new CommandFeedback(_commandSender!, _toasts, ToastHost.NowMilliseconds);
         }
 
         /// <summary>

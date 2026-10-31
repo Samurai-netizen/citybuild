@@ -8,9 +8,9 @@
 - **Task:** M0-47 · Feedback for every result (`[S]`, Sonnet 5.5); M0-46 (PR #61) is merged
 - **Branch:** `task/M0-47-feedback-toasts` (from `main` = `3937f69`)
 - **Build log entry:** `docs/build-log/2026/2026-10-31-09-M0-47.md` (In progress)
-- **Last green commit:** `945ae2f` (the `.meta` chore); nothing of M0-47's code yet
-- **Done steps:** write-ahead
-- **Next step:** step 1 of the plan in the build log: `FeedbackMessages` (the code → message table) with the completeness test. Steps: 1 messages · 2 `ToastQueue` · 3 `ToastHost` + UXML/USS · 4 `CommandFeedback` wiring, bar line, `GameRoot`, PlayMode tests · 5 docs and finish. The owner should still run `docs/testing/LOCAL-E2E.md` step 3 in the Editor (M0-46's placement recipe).
+- **Last green commit:** the head of `task/M0-47-feedback-toasts` (Unity EditMode 636 / 636 and PlayMode 77 / 77 in a mirror project; Repository tests 22 / 22)
+- **Done steps:** write-ahead, steps 1 to 5 (messages, queue, host, `Completed` + feedback + `GameRoot`, docs)
+- **Next step:** finish: `check-docs.sh --base origin/main`, handbook build, .NET suite, self-review, status Done, PR. The owner should still run `docs/testing/LOCAL-E2E.md` step 3 in the Editor (the placement recipe now also shows the toasts).
 - **Open questions for the owner:** M0-46: the ghost's transparent shader variant on a device build (follow-up); M0-45: decision 1 (item names are plural, so `1 Planks`; a singular name in the content is your call), decision 8 (cards use the displayed city, not the raw snapshot), decision 11 (I changed M0-43's `CityInputReader`/`CityWorld` so a press on the menu never reaches the ground); the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never

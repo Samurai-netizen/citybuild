@@ -523,5 +523,100 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(() => new CommandSender(rig.Api, rig.Store, null!), Throws.ArgumentNullException);
             Assert.That(() => rig.Sender.SendAsync(null!, CancellationToken.None), Throws.ArgumentNullException);
         }
+
+        /// <summary>An accepted command raises <c>Completed</c> once, with the outcome, after the pending list has let go of it (M0-47).</summary>
+        [Test]
+        public async Task Completed_IsRaisedOnceForAnAcceptedCommand()
+        {
+            var rig = new Rig(true);
+            rig.Transport.Answer(200, Rig.Success());
+            var seen = new List<CommandOutcome>();
+            int pendingWhenRaised = -1;
+            rig.Sender.Completed += outcome =>
+            {
+                seen.Add(outcome);
+                pendingWhenRaised = rig.Sender.Pending.Count;
+            };
+
+            CommandOutcome returned = await rig.Sender.SendAsync(CommandIntent.PlaceBuilding("house", 1, 2), CancellationToken.None);
+
+            Assert.That(seen, Has.Count.EqualTo(1));
+            Assert.That(seen[0], Is.SameAs(returned));
+            Assert.That(seen[0].IsSuccess, Is.True);
+            Assert.That(pendingWhenRaised, Is.EqualTo(0));
+        }
+
+        /// <summary>A refusal and a lost connection raise <c>Completed</c> too, with the error, so a screen can say why.</summary>
+        [Test]
+        public async Task Completed_IsRaisedForARefusalAndForALostConnection()
+        {
+            var rig = new Rig(true);
+            rig.Transport.Answer(409, Fixtures.Read("error-409-NO_FREE_BUILDER.json")).Fail("offline").Fail("offline").Fail("offline");
+            var seen = new List<CommandOutcome>();
+            rig.Sender.Completed += seen.Add;
+
+            await rig.Sender.SendAsync(CommandIntent.UpgradeBuilding(1), CancellationToken.None);
+            await rig.Sender.SendAsync(CommandIntent.UpgradeBuilding(2), CancellationToken.None);
+
+            Assert.That(seen, Has.Count.EqualTo(2));
+            Assert.That(seen[0].Error!.Code, Is.EqualTo(ApiErrorCodes.NoFreeBuilder));
+            Assert.That(seen[1].Error!.Code, Is.EqualTo(ApiErrorCodes.ClientNetworkError));
+        }
+
+        /// <summary>Five rapid stepper taps raise <c>Completed</c> once, for the target that was sent; the four replaced ones are silent.</summary>
+        [Test]
+        public async Task Completed_IsNotRaisedForASupersededTarget()
+        {
+            var rig = new Rig(false);
+            rig.Transport.Answer(200, Rig.Success());
+            var seen = new List<CommandOutcome>();
+            rig.Sender.Completed += seen.Add;
+
+            var taps = new List<Task<CommandOutcome>>();
+            for (int workers = 1; workers <= 5; workers++)
+            {
+                taps.Add(rig.Sender.SendAsync(CommandIntent.AssignWorkers(3, workers), CancellationToken.None));
+            }
+
+            await WaitUntil(() => rig.Delay.OpenCount == 1, "only the last debounce is still open");
+            rig.Delay.CompleteAt(0);
+            await taps[4];
+
+            Assert.That(seen, Has.Count.EqualTo(1));
+            Assert.That(seen[0].Intent.Workers, Is.EqualTo(5));
+        }
+
+        /// <summary>A command cancelled by the caller (the game is closing) raises nothing: there is no result to show.</summary>
+        [Test]
+        public async Task Completed_IsNotRaisedForACancelledCommand()
+        {
+            var rig = new Rig(false);
+            rig.Transport.Fail("offline");
+            int raised = 0;
+            rig.Sender.Completed += _ => raised++;
+            using (var cancellation = new CancellationTokenSource())
+            {
+                Task<CommandOutcome> command = rig.Sender.SendAsync(CommandIntent.UpgradeBuilding(1), cancellation.Token);
+                await WaitUntil(() => rig.Delay.OpenCount == 1, "the backoff");
+                cancellation.Cancel();
+                await AssertCancelled(command);
+            }
+
+            Assert.That(raised, Is.EqualTo(0));
+        }
+
+        /// <summary>A listener of <c>Completed</c> that throws is logged and does not stop the caller's task from ending with the outcome.</summary>
+        [Test]
+        public async Task AThrowingCompletedListener_DoesNotStopTheOutcome()
+        {
+            var rig = new Rig(true);
+            rig.Transport.Answer(200, Rig.Success());
+            LogAssert.Expect(LogType.Exception, new Regex("a broken completed listener"));
+            rig.Sender.Completed += _ => throw new InvalidOperationException("a broken completed listener");
+
+            CommandOutcome outcome = await rig.Sender.SendAsync(CommandIntent.UpgradeBuilding(1), CancellationToken.None);
+
+            Assert.That(outcome.Kind, Is.EqualTo(CommandOutcomeKind.Succeeded));
+        }
     }
 }

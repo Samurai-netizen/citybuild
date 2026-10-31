@@ -41,6 +41,14 @@ namespace CityBuilder.Client.Net
         /// <summary>Makes the request id of a new intent.</summary>
         private readonly Func<Guid> _newRequestId;
 
+        /// <summary>
+        /// Raised once for every intent that ended with the server's answer or with its error, a success or a failure, after the pending list no
+        /// longer holds it: the one place a screen can show a result from (M0-47). Not raised for a <see cref="CommandOutcomeKind.Superseded"/> target
+        /// (nothing reached the server) or when the caller's token was cancelled (the game is closing). A listener that throws is logged and does
+        /// not stop the sender.
+        /// </summary>
+        public event Action<CommandOutcome>? Completed;
+
         /// <summary>The intents that have not ended, oldest first.</summary>
         private readonly List<Entry> _entries = new List<Entry>();
 
@@ -207,6 +215,7 @@ namespace CityBuilder.Client.Net
             if (outcome != null)
             {
                 entry.Completion.TrySetResult(outcome);
+                RaiseCompleted(outcome);
             }
             else if (failure is OperationCanceledException)
             {
@@ -294,6 +303,19 @@ namespace CityBuilder.Client.Net
                 command.Phase = CommandPhase.Retrying;
                 PendingChanged?.Invoke();
                 await _delay(_policy.BackoffAfter(attempt), cancellationToken);
+            }
+        }
+
+        /// <summary>Tells the listeners of <see cref="Completed"/> how an intent ended; whatever a listener throws is logged, never passed on.</summary>
+        private void RaiseCompleted(CommandOutcome outcome)
+        {
+            try
+            {
+                Completed?.Invoke(outcome);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception);
             }
         }
 

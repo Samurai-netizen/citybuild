@@ -184,7 +184,7 @@ second part is the `TraceId` of every log line of the request), `requestId` the 
 - One writer, one list: every code above is a member of `ErrorCatalogue` (`CityBuilder.Api/Errors/`), and `ApiProblem` writes every error answer
   with exactly these members: `type` (`urn:citybuilder:error:` and the code in kebab case), `title`, `status`, `detail`, `code`, `requestId` **only
   when the request had one** (an answer to `GET /city`, a request that could not be read, a rate limit and a 500 have none) and `traceId`.
-  A test holds every code to this table and to a source that produces it, and `ClientErrorCodesTests` holds the Unity client's `ApiErrorCodes` to the same table.
+  A test holds every code to this table and to a source that produces it, and `ClientErrorCodesTests` holds the Unity client's `ApiErrorCodes` to the same table. The client turns each code into a human sentence in `FeedbackMessages` (M0-47), and a client test fails for a code without one, so a new code needs its sentence there.
 - **No stack trace in any response, in any environment.** An unexpected exception is 500 `INTERNAL_ERROR` with the catalogue's detail; only in
   Development does `detail` also name the exception's type and message. The exception and its stack are logged (event id 3000).
 - A request that can't be read at all (broken JSON, a field the contract doesn't have, a body that doesn't bind) is 400 `INVALID_ARGUMENT` in
