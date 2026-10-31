@@ -8,9 +8,9 @@
 - **Task:** M0-43 · Grid and camera (`[S]`, Sonnet 5.5)
 - **Branch:** `task/M0-43-grid-camera` (from `main` = `17fef65`)
 - **Build log entry:** `docs/build-log/2026/2026-10-31-05-M0-43.md`
-- **Last green commit:** `main` = `17fef65` (nothing changed yet)
-- **Done steps:** —
-- **Next step:** step 1 of the log's plan: `GridCoordinate` and `CityGrid` in `Presentation/City/` with EditMode tests. Steps: 1 grid math · 2 camera model and pointer gesture · 3 tile selection and ground tiles · 4 MonoBehaviours and `GameRoot` · 5 docs and finish.
+- **Last green commit:** the head of `task/M0-43-grid-camera` (EditMode 453 / 453 in a mirror project)
+- **Done steps:** 1 grid math (`GridCoordinate`, `CityGrid`, tests)
+- **Next step:** step 2 of the log's plan: `CityCameraModel` and `PointerGesture` in `Presentation/City/` with EditMode tests. Then 3 tile selection and ground tiles · 4 MonoBehaviours and `GameRoot` · 5 docs and finish. The owner's Editor is open, so Unity runs in a mirror project (decision 5: sync `Assets/` to a copy, run `-batchmode` there, copy new `.meta` files back).
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
