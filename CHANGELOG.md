@@ -182,6 +182,7 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
 - Unity city ground and camera: `CityWorld` (made by `GameRoot`: the only camera, a light, the 8 by 8 ground of primitives from the content's grid size), the angled
   3/4 `CityCameraModel` (pan clamped to the grid, zoom limits), `CityInputReader` (drag, pinch, wheel, tap and hover through the Input System), `CityGrid` and `GridCoordinate`
   (world and tile conversions), `TileSelection`; 93 new tests (75 EditMode, 18 PlayMode; the PlayMode ones use the Input System's fake devices) (M0-43).
+- Building views: placeholder looks from primitives by type and era (Cottage, Woodcutter's Hut, Sawmill, Trading Post), a factory, and `CityView`, which reconciles one view per building with the displayed city; level 2 is 20 % taller, a building under construction is a low foundation; 23 EditMode and 7 PlayMode tests; the owner's `server-panel/` menu for the local server is committed too (M0-44).
 
 ### Changed
 - `/finish-task` can be run by the AI coder itself once every planned step is done (owner directive OD-15; M0-36).

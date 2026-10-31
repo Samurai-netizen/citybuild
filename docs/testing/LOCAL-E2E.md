@@ -36,6 +36,15 @@ In a second terminal, run `curl http://localhost:8080/health`. It answers `Healt
 
 Behind the label the Game view is dark blue-grey, and a green chessboard of 8 by 8 tiles shows in a diamond (the city's ground, M0-43). The Console has no red messages. Try the controls: hold the left mouse button and drag to move the view (it stops at the edge of the grid), turn the mouse wheel to zoom, move the pointer to mark a tile in yellow, and click a tile to mark it in orange (click it again to clear it).
 
+A new city has no buildings, so the ground is empty. To see the building views (M0-44), place a Cottage with the command line (the client has no build menu until M0-45). Do it before pressing Play, or press Play again afterwards (the client asks for the city every 120 s, so a wait of up to two minutes shows it too):
+```
+TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/dev-login -H 'Content-Type: application/json' -d '{"displayName":"dev1"}' | sed 's/.*"accessToken":"\([^"]*\)".*/\1/')
+curl -X POST http://localhost:8080/api/v1/commands/place-building -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d "{\"requestId\":\"$(uuidgen)\",\"buildingTypeId\":\"house\",\"x\":3,\"y\":3}"
+```
+The tile at column 3, row 3 shows a low flat block while the Cottage is under construction, and a small cream box with a red pitched roof once it is built. Other `buildingTypeId` values: `woodcutter` (low box and a log pile), `sawmill` (long box with a wheel), `trading_post` (box with a red awning). The Console shows no red messages.
+
+The local server can also be started and stopped from a small menu, `server-panel/README.md`.
+
 **4. Stop the server and see Offline.**
 1. In the API's terminal press **Ctrl+C**.
 2. Click the Game view in Unity and leave it in front. The game runs only while the Editor has focus (`Run In Background` is off).
