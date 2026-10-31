@@ -14,8 +14,8 @@ namespace CityBuilder.Client.Tests.EditMode.Net
     /// </summary>
     public sealed class FakeTransport : IApiTransport
     {
-        /// <summary>What the next calls return, oldest first.</summary>
-        private readonly Queue<ApiTransportResponse> _answers = new Queue<ApiTransportResponse>();
+        /// <summary>What the next calls return, oldest first; null stands for a call whose token is cancelled, the way the client's timeout does it.</summary>
+        private readonly Queue<ApiTransportResponse?> _answers = new Queue<ApiTransportResponse?>();
 
         /// <summary>Whether a call waits until its token is cancelled instead of answering.</summary>
         private bool _neverAnswers;
@@ -34,6 +34,13 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         public FakeTransport Fail(string message)
         {
             _answers.Enqueue(ApiTransportResponse.NetworkFailure(message));
+            return this;
+        }
+
+        /// <summary>Queues a timeout for the next call: it ends with the cancellation that <see cref="ApiClient"/> turns into <c>CLIENT_TIMEOUT</c>, at once instead of after the real timeout.</summary>
+        public FakeTransport TimeOut()
+        {
+            _answers.Enqueue(null);
             return this;
         }
 
@@ -58,7 +65,13 @@ namespace CityBuilder.Client.Tests.EditMode.Net
                 throw new InvalidOperationException("The test queued no answer for " + request.Method + " " + request.Url);
             }
 
-            return _answers.Dequeue();
+            ApiTransportResponse? answer = _answers.Dequeue();
+            if (answer == null)
+            {
+                throw new OperationCanceledException();
+            }
+
+            return answer;
         }
     }
 }

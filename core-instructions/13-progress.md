@@ -8,10 +8,10 @@
 - **Task:** M0-40 · Command sender and retry policy (`[S]`, Sonnet 5.5)
 - **Branch:** `task/M0-40-command-sender-retry` (from `main` = `34addbe`)
 - **Build log entry:** `docs/build-log/2026/2026-10-31-01-M0-40.md` (In progress)
-- **Last green commit:** `34addbe` on `main` (M0-39 merged, PR #51)
-- **Done steps:** write-ahead only
-- **Next step:** step 1 of the plan: the vocabulary types in `CityBuilder.Client.Net` (`CommandKind`, `CommandIntent`, `CommandPolicy`, `CommandPhase`,
-  `PendingCommand`, `CommandOutcome`) with tests; then `CommandSender` (steps 2 and 3), `GameRoot` (4), docs and finish (5).
+- **Last green commit:** the head of `task/M0-40-command-sender-retry` (Unity EditMode 353, PlayMode 7; Repository tests 22; check-docs OK)
+- **Done steps:** 1 to 3 (the command types, `CommandSender` with retries and the worker stepper lane, their tests)
+- **Next step:** step 4: `GameRoot` keeps the `ApiClient` and builds a `CommandSender` (`CommandPolicy.Default`) once connected; then step 5: docs per
+  the build log's Docs impact table, `/finish-task`. Owner question to put in the report: "max 3 attempts" read as 3 requests in all (decision 2).
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
