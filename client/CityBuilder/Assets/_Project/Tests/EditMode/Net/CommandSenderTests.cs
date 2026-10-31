@@ -2,11 +2,14 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using CityBuilder.Client.Core;
 using CityBuilder.Client.Net;
 using NUnit.Framework;
+using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace CityBuilder.Client.Tests.EditMode.Net
 {
@@ -104,6 +107,34 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             }
 
             Assert.Fail("The task should have been cancelled.");
+        }
+
+        /// <summary>
+        /// A listener of the pending list that throws when the command leaves it does not take the command with it: the caller's task still ends with
+        /// the outcome. Before, the task never ended, and a worker lane stayed blocked for good (CR-0004).
+        /// </summary>
+        [Test]
+        public async Task AListenerThatThrows_DoesNotLeaveTheCommandUnfinished()
+        {
+            var rig = new Rig(true);
+            rig.Transport.Answer(200, Rig.Success()).Answer(200, Rig.Success());
+            bool throwing = true;
+            LogAssert.Expect(LogType.Exception, new Regex("a broken listener"));
+            rig.Sender.PendingChanged += () =>
+            {
+                if (throwing && rig.Sender.Pending.Count == 0)
+                {
+                    throw new InvalidOperationException("a broken listener");
+                }
+            };
+
+            Task<CommandOutcome> first = rig.Sender.SendAsync(CommandIntent.AssignWorkers(1, 2), CancellationToken.None);
+            await WaitUntil(() => first.IsCompleted, "the command to end although a listener threw");
+
+            Assert.That(first.Result.Kind, Is.EqualTo(CommandOutcomeKind.Succeeded));
+            throwing = false;
+            CommandOutcome second = await rig.Sender.SendAsync(CommandIntent.AssignWorkers(1, 3), CancellationToken.None);
+            Assert.That(second.Kind, Is.EqualTo(CommandOutcomeKind.Succeeded), "The building's lane is free again.");
         }
 
         /// <summary>An accepted command gives the store its snapshot once, ends as succeeded after one request, and leaves nothing pending.</summary>

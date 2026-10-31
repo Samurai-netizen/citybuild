@@ -4,6 +4,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using CityBuilder.Client.Core;
+using UnityEngine;
 
 namespace CityBuilder.Client.Net
 {
@@ -182,6 +183,11 @@ namespace CityBuilder.Client.Net
             {
                 // The app is closing: the state stays as it was.
             }
+            catch (Exception exception)
+            {
+                // The frame loop discards this task, so without the log nothing would ever show this. The next poll tries again.
+                Debug.LogException(exception);
+            }
             finally
             {
                 _scheduler.End();
@@ -197,8 +203,10 @@ namespace CityBuilder.Client.Net
         public async Task PollAsync(CancellationToken cancellationToken)
         {
             ApiResult<CitySnapshotDto> answer = await _api.GetCityAsync(cancellationToken);
+            bool loggedInAgain = false;
             if (!answer.IsSuccess && answer.Error!.Code == ApiErrorCodes.AuthenticationRequired)
             {
+                loggedInAgain = true;
                 _auth.Forget();
                 AuthState login = await _auth.LoginAsync(_displayName, cancellationToken);
                 if (login != AuthState.LoggedIn)
@@ -217,7 +225,8 @@ namespace CityBuilder.Client.Net
                 return;
             }
 
-            ApiError? failure = SnapshotMapper.Apply(_store, answer);
+            // After a new login the answer may be another city (a reset development database), whose lower version the store would refuse as old.
+            ApiError? failure = loggedInAgain ? SnapshotMapper.Replace(_store, answer) : SnapshotMapper.Apply(_store, answer);
             if (failure == null)
             {
                 Move(ConnectionState.Connected, null);

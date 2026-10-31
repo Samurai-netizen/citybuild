@@ -22,6 +22,8 @@ namespace CityBuilder.Client.Net
             using (UnityWebRequest web = new UnityWebRequest(request.Url, request.Method))
             {
                 web.downloadHandler = new DownloadHandlerBuffer();
+                // The API never redirects. A redirect from a captive portal or a proxy must not get the bearer token or turn a POST into a GET.
+                web.redirectLimit = 0;
                 web.SetRequestHeader("Accept", "application/json");
                 if (request.JsonBody != null)
                 {

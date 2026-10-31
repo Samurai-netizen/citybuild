@@ -237,6 +237,26 @@ namespace CityBuilder.Client.Tests.EditMode.Core
         }
 
         /// <summary>
+        /// A building at a level the content doesn't have (a command's answer that was made with newer content) makes the engine throw another
+        /// exception than a missing type does. It is handled the same way: logged once, the snapshot is shown, and a command that brought the
+        /// snapshot does not fail because of the display (CR-0004).
+        /// </summary>
+        [Test]
+        public void ALevelTheContentDoesNotHave_ShowsTheSnapshot_WithoutThrowing()
+        {
+            var unknownLevel = new Building(1, new BuildingTypeId("woodcutter"), 0, 0, 9, 1, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
+            var city = new CityState(50, 1, 2, Array.Empty<KeyValuePair<ItemId, long>>(), new[] { unknownLevel }, Array.Empty<ResearchId>(), null);
+            _store.Apply(new CitySnapshot(5, "mvp-2", city));
+            LogAssert.Expect(LogType.Error, new Regex("cannot predict state version 5 \\(content mvp-2\\)"));
+
+            var display = new DisplayCity(_store, _clock, _content);
+            _now += 3;
+
+            Assert.That(display.Current!.Clock, Is.EqualTo(50L));
+            Assert.That(display.Refresh(), Is.False, "No second attempt, so no second error.");
+        }
+
+        /// <summary>
         /// A city the engine refuses (here a building this content doesn't know completes after 2 seconds) doesn't take the game down: one error in
         /// the log, the snapshot shown as it is, and no more attempts until the next snapshot, which predicts again.
         /// </summary>

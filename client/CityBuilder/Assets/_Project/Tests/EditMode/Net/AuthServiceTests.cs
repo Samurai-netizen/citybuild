@@ -42,6 +42,29 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             _auth = new AuthService(_api, _store);
         }
 
+        /// <summary>
+        /// Something unexpected during a login (here the fake wire, which throws for a request the test queued no answer for) leaves the service
+        /// logged out. Before, it stayed <c>LoggingIn</c>, and every later login and <c>Forget</c> threw "already in progress" for good (CR-0004).
+        /// </summary>
+        [Test]
+        public async Task Login_UnexpectedException_LeavesTheServiceLoggedOut_AndTheNextLoginWorks()
+        {
+            try
+            {
+                await _auth.LoginAsync("dev1", CancellationToken.None);
+                Assert.Fail("The login should have thrown.");
+            }
+            catch (InvalidOperationException)
+            {
+                // What the test expects: the exception reaches the caller.
+            }
+
+            Assert.That(_auth.State, Is.EqualTo(AuthState.LoggedOut));
+            Assert.DoesNotThrow(() => _auth.Forget());
+            _transport.Answer(200, LoginAnswer);
+            Assert.That(await _auth.LoginAsync("dev1", CancellationToken.None), Is.EqualTo(AuthState.LoggedIn));
+        }
+
         /// <summary>A new service has no token and no error.</summary>
         [Test]
         public void NewService_IsLoggedOut_WithoutAnError()

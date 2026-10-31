@@ -40,6 +40,8 @@ namespace CityBuilder.Simulation.Content
         {
             Positive(rules.GridWidth, "rules.gridWidth", errors);
             Positive(rules.GridHeight, "rules.gridHeight", errors);
+            AtMostStoredSmallValue(rules.GridWidth, "rules.gridWidth", errors);
+            AtMostStoredSmallValue(rules.GridHeight, "rules.gridHeight", errors);
             Positive(rules.BuilderSlots, "rules.builderSlots", errors);
             Positive(rules.ResearchSlots, "rules.researchSlots", errors);
             if (rules.ResearchSlots > _supportedResearchSlots)
@@ -66,6 +68,8 @@ namespace CityBuilder.Simulation.Content
             foreach (BuildingLevelDefinition level in building.Levels)
             {
                 string levelPath = ContentPaths.Level(building, level);
+                AtMostStoredSmallValue(level.MaxWorkers, levelPath + ".maxWorkers", errors);
+                AtMostStoredSmallValue(level.WorkersProvided, levelPath + ".workersProvided", errors);
                 if (level.Level > 1)
                 {
                     AtLeastZero(level.UpgradeCost, levelPath + ".upgradeCost", errors);
@@ -136,6 +140,18 @@ namespace CityBuilder.Simulation.Content
             foreach (ItemQuantity amount in amounts)
             {
                 AtLeastZero(amount.Quantity, path + "." + amount.Item.Value, errors);
+            }
+        }
+
+        /// <summary>Reports <see cref="ContentErrorCode.ValueTooLarge"/> for a value above <see cref="GameContentFactory.MaxStoredSmallValue"/>.</summary>
+        private static void AtMostStoredSmallValue(int value, string path, ContentErrorList errors)
+        {
+            if (value > GameContentFactory.MaxStoredSmallValue)
+            {
+                errors.Add(
+                    ContentErrorCode.ValueTooLarge,
+                    path,
+                    FormattableString.Invariant($"Must be at most {GameContentFactory.MaxStoredSmallValue}, but is {value}."));
             }
         }
 

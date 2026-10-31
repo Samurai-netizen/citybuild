@@ -21,7 +21,7 @@ namespace CityBuilder.Simulation.Content
         /// <summary>A value is given where none is allowed: upgrade data on level 1, or a field an effect type doesn't have.</summary>
         UnexpectedValue,
 
-        /// <summary>A number is above its limit: <see cref="GameContentFactory.MaxQuantity"/>, 1000 permille, or one research slot.</summary>
+        /// <summary>A number is above its limit: <see cref="GameContentFactory.MaxQuantity"/>, <see cref="GameContentFactory.MaxStoredSmallValue"/>, 1000 permille, or one research slot.</summary>
         ValueTooLarge,
 
         /// <summary>A number that must be greater than zero is not: amounts in recipes and bonuses, labor, durations, caps, grid and slots.</summary>

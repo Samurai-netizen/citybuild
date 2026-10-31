@@ -19,18 +19,20 @@ defects it confirmed; the build log entry has the evidence for each.
 | 1 | Server | A valid token of a player without a city reaches the city lock, which throws | 500 `INTERNAL_ERROR` on every city request until the token expires (up to 12 h), and an Error log line each time |
 | 2 | Client | `StartupFlow` retries a refused kept token only on `GET /content`, which reads no database | With defect 1 fixed, a kept token of a deleted player would still fail the start, and a failed start never polls |
 | 3 | Client | After a re-login the store refuses the new city's snapshot, because its `stateVersion` is lower | The old city stays on screen, labelled `Connected`, until the app restarts |
-| 4 | Client | `UnityWebRequestTransport` calls `UnityWebRequest.Abort` on the thread that cancels the token, and the request timeout cancels it on a timer thread | To be measured: the timeout may never end the request, so no retry and no further poll |
-| 5 | Client | Requests follow redirects with the bearer token | A redirect from a captive portal or a proxy can receive the token, and a POST can turn into a GET |
-| 6 | Client | `DisplayCity` catches only `InvalidOperationException` | A snapshot of other content throws from `Update` every frame, and fails a command that succeeded |
-| 7 | Client | `AuthService` stays `LoggingIn` after an unexpected exception | Every later login and `Forget` throws, so the client never recovers |
-| 8 | Client | `CommandSender` finishes a command after it tells the listeners | A listener that throws leaves the command's task unfinished and its stepper lane blocked |
-| 9 | Client | An unexpected exception in a poll is dropped with the discarded task | A failing poll leaves no trace |
-| 10 | Client | The status label reads the coins only when the connection state changes | The coins shown are out of date while connected |
-| 11 | Server | A body without a `Content-Type` is 400 | The contract says 415 (`05` → Request limits) |
-| 12 | Server | A signed token whose `sub` is no player id passes authentication | 500 instead of the 401 of every other bad token |
-| 13 | Server | `/health` takes every method, the answers name the server software, and nothing forbids caching a response made for one player | Contract mismatch and needless information; a shared cache could keep a player's snapshot |
-| 14 | Engine | Content values that reach `smallint` columns (grid size, workers) have no upper limit | Content that loads can fail with a 500 on the first save |
-| 15 | Handbook | Known vulnerabilities in the site's npm packages | Build-time only, the published site is static; 31 reported by `npm audit` |
+| 4 | Client | Requests follow redirects with the bearer token | A redirect from a captive portal or a proxy receives the token, and a POST turns into a GET: measured against a test server, the request went on to the other path until Unity's redirect limit |
+| 5 | Client | `DisplayCity` catches only `InvalidOperationException` | A snapshot of other content throws from `Update` every frame, and fails a command that succeeded |
+| 6 | Client | `AuthService` stays `LoggingIn` after an unexpected exception | Every later login and `Forget` throws, so the client never recovers |
+| 7 | Client | `CommandSender` finishes a command after it tells the listeners | A listener that throws leaves the command's task unfinished and its stepper lane blocked |
+| 8 | Client | An unexpected exception in a poll is dropped with the discarded task | A failing poll leaves no trace |
+| 9 | Client | The status label reads the coins only when the connection state changes | The coins shown are out of date while connected |
+| 10 | Server | A body without a `Content-Type` is 400 | The contract says 415 (`05` → Request limits) |
+| 11 | Server | A signed token whose `sub` is no player id passes authentication | 500 instead of the 401 of every other bad token |
+| 12 | Server | `/health` takes every method, the answers name the server software, and nothing forbids caching a response made for one player | Contract mismatch and needless information; a shared cache could keep a player's snapshot |
+| 13 | Engine | Content values that reach `smallint` columns (grid size, workers) have no upper limit | Content that loads can fail with a 500 on the first save |
+| 14 | Handbook | Known vulnerabilities in the site's npm packages | Build-time only, the published site is static; 31 reported by `npm audit` |
+
+The audit also suspected that `UnityWebRequest.Abort` fails when a timer cancels the request on another thread. Measured against a server that
+never answers: the request ended in 0.21 s with no error in the log, in the Editor. So that is no defect, and its test stays as coverage.
 
 ## Proposal
 Fix each defect with a regression test, in small steps. No game rule changes. Contract changes are limited to making an unexpected 500 the

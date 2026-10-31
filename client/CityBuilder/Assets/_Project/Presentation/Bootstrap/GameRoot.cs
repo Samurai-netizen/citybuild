@@ -120,6 +120,8 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                         new PollScheduler(() => Time.realtimeSinceStartupAsDouble, PollScheduler.DefaultIntervalSeconds),
                         () => Application.internetReachability != NetworkReachability.NotReachable);
                     _monitor.StateChanged += OnConnectionChanged;
+                    // The label names the coins, which change with every snapshot, not only when the connection state does.
+                    _cityStore.SnapshotChanged += OnConnectionChanged;
                 }
                 else
                 {
@@ -161,6 +163,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             if (_monitor != null)
             {
                 _monitor.StateChanged -= OnConnectionChanged;
+                _cityStore.SnapshotChanged -= OnConnectionChanged;
             }
         }
 
