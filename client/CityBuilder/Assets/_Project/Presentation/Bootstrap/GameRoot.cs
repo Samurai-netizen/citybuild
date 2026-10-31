@@ -3,6 +3,7 @@
 using System;
 using CityBuilder.Client.Core;
 using CityBuilder.Client.Net;
+using CityBuilder.Client.Presentation.Build;
 using CityBuilder.Client.Presentation.City;
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.State;
@@ -18,6 +19,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
     /// and shows how it ended: "Connected" with the era and the coins, a message when the server cannot be used, or the fatal error screen
     /// when the server's content is invalid. Once connected it owns the city store, keeps the display city up to date for the views and builds the command sender they use.
     /// It creates the city's camera first (<see cref="CityWorld"/>, so the screen is cleared at once) and, once connected, shows the ground for the grid size of the rules and the buildings of the displayed city (<see cref="CityView"/>).
+    /// It also shows the build menu (<see cref="BuildMenu"/>), whose cards follow the displayed city, and tells the ground that a press on the menu is not its own.
     /// It also drives the connection monitor: it polls the city, goes quiet while the app is paused, and the screen says how the connection stands.
     /// </summary>
     [DisallowMultipleComponent]
@@ -75,6 +77,9 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         /// <summary>The city's camera, light and ground; made in <c>Awake</c>, its ground once the content's grid size is known.</summary>
         private CityWorld? _world;
 
+        /// <summary>The build menu; null until the start has connected, or when its assets are missing.</summary>
+        private BuildMenu? _buildMenu;
+
         /// <summary>The text the screen shows now, for tests and logs.</summary>
         public string CurrentStatusText { get; private set; } = string.Empty;
 
@@ -83,6 +88,9 @@ namespace CityBuilder.Client.Presentation.Bootstrap
 
         /// <summary>The connection monitor the views read the state from (<c>09</c> Polling); null until the start has connected.</summary>
         internal ConnectionMonitor? Connection => _monitor;
+
+        /// <summary>The build menu (<c>09</c> Build menu); null until the start has connected, or when its assets are missing.</summary>
+        internal BuildMenu? BuildMenu => _buildMenu;
 
         /// <summary>The city's camera and ground (<c>09</c> City view); null only before <c>Awake</c> has run.</summary>
         internal CityWorld? World => _world;
@@ -126,6 +134,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                     _content = outcome.Content;
                     _world!.ShowGrid(new CityGrid(outcome.Content!.Rules.GridWidth, outcome.Content.Rules.GridHeight));
                     _displayCity.Changed += ShowBuildings;
+                    CreateBuildMenu(outcome.Content!);
                     ShowBuildings();
                     _monitor = new ConnectionMonitor(
                         _api!,
@@ -195,6 +204,26 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             if (city != null)
             {
                 _world!.ShowCity(city);
+                _buildMenu?.Model?.Update(city);
+            }
+        }
+
+        /// <summary>
+        /// Shows the build menu for the displayed city and makes the ground leave a press on the menu to it. Does nothing when there is no
+        /// displayed city yet; the menu logs an error and stays null when its assets are missing.
+        /// </summary>
+        private void CreateBuildMenu(GameContent content)
+        {
+            CityState? city = _displayCity?.Current;
+            if (city == null)
+            {
+                return;
+            }
+
+            _buildMenu = BuildMenu.Create(transform, new BuildMenuModel(content, city));
+            if (_buildMenu != null)
+            {
+                _world!.IsPointerOverUi = _buildMenu.IsOverUi;
             }
         }
 

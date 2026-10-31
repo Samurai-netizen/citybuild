@@ -9,7 +9,7 @@ namespace CityBuilder.Client.Tests.PlayMode
 {
     /// <summary>
     /// The input reader with fake mouse and touch devices (M0-43): a mouse or finger tap selects a tile, a drag pans without selecting, the wheel and a pinch
-    /// zoom, and the finger left after a pinch does not tap. The devices come from the Input System's test fixture, which also hides the real ones.
+    /// zoom, and the finger left after a pinch does not tap; a press that starts over the UI (M0-45) is the UI's and never reaches the ground. The devices come from the Input System's test fixture, which also hides the real ones.
     /// </summary>
     public sealed class CityInputReaderTests : InputTestFixture
     {
@@ -159,6 +159,122 @@ namespace CityBuilder.Client.Tests.PlayMode
             _reader.Tick();
             EndTouch(1, middle - new Vector2(120f, 0f));
             _reader.Tick();
+
+            Assert.That(_world.Selection!.Selected, Is.Null);
+        }
+
+        /// <summary>A reader for which everything within 30 pixels of <paramref name="center"/> is over the UI (a button, say).</summary>
+        private CityInputReader ReaderWithUiAt(Vector2 center)
+        {
+            return new CityInputReader(_world.Rig!, 160f, position => (position - center).sqrMagnitude < 30f * 30f);
+        }
+
+        /// <summary>A mouse click on the UI selects no tile: the press belongs to the UI.</summary>
+        [Test]
+        public void MouseClick_OverTheUi_SelectsNothing()
+        {
+            Vector2 onUi = ScreenOf(new Vector3(5.5f, 0f, 6.5f));
+            CityInputReader reader = ReaderWithUiAt(onUi);
+
+            Set(_mouse.position, onUi);
+            Press(_mouse.leftButton);
+            reader.Tick();
+            Release(_mouse.leftButton);
+            reader.Tick();
+
+            Assert.That(_world.Selection!.Selected, Is.Null);
+        }
+
+        /// <summary>A press that starts on the UI and moves off it neither pans nor taps the ground it ends on.</summary>
+        [Test]
+        public void MousePress_StartedOverTheUi_AndMovedOffIt_DoesNothingToTheGround()
+        {
+            _world.Rig!.Zoom(0.5f);
+            Vector2 onUi = ScreenOf(new Vector3(4f, 0f, 4f));
+            CityInputReader reader = ReaderWithUiAt(onUi);
+            Vector2 focusBefore = _world.Rig.Model.Focus;
+
+            Set(_mouse.position, onUi);
+            Press(_mouse.leftButton);
+            reader.Tick();
+            Set(_mouse.position, onUi + new Vector2(120f, 0f));
+            reader.Tick();
+            Release(_mouse.leftButton);
+            reader.Tick();
+
+            Assert.That(_world.Rig.Model.Focus, Is.EqualTo(focusBefore));
+            Assert.That(_world.Selection!.Selected, Is.Null);
+        }
+
+        /// <summary>After the UI press ended, the next press on the ground works again.</summary>
+        [Test]
+        public void MouseClick_OnTheGround_AfterAPressOnTheUi_StillSelects()
+        {
+            Vector2 onUi = ScreenOf(new Vector3(1.5f, 0f, 1.5f));
+            Vector2 onTile = ScreenOf(new Vector3(5.5f, 0f, 6.5f));
+            CityInputReader reader = ReaderWithUiAt(onUi);
+            Set(_mouse.position, onUi);
+            Press(_mouse.leftButton);
+            reader.Tick();
+            Release(_mouse.leftButton);
+            reader.Tick();
+
+            Set(_mouse.position, onTile);
+            Press(_mouse.leftButton);
+            reader.Tick();
+            Release(_mouse.leftButton);
+            reader.Tick();
+
+            Assert.That(_world.Selection!.Selected, Is.EqualTo(new GridCoordinate(5, 6)));
+        }
+
+        /// <summary>A drag that starts on the ground keeps panning when the pointer moves over the UI.</summary>
+        [Test]
+        public void MouseDrag_StartedOnTheGround_ContinuesOverTheUi()
+        {
+            _world.Rig!.Zoom(0.5f);
+            Vector2 start = ScreenOf(new Vector3(4f, 0f, 4f));
+            CityInputReader reader = ReaderWithUiAt(start + new Vector2(80f, 0f));
+            Vector2 focusBefore = _world.Rig.Model.Focus;
+
+            Set(_mouse.position, start);
+            Press(_mouse.leftButton);
+            reader.Tick();
+            Set(_mouse.position, start + new Vector2(80f, 0f));
+            reader.Tick();
+            Release(_mouse.leftButton);
+            reader.Tick();
+
+            Assert.That(_world.Rig.Model.Focus, Is.Not.EqualTo(focusBefore));
+        }
+
+        /// <summary>The wheel over the UI does not zoom the city, and the pointer over the UI marks no tile.</summary>
+        [Test]
+        public void MouseWheelAndHover_OverTheUi_DoNothingToTheGround()
+        {
+            Vector2 onUi = ScreenOf(new Vector3(4f, 0f, 4f));
+            CityInputReader reader = ReaderWithUiAt(onUi);
+            float start = _world.Rig!.Model.Distance;
+
+            Set(_mouse.position, onUi);
+            Set(_mouse.scroll, new Vector2(0f, 120f));
+            reader.Tick();
+
+            Assert.That(_world.Rig.Model.Distance, Is.EqualTo(start));
+            Assert.That(_world.Selection!.Hovered, Is.Null);
+        }
+
+        /// <summary>A finger tap on the UI selects no tile.</summary>
+        [Test]
+        public void FingerTap_OverTheUi_SelectsNothing()
+        {
+            Vector2 onUi = ScreenOf(new Vector3(2.5f, 0f, 3.5f));
+            CityInputReader reader = ReaderWithUiAt(onUi);
+
+            BeginTouch(1, onUi);
+            reader.Tick();
+            EndTouch(1, onUi);
+            reader.Tick();
 
             Assert.That(_world.Selection!.Selected, Is.Null);
         }

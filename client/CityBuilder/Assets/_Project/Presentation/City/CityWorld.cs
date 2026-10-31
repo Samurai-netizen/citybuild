@@ -1,5 +1,6 @@
 #nullable enable
 
+using System;
 using CityBuilder.Simulation.State;
 using UnityEngine;
 
@@ -26,6 +27,12 @@ namespace CityBuilder.Client.Presentation.City
 
         /// <summary>The building views, or null before <see cref="ShowGrid"/>.</summary>
         private CityView? _buildings;
+
+        /// <summary>
+        /// Tells whether a screen position (pixels, origin bottom left) is over the UI, so a press there is the UI's and not the ground's; set by
+        /// <c>GameRoot</c> once the UI exists. Read when the pointer is pressed, so setting it after <see cref="ShowGrid"/> works. Null: no UI.
+        /// </summary>
+        public Func<Vector2, bool>? IsPointerOverUi { get; set; }
 
         /// <summary>The camera that shows the city; made in <c>Awake</c>.</summary>
         public Camera Camera { get; private set; } = null!;
@@ -79,7 +86,7 @@ namespace CityBuilder.Client.Presentation.City
             _ground = new GroundTiles(grid, Selection, transform);
             _buildings = new CityView(grid, transform);
             Rig = new CityCameraRig(Camera, grid, Selection);
-            _input = new CityInputReader(Rig, Screen.dpi);
+            _input = new CityInputReader(Rig, Screen.dpi, position => IsPointerOverUi != null && IsPointerOverUi(position));
         }
 
         /// <summary>Makes the building views match a city (<see cref="CityView.Show"/>). Does nothing before <see cref="ShowGrid"/>.</summary>
