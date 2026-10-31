@@ -34,7 +34,7 @@ In a second terminal, run `curl http://localhost:8080/health`. It answers `Healt
 
 > Connected - Early Middle Ages - Coins: 700
 
-The Console has no red messages. "No cameras rendering" in the Game view is expected: the scene has no camera until M0-43.
+Behind the label the Game view is dark blue-grey, and a green chessboard of 8 by 8 tiles shows in a diamond (the city's ground, M0-43). The Console has no red messages. Try the controls: hold the left mouse button and drag to move the view (it stops at the edge of the grid), turn the mouse wheel to zoom, move the pointer to mark a tile in yellow, and click a tile to mark it in orange (click it again to clear it).
 
 **4. Stop the server and see Offline.**
 1. In the API's terminal press **Ctrl+C**.
@@ -62,7 +62,6 @@ Coming back to the app also asks at once, so the label can change as soon as you
 | "Not connected: Cannot reach the server (CLIENT_NETWORK_ERROR)" after Play | The API wasn't running when you pressed Play. A failed start doesn't retry | Start the API, then press Play twice: stop, then start |
 | The coins aren't 700 | The dev player `dev1` has played. Its city carries over from run to run | Reset the city (below) |
 | The label doesn't change after 2 minutes | The Editor didn't have focus, or the game is paused | Click the Game view and check that the Pause button isn't on |
-| Bits of the old text show through or beside the label, such as "Offline" behind "Connected" | Expected until M0-43: with no camera nothing clears the screen, and the label's background is see-through | Nothing. The newest text is the one in front |
 | A red message in the Console, or another label | Not a known state | Copy the label and the first red message into the chat with the AI coder |
 
 A token kept from an earlier run that the server no longer accepts (a new signing key, a reset database) isn't a problem: the client logs in again by itself.

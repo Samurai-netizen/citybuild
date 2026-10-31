@@ -1,7 +1,7 @@
 # Unity Client
 
 > **Built so far:** the project, its four assemblies and their tests, and the `Bootstrap` scene that shows "Not connected" (M0-04, M0-05;
-> `client/README.md`). The API client, the DTOs and the error parsing (`CityBuilder.Client.Net`, M0-37) and the start of the game (login, content through the engine's factory, the first `GET /city`, "Connected" or the fatal error screen: `AuthService`, `ContentService`, `StartupFlow`, `GameRoot`, M0-38) and the city store with its display prediction (`ClientCityStore`, `DisplayClock`, `DisplayCity`, M0-39) and the command sender with its retry policy (`CommandSender`, M0-40) and the polling with the connection state (`ConnectionMonitor`, `PollScheduler`, M0-41) are built and tested; the city view with M0-43, the screens from M0-45 *(planned)*. A task that builds a
+> `client/README.md`). The API client, the DTOs and the error parsing (`CityBuilder.Client.Net`, M0-37) and the start of the game (login, content through the engine's factory, the first `GET /city`, "Connected" or the fatal error screen: `AuthService`, `ContentService`, `StartupFlow`, `GameRoot`, M0-38) and the city store with its display prediction (`ClientCityStore`, `DisplayClock`, `DisplayCity`, M0-39) and the command sender with its retry policy (`CommandSender`, M0-40) and the polling with the connection state (`ConnectionMonitor`, `PollScheduler`, M0-41) are built and tested; the city's grid, ground and camera (`CityWorld`, `CityGrid`, `CityCameraModel`, `CityInputReader`, M0-43) are built and tested; the building views from M0-44 and the screens from M0-45 *(planned)*. A task that builds a
 > part updates this line.
 
 The client renders the latest authoritative snapshot and makes waiting feel alive.
@@ -75,6 +75,8 @@ Local package line in `Packages/manifest.json`:
   foreground; nothing while paused, one poll at a time (`PollScheduler`). `ConnectionMonitor` (Net) puts each snapshot in the store and holds the
   `ConnectionState` (`Connecting`, `Connected`, `Offline`, `Unauthorized`, `ServerError`, `IncompatibleVersion`): a refused token gets one new login and one
   repeat, then `Unauthorized`, and the answer to that repeat replaces the city whatever its version (it may be a new city, CR-0004); content of another version is `IncompatibleVersion` and is not applied. `GameRoot` ticks it in `Update` and shows the state.
+- **City view (M0-43):** `GameRoot.Awake` creates `CityWorld` first: the one `City Camera` (tag `MainCamera`, solid dark background, perspective, yaw 45° and pitch 50°) and a sun, so the screen is cleared from the first frame. Once connected, `ShowGrid(new CityGrid(rules.GridWidth, rules.GridHeight))` builds the ground from primitives and the controls.
+  Grid x is world x, grid y is world z, a tile is 1 unit, the ground is y = 0. A drag (one finger or the left mouse button) pans so the ground point under the pointer stays under it, clamped to the grid; a pinch or the mouse wheel zooms between 3 units and the distance where the whole grid fits; a tap selects the tile (again, or off the grid, clears it); the mouse pointer marks its tile. `TileSelection` is display state only: tile checks are UX hints, the server decides (`UX rules`).
 - **The start (`StartupFlow`):** a kept token refused by `GET /content` or by `GET /city` gets one new login and one repeat; a refusal after a fresh login is a failure.
 - **The wire:** no redirect is followed, because the API never sends one and the bearer token must go to no one else (CR-0004).
 

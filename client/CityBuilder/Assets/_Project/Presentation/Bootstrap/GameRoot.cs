@@ -16,6 +16,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
     /// It shows the connection status, builds the API client from the settings asset, runs <see cref="StartupFlow"/> (login, content, city)
     /// and shows how it ended: "Connected" with the era and the coins, a message when the server cannot be used, or the fatal error screen
     /// when the server's content is invalid. Once connected it owns the city store, keeps the display city up to date for the views and builds the command sender they use.
+    /// It creates the city's camera first (<see cref="CityWorld"/>, so the screen is cleared at once) and, once connected, shows the ground for the grid size of the rules.
     /// It also drives the connection monitor: it polls the city, goes quiet while the app is paused, and the screen says how the connection stands.
     /// </summary>
     [DisallowMultipleComponent]

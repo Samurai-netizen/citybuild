@@ -4,7 +4,7 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **State:** AWAITING OWNER   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M0-43 · Grid and camera (`[S]`, Sonnet 5.5)
 - **Branch:** `task/M0-43-grid-camera` (from `main` = `17fef65`)
 - **Build log entry:** `docs/build-log/2026/2026-10-31-05-M0-43.md`
@@ -17,7 +17,7 @@
   executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); M0-30: decisions 2 and 5 (400 for a too-big body, not the 413 my
   question named; malformed type ids 400 instead of 422); M0-38: decision 1 (Net and Presentation reference Simulation), decision 5 (the
   PlayMode scene test changed), the stray `dev1` player in the dev database; M0-39: decision 4 (the store also ignores the same version with the same or an earlier clock); M0-40: decision 2 (3 requests in all, not 3 retries), decision 3 (`RATE_LIMITED` is not retried); M0-41: decision 4 (what `IncompatibleVersion` means), decision 7 (no faster retry while `Offline`); CR-0004-T1 Follow-ups: the coin soft-lock (G-Design), `ci.yml` permissions (G-Rules), the handbook's remaining advisories (G-Dependency).
-- **Known broken / do not touch:** —
+- **Known broken / do not touch:** M0-43: `ClientAssemblyTests` (PlayMode references) fails until the owner answers the G-Tests question (build log → Problems); nothing else.
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
