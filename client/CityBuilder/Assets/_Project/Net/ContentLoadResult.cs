@@ -14,15 +14,22 @@ namespace CityBuilder.Client.Net
     public sealed class ContentLoadResult
     {
         /// <summary>Creates a result; use the static members.</summary>
-        private ContentLoadResult(GameContent? content, ApiError? apiError, IReadOnlyList<ContentError> contentErrors)
+        private ContentLoadResult(GameContent? content, int timeScale, ApiError? apiError, IReadOnlyList<ContentError> contentErrors)
         {
             Content = content;
+            TimeScale = timeScale;
             ApiError = apiError;
             ContentErrors = contentErrors;
         }
 
         /// <summary>The validated content, or null unless <see cref="IsSuccess"/>.</summary>
         public GameContent? Content { get; }
+
+        /// <summary>
+        /// The speed of the server's clock, <c>timeScale</c> of the answer: at least 1 when <see cref="IsSuccess"/>, otherwise 0. The display
+        /// clock needs it; it is not content, so <see cref="GameContent"/> does not hold it.
+        /// </summary>
+        public int TimeScale { get; }
 
         /// <summary>Why the request failed, or null: the answer did not arrive, was refused, or was not the contract's.</summary>
         public ApiError? ApiError { get; }
@@ -37,21 +44,21 @@ namespace CityBuilder.Client.Net
         public bool IsInvalidContent => ContentErrors.Count > 0;
 
         /// <summary>A valid result.</summary>
-        public static ContentLoadResult Success(GameContent content)
+        public static ContentLoadResult Success(GameContent content, int timeScale)
         {
-            return new ContentLoadResult(content, null, Array.Empty<ContentError>());
+            return new ContentLoadResult(content, timeScale, null, Array.Empty<ContentError>());
         }
 
         /// <summary>A failed request.</summary>
         public static ContentLoadResult RequestFailed(ApiError error)
         {
-            return new ContentLoadResult(null, error, Array.Empty<ContentError>());
+            return new ContentLoadResult(null, 0, error, Array.Empty<ContentError>());
         }
 
         /// <summary>An answer the factory refused; <paramref name="errors"/> is never empty.</summary>
         public static ContentLoadResult Invalid(IReadOnlyList<ContentError> errors)
         {
-            return new ContentLoadResult(null, null, errors);
+            return new ContentLoadResult(null, 0, null, errors);
         }
     }
 }

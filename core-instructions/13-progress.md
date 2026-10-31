@@ -8,9 +8,9 @@
 - **Task:** M0-39 · Client city store and display prediction
 - **Branch:** `task/M0-39-city-store-prediction` (from `main` = `3b8b3c3`)
 - **Build log entry:** `docs/build-log/2026/2026-10-30-04-M0-39.md`
-- **Last green commit:** `main` = `3b8b3c3` (M0-38 merged, PR #50)
-- **Done steps:** —
-- **Next step:** step 1 of the plan in the build log: `CitySnapshot` and `ClientCityStore` in Core.
+- **Last green commit:** the head of this branch (Unity EditMode 298, PlayMode 7)
+- **Done steps:** 1 to 4: `CitySnapshot`, `ClientCityStore`, `SnapshotMapper`, `DisplayClock`, `DisplayCity`, `timeScale`, `StartupFlow` and `GameRoot` wiring
+- **Next step:** step 5: docs per the Docs impact table, Definition of Done, PR.
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
