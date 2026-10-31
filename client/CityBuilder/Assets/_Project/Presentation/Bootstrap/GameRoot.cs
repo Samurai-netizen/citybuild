@@ -13,7 +13,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
     /// (core-instructions/09, "Runtime structure"). <see cref="GameBootstrap"/> creates exactly one when the Bootstrap scene loads.
     /// It shows the connection status, builds the API client from the settings asset, runs <see cref="StartupFlow"/> (login, content, city)
     /// and shows how it ended: "Connected" with the era and the coins, a message when the server cannot be used, or the fatal error screen
-    /// when the server's content is invalid. Once connected it owns the city store and keeps the display city up to date for the views.
+    /// when the server's content is invalid. Once connected it owns the city store, keeps the display city up to date for the views and builds the command sender they use.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class GameRoot : MonoBehaviour
@@ -49,8 +49,17 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         /// <summary>The predicted city; null until the start has connected.</summary>
         private DisplayCity? _displayCity;
 
+        /// <summary>The API client the start flow and the command sender share; null until the settings were read.</summary>
+        private ApiClient? _api;
+
+        /// <summary>The way every view gives the server a command; null until the start has connected.</summary>
+        private CommandSender? _commandSender;
+
         /// <summary>The text the screen shows now, for tests and logs.</summary>
         public string CurrentStatusText { get; private set; } = string.Empty;
+
+        /// <summary>The command sender the views use (<c>09</c> Commands); null until the start has connected.</summary>
+        internal CommandSender? CommandSender => _commandSender;
 
         /// <summary>Whether the fatal error screen is up.</summary>
         public bool IsFatalErrorShown { get; private set; }
@@ -83,6 +92,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                 if (outcome.Kind == StartupResultKind.Connected)
                 {
                     _displayCity = new DisplayCity(_cityStore, new DisplayClock(_cityStore, outcome.TimeScale), outcome.Content!);
+                    _commandSender = new CommandSender(_api!, _cityStore, CommandPolicy.Default);
                 }
                 else
                 {
@@ -125,7 +135,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             ApiClient api;
             try
             {
-                api = new ApiClient(settings.BaseUrl, settings.RequestTimeoutSeconds, new UnityWebRequestTransport());
+                api = _api = new ApiClient(settings.BaseUrl, settings.RequestTimeoutSeconds, new UnityWebRequestTransport());
             }
             catch (ArgumentException exception)
             {

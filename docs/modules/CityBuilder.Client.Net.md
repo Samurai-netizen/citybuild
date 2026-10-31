@@ -7,8 +7,8 @@
 ## Purpose
 All talking to the server: the HTTP client, the DTOs that mirror `core-instructions/05-api-contract.md`, and the translation of
 Problem Details responses into an `ApiError`. It is **not** responsible for gameplay logic, for what a response means to the city
-(`CityBuilder.Client.Core`), for request ids or retries (`CommandSender`, M0-40 *(planned)*), or for any UI: views never call the API
-client directly (`.claude/rules/unity.md`). `GameRoot` builds it and runs the startup flow with it (login, content, city: M0-38).
+(`CityBuilder.Client.Core`), or for any UI: views never call the API
+client directly (`.claude/rules/unity.md`). `GameRoot` builds it and runs the startup flow with it (login, content, city: M0-38). It also makes the request id of every command and repeats a command that did not get through (`CommandSender`, M0-40).
 
 ## Key types
 | Type | Responsibility |
@@ -24,6 +24,9 @@ client directly (`.claude/rules/unity.md`). `GameRoot` builds it and runs the st
 | `IAccessTokenStore`, `StoredLogin`, `PlayerPrefsAccessTokenStore`, `NullAccessTokenStore`, `AccessTokenStores` | Where the token lives between runs. `StoredLogin` is the token and the display name it was issued for, nothing else (no snapshot, no balance, no expiry). `AccessTokenStores.For(isDevelopmentBuild)` gives `PlayerPrefs` (keys `CityBuilder.DevLogin.AccessToken` and `.DisplayName`) to the Editor and development players, and a store that keeps nothing to every other build |
 | `ContentService`, `ContentMapper`, `ContentLoadResult` | `GET /content` to the engine's `GameContent` plus the server clock's `TimeScale` (not content; below 1 is `CLIENT_INVALID_RESPONSE`): `ContentMapper` copies the answer into `GameContentData` (the one respelling: kind `House` to `house`), `GameContentFactory.Create` validates it exactly as the server does. The result is one of three: the content, a failed request (`ApiError`), or the factory's error list (the answer arrived but is invalid) |
 | `SnapshotMapper` | A snapshot answer to the engine's terms (`CitySnapshot`), and `Apply(store, result)`, the one way from an answer to the `ClientCityStore`: a failure returns the error and leaves the store alone. The answer has no target level (level + 1 while upgrading) and no next building id (highest id + 1; only the server places buildings). The engine's constructors check the rest: an impossible city is `CLIENT_INVALID_RESPONSE` |
+| `CommandSender`, `CommandIntent`, `CommandKind` | The one way to give the server a command. `CommandIntent` is what the player wants (`PlaceBuilding`, `UpgradeBuilding`, `AssignWorkers`, `StartResearch` factories; equal kind and arguments are the same intent). `SendAsync(intent, token)` makes the request id once, sends it with every attempt, gives the snapshot of an accepted command to the `ClientCityStore` through `SnapshotMapper.Apply`, and returns a `CommandOutcome` |
+| `CommandPolicy` | The client's behaviour numbers: 3 requests per intent at most, waits of 0.5 s and 1 s between them (the default also holds a 2 s entry for a 4th), stepper debounce 400 ms; `IsRetryable(error)` is the one test of which failure is repeated |
+| `PendingCommand`, `CommandPhase`, `CommandOutcome`, `CommandOutcomeKind` | What the UI shows while an intent is on its way: `CommandSender.Pending` (replaced on every change; `PendingChanged` says when) lists each intent with its `Phase` (`Waiting`, `Sending`, `Retrying`) and `Attempts`. An intent ends as `Succeeded`, `Failed` (with the last `ApiError`) or `Superseded` (a newer worker target replaced it before it was sent) |
 | `Dtos/*Dto` | The records of `05` as immutable classes: snapshot (`CitySnapshotDto` …), content (`ContentResponseDto` …), the dev login and the four command bodies; three enums |
 
 ## Rules and invariants
@@ -37,6 +40,14 @@ client directly (`.claude/rules/unity.md`). `GameRoot` builds it and runs the st
 - A DTO mirrors `05` member for member and in the server's order (a test writes each fixture back byte for byte). Members `05` writes
   as `null` are nullable; every other member is required, and a missing one fails the answer (`CLIENT_INVALID_RESPONSE`). Members the DTOs
   don't know are ignored. An enum value the DTO lacks fails the answer.
+- **Commands (M0-40).** One request id per intent, the same on every attempt. Repeated: a lost connection, a timeout, any 5xx (a proxy's page too)
+  and `CONCURRENCY_CONFLICT`, at most 3 requests with waits of 0.5 s and 1 s. Never repeated: every other 4xx (also `RATE_LIMITED` and
+  `AUTHENTICATION_REQUIRED`, which the player or the login flow handles) and a 200 whose body is unusable. A repeat of a pending intent shares its
+  result (a double tap sends once). `AssignWorkers` targets are coalesced per building: a new target replaces a waiting one, is sent after the
+  debounce, and waits for the building's earlier target to end. An intent leaves `Pending` before its outcome is reported. Nothing is
+  optimistic: only the server's snapshot changes the city.
+- The sender runs on the main thread (its tasks continue there under Unity's context); waits and request ids are injected (`Func`s) so tests
+  take no time.
 - Failures are results, not exceptions; only a cancelled token throws `OperationCanceledException`. The timeout is the client's
   (`ApiClientSettings`, default 15 s), so it behaves the same on every transport.
 - Quantities are `long`. Collections are `Dictionary<string, long>` and `List<T>`: IL2CPP may not have generics over read-only wrappers.
@@ -59,6 +70,9 @@ captured from the real server, and the round-trip test. A new error code: add it
 
 ## Tests
 `Assets/_Project/Tests/EditMode/Net/` (`CityBuilder.Client.Tests.EditMode`), run by `scripts/dev/test-unity.sh`:
+- `CommandIntentTests`, `CommandPolicyTests`, `CommandSenderTests` (real `ApiClient`, `FakeTransport`, `FakeDelay`): endpoint and body of each command; the same
+  request id on every retry and the waits; 422 and the other refusals not repeated; success after two timeouts applies one snapshot; five rapid
+  stepper taps send one command with the final value; the order of two targets of one building; cancellation leaves nothing pending.
 - `SnapshotDtoTests`, `ContentDtoTests`, `RequestDtoTests`: every fixture reads, writes back to the same text, holds the expected values;
   a missing required member and an unknown phase are refused; request bodies have exactly their members.
 - `ApiResponseParserTests`: every `error-*.json` fixture parses to its code and status, all 24 server codes parse, `Retry-After`,
@@ -77,10 +91,10 @@ captured from the real server, and the round-trip test. A new error code: add it
   `server/tests/CityBuilder.Simulation.Tests`, run with `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`.
 
 ## Known limitations
-- There is no request id maker, retry or backoff (`CommandSender`, M0-40) and no complete error message table (M0-47 *(planned)*);
+- No view uses `CommandSender` yet (M0-44 onwards), and there is no complete error message table (M0-47 *(planned)*);
   `ConnectionStatusModel` words only the failures of starting up.
 - An unknown enum value or a missing member fails the whole answer; a server and a client of different versions during M0 need
   matching builds.
 - The real transport was walked against a running server once (M0-37 build log); it is not in CI (Unity tests are not).
 
-Last updated: M0-39
+Last updated: M0-40

@@ -188,7 +188,7 @@ second part is the `TraceId` of every log line of the request), `requestId` the 
 - **Every error answer has a `code`**, also the three the framework ends without a body (`NOT_FOUND`, `METHOD_NOT_ALLOWED`,
   `UNSUPPORTED_MEDIA_TYPE`): the status code pages give them the catalogue's Problem Details. A body Kestrel stops at the size limit (an empty 413 inside
   the binding) is rewritten to 400 `INVALID_ARGUMENT`. (M0-34, owner's delegated decision 3: add the three codes.)
-- `CONCURRENCY_CONFLICT` and `RATE_LIMITED` are retryable: the first with the same `requestId` at once, the second after `Retry-After`.
+- `CONCURRENCY_CONFLICT` and `RATE_LIMITED` are retryable: the first with the same `requestId` at once, the second after `Retry-After`. The Unity client's `CommandSender` (M0-40) repeats `CONCURRENCY_CONFLICT` after its normal wait and leaves `RATE_LIMITED` to the player.
 
 ## Idempotency rules
 - `requestId` is a client-generated UUID, required on every command, and reused on every retry.

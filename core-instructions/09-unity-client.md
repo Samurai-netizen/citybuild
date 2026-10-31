@@ -1,7 +1,7 @@
 # Unity Client
 
 > **Built so far:** the project, its four assemblies and their tests, and the `Bootstrap` scene that shows "Not connected" (M0-04, M0-05;
-> `client/README.md`). The API client, the DTOs and the error parsing (`CityBuilder.Client.Net`, M0-37) and the start of the game (login, content through the engine's factory, the first `GET /city`, "Connected" or the fatal error screen: `AuthService`, `ContentService`, `StartupFlow`, `GameRoot`, M0-38) and the city store with its display prediction (`ClientCityStore`, `DisplayClock`, `DisplayCity`, M0-39) are built and tested; the city view with M0-43, the screens from M0-45 *(planned)*. A task that builds a
+> `client/README.md`). The API client, the DTOs and the error parsing (`CityBuilder.Client.Net`, M0-37) and the start of the game (login, content through the engine's factory, the first `GET /city`, "Connected" or the fatal error screen: `AuthService`, `ContentService`, `StartupFlow`, `GameRoot`, M0-38) and the city store with its display prediction (`ClientCityStore`, `DisplayClock`, `DisplayCity`, M0-39) and the command sender with its retry policy (`CommandSender`, M0-40) are built and tested; the city view with M0-43, the screens from M0-45 *(planned)*. A task that builds a
 > part updates this line.
 
 The client renders the latest authoritative snapshot and makes waiting feel alive.
@@ -65,8 +65,12 @@ Local package line in `Packages/manifest.json`:
   (keys `CityBuilder.DevLogin.*`), never a snapshot or a balance. A kept token the server refuses (`AUTHENTICATION_REQUIRED`) is dropped
   and the flow logs in once more. Invalid content shows the fatal error screen (`UI/FatalError`); a failed request shows "Not connected"
   with a sentence and the code. The dev player's name is `devDisplayName` in `ApiClientSettings`.
-- **Commands:** `CommandSender` creates the `requestId` once per player intent and reuses it on retry.
-  Retries only on network errors, timeouts, 5xx, `CONCURRENCY_CONFLICT` (max 3, backoff 0.5/1/2 s).
+- **Commands (M0-40):** `CommandSender` (Net) creates the `requestId` once per player intent (`CommandIntent`) and reuses it on every attempt.
+  Retries only on network errors, timeouts, 5xx and `CONCURRENCY_CONFLICT`: at most 3 requests, waits 0.5 s then 1 s (`CommandPolicy.Default`
+  holds 0.5/1/2; the 2 s would precede a 4th request). Any other 4xx (also `RATE_LIMITED`) is final. On success the snapshot goes to the store
+  through `SnapshotMapper.Apply`. `Pending` lists the intents on their way (`Waiting`, `Sending`, `Retrying`) for ghosts and disabled buttons;
+  a repeat of a pending intent shares its result. `AssignWorkers` targets are coalesced per building: a new target replaces a not-yet-sent one,
+  is sent after a 400 ms pause with no newer one, and waits for the building's earlier target to end. `GameRoot` builds the sender once connected.
 - **Polling:** `GET /city` on start, on `OnApplicationPause(false)`, after reconnect, every 120 s in foreground.
 
 ## M0 screens (UI Toolkit)
