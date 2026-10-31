@@ -169,6 +169,9 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   (`GET /content` through the engine's validating factory), `StartupFlow` and `GameRoot` (login, content, city; "Connected" with era and coins,
   messages for failures, a fatal error screen for invalid content), the dev player name in `ApiClientSettings`; `Net` and `Presentation` reference the
   engine package; 63 new EditMode tests (M0-38).
+- Unity client keeps the city: `ClientCityStore` (the last snapshot, older answers ignored, a refused command changes nothing), `SnapshotMapper`, and
+  display prediction (`DisplayClock`, `DisplayCity`: the shared engine on a copy, at most once per second, replaced by every new snapshot); 101 new
+  EditMode tests (M0-39).
 
 ### Changed
 - `/finish-task` can be run by the AI coder itself once every planned step is done (owner directive OD-15; M0-36).
