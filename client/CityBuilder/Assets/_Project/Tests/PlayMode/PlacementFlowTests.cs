@@ -219,9 +219,9 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(Element<Button>(PlacementBar.PlaceName).enabledSelf, Is.False);
         }
 
-        /// <summary>Occupied tiles of the last snapshot are red and free ones green; an occupied tile warns but can still be confirmed.</summary>
+        /// <summary>Occupied tiles of the last snapshot are red and free ones green; an occupied tile warns, Place is dimmed and pressing it sends nothing.</summary>
         [UnityTest]
-        public IEnumerator OccupiedTiles_AreRed_AndWarnButCanBeConfirmed()
+        public IEnumerator OccupiedTiles_AreRed_AndWarn_AndCannotBePlaced()
         {
             _flow.Dispose();
             _cancel.Cancel();
@@ -235,7 +235,15 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(_world.Ground.ShownHintAt(new GridCoordinate(1, 0)), Is.EqualTo(TileHint.Occupied));
             Assert.That(_world.Ground.ShownHintAt(new GridCoordinate(2, 0)), Is.EqualTo(TileHint.Free));
             Assert.That(Element<Label>(PlacementBar.HintName).text, Is.EqualTo("This tile is occupied"));
-            Assert.That(Element<Button>(PlacementBar.PlaceName).enabledSelf, Is.True);
+            Assert.That(Element<Button>(PlacementBar.PlaceName).enabledSelf, Is.False);
+
+            _bar.PressPlace();
+            yield return null;
+            Assert.That(_transport.Requests.Count, Is.EqualTo(0), "nothing is sent for a red tile");
+            Assert.That(_flow.Model.Phase, Is.EqualTo(PlacementPhase.Confirming));
+
+            TapTile(2, 0);
+            Assert.That(Element<Button>(PlacementBar.PlaceName).enabledSelf, Is.True, "a free tile can be placed on");
         }
 
         /// <summary>

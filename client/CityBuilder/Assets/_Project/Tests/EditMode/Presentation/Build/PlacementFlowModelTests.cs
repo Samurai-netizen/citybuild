@@ -173,19 +173,43 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Build
             Assert.That(_flow.HintAt(new GridCoordinate(1, 0)), Is.EqualTo(TileHint.Free));
         }
 
-        /// <summary>An occupied tile warns but does not stop the confirm: the server decides (<c>09</c> UX rules).</summary>
+        /// <summary>An occupied tile can be picked and warns, but cannot be confirmed: no intent is made for it.</summary>
         [Test]
-        public void AnOccupiedTile_Warns_ButCanStillBeConfirmed()
+        public void AnOccupiedTile_Warns_AndCannotBeConfirmed()
         {
             _flow.Update(BuildMenuTestData.City(700, 40, 10, new string[0], 1));
             _flow.SetType(House);
             _flow.SetTile(new GridCoordinate(1, 0));
 
+            Assert.That(_flow.Phase, Is.EqualTo(PlacementPhase.Confirming));
             Assert.That(_flow.HintText, Is.EqualTo("This tile is occupied"));
-            Assert.That(_flow.CanConfirm, Is.True);
+            Assert.That(_flow.CanConfirm, Is.False);
+            Assert.That(_flow.TryConfirm(out CommandIntent? intent), Is.False);
+            Assert.That(intent, Is.Null);
+            Assert.That(_flow.Phase, Is.EqualTo(PlacementPhase.Confirming), "nothing was started");
+            Assert.That(_flow.CanCancel, Is.True);
 
             _flow.SetTile(new GridCoordinate(5, 5));
             Assert.That(_flow.HintText, Is.Empty);
+            Assert.That(_flow.CanConfirm, Is.True);
+        }
+
+        /// <summary>A snapshot that occupies the picked tile while the player is deciding takes the confirm away; one that frees it gives it back.</summary>
+        [Test]
+        public void WhenASnapshotOccupiesThePickedTile_ConfirmingStops()
+        {
+            _flow.SetType(House);
+            _flow.SetTile(new GridCoordinate(1, 0));
+            Assert.That(_flow.CanConfirm, Is.True);
+            _changed = 0;
+
+            _flow.Update(BuildMenuTestData.City(700, 40, 10, new string[0], 1));
+
+            Assert.That(_flow.CanConfirm, Is.False);
+            Assert.That(_changed, Is.GreaterThan(0), "the bar must hear about it");
+
+            _flow.Update(BuildMenuTestData.StartCity());
+            Assert.That(_flow.CanConfirm, Is.True);
         }
 
         /// <summary>Confirming makes the place-building intent for the picked type and tile, and the flow is then sending.</summary>

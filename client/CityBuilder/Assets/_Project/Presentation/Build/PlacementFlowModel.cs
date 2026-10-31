@@ -12,9 +12,10 @@ namespace CityBuilder.Client.Presentation.Build
     /// <summary>
     /// The placement flow without a screen (M0-46): pick a card, pick a tile, confirm, wait for the server. It holds which type and tile are
     /// picked, a hint for every tile of the grid from the latest city (free or occupied), the words of the bar, and what each ending does:
-    /// a success ends the flow, a failure keeps the card, drops the tile and keeps the error to show; while a command is on its way the picks are frozen. It decides nothing: an occupied tile
-    /// can still be confirmed, because the server decides (<c>09</c> UX rules), it subtracts nothing and it never creates a building;
-    /// <see cref="TryConfirm"/> only makes the <see cref="CommandIntent"/> that the caller gives the <see cref="CommandSender"/>.
+    /// a success ends the flow, a failure keeps the card, drops the tile and keeps the error to show; while a command is on its way the picks are frozen. An occupied tile
+    /// (red) can be picked, so the bar can say why, but it cannot be confirmed: nothing is sent for a tile the player was told is taken. That is
+    /// a courtesy, not the rule: the server checks every command again (<c>09</c> UX rules). The model subtracts nothing and never creates a
+    /// building; <see cref="TryConfirm"/> only makes the <see cref="CommandIntent"/> that the caller gives the <see cref="CommandSender"/>.
     /// </summary>
     public sealed class PlacementFlowModel
     {
@@ -82,8 +83,11 @@ namespace CityBuilder.Client.Presentation.Build
         /// <summary>Whether the ground should show the hints: a card is picked, or a command is on its way.</summary>
         public bool ShowsHints => Phase != PlacementPhase.Idle;
 
-        /// <summary>Whether <see cref="TryConfirm"/> can succeed: a type and a tile are picked and nothing is on its way.</summary>
-        public bool CanConfirm => Phase == PlacementPhase.Confirming;
+        /// <summary>
+        /// Whether <see cref="TryConfirm"/> can succeed: a type and a free tile are picked and nothing is on its way. A tile the displayed city
+        /// shows occupied (red) cannot be confirmed; if a snapshot occupies the picked tile, this turns false at once.
+        /// </summary>
+        public bool CanConfirm => Phase == PlacementPhase.Confirming && HintAt(Tile!.Value) != TileHint.Occupied;
 
         /// <summary>Whether <see cref="Cancel"/> does anything: a command that was sent cannot be taken back.</summary>
         public bool CanCancel => Phase != PlacementPhase.Idle && Phase != PlacementPhase.Sending;
@@ -117,7 +121,7 @@ namespace CityBuilder.Client.Presentation.Build
             }
         }
 
-        /// <summary>A warning about the picked tile from the displayed city, or empty. It does not stop <see cref="TryConfirm"/>.</summary>
+        /// <summary>A warning about the picked tile from the displayed city, or empty. While it is shown <see cref="CanConfirm"/> is false.</summary>
         public string HintText
         {
             get
