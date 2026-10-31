@@ -13,7 +13,7 @@ client/CityBuilder/
 ├── Assets/_Project/
 │   ├── Core/            CityBuilder.Client.Core           client state, display prediction (skeleton)
 │   ├── Net/             CityBuilder.Client.Net            API client, DTOs, error parsing (M0-37); login, token stores, content loading (M0-38)
-│   ├── Presentation/    CityBuilder.Client.Presentation   GameRoot, bootstrap, startup flow, status screens; City/ (grid, camera, ground, M0-43; building views, M0-44)
+│   ├── Presentation/    CityBuilder.Client.Presentation   GameRoot, bootstrap, startup flow, status screens; City/ (grid, camera, ground, M0-43; building views, M0-44), Build/ (build menu, M0-45), Ui/ (safe area, M0-45)
 │   ├── Resources/       UI/ (PanelSettings.asset, UXML and USS the code loads by name), Config/ApiClientSettings.asset (server URL, timeout, dev player name)
 │   └── Tests/EditMode · Tests/PlayMode                    test assemblies (AppInfo, engine-in-Unity and Bootstrap scene tests, M0-05; Net/ tests, M0-37); Tests/Fixtures/ real server answers
 ├── Assets/Scenes/       Bootstrap.unity (made by hand, scene 0 in the build list; steps below); SampleScene is the template's, unticked

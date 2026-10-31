@@ -9,8 +9,8 @@
 - **Branch:** `task/M0-45-build-menu` (from `main` = `d8372ef`, M0-44 merged as PR #59)
 - **Build log entry:** `docs/build-log/2026/2026-10-31-07-M0-45.md`
 - **Last green commit:** the head of `task/M0-45-build-menu` after `feat(M0-45): build menu screen` (Unity EditMode 570 / 570, PlayMode 45 / 45 in a mirror project; check-docs OK)
-- **Done steps:** write-ahead; 1 models and tests; 2 to 4 layout, `BuildMenu`, `SafeAreaInsets`, `GameRoot` wiring, UI-press handling in `CityInputReader`, EditMode and PlayMode tests
-- **Next step:** step 5: `docs/how-to/add-ui-screen.md` (+ index row, sidebar if needed), then every row of the log's Docs impact table (09, module doc, overview, testing README, client README, 08, CHANGELOG, board), then `/finish-task`. Unity runs in a mirror project (the owner's Editor is open): `scratchpad/run-unity.sh EditMode|PlayMode`; copy new `.meta` files back.
+- **Done steps:** write-ahead; 1 models and tests; 2 to 4 layout, `BuildMenu`, `SafeAreaInsets`, `GameRoot` wiring, UI-press handling in `CityInputReader`, tests; 5 docs (`add-ui-screen.md`, Docs impact rows)
+- **Next step:** `/finish-task`: Definition of Done, self-review of the diff, close the two open Docs impact rows (13, board), report, PR.
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never

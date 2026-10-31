@@ -183,6 +183,7 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   3/4 `CityCameraModel` (pan clamped to the grid, zoom limits), `CityInputReader` (drag, pinch, wheel, tap and hover through the Input System), `CityGrid` and `GridCoordinate`
   (world and tile conversions), `TileSelection`; 93 new tests (75 EditMode, 18 PlayMode; the PlayMode ones use the Input System's fake devices) (M0-43).
 - Building views: placeholder looks from primitives by type and era (Cottage, Woodcutter's Hut, Sawmill, Trading Post), a factory, and `CityView`, which reconciles one view per building with the displayed city; level 2 is 20 % taller, a building under construction is a low foundation; 23 EditMode and 7 PlayMode tests; the owner's `server-panel/` menu for the local server is committed too (M0-44).
+- Build menu: `BuildMenu` (UXML/USS, a "Build" button and a sheet with one card per building type), `BuildCardModel`/`BuildMenuModel` (name, cost, `2m 30s` build time, workers, recipe with its per-hour rate, `Requires: Trade Charter` lock, builder and cost hints that never block), `DurationText`, `SafeAreaInsets`; a press over the UI no longer reaches the ground; `docs/how-to/add-ui-screen.md`; 64 new tests (51 EditMode, 13 PlayMode) (M0-45).
 
 ### Changed
 - `/finish-task` can be run by the AI coder itself once every planned step is done (owner directive OD-15; M0-36).
