@@ -1,0 +1,88 @@
+#nullable enable
+
+using UnityEngine;
+
+namespace CityBuilder.Client.Presentation.City
+{
+    /// <summary>
+    /// The city's place in the scene: the camera and a light, made from code as soon as the object exists (so the screen is cleared even
+    /// before the server answers), and, once <see cref="ShowGrid"/> is called with the grid size from the content's rules, the ground
+    /// tiles, the camera controls and the tile selection. A thin component: the logic is in <see cref="CityCameraModel"/>,
+    /// <see cref="CityCameraRig"/>, <see cref="CityInputReader"/>, <see cref="TileSelection"/> and <see cref="GroundTiles"/>.
+    /// The building views of M0-44 will hang under it. <c>GameRoot</c> creates it.
+    /// </summary>
+    [DisallowMultipleComponent]
+    public sealed class CityWorld : MonoBehaviour
+    {
+        /// <summary>The colour the camera clears the screen to: dark, so the gaps between tiles read as grid lines.</summary>
+        private static readonly Color Background = new Color(0.10f, 0.12f, 0.14f);
+
+        /// <summary>The ground, or null before <see cref="ShowGrid"/>.</summary>
+        private GroundTiles? _ground;
+
+        /// <summary>The input reader, or null before <see cref="ShowGrid"/>.</summary>
+        private CityInputReader? _input;
+
+        /// <summary>The camera that shows the city; made in <c>Awake</c>.</summary>
+        public Camera Camera { get; private set; } = null!;
+
+        /// <summary>The camera controls; null before <see cref="ShowGrid"/>.</summary>
+        public CityCameraRig? Rig { get; private set; }
+
+        /// <summary>The hovered and selected tile; null before <see cref="ShowGrid"/>.</summary>
+        public TileSelection? Selection { get; private set; }
+
+        /// <summary>The grid shown; null before <see cref="ShowGrid"/>.</summary>
+        public CityGrid? Grid { get; private set; }
+
+        /// <summary>The ground tiles; null before <see cref="ShowGrid"/>.</summary>
+        public GroundTiles? Ground => _ground;
+
+        /// <summary>Unity calls it once, right after the component is created: it makes the camera and the light.</summary>
+        private void Awake()
+        {
+            var cameraObject = new GameObject("City Camera") { tag = "MainCamera" };
+            cameraObject.transform.SetParent(transform, false);
+            Camera = cameraObject.AddComponent<Camera>();
+            Camera.clearFlags = CameraClearFlags.SolidColor;
+            Camera.backgroundColor = Background;
+            Camera.fieldOfView = CityCameraModel.FieldOfViewDegrees;
+            Camera.nearClipPlane = 0.3f;
+            Camera.farClipPlane = 200f;
+
+            var lightObject = new GameObject("Sun");
+            lightObject.transform.SetParent(transform, false);
+            lightObject.transform.rotation = Quaternion.Euler(55f, -30f, 0f);
+            var sun = lightObject.AddComponent<Light>();
+            sun.type = LightType.Directional;
+            sun.shadows = LightShadows.None;
+        }
+
+        /// <summary>
+        /// Builds the ground, the selection and the camera controls for a grid, and frames the camera on it. Calling it again replaces the
+        /// earlier ground (a new city size).
+        /// </summary>
+        /// <param name="grid">The grid from the content's rules.</param>
+        public void ShowGrid(CityGrid grid)
+        {
+            _ground?.Destroy();
+            Grid = grid;
+            Selection = new TileSelection(grid);
+            _ground = new GroundTiles(grid, Selection, transform);
+            Rig = new CityCameraRig(Camera, grid, Selection);
+            _input = new CityInputReader(Rig, Screen.dpi);
+        }
+
+        /// <summary>Unity calls it every frame: the player's input moves the camera and the selection.</summary>
+        private void Update()
+        {
+            _input?.Tick();
+        }
+
+        /// <summary>Unity calls it when the object is destroyed: the ground takes its listener off the selection.</summary>
+        private void OnDestroy()
+        {
+            _ground?.Destroy();
+        }
+    }
+}

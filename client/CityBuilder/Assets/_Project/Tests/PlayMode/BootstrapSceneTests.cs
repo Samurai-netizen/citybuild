@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using CityBuilder.Client.Presentation.Bootstrap;
+using CityBuilder.Client.Presentation.City;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -98,6 +99,22 @@ namespace CityBuilder.Client.Tests.PlayMode
         public void GameRoot_WhenBootstrapSceneIsLoaded_IsNotShowingTheFatalErrorScreen()
         {
             Assert.That(FindGameRoots()[0].IsFatalErrorShown, Is.False);
+        }
+
+        /// <summary>
+        /// The scene shows through exactly one camera, made by the <see cref="GameRoot"/> from code (the scene has none): it clears the screen to a solid colour, so
+        /// the status text of an earlier moment never shows through (M0-43, the M0-42 follow-up).
+        /// </summary>
+        [Test]
+        public void GameRoot_WhenBootstrapSceneIsLoaded_MakesTheOnlyCamera()
+        {
+            Camera[] cameras = Object.FindObjectsByType<Camera>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            CityWorld world = FindGameRoots()[0].GetComponentInChildren<CityWorld>();
+
+            Assert.That(cameras, Has.Length.EqualTo(1));
+            Assert.That(world, Is.Not.Null, "GameRoot has no CityWorld.");
+            Assert.That(cameras[0], Is.SameAs(world.Camera));
+            Assert.That(cameras[0].clearFlags, Is.EqualTo(CameraClearFlags.SolidColor));
         }
 
         /// <summary>Loading the scene a second time still leaves exactly one <see cref="GameRoot"/>.</summary>

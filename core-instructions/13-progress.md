@@ -8,9 +8,9 @@
 - **Task:** M0-43 · Grid and camera (`[S]`, Sonnet 5.5)
 - **Branch:** `task/M0-43-grid-camera` (from `main` = `17fef65`)
 - **Build log entry:** `docs/build-log/2026/2026-10-31-05-M0-43.md`
-- **Last green commit:** the head of `task/M0-43-grid-camera` (EditMode 453 / 453 in a mirror project)
-- **Done steps:** 1 grid math (`GridCoordinate`, `CityGrid`) · 2 `CityCameraModel`, `PointerGesture`, `PinchGesture` · 3 `TileSelection`, `GroundTiles` (EditMode 496 / 496)
-- **Next step:** step 4 of the log's plan (`CityCameraRig` and `CityWorld` MonoBehaviours with the Input System, `GameRoot` creates the camera at once and the ground when the grid size is known, a PlayMode check). Then MonoBehaviours and `GameRoot` · 5 docs and finish. The owner's Editor is open, so Unity runs in a mirror project (decision 5: sync `Assets/` to a copy, run `-batchmode` there, copy new `.meta` files back).
+- **Last green commit:** the head of `task/M0-43-grid-camera` (Unity in a mirror project: EditMode 496 / 496, PlayMode 25 / 25; Repository tests 22 / 22)
+- **Done steps:** 1 grid math · 2 camera model, pointer gesture, pinch · 3 tile selection, ground tiles · 4 `CityCameraRig`, `CityInputReader`, `CityWorld`, `GameRoot` wiring, PlayMode tests
+- **Next step:** step 5 of the log's plan: docs (`09`, the Presentation module doc, `LOCAL-E2E.md` incl. removing the "Offline beside Connected" row, `client/README.md`, CHANGELOG, tests docs), fill the Docs impact rows, then `/finish-task`. The owner's Editor is open, so Unity runs in a mirror project (log decision 5).
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never

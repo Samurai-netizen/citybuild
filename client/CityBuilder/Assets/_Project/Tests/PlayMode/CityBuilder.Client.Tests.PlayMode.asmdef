@@ -7,7 +7,9 @@
     "CityBuilder.Simulation",
     "CityBuilder.Client.Core",
     "CityBuilder.Client.Net",
-    "CityBuilder.Client.Presentation"
+    "CityBuilder.Client.Presentation",
+    "Unity.InputSystem",
+    "Unity.InputSystem.TestFramework"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
