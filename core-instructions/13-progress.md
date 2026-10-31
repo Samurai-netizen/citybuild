@@ -4,13 +4,13 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-42 · End-to-end checkpoint; the PR is open, the owner merges it)
-- **Branch:** `task/M0-42-e2e-checkpoint` (from `main` = `53e9ab6`) until the owner merges
-- **Build log entry:** last: `docs/build-log/2026/2026-10-31-04-M0-42.md` (Done)
-- **Last green commit:** the head of `task/M0-42-e2e-checkpoint` (docs only; handbook builds; check-docs OK; the owner's Editor run works)
-- **Done steps:** all of M0-42
-- **Next step:** the owner merges the PR. Then `/start-task M0-43` (grid and camera, `[S]`: Sonnet 5.5); read the M0-42 Follow-ups.
+- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** M0-43 · Grid and camera (`[S]`, Sonnet 5.5)
+- **Branch:** `task/M0-43-grid-camera` (from `main` = `17fef65`)
+- **Build log entry:** `docs/build-log/2026/2026-10-31-05-M0-43.md`
+- **Last green commit:** `main` = `17fef65` (nothing changed yet)
+- **Done steps:** —
+- **Next step:** step 1 of the log's plan: `GridCoordinate` and `CityGrid` in `Presentation/City/` with EditMode tests. Steps: 1 grid math · 2 camera model and pointer gesture · 3 tile selection and ground tiles · 4 MonoBehaviours and `GameRoot` · 5 docs and finish.
 - **Open questions for the owner:** the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
