@@ -2,9 +2,11 @@
 
 using System.Collections.Generic;
 using System.Globalization;
+using CityBuilder.Client.Core;
 using CityBuilder.Client.Net;
 using CityBuilder.Simulation;
 using CityBuilder.Simulation.Content;
+using CityBuilder.Simulation.State;
 
 namespace CityBuilder.Client.Presentation.Bootstrap
 {
@@ -64,15 +66,54 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             }
         }
 
-        /// <summary><c>Connected - Early Middle Ages - Coins: 700</c>; the era and item names are the content's, a missing one falls back to the id or number.</summary>
+        /// <summary>
+        /// The status for the connection as the polling sees it (M0-41), shown whenever <see cref="ConnectionMonitor.State"/> changes:
+        /// <c>Connected - ...</c> as at the start, but from the latest snapshot, or one sentence that names what is wrong, ending in the code
+        /// of <paramref name="error"/> when there is one.
+        /// </summary>
+        /// <param name="state">The connection state.</param>
+        /// <param name="error">Why it is not connected; null when connected or when no error is the reason.</param>
+        /// <param name="content">The content the era and item names come from.</param>
+        /// <param name="snapshot">The latest snapshot; used only for <see cref="ConnectionState.Connected"/>, and null falls back to the era and coins of an empty city.</param>
+        public static ConnectionStatusModel ForConnection(ConnectionState state, ApiError? error, GameContent content, CitySnapshot? snapshot)
+        {
+            string code = error == null ? string.Empty : " (" + error.Code + ")";
+            switch (state)
+            {
+                case ConnectionState.Connecting:
+                    return Connecting();
+                case ConnectionState.Connected:
+                    CityState? city = snapshot?.CopyCity();
+                    int era = city == null ? 0 : city.Era;
+                    long coins = city == null ? 0 : city.GetQuantity(new ItemId(CoinsItemId));
+                    return new ConnectionStatusModel(ConnectedText(content, era, coins), new string[0], false);
+                case ConnectionState.Offline:
+                    string reason = error != null && error.Code == ApiErrorCodes.ClientTimeout ? "the server did not answer in time" : "cannot reach the server";
+                    return new ConnectionStatusModel("Offline: " + reason + code, new string[0], false);
+                case ConnectionState.Unauthorized:
+                    return new ConnectionStatusModel("Signed out: the server did not accept the login" + code, new string[0], false);
+                case ConnectionState.IncompatibleVersion:
+                    return new ConnectionStatusModel("Update needed: this game does not match the server" + (error == null ? " (other content version)" : code), new string[0], false);
+                default:
+                    return new ConnectionStatusModel("Server problem: the server could not be used" + code, new string[0], false);
+            }
+        }
+
+        /// <summary><c>Connected - Early Middle Ages - Coins: 700</c> from the first answer's DTO.</summary>
         private static string ConnectedText(GameContent content, CitySnapshotDto city)
         {
-            string era = content.TryGetEra(city.City.Era, out EraDefinition? eraDefinition)
-                ? eraDefinition.Name
-                : "Era " + city.City.Era.ToString(CultureInfo.InvariantCulture);
-            string coinsName = content.TryGetItem(new ItemId(CoinsItemId), out ItemDefinition? coins) ? coins.Name : CoinsItemId;
             city.City.Inventory.TryGetValue(CoinsItemId, out long amount);
-            return "Connected - " + era + " - " + coinsName + ": " + amount.ToString(CultureInfo.InvariantCulture);
+            return ConnectedText(content, city.City.Era, amount);
+        }
+
+        /// <summary><c>Connected - Early Middle Ages - Coins: 700</c>; the era and item names are the content's, a missing one falls back to the id or number.</summary>
+        private static string ConnectedText(GameContent content, int eraNumber, long coinsAmount)
+        {
+            string era = content.TryGetEra(eraNumber, out EraDefinition? eraDefinition)
+                ? eraDefinition.Name
+                : "Era " + eraNumber.ToString(CultureInfo.InvariantCulture);
+            string coinsName = content.TryGetItem(new ItemId(CoinsItemId), out ItemDefinition? coins) ? coins.Name : CoinsItemId;
+            return "Connected - " + era + " - " + coinsName + ": " + coinsAmount.ToString(CultureInfo.InvariantCulture);
         }
 
         /// <summary>A sentence for a failed request; the code is added so a bug report names it.</summary>

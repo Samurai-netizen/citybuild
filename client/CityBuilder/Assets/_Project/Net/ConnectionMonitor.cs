@@ -157,7 +157,7 @@ namespace CityBuilder.Client.Net
         /// Returns when the poll is done, or at once when nothing is due. Never throws: a cancel ends it quietly.
         /// </summary>
         /// <param name="cancellationToken">Cancels the request (the app is closing).</param>
-        public async Task TickAsync(CancellationToken cancellationToken)
+        public Task TickAsync(CancellationToken cancellationToken)
         {
             bool reachable = _isReachable();
             if (reachable && !_wasReachable)
@@ -166,11 +166,14 @@ namespace CityBuilder.Client.Net
             }
 
             _wasReachable = reachable;
-            if (!_scheduler.TryBegin())
-            {
-                return;
-            }
 
+            // Not async on purpose: a frame with nothing due must not allocate a task.
+            return _scheduler.TryBegin() ? PollBegunAsync(cancellationToken) : Task.CompletedTask;
+        }
+
+        /// <summary>Polls after <see cref="PollScheduler.TryBegin"/> said so and always ends the scheduler's poll; a cancel ends it quietly.</summary>
+        private async Task PollBegunAsync(CancellationToken cancellationToken)
+        {
             try
             {
                 await PollAsync(cancellationToken);
