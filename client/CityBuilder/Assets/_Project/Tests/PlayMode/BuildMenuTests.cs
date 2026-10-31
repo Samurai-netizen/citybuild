@@ -193,6 +193,28 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(panel.ClassListContains("build-panel--hidden"), Is.True);
         }
 
+        /// <summary>
+        /// The menu answers "over the UI" for the screen position of its button and "not over the UI" for an empty top edge. The button's place is
+        /// read from the laid-out tree, so the test needs a frame. It does not prove the y flip alone (another document in the shared panel,
+        /// such as the status label of a <c>GameRoot</c> that another test left, can cover the unflipped spot); <c>ScreenPointTests</c> pins that.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator IsOverUi_IsTrueOnTheButton_AndFalseInTheEmptyTopCorner()
+        {
+            yield return null;
+            VisualElement root = _menu.Root!;
+            Rect button = root.Q<Button>(BuildMenu.ToggleName).worldBound;
+            Assume.That(float.IsNaN(button.center.x), Is.False, "the panel has not been laid out");
+            float scaleX = Screen.width / root.worldBound.width;
+            float scaleY = Screen.height / root.worldBound.height;
+
+            var onButton = new Vector2(button.center.x * scaleX, Screen.height - button.center.y * scaleY);
+            var topCorner = new Vector2(Screen.width * 0.5f, Screen.height - 2f);
+
+            Assert.That(_menu.IsOverUi(onButton), Is.True, "the build button takes the pointer");
+            Assert.That(_menu.IsOverUi(topCorner), Is.False, "the empty space passes the pointer to the ground");
+        }
+
         /// <summary>Destroying the menu takes its listeners off the model, so a later update does not touch destroyed elements.</summary>
         [Test]
         public void Destroyed_Menu_NoLongerListensToTheModel()

@@ -186,9 +186,9 @@ namespace CityBuilder.Client.Presentation.Build
                 return false;
             }
 
-            // The panel's origin is the top left and the Input System's the bottom left.
-            Vector2 flipped = new Vector2(screenPosition.x, Screen.height - screenPosition.y);
-            return root.panel.Pick(RuntimePanelUtils.ScreenToPanel(root.panel, flipped)) != null;
+            // The panel counts from the top left and the Input System from the bottom left; ScreenToPanel only scales.
+            Vector2 topLeft = ScreenPoint.ToTopLeft(screenPosition, Screen.height);
+            return root.panel.Pick(RuntimePanelUtils.ScreenToPanel(root.panel, topLeft)) != null;
         }
 
         /// <summary>Unity calls it before the first frame: the document's tree exists now, so the cards are built into it.</summary>
