@@ -178,6 +178,7 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
 - Unity client keeps itself current: `ConnectionMonitor` polls `GET /city` every 120 s in the foreground, on resuming from the background and when the
   network returns (never while paused), and tracks a `ConnectionState` (`Connected`, `Offline`, `Unauthorized`, `ServerError`, `IncompatibleVersion`) the
   status label shows; a refused token gets one new login; `PollScheduler` holds the timing rules; 57 new EditMode tests (M0-41).
+- The local end-to-end check of the Unity client against the real server, run in the Editor: `docs/testing/LOCAL-E2E.md` (M0-42).
 
 ### Changed
 - `/finish-task` can be run by the AI coder itself once every planned step is done (owner directive OD-15; M0-36).

@@ -62,6 +62,7 @@ Coming back to the app also asks at once, so the label can change as soon as you
 | "Not connected: Cannot reach the server (CLIENT_NETWORK_ERROR)" after Play | The API wasn't running when you pressed Play. A failed start doesn't retry | Start the API, then press Play twice: stop, then start |
 | The coins aren't 700 | The dev player `dev1` has played. Its city carries over from run to run | Reset the city (below) |
 | The label doesn't change after 2 minutes | The Editor didn't have focus, or the game is paused | Click the Game view and check that the Pause button isn't on |
+| Bits of the old text show through or beside the label, such as "Offline" behind "Connected" | Expected until M0-43: with no camera nothing clears the screen, and the label's background is see-through | Nothing. The newest text is the one in front |
 | A red message in the Console, or another label | Not a known state | Copy the label and the first red message into the chat with the AI coder |
 
 A token kept from an earlier run that the server no longer accepts (a new signing key, a reset database) isn't a problem: the client logs in again by itself.
