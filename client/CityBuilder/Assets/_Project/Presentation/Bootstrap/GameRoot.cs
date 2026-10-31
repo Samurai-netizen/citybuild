@@ -19,7 +19,8 @@ namespace CityBuilder.Client.Presentation.Bootstrap
     /// and shows how it ended: "Connected" with the era and the coins, a message when the server cannot be used, or the fatal error screen
     /// when the server's content is invalid. Once connected it owns the city store, keeps the display city up to date for the views and builds the command sender they use.
     /// It creates the city's camera first (<see cref="CityWorld"/>, so the screen is cleared at once) and, once connected, shows the ground for the grid size of the rules and the buildings of the displayed city (<see cref="CityView"/>).
-    /// It also shows the build menu (<see cref="BuildMenu"/>), whose cards follow the displayed city, and tells the ground that a press on the menu is not its own.
+    /// It also shows the build menu (<see cref="BuildMenu"/>), whose cards follow the displayed city, and tells the ground that a press on the menu or on the placement bar is not its own.
+    /// It joins the menu, the ground, the placement bar and the command sender into the placement flow (<see cref="PlacementFlow"/>).
     /// It also drives the connection monitor: it polls the city, goes quiet while the app is paused, and the screen says how the connection stands.
     /// </summary>
     [DisallowMultipleComponent]
@@ -80,6 +81,12 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         /// <summary>The build menu; null until the start has connected, or when its assets are missing.</summary>
         private BuildMenu? _buildMenu;
 
+        /// <summary>The placement bar; null until the start has connected, or when its assets are missing.</summary>
+        private PlacementBar? _placementBar;
+
+        /// <summary>The placement flow (pick a card, a tile, confirm); null until the start has connected, or when the menu or the bar is missing.</summary>
+        private PlacementFlow? _placement;
+
         /// <summary>The text the screen shows now, for tests and logs.</summary>
         public string CurrentStatusText { get; private set; } = string.Empty;
 
@@ -91,6 +98,12 @@ namespace CityBuilder.Client.Presentation.Bootstrap
 
         /// <summary>The build menu (<c>09</c> Build menu); null until the start has connected, or when its assets are missing.</summary>
         internal BuildMenu? BuildMenu => _buildMenu;
+
+        /// <summary>The placement flow (<c>09</c> Placement); null until the start has connected, or when the menu or the bar is missing.</summary>
+        internal PlacementFlow? Placement => _placement;
+
+        /// <summary>The placement bar (<c>09</c> Placement); null until the start has connected, or when its assets are missing.</summary>
+        internal PlacementBar? PlacementBar => _placementBar;
 
         /// <summary>The city's camera and ground (<c>09</c> City view); null only before <c>Awake</c> has run.</summary>
         internal CityWorld? World => _world;
@@ -135,6 +148,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                     _world!.ShowGrid(new CityGrid(outcome.Content!.Rules.GridWidth, outcome.Content.Rules.GridHeight));
                     _displayCity.Changed += ShowBuildings;
                     CreateBuildMenu(outcome.Content!);
+                    CreatePlacement(outcome.Content!);
                     ShowBuildings();
                     _monitor = new ConnectionMonitor(
                         _api!,
@@ -182,9 +196,10 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             _monitor?.SetPaused(pauseStatus);
         }
 
-        /// <summary>Unity calls it when the object is destroyed: the monitor no longer reports to a screen that is gone.</summary>
+        /// <summary>Unity calls it when the object is destroyed: the placement flow and the monitor no longer report to a screen that is gone.</summary>
         private void OnDestroy()
         {
+            _placement?.Dispose();
             if (_displayCity != null)
             {
                 _displayCity.Changed -= ShowBuildings;
@@ -205,6 +220,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             {
                 _world!.ShowCity(city);
                 _buildMenu?.Model?.Update(city);
+                _placement?.Update(city);
             }
         }
 
@@ -223,8 +239,48 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             _buildMenu = BuildMenu.Create(transform, new BuildMenuModel(content, city));
             if (_buildMenu != null)
             {
-                _world!.IsPointerOverUi = _buildMenu.IsOverUi;
+                _world!.IsPointerOverUi = IsOverUi;
             }
+        }
+
+        /// <summary>
+        /// Makes the placement flow over the menu, the ground and the command sender, with its bar. Does nothing when there is no build menu
+        /// (its assets are missing: it logged an error) or the bar cannot be shown (it logged one too).
+        /// </summary>
+        private void CreatePlacement(GameContent content)
+        {
+            CityState? city = _displayCity?.Current;
+            if (_buildMenu == null || _buildMenu.Model == null || city == null || _commandSender == null || _world!.Grid == null)
+            {
+                return;
+            }
+
+            var model = new PlacementFlowModel(content, _world.Grid);
+            model.Update(city);
+            PlacementBar? bar = PlacementBar.Create(transform, model);
+            if (bar == null)
+            {
+                return;
+            }
+
+            _placementBar = bar;
+            BuildMenu menu = _buildMenu;
+            _placement = new PlacementFlow(
+                model,
+                menu.Model!,
+                () => menu.SetOpen(false),
+                _world,
+                _commandSender,
+                bar,
+                () => _displayCity?.Current?.Era ?? 1,
+                destroyCancellationToken);
+        }
+
+        /// <summary>Whether a screen position (pixels, origin bottom left) is over the build menu or the placement bar: a press there is the UI's, not the ground's.</summary>
+        private bool IsOverUi(Vector2 screenPosition)
+        {
+            return (_buildMenu != null && _buildMenu.IsOverUi(screenPosition))
+                || (_placementBar != null && _placementBar.IsOverUi(screenPosition));
         }
 
         /// <summary>The monitor's state or error changed: the screen says how the connection stands now.</summary>

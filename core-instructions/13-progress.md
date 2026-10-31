@@ -9,8 +9,8 @@
 - **Branch:** `task/M0-46-placement-flow` (from `main` = `d1bdce1`)
 - **Build log entry:** `docs/build-log/2026/2026-10-31-08-M0-46.md` (In progress)
 - **Last green commit:** `d1bdce1` on `main` (M0-45 merged, PR #60)
-- **Done steps:** write-ahead · step 1 (`PlacementFlowModel`, `TileHint`, `PlacementPhase`) · step 2 (ground hints, `PlacementGhosts`, `ControllableTransport`; EditMode 595 / 595, PlayMode 56 / 56)
-- **Next step:** step 3: `PlacementBar` (`UI/PlacementBar.uxml`/`.uss`, own `UIDocument`) and the thin `PlacementFlow` that wires `BuildMenu.Model.Selected`, `CityWorld.Selection`, `PlacementFlowModel`, `CityWorld.ShowHints`/`ShowGhosts` and `CommandSender`; picking a card closes the sheet. Then 4 `GameRoot` wiring (+ `IsPointerOverUi` covers the bar) and PlayMode flow tests with `ControllableTransport`, 5 docs and finish. Unity tests: `scratchpad/run-unity.sh` (mirror project; the owner's Editor holds the lock).
+- **Done steps:** write-ahead · step 1 (`PlacementFlowModel`, `TileHint`, `PlacementPhase`) · step 2 (ground hints, `PlacementGhosts`) · steps 3 and 4 (`PlacementBar`, `PlacementFlow`, `UiRoot`, `GameRoot` wiring; EditMode 598 / 598, PlayMode 73 / 73)
+- **Next step:** step 5: docs per the Docs impact table (module doc, `09`, how-to, overview, testing README, `LOCAL-E2E.md` step 3 place-a-Cottage recipe, `08`, `client/README.md`, CHANGELOG), then `/finish-task`. Unity tests: `scratchpad/run-unity.sh` (mirror project; the owner's Editor holds the lock).
 - **Open questions for the owner:** M0-46: decision 2 (a red, occupied tile can still be picked and placed: hints never block; say if you want it refused); M0-45: decision 1 (item names are plural, so `1 Planks`; a singular name in the content is your call), decision 8 (cards use the displayed city, not the raw snapshot), decision 11 (I changed M0-43's `CityInputReader`/`CityWorld` so a press on the menu never reaches the ground); the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never

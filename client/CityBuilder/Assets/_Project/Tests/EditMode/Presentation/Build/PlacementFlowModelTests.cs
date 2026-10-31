@@ -238,6 +238,24 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Build
             Assert.That(_ended, Is.EqualTo(0));
         }
 
+        /// <summary>What was confirmed stays what it was while the command is on its way: another card or tile changes nothing.</summary>
+        [Test]
+        public void SetTypeAndSetTile_WhileSending_ChangeNothing()
+        {
+            ConfirmSawmillAt34();
+            _changed = 0;
+
+            _flow.SetType(null);
+            _flow.SetType(House);
+            _flow.SetTile(new GridCoordinate(0, 0));
+            _flow.SetTile(null);
+
+            Assert.That(_flow.TypeId, Is.EqualTo(Sawmill));
+            Assert.That(_flow.Tile, Is.EqualTo(new GridCoordinate(3, 4)));
+            Assert.That(_flow.Phase, Is.EqualTo(PlacementPhase.Sending));
+            Assert.That(_changed, Is.EqualTo(0));
+        }
+
         /// <summary>The server accepted: the flow ends, the card and the tile are dropped, and the holders are told once.</summary>
         [Test]
         public void Succeeded_EndsTheFlow()

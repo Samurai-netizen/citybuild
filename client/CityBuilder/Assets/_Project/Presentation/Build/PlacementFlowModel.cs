@@ -12,7 +12,7 @@ namespace CityBuilder.Client.Presentation.Build
     /// <summary>
     /// The placement flow without a screen (M0-46): pick a card, pick a tile, confirm, wait for the server. It holds which type and tile are
     /// picked, a hint for every tile of the grid from the latest city (free or occupied), the words of the bar, and what each ending does:
-    /// a success ends the flow, a failure keeps the card, drops the tile and keeps the error to show. It decides nothing: an occupied tile
+    /// a success ends the flow, a failure keeps the card, drops the tile and keeps the error to show; while a command is on its way the picks are frozen. It decides nothing: an occupied tile
     /// can still be confirmed, because the server decides (<c>09</c> UX rules), it subtracts nothing and it never creates a building;
     /// <see cref="TryConfirm"/> only makes the <see cref="CommandIntent"/> that the caller gives the <see cref="CommandSender"/>.
     /// </summary>
@@ -129,11 +129,11 @@ namespace CityBuilder.Client.Presentation.Build
 
         /// <summary>
         /// Sets the picked type (from the build menu's selection); null clears it, and with it the tile and the error. Does nothing when the
-        /// type is the one already picked.
+        /// type is the one already picked, and while a command is on its way: what was confirmed stays what it was until it ends.
         /// </summary>
         public void SetType(BuildingTypeId? typeId)
         {
-            if (TypeId == typeId)
+            if (_sending != null || TypeId == typeId)
             {
                 return;
             }
@@ -148,10 +148,13 @@ namespace CityBuilder.Client.Presentation.Build
             Changed?.Invoke();
         }
 
-        /// <summary>Sets the picked tile (from the ground's selection); null clears it. Does nothing when it is the one already picked.</summary>
+        /// <summary>
+        /// Sets the picked tile (from the ground's selection); null clears it. Does nothing when it is the one already picked, and while a
+        /// command is on its way.
+        /// </summary>
         public void SetTile(GridCoordinate? tile)
         {
-            if (Tile == tile)
+            if (_sending != null || Tile == tile)
             {
                 return;
             }
