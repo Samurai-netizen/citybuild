@@ -39,7 +39,7 @@ public sealed class CityRepository(CityBuilderDbContext db, TimeProvider timePro
             throw new InvalidOperationException("This request has already loaded a city: a request locks only the acting player's city, once.");
         }
 
-        CityRow city = await LockAsync(playerId, cancellationToken) ?? throw new InvalidOperationException($"Player {playerId} has no city.");
+        CityRow city = await LockAsync(playerId, cancellationToken) ?? throw new CityNotFoundException($"Player {playerId} has no city.");
         List<CityInventoryRow> inventory = await _db.CityInventory.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
         List<CityBuildingRow> buildings = await _db.CityBuildings.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
         List<CityResearchRow> research = await _db.CityResearch.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);

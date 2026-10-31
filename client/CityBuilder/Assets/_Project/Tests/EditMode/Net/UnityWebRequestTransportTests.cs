@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.IO;
 using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,7 +15,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
     /// <summary>
     /// <see cref="UnityWebRequestTransport"/> against a small HTTP server inside the test (<see cref="HttpListener"/> on a free local
     /// port): what it sends (method, path, headers, body) and what it returns for a 200, a Problem Details 422, a 429 with
-    /// <c>Retry-After</c>, a refused connection and a cancelled call. The tests are coroutines because Unity completes web requests on its own update loop.
+    /// <c>Retry-After</c>, a redirect, a refused connection, a cancelled call and a cancel from a timer's thread while the server stays silent. The tests are coroutines because Unity completes web requests on its own update loop.
     /// </summary>
     public sealed class UnityWebRequestTransportTests
     {
@@ -27,8 +28,11 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         /// <summary>The prefix the server listens on, for example <c>http://localhost:49213/</c>.</summary>
         private string _prefix;
 
+        /// <summary>The socket of the test that needs a server that takes connections and never answers.</summary>
+        private TcpListener _silent;
+
         /// <summary>Starts a server that answers every request with <paramref name="status"/>, <paramref name="body"/> and an optional <c>Retry-After</c>.</summary>
-        private void StartServer(int status, string body, string retryAfter = null)
+        private void StartServer(int status, string body, string retryAfter = null, string location = null)
         {
             _listener = new HttpListener();
             for (int port = 49200; port < 49400; port++)
@@ -47,11 +51,11 @@ namespace CityBuilder.Client.Tests.EditMode.Net
                 }
             }
 
-            Task.Run(() => Serve(status, body, retryAfter));
+            Task.Run(() => Serve(status, body, retryAfter, location));
         }
 
         /// <summary>Answers requests until the listener stops.</summary>
-        private void Serve(int status, string body, string retryAfter)
+        private void Serve(int status, string body, string retryAfter, string location)
         {
             while (_listener.IsListening)
             {
@@ -66,10 +70,15 @@ namespace CityBuilder.Client.Tests.EditMode.Net
                 }
 
                 string requestBody = new StreamReader(context.Request.InputStream, Encoding.UTF8).ReadToEnd();
-                _seen = context.Request.HttpMethod + " " + context.Request.Url.AbsolutePath + "\n"
+                _seen += context.Request.HttpMethod + " " + context.Request.Url.AbsolutePath + "\n"
                     + "auth=" + context.Request.Headers["Authorization"] + "\n"
                     + "type=" + context.Request.ContentType + "\n" + requestBody;
                 context.Response.StatusCode = status;
+                if (location != null)
+                {
+                    context.Response.AddHeader("Location", location);
+                }
+
                 if (retryAfter != null)
                 {
                     context.Response.AddHeader("Retry-After", retryAfter);
@@ -88,6 +97,9 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         {
             _listener?.Close();
             _listener = null;
+            _silent?.Stop();
+            _silent = null;
+            _seen = null;
         }
 
         /// <summary>Waits for <paramref name="task"/> to finish, one editor frame at a time, for at most 20 seconds.</summary>
@@ -158,6 +170,68 @@ namespace CityBuilder.Client.Tests.EditMode.Net
 
             Assert.That(call.Result.NetworkFailureMessage, Is.Not.Null.And.Not.Empty);
             Assert.That(call.Result.StatusCode, Is.EqualTo(0));
+        }
+
+        /// <summary>
+        /// The server takes the connection and never answers, and a timer cancels the token, as <see cref="ApiClient"/>'s timeout does. A timer
+        /// cancels on another thread, and <c>UnityWebRequest.Abort</c> works only on the main thread, so the abort must come back to it: otherwise the
+        /// request never ends, and with it the poll or the retries that wait for it (CR-0004).
+        /// </summary>
+        [UnityTest]
+        public IEnumerator ACancelFromATimer_EndsARequestTheServerNeverAnswers()
+        {
+            _silent = new TcpListener(IPAddress.Loopback, 0);
+            _silent.Start();
+            int port = ((IPEndPoint)_silent.LocalEndpoint).Port;
+            using (var timeout = new CancellationTokenSource())
+            {
+                Task<ApiTransportResponse> call = new UnityWebRequestTransport().SendAsync(
+                    new ApiTransportRequest("GET", "http://127.0.0.1:" + port + "/api/v1/city", null, "tok"), timeout.Token);
+                timeout.CancelAfter(TimeSpan.FromMilliseconds(200));
+
+                yield return Wait(call);
+
+                Assert.That(call.IsCanceled, Is.True, "the cancelled request should end as cancelled, but is " + call.Status);
+            }
+        }
+
+        /// <summary>
+        /// A cancel on the main thread, as when the scene is destroyed, aborts at once: the call ends without waiting for another frame's turn.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator ACancelOnTheMainThread_EndsTheRequest()
+        {
+            _silent = new TcpListener(IPAddress.Loopback, 0);
+            _silent.Start();
+            int port = ((IPEndPoint)_silent.LocalEndpoint).Port;
+            using (var cancel = new CancellationTokenSource())
+            {
+                Task<ApiTransportResponse> call = new UnityWebRequestTransport().SendAsync(
+                    new ApiTransportRequest("GET", "http://127.0.0.1:" + port + "/api/v1/city", null, "tok"), cancel.Token);
+
+                yield return null;
+                cancel.Cancel();
+                yield return Wait(call);
+
+                Assert.That(call.IsCanceled, Is.True, "the cancelled request should end as cancelled, but is " + call.Status);
+            }
+        }
+
+        /// <summary>
+        /// A redirect is not followed: the API never sends one, and following it would hand the bearer token to wherever a captive portal or a
+        /// proxy points, and turn a POST into a GET (CR-0004). The server sees the first request only, and the client gets a failure, not the other page.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator ARedirect_IsNotFollowed()
+        {
+            StartServer(302, string.Empty, null, "/elsewhere");
+            Task<ApiTransportResponse> call = new UnityWebRequestTransport().SendAsync(
+                new ApiTransportRequest("POST", _prefix + "api/v1/commands/x", "{\"a\":1}", "tok"), CancellationToken.None);
+
+            yield return Wait(call);
+
+            Assert.That(_seen, Does.Not.Contain("/elsewhere"));
+            Assert.That(call.Result.StatusCode == 200, Is.False, "a redirect must not end as a success");
         }
 
         /// <summary>An already cancelled token throws before a request is made.</summary>

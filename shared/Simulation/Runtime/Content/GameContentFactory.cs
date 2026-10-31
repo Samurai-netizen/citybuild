@@ -20,6 +20,12 @@ namespace CityBuilder.Simulation.Content
         /// </summary>
         public const long MaxQuantity = 1_000_000_000_000;
 
+        /// <summary>
+        /// The largest grid size and worker count content may hold: these values end up in <c>smallint</c> database columns
+        /// (<c>core-instructions/06-data-model.md</c>), so content past this would load and then fail on the first save.
+        /// </summary>
+        public const int MaxStoredSmallValue = short.MaxValue;
+
         /// <summary>Checks the data and builds the content.</summary>
         /// <param name="data">The content as read from a file or a response. It is only read, never changed.</param>
         /// <returns>The content, or every error found.</returns>

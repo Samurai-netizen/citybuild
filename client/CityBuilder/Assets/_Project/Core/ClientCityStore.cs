@@ -63,10 +63,32 @@ namespace CityBuilder.Client.Core
                 return false;
             }
 
+            Take(snapshot);
+            return true;
+        }
+
+        /// <summary>
+        /// Takes <paramref name="snapshot"/> whatever the one held is, and raises <see cref="SnapshotChanged"/>: for the answer right after a new login,
+        /// which may be another city than the one held, whose version says nothing about this one's (a reset development database starts over).
+        /// </summary>
+        /// <param name="snapshot">The server's snapshot.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="snapshot"/> is null.</exception>
+        public void Replace(CitySnapshot snapshot)
+        {
+            if (snapshot == null)
+            {
+                throw new ArgumentNullException(nameof(snapshot));
+            }
+
+            Take(snapshot);
+        }
+
+        /// <summary>Holds <paramref name="snapshot"/> from now on and says so.</summary>
+        private void Take(CitySnapshot snapshot)
+        {
             Snapshot = snapshot;
             ReceivedAtSeconds = _realtimeSeconds();
             SnapshotChanged?.Invoke();
-            return true;
         }
     }
 }

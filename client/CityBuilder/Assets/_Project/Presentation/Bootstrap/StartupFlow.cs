@@ -67,6 +67,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             if (restored && IsTokenRefused(content.ApiError))
             {
                 // The kept token is no good (expired, or the server was reset): one fresh login, then the same request again.
+                restored = false;
                 _auth.Forget();
                 StartupOutcome? loginFailure = await LoginAsync(cancellationToken);
                 if (loginFailure != null)
@@ -88,6 +89,19 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             }
 
             ApiResult<CitySnapshotDto> city = await _api.GetCityAsync(cancellationToken);
+            if (restored && IsTokenRefused(city.Error))
+            {
+                // The content reads no city, so only this request can find that the kept token's player is gone (a reset development database).
+                _auth.Forget();
+                StartupOutcome? loginFailure = await LoginAsync(cancellationToken);
+                if (loginFailure != null)
+                {
+                    return loginFailure;
+                }
+
+                city = await _api.GetCityAsync(cancellationToken);
+            }
+
             ApiError? refused = SnapshotMapper.Apply(_store, city);
             if (refused != null)
             {

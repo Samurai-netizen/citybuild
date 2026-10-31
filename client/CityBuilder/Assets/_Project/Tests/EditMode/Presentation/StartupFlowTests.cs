@@ -115,6 +115,48 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation
             Assert.That(_store.Kept!.AccessToken, Is.EqualTo("fresh-token"));
         }
 
+        /// <summary>
+        /// A kept token whose player is gone (a reset development database) passes <c>GET /content</c>, which reads no city, and is refused by
+        /// <c>GET /city</c>: the same one login and repeat, and the start connects with the new city (CR-0004).
+        /// </summary>
+        [Test]
+        public async Task Run_WhenOnlyTheCityRefusesTheKeptToken_LogsInOnceAndConnects()
+        {
+            _store.Kept = new StoredLogin("dev1", "old-token");
+            _transport.Answer(200, Fixtures.Read("content.json"))
+                .Answer(401, Fixtures.Read("error-401-AUTHENTICATION_REQUIRED.json"))
+                .Answer(200, LoginAnswer)
+                .Answer(200, Fixtures.Read("snapshot-city-start.json"));
+
+            StartupOutcome outcome = await _flow.RunAsync(CancellationToken.None);
+
+            Assert.That(outcome.Kind, Is.EqualTo(StartupResultKind.Connected));
+            Assert.That(_transport.Requests, Has.Count.EqualTo(4));
+            Assert.That(_transport.Requests[1].AccessToken, Is.EqualTo("old-token"));
+            Assert.That(_transport.Requests[2].Url, Does.EndWith("/auth/dev-login"));
+            Assert.That(_transport.Requests[3].Url, Does.EndWith("/city"));
+            Assert.That(_transport.Requests[3].AccessToken, Is.EqualTo("fresh-token"));
+            Assert.That(_store.Kept!.AccessToken, Is.EqualTo("fresh-token"));
+            Assert.That(_cityStore.Snapshot, Is.Not.Null);
+        }
+
+        /// <summary>A kept token refused by the content and the new one refused by the city is a failure after one login, not a second one.</summary>
+        [Test]
+        public async Task Run_WhenTheCityRefusesTheTokenOfTheRetry_FailsWithoutAnotherLogin()
+        {
+            _store.Kept = new StoredLogin("dev1", "old-token");
+            _transport.Answer(401, Fixtures.Read("error-401-AUTHENTICATION_REQUIRED.json"))
+                .Answer(200, LoginAnswer)
+                .Answer(200, Fixtures.Read("content.json"))
+                .Answer(401, Fixtures.Read("error-401-AUTHENTICATION_REQUIRED.json"));
+
+            StartupOutcome outcome = await _flow.RunAsync(CancellationToken.None);
+
+            Assert.That(outcome.Kind, Is.EqualTo(StartupResultKind.Failed));
+            Assert.That(outcome.Error!.Code, Is.EqualTo(ApiErrorCodes.AuthenticationRequired));
+            Assert.That(_transport.Requests, Has.Count.EqualTo(4));
+        }
+
         /// <summary>A refusal right after a fresh login is a failure, not a reason to log in again and again.</summary>
         [Test]
         public async Task Run_WhenAFreshTokenIsRefused_Fails_WithoutAnotherLogin()

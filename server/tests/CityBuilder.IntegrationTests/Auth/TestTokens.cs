@@ -25,13 +25,22 @@ internal static class TestTokens
     /// <param name="signingKey">The key it is signed with (HMAC-SHA256), or <see langword="null"/> for an unsigned token (<c>alg: none</c>).</param>
     /// <param name="issuer">Its <c>iss</c> claim.</param>
     /// <returns>The token.</returns>
-    public static string Build(Guid playerId, DateTimeOffset issuedAt, string? signingKey, string issuer = AccessTokens.Issuer)
+    public static string Build(Guid playerId, DateTimeOffset issuedAt, string? signingKey, string issuer = AccessTokens.Issuer) =>
+        Build(new Dictionary<string, object> { [AccessTokens.PlayerIdClaim] = playerId.ToString("D") }, issuedAt, signingKey, issuer);
+
+    /// <summary>Builds a token with exactly the claims a test names, for a token signed with the right key that names no player.</summary>
+    /// <param name="claims">Its claims besides the issuer, the audience and the times.</param>
+    /// <param name="issuedAt">Its <c>iat</c> and <c>nbf</c>; <c>exp</c> is an hour later.</param>
+    /// <param name="signingKey">The key it is signed with (HMAC-SHA256), or <see langword="null"/> for an unsigned token (<c>alg: none</c>).</param>
+    /// <param name="issuer">Its <c>iss</c> claim.</param>
+    /// <returns>The token.</returns>
+    public static string Build(Dictionary<string, object> claims, DateTimeOffset issuedAt, string? signingKey, string issuer = AccessTokens.Issuer)
     {
         var descriptor = new SecurityTokenDescriptor
         {
             Issuer = issuer,
             Audience = AccessTokens.Audience,
-            Claims = new Dictionary<string, object> { [AccessTokens.PlayerIdClaim] = playerId.ToString("D") },
+            Claims = claims,
             IssuedAt = issuedAt.UtcDateTime,
             NotBefore = issuedAt.UtcDateTime,
             Expires = issuedAt.AddHours(1).UtcDateTime,

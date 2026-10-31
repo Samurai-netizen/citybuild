@@ -17,8 +17,8 @@ public interface ICityRepository
     /// <param name="playerId">The acting player; a request never locks another player's city.</param>
     /// <param name="cancellationToken">Cancels the load.</param>
     /// <returns>The player's city.</returns>
-    /// <exception cref="InvalidOperationException">The player has no city, no transaction is running, or this request has already loaded a
-    /// city.</exception>
+    /// <exception cref="InvalidOperationException">No transaction is running, or this request has already loaded a city.</exception>
+    /// <exception cref="Persistence.CityNotFoundException">The player has no city.</exception>
     /// <exception cref="Persistence.ConcurrencyConflictException">Another transaction held the lock for longer than the lock timeout.</exception>
     Task<CityAggregate> LoadForUpdateAsync(Guid playerId, CancellationToken cancellationToken);
 

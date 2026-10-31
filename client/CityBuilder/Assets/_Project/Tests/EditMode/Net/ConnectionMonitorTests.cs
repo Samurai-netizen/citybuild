@@ -1,11 +1,15 @@
 #nullable enable
 
 using System;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using CityBuilder.Client.Core;
 using CityBuilder.Client.Net;
+using CityBuilder.Client.Tests.EditMode.Core;
 using NUnit.Framework;
+using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace CityBuilder.Client.Tests.EditMode.Net
 {
@@ -199,6 +203,53 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(_transport.Requests[2].AccessToken, Is.EqualTo("fresh-token"));
             Assert.That(_tokens.Kept!.AccessToken, Is.EqualTo("fresh-token"));
             Assert.That(_changes, Is.EqualTo(0));
+        }
+
+        /// <summary>
+        /// After a new login the server's answer is the city, even with a lower version: the player may be new (a reset development database,
+        /// where the versions start over). The store would refuse it as old, and the old city would stay on screen as <c>Connected</c> (CR-0004).
+        /// </summary>
+        [Test]
+        public async Task Poll_AfterANewLogin_TakesTheCityEvenWithALowerVersion()
+        {
+            _store.Apply(CityTestData.Snapshot("snapshot-city-producing.json"));
+            _transport.Answer(401, Fixtures.Read("error-401-AUTHENTICATION_REQUIRED.json"))
+                .Answer(200, LoginAnswer)
+                .Answer(200, Fixtures.Read("snapshot-city-start.json"));
+
+            await _monitor.PollAsync(CancellationToken.None);
+
+            Assert.That(_monitor.State, Is.EqualTo(ConnectionState.Connected));
+            Assert.That(_store.Snapshot!.StateVersion, Is.EqualTo(2L));
+        }
+
+        /// <summary>Without a new login a lower version is still an old answer: the store keeps what it has.</summary>
+        [Test]
+        public async Task Poll_WithoutANewLogin_KeepsTheNewerCity()
+        {
+            _store.Apply(CityTestData.Snapshot("snapshot-city-producing.json"));
+            _transport.Answer(200, Fixtures.Read("snapshot-city-start.json"));
+
+            await _monitor.PollAsync(CancellationToken.None);
+
+            Assert.That(_store.Snapshot!.StateVersion, Is.EqualTo(25L));
+        }
+
+        /// <summary>
+        /// Something unexpected in a poll is logged, because the frame loop discards the task: without the log it would leave no trace. The
+        /// scheduler is free again, so the next poll runs (CR-0004).
+        /// </summary>
+        [Test]
+        public async Task Tick_UnexpectedException_IsLogged_AndTheNextPollRuns()
+        {
+            // The fake wire throws InvalidOperationException for a request the test queued no answer for.
+            _scheduler.RequestPoll();
+            LogAssert.Expect(LogType.Exception, new Regex("InvalidOperationException"));
+
+            await _monitor.TickAsync(CancellationToken.None);
+
+            Assert.That(_scheduler.IsPolling, Is.False);
+            Assert.That(_monitor.State, Is.EqualTo(ConnectionState.Connected));
         }
 
         /// <summary>The new token is refused too: unauthorized, after exactly one login and one repeat; a later poll may try again.</summary>

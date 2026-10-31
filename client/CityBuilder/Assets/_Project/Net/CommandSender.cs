@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using CityBuilder.Client.Core;
+using UnityEngine;
 
 namespace CityBuilder.Client.Net
 {
@@ -193,7 +194,16 @@ namespace CityBuilder.Client.Net
                 }
             }
 
-            Remove(entry);
+            try
+            {
+                Remove(entry);
+            }
+            catch (Exception exception)
+            {
+                // A listener of the pending list threw. That is no reason to leave the caller's task unfinished and the lane blocked for good.
+                Debug.LogException(exception);
+            }
+
             if (outcome != null)
             {
                 entry.Completion.TrySetResult(outcome);

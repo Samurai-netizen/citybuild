@@ -194,3 +194,7 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
   buildings have no stall reason and which level's worker limit applies while upgrading (decision 034) (M0-12).
 - A rolled-back city transaction no longer leaves its failed writes staged in the request's context, where a later save would have written
   them outside the transaction and without the city's lock (M0-24).
+- Whole-code audit: a token whose player has no city or that names no player is 401 instead of 500, a body with no content type is 415, `/health`
+  takes GET and HEAD, every answer forbids caching and sniffing and names no server software, content limits for values in `smallint` columns; the client
+  logs in again when only `GET /city` refuses a kept token, takes the new city after a new login, follows no redirect with the token, and survives
+  unexpected exceptions in a login, a poll, a command listener and the display prediction; in-range security fixes of the handbook's packages (CR-0004-T1).

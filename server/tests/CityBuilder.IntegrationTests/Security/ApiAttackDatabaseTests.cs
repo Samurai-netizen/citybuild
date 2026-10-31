@@ -192,6 +192,26 @@ public sealed class ApiAttackDatabaseTests(PostgresServer server) : PostgresTest
     }
 
     /// <summary>
+    /// A valid token of a player deleted from the database (a reset development database) is 401 on PostgreSQL too, on the read and on a command:
+    /// the real city lock finds no row. The login that follows makes a new player with a new city (CR-0004).
+    /// </summary>
+    [Fact]
+    public async Task Security_TokenOfAPlayerWithoutACity_Is401ThenANewLoginWorks()
+    {
+        Guid deleted = Guid.CreateVersion7();
+
+        ApiResponse read = await ApiClient.GetAsync(Factory, "/api/v1/city", deleted);
+        ApiResponse command = await ApiClient.PostAsync(Factory, _path, deleted, _placeHouse);
+        ApiResponse login = await ApiClient.PostAsync(Factory, _devLogin, playerId: null, """{"displayName":"back-again"}""");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, read.Status);
+        Assert.Equal("AUTHENTICATION_REQUIRED", (string)read.Json()["code"]!);
+        Assert.Equal(HttpStatusCode.Unauthorized, command.Status);
+        Assert.Equal("AUTHENTICATION_REQUIRED", (string)command.Json()["code"]!);
+        Assert.Equal(HttpStatusCode.OK, login.Status);
+    }
+
+    /// <summary>
     /// The dev login refuses what its contract doesn't allow, and no player or city is created: a field it doesn't have (a player id) next to
     /// a valid name, a display name of 4000 characters, a megabyte body.
     /// </summary>

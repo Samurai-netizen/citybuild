@@ -130,6 +130,26 @@ public sealed class AuthenticationTests(ApiFactory factory) : IClassFixture<ApiF
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
+    /// <summary>
+    /// A token signed with the server's key whose <c>sub</c> is no player id (the server never issues one, but a key can outlive a format) is
+    /// refused at the token check like every other bad token, not a 500 at the first read of the player.
+    /// </summary>
+    /// <param name="subject">The <c>sub</c> claim, or <see langword="null"/> for none.</param>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("not-a-player-id")]
+    [InlineData("00000000-0000-0000-0000-000000000000")]
+    public async Task Security_SignedTokenWithoutAPlayerId_IsRefused(string? subject)
+    {
+        await using WebApplicationFactory<Program> server = Server();
+        Dictionary<string, object> claims = subject is null ? [] : new() { [AccessTokens.PlayerIdClaim] = subject };
+        string token = TestTokens.Build(claims, _start, TestTokens.SigningKey);
+
+        using HttpResponseMessage response = await GetCurrentPlayerAsync(server, "Bearer", token);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
     /// <summary>The hand-built token of the attacks is otherwise right: with the server's key and issuer it is accepted.</summary>
     [Fact]
     public async Task GetCurrentPlayer_HandBuiltTokenWithServerKey_ReturnsItsPlayer()

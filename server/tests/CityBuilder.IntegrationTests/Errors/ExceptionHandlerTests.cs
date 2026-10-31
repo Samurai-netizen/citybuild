@@ -166,20 +166,56 @@ public sealed class ExceptionHandlerTests(ApiFactory factory) : IClassFixture<Ap
     }
 
     /// <summary>
-    /// A valid token for a player the store has no city for (a reset development database) reaches the city lock, which throws: 500
-    /// <c>INTERNAL_ERROR</c> from the real endpoint, in Development and Production alike.
+    /// A valid token for a player the store has no city for (a reset development database) reaches the city lock, which finds nothing: the
+    /// same 401 as every other token that can't be used, with its <c>WWW-Authenticate</c> header, so the client logs in again. Until CR-0004 this
+    /// was a 500 until the token expired. It is no server fault, so it logs a refused token and no error, in Development and Production alike.
     /// </summary>
     /// <param name="production">Whether the server runs in Production.</param>
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task Get_City_OfAPlayerWithoutACity_IsInternalError(bool production)
+    public async Task Security_Get_City_OfAPlayerWithoutACity_IsAuthenticationRequired(bool production)
     {
-        await using WebApplicationFactory<Program> server = Serve(production, new CapturingLogger());
+        var logs = new CapturingLogger();
+        await using WebApplicationFactory<Program> server = Serve(production, logs);
 
         ApiResponse response = await ApiClient.GetAsync(server, "/api/v1/city", _playerId);
 
-        AssertProblem(response, HttpStatusCode.InternalServerError, "INTERNAL_ERROR", requestId: null);
+        AssertProblem(response, HttpStatusCode.Unauthorized, "AUTHENTICATION_REQUIRED", requestId: null);
+        Assert.Equal(ErrorCatalogue.AuthenticationRequired.Detail, (string)response.Json()["detail"]!);
+        Assert.Equal("Bearer", Assert.Single(response.Headers.WwwAuthenticate).Scheme);
+        Assert.Empty(logs.Events(3000));
+        Assert.Contains(logs.Events(4003), entry => entry.Message.Contains("NoCity", StringComparison.Ordinal));
+    }
+
+    /// <summary>A command of a player without a city is the same 401: the lock finds nothing, and nothing is stored.</summary>
+    [Fact]
+    public async Task Security_Post_Command_OfAPlayerWithoutACity_IsAuthenticationRequired()
+    {
+        var store = new FakeCityStore();
+        await using WebApplicationFactory<Program> server = Serve(production: true, new CapturingLogger(), store);
+
+        ApiResponse response = await ApiClient.PostAsync(server, "/api/v1/commands/place-building", _playerId, _placeWoodcutter);
+
+        AssertProblem(response, HttpStatusCode.Unauthorized, "AUTHENTICATION_REQUIRED", requestId: null);
+        Assert.Equal(1, store.LockCount);
+        Assert.Equal(0, store.SaveCount);
+    }
+
+    /// <summary>
+    /// A body without a <c>Content-Type</c> is 415 like a body of another type: the framework's refusal of it is an exception with status
+    /// 415, unlike the routing's for a wrong type (found on a running server: it was 400).
+    /// </summary>
+    [Fact]
+    public async Task Post_BodyWithoutAContentType_Is415()
+    {
+        await using WebApplicationFactory<Program> server = Serve(production: true, new CapturingLogger());
+        using var content = new StringContent(_placeWoodcutter, Encoding.UTF8);
+        content.Headers.ContentType = null;
+
+        ApiResponse response = await ApiClient.PostAsync(server, "/api/v1/commands/place-building", _playerId, content, headers: null);
+
+        AssertProblem(response, HttpStatusCode.UnsupportedMediaType, "UNSUPPORTED_MEDIA_TYPE", requestId: null);
     }
 
     /// <summary>A command whose city lock isn't granted answers 409 <c>CONCURRENCY_CONFLICT</c> with the command's request id, to retry.</summary>
