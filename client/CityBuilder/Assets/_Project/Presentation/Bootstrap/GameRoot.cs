@@ -8,6 +8,7 @@ using CityBuilder.Client.Presentation.City;
 using CityBuilder.Client.Presentation.Feedback;
 using CityBuilder.Client.Presentation.Hud;
 using CityBuilder.Client.Presentation.Inspector;
+using CityBuilder.Client.Presentation.Research;
 using CityBuilder.Client.Presentation.Ui;
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.State;
@@ -24,8 +25,9 @@ namespace CityBuilder.Client.Presentation.Bootstrap
     /// It shows the top HUD (<see cref="HudView"/>) over the displayed city and the connection state.
     /// It also shows the build menu (<see cref="BuildMenu"/>), whose cards follow the displayed city, and tells the ground that a press on the menu or on the placement bar is not its own.
     /// It joins the menu, the ground, the placement bar and the command sender into the placement flow (<see cref="PlacementFlow"/>).
-    /// The menus the player opens and closes (the build menu's sheet, the inspector) are one <see cref="MenuGroup"/>: opening one closes the others.
+    /// The menus the player opens and closes (the build menu's sheet, the inspector, the research screen) are one <see cref="MenuGroup"/>: opening one closes the others.
     /// It also shows the building inspector (<see cref="BuildingInspector"/>) for the building on the tapped tile and joins it to the command sender (<see cref="InspectorFlow"/>).
+    /// It also shows the research screen (<see cref="ResearchScreen"/>) for the city's era and joins it to the command sender (<see cref="ResearchFlow"/>); it is one more member of the menu group.
     /// It also drives the connection monitor: it polls the city, goes quiet while the app is paused, and the status view says how the connection stands.
     /// </summary>
     [DisallowMultipleComponent]
@@ -85,6 +87,12 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         /// <summary>Joins the tile selection, the inspector and the command sender; null until the start has connected, or when the inspector is missing.</summary>
         private InspectorFlow? _inspectorFlow;
 
+        /// <summary>The research screen; null until the start has connected, or when its assets are missing.</summary>
+        private ResearchScreen? _researchScreen;
+
+        /// <summary>Joins the displayed city, the command sender and the research screen; null until the start has connected, or when the screen is missing.</summary>
+        private ResearchFlow? _researchFlow;
+
         /// <summary>The toasts on the screen; null until the start has connected.</summary>
         private ToastQueue? _toasts;
 
@@ -126,6 +134,12 @@ namespace CityBuilder.Client.Presentation.Bootstrap
 
         /// <summary>The inspector's flow (<c>09</c> Building inspector); null until the start has connected, or when the inspector is missing.</summary>
         internal InspectorFlow? InspectorFlow => _inspectorFlow;
+
+        /// <summary>The research screen (<c>09</c> Research screen); null until the start has connected, or when its assets are missing.</summary>
+        internal ResearchScreen? ResearchScreen => _researchScreen;
+
+        /// <summary>The research screen's flow (<c>09</c> Research screen); null until the start has connected, or when the screen is missing.</summary>
+        internal ResearchFlow? ResearchFlow => _researchFlow;
 
         /// <summary>The city's camera and ground (<c>09</c> City view); null only before <c>Awake</c> has run.</summary>
         internal CityWorld? World => _world;
@@ -174,6 +188,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                     CreateBuildMenu(outcome.Content!);
                     CreatePlacement(outcome.Content!);
                     CreateInspector(outcome.Content!);
+                    CreateResearchScreen(outcome.Content!);
                     ShowBuildings();
                     _monitor = new ConnectionMonitor(
                         _api!,
@@ -226,6 +241,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         {
             _placement?.Dispose();
             _inspectorFlow?.Dispose();
+            _researchFlow?.Dispose();
             _feedback?.Dispose();
             if (_displayCity != null)
             {
@@ -250,6 +266,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                 _buildMenu?.Model?.Update(city);
                 _placement?.Update(city);
                 _inspectorFlow?.Update(city);
+                _researchFlow?.Update(city);
             }
         }
 
@@ -356,12 +373,35 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             _world.IsPointerOverUi = IsOverUi;
         }
 
-        /// <summary>Whether a screen position (pixels, origin bottom left) is over the build menu, the placement bar or the building inspector: a press there is the UI's, not the ground's.</summary>
+        /// <summary>
+        /// Shows the research screen, joins it to the command sender and to the menu group, and makes the ground leave a press on it to it. Does
+        /// nothing when there is no command sender yet; the screen logs an error and stays null when its assets are missing.
+        /// </summary>
+        private void CreateResearchScreen(GameContent content)
+        {
+            if (_commandSender == null)
+            {
+                return;
+            }
+
+            _researchScreen = ResearchScreen.Create(transform);
+            if (_researchScreen == null)
+            {
+                return;
+            }
+
+            var flow = _researchFlow = new ResearchFlow(content, _commandSender, _researchScreen, destroyCancellationToken);
+            _researchScreen.Opened += _menus.Join(flow.Close).NotifyOpened;
+            _world!.IsPointerOverUi = IsOverUi;
+        }
+
+        /// <summary>Whether a screen position (pixels, origin bottom left) is over the build menu, the placement bar, the building inspector or the research screen: a press there is the UI's, not the ground's.</summary>
         private bool IsOverUi(Vector2 screenPosition)
         {
             return (_buildMenu != null && _buildMenu.IsOverUi(screenPosition))
                 || (_placementBar != null && _placementBar.IsOverUi(screenPosition))
-                || (_inspector != null && _inspector.IsOverUi(screenPosition));
+                || (_inspector != null && _inspector.IsOverUi(screenPosition))
+                || (_researchScreen != null && _researchScreen.IsOverUi(screenPosition));
         }
 
         /// <summary>The monitor's state or error changed: the screen says how the connection stands now.</summary>

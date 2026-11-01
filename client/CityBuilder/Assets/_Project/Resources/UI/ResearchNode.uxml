@@ -1,0 +1,18 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+  <!-- One research node of the research screen (M0-52, docs/how-to/add-ui-screen.md): ResearchScreen clones it once per node and writes the
+       texts of ResearchNodeModel into the labels by name; research-node-icon gets the node's picture (UiIcons) and research-node-ring is
+       painted from the node's progress while it runs. Its style is in Research.uss. -->
+  <ui:VisualElement name="research-node" class="research-node">
+    <ui:VisualElement class="research-node-header">
+      <ui:VisualElement name="research-node-icon" class="research-node-icon" picking-mode="Ignore" />
+      <ui:Label name="research-node-name" class="research-node-name" />
+      <ui:VisualElement name="research-node-ring" class="research-node-ring" picking-mode="Ignore" />
+    </ui:VisualElement>
+    <ui:Label name="research-node-effect" class="research-node-effect" />
+    <ui:Label name="research-node-cost" class="research-node-line" />
+    <ui:Label name="research-node-time" class="research-node-line" />
+    <ui:Label name="research-node-status" class="research-node-status" />
+    <ui:Label name="research-node-note" class="research-node-note" />
+    <ui:Button name="research-node-finance" class="research-button research-node-finance" text="Finance" />
+  </ui:VisualElement>
+</ui:UXML>
