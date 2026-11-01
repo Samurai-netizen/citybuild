@@ -3,7 +3,7 @@
 -- client code reach it (core-instructions/02-principles.md rule 5 is about those). panel.sh checks that the item is in the content file.
 --
 -- Run:  psql -X -q -v ON_ERROR_STOP=1 -v player=devtest -v mode=add -v item=planks -v amount=50 -f goods.sql
---   player  the dev name of the player; panel.sh passes only `devtest` (OD-14)
+--   player  the dev name of the player; panel.sh passes the one the Unity client logs in as, or $PLAYER (CR-0006-T2)
 --   mode    show | add | remove | set
 --   item    an item id of the content (ignored by show)
 --   amount  whole number, 0 to 999999999999 (ignored by show)

@@ -5,11 +5,11 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: CR-0006-T1 · server panel goods; the PR is open, the owner merges it. It carries CR-0006's proposal commit too)
-- **Branch:** `task/CR-0006-T1-goods-panel` (from `task/CR-0006-proposal`, from `main` = `c82a32e`) until the owner merges
-- **Build log entry:** `docs/build-log/2026/2026-11-01-10-CR-0006-T1.md` (Done)
-- **Last green commit:** the head of `task/CR-0006-T1-goods-panel` (fast .NET suite and the 187 integration tests pass)
-- **Done steps:** all of CR-0006-T1
+- **Task:** — (last completed: CR-0006-T2 · the goods panel works on the Unity client's player; the PR is open, the owner merges it)
+- **Branch:** `task/CR-0006-T2-client-player` (from `main` = `0c7dbb9`) until the owner merges
+- **Build log entry:** `docs/build-log/2026/2026-11-01-11-CR-0006-T2.md` (Done)
+- **Last green commit:** the head of `task/CR-0006-T2-client-player` (`test-goods.sh` OK)
+- **Done steps:** all of CR-0006-T2
 - **Next step:** the owner merges the PR. Then `/start-task M0-54` (waiting-loop review and tuning, `[O]` `[MANUAL]`: use Opus 5.5).
 - **Open questions for the owner:** CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). The Unity Editor re-saved five `client/` settings files and made `Assets/Resources/`: not part of any task, left uncommitted. M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11).
 - **Known broken / do not touch:** —
