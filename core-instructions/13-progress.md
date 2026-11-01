@@ -4,13 +4,13 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: CR-0005-T4 · the UI icons in the HUD and the build menu; the PR is open, the owner merges it)
-- **Branch:** `task/CR-0005-T4-ui-icons` (from `main` = `605267f`) until the owner merges
-- **Build log entry:** last: `docs/build-log/2026/2026-11-01-05-CR-0005-T4.md` (Done)
-- **Last green commit:** the head of `task/CR-0005-T4-ui-icons` (Unity EditMode 724 / 724, PlayMode 93 / 93, in a mirror; fast .NET suite, check-docs and the handbook build pass)
-- **Done steps:** all of CR-0005-T4
-- **Next step:** the owner merges the PR. Then `/start-task M0-50` (building status visuals; builds on the models' `Anchor_Status` and the construction site, and `bld_construction`).
+- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** M0-50 · building status visuals (ring, bubble, pips, stalled tint; the scaffold is CR-0005-T3's construction site)
+- **Branch:** `task/M0-50-building-status-visuals` (from `main` = `4b6bce7`)
+- **Build log entry:** `docs/build-log/2026/2026-11-01-06-M0-50.md` (In progress)
+- **Last green commit:** `4b6bce7` (main, CR-0005-T4 merged as PR #69)
+- **Done steps:** write-ahead
+- **Next step:** step 1 of the build log plan: `BuildingStatus` + `BuildingStatusModel` with EditMode tests.
 - **Open questions for the owner:** CR-0005-T4: the [MANUAL] look at the icons (`client/README.md`), decision 1 (the icons moved out of `art/ui/` into `Resources/UI/Icons/`), decision 3 (captions kept next to the pictures); CR-0005-T3: the open Editor and the new `Art/Resources.meta` (Follow-ups; the look at the city and decision 1 are settled); CR-0005-T2: the [MANUAL] look at `house_l1` (`client/README.md`), decision 2 (`ClientAssemblyTests` now knows six assemblies); M0-49: decision 7 (status label moved to the bottom left, toasts below the HUD), the [MANUAL] look at the HUD (Follow-ups); M0-48: decision 1 (`ConnectionStatusView` split out of `GameRoot`); M0-47: decision 4 (new `CommandSender.Completed` event in `Net`), decision 2 (no builder count or building name in a sentence); M0-46: the ghost's transparent shader variant on a device build (follow-up); M0-45: decision 1 (item names are plural, so `1 Planks`; a singular name in the content is your call), decision 8 (cards use the displayed city, not the raw snapshot), decision 11 (I changed M0-43's `CityInputReader`/`CityWorld` so a press on the menu never reaches the ground); the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
