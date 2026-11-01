@@ -4,11 +4,13 @@ using System;
 using System.Collections.Generic;
 using CityBuilder.Client.Net;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace CityBuilder.Client.Presentation.City
 {
     /// <summary>
-    /// The translucent "pending" buildings of the placement flow (M0-46): one ghost, in the look of the type and the city's era, on the tile of
+    /// The translucent "pending" buildings of the placement flow (M0-46): one ghost, in the look of the type and the city's era (its level 1 model
+    /// in a see-through copy of the art's material, or its primitives when the art has no model), on the tile of
     /// every place-building command that <see cref="CommandSender.Pending"/> lists. The ghost is not a building: nothing is created, paid
     /// or counted. It is there while the command is on its way and goes when the sender ends it, in the same call that hands the new snapshot
     /// to the store, so the real building (from the snapshot) and the ghost are never both missing or both seen. It has no collider and never
@@ -33,6 +35,9 @@ namespace CityBuilder.Client.Presentation.City
 
         /// <summary>The translucent materials, one per colour, destroyed with the ghosts.</summary>
         private readonly Dictionary<Color, Material> _materials = new Dictionary<Color, Material>();
+
+        /// <summary>The depth-only and the see-through copy of the art's shared material that the ghosts of models use; made with the first one, destroyed with the ghosts.</summary>
+        private Material[]? _modelMaterials;
 
         /// <summary>The grid whose tiles the ghosts stand on.</summary>
         private readonly CityGrid _grid;
@@ -149,14 +154,44 @@ namespace CityBuilder.Client.Presentation.City
             }
 
             _materials.Clear();
+            if (_modelMaterials != null)
+            {
+                foreach (Material material in _modelMaterials)
+                {
+                    PlaceholderArt.Destroy(material);
+                }
+
+                _modelMaterials = null;
+            }
         }
 
-        /// <summary>Makes the ghost of one place-building intent: the finished level 1 look of its type, on its tile, in translucent parts.</summary>
+        /// <summary>Makes the ghost of one place-building intent: the finished level 1 look of its type, on its tile, in translucent material.</summary>
         private GameObject CreateGhost(CommandIntent intent, int era)
         {
             var ghost = new GameObject("Ghost " + intent.ContentId + " " + intent.X + "," + intent.Y);
             ghost.transform.SetParent(Root.transform, false);
             ghost.transform.localPosition = _grid.ToWorldCenter(new GridCoordinate(intent.X, intent.Y));
+            GameObject? model = BuildingLooks.FindModel(intent.ContentId!, era, 1);
+            if (model != null)
+            {
+                GameObject body = Object.Instantiate(model, ghost.transform, false);
+                Renderer[] renderers = body.GetComponentsInChildren<Renderer>();
+                if (_modelMaterials == null && renderers.Length > 0)
+                {
+                    _modelMaterials = PlaceholderArt.CreateGhostMaterials(renderers[0].sharedMaterial, Alpha);
+                }
+
+                if (_modelMaterials != null)
+                {
+                    for (int i = 0; i < renderers.Length; i++)
+                    {
+                        renderers[i].sharedMaterials = _modelMaterials;
+                    }
+                }
+
+                return ghost;
+            }
+
             BuildingLook look = BuildingLooks.Get(intent.ContentId!, era);
             for (int i = 0; i < look.Parts.Count; i++)
             {

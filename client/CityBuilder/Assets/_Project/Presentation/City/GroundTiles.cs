@@ -2,13 +2,15 @@
 
 using System;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace CityBuilder.Client.Presentation.City
 {
     /// <summary>
-    /// The ground of the city: one flat tile per grid cell, built from cube primitives at runtime (M0 uses placeholder art, <c>09</c>),
-    /// in two greens like a chessboard, plus a hover marker and a selection marker that follow a <see cref="TileSelection"/>. The tiles have
-    /// no colliders: the pointer's tile is found with maths (<see cref="CityGrid"/>), not physics. <see cref="Destroy"/> removes everything it made.
+    /// The ground of the city: one flat tile per grid cell, an instance of the art's grass tile (CR-0005); if the tile model is missing, a cube
+    /// primitive in two greens like a chessboard instead. Plus a hover marker and a selection marker that follow a <see cref="TileSelection"/>.
+    /// The tiles have no colliders: the pointer's tile is found with maths (<see cref="CityGrid"/>), not physics. <see cref="Destroy"/> removes
+    /// everything it made.
     /// </summary>
     public sealed class GroundTiles
     {
@@ -48,8 +50,11 @@ namespace CityBuilder.Client.Presentation.City
         /// <summary>The state the markers show.</summary>
         private readonly TileSelection _selection;
 
-        /// <summary>The materials this object created, destroyed with it.</summary>
-        private readonly Material[] _materials = new Material[6];
+        /// <summary>The materials this object created, destroyed with it. The first two are the chessboard greens of the cube fallback, and stay null when tile models are used.</summary>
+        private readonly Material?[] _materials = new Material?[6];
+
+        /// <summary>The material each tile shows when it has no hint, row by row: the art's shared material, or a chessboard green.</summary>
+        private readonly Material[] _groundMaterials;
 
         /// <summary>The tile blocks, row by row (<c>y * width + x</c>), so a hint can change a tile's material.</summary>
         private readonly Renderer[] _tileRenderers;
@@ -66,6 +71,20 @@ namespace CityBuilder.Client.Presentation.City
         /// <param name="parent">The transform the ground hangs under.</param>
         /// <exception cref="ArgumentNullException">An argument is null.</exception>
         public GroundTiles(CityGrid grid, TileSelection selection, Transform parent)
+            : this(grid, selection, parent, Resources.Load<GameObject>(BuildingLooks.GrassTilePath))
+        {
+        }
+
+        /// <summary>
+        /// Builds the tiles from <paramref name="tileModel"/> (or, when it is null, from cubes) and the markers, like the other constructor.
+        /// Lets a test build the fallback.
+        /// </summary>
+        /// <param name="grid">The grid to cover.</param>
+        /// <param name="selection">The state the markers show; this object listens to it until <see cref="Destroy"/>.</param>
+        /// <param name="parent">The transform the ground hangs under.</param>
+        /// <param name="tileModel">The model of one tile, whose top is the ground plane, or null for cube blocks.</param>
+        /// <exception cref="ArgumentNullException">An argument other than <paramref name="tileModel"/> is null.</exception>
+        public GroundTiles(CityGrid grid, TileSelection selection, Transform parent, GameObject? tileModel)
         {
             _grid = grid ?? throw new ArgumentNullException(nameof(grid));
             _selection = selection ?? throw new ArgumentNullException(nameof(selection));
@@ -78,18 +97,35 @@ namespace CityBuilder.Client.Presentation.City
             Root.transform.SetParent(parent, false);
 
             _tileRenderers = new Renderer[grid.Width * grid.Height];
+            _groundMaterials = new Material[grid.Width * grid.Height];
             _shownHints = new TileHint?[grid.Width * grid.Height];
-            Material lightMaterial = _materials[0] = PlaceholderArt.CreateMaterial(LightGround);
-            Material darkMaterial = _materials[1] = PlaceholderArt.CreateMaterial(DarkGround);
+            if (tileModel == null)
+            {
+                _materials[0] = PlaceholderArt.CreateMaterial(LightGround);
+                _materials[1] = PlaceholderArt.CreateMaterial(DarkGround);
+            }
+
             for (int y = 0; y < grid.Height; y++)
             {
                 for (int x = 0; x < grid.Width; x++)
                 {
                     var tile = new GridCoordinate(x, y);
-                    GameObject block = CreateBlock("Tile " + tile, TileFill, TileThickness, -TileThickness * 0.5f, grid.ToWorldCenter(tile));
-                    Renderer renderer = block.GetComponent<Renderer>();
-                    renderer.sharedMaterial = (x + y) % 2 == 0 ? lightMaterial : darkMaterial;
-                    _tileRenderers[y * grid.Width + x] = renderer;
+                    int index = y * grid.Width + x;
+                    if (tileModel != null)
+                    {
+                        GameObject instance = Object.Instantiate(tileModel, Root.transform, false);
+                        instance.name = "Tile " + tile;
+                        instance.transform.localPosition = grid.ToWorldCenter(tile);
+                        _tileRenderers[index] = instance.GetComponentInChildren<Renderer>();
+                    }
+                    else
+                    {
+                        GameObject block = CreateBlock("Tile " + tile, TileFill, TileThickness, -TileThickness * 0.5f, grid.ToWorldCenter(tile));
+                        _tileRenderers[index] = block.GetComponent<Renderer>();
+                        _tileRenderers[index].sharedMaterial = (x + y) % 2 == 0 ? _materials[0]! : _materials[1]!;
+                    }
+
+                    _groundMaterials[index] = _tileRenderers[index].sharedMaterial;
                 }
             }
 
@@ -141,8 +177,8 @@ namespace CityBuilder.Client.Presentation.City
 
                     _shownHints[index] = hint;
                     _tileRenderers[index].sharedMaterial = hint == null
-                        ? ((x + y) % 2 == 0 ? _materials[0] : _materials[1])
-                        : (hint == TileHint.Occupied ? _materials[5] : _materials[4]);
+                        ? _groundMaterials[index]
+                        : (hint == TileHint.Occupied ? _materials[5]! : _materials[4]!);
                 }
             }
         }
@@ -164,7 +200,7 @@ namespace CityBuilder.Client.Presentation.City
             _destroyed = true;
             _selection.Changed -= ShowSelection;
             PlaceholderArt.Destroy(Root);
-            foreach (Material material in _materials)
+            foreach (Material? material in _materials)
             {
                 PlaceholderArt.Destroy(material);
             }

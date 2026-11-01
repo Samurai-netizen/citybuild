@@ -6,8 +6,8 @@ using Object = UnityEngine.Object;
 namespace CityBuilder.Client.Presentation.City
 {
     /// <summary>
-    /// The two small jobs every placeholder-art class of the city view needs (M0 draws everything from primitives, <c>09</c>): a material of one
-    /// colour, and destroying a Unity object the way the current mode needs. Shared by <see cref="GroundTiles"/> and <see cref="BuildingViewFactory"/>.
+    /// The small jobs the art classes of the city view share: a material of one colour for the primitive fallbacks (M0-44), a see-through
+    /// material for ghosts, and destroying a Unity object the way the current mode needs. Shared by <see cref="GroundTiles"/> and <see cref="BuildingViewFactory"/>.
     /// </summary>
     internal static class PlaceholderArt
     {
@@ -36,7 +36,41 @@ namespace CityBuilder.Client.Presentation.City
         /// <returns>A new material.</returns>
         public static Material CreateTranslucentMaterial(Color color, float alpha)
         {
-            Material material = CreateMaterial(new Color(color.r, color.g, color.b, alpha));
+            return MakeTranslucent(CreateMaterial(new Color(color.r, color.g, color.b, alpha)));
+        }
+
+        /// <summary>
+        /// Creates the two materials the ghost of a model needs from <paramref name="source"/> (the art's shared material, with its palette texture),
+        /// to be put on each renderer in this order. A model has several layers (roof over walls, props), and a see-through material alone would
+        /// blend every layer over the ones behind it, so the ghost would look nearly solid and pale. The first material therefore only writes
+        /// depth (blending that keeps the colour already on the screen, drawn just before the second), and the second blends the colour with
+        /// <paramref name="alpha"/> where it is the nearest layer. Both are copies: the source is not changed. The caller destroys them.
+        /// </summary>
+        /// <param name="source">The material to copy.</param>
+        /// <param name="alpha">How opaque the ghost is, 0 (invisible) to 1 (solid).</param>
+        /// <returns>The depth-only material and the see-through one.</returns>
+        public static Material[] CreateGhostMaterials(Material source, float alpha)
+        {
+            var depthOnly = new Material(source);
+            if (depthOnly.HasProperty("_SrcBlend"))
+            {
+                depthOnly.SetFloat("_Surface", 0f);
+                depthOnly.SetFloat("_ZWrite", 1f);
+                depthOnly.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.Zero);
+                depthOnly.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.One);
+                depthOnly.SetFloat("_SrcBlendAlpha", (float)UnityEngine.Rendering.BlendMode.Zero);
+                depthOnly.SetFloat("_DstBlendAlpha", (float)UnityEngine.Rendering.BlendMode.One);
+                depthOnly.SetShaderPassEnabled("ShadowCaster", false);
+            }
+
+            // After every opaque object (the ground), before the see-through material.
+            depthOnly.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent - 1;
+            return new[] { depthOnly, MakeTranslucent(new Material(source) { color = new Color(1f, 1f, 1f, alpha) }) };
+        }
+
+        /// <summary>Switches a material to the render pipeline's transparent surface; a shader without those properties keeps its look and only gets the later render queue.</summary>
+        private static Material MakeTranslucent(Material material)
+        {
             if (material.HasProperty("_Surface"))
             {
                 material.SetFloat("_Surface", 1f);

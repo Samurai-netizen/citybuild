@@ -154,13 +154,45 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(_sender.Pending.Count, Is.EqualTo(1));
             Assert.That(_world.Ghosts.TryGetGhost(_sender.Pending[0].RequestId, out GameObject? ghost), Is.True);
             Assert.That(ghost!.transform.localPosition, Is.EqualTo(new Vector3(2.5f, 0f, 3.5f)));
-            Assert.That(ghost.transform.childCount, Is.EqualTo(BuildingLooks.Get("house", 1).Parts.Count));
+            Assert.That(ghost.transform.childCount, Is.EqualTo(1), "one instance of the house model");
+            Assert.That(ghost.GetComponentsInChildren<Renderer>().Length, Is.GreaterThan(0));
             foreach (Renderer renderer in ghost.GetComponentsInChildren<Renderer>())
             {
-                Assert.That(renderer.sharedMaterial.color.a, Is.EqualTo(PlacementGhosts.Alpha).Within(0.001f));
-                Assert.That(renderer.sharedMaterial.renderQueue, Is.GreaterThanOrEqualTo(3000), "drawn with the transparent objects");
+                // The first material only writes depth, so the layers of the model do not blend over each other; the second is the see-through one.
+                Assert.That(renderer.sharedMaterials.Length, Is.EqualTo(2));
+                Material seeThrough = renderer.sharedMaterials[1];
+                Assert.That(seeThrough.color.a, Is.EqualTo(PlacementGhosts.Alpha).Within(0.001f));
+                Assert.That(seeThrough.renderQueue, Is.GreaterThanOrEqualTo(3000), "drawn with the transparent objects");
+                Assert.That(renderer.sharedMaterials[0].renderQueue, Is.LessThan(seeThrough.renderQueue), "the depth comes first");
                 Assert.That(renderer.GetComponent<Collider>(), Is.Null);
             }
+        }
+
+        /// <summary>The ghost of a model has its own see-through copy of the art's material; the shared material that real buildings use stays opaque.</summary>
+        [UnityTest]
+        public IEnumerator AGhostOfAModel_NeverChangesTheSharedMaterial()
+        {
+            _ = StartPlacing("house", 2, 3);
+            yield return null;
+            _world.Ghosts!.TryGetGhost(_sender.Pending[0].RequestId, out GameObject? ghost);
+            Material ghostMaterial = ghost!.GetComponentInChildren<Renderer>().sharedMaterials[1];
+
+            Material shared = BuildingLooks.FindModel("house", 1, 1)!.GetComponentInChildren<Renderer>().sharedMaterial;
+            Assert.That(ghostMaterial, Is.Not.SameAs(shared));
+            Assert.That(ghostMaterial.mainTexture, Is.SameAs(shared.mainTexture), "it keeps the palette");
+            Assert.That(shared.color.a, Is.EqualTo(1f));
+            Assert.That(shared.renderQueue, Is.LessThan(3000));
+        }
+
+        /// <summary>A type with no model still gets a ghost, from its primitives.</summary>
+        [UnityTest]
+        public IEnumerator AGhostOfATypeWithoutAModel_IsMadeFromPrimitives()
+        {
+            _ = StartPlacing("castle", 1, 1);
+            yield return null;
+
+            _world.Ghosts!.TryGetGhost(_sender.Pending[0].RequestId, out GameObject? ghost);
+            Assert.That(ghost!.transform.childCount, Is.EqualTo(BuildingLooks.Fallback.Parts.Count));
         }
 
         /// <summary>A ghost is not a building: the building views stay empty.</summary>
