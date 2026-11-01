@@ -34,7 +34,7 @@ namespace CityBuilder.Client.Presentation.City
         /// <summary>How much taller each level above 1 makes a building, in thousandths of its level 1 height (20 %).</summary>
         public const int HeightPerLevelPermille = 200;
 
-        /// <summary>How tall a building under construction is, in thousandths: a low foundation, so nothing finished shows before the server says it is done.</summary>
+        /// <summary>How tall a building drawn from primitives is while it is constructing, in thousandths: a low foundation (a model shows the construction site instead).</summary>
         public const int ConstructionHeightPermille = 250;
 
         /// <summary>The folder, under <c>Resources</c>, of the models; the Blender build writes the FBX files there (<c>art/README.md</c>).</summary>
