@@ -14,7 +14,8 @@ structure). It is **not** responsible for talking to the server (`CityBuilder.Cl
 | Type | Responsibility |
 |---|---|
 | `AppInfo` | static, read-only facts about this build. `Version` is `Application.version`, the "Version" field of Project Settings → Player (`bundleVersion`, `0.1.0` today); M0-58 sends it to the server |
-| `CitySnapshot` | One server snapshot in the engine's terms: version, content version, clock, and a city that only leaves as a copy (`CopyCity()`), so the state the store holds cannot change. `SnapshotMapper` (Net) builds it, because Core cannot name the DTOs |
+| `CitySnapshot` | One server snapshot in the engine's terms: version, content version, clock, and a city that only leaves as a copy (`CopyCity()`), so the state the store holds cannot change. It also carries the `SettlementSummary` of the answer (null for a snapshot made without one). `SnapshotMapper` (Net) builds it, because Core cannot name the DTOs |
+| `SettlementSummary` | What the settlement of one request did, in the engine's terms (M0-53): elapsed and production seconds, produced and consumed per item, completed building ids, completed research ids, era changed. Immutable, copies its lists, and refuses values no settlement has (a negative number, production time above the elapsed time). The welcome-back report reads it |
 | `ClientCityStore` | The last snapshot and its receive time. `Apply` takes a snapshot whose `(stateVersion, clock)` is greater than the held one's and raises `SnapshotChanged`; anything else is ignored. `Replace` takes one whatever is held, for the answer right after a new login, which may be another city (CR-0004). The default constructor reads `Time.realtimeSinceStartupAsDouble`, tests pass their own clock |
 | `DisplayClock` | `snapshot.clock + whole seconds since receipt × timeScale`, for display only |
 | `ConnectionState` | How the client stands with the server: `Connecting`, `Connected`, `Offline`, `Unauthorized`, `ServerError`, `IncompatibleVersion`. Only the names; the rules that move between them are `ConnectionMonitor`'s (Net) |
@@ -47,6 +48,7 @@ folder area follows the recipe "New project, assembly or folder area" in `core-i
 - `SimulationInUnityTests`: `IntegerMath.CeilDiv` called from the local package `com.citybuilder.simulation` rounds up. It proves that the engine
   compiles and runs inside Unity; the engine's rules are tested in `server/tests/CityBuilder.Simulation.Tests`.
 - `Core/ClientCityStoreTests`: newer replaces, older and same-city answers are ignored, whole seconds, a copy holds every value and leaves the snapshot alone.
+- `Core/SettlementSummaryTests`: every value kept, the lists copied, impossible values and null lists refused, a snapshot made without an answer has no settlement.
 - `Core/PollSchedulerTests`: not due at the start, due after exactly 120 s from the end of the last poll, nothing while paused whatever was requested, a poll at once on resume, never two at a time, a request during a poll is served after it, bad constructor arguments.
 - `Core/DisplayCityTests`: the prediction equals one `Simulator.Advance` exactly on real snapshots at seconds up to past the production cap, a research
   completes on its second, a construction auto-staffs, at most one prediction per second, a new snapshot wins, the time scale, an engine refusal.
@@ -55,6 +57,5 @@ folder area follows the recipe "New project, assembly or folder area" in `core-i
 - A lower `stateVersion` is ignored for as long as the app runs, so after a dev database reset the store keeps the old city until the app restarts.
 - `Time.realtimeSinceStartupAsDouble` may or may not count while the app is in the background, depending on the platform. The poll on resume
   (`PollScheduler`, M0-41) replaces the snapshot, so this lasts only until that answer arrives.
-- `CitySnapshot` has no settlement block yet; the welcome-back report adds it (M0-53 *(planned)*).
 
-Last updated: CR-0004-T1
+Last updated: M0-53
