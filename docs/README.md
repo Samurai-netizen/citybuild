@@ -6,6 +6,7 @@ in chapters, with every backticked path and spec number as a link (`website/READ
 
 | I want to… | Read |
 |---|---|
+| see the art style or rebuild the models | `art/README.md` |
 | understand the game | `core-instructions/22-game-mechanics.md` (pillars + mechanics), `21-game-vision.md`, `25-eras-and-research.md` |
 | see where the project stands right now | `core-instructions/13-progress.md` (resume point), `docs/plan/M0-PLAN.md` (task board) |
 | set up and run the project | [getting-started.md](getting-started.md) |

@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CityBuilder UI kit</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Nunito:wght@600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1280px; height: 1700px; box-sizing: border-box; padding: 56px 64px; display: flex; flex-direction: column; gap: 28px; background: #FBF5E8; font-family: 'Nunito', system-ui, sans-serif; color: #3A2A1A">
+
+<div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h1 style="margin: 0; font: 600 46px 'Fredoka', sans-serif; color: #3A2A1A">CityBuilder UI kit · Era I</h1>
+<p style="margin: 0; font: 700 18px 'Nunito', sans-serif; color: #6B5440">Icons rendered in Blender from the game's own models. Colours taken from the models' palette. Glyphs drawn as vector shapes.</p>
+</div>
+<div style="padding: 6px 18px; border-radius: 8px; background: #F2C230; border-bottom: 4px solid #B8862F; font: 600 16px 'Fredoka', sans-serif; letter-spacing: 0.06em; white-space: nowrap">ERA I · EARLY MIDDLE AGES</div>
+</div>
+
+<section style="display: flex; flex-direction: column; gap: 12px; padding: 22px 24px; border-radius: 22px; background: #F4E8CF; border: 3px solid #D8C49B">
+<h2 style="margin: 0; font: 600 22px 'Fredoka', sans-serif">Model palette <span style="font: 700 14px 'Nunito', sans-serif; color: #6B5440">one 128 × 128 texture shared by every 3D model</span></h2>
+<div style="display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 10px">
+<sc-for list="{{ palette }}" as="c" hint-placeholder-count="20">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="height: 52px; border-radius: 12px; background: {{ c.hex }}; box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.15)"></div>
+<span style="font: 600 13px 'Fredoka', sans-serif">{{ c.name }}</span>
+<span style="font: 700 11px 'Nunito', sans-serif; color: #6B5440">{{ c.hex }}</span>
+</div>
+</sc-for>
+</div>
+</section>
+
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px">
+<section style="display: flex; flex-direction: column; gap: 12px; padding: 22px 24px; border-radius: 22px; background: #F4E8CF; border: 3px solid #D8C49B">
+<h2 style="margin: 0; font: 600 22px 'Fredoka', sans-serif">UI colours</h2>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+<sc-for list="{{ ui }}" as="c" hint-placeholder-count="9">
+<div style="display: flex; align-items: center; gap: 10px">
+<div style="width: 44px; height: 44px; flex: none; border-radius: 12px; background: {{ c.hex }}; border: 2px solid rgba(58, 42, 26, 0.2)"></div>
+<span style="display: flex; flex-direction: column; line-height: 1.2"><span style="font: 600 14px 'Fredoka', sans-serif">{{ c.name }}</span><span style="font: 700 11px 'Nunito', sans-serif; color: #6B5440">{{ c.use }}</span></span>
+</div>
+</sc-for>
+</div>
+</section>
+<section style="display: flex; flex-direction: column; gap: 10px; padding: 22px 24px; border-radius: 22px; background: #F4E8CF; border: 3px solid #D8C49B">
+<h2 style="margin: 0; font: 600 22px 'Fredoka', sans-serif">Type</h2>
+<span style="font: 600 40px/1 'Fredoka', sans-serif">Fredoka 600 · 1,250</span>
+<span style="font: 600 22px 'Fredoka', sans-serif">Titles, buttons and every number</span>
+<span style="font: 800 16px 'Nunito', sans-serif">Nunito 800 · labels, rates (+60/h)</span>
+<span style="font: 700 15px 'Nunito', sans-serif; color: #6B5440; line-height: 1.4">Nunito 700 · body text and explanations, such as why a building waits: "Short of planks: the Sawmill makes 60/h, this needs 120/h".</span>
+<span style="font: 700 12px 'Nunito', sans-serif; color: #6B5440">Both fonts: SIL Open Font License, from Google Fonts.</span>
+</section>
+</div>
+
+<section style="display: flex; flex-direction: column; gap: 12px; padding: 22px 24px; border-radius: 22px; background: #F4E8CF; border: 3px solid #D8C49B">
+<h2 style="margin: 0; font: 600 22px 'Fredoka', sans-serif">Icons rendered from the 3D models <span style="font: 700 14px 'Nunito', sans-serif; color: #6B5440">256 px, transparent, same light and palette as the town</span></h2>
+<div style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 12px">
+<sc-for list="{{ icons }}" as="i" hint-placeholder-count="15">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 6px 10px; border-radius: 16px; background: #FFF6E3; border: 2px solid #E3D3B0">
+<img src="{{ i.src }}" alt="{{ i.name }}" style="width: 104px; height: 104px">
+<span style="font: 600 13px 'Fredoka', sans-serif; text-align: center">{{ i.name }}</span>
+<span style="font: 700 10px 'Nunito', sans-serif; color: #6B5440; letter-spacing: 0.06em">{{ i.group }}</span>
+</div>
+</sc-for>
+</div>
+</section>
+
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px">
+
+<section style="display: flex; flex-direction: column; gap: 16px; padding: 22px 24px; border-radius: 22px; background: #F4E8CF; border: 3px solid #D8C49B">
+<h2 style="margin: 0; font: 600 22px 'Fredoka', sans-serif">Buttons</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center">
+<button style="height: 56px; padding: 0 22px; border: 0; border-radius: 16px; background: #3B7D34; box-shadow: inset 0 -5px 0 #2B5E26; color: #FFFFFF; font: 600 18px 'Fredoka', sans-serif">Build</button>
+<button style="height: 56px; padding: 0 22px; border: 0; border-radius: 16px; background: #F2C230; box-shadow: inset 0 -5px 0 #B8862F; color: #3A2A1A; font: 600 18px 'Fredoka', sans-serif">Research</button>
+<button style="height: 56px; padding: 0 22px; border: 3px solid #7A4E2D; border-radius: 16px; background: #FFF6E3; box-shadow: 0 4px 0 #7A4E2D; color: #3A2A1A; font: 600 18px 'Fredoka', sans-serif">Details</button>
+<button disabled="{{ yes }}" style="height: 56px; padding: 0 22px; border: 0; border-radius: 16px; background: #CFC3AB; box-shadow: inset 0 -5px 0 #A89B82; color: #5A4A38; font: 600 18px 'Fredoka', sans-serif">Upgrade</button>
+<button disabled="{{ yes }}" aria-label="Market, locked until Era II" style="height: 56px; padding: 0 18px; display: inline-flex; align-items: center; gap: 8px; border: 2px dashed #A89B82; border-radius: 16px; background: transparent; color: #5A4A38; font: 600 18px 'Fredoka', sans-serif">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>Market · Era II</button>
+</div>
+<div style="display: flex; gap: 12px; align-items: center">
+<button aria-label="One worker less" style="width: 52px; height: 52px; padding: 0; border: 0; border-radius: 14px; background: #B8402C; box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.22); color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg></button>
+<span style="width: 34px; text-align: center; font: 700 28px 'Fredoka', sans-serif">3</span>
+<button aria-label="One worker more" style="width: 52px; height: 52px; padding: 0; border: 0; border-radius: 14px; background: #3B7D34; box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.22); color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+<div style="display: flex; gap: 5px; margin-left: 8px">
+<span style="width: 20px; height: 20px; box-sizing: border-box; border-radius: 50%; background: #3B7D34; border: 2px solid #2B5E26"></span>
+<span style="width: 20px; height: 20px; box-sizing: border-box; border-radius: 50%; background: #3B7D34; border: 2px solid #2B5E26"></span>
+<span style="width: 20px; height: 20px; box-sizing: border-box; border-radius: 50%; background: #3B7D34; border: 2px solid #2B5E26"></span>
+<span style="width: 20px; height: 20px; box-sizing: border-box; border-radius: 50%; background: #E6DCC8; border: 2px solid #C9BDA5"></span>
+<span style="width: 20px; height: 20px; box-sizing: border-box; border-radius: 50%; background: #E6DCC8; border: 2px solid #C9BDA5"></span>
+<span style="width: 20px; height: 20px; box-sizing: border-box; border-radius: 50%; background: #E6DCC8; border: 2px solid #C9BDA5"></span>
+</div>
+<span style="font: 700 12px 'Nunito', sans-serif; color: #6B5440; line-height: 1.3">Worker stepper: green = working,<br>grey = slots that level 2 adds</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+<span style="display: inline-flex; align-items: center; gap: 2px; padding: 2px 12px 2px 2px; border-radius: 14px; background: #FFF6E3; font: 600 16px 'Fredoka', sans-serif"><img src="/_blob/a6f50a90a80ee6fe2e48281b80f7f2fc" alt="Coins" style="width: 32px; height: 32px">50</span>
+<span style="display: inline-flex; align-items: center; gap: 2px; padding: 2px 12px 2px 2px; border-radius: 14px; background: #F6D6CC; color: #A23A28; font: 600 16px 'Fredoka', sans-serif"><img src="/_blob/211e42a55b1d1b90e963a01e114410fc" alt="Planks" style="width: 32px; height: 32px">30</span>
+<span style="font: 700 12px 'Nunito', sans-serif; color: #6B5440">Cost chips: affordable, and short (red)</span>
+</div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 16px; padding: 22px 24px; border-radius: 22px; background: #F4E8CF; border: 3px solid #D8C49B">
+<h2 style="margin: 0; font: 600 22px 'Fredoka', sans-serif">HUD and status</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 10px; padding: 14px; border-radius: 16px; background: #7DB24C">
+<div style="height: 44px; display: flex; align-items: center; gap: 2px; padding: 0 12px 0 0; border-radius: 22px; background: rgba(48, 31, 18, 0.88); color: #FFF6E3">
+<img src="/_blob/a6f50a90a80ee6fe2e48281b80f7f2fc" alt="Coins" style="width: 46px; height: 46px; margin-left: -4px">
+<span style="display: flex; flex-direction: column; line-height: 1.1"><span style="font: 600 17px 'Fredoka', sans-serif">85</span><span style="font: 800 11px 'Nunito', sans-serif; color: #A5DE86">+300/h</span></span>
+</div>
+<div style="height: 44px; display: flex; align-items: center; gap: 2px; padding: 0 12px 0 0; border-radius: 22px; background: rgba(48, 31, 18, 0.88); color: #FFF6E3">
+<img src="/_blob/94b47eaa5de2abf71da9f1039b9b565f" alt="Logs" style="width: 46px; height: 46px; margin-left: -4px">
+<span style="display: flex; flex-direction: column; line-height: 1.1"><span style="font: 600 17px 'Fredoka', sans-serif">14<span style="font-size: 11px; color: #D9CBB0"> / 500</span></span><span style="font: 800 11px 'Nunito', sans-serif; color: #E2D3B5">0/h</span></span>
+</div>
+<div style="height: 44px; display: flex; align-items: center; gap: 2px; padding: 0 12px 0 0; border-radius: 22px; background: rgba(48, 31, 18, 0.88); color: #FFF6E3">
+<img src="/_blob/211e42a55b1d1b90e963a01e114410fc" alt="Planks" style="width: 46px; height: 46px; margin-left: -4px">
+<span style="display: flex; flex-direction: column; line-height: 1.1"><span style="font: 600 17px 'Fredoka', sans-serif">1<span style="font-size: 11px; color: #D9CBB0"> / 500</span></span><span style="font: 800 11px 'Nunito', sans-serif; color: #FFA48F">−60/h</span></span>
+</div>
+<div style="height: 44px; display: flex; align-items: center; gap: 4px; padding: 0 14px 0 2px; border-radius: 22px; background: rgba(48, 31, 18, 0.88); color: #FFF6E3; font: 600 16px 'Fredoka', sans-serif">
+<img src="/_blob/64a92c5bfeacf72d356c342231c01a7e" alt="Workers" style="width: 42px; height: 42px">1<span style="font-size: 12px; color: #D9CBB0"> free / 8</span>
+</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start; padding: 16px 14px 24px; border-radius: 16px; background: #7DB24C">
+<sc-for list="{{ bubbles }}" as="b" hint-placeholder-count="5">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 6px; width: 92px">
+<div role="img" aria-label="{{ b.name }}" style="position: relative; width: 48px; height: 48px; border-radius: 50%; background: conic-gradient({{ b.color }} {{ b.deg }}deg, rgba(255, 246, 227, 0.6) 0deg); box-shadow: 0 2px 5px rgba(40, 25, 10, 0.4)">
+<div style="position: absolute; left: 5px; top: 5px; width: 38px; height: 38px; border-radius: 50%; background: #FFF6E3; display: flex; align-items: center; justify-content: center"><img src="{{ b.icon }}" alt="" style="width: 34px; height: 34px"></div>
+<sc-if value="{{ b.alert }}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; right: -5px; top: -5px; width: 20px; height: 20px; border-radius: 50%; background: #B8402C; border: 2px solid #FFF6E3; color: #FFFFFF; font: 700 13px/20px 'Fredoka', sans-serif; text-align: center">!</div>
+</sc-if>
+</div>
+<span style="padding: 2px 8px; border-radius: 8px; background: rgba(48, 31, 18, 0.88); color: #FFF6E3; font: 600 12px 'Fredoka', sans-serif; text-align: center">{{ b.name }}</span>
+</div>
+</sc-for>
+</div>
+<div style="display: flex; align-items: center; gap: 12px">
+<div role="status" style="flex: 1 1 auto; padding: 12px 16px; border-radius: 16px; background: rgba(48, 31, 18, 0.94); color: #FFF6E3; font: 700 14px 'Nunito', sans-serif; text-align: center">No free workers: build a Cottage</div>
+<span style="font: 700 12px 'Nunito', sans-serif; color: #6B5440; width: 140px; line-height: 1.3">Toast: every server answer gets a human message</span>
+</div>
+</section>
+</div>
+
+<section style="display: flex; align-items: center; gap: 28px; padding: 18px 24px; border-radius: 22px; background: #F4E8CF; border: 3px solid #D8C49B; color: #5A3820">
+<h2 style="margin: 0; font: 600 22px 'Fredoka', sans-serif; color: #3A2A1A">Line glyphs</h2>
+<svg role="img" aria-label="Close" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+<svg role="img" aria-label="Plus" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+<svg role="img" aria-label="Minus" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14"></path></svg>
+<svg role="img" aria-label="Locked" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>
+<svg role="img" aria-label="Time" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+<svg role="img" aria-label="Done" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>
+<svg role="img" aria-label="Makes" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+<span style="margin-left: auto; font: 700 13px 'Nunito', sans-serif; color: #6B5440; max-width: 360px; line-height: 1.35">Small UI glyphs are vector shapes. Everything you can build, make or research is a rendered icon.</span>
+</section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const palette = [
+      ['grass', '#7DB24C'], ['grass_dark', '#5C9A3B'], ['dirt', '#B98C5C'], ['stone', '#B0AA9F'], ['stone_dark', '#7D786F'],
+      ['wood', '#C98E54'], ['wood_dark', '#7A4E2D'], ['wood_end', '#EBC88E'], ['thatch', '#E5B24C'], ['thatch_dark', '#B8862F'],
+      ['plaster', '#F4E8CF'], ['red', '#D4553F'], ['blue', '#4F80B9'], ['window', '#3A3F57'], ['leaf', '#57A443'],
+      ['metal', '#C8CDD5'], ['leaf_dark', '#3B7D34'], ['water', '#6EC1E4'], ['skin', '#F0C08A'], ['gold', '#F2C230']
+    ].map((c) => ({ name: c[0], hex: c[1] }));
+    const ui = [
+      ['Ink', '#3A2A1A', 'text'], ['Ink soft', '#6B5440', 'labels'], ['Parchment', '#F4E8CF', 'panels'],
+      ['Card', '#EADBB9', 'cards in panels'], ['Wood', '#7A4E2D', 'frames, borders'], ['Gold', '#F2C230', 'research, era'],
+      ['Green', '#3B7D34', 'go, working'], ['Alert', '#B8402C', 'stopped, short'], ['HUD', '#301F12', 'chips over the map']
+    ].map((c) => ({ name: c[0], hex: c[1], use: c[2] }));
+    const icons = [
+      ['Coins', 'ITEM', '/_blob/a6f50a90a80ee6fe2e48281b80f7f2fc'],
+      ['Logs', 'ITEM', '/_blob/94b47eaa5de2abf71da9f1039b9b565f'],
+      ['Planks', 'ITEM', '/_blob/211e42a55b1d1b90e963a01e114410fc'],
+      ['Workers', 'HUD', '/_blob/64a92c5bfeacf72d356c342231c01a7e'],
+      ['Builders', 'HUD', '/_blob/fad5037c429742bcfd002d61fd6ef103'],
+      ['Research', 'HUD', '/_blob/b8c5ac9425a4e3d4d123ff9ddee14241'],
+      ['Cottage', 'BUILDING', '/_blob/1a8908c97f213a44e9a726da9d87c02a'],
+      ["Woodcutter's Hut", 'BUILDING', '/_blob/2bc73dbb1d1b380ce3e6dbad31a14f2c'],
+      ['Sawmill', 'BUILDING', '/_blob/4fb73164f2b20282f5e9c8b6e0034e19'],
+      ['Trading Post', 'BUILDING', '/_blob/18444ca3825ac5d08fbfcc6301373577'],
+      ['Building site', 'BUILDING', '/_blob/45d95dc297e730807d882b402e920688'],
+      ['Trade Charter', 'RESEARCH', '/_blob/4ab905f698f7e6f053e796b0c395758b'],
+      ['Sharpened Axes', 'RESEARCH', '/_blob/18022b7a8aec435907c1b2afd5054d0f'],
+      ['Frame Saw', 'RESEARCH', '/_blob/2575f1bb7a6415df7e8705d2dfe5010c'],
+      ['Storehouses', 'RESEARCH', '/_blob/255585bfd5dbf9caf172bfed14268c30']
+    ].map((i) => ({ name: i[0], group: i[1], src: i[2] }));
+    const bubbles = [
+      { name: 'Working', color: '#3B7D34', deg: 220, icon: '/_blob/211e42a55b1d1b90e963a01e114410fc', alert: false },
+      { name: 'Short of planks', color: '#D9A520', deg: 120, icon: '/_blob/211e42a55b1d1b90e963a01e114410fc', alert: true },
+      { name: 'No workers', color: '#B8402C', deg: 360, icon: '/_blob/64a92c5bfeacf72d356c342231c01a7e', alert: true },
+      { name: 'Building 0:18', color: '#3B7D34', deg: 144, icon: '/_blob/1a8908c97f213a44e9a726da9d87c02a', alert: false },
+      { name: 'Research', color: '#F2C230', deg: 126, icon: '/_blob/18022b7a8aec435907c1b2afd5054d0f', alert: false }
+    ];
+    return { palette, ui, icons, bubbles, yes: true };
+  }
+}
+</script>
+</body>
+</html>

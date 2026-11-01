@@ -14,6 +14,7 @@ client/CityBuilder/
 │   ├── Core/            CityBuilder.Client.Core           client state, display prediction (skeleton)
 │   ├── Net/             CityBuilder.Client.Net            API client, DTOs, error parsing (M0-37); login, token stores, content loading (M0-38)
 │   ├── Presentation/    CityBuilder.Client.Presentation   GameRoot, bootstrap, startup flow, status screens; City/ (grid, camera, ground, M0-43; building views, M0-44), Build/ (build menu, M0-45; placement flow and bar, M0-46), Feedback/ (error messages and toasts, M0-47), Ui/ (safe area, M0-45)
+│   ├── Art/             Models/ (the FBX files: the only copy, written by `art/blender/build_all.py`), Textures/ (the palette); no importer settings or `.meta` files until CR-0005-T2 (`art/README.md`)
 │   ├── Resources/       UI/ (PanelSettings.asset, UXML and USS the code loads by name), Config/ApiClientSettings.asset (server URL, timeout, dev player name)
 │   └── Tests/EditMode · Tests/PlayMode                    test assemblies (AppInfo, engine-in-Unity and Bootstrap scene tests, M0-05; Net/ tests, M0-37); Tests/Fixtures/ real server answers
 ├── Assets/Scenes/       Bootstrap.unity (made by hand, scene 0 in the build list; steps below); SampleScene is the template's, unticked
@@ -74,4 +75,4 @@ Claude cannot use the Editor GUI, and a scene file is never hand-edited. The sce
    or tell the next AI coder that the scene exists, and it commits `Bootstrap.unity`, its `.meta` file and `EditorBuildSettings.asset`.
 7. If the label does not show, copy the first red Console message into the chat. Do not edit the scene or the scripts by hand.
 
-Last updated: CR-0002-T1
+Last updated: CR-0005-T1

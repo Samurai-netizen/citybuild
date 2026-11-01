@@ -36,3 +36,10 @@ artifacts/
 *.log
 # Unity-specific ignores live in client/CityBuilder/.gitignore (created in M0-04).
 # Do NOT ignore *.csproj or *.sln here: the server needs them.
+
+# --- art (art/README.md): renders the Blender build rewrites; only the two README pictures are tracked ---
+art/previews/*
+!art/previews/city_closeup.png
+!art/previews/city_golden_scenario.png
+art/ui/city_phone.png
+__pycache__/

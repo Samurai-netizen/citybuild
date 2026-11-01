@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CityBuilder: the town</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Nunito:wght@600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; font-family: 'Nunito', system-ui, sans-serif; color: #3A2A1A; background: #7DB24C">
+
+<img src="/_blob/b519d00c6fb9211091e9c016cbcfeb94" alt="The village from above: two cottages, a woodcutter's hut, a sawmill with a water wheel, a trading post and a building site on a grass grid with dirt paths" style="position: absolute; left: 0; top: 0; width: 390px; height: 844px; object-fit: cover">
+
+<sc-for list="{{ spots }}" as="s" hint-placeholder-count="6">
+<button aria-label="{{ s.label }}" onClick="{{ s.open }}" style="position: absolute; left: {{ s.left }}px; top: {{ s.top }}px; width: 72px; height: 66px; padding: 0; border: 0; border-radius: 18px; background: transparent; cursor: pointer; box-shadow: {{ s.shadow }}"></button>
+</sc-for>
+
+<sc-for list="{{ bubbles }}" as="b" hint-placeholder-count="4">
+<div role="img" aria-label="{{ b.aria }}" style="position: absolute; left: {{ b.left }}px; top: {{ b.top }}px; width: 40px; height: 40px; border-radius: 50%; background: conic-gradient({{ b.color }} {{ b.deg }}deg, rgba(255, 246, 227, 0.6) 0deg); box-shadow: 0 2px 5px rgba(40, 25, 10, 0.4); pointer-events: none">
+<div style="position: absolute; left: 4px; top: 4px; width: 32px; height: 32px; border-radius: 50%; background: #FFF6E3; display: flex; align-items: center; justify-content: center">
+<img src="{{ b.icon }}" alt="" style="width: 28px; height: 28px">
+</div>
+<sc-if value="{{ b.alert }}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; right: -5px; top: -5px; width: 18px; height: 18px; border-radius: 50%; background: #B8402C; border: 2px solid #FFF6E3; color: #FFFFFF; font: 700 12px/18px 'Fredoka', sans-serif; text-align: center">!</div>
+</sc-if>
+<sc-if value="{{ b.label }}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: -6px; top: 42px; width: 52px; padding: 1px 0; border-radius: 9px; background: rgba(48, 31, 18, 0.88); color: #FFF6E3; font: 600 12px 'Fredoka', sans-serif; text-align: center">{{ b.label }}</div>
+</sc-if>
+</div>
+</sc-for>
+
+<div style="position: absolute; left: 12px; right: 12px; top: 10px; display: flex; flex-direction: column; align-items: center; gap: 8px">
+<div style="padding: 3px 16px; border-radius: 6px; background: #F2C230; border-bottom: 3px solid #B8862F; color: #3A2A1A; font: 600 13px 'Fredoka', sans-serif; letter-spacing: 0.06em">ERA I · EARLY MIDDLE AGES</div>
+<div style="display: flex; gap: 8px; width: 100%">
+<div style="flex: 1 1 0; min-width: 0; height: 42px; display: flex; align-items: center; gap: 2px; padding: 0 8px 0 0; border-radius: 21px; background: rgba(48, 31, 18, 0.88); color: #FFF6E3">
+<img src="/_blob/a6f50a90a80ee6fe2e48281b80f7f2fc" alt="Coins" style="width: 44px; height: 44px; margin: 0 -2px 0 -4px">
+<div style="display: flex; flex-direction: column; line-height: 1.1; min-width: 0">
+<span style="font: 600 16px 'Fredoka', sans-serif">{{ stock.coins }}</span>
+<span style="font: 800 11px 'Nunito', sans-serif; color: {{ rate.coinsTone }}">{{ rate.coins }}</span>
+</div>
+</div>
+<div style="flex: 1 1 0; min-width: 0; height: 42px; display: flex; align-items: center; gap: 2px; padding: 0 8px 0 0; border-radius: 21px; background: rgba(48, 31, 18, 0.88); color: #FFF6E3">
+<img src="/_blob/94b47eaa5de2abf71da9f1039b9b565f" alt="Logs" style="width: 44px; height: 44px; margin: 0 -2px 0 -4px">
+<div style="display: flex; flex-direction: column; line-height: 1.1; min-width: 0">
+<span style="font: 600 16px 'Fredoka', sans-serif">{{ stock.logs }}<span style="font-size: 11px; color: #D9CBB0"> / 500</span></span>
+<span style="font: 800 11px 'Nunito', sans-serif; color: {{ rate.logsTone }}">{{ rate.logs }}</span>
+</div>
+</div>
+<div style="flex: 1 1 0; min-width: 0; height: 42px; display: flex; align-items: center; gap: 2px; padding: 0 8px 0 0; border-radius: 21px; background: rgba(48, 31, 18, 0.88); color: #FFF6E3">
+<img src="/_blob/211e42a55b1d1b90e963a01e114410fc" alt="Planks" style="width: 44px; height: 44px; margin: 0 -2px 0 -4px">
+<div style="display: flex; flex-direction: column; line-height: 1.1; min-width: 0">
+<span style="font: 600 16px 'Fredoka', sans-serif">{{ stock.planks }}<span style="font-size: 11px; color: #D9CBB0"> / 500</span></span>
+<span style="font: 800 11px 'Nunito', sans-serif; color: {{ rate.planksTone }}">{{ rate.planks }}</span>
+</div>
+</div>
+</div>
+<div style="display: flex; gap: 8px; width: 100%">
+<div role="img" aria-label="{{ workersAria }}" style="height: 38px; display: flex; align-items: center; gap: 4px; padding: 0 12px 0 2px; border-radius: 19px; background: rgba(48, 31, 18, 0.88); color: #FFF6E3; font: 600 15px 'Fredoka', sans-serif">
+<img src="/_blob/64a92c5bfeacf72d356c342231c01a7e" alt="" style="width: 38px; height: 38px">{{ free }}<span style="font-size: 12px; color: #D9CBB0"> free / 8</span>
+</div>
+<div role="img" aria-label="1 of 2 builders busy" style="height: 38px; display: flex; align-items: center; gap: 4px; padding: 0 12px 0 2px; border-radius: 19px; background: rgba(48, 31, 18, 0.88); color: #FFF6E3; font: 600 15px 'Fredoka', sans-serif">
+<img src="/_blob/fad5037c429742bcfd002d61fd6ef103" alt="" style="width: 34px; height: 34px">1<span style="font-size: 12px; color: #D9CBB0"> / 2</span>
+</div>
+<button onClick="{{ openResearch }}" aria-label="{{ research.aria }}" style="flex: 1 1 0; min-width: 0; height: 38px; display: flex; align-items: center; gap: 6px; padding: 0 10px 0 3px; border: 0; border-radius: 19px; background: rgba(48, 31, 18, 0.88); color: #FFF6E3; cursor: pointer; text-align: left">
+<span style="position: relative; width: 32px; height: 32px; flex: none; border-radius: 50%; background: conic-gradient(#F2C230 {{ research.deg }}deg, rgba(255, 246, 227, 0.25) 0deg)">
+<span style="position: absolute; left: 3px; top: 3px; width: 26px; height: 26px; border-radius: 50%; background: #4A3220; display: flex; align-items: center; justify-content: center">
+<img src="/_blob/18022b7a8aec435907c1b2afd5054d0f" alt="" style="width: 24px; height: 24px">
+</span>
+</span>
+<span style="display: flex; flex-direction: column; line-height: 1.1; min-width: 0">
+<span style="font: 600 13px 'Fredoka', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Sharpened Axes</span>
+<span style="font: 800 11px 'Nunito', sans-serif; color: #F2C230">{{ research.pct }}% · {{ research.left }}</span>
+</span>
+</button>
+</div>
+</div>
+
+<button onClick="{{ openWelcome }}" aria-label="While you were away: open the report" style="position: absolute; right: 12px; bottom: 96px; width: 52px; height: 52px; padding: 0; border: 3px solid #7A4E2D; border-radius: 50%; background: #F4E8CF; box-shadow: 0 3px 0 #5A3820; cursor: pointer; display: flex; align-items: center; justify-content: center">
+<img src="/_blob/4ab905f698f7e6f053e796b0c395758b" alt="" style="width: 40px; height: 40px">
+</button>
+
+<div style="position: absolute; left: 12px; right: 12px; bottom: 14px; display: flex; gap: 10px">
+<button onClick="{{ openBuild }}" style="flex: 1 1 0; height: 68px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; padding: 0; border: 0; border-radius: 18px; background: #3B7D34; box-shadow: inset 0 -5px 0 #2B5E26, 0 3px 6px rgba(30, 18, 8, 0.35); color: #FFFFFF; font: 600 16px 'Fredoka', sans-serif; cursor: pointer">
+<img src="/_blob/fad5037c429742bcfd002d61fd6ef103" alt="" style="width: 36px; height: 36px; margin-top: -4px">Build
+</button>
+<button onClick="{{ openResearch }}" style="flex: 1 1 0; height: 68px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; padding: 0; border: 0; border-radius: 18px; background: #F2C230; box-shadow: inset 0 -5px 0 #B8862F, 0 3px 6px rgba(30, 18, 8, 0.35); color: #3A2A1A; font: 600 16px 'Fredoka', sans-serif; cursor: pointer">
+<img src="/_blob/b8c5ac9425a4e3d4d123ff9ddee14241" alt="" style="width: 36px; height: 36px; margin-top: -4px">Research
+</button>
+<button onClick="{{ openMarket }}" aria-label="Market: opens in Era II" style="flex: 1 1 0; height: 68px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 0; border: 0; border-radius: 18px; background: #CFC3AB; box-shadow: inset 0 -5px 0 #A89B82; color: #5A4A38; font: 600 16px 'Fredoka', sans-serif; cursor: pointer">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>
+<span>Market</span>
+<span style="font: 800 10px 'Nunito', sans-serif; margin-top: -2px">ERA II</span>
+</button>
+</div>
+
+<sc-if value="{{ sheetOpen }}" hint-placeholder-val="{{ false }}">
+<button onClick="{{ close }}" aria-label="Close" style="position: absolute; left: 0; top: 0; width: 390px; height: 844px; padding: 0; border: 0; background: rgba(30, 18, 8, 0.4); cursor: pointer"></button>
+</sc-if>
+
+<sc-if value="{{ isInspector }}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: 0; right: 0; bottom: 0; box-sizing: border-box; padding: 18px 18px 22px; display: flex; flex-direction: column; gap: 14px; background: #F4E8CF; border-top: 4px solid #7A4E2D; border-radius: 26px 26px 0 0; box-shadow: 0 -6px 18px rgba(30, 18, 8, 0.3)">
+<div style="display: flex; align-items: center; gap: 12px">
+<img src="{{ sel.icon }}" alt="" style="width: 72px; height: 72px; margin: -14px 0 -6px -6px">
+<div style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+<h2 style="margin: 0; font: 600 22px 'Fredoka', sans-serif; color: #3A2A1A">{{ sel.name }}</h2>
+<span style="font: 700 13px 'Nunito', sans-serif; color: #6B5440">{{ sel.sub }}</span>
+</div>
+<button onClick="{{ close }}" aria-label="Close" style="width: 44px; height: 44px; flex: none; padding: 0; border: 3px solid #7A4E2D; border-radius: 50%; background: #EADBB9; color: #5A3820; cursor: pointer; display: flex; align-items: center; justify-content: center">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+</button>
+</div>
+
+<sc-if value="{{ sel.isProducer }}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 16px; background: #EADBB9; border: 2px solid #D8C49B">
+<sc-for list="{{ sel.ins }}" as="c" hint-placeholder-count="1">
+<span style="display: inline-flex; align-items: center; font: 600 16px 'Fredoka', sans-serif"><img src="{{ c.icon }}" alt="{{ c.alt }}" style="width: 40px; height: 40px">×{{ c.qty }}</span>
+</sc-for>
+<sc-if value="{{ sel.hasIns }}" hint-placeholder-val="{{ true }}">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7A4E2D" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+</sc-if>
+<span style="display: inline-flex; align-items: center; font: 600 16px 'Fredoka', sans-serif"><img src="{{ sel.out.icon }}" alt="{{ sel.out.alt }}" style="width: 40px; height: 40px">×{{ sel.out.qty }}</span>
+<span style="margin-left: auto; text-align: right; font: 700 13px 'Nunito', sans-serif; color: #6B5440; line-height: 1.25; white-space: pre-line">{{ sel.cycle }}</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span style="font: 600 18px 'Fredoka', sans-serif; color: #3A2A1A">{{ sel.rate }}</span>
+<span style="display: flex; align-items: flex-start; gap: 6px; font: 700 13px 'Nunito', sans-serif; color: {{ sel.statusColor }}; line-height: 1.3"><span style="width: 10px; height: 10px; margin-top: 4px; flex: none; border-radius: 50%; background: {{ sel.statusColor }}"></span>{{ sel.status }}</span>
+<sc-if value="{{ sel.tip }}" hint-placeholder-val="{{ false }}">
+<span style="padding: 6px 10px; border-radius: 10px; background: #FFF6E3; border: 2px dashed #D9A520; font: 700 13px 'Nunito', sans-serif; color: #5A3820; line-height: 1.3">{{ sel.tip }}</span>
+</sc-if>
+</div>
+<div style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 16px; background: #FFF6E3; border: 2px solid #D8C49B">
+<div style="display: flex; flex-direction: column; gap: 6px; flex: 1 1 auto; min-width: 0">
+<span style="font: 600 15px 'Fredoka', sans-serif">Workers {{ sel.workers }} / {{ sel.max }}</span>
+<div style="display: flex; gap: 5px">
+<sc-for list="{{ sel.pips }}" as="p" hint-placeholder-count="4">
+<span style="width: 18px; height: 18px; border-radius: 50%; box-sizing: border-box; background: {{ p.bg }}; border: 2px solid {{ p.edge }}"></span>
+</sc-for>
+</div>
+<span style="font: 700 12px 'Nunito', sans-serif; color: #6B5440">{{ freeText }}</span>
+</div>
+<button onClick="{{ sel.dec }}" disabled="{{ sel.decOff }}" aria-label="One worker less" style="width: 48px; height: 48px; flex: none; padding: 0; border: 0; border-radius: 14px; background: {{ sel.decBg }}; box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.22); color: #FFFFFF; cursor: pointer; display: flex; align-items: center; justify-content: center">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg>
+</button>
+<span style="width: 30px; text-align: center; font: 700 26px 'Fredoka', sans-serif">{{ sel.workers }}</span>
+<button onClick="{{ sel.inc }}" disabled="{{ sel.incOff }}" aria-label="One worker more" style="width: 48px; height: 48px; flex: none; padding: 0; border: 0; border-radius: 14px; background: {{ sel.incBg }}; box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.22); color: #FFFFFF; cursor: pointer; display: flex; align-items: center; justify-content: center">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ sel.isHouse }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 16px; background: #EADBB9; border: 2px solid #D8C49B">
+<img src="/_blob/64a92c5bfeacf72d356c342231c01a7e" alt="" style="width: 48px; height: 48px">
+<span style="font: 600 18px 'Fredoka', sans-serif">Home for 4 workers</span>
+</div>
+</sc-if>
+
+<sc-if value="{{ sel.isSite }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 16px; background: #EADBB9; border: 2px solid #D8C49B">
+<div style="display: flex; justify-content: space-between; font: 600 16px 'Fredoka', sans-serif"><span>Building a Cottage</span><span>{{ site.left }} left</span></div>
+<div style="height: 16px; border-radius: 8px; background: #FFF6E3; border: 2px solid #7A4E2D; overflow: hidden">
+<div style="height: 100%; width: {{ site.pct }}%; background: #3B7D34"></div>
+</div>
+<span style="font: 700 13px 'Nunito', sans-serif; color: #6B5440">1 of 2 builders is working here. The other one is free.</span>
+</div>
+</sc-if>
+
+<sc-if value="{{ sel.hasUpgrade }}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 16px; background: #EADBB9; border: 2px solid #D8C49B">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+<span style="font: 600 16px 'Fredoka', sans-serif">Level 2 · {{ sel.upText }}</span>
+<span style="display: inline-flex; align-items: center; gap: 4px; font: 700 13px 'Nunito', sans-serif; color: #6B5440"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>{{ sel.upTime }}</span>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
+<sc-for list="{{ sel.upCost }}" as="c" hint-placeholder-count="2">
+<span style="display: inline-flex; align-items: center; gap: 2px; padding: 2px 10px 2px 2px; border-radius: 14px; background: {{ c.bg }}; color: {{ c.fg }}; font: 600 15px 'Fredoka', sans-serif"><img src="{{ c.icon }}" alt="{{ c.alt }}" style="width: 30px; height: 30px">{{ c.qty }}</span>
+</sc-for>
+<button onClick="{{ sel.upgrade }}" style="margin-left: auto; height: 44px; padding: 0 18px; border: 0; border-radius: 14px; background: {{ sel.upBg }}; box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.22); color: {{ sel.upFg }}; font: 600 16px 'Fredoka', sans-serif; cursor: pointer">Upgrade</button>
+</div>
+<sc-if value="{{ sel.upNeed }}" hint-placeholder-val="{{ false }}">
+<span style="font: 700 13px 'Nunito', sans-serif; color: #A23A28">{{ sel.upNeed }}</span>
+</sc-if>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ isBuild }}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: 0; right: 0; bottom: 0; box-sizing: border-box; padding: 18px 16px 22px; display: flex; flex-direction: column; gap: 12px; background: #F4E8CF; border-top: 4px solid #7A4E2D; border-radius: 26px 26px 0 0; box-shadow: 0 -6px 18px rgba(30, 18, 8, 0.3)">
+<div style="display: flex; align-items: center; gap: 10px">
+<h2 style="margin: 0; flex: 1 1 auto; font: 600 24px 'Fredoka', sans-serif">Build</h2>
+<span style="display: inline-flex; align-items: center; gap: 2px; font: 700 13px 'Nunito', sans-serif; color: #6B5440"><img src="/_blob/fad5037c429742bcfd002d61fd6ef103" alt="" style="width: 28px; height: 28px">1 of 2 builders free</span>
+<button onClick="{{ close }}" aria-label="Close" style="width: 44px; height: 44px; flex: none; padding: 0; border: 3px solid #7A4E2D; border-radius: 50%; background: #EADBB9; color: #5A3820; cursor: pointer; display: flex; align-items: center; justify-content: center">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+</button>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<sc-for list="{{ cards }}" as="k" hint-placeholder-count="4">
+<button onClick="{{ k.pick }}" aria-label="{{ k.aria }}" style="display: flex; flex-direction: column; align-items: stretch; gap: 4px; padding: 8px 10px 10px; border: 3px solid {{ k.edge }}; border-radius: 18px; background: {{ k.bg }}; box-shadow: 0 3px 0 {{ k.edge }}; color: #3A2A1A; text-align: left; cursor: pointer">
+<img src="{{ k.icon }}" alt="" style="width: 92px; height: 92px; align-self: center; margin: -6px 0 -8px; opacity: {{ k.fade }}">
+<span style="font: 600 16px 'Fredoka', sans-serif">{{ k.name }}</span>
+<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px">
+<sc-for list="{{ k.costs }}" as="c" hint-placeholder-count="1">
+<span style="display: inline-flex; align-items: center; padding: 1px 7px 1px 1px; border-radius: 12px; background: {{ c.bg }}; color: {{ c.fg }}; font: 600 13px 'Fredoka', sans-serif"><img src="{{ c.icon }}" alt="{{ c.alt }}" style="width: 24px; height: 24px">{{ c.qty }}</span>
+</sc-for>
+<span style="display: inline-flex; align-items: center; gap: 2px; font: 700 12px 'Nunito', sans-serif; color: #6B5440"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>{{ k.time }}</span>
+</span>
+<span style="font: 700 12px 'Nunito', sans-serif; color: #6B5440; line-height: 1.3">{{ k.line }}</span>
+<sc-if value="{{ k.hint }}" hint-placeholder-val="{{ false }}">
+<span style="font: 800 12px 'Nunito', sans-serif; color: #A23A28; line-height: 1.3">{{ k.hint }}</span>
+</sc-if>
+</button>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isResearch }}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: 0; right: 0; bottom: 0; top: 96px; box-sizing: border-box; padding: 18px 16px 22px; display: flex; flex-direction: column; gap: 12px; background: #F4E8CF; border-top: 4px solid #7A4E2D; border-radius: 26px 26px 0 0; box-shadow: 0 -6px 18px rgba(30, 18, 8, 0.3)">
+<div style="display: flex; align-items: center; gap: 10px">
+<h2 style="margin: 0; flex: 1 1 auto; font: 600 24px 'Fredoka', sans-serif">Research</h2>
+<button onClick="{{ close }}" aria-label="Close" style="width: 44px; height: 44px; flex: none; padding: 0; border: 3px solid #7A4E2D; border-radius: 50%; background: #EADBB9; color: #5A3820; cursor: pointer; display: flex; align-items: center; justify-content: center">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+</button>
+</div>
+<div style="display: flex; gap: 8px">
+<button aria-pressed="true" style="height: 40px; padding: 0 18px; border: 0; border-radius: 12px; background: #7A4E2D; color: #FFF6E3; font: 600 15px 'Fredoka', sans-serif">Era I</button>
+<button disabled="{{ yes }}" aria-label="Era II, locked" style="height: 40px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; border: 2px dashed #A89B82; border-radius: 12px; background: transparent; color: #6B5440; font: 600 15px 'Fredoka', sans-serif">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>Era II</button>
+<span style="margin-left: auto; align-self: center; font: 700 12px 'Nunito', sans-serif; color: #6B5440">1 research at a time</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: start">
+<div style="display: flex; flex-direction: column; align-items: stretch">
+<span style="font: 800 11px 'Nunito', sans-serif; letter-spacing: 0.08em; color: #6B5440; margin: 0 0 6px 4px">TRADE</span>
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 10px; border-radius: 16px; background: #E3EFD6; border: 3px solid #3B7D34">
+<div style="display: flex; align-items: center; gap: 6px"><img src="/_blob/4ab905f698f7e6f053e796b0c395758b" alt="" style="width: 44px; height: 44px; margin: -4px"><span style="font: 600 15px 'Fredoka', sans-serif; line-height: 1.1">Trade Charter</span></div>
+<span style="font: 700 12px 'Nunito', sans-serif; color: #3A2A1A; line-height: 1.3">Unlocks the Trading Post</span>
+<span style="display: inline-flex; align-items: center; gap: 4px; font: 600 14px 'Fredoka', sans-serif; color: #2B5E26"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>Done</span>
+</div>
+<div style="width: 4px; height: 18px; margin: 0 auto; background: #7A4E2D"></div>
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 16px; background: #FFF6E3; border: 3px solid #7A4E2D">
+<div style="display: flex; align-items: center; gap: 6px"><img src="/_blob/255585bfd5dbf9caf172bfed14268c30" alt="" style="width: 44px; height: 44px; margin: -4px"><span style="font: 600 15px 'Fredoka', sans-serif; line-height: 1.1">Storehouses</span></div>
+<span style="font: 700 12px 'Nunito', sans-serif; color: #3A2A1A; line-height: 1.3">+250 storage for logs and planks</span>
+<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px">
+<span style="display: inline-flex; align-items: center; padding: 1px 7px 1px 1px; border-radius: 12px; background: #F6D6CC; color: #A23A28; font: 600 13px 'Fredoka', sans-serif"><img src="/_blob/a6f50a90a80ee6fe2e48281b80f7f2fc" alt="Coins" style="width: 24px; height: 24px">300</span>
+<span style="display: inline-flex; align-items: center; padding: 1px 7px 1px 1px; border-radius: 12px; background: #F6D6CC; color: #A23A28; font: 600 13px 'Fredoka', sans-serif"><img src="/_blob/94b47eaa5de2abf71da9f1039b9b565f" alt="Logs" style="width: 24px; height: 24px">50</span>
+<span style="font: 700 12px 'Nunito', sans-serif; color: #6B5440">45m</span>
+</span>
+<button onClick="{{ slotBusy }}" style="height: 40px; border: 0; border-radius: 12px; background: #CFC3AB; box-shadow: inset 0 -4px 0 #A89B82; color: #5A4A38; font: 600 14px 'Fredoka', sans-serif; cursor: pointer">Fund</button>
+<span style="font: 700 11px 'Nunito', sans-serif; color: #6B5440; line-height: 1.3">Starts when the research slot is free</span>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; align-items: stretch">
+<span style="font: 800 11px 'Nunito', sans-serif; letter-spacing: 0.08em; color: #6B5440; margin: 0 0 6px 4px">TOOLS</span>
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 16px; background: #FFF3C9; border: 3px solid #D9A520; box-shadow: 0 0 0 4px rgba(242, 194, 48, 0.35)">
+<div style="display: flex; align-items: center; gap: 6px"><img src="/_blob/18022b7a8aec435907c1b2afd5054d0f" alt="" style="width: 44px; height: 44px; margin: -4px"><span style="font: 600 15px 'Fredoka', sans-serif; line-height: 1.1">Sharpened Axes</span></div>
+<span style="font: 700 12px 'Nunito', sans-serif; color: #3A2A1A; line-height: 1.3">Woodcutters work 20% faster</span>
+<div style="height: 12px; border-radius: 6px; background: #FFFFFF; border: 2px solid #B8862F; overflow: hidden"><div style="height: 100%; width: {{ research.pct }}%; background: #F2C230"></div></div>
+<span style="font: 600 13px 'Fredoka', sans-serif; color: #5A3820">{{ research.pct }}% · {{ research.left }} left</span>
+</div>
+<div style="width: 4px; height: 18px; margin: 0 auto; background: #A89B82"></div>
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 16px; background: #E6DCC8; border: 3px dashed #A89B82; color: #5A4A38">
+<div style="display: flex; align-items: center; gap: 6px"><img src="/_blob/2575f1bb7a6415df7e8705d2dfe5010c" alt="" style="width: 44px; height: 44px; margin: -4px; opacity: 0.55"><span style="font: 600 15px 'Fredoka', sans-serif; line-height: 1.1">Frame Saw</span></div>
+<span style="font: 700 12px 'Nunito', sans-serif; line-height: 1.3">Sawmills work 20% faster</span>
+<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font: 600 13px 'Fredoka', sans-serif">
+<span style="display: inline-flex; align-items: center; padding-right: 6px"><img src="/_blob/a6f50a90a80ee6fe2e48281b80f7f2fc" alt="Coins" style="width: 24px; height: 24px">400</span>
+<span style="display: inline-flex; align-items: center; padding-right: 6px"><img src="/_blob/211e42a55b1d1b90e963a01e114410fc" alt="Planks" style="width: 24px; height: 24px">30</span>
+<span style="font: 700 12px 'Nunito', sans-serif">1h</span>
+</span>
+<span style="display: inline-flex; align-items: center; gap: 4px; font: 700 12px 'Nunito', sans-serif"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>Needs Sharpened Axes</span>
+</div>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isWelcome }}" hint-placeholder-val="{{ false }}">
+<div role="dialog" aria-label="While you were away" style="position: absolute; left: 22px; right: 22px; top: 150px; box-sizing: border-box; padding: 20px 18px 18px; display: flex; flex-direction: column; gap: 12px; background: #F4E8CF; border: 4px solid #7A4E2D; border-radius: 24px; box-shadow: 0 6px 0 #5A3820, 0 14px 30px rgba(30, 18, 8, 0.45)">
+<div style="align-self: center; margin-top: -40px; padding: 4px 20px; border-radius: 8px; background: #F2C230; border-bottom: 3px solid #B8862F; font: 600 20px 'Fredoka', sans-serif">Welcome back!</div>
+<p style="margin: 0; text-align: center; font: 700 14px 'Nunito', sans-serif; color: #6B5440">While you were away · 7 h 12 m</p>
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 16px; background: #FFF6E3; border: 2px solid #D8C49B">
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); font: 800 11px 'Nunito', sans-serif; letter-spacing: 0.06em; color: #6B5440"><span></span><span style="text-align: right">MADE</span><span style="text-align: right">USED</span></div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; font: 600 17px 'Fredoka', sans-serif"><span style="display: inline-flex; align-items: center; gap: 2px"><img src="/_blob/94b47eaa5de2abf71da9f1039b9b565f" alt="" style="width: 36px; height: 36px">Logs</span><span style="text-align: right; color: #2B5E26">+864</span><span style="text-align: right; color: #A23A28">−864</span></div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; font: 600 17px 'Fredoka', sans-serif"><span style="display: inline-flex; align-items: center; gap: 2px"><img src="/_blob/211e42a55b1d1b90e963a01e114410fc" alt="" style="width: 36px; height: 36px">Planks</span><span style="text-align: right; color: #2B5E26">+432</span><span style="text-align: right; color: #A23A28">−432</span></div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; font: 600 17px 'Fredoka', sans-serif"><span style="display: inline-flex; align-items: center; gap: 2px"><img src="/_blob/a6f50a90a80ee6fe2e48281b80f7f2fc" alt="" style="width: 36px; height: 36px">Coins</span><span style="text-align: right; color: #2B5E26">+2,160</span><span style="text-align: right; color: #6B5440">0</span></div>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 14px; background: #E3EFD6; border: 2px solid #3B7D34; font: 600 15px 'Fredoka', sans-serif"><img src="/_blob/4ab905f698f7e6f053e796b0c395758b" alt="" style="width: 40px; height: 40px; margin: -6px 0">Research done: Trade Charter</div>
+<p style="margin: 0; font: 700 13px 'Nunito', sans-serif; color: #6B5440; line-height: 1.35; text-align: center">Your town kept working the whole time. Production only pauses after 8 hours away.</p>
+<button onClick="{{ close }}" style="height: 54px; border: 0; border-radius: 16px; background: #3B7D34; box-shadow: inset 0 -5px 0 #2B5E26; color: #FFFFFF; font: 600 18px 'Fredoka', sans-serif; cursor: pointer">Back to town</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+<div role="status" style="position: absolute; left: 24px; right: 24px; bottom: 98px; padding: 12px 16px; border-radius: 16px; background: rgba(48, 31, 18, 0.94); color: #FFF6E3; font: 700 14px 'Nunito', sans-serif; text-align: center; line-height: 1.35; box-shadow: 0 4px 12px rgba(30, 18, 8, 0.4)">{{ toast }}</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"startScreen":{"editor":"enum","options":["city","inspector","build","research","welcome"],"default":"city","section":"Prototype"},"startPick":{"editor":"enum","options":["1","2","3","4","5"],"default":"1","section":"Prototype","tsType":"string"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const p = this.props || props || {};
+    this.state = {
+      t: 0,
+      screen: p.startScreen || 'city',
+      pick: Number(p.startPick || 1),
+      workers: { woodcutter: 2, sawmill: 3, trading_post: 2 },
+      toast: ''
+    };
+  }
+
+  componentDidMount() {
+    this.timer = setInterval(() => this.setState((s) => ({ t: s.t + 1 })), 1000);
+  }
+
+  componentDidUpdate(prev) {
+    if (prev.startScreen !== this.props.startScreen || prev.startPick !== this.props.startPick) {
+      this.setState({ screen: this.props.startScreen || 'city', pick: Number(this.props.startPick || 1) });
+    }
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.timer);
+    clearTimeout(this.toastTimer);
+  }
+
+  say(text) {
+    this.setState({ toast: text });
+    clearTimeout(this.toastTimer);
+    this.toastTimer = setTimeout(() => this.setState({ toast: '' }), 2800);
+  }
+
+  setWorkers(type, n) {
+    const w = Object.assign({}, this.state.workers);
+    w[type] = n;
+    this.setState({ workers: w });
+  }
+
+  renderVals() {
+    const s = this.state;
+    const t = s.t;
+    const IMG = {
+      coins: '/_blob/a6f50a90a80ee6fe2e48281b80f7f2fc',
+      logs: '/_blob/94b47eaa5de2abf71da9f1039b9b565f',
+      planks: '/_blob/211e42a55b1d1b90e963a01e114410fc',
+      house: '/_blob/1a8908c97f213a44e9a726da9d87c02a',
+      woodcutter: '/_blob/2bc73dbb1d1b380ce3e6dbad31a14f2c',
+      sawmill: '/_blob/4fb73164f2b20282f5e9c8b6e0034e19',
+      trading_post: '/_blob/18444ca3825ac5d08fbfcc6301373577',
+      construction_site: '/_blob/45d95dc297e730807d882b402e920688'
+    };
+    const NAME = { coins: 'coins', logs: 'logs', planks: 'planks' };
+    const stock = { coins: 85, logs: 14, planks: 1 };
+    const W = s.workers;
+    const total = 8;
+    const free = total - W.woodcutter - W.sawmill - W.trading_post;
+
+    // The M0 economy (core-instructions/23-mvp-content.md): labor in worker-seconds per cycle.
+    const logsMade = 60 * W.woodcutter;
+    const sawWants = 20 * W.sawmill;
+    const plankRate = Math.min(sawWants, Math.floor(logsMade / 2));
+    const tpWants = 60 * W.trading_post;
+    const tpUse = Math.min(tpWants, plankRate);
+    const net = { coins: 5 * tpUse, logs: logsMade - 2 * plankRate, planks: plankRate - tpUse };
+    const fmt = (n) => (n > 0 ? '+' + n + '/h' : n < 0 ? '−' + (-n) + '/h' : '0/h');
+    const tone = (n) => (n > 0 ? '#A5DE86' : n < 0 ? '#FFA48F' : '#E2D3B5');
+    const mmss = (sec) => {
+      const v = Math.max(0, Math.round(sec));
+      const m = Math.floor(v / 60);
+      const r = v % 60;
+      return m + ':' + (r < 10 ? '0' : '') + r;
+    };
+    const spin = (cycle) => (cycle > 0 ? Math.round(((t % cycle) / cycle) * 360) : 0);
+    const close = () => this.setState({ screen: 'city' });
+
+    const STATUS = {
+      woodcutter: () => {
+        const w = W.woodcutter;
+        if (!w) return { kind: 'idle', text: 'No workers: give it one to start', cycle: 0 };
+        return { kind: 'work', text: 'Working: one log every ' + 60 / w + ' s', cycle: 60 / w };
+      },
+      sawmill: () => {
+        const w = W.sawmill;
+        if (!w) return { kind: 'idle', text: 'No workers: give it one to start', cycle: 0 };
+        if (plankRate < sawWants) {
+          return { kind: 'short', input: 'logs', cycle: plankRate ? 3600 / plankRate : 0,
+            text: 'Short of logs: it gets ' + logsMade + ' logs/h and needs ' + 2 * sawWants + '/h' };
+        }
+        return { kind: 'work', text: 'Working: one plank every ' + 180 / w + ' s', cycle: 180 / w };
+      },
+      trading_post: () => {
+        const w = W.trading_post;
+        if (!w) return { kind: 'idle', text: 'No workers: give it one to start', cycle: 0 };
+        if (tpUse < tpWants) {
+          return { kind: 'short', input: 'planks', cycle: tpUse ? 7200 / tpUse : 0,
+            text: 'Short of planks: the Sawmill makes ' + plankRate + '/h, this needs ' + tpWants + '/h' };
+        }
+        return { kind: 'work', text: 'Working: 10 coins every ' + 120 / w + ' s', cycle: 120 / w };
+      }
+    };
+
+    const siteLeft = 30 - ((12 + t) % 30);
+    const site = { left: mmss(siteLeft), pct: Math.round(((30 - siteLeft) / 30) * 100) };
+    const elapsed = Math.min(1800, 630 + t);
+    const research = {
+      pct: Math.floor((elapsed / 1800) * 100),
+      left: mmss(1800 - elapsed),
+      deg: Math.round((elapsed / 1800) * 360)
+    };
+    research.aria = 'Research: Sharpened Axes, ' + research.pct + ' percent, ' + research.left + ' left. Open research';
+
+    const SPOTS = [
+      { id: 1, type: 'trading_post', x: 359.5, y: 370.3, sx: 350.8, sy: 312.5 },
+      { id: 2, type: 'sawmill', x: 248.0, y: 444.1, sx: 251.4, sy: 391.6 },
+      { id: 3, type: 'construction_site', x: 136.6, y: 517.9, sx: 136.6, sy: 474.0 },
+      { id: 4, type: 'woodcutter', x: 80.8, y: 554.8, sx: 80.8, sy: 508.9 },
+      { id: 5, type: 'house', x: 192.3, y: 333.4, sx: 192.3, sy: 279.5 },
+      { id: 6, type: 'house', x: 25.1, y: 444.1, sx: 25.1, sy: 390.3 }
+    ];
+    const LABEL = { trading_post: 'Trading Post', sawmill: 'Sawmill', construction_site: 'Building site',
+      woodcutter: "Woodcutter's Hut", house: 'Cottage' };
+    const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+    const open = (id) => () => this.setState({ screen: 'inspector', pick: id });
+    const spots = SPOTS.map((p) => ({
+      label: LABEL[p.type] + ': open details',
+      left: Math.round(clamp(p.x - 36, 0, 318)),
+      top: Math.round(p.y - 54),
+      shadow: s.screen === 'inspector' && s.pick === p.id ? '0 0 0 3px #F2C230' : 'none',
+      open: open(p.id)
+    }));
+
+    const bubbles = [];
+    SPOTS.forEach((p) => {
+      const left = Math.round(clamp(p.sx - 20, 2, 348));
+      const top = Math.round(p.sy - 26);
+      if (p.type === 'construction_site') {
+        bubbles.push({ left, top, color: '#3B7D34', deg: Math.round((site.pct / 100) * 360), icon: IMG.house,
+          alert: false, label: site.left, aria: 'Building a Cottage, ' + site.left + ' left' });
+        return;
+      }
+      const st = STATUS[p.type] ? STATUS[p.type]() : null;
+      if (!st) return;
+      const out = { woodcutter: 'logs', sawmill: 'planks', trading_post: 'coins' }[p.type];
+      if (st.kind === 'idle') {
+        bubbles.push({ left, top, color: '#B8402C', deg: 360, icon: '/_blob/64a92c5bfeacf72d356c342231c01a7e',
+          alert: true, label: false, aria: LABEL[p.type] + ': no workers' });
+      } else if (st.kind === 'short') {
+        bubbles.push({ left, top, color: '#D9A520', deg: spin(st.cycle), icon: IMG[st.input], alert: true, label: false,
+          aria: LABEL[p.type] + ': short of ' + st.input });
+      } else {
+        bubbles.push({ left, top, color: '#3B7D34', deg: spin(st.cycle), icon: IMG[out], alert: false, label: false,
+          aria: LABEL[p.type] + ': working' });
+      }
+    });
+
+    const costChips = (list) => list.map((c) => {
+      const ok = stock[c[0]] >= c[1];
+      return { icon: IMG[c[0]], alt: NAME[c[0]], qty: c[1], bg: ok ? '#FFF6E3' : '#F6D6CC', fg: ok ? '#3A2A1A' : '#A23A28' };
+    });
+    const needText = (list) => {
+      const parts = list.filter((c) => stock[c[0]] < c[1]).map((c) => (c[1] - stock[c[0]]) + ' more ' + NAME[c[0]]);
+      return parts.length ? 'Need ' + parts.join(' and ') : '';
+    };
+
+    const DEF = {
+      woodcutter: { name: "Woodcutter's Hut", max: 2, next: 4, ins: [], out: ['logs', 1], up: [['coins', 150], ['planks', 20]], upTime: '2m' },
+      sawmill: { name: 'Sawmill', max: 3, next: 6, ins: [['logs', 2]], out: ['planks', 1], up: [['coins', 250], ['planks', 30]], upTime: '3m' },
+      trading_post: { name: 'Trading Post', max: 2, next: 4, ins: [['planks', 2]], out: ['coins', 10], up: [['coins', 400], ['planks', 40]], upTime: '5m' },
+      house: { name: 'Cottage', up: [['coins', 120], ['logs', 30]], upTime: '1m 30s' },
+      construction_site: { name: 'Building site' }
+    };
+
+    const spot = SPOTS.find((p) => p.id === s.pick) || SPOTS[0];
+    const type = spot.type;
+    const d = DEF[type];
+    const sel = {
+      name: d.name, icon: IMG[type], isProducer: !!STATUS[type], isHouse: type === 'house',
+      isSite: type === 'construction_site', hasUpgrade: !!d.up, hasIns: !!(d.ins && d.ins.length),
+      sub: type === 'construction_site' ? 'A new Cottage is going up' : 'Level 1',
+      ins: [], out: { icon: IMG.logs, alt: '', qty: '' }, pips: [], upCost: [], upNeed: false, tip: false,
+      workers: 0, max: 0, cycle: '', rate: '', status: '', statusColor: '#3A2A1A', upText: '', upTime: '',
+      decOff: true, incOff: true, decBg: '#CFC3AB', incBg: '#CFC3AB', upBg: '#CFC3AB', upFg: '#5A4A38',
+      dec: () => {}, inc: () => {}, upgrade: () => {}
+    };
+    if (sel.isProducer) {
+      const w = W[type];
+      const st = STATUS[type]();
+      const actual = { woodcutter: logsMade + ' logs/h', sawmill: plankRate + ' planks/h · uses ' + 2 * plankRate + ' logs/h',
+        trading_post: 5 * tpUse + ' coins/h · uses ' + tpUse + ' planks/h' }[type];
+      sel.workers = w;
+      sel.max = d.max;
+      sel.ins = d.ins.map((c) => ({ icon: IMG[c[0]], alt: NAME[c[0]], qty: c[1] }));
+      sel.out = { icon: IMG[d.out[0]], alt: NAME[d.out[0]], qty: d.out[1] };
+      sel.cycle = st.cycle ? 'every\n' + Math.round(st.cycle) + ' s' : 'stopped';
+      sel.rate = w ? actual : '0/h';
+      sel.status = st.text;
+      sel.statusColor = st.kind === 'work' ? '#2B5E26' : st.kind === 'short' ? '#8A5A00' : '#A23A28';
+      sel.tip = type === 'trading_post' && w > 1 && 60 * (w - 1) >= plankRate
+        ? 'Tip: with ' + (w - 1) + ' worker it earns the same and frees a worker.' : false;
+      sel.pips = [];
+      for (let i = 0; i < d.next; i++) {
+        sel.pips.push(i < w ? { bg: '#3B7D34', edge: '#2B5E26' } : i < d.max ? { bg: '#FFF6E3', edge: '#7A4E2D' }
+          : { bg: '#E6DCC8', edge: '#C9BDA5' });
+      }
+      sel.decOff = w <= 0;
+      sel.incOff = w >= d.max || free <= 0;
+      sel.decBg = sel.decOff ? '#CFC3AB' : '#B8402C';
+      sel.incBg = sel.incOff ? '#CFC3AB' : '#3B7D34';
+      sel.dec = () => this.setWorkers(type, Math.max(0, w - 1));
+      sel.inc = () => {
+        if (w >= d.max) return this.say('Upgrade to level 2 for more workplaces');
+        if (free <= 0) return this.say('No free workers: build a Cottage');
+        this.setWorkers(type, w + 1);
+      };
+      sel.upText = 'workers ' + d.max + ' → ' + d.next;
+    }
+    if (sel.isHouse) sel.upText = 'homes for 4 → 6 workers';
+    if (d.up) {
+      const need = needText(d.up);
+      sel.upCost = costChips(d.up);
+      sel.upTime = d.upTime;
+      sel.upNeed = need || false;
+      sel.upBg = need ? '#CFC3AB' : '#3B7D34';
+      sel.upFg = need ? '#5A4A38' : '#FFFFFF';
+      sel.upgrade = () => this.say(need ? need + ' to upgrade' : 'Upgrade started');
+    }
+
+    const CARDS = [
+      { type: 'house', name: 'Cottage', cost: [['coins', 50]], time: '30s', line: 'Home for 4 workers' },
+      { type: 'woodcutter', name: "Woodcutter's Hut", cost: [['coins', 80]], time: '1m', line: 'Makes logs · 120/h at 2 workers' },
+      { type: 'sawmill', name: 'Sawmill', cost: [['coins', 150], ['logs', 30]], time: '2m', line: '2 Logs → 1 Plank · 60/h at 3 workers' },
+      { type: 'trading_post', name: 'Trading Post', cost: [['coins', 200], ['planks', 20]], time: '3m', line: '2 Planks → 10 Coins · 600/h at 2 workers' }
+    ];
+    const cards = CARDS.map((c) => {
+      const hint = needText(c.cost);
+      return {
+        name: c.name, icon: IMG[c.type], time: c.time, line: c.line, costs: costChips(c.cost),
+        hint: hint || false, fade: hint ? 0.6 : 1, bg: hint ? '#EFE3CB' : '#FFF6E3', edge: hint ? '#C9BDA5' : '#7A4E2D',
+        aria: c.name + (hint ? ', ' + hint : ''),
+        pick: () => {
+          if (hint) return this.say(hint + ' for the ' + c.name);
+          this.setState({ screen: 'city' });
+          this.say('Tap a free tile to place the ' + c.name);
+        }
+      };
+    });
+
+    return {
+      stock, free, spots, bubbles, sel, site, research, cards,
+      yes: true,
+      rate: { coins: fmt(net.coins), logs: fmt(net.logs), planks: fmt(net.planks),
+        coinsTone: tone(net.coins), logsTone: tone(net.logs), planksTone: tone(net.planks) },
+      workersAria: free + ' of 8 workers free',
+      freeText: free === 1 ? '1 free worker in town' : free + ' free workers in town',
+      sheetOpen: s.screen !== 'city',
+      isInspector: s.screen === 'inspector',
+      isBuild: s.screen === 'build',
+      isResearch: s.screen === 'research',
+      isWelcome: s.screen === 'welcome',
+      toast: s.toast || false,
+      close,
+      openBuild: () => this.setState({ screen: 'build' }),
+      openResearch: () => this.setState({ screen: 'research' }),
+      openWelcome: () => this.setState({ screen: 'welcome' }),
+      openMarket: () => this.say('The market opens in Era II'),
+      slotBusy: () => this.say('One research at a time: Sharpened Axes is running')
+    };
+  }
+}
+</script>
+</body>
+</html>

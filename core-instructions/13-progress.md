@@ -8,9 +8,9 @@
 - **Task:** CR-0005-T1 · adopt `art/` (move the folder, Blender build writes the models into the Unity `Art/` folder, README as a handbook page)
 - **Branch:** `task/CR-0005-T1-adopt-art` (from `main` = `bc4a597`; the CR's approval commit is cherry-picked in)
 - **Build log entry:** `docs/build-log/2026/2026-11-01-02-CR-0005-T1.md`
-- **Last green commit:** — (nothing built yet)
-- **Done steps:** write-ahead
-- **Next step:** step 1 of the plan: move `citybuild-assets/` to `art/`, the FBX files into `client/CityBuilder/Assets/_Project/Art/Models/`, ignore rules.
+- **Last green commit:** the head of `task/CR-0005-T1-adopt-art` (check-docs OK, handbook builds, Blender build passes, Repository tests 22 / 22)
+- **Done steps:** all four plan steps (folder moved, Blender build repointed, README as a handbook page, docs)
+- **Next step:** `/finish-task` (Definition of Done, close the Docs impact rows, PR).
 - **Open questions for the owner:** M0-49: decision 7 (status label moved to the bottom left, toasts below the HUD), the [MANUAL] look at the HUD (Follow-ups); M0-48: decision 1 (`ConnectionStatusView` split out of `GameRoot`); M0-47: decision 4 (new `CommandSender.Completed` event in `Net`), decision 2 (no builder count or building name in a sentence); M0-46: the ghost's transparent shader variant on a device build (follow-up); M0-45: decision 1 (item names are plural, so `1 Planks`; a singular name in the content is your call), decision 8 (cards use the displayed city, not the raw snapshot), decision 11 (I changed M0-43's `CityInputReader`/`CityWorld` so a press on the menu never reaches the ground); the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
