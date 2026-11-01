@@ -121,3 +121,4 @@ flowchart LR
 ## Other test documents
 - `LOCAL-E2E.md`: the manual check of the Unity client against the real server on one machine (M0-42).
 - `UNITY-SMOKE-TEST.md`: the manual smoke test of a real build *(planned, M0-72)*.
+- `server-panel/goods.sql` (the panel's goods script, CR-0006) is tested by `ServerPanel/GoodsPanelScriptTests` in the integration project: it runs the file with the container's own `psql` through `PostgresServer.RunPsqlFileAsync`. The panel's argument checks have no database: `bash server-panel/test-goods.sh` (not run by CI yet; the workflow files are protected, `15`).
