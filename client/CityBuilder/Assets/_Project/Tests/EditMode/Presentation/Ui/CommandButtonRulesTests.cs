@@ -2,6 +2,7 @@
 
 using System;
 using CityBuilder.Client.Core;
+using CityBuilder.Client.Net;
 using CityBuilder.Client.Presentation.Build;
 using CityBuilder.Client.Presentation.City;
 using CityBuilder.Client.Presentation.Inspector;
@@ -9,6 +10,7 @@ using CityBuilder.Client.Presentation.Research;
 using CityBuilder.Client.Presentation.Ui;
 using CityBuilder.Client.Tests.EditMode.Presentation.Build;
 using CityBuilder.Client.Tests.EditMode.Presentation.Hud;
+using CityBuilder.Simulation;
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.State;
 using NUnit.Framework;
