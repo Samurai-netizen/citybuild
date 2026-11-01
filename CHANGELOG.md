@@ -6,6 +6,7 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
 ## Unreleased
 
 ### Added
+- Connection states in the UI: while the client is offline, the server has a fault or the login is refused, the city stays on screen and a banner under the HUD says so, with "Last synced 3m ago" and a Try again / Sign in again button; Place, the worker stepper, Upgrade and Finance are off with the reason (`CommandAvailability`); a game that does not match the server gets a blocking "Update needed" screen; a command that ends with no answer or a server fault asks for a poll at once (M0-55).
 - Waiting-loop review: the welcome-back threshold counts real time at a dev time scale, a command refused for an expired token leads to a new login at once, `PredictionWatch` logs prediction mismatches in development, the [MANUAL] run at 60 times the speed, and `BootstrapSceneTests` no longer leave their `GameRoot` behind (M0-54).
 - Instruction kit: specs, AI workflow (session protocol, change control, build log, documentation system), Claude Code skills,
   subagents and hooks, git hooks, CI, M0 plan with 84 tasks (KIT).

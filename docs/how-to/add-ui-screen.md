@@ -9,7 +9,7 @@ screen or view" in `core-instructions/19-change-recipes.md` is the checklist; th
 - Know which state it shows and where it comes from: `DisplayCity.Current` (the latest snapshot advanced to now), the `GameContent`, the
   connection state. A screen reads these; it never keeps its own copy of a balance, a cost or a timer.
 - Know what a tap does. Commands go through `CommandSender`, never through `ApiClient` (`.claude/rules/unity.md`). A hint from the client
-  (affordable, free builder, locked) is a hint only: the server checks again, so a hint never disables a button that the server would accept.
+  (affordable, free builder, locked) is a hint only: the server checks again, so a hint never disables a button that the server would accept. The one exception is the connection (M0-55): while the client is not `Connected` no command can be sent, so `CommandAvailability` switches every button that sends one off and names the reason; a screen with such a button takes the availability from `GameRoot` (`SetCommandAvailability`) and shows the reason as its note.
 
 ## The shape: view-model, thin component, layout
 | Part | Where | What it is |
@@ -54,7 +54,7 @@ new stock shows within a second. No singleton, no `Find*` call.
 **6. Do not let taps fall through.** The ground reads the Input System directly, so a tap on a card would also select the tile behind it.
 `BuildMenu.IsOverUi(screenPosition)` asks the panel (`panel.Pick`, after `ScreenPoint.ToTopLeft`: the Input System counts pixels from the bottom left, a panel from the top left, and `ScreenToPanel` does not flip), `GameRoot` hands it to `CityWorld.IsPointerOverUi`, and
 `CityInputReader` leaves a press that started over the UI to the UI. Any screen with elements that take taps needs its area covered by
-that predicate: a second screen means extending it, not replacing it: `GameRoot.IsOverUi` ors the menu's, the placement bar's, the building inspector's, the research screen's and the welcome-back report's `IsOverUi`, and both use `UiRoot.IsOver` / `UiRoot.PadBySafeArea` (`Presentation/Ui/`).
+that predicate: a second screen means extending it, not replacing it: `GameRoot.IsOverUi` ors the menu's, the placement bar's, the building inspector's, the research screen's, the welcome-back report's and the connection banner's `IsOverUi`, and both use `UiRoot.IsOver` / `UiRoot.PadBySafeArea` (`Presentation/Ui/`).
 
 **7. Respect the safe area.** `SafeAreaInsets.From(Screen.safeArea, …)` turns the notch and the bars into panel units; the component adds
 them to its root padding when the layout is computed (`GeometryChangedEvent`).

@@ -4,20 +4,20 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** M0-55 · connection states in the UI (`[S]`, Sonnet 5.5); last completed: M0-54 (PR #76 merged)
-- **Branch:** `task/M0-55-connection-states-ui` (from `main` = `1563754`)
-- **Build log entry:** `docs/build-log/2026/2026-11-01-13-M0-55.md` (In progress)
-- **Last green commit:** `a46c3b6` (step 3). The head is a `wip` commit: steps 4 and 5 are written and **not yet seen green**
-- **Done steps:** write-ahead; steps 1, 2, 3 (green); step 4 banner + flow + `GameRoot` and step 5 `ReportCommandError` / `PollFinished` written, unverified
-- **Next step:** read the full Unity run on the copy (`<scratchpad>/run-unity-copy.sh`; results in `<scratchpad>/unity-out/`) and fix failures; then step 6: docs (Docs impact rows), `check-docs.sh`, handbook build, `/finish-task`. A [MANUAL] look at the banner for the owner (stop the server, watch the banner) goes into `client/README.md`.
-- **Open questions for the owner:** CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-54: the dev database still runs the fast clock until the owner does step 7 of the waiting-loop run (`LOCAL-E2E.md`).
-- **Known broken / do not touch:** — (do not touch the owner's open Unity Editor; `ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once, flaky, see the build log)
+- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** — (last completed: M0-55 · connection states in the UI; the PR is open, the owner merges it)
+- **Branch:** `task/M0-55-connection-states-ui` (from `main` = `1563754`) until the owner merges
+- **Build log entry:** `docs/build-log/2026/2026-11-01-13-M0-55.md` (Done)
+- **Last green commit:** the head of `task/M0-55-connection-states-ui`
+- **Done steps:** all of M0-55
+- **Next step:** the owner merges the PR. Then `/start-task M0-56` (proving idempotent retries, `[O]`: use Opus 5.5).
+- **Open questions for the owner:** CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-54: the dev database still runs the fast clock until the owner does step 7 of the waiting-loop run (`LOCAL-E2E.md`). M0-55: the [MANUAL] look at the connection states (`client/README.md`).
+- **Known broken / do not touch:** — (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55)
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 54 / 85
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 55 / 85
 
 | Area | State | Notes |
 |---|---|---|
@@ -31,7 +31,7 @@
 | Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) and M0-05 (Unity tests, `test-unity.sh`) merged (PR #8, #12); API client and DTOs M0-37 merged (PR #49); auth and content on the client M0-38 merged (PR #50); the city store and display prediction M0-39 merged (PR #51); the command sender M0-40 merged (PR #52); polling and lifecycle M0-41 merged (PR #53); end-to-end check M0-42 merged (PR #57; `docs/testing/LOCAL-E2E.md`) |
 | Unity city view + placement | in progress | grid, ground and camera M0-43 merged (PR #58; `CityWorld`, drag/pinch/wheel/tap, tile selection); building views M0-44 merged (PR #59; `CityView`, `BuildingLooks`, `BuildingViewFactory`); build menu M0-45 merged (PR #60; `BuildMenu`, `BuildCardModel`, `BuildMenuModel`; a press over the UI stays off the ground); placement flow M0-46 merged (PR #61; `PlacementFlow`, `PlacementFlowModel`, `PlacementBar`, `PlacementGhosts`); feedback for every result M0-47 merged (PR #62; `FeedbackMessages`, `ToastQueue`, `ToastHost`, `CommandFeedback`, `CommandSender.Completed`); client review M0-48 merged (PR #63; `ConnectionStatusView`) |
 | Era I art (CR-0005) | in progress | T1 `art/` adopted, merged (PR #66); T2 (first import, `ArtImportPostprocessor`) merged (PR #67); T3 (models in the city) merged (PR #68); T4 (icons) merged (PR #69); M0-50 (building status, uses the anchors and the site) merged (PR #70) |
-| Inspector, worker stepper, research screen, HUD | in progress | connection states M0-55 in progress; waiting-loop review M0-54 merged (PR #76) (`PredictionWatch`; no mismatch in the owner's run at scale 60); welcome-back report M0-53 merged (PR #73) (`WelcomeBackModel`, `WelcomeBackPanel`, `WelcomeBackFlow`, `SettlementSummary`, `ResearchEffectText`); research screen M0-52 merged (PR #72) (`ResearchScreenModel`, `ResearchNodeModel`, `ResearchScreen`, `ResearchFlow`); building inspector with the worker stepper M0-51 merged (PR #71) (`BuildingInspectorModel`, `BuildingInspector`, `InspectorFlow`, `ItemText`); HUD M0-49 merged (PR #64) (`HudView`, `HudModel`, `ItemChipModel`, `ResearchRingModel`, `PerHourText`); building status visuals M0-50 merged (PR #70) (`BuildingStatusModel`, `BuildingStatusView`, `StatusArt`, `StalledTint`) |
+| Inspector, worker stepper, research screen, HUD | in progress | connection states M0-55 in review (`CommandAvailability`, `ConnectionBannerModel`, `ConnectionBanner`, `ConnectionFlow`); waiting-loop review M0-54 merged (PR #76) (`PredictionWatch`; no mismatch in the owner's run at scale 60); welcome-back report M0-53 merged (PR #73) (`WelcomeBackModel`, `WelcomeBackPanel`, `WelcomeBackFlow`, `SettlementSummary`, `ResearchEffectText`); research screen M0-52 merged (PR #72) (`ResearchScreenModel`, `ResearchNodeModel`, `ResearchScreen`, `ResearchFlow`); building inspector with the worker stepper M0-51 merged (PR #71) (`BuildingInspectorModel`, `BuildingInspector`, `InspectorFlow`, `ItemText`); HUD M0-49 merged (PR #64) (`HudView`, `HudModel`, `ItemChipModel`, `ResearchRingModel`, `PerHourText`); building status visuals M0-50 merged (PR #70) (`BuildingStatusModel`, `BuildingStatusView`, `StatusArt`, `StalledTint`) |
 | Dev tooling (CR-0006) | done | server panel goods for the `devtest` account: `server-panel/goods.sql`, `panel.sh goods`, tests (CR-0006-T1) |
 | Resilience (limits, retries, logging) | in progress | error catalogue, global handler, rate limits and input limits M0-34 merged (PR #46); logging, correlation and the dev time scale M0-35 merged (PR #47) |
 | Docs automation (DocTools) + docs completeness | in progress | handbook, Pages, docs-as-code checks and a full audit: CR-0002 done (PR #27); code documentation CR-0003 done (PR #29); DocTools is M0-61 |

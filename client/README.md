@@ -158,4 +158,17 @@ The tests check the words, the threshold and the wiring; only a person can say t
    Open the **Build** sheet or the **Research** panel after Continue: they work as before. Let the game run a few minutes: the report never comes back by itself.
 4. Tell the AI coder "welcome-back report looks right", or what looks wrong. Stop Play mode without saving the scene.
 
-Last updated: M0-53
+## [MANUAL] Look at the connection states (M0-55)
+The tests check the words, the rule for every button and the wiring; only a person can say the banner sits well. Nothing here is saved or committed. Use the
+server of `docs/testing/LOCAL-E2E.md` and press **Play**, then:
+1. Stop the server (Ctrl+C in its terminal) and wait for the next poll (up to 2 minutes), or press a button that sends a command (Place on a free tile) and wait a few
+   seconds. A strip appears under the HUD at the left: "Offline. The city shown may be out of date.", "Last synced …" and **Try again**. The city stays, the clocks go on.
+2. The buttons that send a command are dimmed with the words "You are offline": **Place** (pick a card and a tile first: the bar's hint line says it), − and + and **Upgrade** in the
+   inspector, **Finance** on every research node. The build cards can still be picked.
+3. Check the layout: the strip must not touch the HUD or run over the inspector at the right; a toast (try a refused command later) must not hide it; on a narrow screen the text wraps and **Try again** stays easy to hit.
+4. Press **Try again** with the server still stopped: the button reads "Trying…" and is dimmed until the answer fails, then it is back. Start the server and press it again: the strip goes and the buttons work.
+5. To see the blocking screen, copy `server/content/mvp-content.json` to a file of your own and change its `contentVersion` (for example to `mvp-2`), stop the server and start it again with that file (`dotnet run --project server/src/CityBuilder.Api -- --Content:FilePath=<your file>`), then press **Try again** (or wait for the next poll): a dark
+   screen with "Update needed" covers everything and no press reaches the city. **Check again** asks once more. Stop it by pressing Stop in the Editor.
+6. Tell the AI coder "connection states look right", or what looks wrong. Stop Play mode without saving the scene.
+
+Last updated: M0-55
