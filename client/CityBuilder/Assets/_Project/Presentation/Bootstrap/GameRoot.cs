@@ -8,6 +8,7 @@ using CityBuilder.Client.Presentation.City;
 using CityBuilder.Client.Presentation.Feedback;
 using CityBuilder.Client.Presentation.Hud;
 using CityBuilder.Client.Presentation.Inspector;
+using CityBuilder.Client.Presentation.Ui;
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.State;
 using UnityEngine;
@@ -23,6 +24,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
     /// It shows the top HUD (<see cref="HudView"/>) over the displayed city and the connection state.
     /// It also shows the build menu (<see cref="BuildMenu"/>), whose cards follow the displayed city, and tells the ground that a press on the menu or on the placement bar is not its own.
     /// It joins the menu, the ground, the placement bar and the command sender into the placement flow (<see cref="PlacementFlow"/>).
+    /// The menus the player opens and closes (the build menu's sheet, the inspector) are one <see cref="MenuGroup"/>: opening one closes the others.
     /// It also shows the building inspector (<see cref="BuildingInspector"/>) for the building on the tapped tile and joins it to the command sender (<see cref="InspectorFlow"/>).
     /// It also drives the connection monitor: it polls the city, goes quiet while the app is paused, and the status view says how the connection stands.
     /// </summary>
@@ -64,6 +66,9 @@ namespace CityBuilder.Client.Presentation.Bootstrap
 
         /// <summary>The top HUD; null until the start has connected, or when its assets are missing.</summary>
         private HudView? _hud;
+
+        /// <summary>The menus the player opens and closes as one group: opening one closes the others (owner directive OD-16).</summary>
+        private readonly MenuGroup _menus = new MenuGroup();
 
         /// <summary>The build menu; null until the start has connected, or when its assets are missing.</summary>
         private BuildMenu? _buildMenu;
@@ -287,10 +292,11 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                 return;
             }
 
-            _buildMenu = BuildMenu.Create(transform, new BuildMenuModel(content, city));
-            if (_buildMenu != null)
+            BuildMenu? menu = _buildMenu = BuildMenu.Create(transform, new BuildMenuModel(content, city));
+            if (menu != null)
             {
                 _world!.IsPointerOverUi = IsOverUi;
+                menu.Opened += _menus.Join(() => menu.SetOpen(false)).NotifyOpened;
             }
         }
 
@@ -345,7 +351,8 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                 return;
             }
 
-            _inspectorFlow = new InspectorFlow(content, _world, _commandSender, _inspector, _placement?.Model, destroyCancellationToken);
+            var flow = _inspectorFlow = new InspectorFlow(content, _world, _commandSender, _inspector, _placement?.Model, destroyCancellationToken);
+            _inspector.Opened += _menus.Join(flow.Close).NotifyOpened;
             _world.IsPointerOverUi = IsOverUi;
         }
 

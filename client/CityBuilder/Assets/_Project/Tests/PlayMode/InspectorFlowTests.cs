@@ -9,6 +9,7 @@ using CityBuilder.Client.Net;
 using CityBuilder.Client.Presentation.Build;
 using CityBuilder.Client.Presentation.City;
 using CityBuilder.Client.Presentation.Inspector;
+using CityBuilder.Client.Presentation.Ui;
 using CityBuilder.Simulation;
 using CityBuilder.Simulation.Content;
 using NUnit.Framework;
@@ -23,6 +24,7 @@ namespace CityBuilder.Client.Tests.PlayMode
     /// The building inspector end to end in a running scene (M0-51), with the real world, city store, command sender and screen over a
     /// transport that answers when the test says: tap a building and see its words, press − and + and see the target pending, then sent once
     /// after the debounce, press Upgrade twice and see one request, see the disabled reasons, and see the placement flow keep the ground to itself.
+    /// With the build menu joined to the inspector in one <see cref="MenuGroup"/>, as <c>GameRoot</c> does (owner directive OD-16), opening either closes the other.
     /// The fixture city has two cottages (tiles 0 and 1), a sawmill with 3 of 3 workers at tile 2 and a woodcutter with 2 of 2 at tile 4, with
     /// 220 coins, 10 logs and 10 planks and 3 free workers.
     /// </summary>
@@ -51,6 +53,9 @@ namespace CityBuilder.Client.Tests.PlayMode
 
         /// <summary>The placement flow's state, which keeps the inspector closed while it has something in progress.</summary>
         private PlacementFlowModel _placement = null!;
+
+        /// <summary>The build menu, joined to the inspector in one group.</summary>
+        private BuildMenu _menu = null!;
 
         /// <summary>The screen under test.</summary>
         private BuildingInspector _inspector = null!;
@@ -103,6 +108,10 @@ namespace CityBuilder.Client.Tests.PlayMode
             _cancel = new CancellationTokenSource();
             _inspector = BuildingInspector.Create(_host.transform)!;
             _flow = new InspectorFlow(content, _world, _sender, _inspector, _placement, _cancel.Token);
+            _menu = BuildMenu.Create(_host.transform, new BuildMenuModel(content, _display.Current!))!;
+            var menus = new MenuGroup();
+            _menu.Opened += menus.Join(() => _menu.SetOpen(false)).NotifyOpened;
+            _inspector.Opened += menus.Join(_flow.Close).NotifyOpened;
             _display.Changed += () => _flow.Update(_display.Current!);
             _flow.Update(_display.Current!);
             yield return null;
@@ -335,6 +344,60 @@ namespace CityBuilder.Client.Tests.PlayMode
 
             Assert.That(ButtonOf(BuildingInspector.UpgradeName).enabledSelf, Is.True);
             Assert.That(LabelOf(BuildingInspector.UpgradeNoteName).text, Is.Empty);
+        }
+
+        /// <summary>Opening the build menu's sheet closes the inspector and drops its tile.</summary>
+        [Test]
+        public void OpeningTheBuildSheet_ClosesTheInspector()
+        {
+            TapTile(2, 0);
+            Assert.That(_inspector.IsShown, Is.True);
+
+            _menu.SetOpen(true);
+
+            Assert.That(_menu.IsOpen, Is.True);
+            Assert.That(_inspector.IsShown, Is.False);
+            Assert.That(_world.Selection!.Selected, Is.Null);
+        }
+
+        /// <summary>Opening the inspector (tapping a building) closes the build menu's sheet.</summary>
+        [Test]
+        public void OpeningTheInspector_ClosesTheBuildSheet()
+        {
+            _menu.SetOpen(true);
+
+            TapTile(2, 0);
+
+            Assert.That(_inspector.IsShown, Is.True);
+            Assert.That(_menu.IsOpen, Is.False);
+        }
+
+        /// <summary>Another building tapped while the inspector is shown, and the once-a-second refresh, are not openings: a sheet opened meanwhile is not closed by them.</summary>
+        [Test]
+        public void ARefreshOrAnotherBuilding_IsNotAnOpening()
+        {
+            int opened = 0;
+            _inspector.Opened += () => opened++;
+            TapTile(2, 0);
+            Assert.That(opened, Is.EqualTo(1));
+
+            _flow.Update(_display.Current!);
+            TapTile(4, 0);
+
+            Assert.That(_inspector.IsShown, Is.True);
+            Assert.That(opened, Is.EqualTo(1));
+        }
+
+        /// <summary>Opening the sheet to pick another card while the placement flow holds a tile does not drop the tile: the tile is the placement's, not the inspector's.</summary>
+        [Test]
+        public void OpeningTheBuildSheet_WhilePlacing_KeepsThePickedTile()
+        {
+            _placement.SetType(new BuildingTypeId("house"));
+            TapTile(3, 0);
+
+            _menu.SetOpen(true);
+
+            Assert.That(_world.Selection!.Selected, Is.EqualTo(new GridCoordinate(3, 0)));
         }
 
         /// <summary>A flow that was disposed no longer follows the ground.</summary>

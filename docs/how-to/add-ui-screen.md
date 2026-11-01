@@ -64,6 +64,7 @@ and checks the tree: one card per type, a locked card's lock text and disabled s
 updates the cards, that the sheet opens. Click a card with the component's `Tap`, not with a fake pointer.
 
 ## Checklist
+- [ ] A screen the player opens and closes (a menu, a sheet, a panel) joins the `MenuGroup` in `GameRoot` (owner directive OD-16): `Join(closeAction)` and a call of `NotifyOpened()` when it goes from closed to open, so opening it closes the others and theirs close it. The close action is safe when it is closed already and keeps no state that belongs to another flow. A bar or toast of a flow is not a menu.
 - [ ] Texts and flags in a plain class with EditMode tests; no game number written in code.
 - [ ] Layout in `Resources/UI/`, a comment at the top of each file, a layout test for the names the component looks up.
 - [ ] A picture comes from `UiIcons` (an icon of an item, a building type or a research node, found by content id; `UiIcons.Show(element, icon)` sets it as the element's background), never from a path written in the screen. A new content id needs a PNG named `item_<id>`, `bld_<typeId>` or `res_<id>` in `Resources/UI/Icons/` (`art/README.md`); `UiIconsTests` fails without it. The screen keeps its text when there is no picture.

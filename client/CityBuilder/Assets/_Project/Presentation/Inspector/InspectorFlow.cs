@@ -99,6 +99,18 @@ namespace CityBuilder.Client.Presentation.Inspector
             Refresh();
         }
 
+        /// <summary>
+        /// Closes the inspector because another menu opened (<see cref="Ui.MenuGroup"/>): the tile is dropped, which hides the screen. Does nothing
+        /// while the inspector is hidden: the tile may then be the placement flow's, and dropping it would lose the player's pick.
+        /// </summary>
+        public void Close()
+        {
+            if (!_disposed && _inspector.IsShown)
+            {
+                _world.Selection!.ClearSelection();
+            }
+        }
+
         /// <summary>Stops listening to everything it listened to. Safe to call twice.</summary>
         public void Dispose()
         {

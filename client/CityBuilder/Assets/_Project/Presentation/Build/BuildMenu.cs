@@ -113,6 +113,9 @@ namespace CityBuilder.Client.Presentation.Build
         /// <summary>Whether the sheet of cards is open.</summary>
         public bool IsOpen { get; private set; }
 
+        /// <summary>Raised when the sheet goes from closed to open (never for a call that changes nothing), so the other menus can close (<see cref="Ui.MenuGroup"/>).</summary>
+        public event Action? Opened;
+
         /// <summary>The model the screen shows; null before <see cref="Create"/> succeeded.</summary>
         public BuildMenuModel? Model => _model;
 
@@ -165,9 +168,10 @@ namespace CityBuilder.Client.Presentation.Build
             return _model != null && _model.TryToggle(typeId);
         }
 
-        /// <summary>Opens or closes the sheet of cards.</summary>
+        /// <summary>Opens or closes the sheet of cards. Opening a closed sheet raises <see cref="Opened"/>.</summary>
         public void SetOpen(bool open)
         {
+            bool opens = open && !IsOpen;
             IsOpen = open;
             if (_panel != null)
             {
@@ -177,6 +181,11 @@ namespace CityBuilder.Client.Presentation.Build
             if (_toggle != null)
             {
                 _toggle.text = open ? "Close" : "Build";
+            }
+
+            if (opens)
+            {
+                Opened?.Invoke();
             }
         }
 

@@ -120,6 +120,9 @@ namespace CityBuilder.Client.Presentation.Inspector
         /// <summary>Raised when the player presses the close button.</summary>
         public event Action? CloseRequested;
 
+        /// <summary>Raised when the panel goes from hidden to shown (not when a shown panel gets another model), so the other menus can close (<see cref="MenuGroup"/>).</summary>
+        public event Action? Opened;
+
         /// <summary>The root of the inspector's element tree; null when the layout was not loaded.</summary>
         public VisualElement? Root => _document == null ? null : _document.rootVisualElement;
 
@@ -249,6 +252,7 @@ namespace CityBuilder.Client.Presentation.Inspector
             }
 
             BuildingInspectorModel? model = _model;
+            bool wasHidden = e.Panel.ClassListContains(HiddenClass);
             e.Panel.EnableInClassList(HiddenClass, model == null);
             if (model == null)
             {
@@ -276,6 +280,10 @@ namespace CityBuilder.Client.Presentation.Inspector
             e.Upgrade.SetEnabled(model.CanUpgrade);
             // At the highest level there is nothing to press: the title says so.
             e.Upgrade.style.display = model.UpgradeCostText.Length == 0 ? DisplayStyle.None : DisplayStyle.Flex;
+            if (wasHidden)
+            {
+                Opened?.Invoke();
+            }
         }
 
         /// <summary>Sets a label's text and hides the label when the text is empty, so an empty line takes no room.</summary>

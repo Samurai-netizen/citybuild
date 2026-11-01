@@ -127,8 +127,8 @@ server of `docs/testing/LOCAL-E2E.md` and play a few minutes.
 3. With coins and planks in stock press **Upgrade** on a Sawmill: the button dims with "Upgrade requested…", the building gets the construction site and a blue
    ring, and the panel says "Upgrading to level 2". Press it twice quickly: only one upgrade starts. With too little stock the button is dimmed and names what is missing.
 4. Check the layout: the panel must not hide the HUD or run off the bottom on your screen (the top margin is a fixed 124 and assumes the HUD's height), the lines must
-   not be cut off, and − and + must be easy to hit with a thumb. Open the **Build** sheet while the panel is up: the sheet covers it. Pick a building in the sheet:
-   the panel closes and placement starts.
+   not be cut off, and − and + must be easy to hit with a thumb. Open the **Build** sheet while the panel is up: the panel closes (one menu at a time).
+   With the sheet open, tap a building: the sheet closes and the panel opens. Pick a building in the sheet: placement starts.
 5. Tell the AI coder "inspector looks right", or what looks wrong (too wide, too tall, the text too small, a button hard to hit). Stop Play mode without saving the scene.
 
 Last updated: M0-51
