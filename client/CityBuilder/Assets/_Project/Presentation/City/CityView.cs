@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.State;
 using UnityEngine;
 
@@ -13,7 +14,8 @@ namespace CityBuilder.Client.Presentation.City
     /// a view whose building is gone is destroyed, so there is exactly one view per building and none left over. It runs once a second with
     /// the display city, so a call where nothing changed walks the buildings and allocates nothing. It decides nothing, shows a building under
     /// construction or upgrade as the construction site (nothing finished appears before the server says so, <c>09</c> "UX rules") and never calls the server.
-    /// <see cref="Destroy"/> removes everything it made.
+    /// Given the content, it also shows each building's status (M0-50): a ring, a bubble and worker pips (<see cref="BuildingStatusView"/>), drawn only
+    /// when they differ from the last call. <see cref="Destroy"/> removes everything it made.
     /// </summary>
     public sealed class CityView
     {
@@ -32,14 +34,21 @@ namespace CityBuilder.Client.Presentation.City
         /// <summary>The factory that builds and refreshes the views.</summary>
         private readonly BuildingViewFactory _factory;
 
+        /// <summary>The camera the statuses face, or null.</summary>
+        private readonly Transform? _facing;
+
+        /// <summary>The pictures the statuses share, made when the first status is shown.</summary>
+        private StatusArt? _statusArt;
+
         /// <summary>Whether <see cref="Destroy"/> has run.</summary>
         private bool _destroyed;
 
         /// <summary>Creates the view under a new object called <c>Buildings</c> that is a child of <paramref name="parent"/>.</summary>
         /// <param name="grid">The grid the buildings stand on.</param>
         /// <param name="parent">The transform the buildings hang under.</param>
-        /// <exception cref="ArgumentNullException">An argument is null.</exception>
-        public CityView(CityGrid grid, Transform parent)
+        /// <param name="facing">The camera the statuses turn to face, or null to leave them as they are.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="grid"/> or <paramref name="parent"/> is null.</exception>
+        public CityView(CityGrid grid, Transform parent, Transform? facing = null)
         {
             if (grid == null)
             {
@@ -52,6 +61,7 @@ namespace CityBuilder.Client.Presentation.City
             }
 
             _factory = new BuildingViewFactory(grid);
+            _facing = facing;
             Root = new GameObject(RootName);
             Root.transform.SetParent(parent, false);
         }
@@ -75,10 +85,11 @@ namespace CityBuilder.Client.Presentation.City
         /// Makes the views match <paramref name="city"/>: adds a view for each new building, updates the views of changed ones and removes the
         /// views of buildings that are no longer there. Calling it again with the same city changes nothing.
         /// </summary>
-        /// <param name="city">The displayed city.</param>
+        /// <param name="city">The displayed city; its clock is the clock the rings show.</param>
+        /// <param name="content">The game content, which the statuses need to tell why a building stalls; null shows no status.</param>
         /// <exception cref="ArgumentNullException"><paramref name="city"/> is null.</exception>
         /// <exception cref="ObjectDisposedException">The view was destroyed.</exception>
-        public void Show(CityState city)
+        public void Show(CityState city, GameContent? content = null)
         {
             if (city == null)
             {
@@ -102,7 +113,13 @@ namespace CityBuilder.Client.Presentation.City
                 }
                 else
                 {
-                    _views.Add(building.Id, _factory.Create(building, city.Era, Root.transform));
+                    view = _factory.Create(building, city.Era, Root.transform);
+                    _views.Add(building.Id, view);
+                }
+
+                if (content != null)
+                {
+                    ShowStatus(view, city, content, building);
                 }
             }
 
@@ -143,6 +160,27 @@ namespace CityBuilder.Client.Presentation.City
             _views.Clear();
             PlaceholderArt.Destroy(Root);
             _factory.Destroy();
+            _statusArt?.Destroy();
+        }
+
+        /// <summary>Draws the status of one building on its view, making the status object and the shared pictures the first time.</summary>
+        private void ShowStatus(BuildingView view, CityState city, GameContent content, Building building)
+        {
+            BuildingStatus status = BuildingStatusModel.Describe(city, content, building);
+            BuildingStatusView? statusView = view.Status;
+            if (statusView == null)
+            {
+                // A building with nothing to show gets no status object at all, so a city of cottages carries none.
+                if (status == default)
+                {
+                    return;
+                }
+
+                _statusArt ??= new StatusArt();
+                statusView = BuildingStatusView.Create(view, _statusArt, _facing);
+            }
+
+            statusView.Apply(status);
         }
     }
 }

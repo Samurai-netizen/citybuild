@@ -74,5 +74,8 @@ namespace CityBuilder.Client.Presentation.City
 
         /// <summary>The Sawmill's water wheel (<see cref="WheelName"/>), or null. Nothing turns it yet.</summary>
         public Transform? Wheel { get; internal set; }
+
+        /// <summary>The ring, bubble and pips above the building (M0-50), or null until <see cref="CityView"/> shows a status for it.</summary>
+        public BuildingStatusView? Status { get; internal set; }
     }
 }
