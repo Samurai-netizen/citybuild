@@ -21,4 +21,4 @@ as a CR. That's how the owner keeps control over what gets built (`core-instruct
 | [CR-0003](CR-0003-code-documentation.md) | Code documentation: every file and every declaration described, and checked | Process | Done |
 | [CR-0004](CR-0004-code-audit-fixes.md) | Whole-code audit: bugs, edge cases and security fixes | Bug | Done |
 | [CR-0005](CR-0005-era1-art-in-client.md) | Era I art in the client: models, palette and UI icons | Feature | In progress |
-| [CR-0006](CR-0006-server-panel-goods.md) | Server panel: add or remove goods on the test account | Feature | Proposed |
+| [CR-0006](CR-0006-server-panel-goods.md) | Server panel: add or remove goods on the test account | Feature | Approved |

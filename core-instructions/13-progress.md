@@ -4,19 +4,14 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-53 · welcome-back report; the PR is open, the owner merges it)
-- **Branch:** `task/M0-53-welcome-back-report` (from `main` = `48e4aad`) until the owner merges
-- **Build log entry:** `docs/build-log/2026/2026-11-01-09-M0-53.md` (Done)
-- **Last green commit:** the head of `task/M0-53-welcome-back-report` (Unity EditMode 839 / 839, PlayMode 153 / 153; fast .NET suite passes)
-- **Done steps:** all of M0-53
-- **Next step:** the owner merges the PR. Then `/start-task M0-54` (waiting-loop review and tuning, `[O]` `[MANUAL]`: use Opus 5.5).
-- **Open questions for the owner:** M0-53: the [MANUAL] look at the welcome-back report (`client/README.md`), decision 9 (the panel is modal; only Continue closes it), decision 11 (a newer report replaces an open one), decision 5 (`7 h 12 m` with spaces, not `DurationText`'s style), decision 7 (`ResearchEffectText` taken out of `ResearchNodeModel`); M0-52: the [MANUAL] look at the research screen (`client/README.md`), decision 2 (the Research button next to Build, bottom left), decision 3 (plain columns, no arrows); M0-51: the [MANUAL] look at the inspector and the menu closing (`client/README.md`), decision 9 (the panel's place and sort order), decision 4 (`ItemText` shared with the build card); M0-50 (merged, PR #70): the [MANUAL] look at the status (`client/README.md`), decision 9 (storage full is a blue rim and the item, no glyph), decision 13 (the stalled look is a property block plus `_EMISSION` on the shared material; strength `StalledTint.Mix`); CR-0005-T4: the [MANUAL] look at the icons (`client/README.md`), decision 1 (the icons moved out of `art/ui/` into `Resources/UI/Icons/`), decision 3 (captions kept next to the pictures); CR-0005-T3: the open Editor and the new `Art/Resources.meta` (Follow-ups; the look at the city and decision 1 are settled); CR-0005-T2: the [MANUAL] look at `house_l1` (`client/README.md`), decision 2 (`ClientAssemblyTests` now knows six assemblies); M0-49: decision 7 (status label moved to the bottom left, toasts below the HUD), the [MANUAL] look at the HUD (Follow-ups); M0-48: decision 1 (`ConnectionStatusView` split out of `GameRoot`); M0-47: decision 4 (new `CommandSender.Completed` event in `Net`), decision 2 (no builder count or building name in a sentence); M0-46: the ghost's transparent shader variant on a device build (follow-up); M0-45: decision 1 (item names are plural, so `1 Planks`; a singular name in the content is your call), decision 8 (cards use the displayed city, not the raw snapshot), decision 11 (I changed M0-43's `CityInputReader`/`CityWorld` so a press on the menu never reaches the ground); the step-7 comment edits of protected files that skipped the
-  `ask` prompt (commit `9156324`, M0-21 build
-  log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
-  executed); the template sample content (M0-04 follow-up; its scripts are the checker's only exemption); M0-30: decisions 2 and 5 (400 for a too-big body, not the 413 my
-  question named; malformed type ids 400 instead of 422); M0-38: decision 1 (Net and Presentation reference Simulation), decision 5 (the
-  PlayMode scene test changed), the stray `dev1` player in the dev database; M0-39: decision 4 (the store also ignores the same version with the same or an earlier clock); M0-43: decision 5 (Unity ran in a mirror project because your Editor was open), decision 13 (wheel = one ×0.9 step per event), decision 15 (UI-overlap and rotation not handled yet); M0-40: decision 2 (3 requests in all, not 3 retries), decision 3 (`RATE_LIMITED` is not retried); M0-41: decision 4 (what `IncompatibleVersion` means), decision 7 (no faster retry while `Offline`); CR-0004-T1 Follow-ups: the coin soft-lock (G-Design), `ci.yml` permissions (G-Rules), the handbook's remaining advisories (G-Dependency).
+- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** CR-0006-T1 · server panel: add or remove goods on the test account (CR-0006, approved 2026-11-01)
+- **Branch:** `task/CR-0006-T1-goods-panel`, stacked on `task/CR-0006-proposal` (the proposal PR is not merged)
+- **Build log entry:** `docs/build-log/2026/2026-11-01-10-CR-0006-T1.md`
+- **Last green commit:** `origin/main` = `c82a32e` (M0-53 merged, PR #73) plus the CR file
+- **Done steps:** write-ahead
+- **Next step:** step 1 of the log's plan: `server-panel/goods.sql` and its Testcontainers integration test (needs Docker).
+- **Open questions for the owner:** `AGENTS.md` is a protected file; adding the goods commands to its list needs your OK (else only the other docs). M0-53 questions (the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11) and the older ones are in the M0-53 build log and the entries named there.
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)

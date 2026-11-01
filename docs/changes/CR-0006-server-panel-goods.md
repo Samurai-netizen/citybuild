@@ -1,6 +1,6 @@
 # CR-0006 — Server panel: add or remove goods on the test account
 
-- **Status:** Proposed
+- **Status:** Approved
 - **Type:** Feature (dev tooling)
 - **Requested by:** owner · **Date:** 2026-11-01
 - **Milestone / era:** M0 / Era I
@@ -77,7 +77,7 @@ Extend the server panel (`server-panel/panel.sh`, started by `Server Panel.comma
 ## Tasks (filled in after approval)
 | ID | Title | Model | Status |
 |---|---|---|---|
-| CR-0006-T1 | `goods.sql` + integration test; `panel.sh goods …` commands and menu entry; docs | S | Todo |
+| CR-0006-T1 | `goods.sql` + integration test; `panel.sh goods …` commands and menu entry; docs | S | In progress |
 
 ## Owner approval
-- Approved on: — (quote the owner's words)
+- Approved on: 2026-11-01. Owner's words: "approved" (reply to the proposal, including its principle-5 note: a local script, no endpoint).
