@@ -1,0 +1,21 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+  <!-- The research screen that ResearchScreen shows (M0-52, docs/how-to/add-ui-screen.md): a "Research" button at the bottom left, next to
+       the Build button, that opens a panel with the era header, the rule line and the columns of research nodes (ResearchNode.uxml is one
+       node; ResearchScreen makes one per node of the era and puts it into the column of its prerequisites). Its style is Research.uss. -->
+  <Style src="Research.uss" />
+  <ui:VisualElement name="research-root" class="research-root" picking-mode="Ignore">
+    <ui:VisualElement name="research-panel" class="research-panel research-panel--hidden">
+      <ui:VisualElement class="research-header">
+        <ui:VisualElement class="research-titles">
+          <ui:Label name="research-era" class="research-era" />
+          <ui:Label name="research-rule" class="research-rule" />
+        </ui:VisualElement>
+        <ui:Button name="research-close" class="research-button research-close" text="X" />
+      </ui:VisualElement>
+      <ui:ScrollView name="research-scroll" class="research-scroll" mode="Horizontal">
+        <ui:VisualElement name="research-columns" class="research-columns" />
+      </ui:ScrollView>
+    </ui:VisualElement>
+    <ui:Button name="research-toggle" class="research-button research-toggle" text="Research" />
+  </ui:VisualElement>
+</ui:UXML>
