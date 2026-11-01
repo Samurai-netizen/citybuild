@@ -8,9 +8,9 @@
 - **Task:** CR-0005-T4 · UI icons in the HUD, the build menu and (placed for M0-52) the research screen (`[S]`: Sonnet 5.5)
 - **Branch:** `task/CR-0005-T4-ui-icons` (from `main` = `605267f`; T3 is merged, PR #68)
 - **Build log entry:** `docs/build-log/2026/2026-11-01-05-CR-0005-T4.md`
-- **Last green commit:** the head of `task/CR-0005-T4-ui-icons` (Unity EditMode 724 / 724, PlayMode 92 / 92 in a mirror)
-- **Done steps:** write-ahead · step 1 (icons in `Resources/UI/Icons/`, import settings, test) · step 2 (`UiIcons` and its test) · step 3 (HUD icons)
-- **Next step:** step 4: build menu cards show the `bld_*` icon (`BuildCard.uxml`, `BuildMenu.uss`, `BuildMenu`) + PlayMode `BuildMenuTests`.
+- **Last green commit:** the head of `task/CR-0005-T4-ui-icons` (Unity EditMode 724 / 724, PlayMode 93 / 93 in a mirror)
+- **Done steps:** write-ahead · step 1 (icons in `Resources/UI/Icons/`, import settings, test) · step 2 (`UiIcons` and its test) · step 3 (HUD icons) · step 4 (build menu card icons)
+- **Next step:** step 6: docs per the recipes (Docs impact rows), [MANUAL] look in `client/README.md`, then `/finish-task`.
 - **Open questions for the owner:** CR-0005-T3: the open Editor and the new `Art/Resources.meta` (Follow-ups; the look at the city and decision 1 are settled); CR-0005-T2: the [MANUAL] look at `house_l1` (`client/README.md`), decision 2 (`ClientAssemblyTests` now knows six assemblies); M0-49: decision 7 (status label moved to the bottom left, toasts below the HUD), the [MANUAL] look at the HUD (Follow-ups); M0-48: decision 1 (`ConnectionStatusView` split out of `GameRoot`); M0-47: decision 4 (new `CommandSender.Completed` event in `Net`), decision 2 (no builder count or building name in a sentence); M0-46: the ghost's transparent shader variant on a device build (follow-up); M0-45: decision 1 (item names are plural, so `1 Planks`; a singular name in the content is your call), decision 8 (cards use the displayed city, not the raw snapshot), decision 11 (I changed M0-43's `CityInputReader`/`CityWorld` so a press on the menu never reaches the ground); the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never

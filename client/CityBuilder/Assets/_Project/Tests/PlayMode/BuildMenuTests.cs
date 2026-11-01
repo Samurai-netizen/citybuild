@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using CityBuilder.Client.Net;
 using CityBuilder.Client.Presentation.Build;
+using CityBuilder.Client.Presentation.Ui;
 using CityBuilder.Simulation;
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.State;
@@ -115,6 +116,20 @@ namespace CityBuilder.Client.Tests.PlayMode
             {
                 Assert.That(LabelAt(index, "card-name").text, Is.EqualTo(_content.Buildings[index].Name));
                 Assert.That(LabelAt(index, "card-cost").text, Is.EqualTo(_menu.Model!.Cards[index].CostText));
+            }
+        }
+
+        /// <summary>Every card shows the picture of its building type (CR-0005-T4), also a locked card.</summary>
+        [Test]
+        public void EveryCard_ShowsThePictureOfItsType()
+        {
+            for (int index = 0; index < _content.Buildings.Count; index++)
+            {
+                Texture2D expected = UiIcons.ForBuilding(_content.Buildings[index].Id)!;
+                VisualElement icon = CardAt(index).Q<VisualElement>(BuildMenu.CardIconName);
+
+                Assert.That(expected, Is.Not.Null, _content.Buildings[index].Id.Value);
+                Assert.That(icon.style.backgroundImage.value.texture, Is.SameAs(expected), _content.Buildings[index].Id.Value);
             }
         }
 
