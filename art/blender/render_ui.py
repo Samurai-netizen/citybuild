@@ -3,7 +3,8 @@
 
     blender -b --factory-startup --python art/blender/render_ui.py
 
-Output: ui/icons/<name>.png (256 x 256), ui/city_phone.png (780 x 1688) and ui/hotspots.json.
+Output: the icons <name>.png (256 x 256) straight into the Unity project, Resources/UI/Icons/ (the only copy, loaded by name),
+and ui/city_phone.png (780 x 1688) and ui/hotspots.json here in art/.
 """
 import json
 import math
@@ -24,6 +25,8 @@ from lib import Model  # noqa: E402
 
 ROOT = os.path.dirname(HERE)
 OUT = os.path.join(ROOT, "ui")
+# Where the Unity project keeps the icons: under Resources, so a player build contains them and the client loads them by name (UiIcons).
+ICONS_OUT = os.path.join(os.path.dirname(ROOT), "client", "CityBuilder", "Assets", "_Project", "Resources", "UI", "Icons")
 
 
 # --- small models that exist only as icons ------------------------------------------------------------------------
@@ -143,7 +146,7 @@ def icons():
         objects = build()
         lib.setup_render(256, 256, transparent=True)
         lib.frame_camera(meshes(objects), margin=1.08)
-        lib.render(os.path.join(OUT, "icons", name + ".png"))
+        lib.render(os.path.join(ICONS_OUT, name + ".png"))
 
 
 def phone_city():

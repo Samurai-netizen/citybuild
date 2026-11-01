@@ -48,6 +48,15 @@ namespace CityBuilder.Client.Presentation.Hud
         /// <summary>The name of the label with the busy builders and the slots.</summary>
         public const string BuildersName = "hud-builders";
 
+        /// <summary>The name of the workers icon.</summary>
+        public const string WorkersIconName = "hud-workers-icon";
+
+        /// <summary>The name of the builders icon.</summary>
+        public const string BuildersIconName = "hud-builders-icon";
+
+        /// <summary>The name of the research icon in the middle of the ring.</summary>
+        public const string RingIconName = "hud-ring-icon";
+
         /// <summary>The name of the element the research ring is drawn on.</summary>
         public const string RingName = "hud-ring";
 
@@ -80,6 +89,9 @@ namespace CityBuilder.Client.Presentation.Hud
 
         /// <summary>The name of a chip's rate label.</summary>
         public const string ChipRateName = "hud-chip-rate";
+
+        /// <summary>The USS class of a chip icon that shows a picture instead of the item's first letter.</summary>
+        public const string ChipIconPictureClass = "hud-chip-icon--picture";
 
         /// <summary>The USS class of a chip whose item is at its cap.</summary>
         public const string ChipFullClass = "hud-chip--full";
@@ -198,22 +210,36 @@ namespace CityBuilder.Client.Presentation.Hud
             _workers = root?.Q<Label>(WorkersName);
             _builders = root?.Q<Label>(BuildersName);
             _ring = root?.Q<VisualElement>(RingName);
+            VisualElement? workersIcon = root?.Q<VisualElement>(WorkersIconName);
+            VisualElement? buildersIcon = root?.Q<VisualElement>(BuildersIconName);
+            VisualElement? ringIcon = root?.Q<VisualElement>(RingIconName);
             _researchName = root?.Q<Label>(ResearchNameName);
             _researchTime = root?.Q<Label>(ResearchTimeName);
             _era = root?.Q<Label>(EraName);
             _connectionDot = root?.Q<VisualElement>(ConnectionDotName);
             _connectionText = root?.Q<Label>(ConnectionTextName);
             if (_model == null || root == null || _chipList == null || _workers == null || _builders == null || _ring == null
-                || _researchName == null || _researchTime == null || _era == null || _connectionDot == null || _connectionText == null)
+                || _researchName == null || _researchTime == null || _era == null || _connectionDot == null || _connectionText == null
+                || workersIcon == null || buildersIcon == null || ringIcon == null)
             {
                 Debug.LogError("HudView: the layout lacks one of its named elements (see the names in HudView).");
                 return;
             }
 
+            ShowFixedIcon(workersIcon, UiIcons.Workers);
+            ShowFixedIcon(buildersIcon, UiIcons.Builders);
+            ShowFixedIcon(ringIcon, UiIcons.Research);
             _ring.generateVisualContent += PaintRing;
             root.RegisterCallback<GeometryChangedEvent>(_ => UiRoot.PadBySafeArea(root, BasePadding));
             _model.Changed += Refresh;
             Refresh();
+        }
+
+        /// <summary>Puts one of the fixed pictures on its element; an element whose picture is missing is hidden, so it leaves no empty square.</summary>
+        private static void ShowFixedIcon(VisualElement element, Texture2D? icon)
+        {
+            UiIcons.Show(element, icon);
+            element.style.display = icon == null ? DisplayStyle.None : DisplayStyle.Flex;
         }
 
         /// <summary>Unity calls it when the object is destroyed: the model no longer reports to a screen that is gone.</summary>
@@ -317,7 +343,7 @@ namespace CityBuilder.Client.Presentation.Hud
             /// <summary>The chip's root element.</summary>
             public VisualElement Root { get; }
 
-            /// <summary>The icon placeholder: the item's first letter.</summary>
+            /// <summary>The item's picture; its first letter when the item has no picture.</summary>
             private Label Icon { get; }
 
             /// <summary>The stock label.</summary>
@@ -344,7 +370,10 @@ namespace CityBuilder.Client.Presentation.Hud
             /// <summary>Writes a chip model into the elements.</summary>
             public void Show(ItemChipModel chip)
             {
-                Icon.text = chip.Name.Length == 0 ? string.Empty : chip.Name.Substring(0, 1);
+                Texture2D? picture = UiIcons.ForItem(chip.Item);
+                UiIcons.Show(Icon, picture);
+                Icon.EnableInClassList(ChipIconPictureClass, picture != null);
+                Icon.text = picture != null || chip.Name.Length == 0 ? string.Empty : chip.Name.Substring(0, 1);
                 Stock.text = chip.StockText;
                 Cap.text = chip.CapText.Length == 0 ? string.Empty : "/ " + chip.CapText;
                 Cap.style.display = chip.CapText.Length == 0 ? DisplayStyle.None : DisplayStyle.Flex;

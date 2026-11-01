@@ -1,6 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
   <!-- One item chip of the HUD (M0-49, docs/how-to/add-ui-screen.md): HudView clones it once per item and writes the texts of ItemChipModel into
-       the labels by name. The icon is a placeholder: the item's first letter. Its style is in Hud.uss. -->
+       the labels by name. The icon is the item's picture (UiIcons, CR-0005-T4); when the item has none, the label shows the item's first letter. Its style is in Hud.uss. -->
   <ui:VisualElement name="hud-chip" class="hud-chip" picking-mode="Ignore">
     <ui:Label name="hud-chip-icon" class="hud-chip-icon" picking-mode="Ignore" />
     <ui:VisualElement class="hud-chip-text" picking-mode="Ignore">

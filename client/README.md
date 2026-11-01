@@ -94,4 +94,14 @@ The tests check which model each building gets and that nothing allocates; only 
 5. Upgrade a building: the construction site shows again during the upgrade, then the level 2 model.
 6. Tell the AI coder "city looks right", or what looks wrong. Stop Play mode without saving the scene.
 
-Last updated: CR-0005-T3
+## [MANUAL] Look at the icons (CR-0005-T4)
+The tests compare textures; only a person can say the pictures look right and sit well. Nothing here is saved or committed. (Unity's `Resources/UI/Icons/` is
+new: if your open Editor shows new `.meta` files under it, they are the committed ones.)
+1. Start the server and the database as in `docs/testing/LOCAL-E2E.md`, then open the project in the Editor, open the **Bootstrap** scene and press **Play**.
+2. The top bar: the chips for coins, logs and planks each show their picture (a gold coin pile, a stack of logs, a stack of planks) instead of a letter. Under them,
+   workers and builders have a small picture beside the number, and the research ring has a book in its middle.
+3. Open **Build**: each card shows its building (cottage, sawmill, trading post, woodcutter's hut) beside the name. Resize the Game view to a narrow phone shape:
+   the chips wrap and the name stays readable next to the picture.
+4. Tell the AI coder "icons look right", or what looks wrong (too big, too small, the wrong picture). Stop Play mode without saving the scene.
+
+Last updated: CR-0005-T4

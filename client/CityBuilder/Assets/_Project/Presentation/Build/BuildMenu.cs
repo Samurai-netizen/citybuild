@@ -11,7 +11,7 @@ namespace CityBuilder.Client.Presentation.Build
 {
     /// <summary>
     /// The build menu on the screen (M0-45): a thin component over a <see cref="BuildMenuModel"/>. It loads <c>UI/BuildMenu</c> and one
-    /// <c>UI/BuildCard</c> per building type from <c>Resources</c>, writes the texts of the model's cards into the labels by name, and keeps
+    /// <c>UI/BuildCard</c> per building type from <c>Resources</c>, writes the texts of the model's cards into the labels by name, puts the type's picture on each card, and keeps
     /// them current when the model's cards or selection change. A "Build" button opens and closes the sheet of cards. A tap on a card goes to
     /// <see cref="BuildMenuModel.TryToggle"/>; a locked card is disabled and ignores it. Nothing here decides anything or calls the server.
     /// <c>GameRoot</c> creates it once the start has connected, with <see cref="Create"/>.
@@ -46,6 +46,9 @@ namespace CityBuilder.Client.Presentation.Build
         /// <summary>The name of the button that opens and closes the sheet.</summary>
         public const string ToggleName = "build-toggle";
 
+        /// <summary>The name of a card's picture element in <c>BuildCard.uxml</c>.</summary>
+        public const string CardIconName = "card-icon";
+
         /// <summary>The name of a card's root element in <c>BuildCard.uxml</c>.</summary>
         public const string CardName = "card";
 
@@ -63,6 +66,9 @@ namespace CityBuilder.Client.Presentation.Build
         {
             /// <summary>The card's root, the thing the player taps.</summary>
             public VisualElement Root = null!;
+
+            /// <summary>The building's picture; hidden when the type has none.</summary>
+            public VisualElement Icon = null!;
 
             /// <summary>The building's name.</summary>
             public Label Name = null!;
@@ -239,6 +245,7 @@ namespace CityBuilder.Client.Presentation.Build
             var card = new CardElements
             {
                 Root = root,
+                Icon = clone.Q<VisualElement>(CardIconName),
                 Name = clone.Q<Label>("card-name"),
                 Cost = clone.Q<Label>("card-cost"),
                 Time = clone.Q<Label>("card-time"),
@@ -247,6 +254,10 @@ namespace CityBuilder.Client.Presentation.Build
                 Lock = clone.Q<Label>("card-lock"),
                 Hint = clone.Q<Label>("card-hint"),
             };
+            // The picture belongs to the type and never changes, so it is set once, here.
+            Texture2D? icon = UiIcons.ForBuilding(typeId);
+            UiIcons.Show(card.Icon, icon);
+            card.Icon.style.display = icon == null ? DisplayStyle.None : DisplayStyle.Flex;
             root.AddManipulator(new Clickable(() => Tap(typeId)));
             return card;
         }

@@ -58,8 +58,23 @@
   opacity: 0.5;
 }
 
-.card-name {
+.card-header {
+  flex-direction: row;
+  align-items: center;
   margin-bottom: 6px;
+}
+
+.card-icon {
+  width: 64px;
+  height: 64px;
+  margin-right: 10px;
+  flex-shrink: 0;
+  -unity-background-scale-mode: scale-to-fit;
+}
+
+.card-name {
+  flex-shrink: 1;
+  margin: 0;
   color: rgb(255, 255, 255);
   font-size: 26px;
   -unity-font-style: bold;

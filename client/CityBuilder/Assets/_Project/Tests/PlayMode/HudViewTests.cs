@@ -6,6 +6,7 @@ using System.IO;
 using CityBuilder.Client.Core;
 using CityBuilder.Client.Net;
 using CityBuilder.Client.Presentation.Hud;
+using CityBuilder.Client.Presentation.Ui;
 using CityBuilder.Simulation;
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.State;
@@ -74,19 +75,48 @@ namespace CityBuilder.Client.Tests.PlayMode
         /// <summary>The chip elements on the screen, in order.</summary>
         private List<VisualElement> Chips() => _hud.Root!.Query<VisualElement>(HudView.ChipName).ToList();
 
-        /// <summary>There is one chip per item, each with its icon letter, stock and (for a capped item) cap and rate.</summary>
+        /// <summary>There is one chip per item, each with its icon, stock and (for a capped item) cap and rate.</summary>
         [Test]
         public void Chips_ShowTheItems()
         {
             List<VisualElement> chips = Chips();
 
             Assert.That(chips.Count, Is.EqualTo(3));
-            Assert.That(chips[0].Q<Label>(HudView.ChipIconName).text, Is.EqualTo("C"));
             Assert.That(chips[0].Q<Label>(HudView.ChipStockName).text, Is.EqualTo("700"));
             Assert.That(chips[0].Q<Label>(HudView.ChipCapName).style.display.value, Is.EqualTo(DisplayStyle.None));
             Assert.That(chips[1].Q<Label>(HudView.ChipStockName).text, Is.EqualTo("40"));
             Assert.That(chips[1].Q<Label>(HudView.ChipCapName).text, Is.EqualTo("/ 500"));
             Assert.That(chips[1].Q<Label>(HudView.ChipRateName).text, Is.EqualTo("0/h"));
+        }
+
+        /// <summary>Each chip shows the picture of its item (coins, logs, planks) instead of the item's first letter.</summary>
+        [Test]
+        public void Chips_ShowThePictureOfTheirItem()
+        {
+            List<VisualElement> chips = Chips();
+
+            for (int index = 0; index < chips.Count; index++)
+            {
+                var icon = chips[index].Q<Label>(HudView.ChipIconName);
+                Texture2D expected = UiIcons.ForItem(_hud.Model!.Chips[index].Item)!;
+
+                Assert.That(expected, Is.Not.Null);
+                Assert.That(icon.style.backgroundImage.value.texture, Is.SameAs(expected), icon.name + " " + index);
+                Assert.That(icon.text, Is.Empty, "the letter shows only when there is no picture");
+                Assert.That(icon.ClassListContains(HudView.ChipIconPictureClass), Is.True);
+            }
+        }
+
+        /// <summary>The workers, the builders and the research ring have their pictures.</summary>
+        [Test]
+        public void WorkersBuildersAndResearch_ShowTheirPictures()
+        {
+            VisualElement root = _hud.Root!;
+
+            Assert.That(root.Q<VisualElement>(HudView.WorkersIconName).style.backgroundImage.value.texture, Is.SameAs(UiIcons.Workers));
+            Assert.That(root.Q<VisualElement>(HudView.BuildersIconName).style.backgroundImage.value.texture, Is.SameAs(UiIcons.Builders));
+            Assert.That(root.Q<VisualElement>(HudView.RingIconName).style.backgroundImage.value.texture, Is.SameAs(UiIcons.Research));
+            Assert.That(UiIcons.Workers, Is.Not.Null);
         }
 
         /// <summary>The counters, the era badge and the connection indicator carry the model's words.</summary>

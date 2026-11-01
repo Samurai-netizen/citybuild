@@ -11,7 +11,7 @@ game: drawing the models is `CityBuilder.Client.Presentation`.
 ## Key types
 | Type | Responsibility |
 |---|---|
-| `ArtImportPostprocessor` | An `AssetPostprocessor` over `Assets/_Project/Art/`. A palette under `Art/Textures/` gets Point filter, no compression, no mips and Clamp. A model under `Art/Resources/Models/` gets scale 1, no cameras, lights, blend shapes, animation or colliders, the file's normals and no tangents. After the import it links the model's material `M_Palette_Era1` to the one shared material `Art/Materials/M_Palette_Era1.mat` (an external object remap, kept in the model's `.meta` file) and imports it once more. It makes that material when it is missing: URP Lit, Base Map the palette, Smoothness 0.1 |
+| `ArtImportPostprocessor` | An `AssetPostprocessor` over `Assets/_Project/Art/` and `Assets/_Project/Resources/UI/Icons/`. A palette under `Art/Textures/` gets Point filter, no compression, no mips and Clamp. A UI icon under `Resources/UI/Icons/` (CR-0005-T4; the folder is not under `Art/`, because that is where the client loads it from) gets bilinear filtering, no mips, Clamp, alpha is transparency and not readable. A model under `Art/Resources/Models/` gets scale 1, no cameras, lights, blend shapes, animation or colliders, the file's normals and no tangents. After the import it links the model's material `M_Palette_Era1` to the one shared material `Art/Materials/M_Palette_Era1.mat` (an external object remap, kept in the model's `.meta` file) and imports it once more. It makes that material when it is missing: URP Lit, Base Map the palette, Smoothness 0.1 |
 
 ## Rules and invariants
 - The assembly is Editor only and references none of the client's assemblies (`ClientAssemblyTests`).
@@ -27,10 +27,10 @@ described for artists in `art/README.md`; change both together.
 
 ## Tests
 `Assets/_Project/Tests/EditMode/Art/ArtImportTests.cs` reads the imported assets, so the test assembly needs no reference to this one: the palette's
-settings, the shared material, the settings and the material of every model, `house_l1`'s size and anchors, and a new FBX without a `.meta` file getting all of it
+settings, the settings of every UI icon, the shared material, the settings and the material of every model, `house_l1`'s size and anchors, and a new FBX without a `.meta` file getting all of it
 on its first import. Run with `scripts/dev/test-unity.sh` (`client/README.md` → Run the tests).
 
 ## Known limitations
 - One palette only: the source material name and the material path are constants for Era I. Era II changes this.
 
-Last updated: CR-0005-T2
+Last updated: CR-0005-T4

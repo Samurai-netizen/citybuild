@@ -66,6 +66,7 @@ updates the cards, that the sheet opens. Click a card with the component's `Tap`
 ## Checklist
 - [ ] Texts and flags in a plain class with EditMode tests; no game number written in code.
 - [ ] Layout in `Resources/UI/`, a comment at the top of each file, a layout test for the names the component looks up.
+- [ ] A picture comes from `UiIcons` (an icon of an item, a building type or a research node, found by content id; `UiIcons.Show(element, icon)` sets it as the element's background), never from a path written in the screen. A new content id needs a PNG named `item_<id>`, `bld_<typeId>` or `res_<id>` in `Resources/UI/Icons/` (`art/README.md`); `UiIconsTests` fails without it. The screen keeps its text when there is no picture.
 - [ ] Component thin: no rule, no `ApiClient`, no allocation per frame (refresh on events, not in `Update`).
 - [ ] A result needs no code of its own: a command's success or error is shown as a toast by `CommandFeedback` (`FeedbackMessages` holds the sentences); a screen shows an error line only when the player must see it next to the buttons, and then the same sentence, never the code or the server's text.
 - [ ] Hints are hints: the server's check decides; nothing is subtracted or spawned before it answers.

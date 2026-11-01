@@ -15,7 +15,8 @@ which also brings the art into the Unity client, task by task.
 | `client/CityBuilder/Assets/_Project/Art/Resources/Models/common/` | Era-independent FBX: grass and dirt tiles, pine, round tree, bush, rock, worker |
 | `art/textures/palette_era1.png` | The one texture every model uses (128 × 128). The build also copies it to `…/Art/Textures/` |
 | `art/previews/` | Renders of every model, `lineup_era1.png`, `city_golden_scenario.png` and `city_closeup.png` (the golden scenario #1 village on the 8 × 8 grid). Git tracks only the two city pictures; the build rewrites the rest |
-| `art/ui/` | 2D assets from the same models: `icons/` (15 transparent 256 px icons for items, HUD, buildings, research), `city_phone.jpg` (the village in a phone's portrait frame) and `hotspots.json` (where each building lands on a 390 × 844 screen) |
+| `art/ui/` | 2D assets from the same models: `city_phone.jpg` (the village in a phone's portrait frame) and `hotspots.json` (where each building lands on a 390 × 844 screen) |
+| `client/CityBuilder/Assets/_Project/Resources/UI/Icons/` | The 15 transparent 256 px UI icons (items, workers, builders, research, buildings, research nodes), the **only copy**: `render_ui.py` writes them there, and the client loads them by name (`UiIcons`) |
 | `art/ui/showcase/` | Source of the UI showcase canvas (interactive phone mockups and the UI kit): a design reference for the screen tasks (M0-51 to M0-53); no code reads it |
 
 ## Rebuild
@@ -31,7 +32,7 @@ leaves its tile (for producers, also with the largest stockpile at its anchor), 
 uses another material. Options after `--`: `--only house_l1 sawmill_l2`
 (also `lineup`, `city`), `--no-render`. A full build takes about 15 seconds.
 
-The icons and the phone picture come from `blender -b --factory-startup --python art/blender/render_ui.py` (it writes
+The icons and the phone picture come from `blender -b --factory-startup --python art/blender/render_ui.py` (it writes the icons into the Unity project (`Resources/UI/Icons/`) and
 `art/ui/city_phone.png`, which git ignores; `city_phone.jpg` is a `sips` copy of it). A render is not byte-identical from run to run,
 so run it only when an icon should change.
 
@@ -111,7 +112,7 @@ The client draws these models since T3 (`core-instructions/09-unity-client.md` r
   Smoothness 0.1). Nobody sets these by hand, and the `.meta` files are committed. A new FBX gets all of it on its first import; a rebuild keeps the `.meta` files, because the build only overwrites the FBX files.
   The look check in the Editor is **[MANUAL]** (`client/README.md`).
 - **T3 (done):** the client loads the FBX files with `Resources.Load` by `Models/era<N>/<typeId>_l<level>` (that is why they sit in `Art/Resources/Models/`), draws a building from its model, the construction site while it is built or upgraded, the ground from `tile_grass` and the placement ghost from the model, and finds the anchors and `Wheel` by name. A unit test fails when a building type of the content has no model for a level it can reach or a model lacks `Anchor_Status` / `Anchor_Door`. Nothing turns the wheel, shows smoke or grows the stockpile yet (follow-up tasks). `tile_dirt` and the nature models (trees, bush, rock), the worker and the stockpile props are not used by any view yet.
-- **T4:** the UI icons go into the HUD, the build menu and the research screen.
+- **T4 (done):** the 15 icons moved to `Resources/UI/Icons/` (one copy, like the models). The same editor script gives them their settings (bilinear, no mips, alpha is transparency), and `UiIcons` finds them by content id: `item_<id>` on the HUD chips, `bld_<typeId>` on the build menu cards, `workers`, `builders` and `research` on the HUD, and `res_<id>` for the research screen (M0-52), which does not exist yet. A test fails for an item, building type or research node of the content with no icon. `bld_construction` is not used yet (M0-50).
 
 ## Checked so far
 - `build_all.py` passes every check for all 22 models, including the largest stockpile at each anchor, and renders every
@@ -129,5 +130,5 @@ The client draws these models since T3 (`core-instructions/09-unity-client.md` r
 - **Building size on the tile** (2026-10-26): the owner chose to scale buildings up by about 1.2 so they fill their tiles more,
   like Tap Tap Builder. To change it again, edit `SCALE` in `assets_era1.py`; the checks show which details then leave the tile.
 - **Folder and copies** (2026-11-01, CR-0005): the folder is `art/`, and the models live only in the Unity project (one copy of the
-  FBX files); the build writes them there.
-- **Next art:** status bubble and item icons (logs, planks, coins) for the HUD, smoke, and the Era II look (stone and banners).
+  FBX files); the build writes them there. The icons moved the same way in T4.
+- **Next art:** status bubble for the HUD, smoke, and the Era II look (stone and banners).
