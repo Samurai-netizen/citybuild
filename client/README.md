@@ -148,7 +148,7 @@ server of `docs/testing/LOCAL-E2E.md` and play a few minutes.
 
 ## [MANUAL] Look at the welcome-back report (M0-53)
 The tests check the words, the threshold and the wiring; only a person can say the card reads well. Nothing here is saved or committed. Use the server of
-`docs/testing/LOCAL-E2E.md`. The report shows when a snapshot settled five minutes or more, so the quickest way is to leave the city alone: stop the client
+`docs/testing/LOCAL-E2E.md`. The report shows when a snapshot settled five real minutes or more (at a dev time scale, that many times more city seconds, M0-54), so the quickest way is to leave the city alone: stop the client
 (Play mode off), wait five minutes or more (or set `last_settled_unix` of the city in the `cities` table back in the development database), then press **Play** again.
 1. A dark scrim covers the screen with a card in the middle: "While you were away (5 m)", the headings **Produced**, **Used**, **Buildings** and **Research** for what
    happened (a heading with nothing under it is absent), and a **Continue** button. Press the ground or a button behind it: nothing happens until you press **Continue**.

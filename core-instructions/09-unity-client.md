@@ -68,7 +68,7 @@ Local package line in `Packages/manifest.json`:
 - **Commands (M0-40):** `CommandSender` (Net) creates the `requestId` once per player intent (`CommandIntent`) and reuses it on every attempt.
   Retries only on network errors, timeouts, 5xx and `CONCURRENCY_CONFLICT`: at most 3 requests, waits 0.5 s then 1 s (`CommandPolicy.Default`
   holds 0.5/1/2; the 2 s would precede a 4th request). Any other 4xx (also `RATE_LIMITED`) is final. On success the snapshot goes to the store
-  through `SnapshotMapper.Apply`. `Pending` lists the intents on their way (`Waiting`, `Sending`, `Retrying`) for ghosts and disabled buttons;
+  through `SnapshotMapper.Apply`. A command refused with `AUTHENTICATION_REQUIRED` makes `GameRoot` ask the monitor for a poll at once, whose new login serves the player's next try (M0-54). `Pending` lists the intents on their way (`Waiting`, `Sending`, `Retrying`) for ghosts and disabled buttons;
   a repeat of a pending intent shares its result. `AssignWorkers` targets are coalesced per building: a new target replaces a not-yet-sent one,
   is sent after a 400 ms pause with no newer one, and waits for the building's earlier target to end. `GameRoot` builds the sender once connected.
 - **Polling (M0-41):** `GET /city` on start (the start flow's own), on `OnApplicationPause(false)`, after the device's network comes back, and every 120 s in the
