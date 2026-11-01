@@ -7,6 +7,7 @@ using CityBuilder.Client.Presentation.Build;
 using CityBuilder.Client.Presentation.City;
 using CityBuilder.Client.Presentation.Feedback;
 using CityBuilder.Client.Presentation.Hud;
+using CityBuilder.Client.Presentation.Inspector;
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.State;
 using UnityEngine;
@@ -22,6 +23,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
     /// It shows the top HUD (<see cref="HudView"/>) over the displayed city and the connection state.
     /// It also shows the build menu (<see cref="BuildMenu"/>), whose cards follow the displayed city, and tells the ground that a press on the menu or on the placement bar is not its own.
     /// It joins the menu, the ground, the placement bar and the command sender into the placement flow (<see cref="PlacementFlow"/>).
+    /// It also shows the building inspector (<see cref="BuildingInspector"/>) for the building on the tapped tile and joins it to the command sender (<see cref="InspectorFlow"/>).
     /// It also drives the connection monitor: it polls the city, goes quiet while the app is paused, and the status view says how the connection stands.
     /// </summary>
     [DisallowMultipleComponent]
@@ -72,6 +74,12 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         /// <summary>The placement flow (pick a card, a tile, confirm); null until the start has connected, or when the menu or the bar is missing.</summary>
         private PlacementFlow? _placement;
 
+        /// <summary>The building inspector; null until the start has connected, or when its assets are missing.</summary>
+        private BuildingInspector? _inspector;
+
+        /// <summary>Joins the tile selection, the inspector and the command sender; null until the start has connected, or when the inspector is missing.</summary>
+        private InspectorFlow? _inspectorFlow;
+
         /// <summary>The toasts on the screen; null until the start has connected.</summary>
         private ToastQueue? _toasts;
 
@@ -107,6 +115,12 @@ namespace CityBuilder.Client.Presentation.Bootstrap
 
         /// <summary>The placement bar (<c>09</c> Placement); null until the start has connected, or when its assets are missing.</summary>
         internal PlacementBar? PlacementBar => _placementBar;
+
+        /// <summary>The building inspector (<c>09</c> Building inspector); null until the start has connected, or when its assets are missing.</summary>
+        internal BuildingInspector? Inspector => _inspector;
+
+        /// <summary>The inspector's flow (<c>09</c> Building inspector); null until the start has connected, or when the inspector is missing.</summary>
+        internal InspectorFlow? InspectorFlow => _inspectorFlow;
 
         /// <summary>The city's camera and ground (<c>09</c> City view); null only before <c>Awake</c> has run.</summary>
         internal CityWorld? World => _world;
@@ -154,6 +168,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                     CreateHud(outcome.Content!);
                     CreateBuildMenu(outcome.Content!);
                     CreatePlacement(outcome.Content!);
+                    CreateInspector(outcome.Content!);
                     ShowBuildings();
                     _monitor = new ConnectionMonitor(
                         _api!,
@@ -205,6 +220,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         private void OnDestroy()
         {
             _placement?.Dispose();
+            _inspectorFlow?.Dispose();
             _feedback?.Dispose();
             if (_displayCity != null)
             {
@@ -228,6 +244,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                 _hud?.Model?.Update(city, _monitor?.State ?? ConnectionState.Connected);
                 _buildMenu?.Model?.Update(city);
                 _placement?.Update(city);
+                _inspectorFlow?.Update(city);
             }
         }
 
@@ -310,11 +327,34 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                 destroyCancellationToken);
         }
 
-        /// <summary>Whether a screen position (pixels, origin bottom left) is over the build menu or the placement bar: a press there is the UI's, not the ground's.</summary>
+        /// <summary>
+        /// Shows the building inspector and joins it to the ground's tile selection, the placement flow's state and the command sender, and
+        /// makes the ground leave a press on it to it. Does nothing when there is no command sender yet; the inspector logs an error and
+        /// stays null when its assets are missing.
+        /// </summary>
+        private void CreateInspector(GameContent content)
+        {
+            if (_commandSender == null || _world!.Grid == null)
+            {
+                return;
+            }
+
+            _inspector = BuildingInspector.Create(transform);
+            if (_inspector == null)
+            {
+                return;
+            }
+
+            _inspectorFlow = new InspectorFlow(content, _world, _commandSender, _inspector, _placement?.Model, destroyCancellationToken);
+            _world.IsPointerOverUi = IsOverUi;
+        }
+
+        /// <summary>Whether a screen position (pixels, origin bottom left) is over the build menu, the placement bar or the building inspector: a press there is the UI's, not the ground's.</summary>
         private bool IsOverUi(Vector2 screenPosition)
         {
             return (_buildMenu != null && _buildMenu.IsOverUi(screenPosition))
-                || (_placementBar != null && _placementBar.IsOverUi(screenPosition));
+                || (_placementBar != null && _placementBar.IsOverUi(screenPosition))
+                || (_inspector != null && _inspector.IsOverUi(screenPosition));
         }
 
         /// <summary>The monitor's state or error changed: the screen says how the connection stands now.</summary>
