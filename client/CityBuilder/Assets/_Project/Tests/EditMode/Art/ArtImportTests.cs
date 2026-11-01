@@ -80,6 +80,20 @@ namespace CityBuilder.Client.Tests.EditMode.Art
             Assert.That(material.GetFloat("_Smoothness"), Is.EqualTo(0.1f).Within(_tolerance));
         }
 
+        /// <summary>
+        /// The shared material has its emission keyword on with an emission too dark to see, and is not flagged as having black emission (URP would
+        /// switch the keyword off), so the grey that a stalled building's property block adds is drawn (M0-50, <c>StalledTint</c>).
+        /// </summary>
+        [Test]
+        public void SharedMaterial_Asset_KeepsEmissionOnForTheStalledLook()
+        {
+            var material = AssetDatabase.LoadAssetAtPath<Material>(_materialPath);
+
+            Assert.That(material.IsKeywordEnabled("_EMISSION"), Is.True);
+            Assert.That(material.globalIlluminationFlags & MaterialGlobalIlluminationFlags.EmissiveIsBlack, Is.EqualTo((MaterialGlobalIlluminationFlags)0));
+            Assert.That(material.GetColor("_EmissionColor").maxColorComponent, Is.GreaterThan(0f).And.LessThan(1f / 255f));
+        }
+
         /// <summary>Every model has the settings of the postprocessor.</summary>
         [Test]
         public void EveryModel_ImportSettings_AreThePostprocessors()

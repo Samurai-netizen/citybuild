@@ -28,6 +28,8 @@ namespace CityBuilder.Client.Editor
         private const string _materialsFolder = "Assets/_Project/Art/Materials";
         /// <summary>The URP shader of the shared material.</summary>
         private const string _litShaderName = "Universal Render Pipeline/Lit";
+        /// <summary>The emission of the shared material: darker than one step of an 8-bit channel, so it shows nothing but keeps <c>_EMISSION</c> on.</summary>
+        private const float _emissionBias = 0.002f;
         /// <summary>Smoothness of the shared material: nearly matte, like painted toy blocks (<c>art/README.md</c>).</summary>
         private const float _smoothness = 0.1f;
 
@@ -145,6 +147,13 @@ namespace CityBuilder.Client.Editor
             var material = new Material(shader) { name = _sourceMaterialName };
             material.SetTexture("_BaseMap", palette);
             material.SetFloat("_Smoothness", _smoothness);
+
+            // A stalled building's property block adds a grey as emission (StalledTint), which needs the keyword on. URP's material code switches
+            // the keyword off while the material is flagged as having black emission, so it gets an emission too dark to see (half a level of 255)
+            // and the baked-emission flag that the Editor's own emission toggle sets.
+            material.SetColor("_EmissionColor", new Color(_emissionBias, _emissionBias, _emissionBias, 1f));
+            material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.BakedEmissive;
+            material.EnableKeyword("_EMISSION");
             AssetDatabase.CreateAsset(material, _sharedMaterialPath);
             return material;
         }

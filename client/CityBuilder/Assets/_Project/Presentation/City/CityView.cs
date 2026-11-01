@@ -15,7 +15,7 @@ namespace CityBuilder.Client.Presentation.City
     /// the display city, so a call where nothing changed walks the buildings and allocates nothing. It decides nothing, shows a building under
     /// construction or upgrade as the construction site (nothing finished appears before the server says so, <c>09</c> "UX rules") and never calls the server.
     /// Given the content, it also shows each building's status (M0-50): a ring, a bubble and worker pips (<see cref="BuildingStatusView"/>), drawn only
-    /// when they differ from the last call. <see cref="Destroy"/> removes everything it made.
+    /// when they differ from the last call, and a stalled building looks slightly washed out (<see cref="StalledTint"/>). <see cref="Destroy"/> removes everything it made.
     /// </summary>
     public sealed class CityView
     {
@@ -39,6 +39,9 @@ namespace CityBuilder.Client.Presentation.City
 
         /// <summary>The pictures the statuses share, made when the first status is shown.</summary>
         private StatusArt? _statusArt;
+
+        /// <summary>Gives stalled buildings their washed-out look.</summary>
+        private readonly StalledTint _tint = new StalledTint();
 
         /// <summary>Whether <see cref="Destroy"/> has run.</summary>
         private bool _destroyed;
@@ -163,10 +166,11 @@ namespace CityBuilder.Client.Presentation.City
             _statusArt?.Destroy();
         }
 
-        /// <summary>Draws the status of one building on its view, making the status object and the shared pictures the first time.</summary>
+        /// <summary>Draws the status of one building on its view (its washed-out look when stalled, its ring, bubble and pips), making the status object and the shared pictures the first time.</summary>
         private void ShowStatus(BuildingView view, CityState city, GameContent content, Building building)
         {
             BuildingStatus status = BuildingStatusModel.Describe(city, content, building);
+            _tint.Apply(view, status.Stalled);
             BuildingStatusView? statusView = view.Status;
             if (statusView == null)
             {
