@@ -6,6 +6,7 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
 ## Unreleased
 
 ### Added
+- Waiting-loop review: the welcome-back threshold counts real time at a dev time scale, a command refused for an expired token leads to a new login at once, `PredictionWatch` logs prediction mismatches in development, the [MANUAL] run at 60 times the speed, and `BootstrapSceneTests` no longer leave their `GameRoot` behind (M0-54).
 - Instruction kit: specs, AI workflow (session protocol, change control, build log, documentation system), Claude Code skills,
   subagents and hooks, git hooks, CI, M0 plan with 84 tasks (KIT).
 - Kit verified on macOS; `new-log-entry.sh` fixed for the first entry of a day; GitHub `main` ruleset and security settings;

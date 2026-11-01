@@ -4,13 +4,13 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **State:** AWAITING OWNER   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M0-54 Waiting-loop review and tuning (`[O]` `[MANUAL]`, Opus 5.5)
 - **Branch:** `task/M0-54-waiting-loop-review` (from `main` = `2aa59bf`)
 - **Build log entry:** `docs/build-log/2026/2026-11-01-12-M0-54.md`
-- **Last green commit:** `main` = `2aa59bf`
-- **Done steps:** write-ahead; desk audit, two fixes, `PredictionWatch`, the [MANUAL] steps: all written, **no Unity test has run on them yet** (the Editor was open)
-- **Next step:** with the Editor closed, `test-unity.sh`; commit the `.meta` files of `PredictionWatch.cs` and its tests; then the owner plays `docs/testing/LOCAL-E2E.md` → waiting loop
+- **Last green commit:** the head of `task/M0-54-waiting-loop-review` (EditMode 847, PlayMode 153, fast .NET suite)
+- **Done steps:** write-ahead; desk audit, two fixes, `PredictionWatch`, the [MANUAL] steps, a test-isolation fix (build log)
+- **Next step:** the owner plays `docs/testing/LOCAL-E2E.md` → The waiting loop at 60 times the speed and reports. Then read `~/Library/Logs/Unity/Editor.log` (`PredictionWatch:`), fix with regression tests, record any mismatch with its JSON, and `/finish-task`.
 - **Open questions for the owner:** CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·

@@ -45,6 +45,21 @@ namespace CityBuilder.Client.Tests.PlayMode
             Application.logMessageReceived -= OnLogMessage;
         }
 
+        /// <summary>
+        /// After each test: destroys the root and all it built. Its screens share one UI panel with the other test classes' screens, and with a
+        /// server running its welcome-back scrim would cover that panel for every test after this class (M0-54).
+        /// </summary>
+        [UnityTearDown]
+        public IEnumerator DestroyGameRoots()
+        {
+            foreach (GameRoot root in FindGameRoots())
+            {
+                Object.Destroy(root.gameObject);
+            }
+
+            yield return null;
+        }
+
         /// <summary>The first scene of the build settings is the Bootstrap scene.</summary>
         [Test]
         public void BuildSettings_SceneZero_IsTheBootstrapScene()
