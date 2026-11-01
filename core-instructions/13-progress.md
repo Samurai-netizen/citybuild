@@ -22,7 +22,7 @@
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 52 / 85
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 53 / 85
 
 | Area | State | Notes |
 |---|---|---|
@@ -36,7 +36,7 @@
 | Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) and M0-05 (Unity tests, `test-unity.sh`) merged (PR #8, #12); API client and DTOs M0-37 merged (PR #49); auth and content on the client M0-38 merged (PR #50); the city store and display prediction M0-39 merged (PR #51); the command sender M0-40 merged (PR #52); polling and lifecycle M0-41 merged (PR #53); end-to-end check M0-42 merged (PR #57; `docs/testing/LOCAL-E2E.md`) |
 | Unity city view + placement | in progress | grid, ground and camera M0-43 merged (PR #58; `CityWorld`, drag/pinch/wheel/tap, tile selection); building views M0-44 merged (PR #59; `CityView`, `BuildingLooks`, `BuildingViewFactory`); build menu M0-45 merged (PR #60; `BuildMenu`, `BuildCardModel`, `BuildMenuModel`; a press over the UI stays off the ground); placement flow M0-46 merged (PR #61; `PlacementFlow`, `PlacementFlowModel`, `PlacementBar`, `PlacementGhosts`); feedback for every result M0-47 merged (PR #62; `FeedbackMessages`, `ToastQueue`, `ToastHost`, `CommandFeedback`, `CommandSender.Completed`); client review M0-48 merged (PR #63; `ConnectionStatusView`) |
 | Era I art (CR-0005) | in progress | T1 `art/` adopted, merged (PR #66); T2 (first import, `ArtImportPostprocessor`) merged (PR #67); T3 (models in the city) merged (PR #68); T4 (icons) merged (PR #69); M0-50 (building status, uses the anchors and the site) merged (PR #70) |
-| Inspector, worker stepper, research screen, HUD | in progress | research screen M0-52 in review (`ResearchScreenModel`, `ResearchNodeModel`, `ResearchScreen`, `ResearchFlow`); building inspector with the worker stepper M0-51 merged (PR #71) (`BuildingInspectorModel`, `BuildingInspector`, `InspectorFlow`, `ItemText`); HUD M0-49 merged (PR #64) (`HudView`, `HudModel`, `ItemChipModel`, `ResearchRingModel`, `PerHourText`); building status visuals M0-50 merged (PR #70) (`BuildingStatusModel`, `BuildingStatusView`, `StatusArt`, `StalledTint`) |
+| Inspector, worker stepper, research screen, HUD | in progress | welcome-back report M0-53 in review (`WelcomeBackModel`, `WelcomeBackPanel`, `WelcomeBackFlow`, `SettlementSummary`, `ResearchEffectText`); research screen M0-52 merged (PR #72) (`ResearchScreenModel`, `ResearchNodeModel`, `ResearchScreen`, `ResearchFlow`); building inspector with the worker stepper M0-51 merged (PR #71) (`BuildingInspectorModel`, `BuildingInspector`, `InspectorFlow`, `ItemText`); HUD M0-49 merged (PR #64) (`HudView`, `HudModel`, `ItemChipModel`, `ResearchRingModel`, `PerHourText`); building status visuals M0-50 merged (PR #70) (`BuildingStatusModel`, `BuildingStatusView`, `StatusArt`, `StalledTint`) |
 | Resilience (limits, retries, logging) | in progress | error catalogue, global handler, rate limits and input limits M0-34 merged (PR #46); logging, correlation and the dev time scale M0-35 merged (PR #47) |
 | Docs automation (DocTools) + docs completeness | in progress | handbook, Pages, docs-as-code checks and a full audit: CR-0002 done (PR #27); code documentation CR-0003 done (PR #29); DocTools is M0-61 |
 | Balance simulator | not started | |
