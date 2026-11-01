@@ -174,8 +174,8 @@ namespace CityBuilder.Client.Tests.EditMode.Net
 
         /// <summary>
         /// The server takes the connection and never answers, and a timer cancels the token, as <see cref="ApiClient"/>'s timeout does. A timer
-        /// cancels on another thread, and <c>UnityWebRequest.Abort</c> works only on the main thread, so the abort must come back to it: otherwise the
-        /// request never ends, and with it the poll or the retries that wait for it (CR-0004).
+        /// cancels on another thread, so <c>UnityWebRequest.Abort</c> runs there; measured in the Editor, that ends the request without an error
+        /// (CR-0004 decision 9). If it stopped doing so, the request would never end, and with it the poll or the retries that wait for it.
         /// </summary>
         [UnityTest]
         public IEnumerator ACancelFromATimer_EndsARequestTheServerNeverAnswers()

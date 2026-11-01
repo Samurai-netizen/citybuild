@@ -4,6 +4,8 @@ using CityBuilder.Client.Presentation.City;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.TestTools.Constraints;
+using Is = UnityEngine.TestTools.Constraints.Is;
 
 namespace CityBuilder.Client.Tests.PlayMode
 {
@@ -277,6 +279,20 @@ namespace CityBuilder.Client.Tests.PlayMode
             reader.Tick();
 
             Assert.That(_world.Selection!.Selected, Is.Null);
+        }
+
+        /// <summary>The reader runs every frame: a mouse resting over the grid, and a finger held still, allocate nothing (M0-48).</summary>
+        [Test]
+        public void Tick_WithAPointerAtRest_AllocatesNothing()
+        {
+            CityInputReader reader = ReaderWithUiAt(ScreenOf(new Vector3(7.5f, 0f, 7.5f)));
+            Set(_mouse.position, ScreenOf(new Vector3(1.5f, 0f, 2.5f)));
+            reader.Tick();
+            Assert.That(() => { reader.Tick(); }, Is.Not.AllocatingGCMemory(), "the mouse");
+
+            BeginTouch(1, ScreenOf(new Vector3(2.5f, 0f, 3.5f)));
+            reader.Tick();
+            Assert.That(() => { reader.Tick(); }, Is.Not.AllocatingGCMemory(), "the finger");
         }
 
         /// <summary>Where a world point shows on the screen, in pixels.</summary>

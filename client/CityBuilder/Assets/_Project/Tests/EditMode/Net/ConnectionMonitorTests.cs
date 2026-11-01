@@ -10,6 +10,8 @@ using CityBuilder.Client.Tests.EditMode.Core;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UnityEngine.TestTools.Constraints;
+using Is = UnityEngine.TestTools.Constraints.Is;
 
 namespace CityBuilder.Client.Tests.EditMode.Net
 {
@@ -65,6 +67,15 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             _monitor = new ConnectionMonitor(api, auth, _store, "mvp-1", "dev1", _scheduler, () => _reachable);
             _changes = 0;
             _monitor.StateChanged += () => _changes++;
+        }
+
+        /// <summary><c>GameRoot</c> calls <see cref="ConnectionMonitor.TickAsync"/> every frame: with no poll due it allocates nothing (M0-48).</summary>
+        [Test]
+        public void Tick_WithNoPollDue_AllocatesNothing()
+        {
+            _monitor.TickAsync(CancellationToken.None);
+
+            Assert.That(() => { _monitor.TickAsync(CancellationToken.None); }, Is.Not.AllocatingGCMemory());
         }
 
         /// <summary>A monitor made after a successful start is connected and has sent nothing.</summary>

@@ -3,12 +3,26 @@
 using System;
 using CityBuilder.Client.Presentation.Feedback;
 using NUnit.Framework;
+using UnityEngine.TestTools.Constraints;
+using Is = UnityEngine.TestTools.Constraints.Is;
 
 namespace CityBuilder.Client.Tests.EditMode.Presentation.Feedback
 {
     /// <summary>The toasts on the screen (M0-47): showing, expiry, the cap, and the toast that is not shown twice.</summary>
     public sealed class ToastQueueTests
     {
+        /// <summary>The host calls <see cref="ToastQueue.Update"/> every frame: with nothing to take away it allocates nothing (M0-48). The second assert shows the check does see an allocation.</summary>
+        [Test]
+        public void Update_WithNothingToTakeAway_AllocatesNothing()
+        {
+            var queue = new ToastQueue();
+            queue.Show(ToastKind.Success, "Construction started", 0);
+            queue.Update(1);
+
+            Assert.That(() => { queue.Update(1); }, Is.Not.AllocatingGCMemory());
+            Assert.That(() => { GC.KeepAlive(new object()); }, Is.AllocatingGCMemory());
+        }
+
         /// <summary>A toast shows from the moment it is made until its time is up, and errors stay longer than successes.</summary>
         [Test]
         public void AToast_StaysForItsKindsTime_ThenGoes()

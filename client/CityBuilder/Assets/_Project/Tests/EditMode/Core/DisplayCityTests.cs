@@ -12,6 +12,8 @@ using CityBuilder.Simulation.State;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UnityEngine.TestTools.Constraints;
+using Is = UnityEngine.TestTools.Constraints.Is;
 
 namespace CityBuilder.Client.Tests.EditMode.Core
 {
@@ -52,6 +54,17 @@ namespace CityBuilder.Client.Tests.EditMode.Core
             _now = 100;
             _store = new ClientCityStore(() => _now);
             _clock = new DisplayClock(_store, 1);
+        }
+
+        /// <summary><c>GameRoot</c> calls <see cref="DisplayCity.Refresh"/> every frame: in a second that has already been predicted it allocates nothing (M0-48).</summary>
+        [Test]
+        public void Refresh_WithinTheSameSecond_AllocatesNothing()
+        {
+            _store.Apply(CityTestData.Snapshot("snapshot-city-producing.json"));
+            var display = new DisplayCity(_store, _clock, _content);
+            display.Refresh();
+
+            Assert.That(() => { display.Refresh(); }, Is.Not.AllocatingGCMemory());
         }
 
         /// <summary>The predicted city after N seconds is exactly what the engine makes of the snapshot in one advance of N, for any N and any real answer.</summary>
