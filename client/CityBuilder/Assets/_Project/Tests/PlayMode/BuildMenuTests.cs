@@ -13,6 +13,8 @@ using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
+using UnityEngine.TestTools.Constraints;
+using Is = UnityEngine.TestTools.Constraints.Is;
 
 namespace CityBuilder.Client.Tests.PlayMode
 {
@@ -213,6 +215,17 @@ namespace CityBuilder.Client.Tests.PlayMode
 
             Assert.That(_menu.IsOverUi(onButton), Is.True, "the build button takes the pointer");
             Assert.That(_menu.IsOverUi(topCorner), Is.False, "the empty space passes the pointer to the ground");
+        }
+
+        /// <summary>The input reader asks it every frame while the mouse hovers: the panel's pick allocates nothing (M0-48).</summary>
+        [UnityTest]
+        public IEnumerator IsOverUi_AllocatesNothing()
+        {
+            yield return null;
+            var position = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
+            _menu.IsOverUi(position);
+
+            Assert.That(() => { _menu.IsOverUi(position); }, Is.Not.AllocatingGCMemory());
         }
 
         /// <summary>Destroying the menu takes its listeners off the model, so a later update does not touch destroyed elements.</summary>

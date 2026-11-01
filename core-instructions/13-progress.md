@@ -9,8 +9,8 @@
 - **Branch:** `task/M0-48-client-review` (from `main` = `8ca4d39`)
 - **Build log entry:** `docs/build-log/2026/2026-10-31-10-M0-48.md`
 - **Last green commit:** `8ca4d39` (`main`, M0-47 merged)
-- **Done steps:** write-ahead
-- **Next step:** step 1 of the plan in the build log: review all client scripts against the spec, findings table in the entry.
+- **Done steps:** write-ahead; review (findings table in the build log); `ConnectionStatusView` split; literal era removed; allocation tests
+- **Next step:** `/finish-task` for M0-48.
 - **Open questions for the owner:** M0-47: decision 4 (new `CommandSender.Completed` event in `Net`), decision 2 (no builder count or building name in a sentence); M0-46: the ghost's transparent shader variant on a device build (follow-up); M0-45: decision 1 (item names are plural, so `1 Planks`; a singular name in the content is your call), decision 8 (cards use the displayed city, not the raw snapshot), decision 11 (I changed M0-43's `CityInputReader`/`CityWorld` so a press on the menu never reaches the ground); the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never

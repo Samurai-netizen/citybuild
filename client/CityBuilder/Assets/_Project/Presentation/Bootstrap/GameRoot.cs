@@ -9,48 +9,27 @@ using CityBuilder.Client.Presentation.Feedback;
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.State;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 namespace CityBuilder.Client.Presentation.Bootstrap
 {
     /// <summary>
     /// The composition root: the one place that builds the client's services by hand and hands them to the views
     /// (core-instructions/09, "Runtime structure"). <see cref="GameBootstrap"/> creates exactly one when the Bootstrap scene loads.
-    /// It shows the connection status, builds the API client from the settings asset, runs <see cref="StartupFlow"/> (login, content, city)
-    /// and shows how it ended: "Connected" with the era and the coins, a message when the server cannot be used, or the fatal error screen
-    /// when the server's content is invalid. Once connected it owns the city store, keeps the display city up to date for the views and builds the command sender they use.
+    /// It builds the API client from the settings asset, runs <see cref="StartupFlow"/> (login, content, city) and has the <see cref="ConnectionStatusView"/> show how it ended:
+    /// "Connected" with the era and the coins, a message when the server cannot be used, or the fatal error screen when the server's content is invalid. Once connected it owns the city store, keeps the display city up to date for the views and builds the command sender they use.
     /// It creates the city's camera first (<see cref="CityWorld"/>, so the screen is cleared at once) and, once connected, shows the ground for the grid size of the rules and the buildings of the displayed city (<see cref="CityView"/>).
     /// It also shows the build menu (<see cref="BuildMenu"/>), whose cards follow the displayed city, and tells the ground that a press on the menu or on the placement bar is not its own.
     /// It joins the menu, the ground, the placement bar and the command sender into the placement flow (<see cref="PlacementFlow"/>).
-    /// It also drives the connection monitor: it polls the city, goes quiet while the app is paused, and the screen says how the connection stands.
+    /// It also drives the connection monitor: it polls the city, goes quiet while the app is paused, and the status view says how the connection stands.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class GameRoot : MonoBehaviour
     {
-        /// <summary>
-        /// The UI's panel settings, loaded by name from <c>Assets/_Project/Resources/UI</c>: this object is created from code, so there is no
-        /// scene field to assign.
-        /// </summary>
-        private const string PanelSettingsPath = "UI/PanelSettings";
-        /// <summary>The connection status layout (UXML), loaded by name from the same folder.</summary>
-        private const string ConnectionStatusPath = "UI/ConnectionStatus";
-        /// <summary>The fatal error layout (UXML), loaded by name from the same folder.</summary>
-        private const string FatalErrorPath = "UI/FatalError";
         /// <summary>The API client settings asset, loaded by name from <c>Assets/_Project/Resources/Config</c>.</summary>
         private const string SettingsPath = "Config/ApiClientSettings";
 
-        /// <summary>The name of the status label in <c>ConnectionStatus.uxml</c>.</summary>
-        internal const string StatusLabelName = "connection-status";
-        /// <summary>The name of the title label in <c>FatalError.uxml</c>.</summary>
-        internal const string FatalTitleName = "fatal-error-title";
-        /// <summary>The name of the details label in <c>FatalError.uxml</c>.</summary>
-        internal const string FatalDetailsName = "fatal-error-details";
-
-        /// <summary>The UI object's document; null when an asset is missing and nothing is shown.</summary>
-        private UIDocument? _document;
-
-        /// <summary>The fatal error layout, kept to swap in; null when it is missing.</summary>
-        private VisualTreeAsset? _fatalErrorLayout;
+        /// <summary>The connection status on the screen; null when an asset is missing and nothing is shown.</summary>
+        private ConnectionStatusView? _status;
 
         /// <summary>Holds the last snapshot; the flow and, later, the command sender and the polling give it to this one store.</summary>
         private readonly ClientCityStore _cityStore = new ClientCityStore();
@@ -127,14 +106,14 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         /// <summary>Whether the fatal error screen is up.</summary>
         public bool IsFatalErrorShown { get; private set; }
 
-        /// <summary>Unity calls it once, right after the component is created: it creates the city's camera and the UI.</summary>
+        /// <summary>Unity calls it once, right after the component is created: it creates the city's camera and the connection status.</summary>
         private void Awake()
         {
             // The camera comes first: it clears the screen, so an earlier text never shows through the status label.
             var worldObject = new GameObject("World");
             worldObject.transform.SetParent(transform, false);
             _world = worldObject.AddComponent<CityWorld>();
-            CreateConnectionStatus();
+            _status = ConnectionStatusView.Create(transform);
         }
 
         /// <summary>
@@ -301,7 +280,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                 _world,
                 _commandSender,
                 bar,
-                () => _displayCity?.Current?.Era ?? 1,
+                () => _displayCity!.Current!.Era,
                 destroyCancellationToken);
         }
 
@@ -355,76 +334,15 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             return new StartupFlow(auth, new ContentService(api), api, _displayName, _cityStore);
         }
 
-        /// <summary>
-        /// Creates the UI: a child object <c>UI</c> with a <see cref="UIDocument"/> of the panel settings and the status layout. When an
-        /// asset is missing it logs an error that names them and shows nothing.
-        /// </summary>
-        private void CreateConnectionStatus()
-        {
-            var panelSettings = Resources.Load<PanelSettings>(PanelSettingsPath);
-            var connectionStatus = Resources.Load<VisualTreeAsset>(ConnectionStatusPath);
-            _fatalErrorLayout = Resources.Load<VisualTreeAsset>(FatalErrorPath);
-            if (panelSettings == null || connectionStatus == null || _fatalErrorLayout == null)
-            {
-                Debug.LogError(
-                    "GameRoot: cannot show the connection status, an asset is missing under Assets/_Project/Resources: " +
-                    $"{PanelSettingsPath} {(panelSettings == null ? "missing" : "found")}, " +
-                    $"{ConnectionStatusPath} {(connectionStatus == null ? "missing" : "found")}, " +
-                    $"{FatalErrorPath} {(_fatalErrorLayout == null ? "missing" : "found")}.");
-                return;
-            }
-
-            var uiObject = new GameObject("UI");
-            uiObject.transform.SetParent(transform, false);
-
-            // A UIDocument builds its tree when it is enabled, so it gets its settings while the object is still inactive.
-            uiObject.SetActive(false);
-            _document = uiObject.AddComponent<UIDocument>();
-            _document.panelSettings = panelSettings;
-            _document.visualTreeAsset = connectionStatus;
-            uiObject.SetActive(true);
-        }
-
-        /// <summary>Puts <paramref name="status"/> on the screen: the label's text, or the fatal error layout with its lines.</summary>
+        /// <summary>Remembers what <paramref name="status"/> says, for tests and logs, and has the status view show it.</summary>
         private void Show(ConnectionStatusModel status)
         {
             CurrentStatusText = status.Headline;
             IsFatalErrorShown = status.IsFatal;
-            VisualElement? root = _document == null ? null : _document.rootVisualElement;
-            if (_document == null || root == null)
+            if (_status != null)
             {
-                return;
+                _status.Show(status);
             }
-
-            if (status.IsFatal)
-            {
-                // Setting the layout rebuilds the document's tree, so the labels are looked up after it.
-                _document.visualTreeAsset = _fatalErrorLayout;
-                VisualElement? fatalRoot = _document.rootVisualElement;
-                if (fatalRoot == null)
-                {
-                    return;
-                }
-
-                SetText(fatalRoot, FatalTitleName, status.Headline);
-                SetText(fatalRoot, FatalDetailsName, string.Join("\n", status.Details));
-                return;
-            }
-
-            SetText(root, StatusLabelName, status.Headline);
-        }
-
-        /// <summary>Sets the text of the label called <paramref name="labelName"/> under <paramref name="root"/>; logs an error when the layout lacks it.</summary>
-        private static void SetText(VisualElement root, string labelName, string text)
-        {
-            var label = root.Q<Label>(labelName);
-            if (label == null)
-            {
-                Debug.LogError($"GameRoot: the layout has no label named '{labelName}'.");
-                return;
-            }
-
-            label.text = text;
         }
     }
 }
