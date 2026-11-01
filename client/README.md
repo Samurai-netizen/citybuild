@@ -109,11 +109,26 @@ The tests check the values; only a person can say the status reads well. Nothing
 server of `docs/testing/LOCAL-E2E.md` and play a minute.
 1. Open the **Bootstrap** scene and press **Play**; place a Woodcutter's Hut. While it is built you see the construction site with a yellow ring that fills
    clockwise. When it is done and has workers, a green ring fills over each cycle, and one small pale dot per worker sits under it (at most six).
-2. Set its workers to 0 (the inspector comes with M0-51; until then place a building when no workers are free): an amber bubble with the workers picture
+2. Set its workers to 0 with the stepper of the inspector (tap the building, press −; M0-51): an amber bubble with the workers picture
    shows and the hut looks slightly washed out. Place a Sawmill with no logs in stock: a red bubble with the logs picture and a strike across it. Fill the
    logs to their cap: a blue bubble with the logs.
 3. Zoom in and out and pan: the ring, bubble and dots keep their size on the building and face the screen. Check that nothing hides behind the building in front,
    that the dots can be told apart on a yellow roof, and that the washed-out look is slight and not dirty (`StalledTint.Mix` and `Grey` are the two numbers).
 4. Tell the AI coder "status looks right", or what looks wrong (too big, too small, too strong a tint, a bubble you cannot read). Stop Play mode without saving the scene.
 
-Last updated: M0-50
+## [MANUAL] Look at the building inspector (M0-51)
+The tests check the words and the buttons; only a person can say the panel reads well and is easy to press. Nothing here is saved or committed. Use the
+server of `docs/testing/LOCAL-E2E.md` and play a few minutes.
+1. Open the **Bootstrap** scene and press **Play**. Tap a Woodcutter's Hut or a Sawmill: a panel opens at the right under the HUD with the building's picture,
+   its name and level, the status, the time to the next batch, the recipe, the rates, the stepper (`3 / 3` with − and +) and the upgrade section. Tap a cottage:
+   the same panel without the stepper. Tap an empty tile or the same tile again, or press the X: the panel closes.
+2. Press − once: the value drops at once, a line says the rate with the lower count, and "Updating workers…" shows until the server answers (about half a second
+   later). Press − three times quickly: one request, the last target. With no free workers (every worker is assigned) + is dimmed and says so.
+3. With coins and planks in stock press **Upgrade** on a Sawmill: the button dims with "Upgrade requested…", the building gets the construction site and a blue
+   ring, and the panel says "Upgrading to level 2". Press it twice quickly: only one upgrade starts. With too little stock the button is dimmed and names what is missing.
+4. Check the layout: the panel must not hide the HUD or run off the bottom on your screen (the top margin is a fixed 124 and assumes the HUD's height), the lines must
+   not be cut off, and − and + must be easy to hit with a thumb. Open the **Build** sheet while the panel is up: the sheet covers it. Pick a building in the sheet:
+   the panel closes and placement starts.
+5. Tell the AI coder "inspector looks right", or what looks wrong (too wide, too tall, the text too small, a button hard to hit). Stop Play mode without saving the scene.
+
+Last updated: M0-51
