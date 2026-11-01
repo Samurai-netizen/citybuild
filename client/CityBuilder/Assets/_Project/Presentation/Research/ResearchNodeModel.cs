@@ -1,7 +1,6 @@
 #nullable enable
 
 using System;
-using System.Globalization;
 using System.Text;
 using CityBuilder.Client.Presentation.Build;
 using CityBuilder.Client.Presentation.Ui;
@@ -102,7 +101,7 @@ namespace CityBuilder.Client.Presentation.Research
             {
                 Id = node.Id.Value,
                 Name = node.Name,
-                EffectText = EffectTextOf(content, node),
+                EffectText = ResearchEffectText.Of(content, node),
                 CostText = node.Cost.Count == 0 ? "Free" : "Cost: " + ItemText.Quantities(content, node.Cost, ", "),
                 TimeText = "Takes " + DurationText.Format(node.DurationSeconds),
                 Status = status,
@@ -225,53 +224,6 @@ namespace CityBuilder.Client.Presentation.Research
             }
 
             return lacking.ToString();
-        }
-
-        /// <summary>The words of every effect of the node, joined by a comma; the names come from the content.</summary>
-        private static string EffectTextOf(GameContent content, ResearchDefinition node)
-        {
-            var text = new StringBuilder();
-            for (int index = 0; index < node.Effects.Count; index++)
-            {
-                string line = EffectLine(content, node.Effects[index]);
-                if (line.Length > 0)
-                {
-                    text.Append(text.Length == 0 ? string.Empty : ", ").Append(line);
-                }
-            }
-
-            return text.ToString();
-        }
-
-        /// <summary>One effect in words: <c>Unlocks Trading Post</c>, <c>Woodcutter: −20% labor</c>, <c>+250 Logs storage</c>.</summary>
-        private static string EffectLine(GameContent content, ResearchEffect effect)
-        {
-            switch (effect)
-            {
-                case UnlockBuildingEffect unlock:
-                    return "Unlocks " + BuildingName(content, unlock.Building);
-                case LaborReductionEffect labor:
-                    return BuildingName(content, labor.Building) + ": −" + Percent(labor.Permille) + " labor";
-                case StorageCapBonusEffect storage:
-                    return "+" + storage.Amount.ToString(CultureInfo.InvariantCulture) + " " + ItemText.ItemName(content, storage.Item) + " storage";
-                default:
-                    return string.Empty;
-            }
-        }
-
-        /// <summary>The building type's name from the content; the id when the content has none (it always has).</summary>
-        private static string BuildingName(GameContent content, BuildingTypeId type)
-        {
-            return content.TryGetBuilding(type, out BuildingDefinition? definition) ? definition.Name : type.Value;
-        }
-
-        /// <summary>A permille as a percent: <c>20%</c> for 200, <c>12.5%</c> for 125 (one tenth of a percent at most, rounded toward zero).</summary>
-        private static string Percent(int permille)
-        {
-            const int PermillePerPercent = 10;
-            string text = (permille / PermillePerPercent).ToString(CultureInfo.InvariantCulture);
-            int tenth = permille % PermillePerPercent;
-            return (tenth == 0 ? text : text + "." + tenth.ToString(CultureInfo.InvariantCulture)) + "%";
         }
     }
 }

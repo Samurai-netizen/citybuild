@@ -137,7 +137,8 @@ There is no "claim" command, because production and research complete on their o
   plus research). `maxWorkers` is the most workers the building's current level takes, also while it is being built or upgraded (0 for houses).
   `phase` is `Constructing`, `Upgrading`, `Idle` or `Producing`; the timer fields a phase doesn't use are 0.
 - `settlement` is what the settlement **of this request** did, from the city's last settled second to now: a request seconds after another
-  one reports only those seconds.
+  one reports only those seconds. The client reads it on every snapshot it takes (`SettlementSummary`); a settlement of 300 seconds or more
+  (a routine poll settles about 120) is shown to the player as the welcome-back report (`09`).
 - `stallReason` is one of `null`, `"NoRecipe"`, `"NoWorkers"`, `"MissingInput:logs"` or `"StorageFull:planks"`. `phaseEndsAt` is `null` for a frozen cycle.
 - Lists are sorted: buildings by `id`, completed research by `id` (ordinal).
 - Progress for display: `done = cycleLabor − (laborRemaining − (clientClock − segmentStartedAt) × assignedWorkers)`.

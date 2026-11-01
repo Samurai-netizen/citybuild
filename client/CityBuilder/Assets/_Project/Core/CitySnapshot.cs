@@ -22,9 +22,11 @@ namespace CityBuilder.Client.Core
         /// <param name="stateVersion">The city's stored version after the request.</param>
         /// <param name="contentVersion">The version of the content the server settled the city with.</param>
         /// <param name="city">The city at the snapshot's clock. The snapshot takes it over: the caller must not keep using it.</param>
+        /// <param name="settlement">What the settlement of the request that gave this snapshot did, or null when it is not known (a snapshot made without an answer).</param>
         /// <exception cref="ArgumentNullException"><paramref name="contentVersion"/> or <paramref name="city"/> is null.</exception>
-        public CitySnapshot(long stateVersion, string contentVersion, CityState city)
+        public CitySnapshot(long stateVersion, string contentVersion, CityState city, SettlementSummary? settlement = null)
         {
+            Settlement = settlement;
             StateVersion = stateVersion;
             ContentVersion = contentVersion ?? throw new ArgumentNullException(nameof(contentVersion));
             _city = city ?? throw new ArgumentNullException(nameof(city));
@@ -35,6 +37,9 @@ namespace CityBuilder.Client.Core
 
         /// <summary>The version of the content the server settled the city with.</summary>
         public string ContentVersion { get; }
+
+        /// <summary>What the settlement of the request that gave this snapshot did (<c>05</c>, <c>settlement</c>); null when the snapshot was made without one.</summary>
+        public SettlementSummary? Settlement { get; }
 
         /// <summary>The city clock of the snapshot, in seconds.</summary>
         public long Clock => _city.Clock;

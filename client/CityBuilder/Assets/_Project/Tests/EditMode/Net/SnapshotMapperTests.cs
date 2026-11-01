@@ -86,6 +86,37 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(completed.CompletedResearch.Select(id => id.Value), Does.Contain("trade_charter"));
         }
 
+        /// <summary>The settlement block of a real answer comes along in the engine's terms: times, items per name, completed buildings and research.</summary>
+        [Test]
+        public void ToSnapshot_Settlement_IsKept()
+        {
+            SettlementSummary research = CityTestData.Snapshot("snapshot-city-research-completed.json").Settlement!;
+            SettlementSummary buildings = CityTestData.Snapshot("snapshot-city-settled-buildings.json").Settlement!;
+
+            Assert.That((research.ElapsedSeconds, research.ProductionSeconds), Is.EqualTo((429L, 429L)));
+            Assert.That(research.Produced.Select(line => line.Key.Value + "=" + line.Value), Is.EqualTo(new[] { "logs=14", "planks=7" }));
+            Assert.That(research.Consumed.Select(line => line.Key.Value + "=" + line.Value), Is.EqualTo(new[] { "logs=14" }));
+            Assert.That(research.CompletedResearch.Select(id => id.Value), Is.EqualTo(new[] { "trade_charter" }));
+            Assert.That(research.EraChanged, Is.False);
+            Assert.That(buildings.CompletedBuildings, Is.EqualTo(new[] { 1, 2 }));
+            Assert.That(buildings.Produced, Is.Empty);
+        }
+
+        /// <summary>A settlement that says production counted more seconds than passed is a broken answer.</summary>
+        [Test]
+        public void ToSnapshot_ProductionAboveElapsed_IsAnInvalidResponse()
+        {
+            CitySnapshotDto good = CityTestData.Dto("snapshot-city-research-completed.json");
+            var settlement = new SnapshotSettlementDto(
+                10, 11, good.Settlement.Produced, good.Settlement.Consumed, good.Settlement.CompletedBuildings, good.Settlement.CompletedResearch, false);
+            var broken = new CitySnapshotDto(good.RequestId, good.StateVersion, good.ServerTimeUtc, good.ContentVersion, good.City, settlement);
+
+            ApiResult<CitySnapshot> result = SnapshotMapper.ToSnapshot(broken);
+
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Error!.Code, Is.EqualTo(ApiErrorCodes.ClientInvalidResponse));
+        }
+
         /// <summary>The answer has no target level; an upgrading building gets its level plus 1, and the engine completes the upgrade to it.</summary>
         [Test]
         public void ToSnapshot_UpgradingBuilding_TargetsTheNextLevel()

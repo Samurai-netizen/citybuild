@@ -88,13 +88,39 @@ namespace CityBuilder.Client.Net
 
             try
             {
-                return ApiResult<CitySnapshot>.Success(new CitySnapshot(snapshot.StateVersion, snapshot.ContentVersion, ToCity(snapshot.City)));
+                return ApiResult<CitySnapshot>.Success(new CitySnapshot(snapshot.StateVersion, snapshot.ContentVersion, ToCity(snapshot.City), ToSettlement(snapshot.Settlement)));
             }
             catch (ArgumentException exception)
             {
                 string detail = "The snapshot is not a valid city: " + exception.Message;
                 return ApiResult<CitySnapshot>.Failure(new ApiError(ApiErrorCodes.ClientInvalidResponse, 200, detail, null, snapshot.RequestId, null));
             }
+        }
+
+        /// <summary>The settlement part of the answer: item ids and research ids become the engine's, in the order the server sent them.</summary>
+        /// <exception cref="ArgumentException">The values are no settlement: a negative number, production above the elapsed time, a blank id.</exception>
+        private static SettlementSummary ToSettlement(SnapshotSettlementDto settlement)
+        {
+            return new SettlementSummary(
+                settlement.ElapsedSeconds,
+                settlement.ProductionSeconds,
+                ToQuantities(settlement.Produced),
+                ToQuantities(settlement.Consumed),
+                settlement.CompletedBuildings,
+                settlement.CompletedResearch.ConvertAll(id => new ResearchId(id)),
+                settlement.EraChanged);
+        }
+
+        /// <summary>Item id to quantity as the engine's pairs, in the dictionary's order (the server sends them sorted).</summary>
+        private static List<KeyValuePair<ItemId, long>> ToQuantities(Dictionary<string, long> quantities)
+        {
+            var lines = new List<KeyValuePair<ItemId, long>>(quantities.Count);
+            foreach (KeyValuePair<string, long> line in quantities)
+            {
+                lines.Add(new KeyValuePair<ItemId, long>(new ItemId(line.Key), line.Value));
+            }
+
+            return lines;
         }
 
         /// <summary>The city part of the answer.</summary>
