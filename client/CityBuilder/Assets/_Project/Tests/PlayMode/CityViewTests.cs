@@ -3,12 +3,15 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using CityBuilder.Client.Presentation.City;
 using CityBuilder.Simulation;
 using CityBuilder.Simulation.State;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UnityEngine.TestTools.Constraints;
+using Is = UnityEngine.TestTools.Constraints.Is;
 using Object = UnityEngine.Object;
 
 namespace CityBuilder.Client.Tests.PlayMode
@@ -81,6 +84,34 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(_world.Buildings.Root.transform.childCount, Is.EqualTo(4));
         }
 
+        /// <summary>
+        /// The view runs once a second with the display city: a call where nothing changed allocates nothing (M0-44; the models of CR-0005 must not
+        /// change that), for finished buildings and for one under construction.
+        /// </summary>
+        [Test]
+        public void ShowCity_WithNothingChanged_AllocatesNothing()
+        {
+            CityState city = City(FirstSample().Concat(new[] { new Building(5, new BuildingTypeId(BuildingLooks.House), 0, 0, 1, 0, BuildingPhase.Constructing, 0, 30, 0, 0, 0, 0) }));
+            _world.ShowCity(city);
+
+            Assert.That(() => _world.Buildings!.Show(city), Is.Not.AllocatingGCMemory());
+        }
+
+        /// <summary>All the buildings of a city draw with the art's one material, so a city is a handful of draw calls and not one per building.</summary>
+        [Test]
+        public void ShowCity_DrawsEveryBuildingWithTheOneSharedMaterial()
+        {
+            _world.ShowCity(City(FirstSample().Concat(new[] { Idle(5, BuildingLooks.House, 0, 0, 2) })));
+
+            var materials = new HashSet<Material>();
+            foreach (Renderer renderer in _world.Buildings!.Root.GetComponentsInChildren<Renderer>())
+            {
+                materials.Add(renderer.sharedMaterial);
+            }
+
+            Assert.That(materials.Count, Is.EqualTo(1));
+        }
+
         /// <summary>A second city updates the changed building in place, adds the new one and removes the missing ones, with no duplicates.</summary>
         [UnityTest]
         public IEnumerator ShowCity_WithASecondCity_UpdatesAddsAndRemoves()
@@ -104,7 +135,7 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(buildings.TryGetView(1, out BuildingView? updated), Is.True);
             Assert.That(updated, Is.SameAs(cottage), "the same object, updated in place");
             Assert.That(updated!.Level, Is.EqualTo(2));
-            Assert.That(updated.Body!.localScale.y, Is.EqualTo(1.2f).Within(0.0001f));
+            Assert.That(updated.Model, Is.SameAs(BuildingLooks.FindModel(BuildingLooks.House, 1, 2)), "the level 2 model");
             Assert.That(buildings.TryGetView(2, out _), Is.False, "the hut is gone");
             Assert.That(hut == null, Is.True, "its object is destroyed");
             Assert.That(buildings.TryGetView(4, out _), Is.False, "the trading post is gone");
@@ -125,17 +156,17 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(_world.Buildings.Root.transform.childCount, Is.EqualTo(0));
         }
 
-        /// <summary>A building the server is still constructing shows as a low foundation, and as the finished building once it is idle.</summary>
+        /// <summary>A building the server is still constructing shows as the construction site, and as the finished building once it is idle.</summary>
         [Test]
-        public void ShowCity_ShowsAConstructingBuildingLow_ThenFinished()
+        public void ShowCity_ShowsAConstructingBuildingAsTheSite_ThenFinished()
         {
             _world.ShowCity(City(new[] { new Building(1, new BuildingTypeId(BuildingLooks.House), 1, 1, 1, 0, BuildingPhase.Constructing, 0, 30, 0, 0, 0, 0) }));
             _world.Buildings!.TryGetView(1, out BuildingView? view);
-            Assert.That(view!.Body!.localScale.y, Is.LessThan(0.5f));
+            Assert.That(view!.Model, Is.SameAs(BuildingLooks.FindConstructionSite(1)));
 
             _world.ShowCity(City(new[] { Idle(1, BuildingLooks.House, 1, 1, 1) }));
 
-            Assert.That(view.Body!.localScale.y, Is.EqualTo(1f).Within(0.0001f));
+            Assert.That(view.Model, Is.SameAs(BuildingLooks.FindModel(BuildingLooks.House, 1, 1)));
             Assert.That(_world.Buildings.Count, Is.EqualTo(1));
         }
 
@@ -182,7 +213,7 @@ namespace CityBuilder.Client.Tests.PlayMode
         {
             Assert.That(buildings.TryGetView(id, out BuildingView? view), Is.True, "view of building " + id);
             Assert.That(view!.TypeId, Is.EqualTo(typeId));
-            Assert.That(view.Look, Is.SameAs(BuildingLooks.Get(typeId, 1)));
+            Assert.That(view.Model, Is.SameAs(BuildingLooks.FindModel(typeId, 1, 1)));
             Assert.That(view.transform.localPosition, Is.EqualTo(position));
         }
     }

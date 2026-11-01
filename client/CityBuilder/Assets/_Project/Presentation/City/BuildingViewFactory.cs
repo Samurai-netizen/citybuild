@@ -4,13 +4,16 @@ using System;
 using System.Collections.Generic;
 using CityBuilder.Simulation.State;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace CityBuilder.Client.Presentation.City
 {
     /// <summary>
-    /// Builds and refreshes the objects that stand for buildings (M0-44): the placeholder look for a building's type and the city's era
-    /// (<see cref="BuildingLooks"/>), made from primitives with no collider, stretched upward for the level and the phase. It keeps one material
-    /// per colour for all buildings and destroys them in <see cref="Destroy"/>. Display only: it reads a <see cref="Building"/> and never changes it.
+    /// Builds and refreshes the objects that stand for buildings (M0-44, CR-0005): an instance of the model for a building's type, the city's era
+    /// and its level (<see cref="BuildingLooks.FindModel"/>), or of the construction site while it is built or upgraded, with the anchors found
+    /// by name. A level with no model falls back to the placeholder look of its type from primitives with no collider, stretched upward for the
+    /// level and the phase, and an unknown type to the grey box. Models share the art's one material; the primitives get one material per colour,
+    /// which the factory destroys in <see cref="Destroy"/>. Display only: it reads a <see cref="Building"/> and never changes it.
     /// </summary>
     public sealed class BuildingViewFactory
     {
@@ -65,8 +68,9 @@ namespace CityBuilder.Client.Presentation.City
         }
 
         /// <summary>
-        /// Brings a view up to date with its building: a new body when the type or the era changed (or there is none yet), and a new height
-        /// when the level or the phase changed. Does nothing, and allocates nothing, when the view already shows exactly this.
+        /// Brings a view up to date with its building: a new body when the type, the era, the level or the construction-site state changed (or
+        /// there is none yet) and the model or look it needs is not the one drawn, and a new height for a body of primitives when the level or the
+        /// phase changed. Does nothing, and allocates nothing, when the view already shows exactly this.
         /// </summary>
         /// <param name="view">The view of <paramref name="building"/>.</param>
         /// <param name="building">The building as it is now.</param>
@@ -87,15 +91,26 @@ namespace CityBuilder.Client.Presentation.City
 
             bool changed = false;
             string typeId = building.TypeId.Value;
-            if (view.Body == null || view.Era != era || !string.Equals(view.TypeId, typeId, StringComparison.Ordinal))
+            bool site = BuildingLooks.ShowsConstructionSite(building.Phase);
+            if (view.Body == null
+                || view.Era != era
+                || view.Level != building.Level
+                || BuildingLooks.ShowsConstructionSite(view.Phase) != site
+                || !string.Equals(view.TypeId, typeId, StringComparison.Ordinal))
             {
-                BuildBody(view, BuildingLooks.Get(typeId, era));
+                GameObject? model = site ? BuildingLooks.FindConstructionSite(era) : BuildingLooks.FindModel(typeId, era, building.Level);
+                BuildingLook? look = model == null ? BuildingLooks.Get(typeId, era) : null;
+                if (view.Body == null || view.Model != model || view.Look != look)
+                {
+                    BuildBody(view, model, look);
+                }
+
                 view.TypeId = typeId;
                 view.Era = era;
                 changed = true;
             }
 
-            int height = BuildingLooks.HeightPermille(building.Level, building.Phase);
+            int height = view.Model != null ? BuildingLooks.FullHeightPermille : BuildingLooks.HeightPermille(building.Level, building.Phase);
             if (changed || view.HeightPermille != height)
             {
                 view.Body!.localScale = new Vector3(1f, height / (float)BuildingLooks.FullHeightPermille, 1f);
@@ -156,8 +171,11 @@ namespace CityBuilder.Client.Presentation.City
             _materials.Clear();
         }
 
-        /// <summary>Replaces the view's body with the primitives of <paramref name="look"/>.</summary>
-        private void BuildBody(BuildingView view, BuildingLook look)
+        /// <summary>
+        /// Replaces the view's body with an instance of <paramref name="model"/>, or, when there is none, with the primitives of
+        /// <paramref name="look"/>, and finds the model's anchors by name.
+        /// </summary>
+        private void BuildBody(BuildingView view, GameObject? model, BuildingLook? look)
         {
             if (view.Body != null)
             {
@@ -166,15 +184,30 @@ namespace CityBuilder.Client.Presentation.City
                 PlaceholderArt.Destroy(view.Body.gameObject);
             }
 
-            var body = new GameObject(BodyName);
-            body.transform.SetParent(view.transform, false);
-            for (int i = 0; i < look.Parts.Count; i++)
+            GameObject body;
+            if (model != null)
             {
-                CreatePart(body.transform, look.Parts[i]);
+                body = Object.Instantiate(model, view.transform, false);
+                body.name = BodyName;
+            }
+            else
+            {
+                body = new GameObject(BodyName);
+                body.transform.SetParent(view.transform, false);
+                for (int i = 0; i < look!.Parts.Count; i++)
+                {
+                    CreatePart(body.transform, look.Parts[i]);
+                }
             }
 
             view.Body = body.transform;
+            view.Model = model;
             view.Look = look;
+            view.StatusAnchor = model == null ? null : FindByName(body.transform, BuildingView.StatusAnchorName);
+            view.DoorAnchor = model == null ? null : FindByName(body.transform, BuildingView.DoorAnchorName);
+            view.SmokeAnchor = model == null ? null : FindByName(body.transform, BuildingView.SmokeAnchorName);
+            view.StockpileAnchor = model == null ? null : FindByName(body.transform, BuildingView.StockpileAnchorName);
+            view.Wheel = model == null ? null : FindByName(body.transform, BuildingView.WheelName);
         }
 
         /// <summary>Creates the primitive of one part under <paramref name="body"/>, without a collider and with the part's colour.</summary>

@@ -176,8 +176,8 @@ namespace CityBuilder.Client.Presentation.City
         }
 
         /// <summary>
-        /// How tall a building is drawn, in thousandths of its level 1 height: a building under construction is a low foundation, a finished or
-        /// upgrading one is 20 % taller for each level above 1 (the spec: level 2 is 20 % taller).
+        /// How tall a building drawn from primitives is, in thousandths of its level 1 height (the fallback for a level with no model; a model is
+        /// never stretched): a building under construction is a low foundation, a finished or upgrading one is 20 % taller for each level above 1.
         /// </summary>
         /// <param name="level">The building's current level, at least 1.</param>
         /// <param name="phase">What the building is doing.</param>

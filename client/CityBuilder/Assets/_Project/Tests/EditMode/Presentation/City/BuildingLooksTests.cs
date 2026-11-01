@@ -92,6 +92,14 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.City
             Assert.That(BuildingLooks.ConstructionHeightPermille, Is.LessThan(BuildingLooks.FullHeightPermille));
         }
 
+        /// <summary>The primitive looks are the fallback for a level with no model, so the Cottage still draws at a level the art lacks.</summary>
+        [Test]
+        public void HeightPermille_IsTheFallbacksRule_AModelIsNeverStretched()
+        {
+            Assert.That(BuildingLooks.FindModel(BuildingLooks.House, 1, 3), Is.Null, "no level 3 model, so the primitives and their height rule apply");
+            Assert.That(BuildingLooks.HeightPermille(3, BuildingPhase.Idle), Is.EqualTo(1400));
+        }
+
         /// <summary>A look needs a name and at least one part.</summary>
         [Test]
         public void Look_WithoutANameOrParts_IsRefused()
