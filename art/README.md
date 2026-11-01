@@ -105,10 +105,11 @@ The previews show the medium stockpile and a worker at the door. Those are not p
 ## Using the models in Unity (CR-0005)
 
 The client still draws primitives (`core-instructions/09-unity-client.md` rule 3; M0-44). CR-0005 changes that in steps:
-- **T1 (done here):** the folder is in the repository and the FBX files sit in the Unity project, without `.meta` files yet.
-- **T2:** an editor import script (`AssetPostprocessor`) sets the texture (Point filter, no compression, no mips, Clamp) and the
-  models (scale 1, no cameras or lights, one shared URP Lit material whose Base Map is the palette, Smoothness about 0.1); a
-  **[MANUAL]** check in the Editor; the `.meta` files are committed.
+- **T1 (done):** the folder is in the repository and the FBX files sit in the Unity project.
+- **T2 (done):** an editor script (`ArtImportPostprocessor`, `docs/modules/CityBuilder.Client.Editor.md`) sets the texture (Point filter, no compression, no mips,
+  Clamp) and the models (scale 1, no cameras or lights, one shared URP Lit material `Art/Materials/M_Palette_Era1.mat` whose Base Map is the palette,
+  Smoothness 0.1). Nobody sets these by hand, and the `.meta` files are committed. A new FBX gets all of it on its first import; a rebuild keeps the `.meta` files, because the build only overwrites the FBX files.
+  The look check in the Editor is **[MANUAL]** (`client/README.md`).
 - **T3:** the client looks up the model by `(typeId, era, level)`, reads the anchors by name and turns `Wheel` while the Sawmill produces.
 - **T4:** the UI icons go into the HUD, the build menu and the research screen.
 
@@ -118,7 +119,10 @@ The client still draws primitives (`core-instructions/09-unity-client.md` rule 3
 - An exported FBX re-imported into Blender has the expected objects, anchors, parent, UV map, single material and palette
   texture name. The axes are Y up, and the door anchor is on the −Z side.
 - The build was re-run from `art/` in the repository (CR-0005-T1, 2026-11-01): all checks pass and the FBX files land in the Unity project.
-- **Not checked:** an import into Unity 6000.3. That's T2.
+- Imported into Unity 6000.3.25f1 (CR-0005-T2, 2026-11-01), also from an empty `Library` folder: all 22 models and the palette, without an error. Every
+  model's root is untransformed and every renderer uses the shared material; `house_l1` keeps its size and anchors, with the door toward −Z (`ArtImportTests`). A picture rendered in URP
+  showed the six checked models with the right colours and sharp swatches.
+- **Not checked:** the look in the Editor by a person (the [MANUAL] steps); a device build.
 
 ## Owner decisions and open questions
 - **Building size on the tile** (2026-10-26): the owner chose to scale buildings up by about 1.2 so they fill their tiles more,

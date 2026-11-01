@@ -11,6 +11,7 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
+- [BL-20261101-03 · CR-0005-T2 · Import one building end to end: editor import script, shared URP material, [MANUAL] Editor check](2026/2026-11-01-03-CR-0005-T2.md) — In progress
 - [BL-20261101-02 · CR-0005-T1 · Adopt art/: move the folder, point the Blender build at Unity, README as a handbook page](2026/2026-11-01-02-CR-0005-T1.md) — Done
 - [BL-20261101-01 · M0-49 · HUD](2026/2026-11-01-01-M0-49.md) — Done
 - [BL-20261031-10 · M0-48 · Client review](2026/2026-10-31-10-M0-48.md) — Done

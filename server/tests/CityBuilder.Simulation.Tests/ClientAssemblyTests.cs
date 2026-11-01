@@ -15,15 +15,16 @@ public sealed class ClientAssemblyTests
 
     /// <summary>The Unity project's folder, <c>client/CityBuilder</c>.</summary>
     private static readonly string _unityProject = Path.Combine(RepositoryPaths.Root, "client", "CityBuilder");
-    /// <summary>The folder of the project's own code, <c>Assets/_Project</c>, where the five assembly definitions live.</summary>
+    /// <summary>The folder of the project's own code, <c>Assets/_Project</c>, where the six assembly definitions live.</summary>
     private static readonly string _projectFolder = Path.Combine(_unityProject, "Assets", "_Project");
 
-    /// <summary>The five client assemblies: the folder under <c>Assets/_Project</c> and the assembly name, which is also the asmdef file's name.</summary>
+    /// <summary>The six client assemblies: the folder under <c>Assets/_Project</c> and the assembly name, which is also the asmdef file's name.</summary>
     private static readonly (string Folder, string Name)[] _allAssemblies =
     [
         ("Core", "CityBuilder.Client.Core"),
         ("Net", "CityBuilder.Client.Net"),
         ("Presentation", "CityBuilder.Client.Presentation"),
+        ("Editor", "CityBuilder.Client.Editor"),
         ("Tests/EditMode", "CityBuilder.Client.Tests.EditMode"),
         ("Tests/PlayMode", "CityBuilder.Client.Tests.PlayMode"),
     ];
@@ -44,11 +45,11 @@ public sealed class ClientAssemblyTests
 
     // ----- the set of assemblies -----
 
-    /// <summary>The project folder holds exactly the five assembly definitions and no assembly reference file.</summary>
+    /// <summary>The project folder holds exactly the six assembly definitions and no assembly reference file.</summary>
     [Fact]
-    public void ProjectFolder_AssemblyDefinitions_AreTheFiveClientAssemblies()
+    public void ProjectFolder_AssemblyDefinitions_AreTheSixClientAssemblies()
     {
-        // A sixth asmdef would add a layer the dependency table does not know; a missing one would merge code into Assembly-CSharp.
+        // A seventh asmdef would add a layer the dependency table does not know; a missing one would merge code into Assembly-CSharp.
         string[] actual = Directory.GetFiles(_projectFolder, "*.asmdef", SearchOption.AllDirectories)
             .Select(path => Path.GetRelativePath(_projectFolder, path).Replace('\\', '/'))
             .Order(StringComparer.Ordinal)
@@ -115,6 +116,21 @@ public sealed class ClientAssemblyTests
 
         Assert.True(BoolOf(asmdef, "overrideReferences"));
         Assert.Equal(expected, Strings(asmdef, "precompiledReferences"));
+    }
+
+    // ----- the editor assembly -----
+
+    /// <summary>The editor assembly (CR-0005-T2) exists only in the Editor and depends on nothing of ours, so no game code can reach it or be reached by it.</summary>
+    [Fact]
+    public void EditorAssembly_Setup_IsEditorOnlyWithoutReferences()
+    {
+        JsonObject asmdef = ReadAsmdef("Editor");
+
+        Assert.Equal(["Editor"], Strings(asmdef, "includePlatforms"));
+        Assert.Empty(Strings(asmdef, "references"));
+        Assert.False(BoolOf(asmdef, "autoReferenced") ?? true);
+        Assert.True(BoolOf(asmdef, "overrideReferences"));
+        Assert.Empty(Strings(asmdef, "precompiledReferences"));
     }
 
     // ----- test assemblies -----

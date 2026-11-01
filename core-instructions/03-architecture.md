@@ -39,7 +39,7 @@ and every 2 minutes in the foreground. Every command response carries the full a
 | `CityBuilder.Application` | Domain, Simulation | ASP.NET, EF Core |
 | `CityBuilder.Infrastructure` | Application, Domain, Simulation, EF Core, Npgsql | ASP.NET endpoint types |
 | `CityBuilder.Api` | Application, Infrastructure (composition root only) | — |
-| Unity `CityBuilder.Client.*` | Simulation package; Newtonsoft (`Client.Net` only); Input System (`Client.Presentation` only); the test runner (test assemblies only). Per assembly: `09` | server projects |
+| Unity `CityBuilder.Client.*` | Simulation package; Newtonsoft (`Client.Net` only); Input System (`Client.Presentation` only); the test runner (test assemblies only). `Client.Editor` runs only in the Editor and references none of them. Per assembly: `09` | server projects |
 
 - **Simulation:** content definitions (items, buildings, recipes, research, eras), city state, the `Simulator`, and pure mutation rules.
 - **Domain:** server-only concepts — player, ledger entry, command receipt, settlement record (later: market order, mailbox delivery).
@@ -78,7 +78,7 @@ CityBuilder/
 ├── tools/DocTools/              # generates docs/reference/generated (M0-61)
 ├── tools/BalanceSim/            # headless economy simulator (M0-67)
 ├── website/                     # the handbook: Docusaurus site over core-instructions/ and docs/ (CR-0002)
-├── client/CityBuilder/          # Unity project: Assets/_Project/{Core,Net,Presentation,Resources/UI,Tests}
+├── client/CityBuilder/          # Unity project: Assets/_Project/{Core,Net,Presentation,Editor,Art,Resources/UI,Tests}
 ├── docker-compose.yml · .env.example   # PostgreSQL for development; .env (gitignored) holds its credentials (M0-19)
 └── scripts/dev/                 # check-docs, docs-site, show-task, new-log-entry, setup-hooks, test-guard-bash, test-unity; quality (M0-62)
 ```
