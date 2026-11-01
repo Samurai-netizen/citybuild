@@ -11,6 +11,7 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
+- [BL-20261101-06 · M0-50 · Building status visuals](2026/2026-11-01-06-M0-50.md) — In progress
 - [BL-20261101-05 · CR-0005-T4 · UI icons in the HUD, the build menu and the research screen](2026/2026-11-01-05-CR-0005-T4.md) — Done
 - [BL-20261101-04 · CR-0005-T3 · All models by (typeId, era, level), construction site, ground tiles, anchors, fallback](2026/2026-11-01-04-CR-0005-T3.md) — Done
 - [BL-20261101-03 · CR-0005-T2 · Import one building end to end: editor import script, shared URP material, [MANUAL] Editor check](2026/2026-11-01-03-CR-0005-T2.md) — In progress

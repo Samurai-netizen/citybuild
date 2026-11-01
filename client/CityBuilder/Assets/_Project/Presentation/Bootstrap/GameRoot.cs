@@ -224,7 +224,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             CityState? city = _displayCity?.Current;
             if (city != null)
             {
-                _world!.ShowCity(city);
+                _world!.ShowCity(city, _content);
                 _hud?.Model?.Update(city, _monitor?.State ?? ConnectionState.Connected);
                 _buildMenu?.Model?.Update(city);
                 _placement?.Update(city);

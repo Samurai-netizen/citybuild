@@ -74,5 +74,14 @@ namespace CityBuilder.Client.Presentation.City
 
         /// <summary>The Sawmill's water wheel (<see cref="WheelName"/>), or null. Nothing turns it yet.</summary>
         public Transform? Wheel { get; internal set; }
+
+        /// <summary>The ring, bubble and pips above the building (M0-50), or null until <see cref="CityView"/> shows a status for it.</summary>
+        public BuildingStatusView? Status { get; internal set; }
+
+        /// <summary>Whether the body is drawn with the washed-out look of a stalled building (<see cref="StalledTint"/>).</summary>
+        public bool Stalled { get; internal set; }
+
+        /// <summary>The body that <see cref="Stalled"/> is about: a new body starts normal, so <see cref="StalledTint"/> notices it by this.</summary>
+        internal Transform? TintedBody { get; set; }
     }
 }

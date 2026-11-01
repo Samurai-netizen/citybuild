@@ -104,4 +104,16 @@ new: if your open Editor shows new `.meta` files under it, they are the committe
    the chips wrap and the name stays readable next to the picture.
 4. Tell the AI coder "icons look right", or what looks wrong (too big, too small, the wrong picture). Stop Play mode without saving the scene.
 
-Last updated: CR-0005-T4
+## [MANUAL] Look at the building status (M0-50)
+The tests check the values; only a person can say the status reads well. Nothing here is saved or committed. The test world is a few buildings: use the
+server of `docs/testing/LOCAL-E2E.md` and play a minute.
+1. Open the **Bootstrap** scene and press **Play**; place a Woodcutter's Hut. While it is built you see the construction site with a yellow ring that fills
+   clockwise. When it is done and has workers, a green ring fills over each cycle, and one small pale dot per worker sits under it (at most six).
+2. Set its workers to 0 (the inspector comes with M0-51; until then place a building when no workers are free): an amber bubble with the workers picture
+   shows and the hut looks slightly washed out. Place a Sawmill with no logs in stock: a red bubble with the logs picture and a strike across it. Fill the
+   logs to their cap: a blue bubble with the logs.
+3. Zoom in and out and pan: the ring, bubble and dots keep their size on the building and face the screen. Check that nothing hides behind the building in front,
+   that the dots can be told apart on a yellow roof, and that the washed-out look is slight and not dirty (`StalledTint.Mix` and `Grey` are the two numbers).
+4. Tell the AI coder "status looks right", or what looks wrong (too big, too small, too strong a tint, a bubble you cannot read). Stop Play mode without saving the scene.
+
+Last updated: M0-50

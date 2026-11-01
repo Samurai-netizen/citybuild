@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using CityBuilder.Client.Net;
+using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.State;
 using UnityEngine;
 
@@ -94,7 +95,7 @@ namespace CityBuilder.Client.Presentation.City
             Grid = grid;
             Selection = new TileSelection(grid);
             _ground = new GroundTiles(grid, Selection, transform);
-            _buildings = new CityView(grid, transform);
+            _buildings = new CityView(grid, transform, Camera.transform);
             _ghosts = new PlacementGhosts(grid, transform);
             Rig = new CityCameraRig(Camera, grid, Selection);
             _input = new CityInputReader(Rig, Screen.dpi, position => IsPointerOverUi != null && IsPointerOverUi(position));
@@ -102,9 +103,10 @@ namespace CityBuilder.Client.Presentation.City
 
         /// <summary>Makes the building views match a city (<see cref="CityView.Show"/>). Does nothing before <see cref="ShowGrid"/>.</summary>
         /// <param name="city">The displayed city.</param>
-        public void ShowCity(CityState city)
+        /// <param name="content">The game content, which the building statuses need; null shows no status.</param>
+        public void ShowCity(CityState city, GameContent? content = null)
         {
-            _buildings?.Show(city);
+            _buildings?.Show(city, content);
         }
 
         /// <summary>Paints the tiles green or red by their hints, or gives them their ground colour back (<see cref="GroundTiles.ShowHints"/>). Does nothing before <see cref="ShowGrid"/>.</summary>
