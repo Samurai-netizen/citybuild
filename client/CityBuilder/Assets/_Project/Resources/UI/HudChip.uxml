@@ -1,0 +1,14 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+  <!-- One item chip of the HUD (M0-49, docs/how-to/add-ui-screen.md): HudView clones it once per item and writes the texts of ItemChipModel into
+       the labels by name. The icon is a placeholder: the item's first letter. Its style is in Hud.uss. -->
+  <ui:VisualElement name="hud-chip" class="hud-chip" picking-mode="Ignore">
+    <ui:Label name="hud-chip-icon" class="hud-chip-icon" picking-mode="Ignore" />
+    <ui:VisualElement class="hud-chip-text" picking-mode="Ignore">
+      <ui:VisualElement class="hud-chip-amount" picking-mode="Ignore">
+        <ui:Label name="hud-chip-stock" class="hud-value" picking-mode="Ignore" />
+        <ui:Label name="hud-chip-cap" class="hud-caption" picking-mode="Ignore" />
+      </ui:VisualElement>
+      <ui:Label name="hud-chip-rate" class="hud-rate" picking-mode="Ignore" />
+    </ui:VisualElement>
+  </ui:VisualElement>
+</ui:UXML>

@@ -1,4 +1,4 @@
-/* The toasts (docs/how-to/add-ui-screen.md): short messages at the top centre. M0-47. Sizes are in panel units (reference resolution
+/* The toasts (docs/how-to/add-ui-screen.md): short messages at the top centre, under the HUD (M0-49). M0-47. Sizes are in panel units (reference resolution
    1200 x 800). Success is green, an error is red, both on a dark pill with white text so they read over any ground. */
 .toast-root {
   position: absolute;
@@ -13,6 +13,7 @@
 }
 
 .toast-list {
+  margin-top: 224px; /* clears the HUD; the root's padding is replaced by the safe area in code, a margin is not */
   flex-direction: column;
   align-items: center;
 }

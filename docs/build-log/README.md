@@ -11,7 +11,7 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
-- [BL-20261101-01 · M0-49 · HUD](2026/2026-11-01-01-M0-49.md) — In progress
+- [BL-20261101-01 · M0-49 · HUD](2026/2026-11-01-01-M0-49.md) — Done
 - [BL-20261031-10 · M0-48 · Client review](2026/2026-10-31-10-M0-48.md) — Done
 - [BL-20261031-09 · M0-47 · Feedback for every result](2026/2026-10-31-09-M0-47.md) — Done
 - [BL-20261031-08 · M0-46 · Placement flow](2026/2026-10-31-08-M0-46.md) — Done
