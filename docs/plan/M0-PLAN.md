@@ -296,7 +296,7 @@ The AI coder updates its row at start (`In progress`) and finish (`In review`). 
 | M0-49 | 9 | HUD | S | Done |
 | M0-50 | 9 | Building status visuals | S | Done |
 | M0-51 | 9 | Building inspector with worker stepper | S | Done |
-| M0-52 | 9 | Research screen | S | In progress |
+| M0-52 | 9 | Research screen | S | In review |
 | M0-53 | 9 | Welcome-back report | S | Todo |
 | M0-54 | 9 | Waiting-loop review and tuning | O MANUAL | Todo |
 | M0-55 | 10 | Connection states in the UI | S | Todo |
