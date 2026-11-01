@@ -51,6 +51,13 @@
   -unity-text-align: middle-center;
 }
 
+/* An item with a picture: the picture replaces the grey circle and the letter. */
+.hud-chip-icon--picture {
+  border-radius: 0;
+  background-color: rgba(0, 0, 0, 0);
+  -unity-background-scale-mode: scale-to-fit;
+}
+
 .hud-chip-text {
   flex-direction: column;
 }
@@ -97,6 +104,18 @@
   margin: 0;
 }
 
+.hud-stat-line {
+  flex-direction: row;
+  align-items: center;
+}
+
+.hud-stat-icon {
+  width: 32px;
+  height: 32px;
+  margin: 0 6px 0 0;
+  -unity-background-scale-mode: scale-to-fit;
+}
+
 .hud-research {
   flex-direction: row;
   align-items: center;
@@ -109,6 +128,16 @@
   width: 56px;
   height: 56px;
   margin: 0 10px 0 0;
+}
+
+/* The research picture sits in the middle of the ring that the painter draws on .hud-ring. */
+.hud-ring-icon {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  width: 32px;
+  height: 32px;
+  -unity-background-scale-mode: scale-to-fit;
 }
 
 .hud-research-text {
