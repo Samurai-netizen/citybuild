@@ -50,7 +50,7 @@ namespace CityBuilder.Client.Presentation.Feedback
             switch (code)
             {
                 case ApiErrorCodes.AuthenticationRequired:
-                    message = "Signed out. Log in again";
+                    message = "Session expired. Try again in a moment";
                     return true;
                 case ApiErrorCodes.InvalidArgument:
                     message = "That request was not valid";

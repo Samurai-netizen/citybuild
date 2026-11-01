@@ -136,6 +136,20 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(_store.Snapshot, Is.Not.Null);
         }
 
+        /// <summary>
+        /// Regression (M0-54): a command refused because the token ran out asks for a poll at once, so the new login does not wait for the next
+        /// poll; on a server at 60 times the speed a token lasts 12 real minutes. The command's other errors ask for nothing.
+        /// </summary>
+        [Test]
+        public void ReportCommandError_ARefusedToken_MakesAPollDue()
+        {
+            _monitor.ReportCommandError(new ApiError(ApiErrorCodes.InsufficientResource, 409, "x", null, null, null));
+            Assert.That(_scheduler.IsDue, Is.False);
+
+            _monitor.ReportCommandError(new ApiError(ApiErrorCodes.AuthenticationRequired, 401, "x", null, null, null));
+            Assert.That(_scheduler.IsDue, Is.True);
+        }
+
         /// <summary>A 5xx, also a proxy's page in place of the answer, is a server error and leaves the store alone.</summary>
         [Test]
         public async Task Poll_With5xx_IsAServerError()

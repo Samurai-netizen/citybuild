@@ -20,7 +20,8 @@ structure). It is **not** responsible for talking to the server (`CityBuilder.Cl
 | `DisplayClock` | `snapshot.clock + whole seconds since receipt × timeScale`, for display only |
 | `ConnectionState` | How the client stands with the server: `Connecting`, `Connected`, `Offline`, `Unauthorized`, `ServerError`, `IncompatibleVersion`. Only the names; the rules that move between them are `ConnectionMonitor`'s (Net) |
 | `PollScheduler` | When to ask for the city again (M0-41): due 120 s after the last poll ended (`DefaultIntervalSeconds`), at once after `Resume()` or `RequestPoll()`, never while `Pause()`d or while a poll runs. The caller does `TryBegin()` then `End()`. Reads an injected real-time clock, so tests move time by hand; `MarkFetched()` restarts the interval when someone else fetched the city |
-| `DisplayCity` | The predicted city: `Simulator.Advance` on a fresh copy of the snapshot up to the clock. `Refresh()` predicts at most once per second and allocates nothing otherwise; a new snapshot replaces the prediction at once. Raises `Changed`; views read `Current` |
+| `DisplayCity` | The predicted city: `Simulator.Advance` on a fresh copy of the snapshot up to the clock. `Refresh()` predicts at most once per second and allocates nothing otherwise; a new snapshot replaces the prediction at once. Raises `Changed`; views read `Current`. `SnapshotReplaced` hands over the city shown until a new snapshot came (M0-54) |
+| `PredictionWatch` | A development check (M0-54): at each new snapshot it reports when the display's clock went back and, with no command on its way, when the snapshot differs from `Simulator.Advance` of the one before it, with the cities as JSON (`ToJson`). `GameRoot` makes it when `Debug.isDebugBuild`, reporting to `Debug.LogWarning`; it changes nothing the player sees |
 
 ## Rules and invariants
 - References only `CityBuilder.Simulation` (`03` dependency table). The asmdef is not auto-referenced, so other assemblies must name it,
@@ -58,4 +59,4 @@ folder area follows the recipe "New project, assembly or folder area" in `core-i
 - `Time.realtimeSinceStartupAsDouble` may or may not count while the app is in the background, depending on the platform. The poll on resume
   (`PollScheduler`, M0-41) replaces the snapshot, so this lasts only until that answer arrives.
 
-Last updated: M0-53
+Last updated: M0-54

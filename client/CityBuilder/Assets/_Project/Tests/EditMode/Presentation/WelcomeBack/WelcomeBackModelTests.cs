@@ -70,7 +70,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.WelcomeBack
         /// <summary>The report of <paramref name="settlement"/> over the given buildings; it must exist.</summary>
         private WelcomeBackModel Report(SettlementSummary settlement, params Building[] buildings)
         {
-            WelcomeBackModel? model = WelcomeBackModel.Create(_content, Snapshot(settlement, buildings));
+            WelcomeBackModel? model = WelcomeBackModel.Create(_content, Snapshot(settlement, buildings), 1);
             Assert.That(model, Is.Not.Null);
             return model!;
         }
@@ -85,16 +85,36 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.WelcomeBack
         [Test]
         public void Create_NoSettlement_IsNull()
         {
-            Assert.That(WelcomeBackModel.Create(_content, Snapshot(null)), Is.Null);
+            Assert.That(WelcomeBackModel.Create(_content, Snapshot(null), 1), Is.Null);
         }
 
         /// <summary>The edge: 299 s is a routine settlement, 300 s is a report.</summary>
         [Test]
         public void Create_FiveMinutesIsTheEdge()
         {
-            Assert.That(WelcomeBackModel.Create(_content, Snapshot(Settlement(299))), Is.Null);
-            Assert.That(WelcomeBackModel.Create(_content, Snapshot(Settlement(300))), Is.Not.Null);
+            Assert.That(WelcomeBackModel.Create(_content, Snapshot(Settlement(299)), 1), Is.Null);
+            Assert.That(WelcomeBackModel.Create(_content, Snapshot(Settlement(300)), 1), Is.Not.Null);
             Assert.That(WelcomeBackModel.ThresholdSeconds, Is.EqualTo(300L));
+        }
+
+        /// <summary>
+        /// Regression (M0-54): on a server at 60 times the speed a poll settles 7200 city seconds and any command 5 real seconds after the last request
+        /// settles 300, which opened the modal report again and again. Five real minutes are 18 000 city seconds there.
+        /// </summary>
+        [Test]
+        public void Create_AtADevTimeScale_TheEdgeIsFiveRealMinutes()
+        {
+            Assert.That(WelcomeBackModel.Create(_content, Snapshot(Settlement(300)), 60), Is.Null);
+            Assert.That(WelcomeBackModel.Create(_content, Snapshot(Settlement(7200)), 60), Is.Null);
+            Assert.That(WelcomeBackModel.Create(_content, Snapshot(Settlement(17999)), 60), Is.Null);
+            Assert.That(WelcomeBackModel.Create(_content, Snapshot(Settlement(18000)), 60), Is.Not.Null);
+        }
+
+        /// <summary>A time scale below 1 is a programming error, as in <see cref="DisplayClock"/>.</summary>
+        [Test]
+        public void Create_ATimeScaleBelowOne_Throws()
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => WelcomeBackModel.Create(_content, Snapshot(null), 0));
         }
 
         /// <summary>A routine poll's settlement (about two minutes) with plenty produced is still no report.</summary>
@@ -103,7 +123,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.WelcomeBack
         {
             SettlementSummary routine = Settlement(121, produced: new[] { ("logs", 30L) }, buildings: new[] { 1 }, research: new[] { "frame_saw" });
 
-            Assert.That(WelcomeBackModel.Create(_content, Snapshot(routine, Finished(1, "house", 1))), Is.Null);
+            Assert.That(WelcomeBackModel.Create(_content, Snapshot(routine, Finished(1, "house", 1)), 1), Is.Null);
         }
 
         /// <summary>The title says the time in hours and minutes, the seconds dropped.</summary>
@@ -269,7 +289,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.WelcomeBack
         {
             CitySnapshot snapshot = CityTestData.Snapshot("snapshot-city-research-completed.json");
 
-            WelcomeBackModel model = WelcomeBackModel.Create(_content, snapshot)!;
+            WelcomeBackModel model = WelcomeBackModel.Create(_content, snapshot, 1)!;
 
             Assert.That(model.Title, Is.EqualTo("While you were away (7 m)"));
             Assert.That(Lines(model, "Produced"), Is.EqualTo(new[] { "14 Logs", "7 Planks" }));
@@ -282,15 +302,15 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.WelcomeBack
         [Test]
         public void RealAnswer_ShortSettlement_IsNull()
         {
-            Assert.That(WelcomeBackModel.Create(_content, CityTestData.Snapshot("snapshot-city-settled-buildings.json")), Is.Null);
+            Assert.That(WelcomeBackModel.Create(_content, CityTestData.Snapshot("snapshot-city-settled-buildings.json"), 1), Is.Null);
         }
 
         /// <summary>Missing arguments are coding errors.</summary>
         [Test]
         public void Create_NullArguments_Throw()
         {
-            Assert.Throws<ArgumentNullException>(() => WelcomeBackModel.Create(null!, Snapshot(null)));
-            Assert.Throws<ArgumentNullException>(() => WelcomeBackModel.Create(_content, null!));
+            Assert.Throws<ArgumentNullException>(() => WelcomeBackModel.Create(null!, Snapshot(null), 1));
+            Assert.Throws<ArgumentNullException>(() => WelcomeBackModel.Create(_content, null!, 1));
         }
 
         /// <summary>A section copies its lines, refuses none, and needs a heading.</summary>

@@ -51,6 +51,12 @@ namespace CityBuilder.Client.Core
         /// <summary>Raised after <see cref="Current"/> was replaced.</summary>
         public event Action? Changed;
 
+        /// <summary>
+        /// Raised after a new snapshot replaced <see cref="Current"/>, with the city shown until then; not for the first snapshot. <see cref="Changed"/>
+        /// has already been raised. For <see cref="PredictionWatch"/>: nothing a screen shows depends on it.
+        /// </summary>
+        public event Action<CityState>? SnapshotReplaced;
+
         /// <summary>The predicted city, or null before the first snapshot. It is replaced, not changed, by the next prediction: read it, don't keep it.</summary>
         public CityState? Current { get; private set; }
 
@@ -79,8 +85,13 @@ namespace CityBuilder.Client.Core
         /// <summary>The store took a new snapshot: the prediction starts over from it, whatever it showed before.</summary>
         private void OnSnapshotChanged()
         {
+            CityState? shown = Current;
             _predictionFailed = false;
             Predict(_clock.ElapsedSeconds);
+            if (shown != null)
+            {
+                SnapshotReplaced?.Invoke(shown);
+            }
         }
 
         /// <summary>

@@ -62,6 +62,51 @@ The local server can also be started and stopped from a small menu, `server-pane
 
 **6. Finish.** Press **Play** to stop the game. Stop the API with **Ctrl+C**. The database can keep running.
 
+## The waiting loop at 60 times the speed (M0-54)
+A long play, to see what happens while the player waits: the counters, rings, stall bubbles, the stepper, the research ring and the welcome-back report. It takes about 25 minutes. At this speed a city hour is a real minute, so the times in `core-instructions/23-mvp-content.md` go by 60 times as fast: a Cottage takes half a second, and Trade Charter 10 seconds.
+
+**1. Start with an empty database at the fast clock.** Stop the game and the API. This deletes every city on your development database, because a city does not survive a change of the scale (`docs/getting-started.md` → Configuration):
+```
+docker compose down -v
+docker compose up -d postgres
+dotnet run --project server/src/CityBuilder.Api -- --Simulation:DevTimeScale=60
+```
+The API logs a warning about the time scale. Press **Play** in Unity and keep the Game view in front. The game stops running when the Editor loses focus. The HUD shows Coins 700, Logs 40, Planks 10.
+
+**2. Golden scenario #1.** Act quickly; the exact moments cannot be hit at this speed, so look at the behaviour, not at exact numbers after the first line.
+1. Research **Trade Charter** and build two **Cottages**. Coins read 450 once the answers are in.
+2. Build a **Woodcutter's Hut** and a **Sawmill** when the Cottages stand. Coins 220, Logs 10. Each gets its workers by itself when it is built (pips under the ring: 2 and 3), and Workers reads 3 / 8.
+3. The research ring fills in about 10 seconds and then reads `No research`. Open the research screen: Trade Charter is done.
+4. When Planks reach 20, build a **Trading Post**. Coins 20, Planks 0.
+5. Watch for a minute: Coins rise by 10 about every 2 seconds, and the Trading Post switches between working and the bubble for missing Planks.
+
+**3. Continue: research, workers, upgrade.**
+1. When Coins reach 250 (about a minute, or add them: `bash server-panel/panel.sh goods add coins 500`), research **Sharpened Axes**. The ring takes 30 seconds, then reads `No research`. Open the Woodcutter's inspector: it now says `Makes 150 Logs/h` at 2 workers (120 before).
+2. Open the **Sawmill**. Press − once: the stepper reads 2 / 3 at once, `Updating workers…` shows briefly, and the ring goes on from where it was. Press − twice quickly, then + once: the value moves with each press and settles without jumping back.
+3. Set the Sawmill to 0: its ring stops where it is, the no-workers bubble shows, and `Next batch in` disappears. Set it back to 3: the ring goes on from the same place.
+4. Set the **Trading Post** to 1 worker. Workers goes up by one.
+5. Let the Logs reach 30, with Coins at 120 or more. Open a **Cottage** and press **Upgrade**. The building site shows for about 2 seconds, then the Cottage returns at level 2 and Workers provided goes from 8 to 10.
+
+**4. Welcome-back.** Click another program and leave Unity in the background for at least 6 minutes. Click the Game view: the report opens once, with about 6 h away and what was made. Press Continue. It must not open again while you play. A second time, stay away for at least 9 minutes: the report also says `Production paused after 8 h`.
+
+**5. A token that runs out.** Tokens last 12 real minutes at this speed. If a command then shows the toast `Session expired. Try again in a moment`, the next try a moment later must work, with no `Signed out` staying on the HUD.
+
+**6. What to report.** Note anything that looks wrong in steps 2 to 5, and where:
+- a counter that goes down and back up without a reason, especially when a snapshot arrives (every 2 minutes, after each command, after coming back);
+- a ring that starts over after a worker change;
+- a bubble or status sentence that stays when it no longer applies;
+- a stepper value that flickers or jumps back;
+- a research ring that is wrong after the research ends;
+- a welcome-back report that opens at the wrong time or says something wrong.
+
+The game also checks itself in the Editor and in development builds (`PredictionWatch`): a warning in the Console starting with `PredictionWatch:` says the clock went back or the snapshot differs from the prediction, with both cities as JSON. Show them all with:
+```
+grep -n -A3 'PredictionWatch:' ~/Library/Logs/Unity/Editor.log
+```
+Adding goods with the panel changes the city behind the client's back, so one mismatch right after it is expected.
+
+**7. Back to normal.** Press **Play** to stop the game and stop the API with **Ctrl+C**. Then reset the database, because the clock goes back to the normal scale: `docker compose down -v`, `docker compose up -d postgres`.
+
 ## Why the wait is up to 2 minutes
 The client asks for the city every 120 s while it is in the foreground, and it has no faster retry while offline (`core-instructions/09-unity-client.md` → Polling).
 Coming back to the app also asks at once, so the label can change as soon as you click the Editor.

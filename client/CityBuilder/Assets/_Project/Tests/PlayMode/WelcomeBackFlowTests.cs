@@ -102,7 +102,7 @@ namespace CityBuilder.Client.Tests.PlayMode
             }
 
             _panel = WelcomeBackPanel.Create(_host.transform)!;
-            _flow = new WelcomeBackFlow(_content, _store, _panel);
+            _flow = new WelcomeBackFlow(_content, _store, _panel, 1);
             yield return null;
         }
 
@@ -303,7 +303,7 @@ namespace CityBuilder.Client.Tests.PlayMode
             var menus = new MenuGroup();
             menu.Opened += menus.Join(() => menu.SetOpen(false)).NotifyOpened;
             _panel.Opened += menus.Join(_panel.Dismiss).NotifyOpened;
-            _flow = new WelcomeBackFlow(_content, _store, _panel);
+            _flow = new WelcomeBackFlow(_content, _store, _panel, 1);
             yield return null;
             menu.SetOpen(true);
             Assert.That(_panel.IsOpen, Is.False);

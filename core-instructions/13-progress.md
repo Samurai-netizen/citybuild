@@ -9,8 +9,8 @@
 - **Branch:** `task/M0-54-waiting-loop-review` (from `main` = `2aa59bf`)
 - **Build log entry:** `docs/build-log/2026/2026-11-01-12-M0-54.md`
 - **Last green commit:** `main` = `2aa59bf`
-- **Done steps:** write-ahead
-- **Next step:** step 1, the desk audit of the waiting loop (plan in the build log)
+- **Done steps:** write-ahead; desk audit, two fixes, `PredictionWatch`, the [MANUAL] steps: all written, **no Unity test has run on them yet** (the Editor was open)
+- **Next step:** with the Editor closed, `test-unity.sh`; commit the `.meta` files of `PredictionWatch.cs` and its tests; then the owner plays `docs/testing/LOCAL-E2E.md` → waiting loop
 - **Open questions for the owner:** CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11).
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
