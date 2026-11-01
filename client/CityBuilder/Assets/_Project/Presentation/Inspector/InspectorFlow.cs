@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using CityBuilder.Client.Net;
 using CityBuilder.Client.Presentation.Build;
 using CityBuilder.Client.Presentation.City;
+using CityBuilder.Client.Presentation.Ui;
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.State;
 using UnityEngine;
@@ -19,7 +20,8 @@ namespace CityBuilder.Client.Presentation.Inspector
     /// <see cref="BuildingInspectorModel"/> whenever the city, the selection, the placement or the sender's pending list changes. The − and +
     /// buttons give the sender an absolute worker target one below or above the shown value (the sender coalesces rapid taps and waits out the
     /// debounce) and Upgrade gives it an upgrade intent; both are shown as pending, and the model switches the button off while its intent is
-    /// on its way, so a double tap cannot submit twice. It subtracts nothing and changes no worker count: the new state comes with the snapshot
+    /// on its way, so a double tap cannot submit twice. While the connection does not allow a command (<see cref="CommandAvailability"/>, set by
+    /// <see cref="SetCommandAvailability"/>) all three are off with the reason, and a press that still arrives sends nothing. It subtracts nothing and changes no worker count: the new state comes with the snapshot
     /// the sender hands to the city store, and a refusal is shown as a toast by the feedback (M0-47). <c>GameRoot</c> creates it once connected
     /// and calls <see cref="Dispose"/> when it is destroyed.
     /// </summary>
@@ -45,6 +47,9 @@ namespace CityBuilder.Client.Presentation.Inspector
 
         /// <summary>The latest displayed city, or null before the first <see cref="Update"/>.</summary>
         private CityState? _city;
+
+        /// <summary>Whether a command may be sent now; allowed until <see cref="SetCommandAvailability"/> says otherwise.</summary>
+        private CommandAvailability _availability = CommandAvailability.Allowed;
 
         /// <summary>Whether <see cref="Dispose"/> has run.</summary>
         private bool _disposed;
@@ -96,6 +101,19 @@ namespace CityBuilder.Client.Presentation.Inspector
         public void Update(CityState city)
         {
             _city = city ?? throw new ArgumentNullException(nameof(city));
+            Refresh();
+        }
+
+        /// <summary>The connection changed (M0-55): the buttons follow whether a command may be sent. Pending commands are not touched.</summary>
+        /// <param name="availability">Whether a command may be sent now.</param>
+        public void SetCommandAvailability(CommandAvailability availability)
+        {
+            if (_availability.Equals(availability))
+            {
+                return;
+            }
+
+            _availability = availability;
             Refresh();
         }
 
@@ -169,7 +187,7 @@ namespace CityBuilder.Client.Presentation.Inspector
                 Building building = city.Buildings[index];
                 if (building.X == tile.Value.X && building.Y == tile.Value.Y)
                 {
-                    return BuildingInspectorModel.Create(_content, city, building, InspectorPending.From(building.Id, _sender.Pending));
+                    return BuildingInspectorModel.Create(_content, city, building, InspectorPending.From(building.Id, _sender.Pending), _availability);
                 }
             }
 
@@ -192,7 +210,7 @@ namespace CityBuilder.Client.Presentation.Inspector
         private void SendWorkers(int step)
         {
             BuildingInspectorModel? model = _inspector.Model;
-            if (model != null)
+            if (model != null && _availability.IsAllowed)
             {
                 Send(CommandIntent.AssignWorkers(model.BuildingId, model.WorkersTarget + step));
             }
@@ -202,7 +220,7 @@ namespace CityBuilder.Client.Presentation.Inspector
         private void OnUpgrade()
         {
             BuildingInspectorModel? model = _inspector.Model;
-            if (model != null)
+            if (model != null && _availability.IsAllowed)
             {
                 Send(CommandIntent.UpgradeBuilding(model.BuildingId));
             }

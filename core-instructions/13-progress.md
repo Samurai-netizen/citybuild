@@ -8,11 +8,11 @@
 - **Task:** M0-55 · connection states in the UI (`[S]`, Sonnet 5.5); last completed: M0-54 (PR #76 merged)
 - **Branch:** `task/M0-55-connection-states-ui` (from `main` = `1563754`)
 - **Build log entry:** `docs/build-log/2026/2026-11-01-13-M0-55.md` (In progress)
-- **Last green commit:** `main` = `1563754` (nothing built yet on this branch)
-- **Done steps:** write-ahead
-- **Next step:** plan step 1 of the build log: `CommandAvailability` (Presentation/Ui) with its per-state tests. Then 2 buttons through it, 3 `ConnectionBannerModel`, 4 `ConnectionBanner` + `ConnectionFlow` in `GameRoot`, 5 `ReportCommandError` for a lost connection, 6 docs and `/finish-task`.
+- **Last green commit:** `5f29481` (start task). The head of the branch is a `wip` commit: steps 1 and 2 are written and **not yet seen green**
+- **Done steps:** write-ahead; step 1 `CommandAvailability`; step 2 buttons through it (inspector, research, placement, `GameRoot`), both unverified
+- **Next step:** read `<scratchpad>/unity-out/EditMode.xml` and `PlayMode.xml` (run by `<scratchpad>/run-unity-copy.sh` on a copy of the project, because the owner's Editor holds the project lock) and fix what fails. Then step 3 `ConnectionBannerModel`, 4 `ConnectionBanner` + `ConnectionFlow` in `GameRoot`, 5 `ReportCommandError` for a lost connection, 6 docs and `/finish-task`.
 - **Open questions for the owner:** CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-54: the dev database still runs the fast clock until the owner does step 7 of the waiting-loop run (`LOCAL-E2E.md`).
-- **Known broken / do not touch:** —
+- **Known broken / do not touch:** steps 1 and 2 have not been compiled or run yet (see Next step). Do not touch the owner's open Unity Editor.
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 

@@ -106,10 +106,11 @@ namespace CityBuilder.Client.Presentation.Inspector
         /// <param name="city">The displayed city.</param>
         /// <param name="building">A building of <paramref name="city"/>.</param>
         /// <param name="pending">What is on its way for this building (<see cref="InspectorPending.From"/>).</param>
+        /// <param name="availability">Whether a command may be sent now (<see cref="CommandAvailability.For"/>): when it may not, − + and Upgrade are off and their notes give the reason (M0-55).</param>
         /// <returns>The model, or null when the content does not know the building's type or level (the screen then shows nothing, never an exception).</returns>
         /// <exception cref="ArgumentNullException">The content, the city or the building is null.</exception>
         public static BuildingInspectorModel? Create(
-            GameContent content, CityState city, Building building, InspectorPending pending)
+            GameContent content, CityState city, Building building, InspectorPending pending, CommandAvailability availability)
         {
             if (content == null)
             {
@@ -146,8 +147,8 @@ namespace CityBuilder.Client.Presentation.Inspector
                 IsWorkersPending = pendingTarget.HasValue,
                 IsUpgradePending = upgradePending,
             };
-            model.FillStepper(content, city, building, level, pendingTarget);
-            model.FillUpgrade(content, city, building, definition, upgradePending);
+            model.FillStepper(content, city, building, level, pendingTarget, availability);
+            model.FillUpgrade(content, city, building, definition, upgradePending, availability);
             return model;
         }
 
@@ -188,9 +189,16 @@ namespace CityBuilder.Client.Presentation.Inspector
 
         /// <summary>
         /// Sets the stepper's members. A producer that is built has a stepper; its rates are shown at the assigned workers, and, when a
-        /// target is on its way, at that target too.
+        /// target is on its way, at that target too. While commands are not allowed both buttons are off and the note is the reason; the shown
+        /// value, the pending target included, stays, because the sender is still on its way with it.
         /// </summary>
-        private void FillStepper(GameContent content, CityState city, Building building, BuildingLevelDefinition level, int? pendingTarget)
+        private void FillStepper(
+            GameContent content,
+            CityState city,
+            Building building,
+            BuildingLevelDefinition level,
+            int? pendingTarget,
+            CommandAvailability availability)
         {
             HasStepper = level.Recipe != null && building.Phase != BuildingPhase.Constructing;
             if (level.Recipe == null || building.Phase == BuildingPhase.Constructing)
@@ -204,15 +212,20 @@ namespace CityBuilder.Client.Presentation.Inspector
             WorkersTarget = target;
             WorkersText = Number(target) + " / " + Number(level.MaxWorkers);
             RatesText = RatesTextAt(content, city, building, assigned);
-            MinusEnabled = target > 0;
+            MinusEnabled = availability.IsAllowed && target > 0;
             // One more worker than now must fit the free ones: a target already above the assigned count has used some of them.
-            PlusEnabled = target < level.MaxWorkers && (long)target + 1 - assigned <= free;
+            bool plusFits = target < level.MaxWorkers && (long)target + 1 - assigned <= free;
+            PlusEnabled = availability.IsAllowed && plusFits;
             if (target != assigned)
             {
                 PreviewText = "With " + Number(target) + (target == 1 ? " worker: " : " workers: ") + RatesTextAt(content, city, building, target);
             }
 
-            if (pendingTarget.HasValue)
+            if (!availability.IsAllowed)
+            {
+                StepperNote = availability.Reason;
+            }
+            else if (pendingTarget.HasValue)
             {
                 StepperNote = "Updating workers…";
             }
@@ -220,7 +233,7 @@ namespace CityBuilder.Client.Presentation.Inspector
             {
                 StepperNote = "At most " + Number(level.MaxWorkers) + " workers at this level";
             }
-            else if (!PlusEnabled)
+            else if (!plusFits)
             {
                 StepperNote = "No free workers";
             }
@@ -228,9 +241,15 @@ namespace CityBuilder.Client.Presentation.Inspector
 
         /// <summary>
         /// Sets the upgrade section's members. The disabled reason follows the server's checks in the server's order (busy, highest level, no
-        /// free builder, not enough items), with the upgrade on its way first.
+        /// free builder, not enough items), with the upgrade on its way first. While commands are not allowed the reason comes before all of them.
         /// </summary>
-        private void FillUpgrade(GameContent content, CityState city, Building building, BuildingDefinition definition, bool upgradePending)
+        private void FillUpgrade(
+            GameContent content,
+            CityState city,
+            Building building,
+            BuildingDefinition definition,
+            bool upgradePending,
+            CommandAvailability availability)
         {
             if (building.Level >= definition.MaxLevel)
             {
@@ -247,7 +266,7 @@ namespace CityBuilder.Client.Presentation.Inspector
             UpgradeGainText = current.Recipe != null
                 ? "Max workers " + Number(current.MaxWorkers) + " → " + Number(next.MaxWorkers)
                 : "Provides " + Number(current.WorkersProvided) + " → " + Number(next.WorkersProvided) + " workers";
-            UpgradeNote = UpgradeNoteFor(content, city, building, next, upgradePending);
+            UpgradeNote = availability.IsAllowed ? UpgradeNoteFor(content, city, building, next, upgradePending) : availability.Reason;
             CanUpgrade = UpgradeNote.Length == 0;
         }
 

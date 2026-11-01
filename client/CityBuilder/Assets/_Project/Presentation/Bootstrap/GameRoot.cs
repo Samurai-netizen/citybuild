@@ -31,6 +31,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
     /// It also shows the research screen (<see cref="ResearchScreen"/>) for the city's era and joins it to the command sender (<see cref="ResearchFlow"/>); it is one more member of the menu group.
     /// It also shows the welcome-back report (<see cref="WelcomeBackPanel"/>, <see cref="WelcomeBackFlow"/>) for any snapshot that settled five minutes or more, the first one included; the panel is one more member of the menu group.
     /// It also drives the connection monitor: it polls the city, goes quiet while the app is paused, and the status view says how the connection stands.
+    /// Whenever the connection changes it tells the placement flow, the inspector and the research screen whether a command may be sent (<see cref="CommandAvailability"/>), so their buttons go off with the reason.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class GameRoot : MonoBehaviour
@@ -469,6 +470,10 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             }
 
             Show(ConnectionStatusModel.ForConnection(_monitor.State, _monitor.LastError, _content, _cityStore.Snapshot));
+            CommandAvailability availability = CommandAvailability.For(_monitor.State);
+            _placement?.Model.SetCommandAvailability(availability);
+            _inspectorFlow?.SetCommandAvailability(availability);
+            _researchFlow?.SetCommandAvailability(availability);
             CityState? city = _displayCity?.Current;
             if (city != null)
             {

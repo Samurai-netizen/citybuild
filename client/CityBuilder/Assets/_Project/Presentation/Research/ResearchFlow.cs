@@ -4,6 +4,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using CityBuilder.Client.Net;
+using CityBuilder.Client.Presentation.Ui;
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.State;
 using UnityEngine;
@@ -14,7 +15,8 @@ namespace CityBuilder.Client.Presentation.Research
     /// The research screen's wiring (M0-52): it joins the displayed city, the command sender and the <see cref="ResearchScreen"/>, and holds no
     /// rule of its own. The screen is rebuilt from <see cref="ResearchScreenModel"/> whenever the city or the sender's pending list changes; a
     /// press on Finance gives the sender a <c>StartResearch</c> intent, which the model shows as pending (every Finance button is off while it
-    /// is on its way, so a double tap cannot submit twice). It subtracts nothing and starts nothing: the new state comes with the snapshot the
+    /// is on its way, so a double tap cannot submit twice). While the connection does not allow a command (<see cref="CommandAvailability"/>, set by
+    /// <see cref="SetCommandAvailability"/>) every Finance button is off with the reason, and a press that still arrives sends nothing. It subtracts nothing and starts nothing: the new state comes with the snapshot the
     /// sender hands to the city store, and a refusal is shown as a toast by the feedback (M0-47). <c>GameRoot</c> creates it once connected and
     /// calls <see cref="Dispose"/> when it is destroyed.
     /// </summary>
@@ -34,6 +36,9 @@ namespace CityBuilder.Client.Presentation.Research
 
         /// <summary>The latest displayed city, or null before the first <see cref="Update"/>.</summary>
         private CityState? _city;
+
+        /// <summary>Whether a command may be sent now; allowed until <see cref="SetCommandAvailability"/> says otherwise.</summary>
+        private CommandAvailability _availability = CommandAvailability.Allowed;
 
         /// <summary>Whether <see cref="Dispose"/> has run.</summary>
         private bool _disposed;
@@ -60,6 +65,19 @@ namespace CityBuilder.Client.Presentation.Research
         public void Update(CityState city)
         {
             _city = city ?? throw new ArgumentNullException(nameof(city));
+            Refresh();
+        }
+
+        /// <summary>The connection changed (M0-55): the buttons follow whether a command may be sent. A start already on its way is not touched.</summary>
+        /// <param name="availability">Whether a command may be sent now.</param>
+        public void SetCommandAvailability(CommandAvailability availability)
+        {
+            if (_availability.Equals(availability))
+            {
+                return;
+            }
+
+            _availability = availability;
             Refresh();
         }
 
@@ -96,12 +114,17 @@ namespace CityBuilder.Client.Presentation.Research
                 return;
             }
 
-            _screen.Show(ResearchScreenModel.Create(_content, _city, ResearchPending.From(_sender.Pending)));
+            _screen.Show(ResearchScreenModel.Create(_content, _city, ResearchPending.From(_sender.Pending), _availability));
         }
 
         /// <summary>Finance was pressed on the node <paramref name="id"/>: gives the sender the intent and does not wait for it.</summary>
         private void OnFinance(string id)
         {
+            if (!_availability.IsAllowed)
+            {
+                return;
+            }
+
             _ = SendAsync(CommandIntent.StartResearch(id));
         }
 

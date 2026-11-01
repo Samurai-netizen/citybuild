@@ -1,6 +1,7 @@
 #nullable enable
 
 using CityBuilder.Client.Presentation.Research;
+using CityBuilder.Client.Presentation.Ui;
 using CityBuilder.Client.Tests.EditMode.Presentation.Hud;
 using CityBuilder.Simulation;
 using CityBuilder.Simulation.Content;
@@ -23,10 +24,11 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Research
         }
 
         /// <summary>Makes the model of the node <paramref name="id"/> for <paramref name="city"/>.</summary>
-        private ResearchNodeModel Node(string id, CityState city, string? pending = null, int column = 0)
+        private ResearchNodeModel Node(
+            string id, CityState city, string? pending = null, int column = 0, CommandAvailability availability = default)
         {
             Assert.That(_content.TryGetResearch(new ResearchId(id), out ResearchDefinition? definition), Is.True);
-            return ResearchNodeModel.Create(_content, city, definition!, column, pending);
+            return ResearchNodeModel.Create(_content, city, definition!, column, pending, availability);
         }
 
         /// <summary>A city of Era I with the given coins and logs, planks, and completed research.</summary>

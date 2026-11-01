@@ -76,9 +76,15 @@ namespace CityBuilder.Client.Presentation.Research
         /// <param name="node">A research node of the content.</param>
         /// <param name="column">The node's column in the layout (<see cref="ResearchScreenModel"/> works it out for the whole tree).</param>
         /// <param name="pendingResearchId">The id of a <c>StartResearch</c> on its way to the server, or null when none is.</param>
+        /// <param name="availability">Whether a command may be sent now (<see cref="CommandAvailability.For"/>): when it may not, the button is off and its note is the reason (M0-55).</param>
         /// <exception cref="ArgumentNullException">The content, the city or the node is null.</exception>
         public static ResearchNodeModel Create(
-            GameContent content, CityState city, ResearchDefinition node, int column, string? pendingResearchId)
+            GameContent content,
+            CityState city,
+            ResearchDefinition node,
+            int column,
+            string? pendingResearchId,
+            CommandAvailability availability)
         {
             if (content == null)
             {
@@ -129,7 +135,7 @@ namespace CityBuilder.Client.Presentation.Research
             model.ShowsButton = status == ResearchStatus.Locked || status == ResearchStatus.Available;
             if (model.ShowsButton)
             {
-                model.ButtonNote = ButtonNoteOf(content, city, node, pendingResearchId, missing);
+                model.ButtonNote = availability.IsAllowed ? ButtonNoteOf(content, city, node, pendingResearchId, missing) : availability.Reason;
                 model.ButtonEnabled = model.ButtonNote.Length == 0;
             }
 

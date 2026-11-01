@@ -1,6 +1,7 @@
 #nullable enable
 
 using CityBuilder.Client.Presentation.Research;
+using CityBuilder.Client.Presentation.Ui;
 using CityBuilder.Client.Tests.EditMode.Presentation.Hud;
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.State;
@@ -31,9 +32,9 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Research
         [Test]
         public void Header_CountsResearchedNodes()
         {
-            Assert.That(ResearchScreenModel.Create(_content, City(), null).HeaderText, Is.EqualTo("Early Middle Ages — 0 / 4 researched"));
+            Assert.That(ResearchScreenModel.Create(_content, City(), null, CommandAvailability.Allowed).HeaderText, Is.EqualTo("Early Middle Ages — 0 / 4 researched"));
             Assert.That(
-                ResearchScreenModel.Create(_content, City(new[] { "sharp_axes" }), null).HeaderText,
+                ResearchScreenModel.Create(_content, City(new[] { "sharp_axes" }), null, CommandAvailability.Allowed).HeaderText,
                 Is.EqualTo("Early Middle Ages — 1 / 4 researched"));
         }
 
@@ -43,14 +44,14 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Research
         {
             CityState city = City(new[] { "sharp_axes" }, HudTestData.Research("trade_charter", 900, 1500));
 
-            Assert.That(ResearchScreenModel.Create(_content, city, null).HeaderText, Is.EqualTo("Early Middle Ages — 1 / 4 researched"));
+            Assert.That(ResearchScreenModel.Create(_content, city, null, CommandAvailability.Allowed).HeaderText, Is.EqualTo("Early Middle Ages — 1 / 4 researched"));
         }
 
         /// <summary>The rule is worded as the owner words it, and is greyed out while the content has no later era (every M0 content).</summary>
         [Test]
         public void Rule_IsGreyedOut_WhileThereIsNoNextEra()
         {
-            ResearchScreenModel model = ResearchScreenModel.Create(_content, City(), null);
+            ResearchScreenModel model = ResearchScreenModel.Create(_content, City(), null, CommandAvailability.Allowed);
 
             Assert.That(ResearchScreenModel.RuleText, Is.EqualTo("Complete all to advance"));
             Assert.That(model.RuleIsActive, Is.False);
@@ -60,7 +61,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Research
         [Test]
         public void Nodes_AreInColumnsByPrerequisites()
         {
-            ResearchScreenModel model = ResearchScreenModel.Create(_content, City(), null);
+            ResearchScreenModel model = ResearchScreenModel.Create(_content, City(), null, CommandAvailability.Allowed);
 
             Assert.That(model.ColumnCount, Is.EqualTo(2));
             Assert.That(model.Nodes.Count, Is.EqualTo(4));
@@ -76,7 +77,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Research
         {
             CityState city = City(new[] { "sharp_axes" }, HudTestData.Research("trade_charter", 900, 1500));
 
-            ResearchScreenModel model = ResearchScreenModel.Create(_content, city, null);
+            ResearchScreenModel model = ResearchScreenModel.Create(_content, city, null, CommandAvailability.Allowed);
 
             Assert.That(model.Nodes[0].Status, Is.EqualTo(ResearchStatus.Done));
             Assert.That(model.Nodes[1].Status, Is.EqualTo(ResearchStatus.InProgress));
@@ -88,7 +89,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Research
         [Test]
         public void PendingStart_ReachesEveryNode()
         {
-            ResearchScreenModel model = ResearchScreenModel.Create(_content, City(), "sharp_axes");
+            ResearchScreenModel model = ResearchScreenModel.Create(_content, City(), "sharp_axes", CommandAvailability.Allowed);
 
             foreach (ResearchNodeModel node in model.Nodes)
             {
@@ -100,9 +101,9 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Research
         [Test]
         public void Equality_FollowsTheNodes()
         {
-            ResearchScreenModel first = ResearchScreenModel.Create(_content, City(), null);
-            ResearchScreenModel same = ResearchScreenModel.Create(_content, City(), null);
-            ResearchScreenModel running = ResearchScreenModel.Create(_content, City(null, HudTestData.Research("sharp_axes", 900, 2700)), null);
+            ResearchScreenModel first = ResearchScreenModel.Create(_content, City(), null, CommandAvailability.Allowed);
+            ResearchScreenModel same = ResearchScreenModel.Create(_content, City(), null, CommandAvailability.Allowed);
+            ResearchScreenModel running = ResearchScreenModel.Create(_content, City(null, HudTestData.Research("sharp_axes", 900, 2700)), null, CommandAvailability.Allowed);
 
             Assert.That(same, Is.EqualTo(first));
             Assert.That(same.GetHashCode(), Is.EqualTo(first.GetHashCode()));

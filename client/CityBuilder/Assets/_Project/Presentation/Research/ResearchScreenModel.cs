@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using CityBuilder.Client.Presentation.Ui;
 using CityBuilder.Simulation;
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.State;
@@ -46,8 +47,9 @@ namespace CityBuilder.Client.Presentation.Research
         /// <param name="content">The game content.</param>
         /// <param name="city">The displayed city.</param>
         /// <param name="pendingResearchId">The id of a <c>StartResearch</c> on its way to the server, or null when none is.</param>
+        /// <param name="availability">Whether a command may be sent now: when it may not, every Finance button is off with the reason (M0-55).</param>
         /// <exception cref="ArgumentNullException">The content or the city is null.</exception>
-        public static ResearchScreenModel Create(GameContent content, CityState city, string? pendingResearchId)
+        public static ResearchScreenModel Create(GameContent content, CityState city, string? pendingResearchId, CommandAvailability availability)
         {
             if (content == null)
             {
@@ -86,7 +88,7 @@ namespace CityBuilder.Client.Presentation.Research
                         continue;
                     }
 
-                    ResearchNodeModel node = ResearchNodeModel.Create(content, city, inEra[index], column, pendingResearchId);
+                    ResearchNodeModel node = ResearchNodeModel.Create(content, city, inEra[index], column, pendingResearchId, availability);
                     researched += node.Status == ResearchStatus.Done ? 1 : 0;
                     nodes.Add(node);
                 }
