@@ -189,6 +189,7 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
 - Client review against the nine points of the spec: the status and fatal screens move out of `GameRoot` into `ConnectionStatusView`, a literal era is gone, and what runs every frame is measured to allocate nothing (M0-48).
 - Top HUD: one chip per item (stock, cap, net rate per hour such as `+60/h` or `−30/h`), workers free / provided, builders busy / slots, a research progress ring with the node's name and time left, the era badge and a connection indicator; all from the displayed city, refreshed once a second, and it takes no pointer; the status label moved to the bottom left and the toasts below the HUD; 41 new tests (36 EditMode, 5 PlayMode) (M0-49).
 - Era I art adopted (CR-0005-T1): the owner's Blender scripts, palette, UI icons and README are the tracked folder `art/` (a handbook page); the 22 FBX models and the palette live only in the Unity project (`Assets/_Project/Art/`, no importer settings yet) and the Blender build writes them there; the other renders are git-ignored.
+- The Era I art imports into Unity by script (CR-0005-T2): a new Editor-only assembly `CityBuilder.Client.Editor` with `ArtImportPostprocessor` (the palette's and the models' settings, one shared URP Lit material), the `.meta` files of the art, `ArtImportTests`.
 
 ### Changed
 - `/finish-task` can be run by the AI coder itself once every planned step is done (owner directive OD-15; M0-36).
