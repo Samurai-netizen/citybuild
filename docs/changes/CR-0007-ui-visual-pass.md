@@ -1,6 +1,6 @@
 # CR-0007 — UI visual pass: smaller, tidy, consistent
 
-- **Status:** Proposed
+- **Status:** Approved
 - **Type:** Design change
 - **Requested by:** owner · **Date:** 2026-11-02
 - **Milestone / era:** M0 / Era I
@@ -41,11 +41,7 @@ Make the whole client UI look decent and consistent, without changing what any s
 5. **Every screen, every state:** HUD and its chips, build menu and cards, placement bar, building inspector, research screen, welcome-back
    report, toasts, status label, fatal error screen, and the connection banner and blocking screen of M0-55.
 
-Suggested split into tasks (filled in after approval), each ending with a [MANUAL] look by the owner:
-- T1: the common stylesheet, the tokens, the scale decision and the HUD, toasts and status label (the screens always on screen).
-- T2: build menu, build cards and placement bar.
-- T3: building inspector and research screen.
-- T4: welcome-back report, connection banner and blocking screen, fatal error screen, and the final pass for consistency.
+One task, by the owner's choice (see Owner approval): CR-0007-T1 does every screen in one go, and the owner looks at the result once, at the end.
 
 ## Acceptance criteria
 - [ ] `Common.uss` exists and every layout in `Resources/UI/` imports it; a test fails for a layout that does not.
@@ -56,10 +52,10 @@ Suggested split into tasks (filled in after approval), each ending with a [MANUA
       screen stylesheet).
 - [ ] No element name, text or behaviour changes: every existing EditMode and PlayMode test passes without an edit to an assertion (a test that
       names a style class may change its class name; that is logged).
-- [ ] At 2400 × 1080, 1920 × 1080, 1280 × 720 and a portrait 1080 × 2400 screen, no panel overlaps the HUD or runs off the screen (owner's [MANUAL] look,
-      steps in `client/README.md`).
-- [ ] The touch-target rule of `09` holds as the owner decides it (see Questions), and `09` says what the rule is.
-- [ ] The owner looks at each task's screens and says "decent" (recorded under Owner input in the task's build log entry).
+- [ ] On a landscape phone screen (2400 × 1080, and also 1920 × 1080 and 1280 × 720), no panel overlaps the HUD or runs off the screen. The AI coder
+      looks at a screenshot of every screen at those sizes, and the owner does the [MANUAL] look (steps in `client/README.md`). Portrait is out of scope.
+- [ ] The touch-target rule of `09` holds: every control that takes a tap is at least 48 dp high and wide on a phone (decided by the owner, see Owner approval). `09` states how panel units map to dp.
+- [ ] The owner looks at the screens and says "decent" (recorded under Owner input in the task's build log entry).
 - [ ] Docs: `09` (UX rules, built line), `docs/how-to/add-ui-screen.md` (use the tokens and shared classes), the Presentation module doc (layout list),
       `client/README.md` ([MANUAL] looks), CHANGELOG.
 
@@ -68,7 +64,7 @@ Suggested split into tasks (filled in after approval), each ending with a [MANUA
 - New screens, new features or moved features: a button stays on the screen where it is. Small position tidying inside a screen is in scope.
 - Changing any text, except to shorten one that no longer fits.
 - The city view (ground, buildings, status rings and bubbles, camera) and the Blender art.
-- Light mode, themes, localisation, accessibility features beyond the contrast and touch-target rules above.
+- Portrait layouts, tablets as a target, light mode, themes, localisation, accessibility features beyond the contrast and touch-target rules above.
 - A UI asset-store package or any other new dependency.
 
 ## Impact analysis
@@ -107,7 +103,12 @@ Suggested split into tasks (filled in after approval), each ending with a [MANUA
 ## Tasks (filled in after approval)
 | ID | Title | Model | Status |
 |---|---|---|---|
-| CR-0007-T1 | | S | Todo |
+| CR-0007-T1 | UI visual pass: every screen, the shared stylesheet and the scale | S | Todo |
 
 ## Owner approval
-- Approved on: — (quote the owner's words)
+- Approved on: 2026-11-02. The owner's answers to the four questions, in their words: "1. Focus on mobile landscape view. 2. Look "b". 3. Keep
+  touch targets. 4. Decide for yourself. Also do not divide the task for smaller ones - do everything in one go, even if it will take an hour".
+  - Question 4 (the banner and blocking screen): decided by the AI coder: they are part of the one task like every other screen.
+  - Look "b": warm wood and parchment panels that match the art.
+  - Touch targets stay at 48 dp or more on a phone; the scale is therefore set in dp-like units (decision in the build log).
+  - One task, not four: CR-0007-T1.
