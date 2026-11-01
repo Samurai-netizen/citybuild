@@ -1,0 +1,92 @@
+/* The welcome-back report (M0-53, docs/how-to/add-ui-screen.md): a card in the middle of a dark scrim. Sizes are in panel units (reference
+   resolution 1200 x 800), so the 64 Continue button is well over the 48 dp touch target. */
+.welcome-root {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.welcome-scrim {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  padding: 16px; /* replaced by the safe area in code */
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+.welcome-scrim--hidden {
+  display: none;
+}
+
+.welcome-card {
+  width: 720px;
+  max-width: 100%;
+  max-height: 100%;
+  padding: 20px;
+  border-radius: 12px;
+  background-color: rgba(20, 22, 28, 0.96);
+}
+
+.welcome-title {
+  color: rgb(255, 255, 255);
+  font-size: 30px;
+  -unity-font-style: bold;
+  white-space: normal;
+}
+
+.welcome-scroll {
+  flex-shrink: 1;
+  margin-top: 10px;
+}
+
+.welcome-sections {
+  flex-direction: column;
+}
+
+.welcome-heading {
+  margin-top: 10px;
+  color: rgb(150, 200, 255);
+  font-size: 22px;
+  -unity-font-style: bold;
+}
+
+.welcome-line {
+  margin-top: 2px;
+  color: rgb(235, 235, 235);
+  font-size: 24px;
+  white-space: normal;
+}
+
+.welcome-empty {
+  margin-top: 8px;
+  color: rgb(200, 200, 200);
+  font-size: 24px;
+  white-space: normal;
+}
+
+.welcome-cap-note {
+  margin-top: 12px;
+  padding: 10px;
+  border-left-width: 6px;
+  border-radius: 6px;
+  border-left-color: rgb(240, 180, 70);
+  color: rgb(255, 225, 160);
+  background-color: rgba(240, 180, 70, 0.12);
+  font-size: 22px;
+  white-space: normal;
+}
+
+.welcome-continue {
+  height: 64px;
+  margin-top: 16px;
+  font-size: 26px;
+  border-radius: 8px;
+  color: rgb(255, 255, 255);
+  background-color: rgb(60, 110, 180);
+}

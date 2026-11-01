@@ -10,6 +10,7 @@ using CityBuilder.Client.Presentation.Hud;
 using CityBuilder.Client.Presentation.Inspector;
 using CityBuilder.Client.Presentation.Research;
 using CityBuilder.Client.Presentation.Ui;
+using CityBuilder.Client.Presentation.WelcomeBack;
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.State;
 using UnityEngine;
@@ -25,9 +26,10 @@ namespace CityBuilder.Client.Presentation.Bootstrap
     /// It shows the top HUD (<see cref="HudView"/>) over the displayed city and the connection state.
     /// It also shows the build menu (<see cref="BuildMenu"/>), whose cards follow the displayed city, and tells the ground that a press on the menu or on the placement bar is not its own.
     /// It joins the menu, the ground, the placement bar and the command sender into the placement flow (<see cref="PlacementFlow"/>).
-    /// The menus the player opens and closes (the build menu's sheet, the inspector, the research screen) are one <see cref="MenuGroup"/>: opening one closes the others.
+    /// The menus the player opens and closes (the build menu's sheet, the inspector, the research screen, the welcome-back report) are one <see cref="MenuGroup"/>: opening one closes the others.
     /// It also shows the building inspector (<see cref="BuildingInspector"/>) for the building on the tapped tile and joins it to the command sender (<see cref="InspectorFlow"/>).
     /// It also shows the research screen (<see cref="ResearchScreen"/>) for the city's era and joins it to the command sender (<see cref="ResearchFlow"/>); it is one more member of the menu group.
+    /// It also shows the welcome-back report (<see cref="WelcomeBackPanel"/>, <see cref="WelcomeBackFlow"/>) for any snapshot that settled five minutes or more, the first one included; the panel is one more member of the menu group.
     /// It also drives the connection monitor: it polls the city, goes quiet while the app is paused, and the status view says how the connection stands.
     /// </summary>
     [DisallowMultipleComponent]
@@ -93,6 +95,12 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         /// <summary>Joins the displayed city, the command sender and the research screen; null until the start has connected, or when the screen is missing.</summary>
         private ResearchFlow? _researchFlow;
 
+        /// <summary>The welcome-back report; null until the start has connected, or when its assets are missing.</summary>
+        private WelcomeBackPanel? _welcomePanel;
+
+        /// <summary>Shows the welcome-back report for the snapshots the store takes; null until the start has connected, or when the panel is missing.</summary>
+        private WelcomeBackFlow? _welcomeFlow;
+
         /// <summary>The toasts on the screen; null until the start has connected.</summary>
         private ToastQueue? _toasts;
 
@@ -140,6 +148,12 @@ namespace CityBuilder.Client.Presentation.Bootstrap
 
         /// <summary>The research screen's flow (<c>09</c> Research screen); null until the start has connected, or when the screen is missing.</summary>
         internal ResearchFlow? ResearchFlow => _researchFlow;
+
+        /// <summary>The welcome-back panel (<c>09</c> Welcome-back report); null until the start has connected, or when its assets are missing.</summary>
+        internal WelcomeBackPanel? WelcomePanel => _welcomePanel;
+
+        /// <summary>The welcome-back flow (<c>09</c> Welcome-back report); null until the start has connected, or when the panel is missing.</summary>
+        internal WelcomeBackFlow? WelcomeFlow => _welcomeFlow;
 
         /// <summary>The city's camera and ground (<c>09</c> City view); null only before <c>Awake</c> has run.</summary>
         internal CityWorld? World => _world;
@@ -189,6 +203,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                     CreatePlacement(outcome.Content!);
                     CreateInspector(outcome.Content!);
                     CreateResearchScreen(outcome.Content!);
+                    CreateWelcomeBack(outcome.Content!);
                     ShowBuildings();
                     _monitor = new ConnectionMonitor(
                         _api!,
@@ -242,6 +257,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             _placement?.Dispose();
             _inspectorFlow?.Dispose();
             _researchFlow?.Dispose();
+            _welcomeFlow?.Dispose();
             _feedback?.Dispose();
             if (_displayCity != null)
             {
@@ -395,13 +411,32 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             _world!.IsPointerOverUi = IsOverUi;
         }
 
-        /// <summary>Whether a screen position (pixels, origin bottom left) is over the build menu, the placement bar, the building inspector or the research screen: a press there is the UI's, not the ground's.</summary>
+        /// <summary>
+        /// Shows the welcome-back panel, joins it to the menu group and then makes the flow over the city store, so a report for the snapshot the
+        /// start stored (the answer after a long absence) opens the panel through the group. Does nothing when its assets are missing: the panel
+        /// logs an error and stays null.
+        /// </summary>
+        private void CreateWelcomeBack(GameContent content)
+        {
+            WelcomeBackPanel? panel = _welcomePanel = WelcomeBackPanel.Create(transform);
+            if (panel == null)
+            {
+                return;
+            }
+
+            panel.Opened += _menus.Join(panel.Dismiss).NotifyOpened;
+            _welcomeFlow = new WelcomeBackFlow(content, _cityStore, panel);
+            _world!.IsPointerOverUi = IsOverUi;
+        }
+
+        /// <summary>Whether a screen position (pixels, origin bottom left) is over the build menu, the placement bar, the building inspector, the research screen or the welcome-back report: a press there is the UI's, not the ground's.</summary>
         private bool IsOverUi(Vector2 screenPosition)
         {
             return (_buildMenu != null && _buildMenu.IsOverUi(screenPosition))
                 || (_placementBar != null && _placementBar.IsOverUi(screenPosition))
                 || (_inspector != null && _inspector.IsOverUi(screenPosition))
-                || (_researchScreen != null && _researchScreen.IsOverUi(screenPosition));
+                || (_researchScreen != null && _researchScreen.IsOverUi(screenPosition))
+                || (_welcomePanel != null && _welcomePanel.IsOverUi(screenPosition));
         }
 
         /// <summary>The monitor's state or error changed: the screen says how the connection stands now.</summary>
