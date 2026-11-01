@@ -4,6 +4,7 @@ using System;
 using CityBuilder.Client.Net;
 using CityBuilder.Client.Presentation.Feedback;
 using CityBuilder.Client.Presentation.City;
+using CityBuilder.Client.Presentation.Ui;
 using CityBuilder.Simulation;
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.State;
@@ -17,6 +18,8 @@ namespace CityBuilder.Client.Presentation.Build
     /// (red) can be picked, so the bar can say why, but it cannot be confirmed: nothing is sent for a tile the player was told is taken. That is
     /// a courtesy, not the rule: the server checks every command again (<c>09</c> UX rules). The model subtracts nothing and never creates a
     /// building; <see cref="TryConfirm"/> only makes the <see cref="CommandIntent"/> that the caller gives the <see cref="CommandSender"/>.
+    /// While the connection does not allow a command (<see cref="SetCommandAvailability"/>, M0-55) Place is off and <see cref="HintText"/> gives the
+    /// reason; the picks stay, so the player can go on choosing a tile and place when the connection is back.
     /// </summary>
     public sealed class PlacementFlowModel
     {
@@ -34,6 +37,9 @@ namespace CityBuilder.Client.Presentation.Build
 
         /// <summary>The intent that was confirmed and has not ended; null when none is.</summary>
         private CommandIntent? _sending;
+
+        /// <summary>Whether a command may be sent now; allowed until <see cref="SetCommandAvailability"/> says otherwise.</summary>
+        private CommandAvailability _availability = CommandAvailability.Allowed;
 
         /// <summary>Creates a flow with nothing picked, over a grid whose tiles are all free until <see cref="Update"/> says otherwise.</summary>
         /// <param name="content">The content that names the building types.</param>
@@ -85,10 +91,10 @@ namespace CityBuilder.Client.Presentation.Build
         public bool ShowsHints => Phase != PlacementPhase.Idle;
 
         /// <summary>
-        /// Whether <see cref="TryConfirm"/> can succeed: a type and a free tile are picked and nothing is on its way. A tile the displayed city
-        /// shows occupied (red) cannot be confirmed; if a snapshot occupies the picked tile, this turns false at once.
+        /// Whether <see cref="TryConfirm"/> can succeed: a type and a free tile are picked, nothing is on its way and the connection allows a
+        /// command. A tile the displayed city shows occupied (red) cannot be confirmed; if a snapshot occupies the picked tile, this turns false at once.
         /// </summary>
-        public bool CanConfirm => Phase == PlacementPhase.Confirming && HintAt(Tile!.Value) != TileHint.Occupied;
+        public bool CanConfirm => Phase == PlacementPhase.Confirming && _availability.IsAllowed && HintAt(Tile!.Value) != TileHint.Occupied;
 
         /// <summary>Whether <see cref="Cancel"/> does anything: a command that was sent cannot be taken back.</summary>
         public bool CanCancel => Phase != PlacementPhase.Idle && Phase != PlacementPhase.Sending;
@@ -122,11 +128,19 @@ namespace CityBuilder.Client.Presentation.Build
             }
         }
 
-        /// <summary>A warning about the picked tile from the displayed city, or empty. While it is shown <see cref="CanConfirm"/> is false.</summary>
+        /// <summary>
+        /// A warning about the pick, or empty: the connection's reason while no command may be sent, else that the picked tile is occupied in the
+        /// displayed city. While it is shown <see cref="CanConfirm"/> is false.
+        /// </summary>
         public string HintText
         {
             get
             {
+                if (Phase == PlacementPhase.Confirming && !_availability.IsAllowed)
+                {
+                    return _availability.Reason;
+                }
+
                 bool occupied = Phase == PlacementPhase.Confirming && HintAt(Tile!.Value) == TileHint.Occupied;
                 return occupied ? "This tile is occupied" : string.Empty;
             }
@@ -166,6 +180,22 @@ namespace CityBuilder.Client.Presentation.Build
 
             Tile = tile;
             ErrorText = string.Empty;
+            Changed?.Invoke();
+        }
+
+        /// <summary>
+        /// The connection changed (M0-55): Place follows whether a command may be sent. Raises <see cref="Changed"/> when the availability differs.
+        /// A command already on its way is not touched.
+        /// </summary>
+        /// <param name="availability">Whether a command may be sent now.</param>
+        public void SetCommandAvailability(CommandAvailability availability)
+        {
+            if (_availability.Equals(availability))
+            {
+                return;
+            }
+
+            _availability = availability;
             Changed?.Invoke();
         }
 

@@ -1,0 +1,109 @@
+/* The connection banner and the blocking screen (M0-55, docs/how-to/add-ui-screen.md). Sizes are in panel units (reference resolution 1200 x 800), so
+   the 56 button is well over the 48 dp touch target. The banner sits under the HUD at the left and ends above the toasts (which start at 224). */
+.connection-root {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  padding: 16px; /* replaced by the safe area in code */
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+
+.connection-banner {
+  width: 720px;
+  max-width: 100%;
+  margin-top: 108px; /* clears the HUD */
+  padding: 8px 12px;
+  flex-direction: row;
+  align-items: center;
+  border-radius: 10px;
+  border-left-width: 6px;
+  border-left-color: rgb(255, 200, 90);
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+.connection-banner--hidden {
+  display: none;
+}
+
+.connection-banner-text {
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-direction: column;
+}
+
+.connection-message {
+  color: rgb(255, 255, 255);
+  font-size: 22px;
+  -unity-font-style: bold;
+  white-space: normal;
+}
+
+.connection-synced {
+  margin-top: 2px;
+  color: rgb(255, 200, 90);
+  font-size: 20px;
+  white-space: normal;
+}
+
+.connection-button {
+  min-width: 150px;
+  min-height: 56px;
+  margin: 0 0 0 12px;
+  padding: 6px 16px;
+  border-radius: 8px;
+  color: rgb(255, 255, 255);
+  font-size: 24px;
+  -unity-font-style: bold;
+  background-color: rgb(46, 98, 56);
+}
+
+.connection-button:disabled {
+  opacity: 0.4;
+}
+
+.connection-blocker {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  padding: 16px; /* replaced by the safe area in code */
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.85);
+}
+
+.connection-blocker--hidden {
+  display: none;
+}
+
+.connection-card {
+  width: 640px;
+  max-width: 100%;
+  padding: 24px;
+  border-radius: 12px;
+  background-color: rgba(20, 22, 28, 0.98);
+}
+
+.connection-blocker-title {
+  color: rgb(255, 255, 255);
+  font-size: 32px;
+  -unity-font-style: bold;
+  white-space: normal;
+}
+
+.connection-blocker-message {
+  margin-top: 12px;
+  color: rgb(235, 235, 235);
+  font-size: 24px;
+  white-space: normal;
+}
+
+.connection-blocker-button {
+  margin: 20px 0 0 0;
+  align-self: flex-end;
+}

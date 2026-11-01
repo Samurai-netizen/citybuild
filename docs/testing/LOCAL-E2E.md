@@ -55,10 +55,12 @@ The local server can also be started and stopped from a small menu, `server-pane
 
 > Offline: cannot reach the server (CLIENT_NETWORK_ERROR)
 
+From M0-55 the HUD's dot also turns red with `Offline` and a banner appears under the HUD: "Offline. The city shown may be out of date.", "Last synced 3m ago" and a **Try again** button. The city stays on screen, and the buttons that send a command (Place, − and +, Upgrade, Finance) are dimmed with "You are offline". Press **Try again** with the server still stopped: the button reads "Trying…" and comes back after a moment, the banner stays.
+
 **5. Start the server and see it reconnect.**
 1. In the API's terminal run `dotnet run --project server/src/CityBuilder.Api` again.
 2. Wait until `curl http://localhost:8080/health` answers `Healthy`.
-3. Click the Game view again and wait up to 2 minutes. The label reads "Connected - Early Middle Ages - Coins: 700" again.
+3. Click the Game view again and wait up to 2 minutes. The label reads "Connected - Early Middle Ages - Coins: 700" again, the banner is gone and the command buttons work again.
 
 **6. Finish.** Press **Play** to stop the game. Stop the API with **Ctrl+C**. The database can keep running.
 

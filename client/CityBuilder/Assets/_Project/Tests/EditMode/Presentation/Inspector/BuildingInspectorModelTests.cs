@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using CityBuilder.Client.Presentation.Inspector;
+using CityBuilder.Client.Presentation.Ui;
 using CityBuilder.Client.Tests.EditMode.Presentation.Hud;
 using CityBuilder.Simulation;
 using CityBuilder.Simulation.Content;
@@ -41,11 +42,12 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Inspector
             long coins = 700,
             long logs = 40,
             long planks = 10,
-            string[]? research = null)
+            string[]? research = null,
+            CommandAvailability availability = default)
         {
             CityState city = HudTestData.City(clock, coins, logs, planks, buildings, research);
             Assert.That(city.TryGetBuilding(1, out Building? building), Is.True);
-            BuildingInspectorModel? model = BuildingInspectorModel.Create(_content, city, building!, pending);
+            BuildingInspectorModel? model = BuildingInspectorModel.Create(_content, city, building!, pending, availability);
             Assert.That(model, Is.Not.Null);
             return model!;
         }
@@ -394,8 +396,8 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Inspector
             CityState city = HudTestData.City(0, 700, 40, 10, new[] { Idle("sawmill", 0, level: 3) });
             var unknown = new Building(2, new BuildingTypeId("castle"), 5, 5, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
 
-            Assert.That(BuildingInspectorModel.Create(_content, city, city.Buildings[0], Nothing), Is.Null);
-            Assert.That(BuildingInspectorModel.Create(_content, city, unknown, Nothing), Is.Null);
+            Assert.That(BuildingInspectorModel.Create(_content, city, city.Buildings[0], Nothing, CommandAvailability.Allowed), Is.Null);
+            Assert.That(BuildingInspectorModel.Create(_content, city, unknown, Nothing, CommandAvailability.Allowed), Is.Null);
         }
 
         /// <summary>A missing argument is a programmer error.</summary>
@@ -404,9 +406,9 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Inspector
         {
             CityState city = HudTestData.City(0, 700, 40, 10, new[] { BusySawmill() });
 
-            Assert.Throws<ArgumentNullException>(() => BuildingInspectorModel.Create(null!, city, city.Buildings[0], Nothing));
-            Assert.Throws<ArgumentNullException>(() => BuildingInspectorModel.Create(_content, null!, city.Buildings[0], Nothing));
-            Assert.Throws<ArgumentNullException>(() => BuildingInspectorModel.Create(_content, city, null!, Nothing));
+            Assert.Throws<ArgumentNullException>(() => BuildingInspectorModel.Create(null!, city, city.Buildings[0], Nothing, CommandAvailability.Allowed));
+            Assert.Throws<ArgumentNullException>(() => BuildingInspectorModel.Create(_content, null!, city.Buildings[0], Nothing, CommandAvailability.Allowed));
+            Assert.Throws<ArgumentNullException>(() => BuildingInspectorModel.Create(_content, city, null!, Nothing, CommandAvailability.Allowed));
         }
 
         /// <summary>Two models that say the same are equal (the screen redraws nothing); a different pending state or clock makes them differ.</summary>
