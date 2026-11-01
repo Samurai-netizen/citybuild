@@ -77,7 +77,13 @@ Extend the server panel (`server-panel/panel.sh`, started by `Server Panel.comma
 ## Tasks (filled in after approval)
 | ID | Title | Model | Status |
 |---|---|---|---|
-| CR-0006-T1 | `goods.sql` + integration test; `panel.sh goods …` commands and menu entry; docs | S | In review |
+| CR-0006-T1 | `goods.sql` + integration test; `panel.sh goods …` commands and menu entry; docs | S | Done |
+| CR-0006-T2 | The panel works on the player the Unity client plays as (`dev1`), not on `devtest` | S | In review |
+
+## Change after T1 (2026-11-01)
+The owner reported that the panel changed goods of a player other than the one used in Unity. T1 had taken "the test account" to be `devtest`
+(OD-14), but the client plays as `dev1` (`ApiClientSettings.asset`). T2: the panel takes the player from the client's settings, or `PLAYER=<name>`,
+and prints the name on every run. The "devtest only" lines above describe T1.
 
 ## Owner approval
 - Approved on: 2026-11-01. Owner's words: "approved" (reply to the proposal, including its principle-5 note: a local script, no endpoint).

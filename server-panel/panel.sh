@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Server panel: starts and stops the local dev database and API for testing the Unity client (docs/testing/LOCAL-E2E.md).
 # Usage: panel.sh [start|stop|restart|status|logs|stop-all]   (no argument opens the menu)
-#        panel.sh goods show | add <item> <amount> | remove <item> <amount> | set <item> <amount>   (the devtest player's stock, CR-0006)
+#        panel.sh goods show | add <item> <amount> | remove <item> <amount> | set <item> <amount>   (the stock of the player the Unity client uses, or of $PLAYER; CR-0006)
 set -u
 
 PANEL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -13,8 +13,7 @@ PORT="${PORT:-8080}"
 HEALTH_URL="http://localhost:$PORT/health"
 CONTENT_FILE="$ROOT/server/content/mvp-content.json"
 GOODS_SQL="$PANEL_DIR/goods.sql"
-# The one player the goods commands work on (owner directive OD-14); the SQL refuses nothing else because nothing else is ever passed.
-GOODS_PLAYER="devtest"
+CLIENT_SETTINGS="$ROOT/client/CityBuilder/Assets/_Project/Resources/Config/ApiClientSettings.asset"
 
 mkdir -p "$RUN_DIR"
 cd "$ROOT" || exit 1
@@ -107,12 +106,22 @@ logs() {
   if [ -f "$LOG_FILE" ]; then tail -n 40 "$LOG_FILE"; else say "No log yet."; fi
 }
 
+# Prints the dev name of the player the goods commands work on: $PLAYER if set, else the name the Unity client logs in as
+# (devDisplayName in ApiClientSettings.asset), so the stock changes in the city you are looking at. Fails with a message for an invalid name.
+goods_player() {
+  local name="${PLAYER:-}"
+  [ -z "$name" ] && name="$(sed -n 's/^ *devDisplayName: *//p' "$CLIENT_SETTINGS" 2>/dev/null | head -n 1 | tr -d '\r"')"
+  if [ -z "$name" ]; then say "No player: set PLAYER=<dev name>, or the client's $CLIENT_SETTINGS has no devDisplayName."; return 1; fi
+  if ! [[ "$name" =~ ^[A-Za-z0-9_.-]{1,32}$ ]]; then say "'$name' is not a valid dev name (1 to 32 letters, digits, _ - .)."; return 1; fi
+  printf '%s\n' "$name"
+}
+
 # Prints the item ids of the content file, one per line (the only list of items; no id is written in this script).
 item_ids() {
   python3 -c 'import json,sys; print("\n".join(i["id"] for i in json.load(open(sys.argv[1]))["items"]))' "$CONTENT_FILE" 2>/dev/null
 }
 
-# Runs goods.sql for the devtest player in the database container. $1 mode, $2 item id ("" for show), $3 amount ("" for show).
+# Runs goods.sql for the player $GOODS_PLAYER in the database container. $1 mode, $2 item id ("" for show), $3 amount ("" for show).
 # The values travel as arguments of the container's shell, never inside a command line that is built from them.
 goods_sql() {
   docker compose exec -T postgres sh -c \
@@ -123,6 +132,7 @@ goods_sql() {
 # The goods commands: `goods show` or `goods add|remove|set <item> <amount>`. Checks the arguments first, then changes the stock.
 goods() {
   local mode="${1:-}" item="${2:-}" amount="${3:-}"
+  GOODS_PLAYER="$(goods_player)" || { say "$GOODS_PLAYER"; return 1; }
   case "$mode" in
     show) [ $# -eq 1 ] || { say "Usage: panel.sh goods show"; return 2; } ;;
     add|remove|set) [ $# -eq 3 ] || { say "Usage: panel.sh goods $mode <item> <amount>"; return 2; } ;;
@@ -137,6 +147,7 @@ goods() {
     if ! [[ "$amount" =~ ^[0-9]{1,12}$ ]]; then say "The amount must be a whole number from 0 to 999999999999."; return 2; fi
   fi
   if ! db_running; then say "The database is not running. Start it first (option 1 of the menu, or: panel.sh start)."; return 1; fi
+  say "Player: $GOODS_PLAYER"
   local out; out="$(goods_sql "$mode" "$item" "$amount" 2>&1)"; local code=$?
   say "$out"
   [ $code -eq 0 ] && ! printf '%s\n' "$out" | grep -q '^REFUSED' && return 0
@@ -174,7 +185,7 @@ menu() {
     say " 3) Restart  (API)"
     say " 4) Log      (last 40 lines)"
     say " 5) Stop all (API + database)"
-    say " 6) Goods     (add or remove items of the $GOODS_PLAYER player)"
+    say " 6) Goods     (add or remove items of the player "$(goods_player 2>/dev/null || echo '?')")"
     say " 0) Quit     (the server keeps running)"
     say ""
     read -r -p "Choose: " choice
