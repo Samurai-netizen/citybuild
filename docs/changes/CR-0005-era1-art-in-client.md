@@ -87,7 +87,7 @@ screen tasks (M0-51 to M0-53); they are kept in the folder but no code reads the
 - **One copy of the FBX files.** **Decided by the owner:** the models live only in the Unity project
   (`client/CityBuilder/Assets/_Project/Art/`). The Blender build writes there directly, and `art/` keeps only the sources, icons,
   texture source, kept previews and README.
-- **Stalled tint on a shared material.** Needs a per-renderer property, not a material copy per building; written into M0-50.
+- **Stalled tint on a shared material.** Needs a per-renderer property, not a material copy per building; written into M0-50. M0-50 did it with a property block (the base colour scaled down and a grey emission) and `_EMISSION` on the shared material (`StalledTint`, build log BL-20261101-06).
 - Alternative: keep primitives until M0 closes. Rejected by the owner: the prototype should look like the game.
 - Alternative: a free asset pack. Rejected before (`21` asks for original designs; licences need the owner, OD-8).
 
@@ -97,7 +97,7 @@ screen tasks (M0-51 to M0-53); they are kept in the folder but no code reads the
 | CR-0005-T1 | Adopt `art/`: move the folder, point the Blender build at the Unity `Art/` folder, ignore the other previews, README as a handbook page | S | Done |
 | CR-0005-T2 | Import one building end to end: editor import script (texture, model, shared URP material) and a **[MANUAL]** Editor check | O | Done |
 | CR-0005-T3 | All models by `(typeId, era, level)`, construction site, ground tiles, anchors, fallback, tests | S | Done |
-| CR-0005-T4 | UI icons in the HUD, the build menu and (placed for M0-52) the research screen | S | In review |
+| CR-0005-T4 | UI icons in the HUD, the build menu and (placed for M0-52) the research screen | S | Done |
 
 Order: T1 → T2 → T3 → T4, then M0-50. T2 is `[O]` because it is the first Unity import and the settings may need judgment.
 

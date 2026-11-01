@@ -85,7 +85,7 @@ a swatch. Slots never move: a new colour goes into a free slot (grey).
 - A worker is about 0.17 tall and a door about 0.2: toy proportions, not real ones.
 
 **Budget.** Buildings ≤ 4,500 triangles (today 850–2,430), props ≤ 1,500, tiles ≤ 200. One mesh plus parts that move, and one
-material: a whole city is a handful of draw calls, and tinting or desaturating a stalled building is one material property.
+material: a whole city is a handful of draw calls, and washing out a stalled building is a property block on its renderers, not a second material (M0-50: the base colour times 0.65 and a grey emission; the shared material has `_EMISSION` on with an emission of 0.002, which URP needs to keep the keyword).
 
 **Names.** `Models/<set>/<contentId>_l<level>.fbx`, matching the client's lookup by `(typeId, era)` (`09` → UX rules) plus the
 level. A new era gets a new set (`era2/`) and its own palette. Props are `prop_<item>_<s|m|l>`. Stockpile
@@ -95,7 +95,7 @@ props lie along X and keep the same width at every size (they grow in length and
 
 | Anchor | On | Used for |
 |---|---|---|
-| `Anchor_Status` | every building | Status bubble and progress ring (above the roof) |
+| `Anchor_Status` | every building | Status bubble, progress ring and worker pips (above the roof); used since M0-50 |
 | `Anchor_Door` | every building | Where workers walk in and out |
 | `Anchor_Smoke` | buildings with a chimney | Smoke while producing |
 | `Anchor_Stockpile` | Woodcutter, Sawmill | Where the client shows `prop_logs_*` / `prop_planks_*` by stock (empty when there is none) |
@@ -124,6 +124,7 @@ The client draws these models since T3 (`core-instructions/09-unity-client.md` r
   model's root is untransformed and every renderer uses the shared material; `house_l1` keeps its size and anchors, with the door toward −Z (`ArtImportTests`). A picture rendered in URP
   showed the six checked models with the right colours and sharp swatches.
 - The city view draws the models (CR-0005-T3, 2026-11-01): Unity tests of the model for every reachable level of every building type of the content, the anchors, the construction site, the ground, the ghost (a picture of it is between the bare tile and the finished building) and one shared material for the whole city, EditMode 708 / 708 and PlayMode 90 / 90 with a graphics device.
+- The status above the buildings (M0-50, 2026-11-01): one rendered frame of eight buildings showed the ring (yellow on a construction site, blue on an upgrade, green on producers), the red, amber and blue bubbles with the workers or the item, one to six pips and the washed-out look of two stalled buildings (the same roof colour went from saturation 0.64 to 0.49); the sizes were set by that picture.
 - **Not checked:** the look in the Editor by a person (the [MANUAL] steps in `client/README.md`); a device build (it should contain the models, because they are in `Resources`).
 
 ## Owner decisions and open questions
@@ -131,4 +132,4 @@ The client draws these models since T3 (`core-instructions/09-unity-client.md` r
   like Tap Tap Builder. To change it again, edit `SCALE` in `assets_era1.py`; the checks show which details then leave the tile.
 - **Folder and copies** (2026-11-01, CR-0005): the folder is `art/`, and the models live only in the Unity project (one copy of the
   FBX files); the build writes them there. The icons moved the same way in T4.
-- **Next art:** status bubble for the HUD, smoke, and the Era II look (stone and banners).
+- **Next art:** glyphs for the status bubbles (today a rim colour, a picture and a strike), smoke, and the Era II look (stone and banners).
