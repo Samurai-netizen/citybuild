@@ -95,7 +95,7 @@ screen tasks (M0-51 to M0-53); they are kept in the folder but no code reads the
 | ID | Title | Model | Status |
 |---|---|---|---|
 | CR-0005-T1 | Adopt `art/`: move the folder, point the Blender build at the Unity `Art/` folder, ignore the other previews, README as a handbook page | S | Done |
-| CR-0005-T2 | Import one building end to end: editor import script (texture, model, shared URP material) and a **[MANUAL]** Editor check | O | In progress |
+| CR-0005-T2 | Import one building end to end: editor import script (texture, model, shared URP material) and a **[MANUAL]** Editor check | O | In review |
 | CR-0005-T3 | All models by `(typeId, era, level)`, construction site, ground tiles, anchors, fallback, tests | S | Todo |
 | CR-0005-T4 | UI icons in the HUD, the build menu and (placed for M0-52) the research screen | S | Todo |
 
