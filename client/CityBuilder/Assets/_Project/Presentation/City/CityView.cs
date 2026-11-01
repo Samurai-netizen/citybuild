@@ -12,7 +12,7 @@ namespace CityBuilder.Client.Presentation.City
     /// reconciles the views with it by building id: a building without a view gets one, a view whose building changed is updated in place, and
     /// a view whose building is gone is destroyed, so there is exactly one view per building and none left over. It runs once a second with
     /// the display city, so a call where nothing changed walks the buildings and allocates nothing. It decides nothing, shows a building under
-    /// construction as a low foundation (nothing finished appears before the server says so, <c>09</c> "UX rules") and never calls the server.
+    /// construction or upgrade as the construction site (nothing finished appears before the server says so, <c>09</c> "UX rules") and never calls the server.
     /// <see cref="Destroy"/> removes everything it made.
     /// </summary>
     public sealed class CityView

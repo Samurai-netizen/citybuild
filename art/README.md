@@ -11,8 +11,8 @@ which also brings the art into the Unity client, task by task.
 | Path | What |
 |---|---|
 | `art/blender/` | The source. `build_all.py` builds everything; `assets_era1.py` buildings and stockpiles; `assets_common.py` tiles, nature, worker; `lib.py` geometry, export, rendering; `palette.py` the colours; `render_ui.py` the 2D assets |
-| `client/CityBuilder/Assets/_Project/Art/Models/era1/` | Unity-ready FBX, the **only copy**: the four M0 buildings at level 1 and 2, the construction site, stockpile props |
-| `client/CityBuilder/Assets/_Project/Art/Models/common/` | Era-independent FBX: grass and dirt tiles, pine, round tree, bush, rock, worker |
+| `client/CityBuilder/Assets/_Project/Art/Resources/Models/era1/` | Unity-ready FBX, the **only copy**: the four M0 buildings at level 1 and 2, the construction site, stockpile props |
+| `client/CityBuilder/Assets/_Project/Art/Resources/Models/common/` | Era-independent FBX: grass and dirt tiles, pine, round tree, bush, rock, worker |
 | `art/textures/palette_era1.png` | The one texture every model uses (128 × 128). The build also copies it to `…/Art/Textures/` |
 | `art/previews/` | Renders of every model, `lineup_era1.png`, `city_golden_scenario.png` and `city_closeup.png` (the golden scenario #1 village on the 8 × 8 grid). Git tracks only the two city pictures; the build rewrites the rest |
 | `art/ui/` | 2D assets from the same models: `icons/` (15 transparent 256 px icons for items, HUD, buildings, research), `city_phone.jpg` (the village in a phone's portrait frame) and `hotspots.json` (where each building lands on a 390 × 844 screen) |
@@ -104,13 +104,13 @@ The previews show the medium stockpile and a worker at the door. Those are not p
 
 ## Using the models in Unity (CR-0005)
 
-The client still draws primitives (`core-instructions/09-unity-client.md` rule 3; M0-44). CR-0005 changes that in steps:
+The client draws these models since T3 (`core-instructions/09-unity-client.md` rule 3 and Building views). CR-0005 did it in steps:
 - **T1 (done):** the folder is in the repository and the FBX files sit in the Unity project.
 - **T2 (done):** an editor script (`ArtImportPostprocessor`, `docs/modules/CityBuilder.Client.Editor.md`) sets the texture (Point filter, no compression, no mips,
   Clamp) and the models (scale 1, no cameras or lights, one shared URP Lit material `Art/Materials/M_Palette_Era1.mat` whose Base Map is the palette,
   Smoothness 0.1). Nobody sets these by hand, and the `.meta` files are committed. A new FBX gets all of it on its first import; a rebuild keeps the `.meta` files, because the build only overwrites the FBX files.
   The look check in the Editor is **[MANUAL]** (`client/README.md`).
-- **T3:** the client looks up the model by `(typeId, era, level)`, reads the anchors by name and turns `Wheel` while the Sawmill produces.
+- **T3 (done):** the client loads the FBX files with `Resources.Load` by `Models/era<N>/<typeId>_l<level>` (that is why they sit in `Art/Resources/Models/`), draws a building from its model, the construction site while it is built or upgraded, the ground from `tile_grass` and the placement ghost from the model, and finds the anchors and `Wheel` by name. A unit test fails when a building type of the content has no model for a level it can reach or a model lacks `Anchor_Status` / `Anchor_Door`. Nothing turns the wheel, shows smoke or grows the stockpile yet (follow-up tasks). `tile_dirt` and the nature models (trees, bush, rock), the worker and the stockpile props are not used by any view yet.
 - **T4:** the UI icons go into the HUD, the build menu and the research screen.
 
 ## Checked so far
@@ -122,7 +122,8 @@ The client still draws primitives (`core-instructions/09-unity-client.md` rule 3
 - Imported into Unity 6000.3.25f1 (CR-0005-T2, 2026-11-01), also from an empty `Library` folder: all 22 models and the palette, without an error. Every
   model's root is untransformed and every renderer uses the shared material; `house_l1` keeps its size and anchors, with the door toward −Z (`ArtImportTests`). A picture rendered in URP
   showed the six checked models with the right colours and sharp swatches.
-- **Not checked:** the look in the Editor by a person (the [MANUAL] steps); a device build.
+- The city view draws the models (CR-0005-T3, 2026-11-01): Unity tests of the model for every reachable level of every building type of the content, the anchors, the construction site, the ground, the ghost (a picture of it is between the bare tile and the finished building) and one shared material for the whole city, EditMode 708 / 708 and PlayMode 90 / 90 with a graphics device.
+- **Not checked:** the look in the Editor by a person (the [MANUAL] steps in `client/README.md`); a device build (it should contain the models, because they are in `Resources`).
 
 ## Owner decisions and open questions
 - **Building size on the tile** (2026-10-26): the owner chose to scale buildings up by about 1.2 so they fill their tiles more,

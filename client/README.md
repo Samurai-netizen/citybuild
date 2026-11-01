@@ -15,7 +15,7 @@ client/CityBuilder/
 │   ├── Net/             CityBuilder.Client.Net            API client, DTOs, error parsing (M0-37); login, token stores, content loading (M0-38)
 │   ├── Presentation/    CityBuilder.Client.Presentation   GameRoot, bootstrap, startup flow, status screens; City/ (grid, camera, ground, M0-43; building views, M0-44), Build/ (build menu, M0-45; placement flow and bar, M0-46), Feedback/ (error messages and toasts, M0-47), Ui/ (safe area, M0-45)
 │   ├── Editor/          CityBuilder.Client.Editor         Editor only: the art's import settings and shared material (`ArtImportPostprocessor`, CR-0005-T2)
-│   ├── Art/             Models/ (the FBX files: the only copy, written by `art/blender/build_all.py`), Textures/ (the palette), Materials/ (the one shared material); no view draws them until CR-0005-T3 (`art/README.md`)
+│   ├── Art/             Resources/Models/ (the FBX files: the only copy, written by `art/blender/build_all.py`; under `Resources` so a player build has them and the client loads them by name), Textures/ (the palette), Materials/ (the one shared material); the city view draws them since CR-0005-T3 (`art/README.md`)
 │   ├── Resources/       UI/ (PanelSettings.asset, UXML and USS the code loads by name), Config/ApiClientSettings.asset (server URL, timeout, dev player name)
 │   └── Tests/EditMode · Tests/PlayMode                    test assemblies (AppInfo, engine-in-Unity and Bootstrap scene tests, M0-05; Net/ tests, M0-37); Tests/Fixtures/ real server answers
 ├── Assets/Scenes/       Bootstrap.unity (made by hand, scene 0 in the build list; steps below); SampleScene is the template's, unticked
@@ -79,10 +79,19 @@ Claude cannot use the Editor GUI, and a scene file is never hand-edited. The sce
 ## [MANUAL] Look at the first imported building (CR-0005-T2)
 The tests check the settings and the sizes; only a person can say that the model looks right in the Editor. Nothing here is saved or committed.
 1. Open the project in the Editor (or click into the open Editor) and wait until the Console is quiet. The first time, Unity imports the 22 models. There should be no red message.
-2. In the **Project** window open `Assets/_Project/Art/Models/era1` and click **house_l1**. In the **Inspector**, tab **Model**: *Scale Factor* is 1; *Import Cameras*, *Import Lights* and *Generate Colliders* are off.
+2. In the **Project** window open `Assets/_Project/Art/Resources/Models/era1` and click **house_l1**. In the **Inspector**, tab **Model**: *Scale Factor* is 1; *Import Cameras*, *Import Lights* and *Generate Colliders* are off.
 3. Tab **Materials**: under *Remapped Materials*, `M_Palette_Era1` points at the material `M_Palette_Era1` in `Art/Materials`. Do not press *Apply*.
 4. **File → New Scene** (*Basic*), then drag **house_l1** from the Project window into the **Scene** view. In the Inspector set its *Position* to 0, 0, 0. Its *Scale* is 1, 1, 1 and its *Rotation* 0, 0, 0.
 5. Look at it from the front: a cottage with white plaster, dark timber, a yellow thatched roof and a grey chimney, with sharp colours (no blurred edges between them) and flat faces. The door is on the blue arrow's **back** side (toward −Z). The Hierarchy shows the children `Anchor_Status` and `Anchor_Door`. It is about as wide as one grid square: 0.86 units, so a default 1-unit cube beside it would be slightly wider.
 6. Close the scene without saving (**File → New Scene** → *Don't Save*), and tell the AI coder "house looks right", or what looks wrong.
 
-Last updated: CR-0005-T2
+## [MANUAL] Look at the city with the models (CR-0005-T3)
+The tests check which model each building gets and that nothing allocates; only a person can say that the city looks right. Nothing here is saved or committed.
+1. Start the server and the database as in `docs/testing/LOCAL-E2E.md`, then open the project in the Editor, open the **Bootstrap** scene and press **Play**.
+2. The ground is a green grass field of square tiles, the buildings are the toy-block models standing on their tiles, and the door of each faces the camera's left-front (toward −Z).
+3. In the **Build** menu pick a building, then a free tile: the tiles show green and red, and after **Place** a pale, see-through copy of the building stands on the tile until the server answers. It should look like one clean see-through house, not a patchwork of layers.
+4. When the server accepts, the **construction site** (foundation, frame, scaffold, a red flag) stands there, and the finished building replaces it when the time is up. Use the dev time scale (`LOCAL-E2E.md`) to wait less.
+5. Upgrade a building: the construction site shows again during the upgrade, then the level 2 model.
+6. Tell the AI coder "city looks right", or what looks wrong. Stop Play mode without saving the scene.
+
+Last updated: CR-0005-T3
