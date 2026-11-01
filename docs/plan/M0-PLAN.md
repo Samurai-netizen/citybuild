@@ -298,8 +298,8 @@ The AI coder updates its row at start (`In progress`) and finish (`In review`). 
 | M0-51 | 9 | Building inspector with worker stepper | S | Done |
 | M0-52 | 9 | Research screen | S | Done |
 | M0-53 | 9 | Welcome-back report | S | Done |
-| M0-54 | 9 | Waiting-loop review and tuning | O MANUAL | In review |
-| M0-55 | 10 | Connection states in the UI | S | Todo |
+| M0-54 | 9 | Waiting-loop review and tuning | O MANUAL | Done |
+| M0-55 | 10 | Connection states in the UI | S | In progress |
 | M0-56 | 10 | Proving idempotent retries | O | Todo |
 | M0-57 | 10 | Client logging | S | Todo |
 | M0-58 | 10 | Version and content compatibility | S | Todo |
