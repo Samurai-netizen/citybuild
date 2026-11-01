@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Server panel: starts and stops the local dev database and API for testing the Unity client (docs/testing/LOCAL-E2E.md).
 # Usage: panel.sh [start|stop|restart|status|logs|stop-all]   (no argument opens the menu)
+#        panel.sh goods show | add <item> <amount> | remove <item> <amount> | set <item> <amount>   (the devtest player's stock, CR-0006)
 set -u
 
 PANEL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -10,6 +11,10 @@ PID_FILE="$RUN_DIR/api.pid"
 LOG_FILE="$RUN_DIR/api.log"
 PORT="${PORT:-8080}"
 HEALTH_URL="http://localhost:$PORT/health"
+CONTENT_FILE="$ROOT/server/content/mvp-content.json"
+GOODS_SQL="$PANEL_DIR/goods.sql"
+# The one player the goods commands work on (owner directive OD-14); the SQL refuses nothing else because nothing else is ever passed.
+GOODS_PLAYER="devtest"
 
 mkdir -p "$RUN_DIR"
 cd "$ROOT" || exit 1
@@ -102,6 +107,61 @@ logs() {
   if [ -f "$LOG_FILE" ]; then tail -n 40 "$LOG_FILE"; else say "No log yet."; fi
 }
 
+# Prints the item ids of the content file, one per line (the only list of items; no id is written in this script).
+item_ids() {
+  python3 -c 'import json,sys; print("\n".join(i["id"] for i in json.load(open(sys.argv[1]))["items"]))' "$CONTENT_FILE" 2>/dev/null
+}
+
+# Runs goods.sql for the devtest player in the database container. $1 mode, $2 item id ("" for show), $3 amount ("" for show).
+# The values travel as arguments of the container's shell, never inside a command line that is built from them.
+goods_sql() {
+  docker compose exec -T postgres sh -c \
+    'psql -X -q -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -v "player=$1" -v "mode=$2" -v "item=$3" -v "amount=$4" -f -' \
+    sh "$GOODS_PLAYER" "$1" "${2:-x}" "${3:-0}" < "$GOODS_SQL"
+}
+
+# The goods commands: `goods show` or `goods add|remove|set <item> <amount>`. Checks the arguments first, then changes the stock.
+goods() {
+  local mode="${1:-}" item="${2:-}" amount="${3:-}"
+  case "$mode" in
+    show) [ $# -eq 1 ] || { say "Usage: panel.sh goods show"; return 2; } ;;
+    add|remove|set) [ $# -eq 3 ] || { say "Usage: panel.sh goods $mode <item> <amount>"; return 2; } ;;
+    *) say "Usage: panel.sh goods show | add <item> <amount> | remove <item> <amount> | set <item> <amount>"; return 2 ;;
+  esac
+  if [ "$mode" != "show" ]; then
+    local ids; ids="$(item_ids)" || ids=""
+    if [ -z "$ids" ]; then say "Could not read the item ids from $CONTENT_FILE (python3 is needed)."; return 1; fi
+    if ! printf '%s\n' "$ids" | grep -qxF -- "$item"; then
+      say "Unknown item '$item'. Items: $(printf '%s' "$ids" | tr '\n' ' ')"; return 2
+    fi
+    if ! [[ "$amount" =~ ^[0-9]{1,12}$ ]]; then say "The amount must be a whole number from 0 to 999999999999."; return 2; fi
+  fi
+  if ! db_running; then say "The database is not running. Start it first (option 1 of the menu, or: panel.sh start)."; return 1; fi
+  local out; out="$(goods_sql "$mode" "$item" "$amount" 2>&1)"; local code=$?
+  say "$out"
+  [ $code -eq 0 ] && ! printf '%s\n' "$out" | grep -q '^REFUSED' && return 0
+  return 1
+}
+
+# The goods part of the menu: shows the stock, then asks for an item, add / remove / set and an amount.
+goods_menu() {
+  local ids i=0 item choice mode amount
+  ids="$(item_ids)" || ids=""
+  [ -z "$ids" ] && { say "Could not read the item ids from $CONTENT_FILE (python3 is needed)."; return 1; }
+  goods show || return 1
+  say ""
+  while read -r item; do i=$((i + 1)); say " $i) $item"; done <<< "$ids"
+  read -r -p "Item number (Enter to go back): " choice
+  [ -z "$choice" ] && return 0
+  [[ "$choice" =~ ^[0-9]+$ ]] || { say "Unknown choice."; return 1; }
+  item="$(printf '%s\n' "$ids" | sed -n "${choice}p" 2>/dev/null)"
+  [ -z "$item" ] && { say "Unknown choice."; return 1; }
+  read -r -p "a = add, r = remove, s = set: " mode
+  case "$mode" in a) mode=add ;; r) mode=remove ;; s) mode=set ;; *) say "Unknown choice."; return 1 ;; esac
+  read -r -p "Amount: " amount
+  goods "$mode" "$item" "$amount"
+}
+
 # The interactive menu.
 menu() {
   while true; do
@@ -114,6 +174,7 @@ menu() {
     say " 3) Restart  (API)"
     say " 4) Log      (last 40 lines)"
     say " 5) Stop all (API + database)"
+    say " 6) Goods     (add or remove items of the $GOODS_PLAYER player)"
     say " 0) Quit     (the server keeps running)"
     say ""
     read -r -p "Choose: " choice
@@ -124,6 +185,7 @@ menu() {
       3) stop; start ;;
       4) logs ;;
       5) stop_all ;;
+      6) goods_menu ;;
       0|q|Q) exit 0 ;;
       *) say "Unknown choice." ;;
     esac
@@ -139,6 +201,7 @@ case "${1:-menu}" in
   status) status ;;
   logs) logs ;;
   stop-all) stop_all ;;
+  goods) shift; goods "$@" ;;
   menu) menu ;;
-  *) say "Usage: panel.sh [start|stop|restart|status|logs|stop-all]"; exit 2 ;;
+  *) say "Usage: panel.sh [start|stop|restart|status|logs|stop-all|goods ...]"; exit 2 ;;
 esac
