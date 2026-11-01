@@ -1,0 +1,37 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+  <!-- The building inspector that BuildingInspector shows (M0-51, docs/how-to/add-ui-screen.md): a panel at the right under the HUD with the
+       building's name, status, recipe and rates, the worker stepper (minus, "3 / 3", plus) with the rate at the pending value, and the
+       upgrade section with its button. Hidden while no building is selected. Its style is Inspector.uss. -->
+  <Style src="Inspector.uss" />
+  <ui:VisualElement name="inspector-root" class="inspector-root" picking-mode="Ignore">
+    <ui:VisualElement name="inspector-panel" class="inspector-panel inspector-panel--hidden">
+      <ui:VisualElement class="inspector-header">
+        <ui:VisualElement name="inspector-icon" class="inspector-icon" picking-mode="Ignore" />
+        <ui:VisualElement class="inspector-titles">
+          <ui:Label name="inspector-name" class="inspector-name" />
+          <ui:Label name="inspector-level" class="inspector-line" />
+        </ui:VisualElement>
+        <ui:Button name="inspector-close" class="inspector-button inspector-close" text="X" />
+      </ui:VisualElement>
+      <ui:Label name="inspector-status" class="inspector-status" />
+      <ui:Label name="inspector-time" class="inspector-line" />
+      <ui:Label name="inspector-recipe" class="inspector-line" />
+      <ui:Label name="inspector-rates" class="inspector-line" />
+      <ui:VisualElement name="inspector-stepper" class="inspector-stepper">
+        <ui:Button name="inspector-minus" class="inspector-button inspector-step" text="-" />
+        <ui:Label name="inspector-workers" class="inspector-workers" />
+        <ui:Button name="inspector-plus" class="inspector-button inspector-step" text="+" />
+      </ui:VisualElement>
+      <ui:Label name="inspector-preview" class="inspector-line" />
+      <ui:Label name="inspector-stepper-note" class="inspector-note" />
+      <ui:VisualElement class="inspector-upgrade">
+        <ui:Label name="inspector-upgrade-title" class="inspector-section" />
+        <ui:Label name="inspector-upgrade-cost" class="inspector-line" />
+        <ui:Label name="inspector-upgrade-time" class="inspector-line" />
+        <ui:Label name="inspector-upgrade-gain" class="inspector-line" />
+        <ui:Label name="inspector-upgrade-note" class="inspector-note" />
+        <ui:Button name="inspector-upgrade" class="inspector-button inspector-upgrade-button" text="Upgrade" />
+      </ui:VisualElement>
+    </ui:VisualElement>
+  </ui:VisualElement>
+</ui:UXML>

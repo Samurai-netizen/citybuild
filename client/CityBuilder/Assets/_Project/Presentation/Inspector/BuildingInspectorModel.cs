@@ -32,6 +32,9 @@ namespace CityBuilder.Client.Presentation.Inspector
         /// <summary>The building's id in the city: what a stepper or upgrade command names.</summary>
         public int BuildingId { get; private set; }
 
+        /// <summary>The building's type: the screen finds the picture of the type by it.</summary>
+        public BuildingTypeId TypeId { get; private set; }
+
         /// <summary>The type's name from the content, such as <c>Sawmill</c>.</summary>
         public string Name { get; private set; } = string.Empty;
 
@@ -134,6 +137,7 @@ namespace CityBuilder.Client.Presentation.Inspector
             var model = new BuildingInspectorModel
             {
                 BuildingId = building.Id,
+                TypeId = building.TypeId,
                 Name = definition.Name,
                 LevelText = "Level " + Number(building.Level) + " of " + Number(definition.MaxLevel),
                 StatusText = StatusTextFor(content, city, building),
@@ -152,6 +156,7 @@ namespace CityBuilder.Client.Presentation.Inspector
         {
             return other != null
                 && BuildingId == other.BuildingId
+                && TypeId.Equals(other.TypeId)
                 && Name == other.Name
                 && LevelText == other.LevelText
                 && StatusText == other.StatusText
