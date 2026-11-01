@@ -11,8 +11,8 @@ which also brings the art into the Unity client, task by task.
 | Path | What |
 |---|---|
 | `art/blender/` | The source. `build_all.py` builds everything; `assets_era1.py` buildings and stockpiles; `assets_common.py` tiles, nature, worker; `lib.py` geometry, export, rendering; `palette.py` the colours; `render_ui.py` the 2D assets |
-| `client/CityBuilder/Assets/_Project/Art/Models/era1/` | Unity-ready FBX, the **only copy**: the four M0 buildings at level 1 and 2, the construction site, stockpile props |
-| `client/CityBuilder/Assets/_Project/Art/Models/common/` | Era-independent FBX: grass and dirt tiles, pine, round tree, bush, rock, worker |
+| `client/CityBuilder/Assets/_Project/Art/Resources/Models/era1/` | Unity-ready FBX, the **only copy**: the four M0 buildings at level 1 and 2, the construction site, stockpile props |
+| `client/CityBuilder/Assets/_Project/Art/Resources/Models/common/` | Era-independent FBX: grass and dirt tiles, pine, round tree, bush, rock, worker |
 | `art/textures/palette_era1.png` | The one texture every model uses (128 × 128). The build also copies it to `…/Art/Textures/` |
 | `art/previews/` | Renders of every model, `lineup_era1.png`, `city_golden_scenario.png` and `city_closeup.png` (the golden scenario #1 village on the 8 × 8 grid). Git tracks only the two city pictures; the build rewrites the rest |
 | `art/ui/` | 2D assets from the same models: `icons/` (15 transparent 256 px icons for items, HUD, buildings, research), `city_phone.jpg` (the village in a phone's portrait frame) and `hotspots.json` (where each building lands on a 390 × 844 screen) |

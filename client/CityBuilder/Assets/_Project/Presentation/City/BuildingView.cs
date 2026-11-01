@@ -13,6 +13,21 @@ namespace CityBuilder.Client.Presentation.City
     [DisallowMultipleComponent]
     public sealed class BuildingView : MonoBehaviour
     {
+        /// <summary>The name of the empty object above the roof where the status bubble and the progress ring go (every building model has one).</summary>
+        public const string StatusAnchorName = "Anchor_Status";
+
+        /// <summary>The name of the empty object at the door, where workers walk in and out (every building model has one).</summary>
+        public const string DoorAnchorName = "Anchor_Door";
+
+        /// <summary>The name of the empty object at the chimney top, for smoke (only models with a chimney have one).</summary>
+        public const string SmokeAnchorName = "Anchor_Smoke";
+
+        /// <summary>The name of the empty object where a stockpile prop would stand (the Woodcutter and the Sawmill have one).</summary>
+        public const string StockpileAnchorName = "Anchor_Stockpile";
+
+        /// <summary>The name of the Sawmill's water wheel, a mesh that turns around its local X axis while the Sawmill produces.</summary>
+        public const string WheelName = "Wheel";
+
         /// <summary>The building's id in its city.</summary>
         public int BuildingId { get; internal set; }
 

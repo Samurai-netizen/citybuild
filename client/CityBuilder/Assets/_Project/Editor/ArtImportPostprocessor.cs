@@ -7,12 +7,12 @@ namespace CityBuilder.Client.Editor
 {
     /// <summary>
     /// Applies the art's import settings, so nobody sets them by hand (<c>09</c> rule 1, CR-0005): the palette texture keeps its hard-edged
-    /// swatches, and every model under <c>Art/Models</c> comes in at scale 1, without cameras or lights, drawn with the one shared material.
+    /// swatches, and every model under <c>Art/Resources/Models</c> comes in at scale 1, without cameras or lights, drawn with the one shared material.
     /// </summary>
     internal sealed class ArtImportPostprocessor : AssetPostprocessor
     {
-        /// <summary>The folder of the FBX files the Blender build writes (<c>art/README.md</c>).</summary>
-        private const string _modelsFolder = "Assets/_Project/Art/Models/";
+        /// <summary>The folder of the FBX files the Blender build writes (under <c>Resources</c>, so a player build contains them and the client loads them by name) (<c>art/README.md</c>).</summary>
+        private const string _modelsFolder = "Assets/_Project/Art/Resources/Models/";
         /// <summary>The folder of the palette textures, one per era.</summary>
         private const string _texturesFolder = "Assets/_Project/Art/Textures/";
         /// <summary>The material name every FBX of Era I carries (<c>MATERIAL_NAME</c> in <c>art/blender/lib.py</c>); this is what gets remapped.</summary>

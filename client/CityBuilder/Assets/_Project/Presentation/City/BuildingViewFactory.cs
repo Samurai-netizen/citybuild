@@ -113,6 +113,32 @@ namespace CityBuilder.Client.Presentation.City
             return changed;
         }
 
+        /// <summary>
+        /// The first object called <paramref name="name"/> at or below <paramref name="root"/>, depth first, or null. How a view finds the anchors
+        /// and the wheel of a model. Walks the hierarchy without allocating; call it when a body is built, not every frame.
+        /// </summary>
+        /// <param name="root">Where to start looking.</param>
+        /// <param name="name">The exact object name.</param>
+        /// <returns>The transform, or null when there is none.</returns>
+        public static Transform? FindByName(Transform root, string name)
+        {
+            if (string.Equals(root.name, name, StringComparison.Ordinal))
+            {
+                return root;
+            }
+
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform? found = FindByName(root.GetChild(i), name);
+                if (found != null)
+                {
+                    return found;
+                }
+            }
+
+            return null;
+        }
+
         /// <summary>Destroys every material this factory created. The views are the caller's to destroy. Safe to call twice.</summary>
         public void Destroy()
         {

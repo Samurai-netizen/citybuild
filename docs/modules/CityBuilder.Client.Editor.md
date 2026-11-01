@@ -11,7 +11,7 @@ game: drawing the models is `CityBuilder.Client.Presentation`.
 ## Key types
 | Type | Responsibility |
 |---|---|
-| `ArtImportPostprocessor` | An `AssetPostprocessor` over `Assets/_Project/Art/`. A palette under `Art/Textures/` gets Point filter, no compression, no mips and Clamp. A model under `Art/Models/` gets scale 1, no cameras, lights, blend shapes, animation or colliders, the file's normals and no tangents. After the import it links the model's material `M_Palette_Era1` to the one shared material `Art/Materials/M_Palette_Era1.mat` (an external object remap, kept in the model's `.meta` file) and imports it once more. It makes that material when it is missing: URP Lit, Base Map the palette, Smoothness 0.1 |
+| `ArtImportPostprocessor` | An `AssetPostprocessor` over `Assets/_Project/Art/`. A palette under `Art/Textures/` gets Point filter, no compression, no mips and Clamp. A model under `Art/Resources/Models/` gets scale 1, no cameras, lights, blend shapes, animation or colliders, the file's normals and no tangents. After the import it links the model's material `M_Palette_Era1` to the one shared material `Art/Materials/M_Palette_Era1.mat` (an external object remap, kept in the model's `.meta` file) and imports it once more. It makes that material when it is missing: URP Lit, Base Map the palette, Smoothness 0.1 |
 
 ## Rules and invariants
 - The assembly is Editor only and references none of the client's assemblies (`ClientAssemblyTests`).

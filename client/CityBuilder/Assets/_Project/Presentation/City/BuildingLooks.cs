@@ -7,11 +7,12 @@ using UnityEngine;
 namespace CityBuilder.Client.Presentation.City
 {
     /// <summary>
-    /// The placeholder looks of the buildings (M0-44), found by building type and era (<c>09</c>, "UX rules": art is era-aware from the
-    /// start). M0 has only Era I, so every type has one look, filed under era 1; a later era adds entries for the types whose look changes, and a
-    /// type without an entry for the city's era keeps its latest earlier look. A type this table doesn't know gets <see cref="Fallback"/>,
-    /// so a building from newer content is still drawn. The table is a code table, not an asset (M0-44 decision 1); it holds colours and shapes only,
-    /// never a game number. Display only.
+    /// What a building looks like, found by building type, era and level (<c>09</c>, "UX rules": art is era-aware from the start). The look is a
+    /// model of the Era I art (CR-0005): <see cref="FindModel"/> loads the FBX for <c>(typeId, era, level)</c> by name from <c>Resources</c>, and
+    /// <see cref="FindConstructionSite"/> the model of a building that is built or upgraded; a model for a later era is filed under that era's folder,
+    /// and a type without one keeps its latest earlier model. The primitive looks of the table below (M0-44) are the fallback for a level without a
+    /// model; a type this table doesn't know gets <see cref="Fallback"/>, so a building from newer content is still drawn. The table is a code
+    /// table, not an asset (M0-44 decision 1); it holds colours and shapes only, never a game number. Display only.
     /// </summary>
     public static class BuildingLooks
     {
@@ -35,6 +36,18 @@ namespace CityBuilder.Client.Presentation.City
 
         /// <summary>How tall a building under construction is, in thousandths: a low foundation, so nothing finished shows before the server says it is done.</summary>
         public const int ConstructionHeightPermille = 250;
+
+        /// <summary>The folder, under <c>Resources</c>, of the models; the Blender build writes the FBX files there (<c>art/README.md</c>).</summary>
+        public const string ModelsFolder = "Models";
+
+        /// <summary>The name of the construction site model in each era's folder: shown while a building is built or upgraded.</summary>
+        public const string ConstructionSiteName = "construction_site";
+
+        /// <summary>The path, under <c>Resources</c>, of the grass tile the ground is made of.</summary>
+        public const string GrassTilePath = ModelsFolder + "/common/tile_grass";
+
+        /// <summary>The path, under <c>Resources</c>, of the dirt tile.</summary>
+        public const string DirtTilePath = ModelsFolder + "/common/tile_dirt";
 
         /// <summary>The earliest era a look can be filed under; the lookup stops there.</summary>
         private const int FirstEra = 1;
@@ -83,6 +96,74 @@ namespace CityBuilder.Client.Presentation.City
             }
 
             return Fallback;
+        }
+
+        /// <summary>The path, under <c>Resources</c>, of the model of a building type at a level in one era: <c>Models/era1/house_l2</c>.</summary>
+        /// <param name="typeId">The building type's id in the content.</param>
+        /// <param name="era">The era whose folder holds the model.</param>
+        /// <param name="level">The level, at least 1.</param>
+        /// <returns>The path, without an extension.</returns>
+        public static string ModelPath(string typeId, int era, int level)
+        {
+            return ModelsFolder + "/era" + era + "/" + typeId + "_l" + level;
+        }
+
+        /// <summary>The path, under <c>Resources</c>, of the construction site model of one era.</summary>
+        /// <param name="era">The era whose folder holds the model.</param>
+        /// <returns>The path, without an extension.</returns>
+        public static string ConstructionSitePath(int era)
+        {
+            return ModelsFolder + "/era" + era + "/" + ConstructionSiteName;
+        }
+
+        /// <summary>
+        /// Whether a building in this phase is drawn as the construction site: while it is built and while it is upgraded, so nothing finished
+        /// shows before the server says it is (<c>09</c> "UX rules").
+        /// </summary>
+        /// <param name="phase">What the building is doing.</param>
+        /// <returns>True for <see cref="BuildingPhase.Constructing"/> and <see cref="BuildingPhase.Upgrading"/>.</returns>
+        public static bool ShowsConstructionSite(BuildingPhase phase)
+        {
+            return phase == BuildingPhase.Constructing || phase == BuildingPhase.Upgrading;
+        }
+
+        /// <summary>
+        /// The model of a building type at a level: the one filed under <paramref name="era"/>, or else under the latest earlier era. Loads from
+        /// <c>Resources</c> (Unity keeps a loaded asset, so a second call returns the same object); the caller instantiates it and never changes it.
+        /// </summary>
+        /// <param name="typeId">The building type's id in the content.</param>
+        /// <param name="era">The era to draw it in, at least 1.</param>
+        /// <param name="level">The level, at least 1.</param>
+        /// <returns>The model, or null when the art has none for this type and level.</returns>
+        public static GameObject? FindModel(string typeId, int era, int level)
+        {
+            for (int candidate = era; candidate >= FirstEra; candidate--)
+            {
+                GameObject? model = Resources.Load<GameObject>(ModelPath(typeId, candidate, level));
+                if (model != null)
+                {
+                    return model;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>The construction site model of an era, or else of the latest earlier era; null when the art has none.</summary>
+        /// <param name="era">The era to draw it in, at least 1.</param>
+        /// <returns>The model, or null.</returns>
+        public static GameObject? FindConstructionSite(int era)
+        {
+            for (int candidate = era; candidate >= FirstEra; candidate--)
+            {
+                GameObject? model = Resources.Load<GameObject>(ConstructionSitePath(candidate));
+                if (model != null)
+                {
+                    return model;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>Whether the table has a look filed under exactly this type and era (no fallback, no earlier era).</summary>

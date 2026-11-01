@@ -14,15 +14,15 @@ namespace CityBuilder.Client.Tests.EditMode.Art
     public sealed class ArtImportTests
     {
         /// <summary>The folder of the FBX files.</summary>
-        private const string _modelsFolder = "Assets/_Project/Art/Models";
+        private const string _modelsFolder = "Assets/_Project/Art/Resources/Models";
         /// <summary>The Era I palette.</summary>
         private const string _palettePath = "Assets/_Project/Art/Textures/palette_era1.png";
         /// <summary>The one material of the models.</summary>
         private const string _materialPath = "Assets/_Project/Art/Materials/M_Palette_Era1.mat";
         /// <summary>The first building.</summary>
-        private const string _housePath = "Assets/_Project/Art/Models/era1/house_l1.fbx";
+        private const string _housePath = "Assets/_Project/Art/Resources/Models/era1/house_l1.fbx";
         /// <summary>The folder <see cref="NewModel_OnImport_GetsTheSettingsAndTheSharedMaterial"/> makes and removes.</summary>
-        private const string _temporaryFolder = "Assets/_Project/Art/Models/ArtImportTestsTemporary";
+        private const string _temporaryFolder = "Assets/_Project/Art/Resources/Models/ArtImportTestsTemporary";
         /// <summary>How far a building may reach from its pivot on the ground (<c>art/README.md</c> → Scale and orientation).</summary>
         private const float _tileReach = 0.475f;
         /// <summary>Room for rounding in the import, in Unity units.</summary>

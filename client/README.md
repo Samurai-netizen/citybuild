@@ -79,7 +79,7 @@ Claude cannot use the Editor GUI, and a scene file is never hand-edited. The sce
 ## [MANUAL] Look at the first imported building (CR-0005-T2)
 The tests check the settings and the sizes; only a person can say that the model looks right in the Editor. Nothing here is saved or committed.
 1. Open the project in the Editor (or click into the open Editor) and wait until the Console is quiet. The first time, Unity imports the 22 models. There should be no red message.
-2. In the **Project** window open `Assets/_Project/Art/Models/era1` and click **house_l1**. In the **Inspector**, tab **Model**: *Scale Factor* is 1; *Import Cameras*, *Import Lights* and *Generate Colliders* are off.
+2. In the **Project** window open `Assets/_Project/Art/Resources/Models/era1` and click **house_l1**. In the **Inspector**, tab **Model**: *Scale Factor* is 1; *Import Cameras*, *Import Lights* and *Generate Colliders* are off.
 3. Tab **Materials**: under *Remapped Materials*, `M_Palette_Era1` points at the material `M_Palette_Era1` in `Art/Materials`. Do not press *Apply*.
 4. **File → New Scene** (*Basic*), then drag **house_l1** from the Project window into the **Scene** view. In the Inspector set its *Position* to 0, 0, 0. Its *Scale* is 1, 1, 1 and its *Rotation* 0, 0, 0.
 5. Look at it from the front: a cottage with white plaster, dark timber, a yellow thatched roof and a grey chimney, with sharp colours (no blurred edges between them) and flat faces. The door is on the blue arrow's **back** side (toward −Z). The Hierarchy shows the children `Anchor_Status` and `Anchor_Door`. It is about as wide as one grid square: 0.86 units, so a default 1-unit cube beside it would be slightly wider.

@@ -9,8 +9,8 @@
 - **Branch:** `task/CR-0005-T3-models-by-level` (from `main` = `58cc539`)
 - **Build log entry:** `docs/build-log/2026/2026-11-01-04-CR-0005-T3.md`
 - **Last green commit:** `58cc539` (main; T2 merged, PR #67)
-- **Done steps:** write-ahead
-- **Next step:** step 1: move `Art/Models` to `Art/Resources/Models`, repoint the Blender build, the import script and `ArtImportTests`, add `ArtModelsTests` (Unity runs in a mirror project: the owner's Editor is open). Then steps 2 (buildings), 3 (ghosts, ground), 4 (PlayMode test, docs).
+- **Done steps:** write-ahead; step 1 (models moved to `Art/Resources/Models`, lookup API in `BuildingLooks`, `ArtModelsTests`; Unity Art tests 26 / 26 in a mirror)
+- **Next step:** step 2: `BuildingViewFactory`/`BuildingView` draw the model (no stretch), the construction site while Constructing/Upgrading, anchors by name, primitives as fallback; update the factory and view tests. Then step 3 (ghosts, ground tiles), step 4 (PlayMode test, docs). Unity runs in a mirror: `$SCRATCH/run-unity.sh EditMode|PlayMode [filter]` (the owner's Editor is open).
 - **Open questions for the owner:** CR-0005-T2: the [MANUAL] look at `house_l1` (`client/README.md`), decision 2 (`ClientAssemblyTests` now knows six assemblies); M0-49: decision 7 (status label moved to the bottom left, toasts below the HUD), the [MANUAL] look at the HUD (Follow-ups); M0-48: decision 1 (`ConnectionStatusView` split out of `GameRoot`); M0-47: decision 4 (new `CommandSender.Completed` event in `Net`), decision 2 (no builder count or building name in a sentence); M0-46: the ghost's transparent shader variant on a device build (follow-up); M0-45: decision 1 (item names are plural, so `1 Planks`; a singular name in the content is your call), decision 8 (cards use the displayed city, not the raw snapshot), decision 11 (I changed M0-43's `CityInputReader`/`CityWorld` so a press on the menu never reaches the ground); the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never

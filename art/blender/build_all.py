@@ -3,7 +3,7 @@
     blender -b --factory-startup --python art/blender/build_all.py -- [--only NAME ...] [--no-render]
 
 Run from the repository root. Output: in `art/` (the folder above this script) textures/palette_era1.png, previews/<name>.png,
-previews/lineup_era1.png and previews/city_golden_scenario.png; in the Unity project (UNITY_ART) Models/<set>/<name>.fbx and a copy of
+previews/lineup_era1.png and previews/city_golden_scenario.png; in the Unity project (UNITY_ART) Resources/Models/<set>/<name>.fbx and a copy of
 the palette in Textures/. The models exist only there: one copy. Exits 1 if a check fails.
 """
 import argparse
@@ -22,7 +22,8 @@ import assets_era1  # noqa: E402
 import lib  # noqa: E402
 
 ROOT = os.path.dirname(HERE)
-# Where the Unity project keeps the art (client/CityBuilder/Assets/_Project/Art): the only home of the FBX files
+# Where the Unity project keeps the art (client/CityBuilder/Assets/_Project/Art): the only home of the FBX files, in Resources/Models
+# so a player build contains them and the client loads them by name (Resources.Load)
 UNITY_ART = os.path.join(os.path.dirname(ROOT), "client", "CityBuilder", "Assets", "_Project", "Art")
 # kind -> (max |x|, |y| from the pivot, triangle budget, lowest z: rocks and bushes sit slightly in the ground)
 LIMITS = {"building": (0.475, 4500, -0.006), "prop": (None, 1500, -0.025), "tile": (None, 200, -0.1)}
@@ -195,7 +196,7 @@ def main():
         problems += check(name, kind, root)
         if kind == "building":
             problems += check_stockpile(name, root)
-        lib.export_fbx(root, os.path.join(UNITY_ART, "Models", folder, name + ".fbx"))
+        lib.export_fbx(root, os.path.join(UNITY_ART, "Resources", "Models", folder, name + ".fbx"))
         if not args.no_render:
             if kind != "tile":
                 place(assets_common.ASSETS["tile_grass"], (0, 0, 0))
