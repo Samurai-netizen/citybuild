@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+using CityBuilder.Client.Presentation.Ui;
 using CityBuilder.Simulation;
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.Display;
@@ -90,7 +91,7 @@ namespace CityBuilder.Client.Presentation.Build
             return new BuildCardModel(
                 definition.Id,
                 definition.Name,
-                "Cost: " + Quantities(content, definition.Cost, ", "),
+                "Cost: " + ItemText.Quantities(content, definition.Cost, ", "),
                 "Build time: " + DurationText.Format(definition.BuildSeconds),
                 level.MaxWorkers > 0 ? "Max workers: " + level.MaxWorkers.ToString(CultureInfo.InvariantCulture) : string.Empty,
                 RecipeTextFor(content, city, definition, level),
@@ -183,7 +184,7 @@ namespace CityBuilder.Client.Presentation.Build
                             continue;
                         }
 
-                        missing.Append(missing.Length == 0 ? "Not enough " : ", ").Append(ItemName(content, cost[index].Item));
+                        missing.Append(missing.Length == 0 ? "Not enough " : ", ").Append(ItemText.ItemName(content, cost[index].Item));
                     }
 
                     return missing.ToString();
@@ -206,8 +207,8 @@ namespace CityBuilder.Client.Presentation.Build
                     : string.Empty;
             }
 
-            string inputs = recipe.Inputs.Count == 0 ? "Nothing" : Quantities(content, recipe.Inputs, " + ");
-            string outputs = Quantities(content, recipe.Outputs, " + ");
+            string inputs = recipe.Inputs.Count == 0 ? "Nothing" : ItemText.Quantities(content, recipe.Inputs, " + ");
+            string outputs = ItemText.Quantities(content, recipe.Outputs, " + ");
             return inputs + " → " + outputs + " · " + RatesText(content, city, definition, level.MaxWorkers) + " at "
                 + level.MaxWorkers.ToString(CultureInfo.InvariantCulture) + " workers";
         }
@@ -227,7 +228,7 @@ namespace CityBuilder.Client.Presentation.Build
                 text.Append(index == 0 ? string.Empty : ", ").Append(PerHour(rates[index].MilliPerHour));
                 if (rates.Count > 1)
                 {
-                    text.Append(' ').Append(ItemName(content, rates[index].Item));
+                    text.Append(' ').Append(ItemText.ItemName(content, rates[index].Item));
                 }
             }
 
@@ -246,27 +247,6 @@ namespace CityBuilder.Client.Presentation.Build
             }
 
             return number + "/h";
-        }
-
-        /// <summary><c>150 Coins, 30 Logs</c>: each amount and the content's name of its item, joined by <paramref name="separator"/>.</summary>
-        private static string Quantities(GameContent content, IReadOnlyList<ItemQuantity> lines, string separator)
-        {
-            var text = new StringBuilder();
-            for (int index = 0; index < lines.Count; index++)
-            {
-                text.Append(index == 0 ? string.Empty : separator)
-                    .Append(lines[index].Quantity.ToString(CultureInfo.InvariantCulture))
-                    .Append(' ')
-                    .Append(ItemName(content, lines[index].Item));
-            }
-
-            return text.ToString();
-        }
-
-        /// <summary>The item's name from the content; the id when the content has none (it always has).</summary>
-        private static string ItemName(GameContent content, ItemId item)
-        {
-            return content.TryGetItem(item, out ItemDefinition? definition) ? definition.Name : item.Value;
         }
     }
 }
