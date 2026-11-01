@@ -11,6 +11,7 @@ How to get from a clean machine to a running project. Every command here must wo
 | Docker Desktop | current | PostgreSQL and integration tests (Testcontainers) |
 | Unity Hub + Unity | 6.3 LTS; the project is on 6000.3.25f1 (`client/CityBuilder/ProjectSettings/ProjectVersion.txt`) | Android Build Support for device builds |
 | Node.js | 20 or newer (CI uses 24) | Only for the handbook site (`website/`); `npm` comes with it |
+| Blender | 5.2 | Only to rebuild the art (`art/README.md`); the game, CI and the tests do not need it |
 | Claude Code | current | Or any AI coding tool that reads `AGENTS.md` |
 
 ## First-time setup (owner, Day 0)
@@ -54,6 +55,7 @@ How to get from a clean machine to a running project. Every command here must wo
 | Open the Unity project | Unity Hub → Add → `client/CityBuilder` (editor 6000.3.25f1); details and the Bootstrap scene steps: `client/README.md` | M0-04 |
 | Does the Unity project compile? (Editor closed) | `<UNITY> -batchmode -quit -projectPath client/CityBuilder -logFile -`, exit code 0 and no `error CS` (`client/README.md`) | M0-04 |
 | Unity tests (Editor closed; set `UNITY_EDITOR` first, `client/README.md` → Run the tests) | `bash scripts/dev/test-unity.sh` (Windows: `pwsh scripts/dev/test-unity.ps1`) | M0-05 |
+| Rebuild the Era I models, palette and previews (Blender 5.2; writes the FBX files into the Unity project) | `blender -b --factory-startup --python art/blender/build_all.py` from the repository root (`art/README.md`) | CR-0005-T1 |
 | Everything CI runs | `bash scripts/dev/quality.sh` | *(planned, M0-62)* |
 
 ## Configuration

@@ -1,0 +1,21 @@
+{
+  "v": 3,
+  "createdOnFiles": {"v": 1, "at": "2026-10-26T17:30:00Z"},
+  "title": "CityBuilder UI Showcase",
+  "launch": {"view": "canvas"},
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {"x": 0, "y": 0, "w": 390, "h": 844, "title": "Play: the town (tap buildings and buttons)", "is_interactive": true, "radius": 36},
+    "Inspector.dc.html": {"x": 470, "y": 0, "w": 390, "h": 844, "title": "Building inspector", "is_interactive": true, "radius": 36},
+    "Build.dc.html": {"x": 940, "y": 0, "w": 390, "h": 844, "title": "Build menu", "is_interactive": true, "radius": 36},
+    "Research.dc.html": {"x": 1410, "y": 0, "w": 390, "h": 844, "title": "Research tree", "is_interactive": true, "radius": 36},
+    "Welcome.dc.html": {"x": 1880, "y": 0, "w": 390, "h": 844, "title": "Welcome back", "is_interactive": true, "radius": 36},
+    "UIKit.dc.html": {"x": 0, "y": 964, "w": 1280, "h": 1700, "title": "UI kit"}
+  },
+  "order": ["Main.dc.html", "Inspector.dc.html", "Build.dc.html", "Research.dc.html", "Welcome.dc.html", "UIKit.dc.html"],
+  "notes": {
+    "heading": {"x": 0, "y": -300, "text": "CityBuilder · Era I game UI", "kind": "title1", "maxW": 2270},
+    "howto": {"x": 2350, "y": 0, "w": 320, "text": "Press Play on any phone. Tap a building to inspect it, change its workers with − / + and watch the rates and the bottleneck message update. Build and Research open their sheets; the scroll button reopens the welcome-back report.", "fill": "orange", "size": "m"}
+  },
+  "designSystems": []
+}

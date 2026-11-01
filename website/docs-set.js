@@ -17,6 +17,7 @@ const pageFiles = [
   'CONTRIBUTING.md',
   'CHANGELOG.md',
   'client/README.md',
+  'art/README.md',
   'server/README.md',
   'shared/README.md',
   'tools/README.md',

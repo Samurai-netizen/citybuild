@@ -1,6 +1,6 @@
 # CR-0005 — Era I art in the client: models, palette and UI icons
 
-- **Status:** Proposed
+- **Status:** In progress
 - **Type:** Feature
 - **Requested by:** owner · **Date:** 2026-11-01
 - **Milestone / era:** M0 / Era I
@@ -22,8 +22,7 @@ building throwaway placeholders.
 Bring the art into the repository and use it in the client, in small steps (the tasks are written after approval):
 
 1. **Adopt the folder.** `citybuild-assets/` becomes a tracked top-level folder with a README that is a handbook page
-   (the style guide and the rebuild command are already written in its README). Open choice: its name (`art/`, the name the
-   author's earlier draft used, or `citybuild-assets/`).
+   (the style guide and the rebuild command are already written in its README). **Decided by the owner:** it is named `art/`.
 2. **Import into Unity** under `client/CityBuilder/Assets/_Project/Art/`: the 14 Era I and 7 common FBX files, the palette texture
    and one URP Lit material. Import settings are applied by an **editor script** (an `AssetPostprocessor`), not by hand
    (`09` rule 1): palette texture Point filter, no compression, no mips, Clamp; models scale 1, no cameras or lights, one
@@ -81,13 +80,13 @@ screen tasks (M0-51 to M0-53); they are kept in the folder but no code reads the
 ## Risks and alternatives
 - **Unity import is unchecked.** The FBX files were only re-imported in Blender. A step may need the Editor (materials, axes,
   scale); those steps are written as **[MANUAL]** instructions (`09` rule 4) and the first task starts with one model.
-- **Binary files in git.** 12 MB today (11 MB of it renders in `previews/`) and every re-render adds that again. Choices: track
-  everything and accept it until LFS in M1 (simple); or track the sources, models, texture and icons and leave `previews/` out of
-  git (smaller; the renders can be rebuilt in 15 seconds). **Recommendation:** leave out `previews/` except the two city
-  renders, and decide LFS in M1.
-- **One copy or two.** The FBX files are needed in the Unity project; keeping them also under the art folder duplicates them
-  (692 KB). **Recommendation:** the Blender build writes into `client/.../Art/` directly, and the art folder keeps only the sources,
-  icons and README, so there is one copy.
+- **Binary files in git.** 12 MB today (11 MB of it renders in `previews/`) and every re-render adds that again.
+  **Decided:** track the sources, texture, icons and README, and of `previews/` only `city_closeup.png` and
+  `city_golden_scenario.png`; the other renders are rebuilt in 15 seconds and are git-ignored. LFS is decided in M1.
+  (The owner approved the CR without naming `previews/`; this follows my recommendation, and the owner can change it.)
+- **One copy of the FBX files.** **Decided by the owner:** the models live only in the Unity project
+  (`client/CityBuilder/Assets/_Project/Art/`). The Blender build writes there directly, and `art/` keeps only the sources, icons,
+  texture source, kept previews and README.
 - **Stalled tint on a shared material.** Needs a per-renderer property, not a material copy per building; written into M0-50.
 - Alternative: keep primitives until M0 closes. Rejected by the owner: the prototype should look like the game.
 - Alternative: a free asset pack. Rejected before (`21` asks for original designs; licences need the owner, OD-8).
@@ -95,14 +94,15 @@ screen tasks (M0-51 to M0-53); they are kept in the folder but no code reads the
 ## Tasks (filled in after approval)
 | ID | Title | Model | Status |
 |---|---|---|---|
-| CR-0005-T1 | | | Todo |
+| CR-0005-T1 | Adopt `art/`: move the folder, point the Blender build at the Unity `Art/` folder, ignore the other previews, README as a handbook page | S | In review |
+| CR-0005-T2 | Import one building end to end: editor import script (texture, model, shared URP material) and a **[MANUAL]** Editor check | O | Todo |
+| CR-0005-T3 | All models by `(typeId, era, level)`, construction site, ground tiles, anchors, fallback, tests | S | Todo |
+| CR-0005-T4 | UI icons in the HUD, the build menu and (placed for M0-52) the research screen | S | Todo |
 
-Planned outline (to be confirmed at approval): T1 adopt the folder and its docs · T2 import one building end to end and write the
-import script, with a **[MANUAL]** Editor check · T3 all models by `(typeId, era, level)`, the construction site, ground tiles and
-the fallback · T4 UI icons in the HUD and the build menu.
+Order: T1 → T2 → T3 → T4, then M0-50. T2 is `[O]` because it is the first Unity import and the settings may need judgment.
 
 ## Owner approval
-- Approved on: — (quote the owner's words)
+- Approved on: 2026-11-01: "approved, use art/ and one copy of the FBX files".
 - Requested on 2026-11-01 in chat: "I moved citybuild-assets folder to citybuild folder. It has some graphics examples, ui, 3d
   models, color pallete, etc. You can use it to help you build a prototype MVP", and, asked how to proceed, the owner chose
   "CR first, then M0-50 with models".

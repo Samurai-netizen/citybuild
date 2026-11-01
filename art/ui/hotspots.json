@@ -1,0 +1,56 @@
+[
+ {
+  "id": 1,
+  "model": "trading_post_l1",
+  "type": "trading_post",
+  "x": 359.5,
+  "y": 370.3,
+  "statusX": 350.8,
+  "statusY": 312.5
+ },
+ {
+  "id": 2,
+  "model": "sawmill_l1",
+  "type": "sawmill",
+  "x": 248.0,
+  "y": 444.1,
+  "statusX": 251.4,
+  "statusY": 391.6
+ },
+ {
+  "id": 3,
+  "model": "construction_site",
+  "type": "construction_site",
+  "x": 136.6,
+  "y": 517.9,
+  "statusX": 136.6,
+  "statusY": 474.0
+ },
+ {
+  "id": 4,
+  "model": "woodcutter_l1",
+  "type": "woodcutter",
+  "x": 80.8,
+  "y": 554.8,
+  "statusX": 80.8,
+  "statusY": 508.9
+ },
+ {
+  "id": 5,
+  "model": "house_l1",
+  "type": "house",
+  "x": 192.3,
+  "y": 333.4,
+  "statusX": 192.3,
+  "statusY": 279.5
+ },
+ {
+  "id": 6,
+  "model": "house_l1",
+  "type": "house",
+  "x": 25.1,
+  "y": 444.1,
+  "statusX": 25.1,
+  "statusY": 390.3
+ }
+]
