@@ -1,8 +1,9 @@
-/* The connection status label: top left, readable on any background. M0-04 shows "Not connected"; M0-38 changes the text. */
+/* The connection status label: bottom left above the Build button (the top belongs to the HUD since M0-49), readable on any background.
+   M0-04 shows "Not connected"; M0-38 changes the text. */
 .connection-status {
   position: absolute;
   left: 16px;
-  top: 16px;
+  bottom: 96px;
   margin: 0;
   padding: 8px 14px;
   border-radius: 6px;

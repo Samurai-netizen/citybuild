@@ -6,6 +6,7 @@ using CityBuilder.Client.Net;
 using CityBuilder.Client.Presentation.Build;
 using CityBuilder.Client.Presentation.City;
 using CityBuilder.Client.Presentation.Feedback;
+using CityBuilder.Client.Presentation.Hud;
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.State;
 using UnityEngine;
@@ -18,6 +19,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
     /// It builds the API client from the settings asset, runs <see cref="StartupFlow"/> (login, content, city) and has the <see cref="ConnectionStatusView"/> show how it ended:
     /// "Connected" with the era and the coins, a message when the server cannot be used, or the fatal error screen when the server's content is invalid. Once connected it owns the city store, keeps the display city up to date for the views and builds the command sender they use.
     /// It creates the city's camera first (<see cref="CityWorld"/>, so the screen is cleared at once) and, once connected, shows the ground for the grid size of the rules and the buildings of the displayed city (<see cref="CityView"/>).
+    /// It shows the top HUD (<see cref="HudView"/>) over the displayed city and the connection state.
     /// It also shows the build menu (<see cref="BuildMenu"/>), whose cards follow the displayed city, and tells the ground that a press on the menu or on the placement bar is not its own.
     /// It joins the menu, the ground, the placement bar and the command sender into the placement flow (<see cref="PlacementFlow"/>).
     /// It also drives the connection monitor: it polls the city, goes quiet while the app is paused, and the status view says how the connection stands.
@@ -58,6 +60,9 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         /// <summary>The city's camera, light and ground; made in <c>Awake</c>, its ground once the content's grid size is known.</summary>
         private CityWorld? _world;
 
+        /// <summary>The top HUD; null until the start has connected, or when its assets are missing.</summary>
+        private HudView? _hud;
+
         /// <summary>The build menu; null until the start has connected, or when its assets are missing.</summary>
         private BuildMenu? _buildMenu;
 
@@ -90,6 +95,9 @@ namespace CityBuilder.Client.Presentation.Bootstrap
 
         /// <summary>The toast screen (<c>09</c> Feedback); null until the start has connected, or when its assets are missing.</summary>
         internal ToastHost? ToastHost => _toastHost;
+
+        /// <summary>The top HUD (<c>09</c> HUD); null until the start has connected, or when its assets are missing.</summary>
+        internal HudView? Hud => _hud;
 
         /// <summary>The build menu (<c>09</c> Build menu); null until the start has connected, or when its assets are missing.</summary>
         internal BuildMenu? BuildMenu => _buildMenu;
@@ -143,6 +151,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                     CreateFeedback();
                     _world!.ShowGrid(new CityGrid(outcome.Content!.Rules.GridWidth, outcome.Content.Rules.GridHeight));
                     _displayCity.Changed += ShowBuildings;
+                    CreateHud(outcome.Content!);
                     CreateBuildMenu(outcome.Content!);
                     CreatePlacement(outcome.Content!);
                     ShowBuildings();
@@ -216,6 +225,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             if (city != null)
             {
                 _world!.ShowCity(city);
+                _hud?.Model?.Update(city, _monitor?.State ?? ConnectionState.Connected);
                 _buildMenu?.Model?.Update(city);
                 _placement?.Update(city);
             }
@@ -230,6 +240,22 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             _toasts = new ToastQueue();
             _toastHost = ToastHost.Create(transform, _toasts);
             _feedback = new CommandFeedback(_commandSender!, _toasts, ToastHost.NowMilliseconds);
+        }
+
+        /// <summary>
+        /// Shows the top HUD for the displayed city. The start has just connected, so the indicator begins at connected; the monitor's
+        /// state replaces it from then on. Does nothing when there is no displayed city yet; the HUD logs an error and stays null when
+        /// its assets are missing.
+        /// </summary>
+        private void CreateHud(GameContent content)
+        {
+            CityState? city = _displayCity?.Current;
+            if (city == null)
+            {
+                return;
+            }
+
+            _hud = HudView.Create(transform, new HudModel(content, city, ConnectionState.Connected));
         }
 
         /// <summary>
@@ -300,6 +326,11 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             }
 
             Show(ConnectionStatusModel.ForConnection(_monitor.State, _monitor.LastError, _content, _cityStore.Snapshot));
+            CityState? city = _displayCity?.Current;
+            if (city != null)
+            {
+                _hud?.Model?.Update(city, _monitor.State);
+            }
         }
 
         /// <summary>

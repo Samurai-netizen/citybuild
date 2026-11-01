@@ -30,11 +30,11 @@ In a second terminal, run `curl http://localhost:8080/health`. It answers `Healt
 
 **2. Press Play.** Open the project in Unity and wait until the Console has no more import messages. Open `Assets/Scenes/Bootstrap.unity` and press **Play**.
 
-**3. Check the start.** The dark label at the top left of the Game view reads, within a few seconds:
+**3. Check the start.** The dark label at the bottom left of the Game view reads, within a few seconds:
 
 > Connected - Early Middle Ages - Coins: 700
 
-Behind the label the Game view is dark blue-grey, and a green chessboard of 8 by 8 tiles shows in a diamond (the city's ground, M0-43). The Console has no red messages. Try the controls: hold the left mouse button and drag to move the view (it stops at the edge of the grid), turn the mouse wheel to zoom, move the pointer to mark a tile in yellow, and click a tile to mark it in orange (click it again to clear it).
+Behind the label the Game view is dark blue-grey, and a green chessboard of 8 by 8 tiles shows in a diamond (the city's ground, M0-43). With the server running, a dark HUD across the top shows a chip for Coins, Logs and Planks (stock, cap and rate such as `0/h`), `Workers 4 / 4`, `Builders 0 / 2`, `No research`, the era `Early Middle Ages` and a green dot with `Online` (M0-49). The Console has no red messages. Try the controls: hold the left mouse button and drag to move the view (it stops at the edge of the grid), turn the mouse wheel to zoom, move the pointer to mark a tile in yellow, and click a tile to mark it in orange (click it again to clear it).
 
 A new city has no buildings, so the ground is empty. To see the building views (M0-44), place a Cottage from the build menu (the placement flow below, M0-46), or, to test the views alone, with the command line (do it before pressing Play, or press Play again afterwards: the client asks for the city every 120 s, so a wait of up to two minutes shows it too):
 ```

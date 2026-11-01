@@ -59,7 +59,7 @@ Claude cannot use the Editor GUI, and a scene file is never hand-edited. The sce
 3. **File → Save As…** → folder `Assets/Scenes`, name **`Bootstrap`** (exactly; the name triggers the bootstrap) → Save.
 4. **File → Build Profiles** (older Editors: **Build Settings**) → **Scene List**. With Bootstrap open click **Add Open Scenes**, drag
    `Scenes/Bootstrap` to the top so its number is **0**, and untick `Scenes/SampleScene` (the template's sample).
-5. Press **Play** with Bootstrap open. Expected: a dark rounded label at the top left of the Game view: "Not connected: Cannot reach the server (CLIENT_NETWORK_ERROR)" when no API runs, or "Connected - Early Middle Ages - Coins: 700" when the dev API runs (`docs/getting-started.md`; the client logs in as the player named in `Resources/Config/ApiClientSettings.asset`, `dev1`, and keeps the token in `PlayerPrefs` in the Editor and development builds); in the Hierarchy a
+5. Press **Play** with Bootstrap open. Expected: a dark rounded label at the bottom left of the Game view, just above the Build button once connected (the top belongs to the HUD, M0-49): "Not connected: Cannot reach the server (CLIENT_NETWORK_ERROR)" when no API runs, or "Connected - Early Middle Ages - Coins: 700" when the dev API runs (`docs/getting-started.md`; the client logs in as the player named in `Resources/Config/ApiClientSettings.asset`, `dev1`, and keeps the token in `PlayerPrefs` in the Editor and development builds); in the Hierarchy a
    `GameRoot` with the children `World` and `UI`; no red messages in the Console. The Game
    view is dark blue-grey behind the label: `GameRoot` makes the camera (M0-43), the scene needs none. With the server running, a green
    8 by 8 grid appears. Press Play again to stop.

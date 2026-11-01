@@ -1,0 +1,161 @@
+/* The top HUD (docs/how-to/add-ui-screen.md): a dark panel across the top with the item chips on one row and the workers, builders, research ring,
+   era badge and connection indicator on the next. M0-49. Sizes are in panel units (reference resolution 1200 x 800). It takes no pointer. */
+.hud-root {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  padding: 16px;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.hud-panel {
+  padding: 8px 12px;
+  border-radius: 10px;
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+.hud-row {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.hud-chip {
+  flex-direction: row;
+  align-items: center;
+  min-width: 190px;
+  margin: 2px 12px 2px 0;
+  padding: 4px 10px 4px 4px;
+  border-radius: 8px;
+  border-width: 2px;
+  border-color: rgba(0, 0, 0, 0);
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.hud-chip--full {
+  border-color: rgb(255, 200, 90);
+}
+
+.hud-chip-icon {
+  width: 44px;
+  height: 44px;
+  margin: 0 8px 0 0;
+  border-radius: 22px;
+  background-color: rgb(94, 110, 130);
+  color: rgb(255, 255, 255);
+  font-size: 24px;
+  -unity-font-style: bold;
+  -unity-text-align: middle-center;
+}
+
+.hud-chip-text {
+  flex-direction: column;
+}
+
+.hud-chip-amount {
+  flex-direction: row;
+  align-items: flex-end;
+}
+
+.hud-value {
+  margin: 0;
+  color: rgb(255, 255, 255);
+  font-size: 24px;
+  -unity-font-style: bold;
+}
+
+.hud-caption {
+  margin: 0 0 0 6px;
+  color: rgb(190, 196, 206);
+  font-size: 20px;
+}
+
+.hud-rate {
+  margin: 0;
+  font-size: 20px;
+  color: rgb(190, 196, 206);
+}
+
+.hud-rate--rising {
+  color: rgb(120, 220, 140);
+}
+
+.hud-rate--falling {
+  color: rgb(255, 130, 110);
+}
+
+.hud-stat {
+  min-width: 110px;
+  margin: 2px 16px 2px 0;
+  flex-direction: column;
+}
+
+.hud-stat .hud-caption {
+  margin: 0;
+}
+
+.hud-research {
+  flex-direction: row;
+  align-items: center;
+  flex-grow: 1;
+  min-width: 260px;
+  margin: 2px 16px 2px 0;
+}
+
+.hud-ring {
+  width: 56px;
+  height: 56px;
+  margin: 0 10px 0 0;
+}
+
+.hud-research-text {
+  flex-direction: column;
+}
+
+.hud-research-text .hud-caption {
+  margin: 0;
+}
+
+.hud-meta {
+  flex-direction: column;
+  align-items: flex-end;
+  margin: 2px 0;
+}
+
+.hud-era {
+  margin: 0;
+  padding: 2px 12px;
+  border-radius: 12px;
+  background-color: rgb(88, 70, 40);
+  color: rgb(255, 232, 180);
+  font-size: 20px;
+  -unity-font-style: bold;
+}
+
+.hud-connection {
+  flex-direction: row;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.hud-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  background-color: rgb(150, 150, 150);
+}
+
+.hud-dot--ok {
+  background-color: rgb(90, 190, 110);
+}
+
+.hud-dot--pending {
+  background-color: rgb(255, 200, 90);
+}
+
+.hud-dot--problem {
+  background-color: rgb(235, 100, 85);
+}
