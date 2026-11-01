@@ -150,6 +150,52 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(_scheduler.IsDue, Is.True);
         }
 
+        /// <summary>
+        /// A command that got no answer (status 0) or a server fault ends with a bad connection: a poll is due at once, so the state does not wait for
+        /// the next scheduled poll (M0-55). A refusal of the command itself (409) does not.
+        /// </summary>
+        [TestCase(0, ApiErrorCodes.ClientNetworkError)]
+        [TestCase(0, ApiErrorCodes.ClientTimeout)]
+        [TestCase(503, ApiErrorCodes.InternalError)]
+        public void ReportCommandError_NoAnswerOrAServerFault_MakesAPollDue(int status, string code)
+        {
+            _monitor.ReportCommandError(new ApiError(code, status, "x", null, null, null));
+
+            Assert.That(_scheduler.IsDue, Is.True);
+        }
+
+        /// <summary>A poll that <see cref="ConnectionMonitor.TickAsync"/> began raises <see cref="ConnectionMonitor.PollFinished"/> when it ends, once, and a tick with nothing due raises nothing (M0-55).</summary>
+        [Test]
+        public async Task Tick_WhenAPollEnds_RaisesPollFinishedOnce()
+        {
+            int finished = 0;
+            _monitor.PollFinished += () => finished++;
+            _transport.Answer(200, Fixtures.Read("snapshot-city-start.json"));
+
+            await _monitor.TickAsync(CancellationToken.None);
+            Assert.That(finished, Is.EqualTo(0));
+
+            _now += 1000;
+            await _monitor.TickAsync(CancellationToken.None);
+            await _monitor.TickAsync(CancellationToken.None);
+            Assert.That(finished, Is.EqualTo(1));
+        }
+
+        /// <summary>A poll that fails ends too: the banner's "Trying…" must not stay on after an Offline answer (M0-55).</summary>
+        [Test]
+        public async Task Tick_WhenAPollFails_RaisesPollFinished()
+        {
+            int finished = 0;
+            _monitor.PollFinished += () => finished++;
+            _transport.Fail("Cannot connect to destination host");
+            _now += 1000;
+
+            await _monitor.TickAsync(CancellationToken.None);
+
+            Assert.That(_monitor.State, Is.EqualTo(ConnectionState.Offline));
+            Assert.That(finished, Is.EqualTo(1));
+        }
+
         /// <summary>A 5xx, also a proxy's page in place of the answer, is a server error and leaves the store alone.</summary>
         [Test]
         public async Task Poll_With5xx_IsAServerError()

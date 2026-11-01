@@ -5,6 +5,7 @@ using CityBuilder.Client.Core;
 using CityBuilder.Client.Net;
 using CityBuilder.Client.Presentation.Build;
 using CityBuilder.Client.Presentation.City;
+using CityBuilder.Client.Presentation.Connection;
 using CityBuilder.Client.Presentation.Feedback;
 using CityBuilder.Client.Presentation.Hud;
 using CityBuilder.Client.Presentation.Inspector;
@@ -31,6 +32,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
     /// It also shows the research screen (<see cref="ResearchScreen"/>) for the city's era and joins it to the command sender (<see cref="ResearchFlow"/>); it is one more member of the menu group.
     /// It also shows the welcome-back report (<see cref="WelcomeBackPanel"/>, <see cref="WelcomeBackFlow"/>) for any snapshot that settled five minutes or more, the first one included; the panel is one more member of the menu group.
     /// It also drives the connection monitor: it polls the city, goes quiet while the app is paused, and the status view says how the connection stands.
+    /// While the connection is not good it shows a banner under the HUD with the age of the last sync and an action, or, for a game that does not match the server, a blocking screen (<see cref="ConnectionBanner"/>, <see cref="ConnectionFlow"/>).
     /// Whenever the connection changes it tells the placement flow, the inspector and the research screen whether a command may be sent (<see cref="CommandAvailability"/>), so their buttons go off with the reason.
     /// </summary>
     [DisallowMultipleComponent]
@@ -102,6 +104,12 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         /// <summary>Shows the welcome-back report for the snapshots the store takes; null until the start has connected, or when the panel is missing.</summary>
         private WelcomeBackFlow? _welcomeFlow;
 
+        /// <summary>The connection banner and the blocking screen; null until the start has connected, or when its assets are missing.</summary>
+        private ConnectionBanner? _connectionBanner;
+
+        /// <summary>Joins the monitor, the city store and the banner; null until the start has connected, or when the banner is missing.</summary>
+        private ConnectionFlow? _connectionFlow;
+
         /// <summary>The toasts on the screen; null until the start has connected.</summary>
         private ToastQueue? _toasts;
 
@@ -155,6 +163,9 @@ namespace CityBuilder.Client.Presentation.Bootstrap
 
         /// <summary>The welcome-back flow (<c>09</c> Welcome-back report); null until the start has connected, or when the panel is missing.</summary>
         internal WelcomeBackFlow? WelcomeFlow => _welcomeFlow;
+
+        /// <summary>The connection banner (<c>09</c> Connection states); null until the start has connected, or when its assets are missing.</summary>
+        internal ConnectionBanner? ConnectionBanner => _connectionBanner;
 
         /// <summary>The city's camera and ground (<c>09</c> City view); null only before <c>Awake</c> has run.</summary>
         internal CityWorld? World => _world;
@@ -220,6 +231,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                         _displayName,
                         new PollScheduler(() => Time.realtimeSinceStartupAsDouble, PollScheduler.DefaultIntervalSeconds),
                         () => Application.internetReachability != NetworkReachability.NotReachable);
+                    CreateConnectionBanner();
                     _monitor.StateChanged += OnConnectionChanged;
                     _commandSender.Completed += OnCommandCompleted;
                     // The label names the coins, which change with every snapshot, not only when the connection state does.
@@ -266,6 +278,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             _inspectorFlow?.Dispose();
             _researchFlow?.Dispose();
             _welcomeFlow?.Dispose();
+            _connectionFlow?.Dispose();
             _feedback?.Dispose();
             if (_displayCity != null)
             {
@@ -296,6 +309,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                 _placement?.Update(city);
                 _inspectorFlow?.Update(city);
                 _researchFlow?.Update(city);
+                _connectionFlow?.Update();
             }
         }
 
@@ -442,14 +456,34 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             _world!.IsPointerOverUi = IsOverUi;
         }
 
-        /// <summary>Whether a screen position (pixels, origin bottom left) is over the build menu, the placement bar, the building inspector, the research screen or the welcome-back report: a press there is the UI's, not the ground's.</summary>
+        /// <summary>
+        /// Shows the connection banner and the blocking screen and joins them to the monitor and the city store. Does nothing when the monitor
+        /// does not exist yet; the banner logs an error and stays null when its assets are missing.
+        /// </summary>
+        private void CreateConnectionBanner()
+        {
+            if (_monitor == null)
+            {
+                return;
+            }
+
+            _connectionBanner = ConnectionBanner.Create(transform);
+            if (_connectionBanner != null)
+            {
+                _connectionFlow = new ConnectionFlow(_monitor, _cityStore, _connectionBanner);
+                _world!.IsPointerOverUi = IsOverUi;
+            }
+        }
+
+        /// <summary>Whether a screen position (pixels, origin bottom left) is over the build menu, the placement bar, the building inspector, the research screen, the welcome-back report or the connection banner (the whole screen while the blocking screen is up): a press there is the UI's, not the ground's.</summary>
         private bool IsOverUi(Vector2 screenPosition)
         {
             return (_buildMenu != null && _buildMenu.IsOverUi(screenPosition))
                 || (_placementBar != null && _placementBar.IsOverUi(screenPosition))
                 || (_inspector != null && _inspector.IsOverUi(screenPosition))
                 || (_researchScreen != null && _researchScreen.IsOverUi(screenPosition))
-                || (_welcomePanel != null && _welcomePanel.IsOverUi(screenPosition));
+                || (_welcomePanel != null && _welcomePanel.IsOverUi(screenPosition))
+                || (_connectionBanner != null && _connectionBanner.IsOverUi(screenPosition));
         }
 
         /// <summary>A command ended: the monitor hears its error, because a refused token needs a new login.</summary>

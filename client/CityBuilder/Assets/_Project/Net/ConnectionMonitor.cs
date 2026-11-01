@@ -84,6 +84,9 @@ namespace CityBuilder.Client.Net
         /// <summary>Raised after <see cref="State"/> or the code of <see cref="LastError"/> changed.</summary>
         public event Action? StateChanged;
 
+        /// <summary>Raised when a poll that <see cref="TickAsync"/> began has ended, whatever its result (M0-55): the banner's "Trying…" ends with it.</summary>
+        public event Action? PollFinished;
+
         /// <summary>How the connection stands now.</summary>
         public ConnectionState State { get; private set; }
 
@@ -155,7 +158,9 @@ namespace CityBuilder.Client.Net
 
         /// <summary>
         /// A command ended with <paramref name="error"/>. A refused token means the access token ran out: a poll follows at once, and its one new
-        /// login means the player's next try is accepted. Every other error is the command's own and changes nothing here (M0-54).
+        /// login means the player's next try is accepted (M0-54). A command that got no answer or a server fault (the sender gave up after its
+        /// repeats) says the connection is bad, so a poll follows at once too and the state turns Offline or ServerError without waiting for the
+        /// next scheduled poll (M0-55). Every other error is the command's own and changes nothing here.
         /// </summary>
         /// <param name="error">The command's error.</param>
         /// <exception cref="ArgumentNullException"><paramref name="error"/> is null.</exception>
@@ -166,7 +171,7 @@ namespace CityBuilder.Client.Net
                 throw new ArgumentNullException(nameof(error));
             }
 
-            if (error.Code == ApiErrorCodes.AuthenticationRequired)
+            if (error.Code == ApiErrorCodes.AuthenticationRequired || error.Status == 0 || error.Status >= 500)
             {
                 _scheduler.RequestPoll();
             }
@@ -210,6 +215,7 @@ namespace CityBuilder.Client.Net
             finally
             {
                 _scheduler.End();
+                PollFinished?.Invoke();
             }
         }
 

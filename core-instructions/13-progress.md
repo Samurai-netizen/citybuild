@@ -8,9 +8,9 @@
 - **Task:** M0-55 · connection states in the UI (`[S]`, Sonnet 5.5); last completed: M0-54 (PR #76 merged)
 - **Branch:** `task/M0-55-connection-states-ui` (from `main` = `1563754`)
 - **Build log entry:** `docs/build-log/2026/2026-11-01-13-M0-55.md` (In progress)
-- **Last green commit:** the head of this branch after the checkpoint of steps 1 and 2 (EditMode 883 / 883, PlayMode 153 / 153 on a copy of the project)
-- **Done steps:** write-ahead; step 1 `CommandAvailability`; step 2 the buttons through it; step 3 `SyncAgeText` + `ConnectionBannerModel` (green)
-- **Next step:** step 4: `ConnectionMonitor.PollFinished` (Net, with a test), then `ConnectionBanner` (UIDocument; `Resources/UI/ConnectionBanner.uxml/.uss`; a banner under the HUD and a blocking overlay) + `ConnectionFlow` (model, once a second and on `StateChanged`; the button calls `RequestPoll`), wired in `GameRoot` and in `IsOverUi`; layout test + PlayMode test. Then 5 `ReportCommandError` for a lost connection, 6 docs and `/finish-task`. Run Unity tests with `<scratchpad>/run-unity-copy.sh` (the owner's Editor is open).
+- **Last green commit:** `a46c3b6` (step 3). The head is a `wip` commit: steps 4 and 5 are written and **not yet seen green**
+- **Done steps:** write-ahead; steps 1, 2, 3 (green); step 4 banner + flow + `GameRoot` and step 5 `ReportCommandError` / `PollFinished` written, unverified
+- **Next step:** read the full Unity run on the copy (`<scratchpad>/run-unity-copy.sh`; results in `<scratchpad>/unity-out/`) and fix failures; then step 6: docs (Docs impact rows), `check-docs.sh`, handbook build, `/finish-task`. A [MANUAL] look at the banner for the owner (stop the server, watch the banner) goes into `client/README.md`.
 - **Open questions for the owner:** CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-54: the dev database still runs the fast clock until the owner does step 7 of the waiting-loop run (`LOCAL-E2E.md`).
 - **Known broken / do not touch:** — (do not touch the owner's open Unity Editor; `ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once, flaky, see the build log)
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
