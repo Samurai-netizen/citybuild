@@ -1,5 +1,6 @@
 using CityBuilder.Infrastructure.Persistence;
 using CityBuilder.IntegrationTests.Postgres;
+using DotNet.Testcontainers.Containers;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Testcontainers.PostgreSql;
@@ -49,6 +50,31 @@ public sealed class PostgresServer : IAsyncDisposable
         {
             _gate.Release();
         }
+    }
+
+    /// <summary>
+    /// Runs a SQL file on one test database with the container's own <c>psql</c>, as <c>server-panel/panel.sh</c> runs it on the dev database:
+    /// <c>-X -q</c>, <c>ON_ERROR_STOP</c> and the given variables. The file is copied into the container first.
+    /// </summary>
+    /// <param name="database">The database to run on.</param>
+    /// <param name="sqlFile">The path of the file on this machine.</param>
+    /// <param name="variables">The psql variables (<c>-v name=value</c>), in order.</param>
+    /// <returns>What psql printed on standard output and standard error, and its exit code.</returns>
+    public async Task<PsqlResult> RunPsqlFileAsync(TestDatabase database, string sqlFile, params (string Name, string Value)[] variables)
+    {
+        PostgreSqlContainer container = _container ?? throw new InvalidOperationException("The PostgreSQL container isn't running.");
+        const string target = "/tmp/script.sql";
+        byte[] script = await File.ReadAllBytesAsync(sqlFile, TestContext.Current.CancellationToken);
+        await container.CopyAsync(script, target, ct: TestContext.Current.CancellationToken);
+        List<string> command = ["psql", "-X", "-q", "-U", "postgres", "-d", database.Name, "-v", "ON_ERROR_STOP=1"];
+        foreach ((string name, string value) in variables)
+        {
+            command.AddRange(["-v", $"{name}={value}"]);
+        }
+
+        command.AddRange(["-f", target]);
+        ExecResult result = await container.ExecAsync(command, TestContext.Current.CancellationToken);
+        return new PsqlResult(result.Stdout.Trim(), result.Stderr.Trim(), result.ExitCode ?? -1);
     }
 
     /// <summary>Drops a test's database, ending any connection still open to it.</summary>
@@ -119,3 +145,9 @@ public sealed class PostgresServer : IAsyncDisposable
     private static string ConnectionString(PostgreSqlContainer container, string database, bool pooling) =>
         new NpgsqlConnectionStringBuilder(container.GetConnectionString()) { Database = database, Pooling = pooling }.ConnectionString;
 }
+
+/// <summary>What one <c>psql</c> run printed.</summary>
+/// <param name="Stdout">Standard output, trimmed.</param>
+/// <param name="Stderr">Standard error, trimmed.</param>
+/// <param name="ExitCode">The exit code; 0 when the script ran to its end.</param>
+public sealed record PsqlResult(string Stdout, string Stderr, long ExitCode);

@@ -9,8 +9,8 @@
 - **Branch:** `task/CR-0006-T1-goods-panel`, stacked on `task/CR-0006-proposal` (the proposal PR is not merged)
 - **Build log entry:** `docs/build-log/2026/2026-11-01-10-CR-0006-T1.md`
 - **Last green commit:** `origin/main` = `c82a32e` (M0-53 merged, PR #73) plus the CR file
-- **Done steps:** write-ahead
-- **Next step:** step 1 of the log's plan: `server-panel/goods.sql` and its Testcontainers integration test (needs Docker).
+- **Done steps:** write-ahead; step 1 (`server-panel/goods.sql`, `GoodsPanelScriptTests` 15 / 15)
+- **Next step:** step 2 of the log's plan: `panel.sh goods show|add|remove|set`, the menu entry, `server-panel/test-goods.sh`. Not mine, do not commit: the Unity Editor's re-saved `client/` settings files.
 - **Open questions for the owner:** `AGENTS.md` is a protected file; adding the goods commands to its list needs your OK (else only the other docs). M0-53 questions (the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11) and the older ones are in the M0-53 build log and the entries named there.
 - **Known broken / do not touch:** —
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
