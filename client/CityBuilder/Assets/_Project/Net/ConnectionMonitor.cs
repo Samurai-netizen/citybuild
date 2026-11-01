@@ -154,6 +154,25 @@ namespace CityBuilder.Client.Net
         }
 
         /// <summary>
+        /// A command ended with <paramref name="error"/>. A refused token means the access token ran out: a poll follows at once, and its one new
+        /// login means the player's next try is accepted. Every other error is the command's own and changes nothing here (M0-54).
+        /// </summary>
+        /// <param name="error">The command's error.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="error"/> is null.</exception>
+        public void ReportCommandError(ApiError error)
+        {
+            if (error == null)
+            {
+                throw new ArgumentNullException(nameof(error));
+            }
+
+            if (error.Code == ApiErrorCodes.AuthenticationRequired)
+            {
+                _scheduler.RequestPoll();
+            }
+        }
+
+        /// <summary>
         /// Call it every frame (or from any timer): when the network just came back it asks for a poll, and when a poll is due it makes it.
         /// Returns when the poll is done, or at once when nothing is due. Never throws: a cancel ends it quietly.
         /// </summary>

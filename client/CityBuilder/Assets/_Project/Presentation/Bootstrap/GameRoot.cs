@@ -194,6 +194,12 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                 {
                     _displayCity = new DisplayCity(_cityStore, new DisplayClock(_cityStore, outcome.TimeScale), outcome.Content!);
                     _commandSender = new CommandSender(_api!, _cityStore, CommandPolicy.Default);
+                    if (Debug.isDebugBuild)
+                    {
+                        CommandSender sender = _commandSender;
+                        _ = new PredictionWatch(_cityStore, _displayCity, outcome.Content!, () => sender.Pending.Count > 0, Debug.LogWarning);
+                    }
+
                     _content = outcome.Content;
                     CreateFeedback();
                     _world!.ShowGrid(new CityGrid(outcome.Content!.Rules.GridWidth, outcome.Content.Rules.GridHeight));
@@ -203,7 +209,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                     CreatePlacement(outcome.Content!);
                     CreateInspector(outcome.Content!);
                     CreateResearchScreen(outcome.Content!);
-                    CreateWelcomeBack(outcome.Content!);
+                    CreateWelcomeBack(outcome.Content!, outcome.TimeScale);
                     ShowBuildings();
                     _monitor = new ConnectionMonitor(
                         _api!,
@@ -214,6 +220,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                         new PollScheduler(() => Time.realtimeSinceStartupAsDouble, PollScheduler.DefaultIntervalSeconds),
                         () => Application.internetReachability != NetworkReachability.NotReachable);
                     _monitor.StateChanged += OnConnectionChanged;
+                    _commandSender.Completed += OnCommandCompleted;
                     // The label names the coins, which change with every snapshot, not only when the connection state does.
                     _cityStore.SnapshotChanged += OnConnectionChanged;
                 }
@@ -267,6 +274,11 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             if (_monitor != null)
             {
                 _monitor.StateChanged -= OnConnectionChanged;
+                if (_commandSender != null)
+                {
+                    _commandSender.Completed -= OnCommandCompleted;
+                }
+
                 _cityStore.SnapshotChanged -= OnConnectionChanged;
             }
         }
@@ -416,7 +428,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         /// start stored (the answer after a long absence) opens the panel through the group. Does nothing when its assets are missing: the panel
         /// logs an error and stays null.
         /// </summary>
-        private void CreateWelcomeBack(GameContent content)
+        private void CreateWelcomeBack(GameContent content, int timeScale)
         {
             WelcomeBackPanel? panel = _welcomePanel = WelcomeBackPanel.Create(transform);
             if (panel == null)
@@ -425,7 +437,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             }
 
             panel.Opened += _menus.Join(panel.Dismiss).NotifyOpened;
-            _welcomeFlow = new WelcomeBackFlow(content, _cityStore, panel);
+            _welcomeFlow = new WelcomeBackFlow(content, _cityStore, panel, timeScale);
             _world!.IsPointerOverUi = IsOverUi;
         }
 
@@ -437,6 +449,15 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                 || (_inspector != null && _inspector.IsOverUi(screenPosition))
                 || (_researchScreen != null && _researchScreen.IsOverUi(screenPosition))
                 || (_welcomePanel != null && _welcomePanel.IsOverUi(screenPosition));
+        }
+
+        /// <summary>A command ended: the monitor hears its error, because a refused token needs a new login.</summary>
+        private void OnCommandCompleted(CommandOutcome outcome)
+        {
+            if (outcome.Error != null)
+            {
+                _monitor?.ReportCommandError(outcome.Error);
+            }
         }
 
         /// <summary>The monitor's state or error changed: the screen says how the connection stands now.</summary>

@@ -25,6 +25,9 @@ namespace CityBuilder.Client.Presentation.WelcomeBack
         /// <summary>The panel that shows the report.</summary>
         private readonly WelcomeBackPanel _panel;
 
+        /// <summary>How many city seconds pass per real second; what counts as "away" is real time.</summary>
+        private readonly int _timeScale;
+
         /// <summary>The snapshot looked at last, so one snapshot is never reported twice.</summary>
         private CitySnapshot? _last;
 
@@ -35,12 +38,14 @@ namespace CityBuilder.Client.Presentation.WelcomeBack
         /// <param name="content">The game content.</param>
         /// <param name="store">The city store.</param>
         /// <param name="panel">The panel.</param>
+        /// <param name="timeScale">The <c>timeScale</c> of <c>GET /content</c>, at least 1.</param>
         /// <exception cref="ArgumentNullException">An argument is null.</exception>
-        public WelcomeBackFlow(GameContent content, ClientCityStore store, WelcomeBackPanel panel)
+        public WelcomeBackFlow(GameContent content, ClientCityStore store, WelcomeBackPanel panel, int timeScale)
         {
             _content = content ?? throw new ArgumentNullException(nameof(content));
             _store = store ?? throw new ArgumentNullException(nameof(store));
             _panel = panel != null ? panel : throw new ArgumentNullException(nameof(panel));
+            _timeScale = timeScale;
             _store.SnapshotChanged += OnSnapshotChanged;
             OnSnapshotChanged();
         }
@@ -67,7 +72,7 @@ namespace CityBuilder.Client.Presentation.WelcomeBack
             }
 
             _last = snapshot;
-            WelcomeBackModel? model = WelcomeBackModel.Create(_content, snapshot);
+            WelcomeBackModel? model = WelcomeBackModel.Create(_content, snapshot, _timeScale);
             if (model != null && _panel != null)
             {
                 _panel.Show(model);

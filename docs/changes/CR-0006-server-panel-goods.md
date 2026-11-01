@@ -78,7 +78,7 @@ Extend the server panel (`server-panel/panel.sh`, started by `Server Panel.comma
 | ID | Title | Model | Status |
 |---|---|---|---|
 | CR-0006-T1 | `goods.sql` + integration test; `panel.sh goods …` commands and menu entry; docs | S | Done |
-| CR-0006-T2 | The panel works on the player the Unity client plays as (`dev1`), not on `devtest` | S | In review |
+| CR-0006-T2 | The panel works on the player the Unity client plays as (`dev1`), not on `devtest` | S | Done |
 
 ## Change after T1 (2026-11-01)
 The owner reported that the panel changed goods of a player other than the one used in Unity. T1 had taken "the test account" to be `devtest`

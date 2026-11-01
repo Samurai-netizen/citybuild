@@ -17,11 +17,11 @@ namespace CityBuilder.Client.Presentation.WelcomeBack
     /// buildings were built or upgraded, which research finished and what it does, and, when the offline production cap cut the time short,
     /// <c>Production paused after 8 h. Check in more often or research storage.</c>. It is made from the settlement block of one snapshot and
     /// from that snapshot's city, which names the buildings and their levels. <see cref="Create"/> gives nothing for a settlement shorter than
-    /// <see cref="ThresholdSeconds"/>, so a routine poll never shows a report. Pure code; no Unity objects, so EditMode tests check every sentence.
+    /// <see cref="ThresholdSeconds"/> of real time, so a routine poll never shows a report, also on a Development server whose clock runs faster. Pure code; no Unity objects, so EditMode tests check every sentence.
     /// </summary>
     public sealed class WelcomeBackModel
     {
-        /// <summary>The shortest settlement that is reported, in seconds: five minutes. A routine poll (every 120 s) settles far less.</summary>
+        /// <summary>The shortest absence that is reported, in real seconds: five minutes. A routine poll (every 120 s) settles far less.</summary>
         public const long ThresholdSeconds = 300;
 
         /// <summary>The line shown when nothing was produced, used or finished in the time away.</summary>
@@ -70,13 +70,16 @@ namespace CityBuilder.Client.Presentation.WelcomeBack
 
         /// <summary>
         /// Makes the report of <paramref name="snapshot"/>, or returns null when there is nothing to report: the snapshot has no settlement, or the
-        /// settlement covers fewer than <see cref="ThresholdSeconds"/>.
+        /// settlement covers fewer than <see cref="ThresholdSeconds"/> real seconds: a settlement counts city seconds, and <paramref name="timeScale"/> of
+        /// them pass per real second (M0-54).
         /// </summary>
         /// <param name="content">The game content the names come from.</param>
         /// <param name="snapshot">The snapshot the store took.</param>
+        /// <param name="timeScale">The <c>timeScale</c> of <c>GET /content</c>, at least 1: 1 except on a Development server with a dev time scale.</param>
         /// <returns>The report, or null.</returns>
         /// <exception cref="ArgumentNullException">The content or the snapshot is null.</exception>
-        public static WelcomeBackModel? Create(GameContent content, CitySnapshot snapshot)
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="timeScale"/> is below 1.</exception>
+        public static WelcomeBackModel? Create(GameContent content, CitySnapshot snapshot, int timeScale)
         {
             if (content == null)
             {
@@ -88,8 +91,13 @@ namespace CityBuilder.Client.Presentation.WelcomeBack
                 throw new ArgumentNullException(nameof(snapshot));
             }
 
+            if (timeScale < 1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(timeScale), timeScale, "The time scale must be at least 1.");
+            }
+
             SettlementSummary? settlement = snapshot.Settlement;
-            if (settlement == null || settlement.ElapsedSeconds < ThresholdSeconds)
+            if (settlement == null || settlement.ElapsedSeconds < ThresholdSeconds * timeScale)
             {
                 return null;
             }
