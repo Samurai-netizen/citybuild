@@ -169,6 +169,17 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.City
             Assert.That(status.Pips, Is.EqualTo(2));
         }
 
+        /// <summary>A building above the highest level the content knows (newer server data) gets no bubble and no exception.</summary>
+        [Test]
+        public void Describe_LevelAboveTheContent_HasNoBubbleAndDoesNotThrow()
+        {
+            var tall = new Building(1, new BuildingTypeId("woodcutter"), 0, 0, 9, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
+
+            BuildingStatus status = Describe(tall);
+
+            Assert.That(status.Bubble, Is.EqualTo(StatusBubbleKind.None));
+        }
+
         /// <summary>Two statuses are equal exactly when they draw the same picture, so a view can skip a redraw.</summary>
         [Test]
         public void Equals_ComparesEveryField()

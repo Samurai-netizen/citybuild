@@ -17,8 +17,8 @@ namespace CityBuilder.Client.Presentation.City
     public static class BuildingStatusModel
     {
         /// <summary>
-        /// The status of one building of <paramref name="city"/>. A building whose type the content does not know has no ring, no bubble and
-        /// no pips beyond its workers, never an exception: the display city already shows such a city as it is.
+        /// The status of one building of <paramref name="city"/>. A building whose type or level the content does not know has its ring and its
+        /// pips but no bubble, never an exception: the display city already shows such a city as it is, and this runs every second.
         /// </summary>
         /// <param name="city">The displayed city; its clock is the clock to show.</param>
         /// <param name="content">The game content.</param>
@@ -47,7 +47,7 @@ namespace CityBuilder.Client.Presentation.City
 
             StatusBubbleKind bubble = StatusBubbleKind.None;
             ItemId item = default;
-            if (content.TryGetBuilding(building.TypeId, out _))
+            if (content.TryGetBuilding(building.TypeId, out BuildingDefinition? definition) && building.Level <= definition.MaxLevel)
             {
                 StallReason? reason = StallReason.Of(city, content, building);
                 if (reason != null)
