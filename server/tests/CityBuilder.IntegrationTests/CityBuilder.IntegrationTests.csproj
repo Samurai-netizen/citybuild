@@ -32,4 +32,9 @@
     <None Include="..\CityBuilder.Simulation.Tests\Fixtures\content-golden-v1.json" Link="Fixtures\content-golden-v1.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <!-- The server panel's goods script (CR-0006), the file itself linked, so GoodsPanelScriptTests run what panel.sh runs. -->
+  <ItemGroup>
+    <None Include="..\..\..\server-panel\goods.sql" Link="server-panel\goods.sql" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

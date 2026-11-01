@@ -22,7 +22,8 @@ are `bigint` city-clock seconds and worker-seconds. Quantities are `bigint`. Ite
 | `ledger_entries` | `id bigint identity pk`, `city_id`, `item_id`, `delta bigint`, `balance_after bigint`, `reason text`, `ref_type text`, `ref_id text`, `created_at` | `index (city_id, created_at)` |
 
 Ledger reasons in M0: `STARTING_GRANT`, `SETTLEMENT_PRODUCED`, `SETTLEMENT_CONSUMED`, `COST_PLACE`, `COST_UPGRADE`,
-`REFUND_UPGRADE`, `COST_RESEARCH`. Later: `MARKET_ESCROW`, `MARKET_PROCEEDS`, `MARKET_FEE`, `MAILBOX_DELIVERY`, `ERA_CHARTER`.
+`REFUND_UPGRADE`, `COST_RESEARCH`. `DEV_ADJUST` is written only by the developer's goods script of the server panel (`server-panel/goods.sql`, CR-0006) on the dev database,
+never by the server (`ref_type` `dev-panel`, `ref_id` the mode: add, remove or set); the delta is the change really made. Later: `MARKET_ESCROW`, `MARKET_PROCEEDS`, `MARKET_FEE`, `MAILBOX_DELIVERY`, `ERA_CHARTER`.
 A settlement writes, per item in ordinal order, one `SETTLEMENT_PRODUCED` row (its total output) and then one `SETTLEMENT_CONSUMED` row
 (its total input, negative), with `ref_type` = `settlement` and `ref_id` = the settlement's id, a UUID v7 made for it (there is no
 settlements table). Each `balance_after` runs on from the quantity before the settlement, so produced first keeps every balance ≥ 0, and the

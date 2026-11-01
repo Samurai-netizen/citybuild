@@ -113,6 +113,8 @@ commit;
 SQL
 ```
 The next dev login as `devtest` creates the player and a starter city again.
+
+To give or take goods instead of starting over: `bash server-panel/panel.sh goods add planks 50` (also `remove`, `set` and `show`; menu option 6; `server-panel/README.md`).
 From M0-61 this section links to the generated reference.
 
 ## Troubleshooting
