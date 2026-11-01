@@ -9,8 +9,8 @@
 - **Branch:** `task/M0-49-hud` (from `main` = `9512e02`)
 - **Build log entry:** `docs/build-log/2026/2026-11-01-01-M0-49.md`
 - **Last green commit:** `main` = `9512e02` (M0-48 merged, PR #63)
-- **Done steps:** write-ahead
-- **Next step:** step 1: the view-models in `Presentation/Hud/` (`RateText`, `ItemChipModel`, `ResearchRingModel`, `HudModel`) with EditMode tests. Then layout + `Hud` component, wiring in `GameRoot`, docs.
+- **Done steps:** write-ahead; step 1 (view-models `PerHourText`, `ItemChipModel`, `ResearchRingModel`, `HudModel`, 32 EditMode tests; Unity 671 / 671 and 81 / 81 in a mirror project)
+- **Next step:** step 2: the layouts `Resources/UI/Hud.uxml`, `HudChip.uxml`, `Hud.uss` are written but uncommitted (Unity has not made their `.meta`); write `HudView` (own `UIDocument`, sort order 0.5, ring by `generateVisualContent`) and the layout test; then wire it in `GameRoot`; the status label and the toasts must move below the HUD.
 - **Open questions for the owner:** M0-48: decision 1 (`ConnectionStatusView` split out of `GameRoot`); M0-47: decision 4 (new `CommandSender.Completed` event in `Net`), decision 2 (no builder count or building name in a sentence); M0-46: the ghost's transparent shader variant on a device build (follow-up); M0-45: decision 1 (item names are plural, so `1 Planks`; a singular name in the content is your call), decision 8 (cards use the displayed city, not the raw snapshot), decision 11 (I changed M0-43's `CityInputReader`/`CityWorld` so a press on the menu never reaches the ground); the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
