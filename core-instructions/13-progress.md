@@ -4,13 +4,13 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-49 · HUD; the PR is open, the owner merges it)
-- **Branch:** `task/M0-49-hud` (from `main` = `9512e02`) until the owner merges
-- **Build log entry:** last: `docs/build-log/2026/2026-11-01-01-M0-49.md` (Done)
-- **Last green commit:** the head of `task/M0-49-hud` (fast .NET suite green; Unity EditMode 675 / 675 and PlayMode 86 / 86 in a mirror project; check-docs OK; handbook builds)
-- **Done steps:** all of M0-49
-- **Next step:** the owner merges the PR. Then `/start-task M0-50` (building status visuals, `[S]`: Sonnet 5.5).
+- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** CR-0005-T1 · adopt `art/` (move the folder, Blender build writes the models into the Unity `Art/` folder, README as a handbook page)
+- **Branch:** `task/CR-0005-T1-adopt-art` (from `main` = `bc4a597`; the CR's approval commit is cherry-picked in)
+- **Build log entry:** `docs/build-log/2026/2026-11-01-02-CR-0005-T1.md`
+- **Last green commit:** — (nothing built yet)
+- **Done steps:** write-ahead
+- **Next step:** step 1 of the plan: move `citybuild-assets/` to `art/`, the FBX files into `client/CityBuilder/Assets/_Project/Art/Models/`, ignore rules.
 - **Open questions for the owner:** M0-49: decision 7 (status label moved to the bottom left, toasts below the HUD), the [MANUAL] look at the HUD (Follow-ups); M0-48: decision 1 (`ConnectionStatusView` split out of `GameRoot`); M0-47: decision 4 (new `CommandSender.Completed` event in `Net`), decision 2 (no builder count or building name in a sentence); M0-46: the ghost's transparent shader variant on a device build (follow-up); M0-45: decision 1 (item names are plural, so `1 Planks`; a singular name in the content is your call), decision 8 (cards use the displayed city, not the raw snapshot), decision 11 (I changed M0-43's `CityInputReader`/`CityWorld` so a press on the menu never reaches the ground); the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
