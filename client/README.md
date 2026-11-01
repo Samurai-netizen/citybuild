@@ -131,4 +131,19 @@ server of `docs/testing/LOCAL-E2E.md` and play a few minutes.
    With the sheet open, tap a building: the sheet closes and the panel opens. Pick a building in the sheet: placement starts.
 5. Tell the AI coder "inspector looks right", or what looks wrong (too wide, too tall, the text too small, a button hard to hit). Stop Play mode without saving the scene.
 
-Last updated: M0-51
+## [MANUAL] Look at the research screen (M0-52)
+The tests check the words and the buttons; only a person can say the screen reads well and is easy to press. Nothing here is saved or committed. Use the
+server of `docs/testing/LOCAL-E2E.md` and play a few minutes.
+1. Open the **Bootstrap** scene and press **Play**. A **Research** button sits at the bottom left, to the right of **Build**. Press it: a panel opens under the
+   HUD with "Early Middle Ages — 0 / 4 researched", the greyed-out line "Complete all to advance" and two columns of nodes (Sharpened Axes and Trade Charter on
+   the left; Frame Saw and Storehouses on the right, dimmed, with "Requires: …"). Press **Close** or the X: the panel closes.
+2. Press **Finance** on Trade Charter (150 coins): the button dims with "Starting research…" and every other button says "Another research is running". About a second
+   later the node has a blue border, a ring that fills, "In progress · … left", and the HUD ring runs too. Press Finance on Sharpened Axes meanwhile: nothing happens.
+3. With too few coins (spend them first) Finance is dimmed and says "Not enough Coins". When Trade Charter is done (10 minutes, or the dev time scale of
+   `docs/testing/LOCAL-E2E.md`), the header says "1 / 4", the node is green with "Researched", Storehouses is no longer locked and the Trading Post can be built.
+4. Check the layout: the panel must not hide the HUD or run over the Build and Research buttons on your screen (the top margin is a fixed 124 and the button's
+   offset assumes the width of **Build**), the texts must not be cut off, the columns must scroll sideways with a drag, and Finance must be easy to hit with a
+   thumb. Open the **Build** sheet while the panel is up: the panel closes, and the other way round. Tap a building: the research panel closes.
+5. Tell the AI coder "research screen looks right", or what looks wrong. Stop Play mode without saving the scene.
+
+Last updated: M0-52

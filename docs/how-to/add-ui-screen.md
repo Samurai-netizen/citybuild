@@ -54,7 +54,7 @@ new stock shows within a second. No singleton, no `Find*` call.
 **6. Do not let taps fall through.** The ground reads the Input System directly, so a tap on a card would also select the tile behind it.
 `BuildMenu.IsOverUi(screenPosition)` asks the panel (`panel.Pick`, after `ScreenPoint.ToTopLeft`: the Input System counts pixels from the bottom left, a panel from the top left, and `ScreenToPanel` does not flip), `GameRoot` hands it to `CityWorld.IsPointerOverUi`, and
 `CityInputReader` leaves a press that started over the UI to the UI. Any screen with elements that take taps needs its area covered by
-that predicate: a second screen means extending it, not replacing it: `GameRoot.IsOverUi` ors the menu's, the placement bar's and the building inspector's `IsOverUi`, and both use `UiRoot.IsOver` / `UiRoot.PadBySafeArea` (`Presentation/Ui/`).
+that predicate: a second screen means extending it, not replacing it: `GameRoot.IsOverUi` ors the menu's, the placement bar's, the building inspector's and the research screen's `IsOverUi`, and both use `UiRoot.IsOver` / `UiRoot.PadBySafeArea` (`Presentation/Ui/`).
 
 **7. Respect the safe area.** `SafeAreaInsets.From(Screen.safeArea, …)` turns the notch and the bars into panel units; the component adds
 them to its root padding when the layout is computed (`GeometryChangedEvent`).
