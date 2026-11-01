@@ -8,7 +8,7 @@ using UnityEngine;
 namespace CityBuilder.Client.Tests.EditMode.Art
 {
     /// <summary>
-    /// The art's import (CR-0005-T2): what <c>ArtImportPostprocessor</c> gives the palette and the models, that all of them draw with the one
+    /// The art's import (CR-0005-T2, T4): what <c>ArtImportPostprocessor</c> gives the palette, the models and the UI icons, that all of them draw with the one
     /// shared material, and that <c>house_l1</c>, the first building, arrives at the size and facing <c>art/README.md</c> promises.
     /// </summary>
     public sealed class ArtImportTests
@@ -19,6 +19,8 @@ namespace CityBuilder.Client.Tests.EditMode.Art
         private const string _palettePath = "Assets/_Project/Art/Textures/palette_era1.png";
         /// <summary>The one material of the models.</summary>
         private const string _materialPath = "Assets/_Project/Art/Materials/M_Palette_Era1.mat";
+        /// <summary>The folder of the UI icons.</summary>
+        private const string _iconsFolder = "Assets/_Project/Resources/UI/Icons";
         /// <summary>The first building.</summary>
         private const string _housePath = "Assets/_Project/Art/Resources/Models/era1/house_l1.fbx";
         /// <summary>The folder <see cref="NewModel_OnImport_GetsTheSettingsAndTheSharedMaterial"/> makes and removes.</summary>
@@ -45,6 +47,25 @@ namespace CityBuilder.Client.Tests.EditMode.Art
             Assert.That(importer.textureCompression, Is.EqualTo(TextureImporterCompression.Uncompressed));
             Assert.That(importer.mipmapEnabled, Is.False);
             Assert.That(importer.wrapMode, Is.EqualTo(TextureWrapMode.Clamp));
+        }
+
+        /// <summary>Every UI icon has the settings of the postprocessor: smooth, no mips, transparent background.</summary>
+        [Test]
+        public void EveryIcon_ImportSettings_ArePostprocessors()
+        {
+            string[] guids = AssetDatabase.FindAssets("t:Texture2D", new[] { _iconsFolder });
+            Assert.That(guids, Is.Not.Empty);
+
+            foreach (string guid in guids)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+
+                Assert.That(importer.filterMode, Is.EqualTo(FilterMode.Bilinear), path);
+                Assert.That(importer.mipmapEnabled, Is.False, path);
+                Assert.That(importer.alphaIsTransparency, Is.True, path);
+                Assert.That(importer.wrapMode, Is.EqualTo(TextureWrapMode.Clamp), path);
+            }
         }
 
         /// <summary>The shared material is URP Lit, its Base Map is the palette, and it is nearly matte.</summary>

@@ -7,7 +7,8 @@ namespace CityBuilder.Client.Editor
 {
     /// <summary>
     /// Applies the art's import settings, so nobody sets them by hand (<c>09</c> rule 1, CR-0005): the palette texture keeps its hard-edged
-    /// swatches, and every model under <c>Art/Resources/Models</c> comes in at scale 1, without cameras or lights, drawn with the one shared material.
+    /// swatches, every model under <c>Art/Resources/Models</c> comes in at scale 1, without cameras or lights, drawn with the one shared material,
+    /// and every UI icon under <c>Resources/UI/Icons</c> comes in smooth, without mips, as a picture with a transparent background.
     /// </summary>
     internal sealed class ArtImportPostprocessor : AssetPostprocessor
     {
@@ -15,6 +16,8 @@ namespace CityBuilder.Client.Editor
         private const string _modelsFolder = "Assets/_Project/Art/Resources/Models/";
         /// <summary>The folder of the palette textures, one per era.</summary>
         private const string _texturesFolder = "Assets/_Project/Art/Textures/";
+        /// <summary>The folder of the UI icons (PNG, 256 px) the client loads by name (<c>UiIcons</c>).</summary>
+        private const string _iconsFolder = "Assets/_Project/Resources/UI/Icons/";
         /// <summary>The material name every FBX of Era I carries (<c>MATERIAL_NAME</c> in <c>art/blender/lib.py</c>); this is what gets remapped.</summary>
         private const string _sourceMaterialName = "M_Palette_Era1";
         /// <summary>The Era I palette; the shared material's Base Map.</summary>
@@ -28,15 +31,29 @@ namespace CityBuilder.Client.Editor
         /// <summary>Smoothness of the shared material: nearly matte, like painted toy blocks (<c>art/README.md</c>).</summary>
         private const float _smoothness = 0.1f;
 
-        /// <summary>Gives a palette texture its settings before Unity imports it: no filtering, compression or mips, which would blend neighbouring swatches.</summary>
+        /// <summary>
+        /// Gives a texture its settings before Unity imports it. A palette: no filtering, compression or mips, which would blend neighbouring
+        /// swatches. A UI icon: bilinear, no mips (it is drawn at a fixed size), transparent background without a halo at the edge.
+        /// </summary>
         private void OnPreprocessTexture()
         {
+            var importer = (TextureImporter)assetImporter;
+            if (assetPath.StartsWith(_iconsFolder, System.StringComparison.Ordinal))
+            {
+                importer.textureType = TextureImporterType.Default;
+                importer.alphaIsTransparency = true;
+                importer.filterMode = FilterMode.Bilinear;
+                importer.mipmapEnabled = false;
+                importer.wrapMode = TextureWrapMode.Clamp;
+                importer.isReadable = false;
+                return;
+            }
+
             if (!assetPath.StartsWith(_texturesFolder, System.StringComparison.Ordinal))
             {
                 return;
             }
 
-            var importer = (TextureImporter)assetImporter;
             importer.filterMode = FilterMode.Point;
             importer.textureCompression = TextureImporterCompression.Uncompressed;
             importer.mipmapEnabled = false;
