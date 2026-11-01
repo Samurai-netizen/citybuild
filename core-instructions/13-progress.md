@@ -4,13 +4,13 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: CR-0005-T3 · the city drawn from the Era I models; the PR is open, the owner merges it)
-- **Branch:** `task/CR-0005-T3-models-by-level` (from `main` = `58cc539`) until the owner merges
-- **Build log entry:** last: `docs/build-log/2026/2026-11-01-04-CR-0005-T3.md` (Done)
-- **Last green commit:** the head of `task/CR-0005-T3-models-by-level` (Unity EditMode 708 / 708, PlayMode 90 / 90 with graphics, in a mirror; fast .NET suite, check-docs and the handbook build pass)
-- **Done steps:** all of CR-0005-T3
-- **Next step:** the owner merges the PR. Then `/start-task CR-0005-T4` (UI icons in the HUD, the build menu and the research screen, `[S]`: Sonnet 5.5); then M0-50.
+- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** CR-0005-T4 · UI icons in the HUD, the build menu and (placed for M0-52) the research screen (`[S]`: Sonnet 5.5)
+- **Branch:** `task/CR-0005-T4-ui-icons` (from `main` = `605267f`; T3 is merged, PR #68)
+- **Build log entry:** `docs/build-log/2026/2026-11-01-05-CR-0005-T4.md`
+- **Last green commit:** `605267f` on `main` (T3 merged); nothing of T4 is built yet
+- **Done steps:** write-ahead
+- **Next step:** step 1 of the plan: move the icons into `Resources/UI/Icons/`, point `render_ui.py` at it, add the texture branch to `ArtImportPostprocessor` and its test.
 - **Open questions for the owner:** CR-0005-T3: the open Editor and the new `Art/Resources.meta` (Follow-ups; the look at the city and decision 1 are settled); CR-0005-T2: the [MANUAL] look at `house_l1` (`client/README.md`), decision 2 (`ClientAssemblyTests` now knows six assemblies); M0-49: decision 7 (status label moved to the bottom left, toasts below the HUD), the [MANUAL] look at the HUD (Follow-ups); M0-48: decision 1 (`ConnectionStatusView` split out of `GameRoot`); M0-47: decision 4 (new `CommandSender.Completed` event in `Net`), decision 2 (no builder count or building name in a sentence); M0-46: the ghost's transparent shader variant on a device build (follow-up); M0-45: decision 1 (item names are plural, so `1 Planks`; a singular name in the content is your call), decision 8 (cards use the displayed city, not the raw snapshot), decision 11 (I changed M0-43's `CityInputReader`/`CityWorld` so a press on the menu never reaches the ground); the step-7 comment edits of protected files that skipped the
   `ask` prompt (commit `9156324`, M0-21 build
   log → Problems): keep or review; guard test in CI (KIT-AUDIT-FIXES follow-up); [MANUAL] run `test-unity.ps1` once on Windows (never
@@ -35,7 +35,7 @@
 | Commands: place / upgrade / assign workers / start research | done | place-building M0-29 merged (PR #41; `docs/how-to/add-command.md`); upgrade-building M0-31 merged (PR #43; OD-13); assign-workers M0-32 merged (PR #44); start-research M0-33 merged (PR #45): the four commands of M0 |
 | Unity skeleton + networking | in progress | M0-04 (project, assemblies, GameRoot) and M0-05 (Unity tests, `test-unity.sh`) merged (PR #8, #12); API client and DTOs M0-37 merged (PR #49); auth and content on the client M0-38 merged (PR #50); the city store and display prediction M0-39 merged (PR #51); the command sender M0-40 merged (PR #52); polling and lifecycle M0-41 merged (PR #53); end-to-end check M0-42 merged (PR #57; `docs/testing/LOCAL-E2E.md`) |
 | Unity city view + placement | in progress | grid, ground and camera M0-43 merged (PR #58; `CityWorld`, drag/pinch/wheel/tap, tile selection); building views M0-44 merged (PR #59; `CityView`, `BuildingLooks`, `BuildingViewFactory`); build menu M0-45 merged (PR #60; `BuildMenu`, `BuildCardModel`, `BuildMenuModel`; a press over the UI stays off the ground); placement flow M0-46 merged (PR #61; `PlacementFlow`, `PlacementFlowModel`, `PlacementBar`, `PlacementGhosts`); feedback for every result M0-47 merged (PR #62; `FeedbackMessages`, `ToastQueue`, `ToastHost`, `CommandFeedback`, `CommandSender.Completed`); client review M0-48 merged (PR #63; `ConnectionStatusView`) |
-| Era I art (CR-0005) | in progress | T1 `art/` adopted, merged (PR #66); T2 (first import, `ArtImportPostprocessor`) merged (PR #67); T3 (models in the city) in review; T4 (icons) next, before M0-50 |
+| Era I art (CR-0005) | in progress | T1 `art/` adopted, merged (PR #66); T2 (first import, `ArtImportPostprocessor`) merged (PR #67); T3 (models in the city) merged (PR #68); T4 (icons) in progress, before M0-50 |
 | Inspector, worker stepper, research screen, HUD | in progress | HUD M0-49 merged (PR #64) (`HudView`, `HudModel`, `ItemChipModel`, `ResearchRingModel`, `PerHourText`) |
 | Resilience (limits, retries, logging) | in progress | error catalogue, global handler, rate limits and input limits M0-34 merged (PR #46); logging, correlation and the dev time scale M0-35 merged (PR #47) |
 | Docs automation (DocTools) + docs completeness | in progress | handbook, Pages, docs-as-code checks and a full audit: CR-0002 done (PR #27); code documentation CR-0003 done (PR #29); DocTools is M0-61 |
