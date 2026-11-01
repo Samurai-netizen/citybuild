@@ -11,8 +11,9 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
-- [BL-20261101-11 · CR-0006-T2 · Server panel: goods for the player the client uses](2026/2026-11-01-11-CR-0006-T2.md) — In progress
-- [BL-20261101-10 · CR-0006-T1 · Server panel: goods on the test account](2026/2026-11-01-10-CR-0006-T1.md) — In progress
+- [BL-20261101-12 · M0-54 · Waiting-loop review and tuning](2026/2026-11-01-12-M0-54.md) — In progress
+- [BL-20261101-11 · CR-0006-T2 · Server panel: goods for the player the client uses](2026/2026-11-01-11-CR-0006-T2.md) — Done
+- [BL-20261101-10 · CR-0006-T1 · Server panel: goods on the test account](2026/2026-11-01-10-CR-0006-T1.md) — Done
 - [BL-20261101-09 · M0-53 · Welcome-back report](2026/2026-11-01-09-M0-53.md) — Done
 - [BL-20261101-08 · M0-52 · Research screen](2026/2026-11-01-08-M0-52.md) — Done
 - [BL-20261101-07 · M0-51 · Building inspector with worker stepper](2026/2026-11-01-07-M0-51.md) — In progress
