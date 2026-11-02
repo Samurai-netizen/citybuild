@@ -44,6 +44,19 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation
             Assert.That(Layout("UI/Research").Q<VisualElement>(ResearchScreen.RootName).pickingMode, Is.EqualTo(PickingMode.Ignore));
         }
 
+        /// <summary>
+        /// The row of cards scrolls in both directions (M0-59): sideways through the nodes, and up and down when the panel is lower than a card, as on
+        /// a landscape phone with a bottom inset, so no card is cut off out of reach.
+        /// </summary>
+        [Test]
+        public void Screen_TheCardsScrollInBothDirections()
+        {
+            ScrollView? scroll = Layout("UI/Research").Q<ScrollView>("research-scroll");
+
+            Assert.That(scroll, Is.Not.Null);
+            Assert.That(scroll!.mode, Is.EqualTo(ScrollViewMode.VerticalAndHorizontal));
+        }
+
         /// <summary>The node layout has the root, the picture, the ring, the labels and the Finance button.</summary>
         [Test]
         public void Node_HasEveryElementTheComponentLooksUp()

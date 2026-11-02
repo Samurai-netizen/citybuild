@@ -141,7 +141,7 @@ namespace CityBuilder.Client.Presentation.Inspector
         /// <param name="parent">The object the inspector's object goes under.</param>
         public static BuildingInspector? Create(Transform parent)
         {
-            var panelSettings = UiPanelSettings.Shared();
+            var panelSettings = Resources.Load<PanelSettings>(PanelSettingsPath);
             var layout = Resources.Load<VisualTreeAsset>(LayoutPath);
             if (panelSettings == null || layout == null)
             {

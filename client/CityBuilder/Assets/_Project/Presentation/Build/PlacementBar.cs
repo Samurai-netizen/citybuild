@@ -99,7 +99,7 @@ namespace CityBuilder.Client.Presentation.Build
         /// <param name="model">The flow's state.</param>
         public static PlacementBar? Create(Transform parent, PlacementFlowModel model)
         {
-            var panelSettings = UiPanelSettings.Shared();
+            var panelSettings = Resources.Load<PanelSettings>(PanelSettingsPath);
             var layout = Resources.Load<VisualTreeAsset>(LayoutPath);
             if (panelSettings == null || layout == null)
             {

@@ -13,7 +13,7 @@
 }
 
 .toast-list {
-  margin-bottom: var(--toast-lift);
+  margin-bottom: var(--toast-lift); /* higher in portrait (Common.uss), above the build tray and the placement bar */
   flex-direction: column;
   align-items: flex-start;
 }

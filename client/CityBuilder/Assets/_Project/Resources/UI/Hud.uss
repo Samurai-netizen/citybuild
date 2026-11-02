@@ -1,5 +1,6 @@
 /* The top HUD (docs/how-to/add-ui-screen.md): one wood bar across the top. M0-49, restyled in CR-0007. Colours and sizes come from Common.uss. The bar is
-   40 high plus its border and the gap below: --hud-height in Common.uss is where every screen under the HUD starts. It takes no pointer. */
+   40 high plus its border and the gap below: --hud-height in Common.uss is where every screen under the HUD starts. It takes no pointer.
+   The bar has two parts, the chips and hud-state (the counters, the research and the era): one row in landscape, two rows in portrait (M0-59, at the end). */
 .hud-root {
   position: absolute;
   left: 0;
@@ -20,11 +21,22 @@
 }
 
 .hud-chips {
+  flex-shrink: 0;
+  flex-direction: row;
+  align-items: center;
+}
+
+/* The counters, the research and the era: the research part takes what is left and cuts its text, the rest keeps its size. */
+.hud-state {
+  flex-grow: 1;
+  flex-shrink: 1;
+  min-width: 0;
   flex-direction: row;
   align-items: center;
 }
 
 .hud-chip {
+  flex-shrink: 0;
   flex-direction: row;
   align-items: center;
   height: 32px;
@@ -100,6 +112,7 @@
 }
 
 .hud-stat {
+  flex-shrink: 0;
   flex-direction: row;
   align-items: center;
   margin: 0 var(--sp-2) 0 var(--sp-1);
@@ -197,8 +210,11 @@
   background-color: var(--c-stop-light);
 }
 
-/* Portrait (M0-59): the bar is 400 units wide, so the research name and time and the connection text go; the ring, the chips and the dot stay. */
-.portrait .hud-research-text,
-.portrait .hud-connection .hud-caption {
-  display: none;
+/* Portrait (M0-59): the bar is about 384 units wide, too narrow for one row (three chips alone are ~300), so it becomes two rows: the chips, then
+   hud-state. It is 80 high; --hud-height grows with it under .portrait in Common.uss (80 and the 12 gap). */
+.portrait .hud-panel {
+  height: 80px;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: stretch;
 }

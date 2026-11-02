@@ -1,7 +1,8 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
   <!-- The research screen that ResearchScreen shows (M0-52, docs/how-to/add-ui-screen.md): a "Research" button at the bottom left, next to
        the Build button, that opens a parchment panel with the era header, the rule line and the research nodes as one row of cards (ResearchNode.uxml is one
-       node; ResearchScreen makes one per node of the era and puts them in the row in the model's order). Style: Common.uss and Research.uss. -->
+       node; ResearchScreen makes one per node of the era and puts them in the row in the model's order). Style: Common.uss and Research.uss.
+       The row scrolls sideways, and up and down too when the panel is lower than a card (a landscape phone with a bottom inset, M0-59). -->
   <Style src="Common.uss" />
   <Style src="Research.uss" />
   <ui:VisualElement name="research-root" class="research-root" picking-mode="Ignore">
@@ -13,7 +14,7 @@
         </ui:VisualElement>
         <ui:Button name="research-close" class="research-close btn btn--quiet" text="X" />
       </ui:VisualElement>
-      <ui:ScrollView name="research-scroll" class="research-scroll themed-scroll" mode="Horizontal">
+      <ui:ScrollView name="research-scroll" class="research-scroll themed-scroll" mode="VerticalAndHorizontal">
         <ui:VisualElement name="research-columns" class="research-columns" />
       </ui:ScrollView>
     </ui:VisualElement>

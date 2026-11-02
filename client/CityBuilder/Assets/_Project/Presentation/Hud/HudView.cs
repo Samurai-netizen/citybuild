@@ -175,7 +175,7 @@ namespace CityBuilder.Client.Presentation.Hud
         /// <param name="model">The state the HUD shows.</param>
         public static HudView? Create(Transform parent, HudModel model)
         {
-            var panelSettings = UiPanelSettings.Shared();
+            var panelSettings = Resources.Load<PanelSettings>(PanelSettingsPath);
             var layout = Resources.Load<VisualTreeAsset>(LayoutPath);
             var chipLayout = Resources.Load<VisualTreeAsset>(ChipLayoutPath);
             if (panelSettings == null || layout == null || chipLayout == null)

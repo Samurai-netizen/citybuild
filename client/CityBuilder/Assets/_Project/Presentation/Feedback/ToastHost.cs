@@ -71,7 +71,7 @@ namespace CityBuilder.Client.Presentation.Feedback
         /// <param name="queue">The toasts to show.</param>
         public static ToastHost? Create(Transform parent, ToastQueue queue)
         {
-            var panelSettings = UiPanelSettings.Shared();
+            var panelSettings = Resources.Load<PanelSettings>(PanelSettingsPath);
             var layout = Resources.Load<VisualTreeAsset>(LayoutPath);
             if (panelSettings == null || layout == null)
             {

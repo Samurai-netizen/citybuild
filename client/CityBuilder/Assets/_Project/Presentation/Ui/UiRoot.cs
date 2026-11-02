@@ -30,7 +30,7 @@ namespace CityBuilder.Client.Presentation.Ui
             return root.panel.Pick(RuntimePanelUtils.ScreenToPanel(root.panel, topLeft)) != null;
         }
 
-        /// <summary>The class a root gets while its panel is taller than wide; a screen's USS uses it to drop secondary text (M0-59).</summary>
+        /// <summary>The class a root gets while its panel is taller than wide (M0-59): a screen's USS uses it to rearrange for the 400 unit width.</summary>
         public const string PortraitClass = "portrait";
 
         /// <summary>Pads <paramref name="root"/> by the screen's safe area on top of <paramref name="basePadding"/>, in panel units, and marks it with <see cref="PortraitClass"/> in portrait.</summary>
