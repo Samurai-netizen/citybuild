@@ -7,38 +7,31 @@ using NUnit.Framework;
 namespace CityBuilder.Client.Tests.EditMode.Core
 {
     /// <summary>
-    /// <see cref="ClientLog"/> (M0-57) with a sink that keeps the lines: the level filter, the default level per build type, the
-    /// replaceable sink and the exception line.
+    /// <see cref="ClientLogger"/> and <see cref="ClientLog"/> (M0-57) with a sink that keeps the lines: the level filter, the default
+    /// level per build type, the sink it is given and the exception line.
     /// </summary>
     public sealed class ClientLogTests
     {
-        /// <summary>The sink the log writes to in a test.</summary>
+        /// <summary>The sink the logger under test writes to.</summary>
         private RecordingLogSink _sink = null!;
 
-        /// <summary>Before each test: the log writes to a recording sink at the Debug level.</summary>
-        [SetUp]
-        public void UseARecordingSink()
+        /// <summary>A logger over the recording sink at <paramref name="level"/>.</summary>
+        private ClientLogger NewLogger(LogLevel level)
         {
             _sink = new RecordingLogSink();
-            ClientLog.Sink = _sink;
-            ClientLog.Level = LogLevel.Debug;
-        }
-
-        /// <summary>After each test: the build's default level and the Unity sink, so other tests are not changed.</summary>
-        [TearDown]
-        public void RestoreTheDefaults()
-        {
-            ClientLog.Reset();
+            return new ClientLogger(level, _sink);
         }
 
         /// <summary>At the Debug level every method writes, each with its own level.</summary>
         [Test]
         public void AtDebug_EveryMethodWrites_WithItsLevel()
         {
-            ClientLog.Debug("d");
-            ClientLog.Info("i");
-            ClientLog.Warning("w");
-            ClientLog.Error("e");
+            ClientLogger log = NewLogger(LogLevel.Debug);
+
+            log.Debug("d");
+            log.Info("i");
+            log.Warning("w");
+            log.Error("e");
 
             Assert.That(_sink.Lines.ConvertAll(line => line.Level), Is.EqualTo(new[] { LogLevel.Debug, LogLevel.Info, LogLevel.Warning, LogLevel.Error }));
             Assert.That(_sink.Lines.ConvertAll(line => line.Message), Is.EqualTo(new[] { "d", "i", "w", "e" }));
@@ -48,12 +41,12 @@ namespace CityBuilder.Client.Tests.EditMode.Core
         [Test]
         public void BelowTheLevel_IsDropped_AtOrAboveIsWritten()
         {
-            ClientLog.Level = LogLevel.Warning;
+            ClientLogger log = NewLogger(LogLevel.Warning);
 
-            ClientLog.Debug("d");
-            ClientLog.Info("i");
-            ClientLog.Warning("w");
-            ClientLog.Error("e");
+            log.Debug("d");
+            log.Info("i");
+            log.Warning("w");
+            log.Error("e");
 
             Assert.That(_sink.Lines.ConvertAll(line => line.Message), Is.EqualTo(new[] { "w", "e" }));
         }
@@ -62,24 +55,24 @@ namespace CityBuilder.Client.Tests.EditMode.Core
         [Test]
         public void LevelOff_WritesNothing()
         {
-            ClientLog.Level = LogLevel.Off;
+            ClientLogger log = NewLogger(LogLevel.Off);
 
-            ClientLog.Error("e");
-            ClientLog.Exception(new InvalidOperationException("boom"));
+            log.Error("e");
+            log.Exception(new InvalidOperationException("boom"));
 
             Assert.That(_sink.Lines, Is.Empty);
-            Assert.That(ClientLog.IsEnabled(LogLevel.Error), Is.False);
+            Assert.That(log.IsEnabled(LogLevel.Error), Is.False);
         }
 
-        /// <summary><see cref="ClientLog.IsEnabled"/> agrees with the filter, so a caller can skip building a message.</summary>
+        /// <summary><see cref="ClientLogger.IsEnabled"/> agrees with the filter, so a caller can skip building a message.</summary>
         [Test]
         public void IsEnabled_FollowsTheLevel()
         {
-            ClientLog.Level = LogLevel.Info;
+            ClientLogger log = NewLogger(LogLevel.Info);
 
-            Assert.That(ClientLog.IsEnabled(LogLevel.Debug), Is.False);
-            Assert.That(ClientLog.IsEnabled(LogLevel.Info), Is.True);
-            Assert.That(ClientLog.IsEnabled(LogLevel.Error), Is.True);
+            Assert.That(log.IsEnabled(LogLevel.Debug), Is.False);
+            Assert.That(log.IsEnabled(LogLevel.Info), Is.True);
+            Assert.That(log.IsEnabled(LogLevel.Error), Is.True);
         }
 
         /// <summary>A development build (and the Editor) shows Debug; a release build shows Warning and above only.</summary>
@@ -94,9 +87,10 @@ namespace CityBuilder.Client.Tests.EditMode.Core
         [Test]
         public void Exception_IsAnErrorLine_WithTheException()
         {
+            ClientLogger log = NewLogger(LogLevel.Debug);
             InvalidOperationException exception = new InvalidOperationException("boom");
 
-            ClientLog.Exception(exception);
+            log.Exception(exception);
 
             Assert.That(_sink.Lines, Has.Count.EqualTo(1));
             Assert.That(_sink.Lines[0].Level, Is.EqualTo(LogLevel.Error));
@@ -104,16 +98,18 @@ namespace CityBuilder.Client.Tests.EditMode.Core
             Assert.That(_sink.Lines[0].Exception, Is.SameAs(exception));
         }
 
-        /// <summary>Reset gives the build's default level back and drops the replaced sink.</summary>
+        /// <summary>A logger needs a sink: a missing one is a wiring mistake found at construction.</summary>
         [Test]
-        public void Reset_RestoresTheDefaultSinkAndLevel()
+        public void ALoggerWithoutASink_IsRefused()
         {
-            ClientLog.Level = LogLevel.Off;
+            Assert.That(() => new ClientLogger(LogLevel.Debug, null!), Throws.ArgumentNullException);
+        }
 
-            ClientLog.Reset();
-
-            Assert.That(ClientLog.Sink, Is.InstanceOf<UnityLogSink>());
-            Assert.That(ClientLog.Level, Is.EqualTo(ClientLog.DefaultLevelFor(UnityEngine.Debug.isDebugBuild)));
+        /// <summary>The game's logger follows the build type and writes to the Unity console.</summary>
+        [Test]
+        public void Default_FollowsTheBuildType()
+        {
+            Assert.That(ClientLog.Default.Level, Is.EqualTo(ClientLog.DefaultLevelFor(UnityEngine.Debug.isDebugBuild)));
         }
     }
 }

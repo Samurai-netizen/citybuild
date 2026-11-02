@@ -111,22 +111,16 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Feedback
         public async Task ARefusal_LogsTheTraceIdOfTheError()
         {
             RecordingLogSink sink = new RecordingLogSink();
-            ClientLog.Sink = sink;
-            try
-            {
-                _transport.Answer(409, Fixtures.Read("error-409-NO_FREE_BUILDER.json"));
+            _feedback.Dispose();
+            _feedback = new CommandFeedback(_sender, _queue, () => 0, new ClientLogger(LogLevel.Debug, sink));
+            _transport.Answer(409, Fixtures.Read("error-409-NO_FREE_BUILDER.json"));
 
-                await _sender.SendAsync(CommandIntent.UpgradeBuilding(1), CancellationToken.None);
+            await _sender.SendAsync(CommandIntent.UpgradeBuilding(1), CancellationToken.None);
 
-                var commandWarning = sink.Lines.Find(line => line.Message.StartsWith("Command "));
-                Assert.That(commandWarning.Level, Is.EqualTo(LogLevel.Warning));
-                Assert.That(commandWarning.Message, Does.Contain("NO_FREE_BUILDER"));
-                Assert.That(commandWarning.Message, Does.Contain("[trace 00-"));
-            }
-            finally
-            {
-                ClientLog.Reset();
-            }
+            var commandWarning = sink.Lines.Find(line => line.Message.StartsWith("Command "));
+            Assert.That(commandWarning.Level, Is.EqualTo(LogLevel.Warning));
+            Assert.That(commandWarning.Message, Does.Contain("NO_FREE_BUILDER"));
+            Assert.That(commandWarning.Message, Does.Contain("[trace 00-"));
         }
 
         /// <summary>A command that never got an answer shows the retry hint, not a transport message.</summary>

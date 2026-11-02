@@ -24,26 +24,17 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         /// <summary>The sink the log writes to in a test.</summary>
         private RecordingLogSink _sink = null!;
 
-        /// <summary>Before each test: the log writes to a recording sink at the Debug level.</summary>
+        /// <summary>Before each test: a fresh recording sink.</summary>
         [SetUp]
         public void UseARecordingSink()
         {
             _sink = new RecordingLogSink();
-            ClientLog.Sink = _sink;
-            ClientLog.Level = LogLevel.Debug;
         }
 
-        /// <summary>After each test: the default sink and level.</summary>
-        [TearDown]
-        public void RestoreTheDefaults()
+        /// <summary>A client with the token set, over <paramref name="transport"/>, logging at <paramref name="level"/> to the recording sink.</summary>
+        private ApiClient NewClient(FakeTransport transport, LogLevel level = LogLevel.Debug)
         {
-            ClientLog.Reset();
-        }
-
-        /// <summary>A client with the token set, over <paramref name="transport"/>.</summary>
-        private static ApiClient NewClient(FakeTransport transport)
-        {
-            ApiClient client = new ApiClient("http://localhost:8080", 15, transport);
+            ApiClient client = new ApiClient("http://localhost:8080", 15, transport, new ClientLogger(level, _sink));
             client.SetAccessToken(Token);
             return client;
         }
@@ -68,8 +59,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         [Test]
         public async Task ASuccessfulRequest_AtTheReleaseLevel_WritesNothing()
         {
-            ClientLog.Level = ClientLog.DefaultLevelFor(false);
-            ApiClient client = NewClient(new FakeTransport().Answer(200, Fixtures.Read("snapshot-city-start.json")));
+            ApiClient client = NewClient(new FakeTransport().Answer(200, Fixtures.Read("snapshot-city-start.json")), ClientLog.DefaultLevelFor(false));
 
             await client.GetCityAsync(CancellationToken.None);
 
@@ -80,8 +70,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         [Test]
         public async Task ARefusedRequest_IsAWarning_WithTheCodeAndTheTraceId()
         {
-            ClientLog.Level = ClientLog.DefaultLevelFor(false);
-            ApiClient client = NewClient(new FakeTransport().Answer(409, RefusalAnswer));
+            ApiClient client = NewClient(new FakeTransport().Answer(409, RefusalAnswer), ClientLog.DefaultLevelFor(false));
 
             await client.GetCityAsync(CancellationToken.None);
 

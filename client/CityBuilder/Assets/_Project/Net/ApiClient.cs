@@ -36,6 +36,9 @@ namespace CityBuilder.Client.Net
         /// <summary>Turns answers into results.</summary>
         private readonly ApiResponseParser _parser;
 
+        /// <summary>Where the request lines go (M0-57).</summary>
+        private readonly ClientLogger _log;
+
         /// <summary>The bearer token of the logged-in player; kept in memory only.</summary>
         private string? _accessToken;
 
@@ -43,8 +46,9 @@ namespace CityBuilder.Client.Net
         /// <param name="baseUrl">The server's address without a path, for example <c>http://localhost:8080</c> (<see cref="ApiClientSettings"/>).</param>
         /// <param name="timeoutSeconds">Seconds one request may take, from 1 to 300.</param>
         /// <param name="transport">The wire; <see cref="UnityWebRequestTransport"/> in the game.</param>
+        /// <param name="logger">Where the request lines go; null means <see cref="ClientLog.Default"/>. A test passes a recording one.</param>
         /// <exception cref="ArgumentException"><paramref name="baseUrl"/> is not an absolute http or https address, or the timeout is out of range: a wrong asset, found at start.</exception>
-        public ApiClient(string baseUrl, int timeoutSeconds, IApiTransport transport)
+        public ApiClient(string baseUrl, int timeoutSeconds, IApiTransport transport, ClientLogger? logger = null)
         {
             bool isUrl = Uri.TryCreate(baseUrl, UriKind.Absolute, out Uri? uri);
             if (!isUrl || uri == null || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
@@ -60,6 +64,7 @@ namespace CityBuilder.Client.Net
             _baseUrl = baseUrl.TrimEnd('/');
             _timeoutSeconds = timeoutSeconds;
             _transport = transport;
+            _log = logger ?? ClientLog.Default;
             _parser = new ApiResponseParser(_json);
         }
 
@@ -150,19 +155,19 @@ namespace CityBuilder.Client.Net
         /// server's trace id, so the line can be matched to the server's log) for one that did not. Only the method, the path (without a
         /// base URL or query), the status and the duration are named: never a token and never a body (<c>07</c> Logging policy).
         /// </summary>
-        private static void LogRequest(string method, string path, int status, long milliseconds, ApiError? error)
+        private void LogRequest(string method, string path, int status, long milliseconds, ApiError? error)
         {
             if (error == null)
             {
-                if (ClientLog.IsEnabled(LogLevel.Debug))
+                if (_log.IsEnabled(LogLevel.Debug))
                 {
-                    ClientLog.Debug("Request " + method + " " + path + " -> " + status + " in " + milliseconds + " ms");
+                    _log.Debug("Request " + method + " " + path + " -> " + status + " in " + milliseconds + " ms");
                 }
 
                 return;
             }
 
-            ClientLog.Warning("Request " + method + " " + path + " failed in " + milliseconds + " ms: " + error);
+            _log.Warning("Request " + method + " " + path + " failed in " + milliseconds + " ms: " + error);
         }
     }
 }
