@@ -17,8 +17,9 @@ namespace CityBuilder.Client.Net
     /// <para>
     /// The rules of the state machine:
     /// a usable snapshot of the content the client holds is <see cref="ConnectionState.Connected"/>; no answer is <see cref="ConnectionState.Offline"/>;
-    /// a 5xx or an unexpected refusal is <see cref="ConnectionState.ServerError"/>; an answer that is not the contract's, or a snapshot of other
-    /// content, is <see cref="ConnectionState.IncompatibleVersion"/> and is not applied; <c>AUTHENTICATION_REQUIRED</c> forgets the token, logs in
+    /// a 5xx or an unexpected refusal is <see cref="ConnectionState.ServerError"/>; an answer that is not the contract's, or <c>UNSUPPORTED_CLIENT_VERSION</c>,
+    /// is <see cref="ConnectionState.IncompatibleVersion"/> and is not applied. A snapshot of other content is not applied until <see cref="ContentSync"/> has
+    /// fetched that content (M0-58); it is <see cref="ConnectionState.IncompatibleVersion"/> only when the content cannot be had, or has no version of that name; <c>AUTHENTICATION_REQUIRED</c> forgets the token, logs in
     /// once and repeats the request once, and only a second refusal (or a refused login) is <see cref="ConnectionState.Unauthorized"/>.
     /// <c>RATE_LIMITED</c> changes nothing: the next poll tries again. Every state is left by the next usable answer.
     /// </para>
@@ -34,8 +35,11 @@ namespace CityBuilder.Client.Net
         /// <summary>Receives every usable snapshot.</summary>
         private readonly ClientCityStore _store;
 
-        /// <summary>The <c>contentVersion</c> of the content the client loaded at the start; a snapshot of another version cannot be used with it.</summary>
+        /// <summary>The <c>contentVersion</c> of the content the client loaded at the start; used only when there is no <see cref="_sync"/>, and then a snapshot of another version cannot be used.</summary>
         private readonly string _contentVersion;
+
+        /// <summary>Fetches new content before a snapshot of it is applied (M0-58); null in a monitor that has no way to fetch, which then treats other content as incompatible.</summary>
+        private readonly ContentSync? _sync;
 
         /// <summary>The dev player to log in as.</summary>
         private readonly string _displayName;
@@ -60,7 +64,8 @@ namespace CityBuilder.Client.Net
         /// <param name="displayName">The dev player's name for a new login.</param>
         /// <param name="scheduler">Decides when to poll.</param>
         /// <param name="isReachable">Whether the device has a network (Unity: <c>Application.internetReachability</c>).</param>
-        /// <exception cref="ArgumentNullException">An argument is null.</exception>
+        /// <param name="contentSync">Applies each snapshot through the content refetch (<see cref="ContentSync"/>); the game passes it. Null: no refetch, other content is <see cref="ConnectionState.IncompatibleVersion"/>.</param>
+        /// <exception cref="ArgumentNullException">A required argument is null.</exception>
         public ConnectionMonitor(
             ApiClient api,
             AuthService auth,
@@ -68,7 +73,8 @@ namespace CityBuilder.Client.Net
             string contentVersion,
             string displayName,
             PollScheduler scheduler,
-            Func<bool> isReachable)
+            Func<bool> isReachable,
+            ContentSync? contentSync = null)
         {
             _api = api ?? throw new ArgumentNullException(nameof(api));
             _auth = auth ?? throw new ArgumentNullException(nameof(auth));
@@ -77,6 +83,7 @@ namespace CityBuilder.Client.Net
             _displayName = displayName ?? throw new ArgumentNullException(nameof(displayName));
             _scheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
             _isReachable = isReachable ?? throw new ArgumentNullException(nameof(isReachable));
+            _sync = contentSync;
             _wasReachable = _isReachable();
             State = ConnectionState.Connected;
         }
@@ -112,6 +119,11 @@ namespace CityBuilder.Client.Net
             if (error.Status == 0)
             {
                 return ConnectionState.Offline;
+            }
+
+            if (error.Code == ApiErrorCodes.UnsupportedClientVersion)
+            {
+                return ConnectionState.IncompatibleVersion;
             }
 
             if (error.Code == ApiErrorCodes.RateLimited)
@@ -160,7 +172,8 @@ namespace CityBuilder.Client.Net
         /// A command ended with <paramref name="error"/>. A refused token means the access token ran out: a poll follows at once, and its one new
         /// login means the player's next try is accepted (M0-54). A command that got no answer or a server fault (the sender gave up after its
         /// repeats) says the connection is bad, so a poll follows at once too and the state turns Offline or ServerError without waiting for the
-        /// next scheduled poll (M0-55). Every other error is the command's own and changes nothing here.
+        /// next scheduled poll (M0-55). So does a command whose answer did not fit the client (content that could not be fetched) or that the
+        /// server no longer supports (M0-58): the poll finds the state and tries the content again. Every other error is the command's own and changes nothing here.
         /// </summary>
         /// <param name="error">The command's error.</param>
         /// <exception cref="ArgumentNullException"><paramref name="error"/> is null.</exception>
@@ -171,7 +184,9 @@ namespace CityBuilder.Client.Net
                 throw new ArgumentNullException(nameof(error));
             }
 
-            if (error.Code == ApiErrorCodes.AuthenticationRequired || error.Status == 0 || error.Status >= 500)
+            bool incompatible = error.Code == ApiErrorCodes.UnsupportedClientVersion
+                || (error.Code == ApiErrorCodes.ClientInvalidResponse && error.Status >= 200 && error.Status < 300);
+            if (error.Code == ApiErrorCodes.AuthenticationRequired || error.Status == 0 || error.Status >= 500 || incompatible)
             {
                 _scheduler.RequestPoll();
             }
@@ -243,15 +258,24 @@ namespace CityBuilder.Client.Net
                 answer = await _api.GetCityAsync(cancellationToken);
             }
 
-            if (answer.IsSuccess && answer.Value!.ContentVersion != _contentVersion)
+            // After a new login the answer may be another city (a reset development database), whose lower version the store would refuse as old.
+            Func<ApiError?> apply = loggedInAgain ? (Func<ApiError?>)(() => SnapshotMapper.Replace(_store, answer)) : () => SnapshotMapper.Apply(_store, answer);
+            ApiError? failure;
+            if (_sync != null)
             {
-                // Content of another version: the client's rules and names do not fit it, so the snapshot stays out of the store.
+                // Other content is fetched before its snapshot goes in (M0-58); an answer of the held content goes straight in.
+                failure = await _sync.ApplyAsync(answer, apply, cancellationToken);
+            }
+            else if (answer.IsSuccess && answer.Value!.ContentVersion != _contentVersion)
+            {
+                // No way to fetch: the client's rules and names do not fit other content, so the snapshot stays out of the store.
                 Move(ConnectionState.IncompatibleVersion, null);
                 return;
             }
-
-            // After a new login the answer may be another city (a reset development database), whose lower version the store would refuse as old.
-            ApiError? failure = loggedInAgain ? SnapshotMapper.Replace(_store, answer) : SnapshotMapper.Apply(_store, answer);
+            else
+            {
+                failure = apply();
+            }
             if (failure == null)
             {
                 Move(ConnectionState.Connected, null);

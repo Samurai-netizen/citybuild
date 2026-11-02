@@ -35,6 +35,9 @@ namespace CityBuilder.Client.Net
         /// <summary>How many times, how fast and how long to wait.</summary>
         private readonly CommandPolicy _policy;
 
+        /// <summary>Fetches new content before an answer of it is applied (M0-58); null applies every answer as it is.</summary>
+        private readonly ContentSync? _sync;
+
         /// <summary>Waits for a time span or until the token is cancelled (then it throws <see cref="OperationCanceledException"/>); a test passes its own.</summary>
         private readonly Func<TimeSpan, CancellationToken, Task> _delay;
 
@@ -62,8 +65,9 @@ namespace CityBuilder.Client.Net
         /// <param name="api">The API client.</param>
         /// <param name="store">The city store that takes the answers.</param>
         /// <param name="policy">The attempts, waits and debounce; <see cref="CommandPolicy.Default"/> in the game.</param>
-        public CommandSender(ApiClient api, ClientCityStore store, CommandPolicy policy)
-            : this(api, store, policy, Task.Delay, Guid.NewGuid)
+        /// <param name="contentSync">Applies each answer through the content refetch (<see cref="ContentSync"/>); the game passes it. Null applies the answer as it is.</param>
+        public CommandSender(ApiClient api, ClientCityStore store, CommandPolicy policy, ContentSync? contentSync = null)
+            : this(api, store, policy, Task.Delay, Guid.NewGuid, contentSync)
         {
         }
 
@@ -73,19 +77,22 @@ namespace CityBuilder.Client.Net
         /// <param name="policy">The attempts, waits and debounce.</param>
         /// <param name="delay">Waits; a test passes one that finishes when the test says so.</param>
         /// <param name="newRequestId">Makes a request id; it must never return the all-zeros id (the server refuses it).</param>
-        /// <exception cref="ArgumentNullException">An argument is null.</exception>
+        /// <param name="contentSync">Applies each answer through the content refetch (<see cref="ContentSync"/>), or null to apply it as it is.</param>
+        /// <exception cref="ArgumentNullException">A required argument is null.</exception>
         public CommandSender(
             ApiClient api,
             ClientCityStore store,
             CommandPolicy policy,
             Func<TimeSpan, CancellationToken, Task> delay,
-            Func<Guid> newRequestId)
+            Func<Guid> newRequestId,
+            ContentSync? contentSync = null)
         {
             _api = api ?? throw new ArgumentNullException(nameof(api));
             _store = store ?? throw new ArgumentNullException(nameof(store));
             _policy = policy ?? throw new ArgumentNullException(nameof(policy));
             _delay = delay ?? throw new ArgumentNullException(nameof(delay));
             _newRequestId = newRequestId ?? throw new ArgumentNullException(nameof(newRequestId));
+            _sync = contentSync;
         }
 
         /// <summary>Raised when an intent starts or ends, and when a pending one changes <see cref="PendingCommand.Phase"/>.</summary>
@@ -289,7 +296,9 @@ namespace CityBuilder.Client.Net
                 PendingChanged?.Invoke();
 
                 ApiResult<CitySnapshotDto> result = await command.Intent.SendAsync(_api, command.RequestId, cancellationToken);
-                ApiError? error = SnapshotMapper.Apply(_store, result);
+                ApiError? error = _sync == null
+                    ? SnapshotMapper.Apply(_store, result)
+                    : await _sync.ApplyAsync(result, () => SnapshotMapper.Apply(_store, result), cancellationToken);
                 if (error == null)
                 {
                     return new CommandOutcome(CommandOutcomeKind.Succeeded, command, null);
