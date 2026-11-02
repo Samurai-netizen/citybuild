@@ -206,8 +206,9 @@ The tests hold the rules of the look (the shared stylesheet, the sizes, the touc
 
 ## [MANUAL] Look at the mobile-safe UI (M0-59)
 The tests hold the panel sizes and the rules of the stylesheets (`MobileLayoutTests`), but only the Device Simulator shows a notch and a turn. Open
-**Window → General → Device Simulator** (not the Game view), press **Play**, and check two phones: one with a notch at about 20:9 (for example an iPhone 15
-or a Pixel 7) and one at 16:9 (for example an iPhone SE). Use **Rotate** to see each in landscape and in portrait. On each, look at:
+**Window → General → Device Simulator** (not the Game view), press **Play**, and check two phones from the iPhone XR on (older ones are not designed
+for, owner directive OD-18): the narrowest, an iPhone 12 or 13 mini, and one with a large notch, an iPhone 15 or a Pixel 7. Use **Rotate** to see
+each in landscape and in portrait. On each, look at:
 1. **Safe area.** The HUD, the Build and Research buttons, the status label, the inspector, the placement bar, the toasts and the banner keep clear of
    the notch, the rounded corners and the home bar, in both turns.
 2. **HUD.** Landscape: one row. Portrait: two rows, the chips on top and the workers, builders, research ring and name, era and connection under
@@ -216,8 +217,8 @@ or a Pixel 7) and one at 16:9 (for example an iPhone SE). Use **Rotate** to see 
    buttons and their count fit on one line.
 4. **Bottom.** Pick a building in the Build menu: in portrait the placement bar sits above the Build and Research buttons, not over them. Place it:
    the toast appears above the bar (portrait) or at the left (landscape).
-5. **Research.** Open the research screen: the cards scroll sideways; on a landscape phone with a home bar, if a card is cut off at the bottom,
-   it scrolls up and down too.
+5. **Research.** Open the research screen: the cards scroll sideways and never up and down (OD-17); on a landscape iPhone they are a little smaller,
+   so each card fits whole above the home bar, and a tap on a card still finances it.
 6. **Turn while a screen is open.** The layout follows within a frame; nothing stays at the old size.
 7. **Thumbs.** Every button (−, +, X, Build, Research, Place, Cancel, Try again, Continue) is easy to hit with a thumb; text wraps at the narrowest width.
 

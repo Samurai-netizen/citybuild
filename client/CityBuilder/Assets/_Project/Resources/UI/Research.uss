@@ -48,6 +48,7 @@
   display: none; /* the Close button under the panel closes it, as for the build tray: the header's height is the title's */
 }
 
+/* The cards scroll sideways only; ResearchScreen scales the row down when the panel is lower than a card (owner directive OD-17, M0-59). */
 .research-scroll {
   flex-grow: 1;
   margin-top: var(--sp-1);

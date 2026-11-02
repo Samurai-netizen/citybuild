@@ -19,7 +19,7 @@
 }
 
 .toast {
-  max-width: 280px; /* ends before the inspector, which starts 313 units from the left on a 711 unit wide screen */
+  max-width: 280px; /* ends before the inspector in landscape: on an 866 unit wide iPhone with 60 units of notch each side it starts at 408, the toasts end at 348 */
   margin-bottom: var(--sp-1);
   padding: var(--sp-1) var(--sp-3);
   border-left-width: 4px;

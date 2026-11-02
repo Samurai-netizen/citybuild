@@ -1,8 +1,9 @@
 /* The shared look of every screen (CR-0007): warm wood and parchment, the colours of the Era I art palette (art/blender/palette.py), and one
    scale. Every layout imports this file; a screen's own stylesheet only says where things sit and uses these tokens, never a colour or a font
    size of its own (a test checks it).
-   SCALE: the panel settings expand from 400 x 400 (M0-59), so the short side of the screen is 400 units in both turns (a 16:9 to 20:9 phone is
-   711 to 889 by 400 in landscape, 400 by 711 to 889 in portrait), one panel unit is about one dp, and a 48 unit button is a 48 dp touch target.
+   SCALE: the panel settings expand from 400 x 400 (M0-59), so the short side of the screen is 400 units in both turns (a phone from the iPhone XR
+   on, 19.5:9 to 20:9, is 866 to 889 by 400 in landscape and 400 by 866 to 889 in portrait; older phones are not designed for, owner directive
+   OD-18), one panel unit is about one dp, and a 48 unit button is a 48 dp touch target. What does not fit is scaled to fit (OD-17, ScaleToFit).
    PORTRAIT: every screen root gets the class "portrait" while it is taller than wide (UiRoot.PadBySafeArea); a screen's stylesheet uses it to
    rearrange for the 400 unit width. */
 :root {

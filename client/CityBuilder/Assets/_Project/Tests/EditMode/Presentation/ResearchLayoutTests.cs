@@ -45,16 +45,16 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation
         }
 
         /// <summary>
-        /// The row of cards scrolls in both directions (M0-59): sideways through the nodes, and up and down when the panel is lower than a card, as on
-        /// a landscape phone with a bottom inset, so no card is cut off out of reach.
+        /// The cards scroll sideways only (owner directive OD-17, M0-59): when the panel is lower than a card the component scales the row down
+        /// (<c>ScaleToFit</c>) instead of adding a second scroll direction.
         /// </summary>
         [Test]
-        public void Screen_TheCardsScrollInBothDirections()
+        public void Screen_TheCardsScrollSidewaysOnly()
         {
-            ScrollView? scroll = Layout("UI/Research").Q<ScrollView>("research-scroll");
+            ScrollView? scroll = Layout("UI/Research").Q<ScrollView>(ResearchScreen.ScrollName);
 
             Assert.That(scroll, Is.Not.Null);
-            Assert.That(scroll!.mode, Is.EqualTo(ScrollViewMode.VerticalAndHorizontal));
+            Assert.That(scroll!.mode, Is.EqualTo(ScrollViewMode.Horizontal));
         }
 
         /// <summary>The node layout has the root, the picture, the ring, the labels and the Finance button.</summary>

@@ -12,8 +12,8 @@ using UnityEngine.UIElements;
 namespace CityBuilder.Client.Tests.EditMode.Presentation
 {
     /// <summary>
-    /// Mobile-safe UI (M0-59): the panel sizes a 16:9 to 20:9 phone gets in both turns, every screen padded by the safe area, and the portrait rules
-    /// of the stylesheets. The files are read as text, so a change that breaks a narrow or notched screen fails before anyone opens the Device
+    /// Mobile-safe UI (M0-59): the panel sizes a phone from the iPhone XR on gets in both turns (owner directive OD-18), every screen padded by the
+    /// safe area, scroll views that scroll one way only (OD-17), and the portrait rules of the stylesheets. The files are read as text, so a change that breaks a narrow or notched screen fails before anyone opens the Device
     /// Simulator; how it looks is the [MANUAL] check in <c>client/README.md</c>.
     /// </summary>
     public sealed class MobileLayoutTests
@@ -53,16 +53,19 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation
             return new Vector2(width / ratio, height / ratio);
         }
 
-        /// <summary>A 16:9 to 20:9 phone has 400 units on its short side and 711 to 889 on its long side, in landscape and in portrait.</summary>
-        [TestCase(1280, 720)]
-        [TestCase(1920, 1080)]
+        /// <summary>
+        /// A phone from the iPhone XR on (19.5:9 to 20:9, OD-18: an iPhone XR, a 13 mini or a Galaxy S at 2340 by 1080, an iPhone 15, a 20:9 Android)
+        /// has 400 units on its short side and 865 to 889 on its long side, in landscape and in portrait.
+        /// </summary>
+        [TestCase(1792, 828)]
         [TestCase(2340, 1080)]
+        [TestCase(2556, 1179)]
         [TestCase(2400, 1080)]
-        [TestCase(720, 1280)]
-        [TestCase(1080, 1920)]
+        [TestCase(828, 1792)]
         [TestCase(1080, 2340)]
+        [TestCase(1179, 2556)]
         [TestCase(1080, 2400)]
-        public void APhoneFrom16To20By9_GetsAShortSideOf400_InEitherTurn(int width, int height)
+        public void APhoneFromTheIPhoneXrOn_GetsAShortSideOf400_InEitherTurn(int width, int height)
         {
             var settings = Resources.Load<PanelSettings>("UI/PanelSettings");
             Assert.That(settings, Is.Not.Null);
@@ -70,7 +73,27 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation
             Vector2 size = ExpandedPanelSize(settings.referenceResolution, width, height);
 
             Assert.That(Mathf.Min(size.x, size.y), Is.EqualTo(400f).Within(0.5f));
-            Assert.That(Mathf.Max(size.x, size.y), Is.InRange(711f, 889f));
+            Assert.That(Mathf.Max(size.x, size.y), Is.InRange(865f, 889f));
+        }
+
+        /// <summary>
+        /// Every scroll view of every layout scrolls one way only (owner directive OD-17): content that does not fit across it is scaled to fit
+        /// (<c>ScaleToFit</c>), never given a second scroll direction.
+        /// </summary>
+        [Test]
+        public void EveryScrollView_ScrollsOneWayOnly()
+        {
+            int scrollViews = 0;
+            foreach (string path in Directory.GetFiles(UiFolder, "*.uxml"))
+            {
+                foreach (Match match in Regex.Matches(File.ReadAllText(path), @"<ui:ScrollView\b[^>]*>"))
+                {
+                    scrollViews++;
+                    Assert.That(match.Value, Does.Match(@"\bmode=""(Vertical|Horizontal)"""), Path.GetFileName(path) + ": " + match.Value);
+                }
+            }
+
+            Assert.That(scrollViews, Is.GreaterThanOrEqualTo(3));
         }
 
         /// <summary>
