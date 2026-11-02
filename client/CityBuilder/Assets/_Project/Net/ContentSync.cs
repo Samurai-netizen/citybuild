@@ -97,15 +97,31 @@ namespace CityBuilder.Client.Net
                     return mapped.Error;
                 }
 
-                ContentReplacing?.Invoke();
+                Raise(() => ContentReplacing?.Invoke());
                 LoadedVersion = wanted;
                 ApiError? failure = apply();
-                ContentReplaced?.Invoke(loaded.Content!, loaded.TimeScale);
+                Raise(() => ContentReplaced?.Invoke(loaded.Content!, loaded.TimeScale));
                 return failure;
             }
             finally
             {
                 _gate.Release();
+            }
+        }
+
+        /// <summary>
+        /// Runs a listener call; whatever a listener throws is logged, never passed on, as for <see cref="CommandSender.Completed"/>: the answer is
+        /// already on its way into the store, and the poll or the command that brought it must not fail because a screen could not be built.
+        /// </summary>
+        private static void Raise(Action call)
+        {
+            try
+            {
+                call();
+            }
+            catch (Exception exception)
+            {
+                ClientLog.Exception(exception);
             }
         }
 

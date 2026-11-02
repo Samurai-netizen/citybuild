@@ -2,12 +2,15 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using CityBuilder.Client.Core;
 using CityBuilder.Client.Net;
 using CityBuilder.Simulation.Content;
 using NUnit.Framework;
+using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace CityBuilder.Client.Tests.EditMode.Net
 {
@@ -232,6 +235,21 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(_events.FindAll(e => e.StartsWith("request /content", StringComparison.Ordinal)), Has.Count.EqualTo(1));
             Assert.That(_events.FindAll(e => e == "replacing"), Has.Count.EqualTo(1));
             Assert.That(_events.FindAll(e => e.StartsWith("replaced", StringComparison.Ordinal)), Has.Count.EqualTo(1));
+        }
+
+        /// <summary>A listener that throws is logged and does not stop the apply: the snapshot still goes in and the other listener still hears.</summary>
+        [Test]
+        public async Task Apply_WhenAListenerThrows_StillAppliesTheSnapshot()
+        {
+            _sync.ContentReplacing += () => throw new InvalidOperationException("a broken replacing listener");
+            _wire.Answer(200, CityOf(NewVersion)).Answer(200, ContentOf(NewVersion));
+            LogAssert.Expect(LogType.Exception, new Regex("a broken replacing listener"));
+
+            ApiError? failure = await ApplyNextCityAsync();
+
+            Assert.That(failure, Is.Null);
+            Assert.That(_store.Snapshot!.ContentVersion, Is.EqualTo(NewVersion));
+            Assert.That(_events, Does.Contain("replaced mvp-2 x1"));
         }
 
         /// <summary>The monitor with a sync: a poll that finds other content fetches it first, then applies the snapshot, and ends Connected.</summary>
