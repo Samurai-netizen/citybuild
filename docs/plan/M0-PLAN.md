@@ -301,8 +301,8 @@ The AI coder updates its row at start (`In progress`) and finish (`In review`). 
 | M0-54 | 9 | Waiting-loop review and tuning | O MANUAL | Done |
 | M0-55 | 10 | Connection states in the UI | S | Done |
 | M0-56 | 10 | Proving idempotent retries | O | Done |
-| M0-57 | 10 | Client logging | S | In review |
-| M0-58 | 10 | Version and content compatibility | S | Todo |
+| M0-57 | 10 | Client logging | S | Done |
+| M0-58 | 10 | Version and content compatibility | S | In progress |
 | M0-59 | 10 | Mobile-safe UI | S | Todo |
 | M0-60 | 10 | Client ↔ server boundary review | O | Todo |
 | M0-61 | 11 | DocTools: generated reference docs | O PLAN | Todo |

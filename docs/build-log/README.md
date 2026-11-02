@@ -11,6 +11,7 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
+- [BL-20261102-03 · M0-58 · Version and content compatibility](2026/2026-11-02-03-M0-58.md) — In progress
 - [BL-20261102-02 · M0-57 · Client logging](2026/2026-11-02-02-M0-57.md) — Done
 - [BL-20261102-01 · M0-56 · Proving idempotent retries](2026/2026-11-02-01-M0-56.md) — Done
 - [BL-20261101-14 · CR-0007-T1 · UI visual pass: every screen](2026/2026-11-01-14-CR-0007-T1.md) — Done
