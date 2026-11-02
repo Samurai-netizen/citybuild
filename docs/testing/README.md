@@ -106,6 +106,7 @@ flowchart LR
   clock through the actions and the table's rows and checks each row's snapshot (as one line of text, so a failure names the row), the
   stored city against the replay (`SampleCities.Describe`), and the ledger against the stock. If a row fails there but the engine's golden
   test passes, the difference is in the server. The same requests by hand: `docs/api/smoke.http`.
+- A lost response (`Commands/LostResponseDatabaseTests`, M0-56): the command, a poll that moves the city past it, then the same body again; the client hanging up while its request waits for the city's lock (`DatabaseLocks`). The client's side: `Tests/EditMode/Net/LostResponseTests`, with a wire of its own that keeps receipts, so a retry with a new id would count as a second application.
 - Examples: `Persistence/CityRepositoryDatabaseTests` (repositories through the server), `Persistence/CityTransactionDatabaseTests`
   (the runner: rollback, version check, two transactions on one city, lock timeout), `Persistence/SettleCityDatabaseTests` (a use case
   through the server: `DatabaseCities` stores and settles cities; a twin city settled another way is the expected result, and a second
@@ -120,5 +121,6 @@ flowchart LR
 
 ## Other test documents
 - `LOCAL-E2E.md`: the manual check of the Unity client against the real server on one machine (M0-42).
+- `KILL-SERVER-CHECK.md` and `kill-server-check.sh`: kills the real server with commands on their way, sends them again and counts the rows (M0-56).
 - `UNITY-SMOKE-TEST.md`: the manual smoke test of a real build *(planned, M0-72)*.
 - `server-panel/goods.sql` (the panel's goods script, CR-0006) is tested by `ServerPanel/GoodsPanelScriptTests` in the integration project: it runs the file with the container's own `psql` through `PostgresServer.RunPsqlFileAsync`. The panel's argument checks have no database: `bash server-panel/test-goods.sh` (not run by CI yet; the workflow files are protected, `15`).
