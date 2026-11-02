@@ -145,7 +145,7 @@ namespace CityBuilder.Client.Presentation.Research
         /// <param name="parent">The object the screen's object goes under.</param>
         public static ResearchScreen? Create(Transform parent)
         {
-            var panelSettings = Resources.Load<PanelSettings>(PanelSettingsPath);
+            var panelSettings = UiPanelSettings.Shared();
             var layout = Resources.Load<VisualTreeAsset>(LayoutPath);
             var nodeLayout = Resources.Load<VisualTreeAsset>(NodeLayoutPath);
             if (panelSettings == null || layout == null || nodeLayout == null)

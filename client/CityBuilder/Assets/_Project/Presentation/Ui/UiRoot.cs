@@ -30,13 +30,17 @@ namespace CityBuilder.Client.Presentation.Ui
             return root.panel.Pick(RuntimePanelUtils.ScreenToPanel(root.panel, topLeft)) != null;
         }
 
-        /// <summary>Pads <paramref name="root"/> by the screen's safe area on top of <paramref name="basePadding"/>, in panel units.</summary>
+        /// <summary>The class a root gets while its panel is taller than wide; a screen's USS uses it to drop secondary text (M0-59).</summary>
+        public const string PortraitClass = "portrait";
+
+        /// <summary>Pads <paramref name="root"/> by the screen's safe area on top of <paramref name="basePadding"/>, in panel units, and marks it with <see cref="PortraitClass"/> in portrait.</summary>
         /// <param name="root">The screen's root element, laid out already (its resolved size is read).</param>
         /// <param name="basePadding">The padding in panel units before the safe area is added.</param>
         public static void PadBySafeArea(VisualElement root, float basePadding)
         {
             SafeAreaInsets insets = SafeAreaInsets.From(
                 Screen.safeArea, Screen.width, Screen.height, root.resolvedStyle.width, root.resolvedStyle.height);
+            root.EnableInClassList(PortraitClass, root.resolvedStyle.height > root.resolvedStyle.width);
             root.style.paddingLeft = basePadding + insets.Left;
             root.style.paddingTop = basePadding + insets.Top;
             root.style.paddingRight = basePadding + insets.Right;

@@ -97,7 +97,7 @@ namespace CityBuilder.Client.Presentation.WelcomeBack
         /// <param name="parent">The object the panel's object goes under.</param>
         public static WelcomeBackPanel? Create(Transform parent)
         {
-            var panelSettings = Resources.Load<PanelSettings>(PanelSettingsPath);
+            var panelSettings = UiPanelSettings.Shared();
             var layout = Resources.Load<VisualTreeAsset>(LayoutPath);
             if (panelSettings == null || layout == null)
             {

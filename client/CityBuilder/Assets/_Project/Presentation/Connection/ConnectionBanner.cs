@@ -88,7 +88,7 @@ namespace CityBuilder.Client.Presentation.Connection
         /// <param name="parent">The object the component's object goes under.</param>
         public static ConnectionBanner? Create(Transform parent)
         {
-            var panelSettings = Resources.Load<PanelSettings>(PanelSettingsPath);
+            var panelSettings = UiPanelSettings.Shared();
             var layout = Resources.Load<VisualTreeAsset>(LayoutPath);
             if (panelSettings == null || layout == null)
             {

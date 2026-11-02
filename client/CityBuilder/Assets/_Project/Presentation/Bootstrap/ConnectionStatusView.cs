@@ -1,6 +1,7 @@
 #nullable enable
 
 using CityBuilder.Client.Core;
+using CityBuilder.Client.Presentation.Ui;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -51,7 +52,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         /// <param name="parent">The object the view's object goes under.</param>
         public static ConnectionStatusView? Create(Transform parent)
         {
-            var panelSettings = Resources.Load<PanelSettings>(PanelSettingsPath);
+            var panelSettings = UiPanelSettings.Shared();
             var connectionStatus = Resources.Load<VisualTreeAsset>(ConnectionStatusPath);
             var fatalErrorLayout = Resources.Load<VisualTreeAsset>(FatalErrorPath);
             if (panelSettings == null || connectionStatus == null || fatalErrorLayout == null)

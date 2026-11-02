@@ -13,6 +13,7 @@
 
 .hud-panel {
   height: 40px;
+  overflow: hidden; /* nothing spills out of the bar on a narrow screen */
   padding: 0 var(--sp-2);
   flex-direction: row;
   align-items: center;
@@ -194,4 +195,10 @@
 
 .hud-dot--problem {
   background-color: var(--c-stop-light);
+}
+
+/* Portrait (M0-59): the bar is 400 units wide, so the research name and time and the connection text go; the ring, the chips and the dot stay. */
+.portrait .hud-research-text,
+.portrait .hud-connection .hud-caption {
+  display: none;
 }

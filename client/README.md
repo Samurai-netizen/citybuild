@@ -204,4 +204,14 @@ The tests hold the rules of the look (the shared stylesheet, the sizes, the touc
 7. Check the size of what you tap: every button should be easy to hit with a thumb (48 units high, about 7 mm on a phone). Tell the AI coder "UI looks decent", or what looks wrong
    (which screen, at which size). Stop Play mode without saving the scene.
 
-Last updated: CR-0007-T1
+## [MANUAL] Look at the mobile-safe UI (M0-59)
+The tests hold the scaling maths and the portrait rules of the stylesheets, but only the Device Simulator shows a notch. Open **Window → General → Device Simulator**
+(not the Game view), press **Play**, and for a phone with a notch (for example iPhone 15 or a Pixel with a cut-out), once in portrait and once in landscape and with an
+aspect from 16:9 to 20:9, look at:
+1. The HUD, the Build and Research buttons, the inspector, the placement bar and the toasts keep clear of the notch and the rounded corners (the safe area), in both turns.
+2. Portrait: the HUD shows the chips, workers, builders, ring and era only, nothing overlaps; the inspector and the placement bar fit the width; the research row scrolls sideways.
+3. Rotate while a screen is open: the layout follows within a frame and nothing is stuck at the old size.
+4. Every button (− and +, X, Build, Research, Place, Cancel, Try again) is easy to hit with a thumb; text wraps and never overlaps at the narrowest width.
+Tell the AI coder "mobile UI looks right", or which screen and device is wrong.
+
+Last updated: M0-59

@@ -330,6 +330,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         /// </summary>
         private void Update()
         {
+            UiPanelSettings.Refresh();
             _displayCity?.Refresh();
             _ = _monitor?.TickAsync(destroyCancellationToken);
         }

@@ -132,7 +132,7 @@ namespace CityBuilder.Client.Presentation.Build
         /// <param name="model">The menu's state.</param>
         public static BuildMenu? Create(Transform parent, BuildMenuModel model)
         {
-            var panelSettings = Resources.Load<PanelSettings>(PanelSettingsPath);
+            var panelSettings = UiPanelSettings.Shared();
             var layout = Resources.Load<VisualTreeAsset>(LayoutPath);
             var cardLayout = Resources.Load<VisualTreeAsset>(CardLayoutPath);
             if (panelSettings == null || layout == null || cardLayout == null)

@@ -57,7 +57,7 @@ new stock shows within a second. No singleton, no `Find*` call.
 that predicate: a second screen means extending it, not replacing it: `GameRoot.IsOverUi` ors the menu's, the placement bar's, the building inspector's, the research screen's, the welcome-back report's and the connection banner's `IsOverUi`, and both use `UiRoot.IsOver` / `UiRoot.PadBySafeArea` (`Presentation/Ui/`).
 
 **7. Respect the safe area.** `SafeAreaInsets.From(Screen.safeArea, …)` turns the notch and the bars into panel units; the component adds
-them to its root padding when the layout is computed (`GeometryChangedEvent`).
+them to its root padding when the layout is computed (`GeometryChangedEvent`). Take the panel settings from `UiPanelSettings.Shared()`, never `Resources.Load`: the panel is 880 × 400 units in landscape and 400 × 880 in portrait (`PanelScaling`). Give a fixed-width panel `max-width: 100%`, and use the root's `portrait` class (set by `PadBySafeArea`) to drop secondary text.
 
 **8. Test in the scene.** `Tests/PlayMode/BuildMenuTests.cs` creates the menu for the real content and a city, waits a frame for `Start`,
 and checks the tree: one card per type, a locked card's lock text and disabled state, that a tap on it selects nothing, that a new city
