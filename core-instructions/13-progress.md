@@ -7,8 +7,8 @@
 - **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** CR-0008-T1 · Logistics rework: spec, engine and server (`[O]`; parts A–I, one PR) · branch `task/CR-0008-T1-logistics-engine-server` ·
   build log `docs/build-log/2026/2026-11-02-07-CR-0008-T1.md` (its Session 1 plan lists every part and step)
-- **Part / step:** B (technical spec; draft PR #86). B1 `04`, B2 `05` `06` `07` `09` done. Next: B3 `23` (numbers, golden #1 and #2) →
-  B4 `content-golden-v2.json` (protected: the owner answers the permission prompt). Then C … I, then `/finish-task`.
+- **Part / step:** B (technical spec; draft PR #86). B1–B3 done (`04`, `05`, `06`, `07`, `09`, `23`). Next: B4
+  `content-golden-v2.json` (protected: the owner answers the permission prompt). Then C (engine: roads, paths) … I, then `/finish-task`.
 - **Last completed:** M0-60 · Client ↔ server boundary review (PR #85, merged)
 - **Next task:** CR-0008-T2 · client and art (`[S]`), after T1 merges; then CR-0008-T3, then M0-61.
 - **Open questions for the owner:** M0-60: `test-unity.sh` on a machine with Unity (client changes not compiled in Unity). M0-58: the [MANUAL] content-change check (`client/README.md`; no automated test covers the `GameRoot` rebuild). CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-54: the dev database still runs the fast clock until the owner does step 7 of the waiting-loop run (`LOCAL-E2E.md`). M0-55: the [MANUAL] look at the connection states (`client/README.md`). CR-0007-T1: the [MANUAL] look at the new UI (`client/README.md`); the status label may be removed (build log follow-ups).

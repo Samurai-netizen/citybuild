@@ -72,7 +72,8 @@ One document, the same for every player: `contentVersion`; `rules` (`gridWidth`,
   `Simulation:DevTimeScale` above 1 reports that scale (M0-35, `04` §1).
 - **CR-0008** *(planned, the part that builds each)*: `rules` loses `baseStorageCaps` (part E) and `maxOfflineProductionSeconds` (part H) and
   gains `groundTileMillis`, `crossingSpeedPermille`, `tripCarryLimit`, `maxRouteStops`, `maxStopActions`, `minWalkSeconds`,
-  `maxWalkBonusPermille`; new top-level `roads` (`levels`: `level`, `name`, `tileMillis`, `cost`) and `amountPresets` (`id`, `percent`);
+  `maxWalkBonusPermille`; new top-level `roads` (a list of levels: `level`, `name`, `tileMillis`, `cost`: to place at level 1, to upgrade to it above) and
+  `amountPresets` (`id`, `name`, `percent`);
   an item's `capped` becomes `currency`; `startingCity.inventory` becomes `startingCity.purse`; `kind` adds `Warehouse`, `CourierStation`
   and `Science`; a building may have `maxPerCity`; a level adds `storage` (good → limit), `carryLimit` and `staminaSeconds`; effects add
   `unlockAmountMode` (`mode`: `percent` or `exact`) and `walkSpeedBonus` (`permille`). The same rules for order and nulls apply.
