@@ -11,6 +11,7 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
+- [BL-20261102-04 · repo · Cloud setup script](2026/2026-11-02-04-repo.md) — Done
 - [BL-20261102-03 · M0-58 · Version and content compatibility](2026/2026-11-02-03-M0-58.md) — In progress
 - [BL-20261102-02 · M0-57 · Client logging](2026/2026-11-02-02-M0-57.md) — Done
 - [BL-20261102-01 · M0-56 · Proving idempotent retries](2026/2026-11-02-01-M0-56.md) — Done
