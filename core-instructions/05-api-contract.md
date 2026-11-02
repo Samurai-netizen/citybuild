@@ -143,7 +143,7 @@ There is no "claim" command, because production and research complete on their o
 - `set-route` (`{ requestId, stationId, slot, stops: [{ buildingId, actions: [{ kind, itemId, amount }] }] }`, *(planned, part G)*): ids
   and `slot` ≥ 1, 0 to 16 stops, 1 to 8 actions per stop, `kind` `take` or `put`, item ids of the content-id form, amounts as above, else
   `INVALID_ARGUMENT` before the lock. Then `BUILDING_NOT_FOUND`, `INVALID_ARGUMENT` (not a courier station; the currency; an unknown
-  preset), `INVALID_ROUTE` (slot above the station's couriers, 1 stop or more than `maxRouteStops`, more than `maxStopActions`, two
+  preset), `INVALID_ROUTE` (slot above the station level's courier limit, 1 stop or more than `maxRouteStops`, more than `maxStopActions`, two
   consecutive stops at one building), `UNKNOWN_ITEM`, `AMOUNT_MODE_LOCKED`. 0 stops clears the route.
 - `reenergize-couriers` (`{ requestId }`, *(planned, part H)*): always succeeds; every courier's stamina is full again and resting ones leave.
 
@@ -224,14 +224,6 @@ There is no "claim" command, because production and research complete on their o
 | `RESEARCH_LOCKED` | 422 | Prerequisites missing or the node belongs to another era |
 | `RESEARCH_IN_PROGRESS` | 409 | The research slot is busy |
 | `RESEARCH_COMPLETED` | 409 | Already researched |
-| `BUILDING_LIMIT` | 422 | The city already has the most buildings of this type (`maxPerCity`, the science building) *(planned, CR-0008)* |
-| `NO_SCIENCE_BUILDING` | 422 | Research needs a completed science building *(planned, CR-0008)* |
-| `ROAD_NOT_FOUND` | 404 | A tile of the list has no road *(planned, CR-0008)* |
-| `UNKNOWN_ITEM` | 422 | Item id not in content *(planned, CR-0008)* |
-| `AMOUNT_MODE_LOCKED` | 422 | A percentage or exact amount before the research that unlocks it *(planned, CR-0008)* |
-| `ITEM_NOT_ACCEPTED` | 422 | The trip's target neither needs the item for a project nor stores it *(planned, CR-0008)* |
-| `NOTHING_TO_CARRY` | 422 | The trip's amount gives nothing: the source holds none of the item *(planned, CR-0008)* |
-| `INVALID_ROUTE` | 422 | A route's slot, stop count, action count or consecutive stops break the content's route rules *(planned, CR-0008)* |
 | `IDEMPOTENCY_CONFLICT` | 409 | Same `requestId`, different payload |
 | `RATE_LIMITED` | 429 | Too many requests |
 | `CONCURRENCY_CONFLICT` | 409 | Lock timeout or version mismatch; safe to retry |
@@ -240,6 +232,14 @@ There is no "claim" command, because production and research complete on their o
 | `METHOD_NOT_ALLOWED` | 405 | A method the endpoint doesn't take |
 | `UNSUPPORTED_MEDIA_TYPE` | 415 | A body that isn't `application/json`, or has no `Content-Type` |
 | `UNSUPPORTED_CLIENT_VERSION` | 426 | The `X-Client-Version` build is no longer supported; update the game. *Reserved (M0-58): the server refuses no build yet.* The client treats it as `IncompatibleVersion` |
+
+**Planned codes (CR-0008).** Each joins the table above (and the catalogue, the client's `ApiErrorCodes` and `FeedbackMessages`) in the
+part of CR-0008-T1 that first returns it: `ROAD_NOT_FOUND` 404 (a tile of the list has no road; part D) · `BUILDING_LIMIT` 422 (the city
+already has the most buildings of the type, `maxPerCity`: the science building) · `NO_SCIENCE_BUILDING` 422 (research needs a completed
+science building) · `UNKNOWN_ITEM` 422 (item id not in content) · `AMOUNT_MODE_LOCKED` 422 (a percentage or exact amount before the
+research that unlocks it) · `ITEM_NOT_ACCEPTED` 422 (the trip's target neither needs the item for a project nor stores it) ·
+`NOTHING_TO_CARRY` 422 (the trip's amount gives nothing: the source holds none of the item; all part E) · `INVALID_ROUTE` 422 (a route's
+slot, stop count, action count or consecutive stops break the content's route rules; part G).
 
 `code` is for program logic. `title` and `detail` are for humans and may change. `traceId` names the HTTP request (W3C trace context, always
 the server's own: a `traceparent` the client sends is ignored, M0-60; its second part is the `TraceId` of every log line of the request),
