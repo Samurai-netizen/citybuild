@@ -9,8 +9,8 @@
 - **Branch:** `task/M0-57-client-logging`
 - **Build log entry:** `docs/build-log/2026/2026-11-02-02-M0-57.md` (In progress)
 - **Last green commit:** `3836bf4` (main); the start commit is the first on the branch
-- **Done steps:** none (plan written)
-- **Next step:** step 1 of the plan: `LogLevel`, `ILogSink`, `UnityLogSink`, `ClientLog` in `Core`, with EditMode tests.
+- **Done steps:** 1 (`ClientLog`, `LogLevel`, `ILogSink`, `UnityLogSink` in `Core`, with tests)
+- **Next step:** step 2: `ApiClient` logs each request at Debug (no body, no token) and each failure at Warning with the trace id.
 - **Open questions for the owner:** CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-54: the dev database still runs the fast clock until the owner does step 7 of the waiting-loop run (`LOCAL-E2E.md`). M0-55: the [MANUAL] look at the connection states (`client/README.md`). CR-0007-T1: the [MANUAL] look at the new UI (`client/README.md`); the status label may be removed (build log follow-ups).
 - **Known broken / do not touch:** — (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55)
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
