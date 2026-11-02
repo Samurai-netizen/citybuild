@@ -103,7 +103,7 @@ One task, by the owner's choice (see Owner approval): CR-0007-T1 does every scre
 ## Tasks (filled in after approval)
 | ID | Title | Model | Status |
 |---|---|---|---|
-| CR-0007-T1 | UI visual pass: every screen, the shared stylesheet and the scale | S | In review |
+| CR-0007-T1 | UI visual pass: every screen, the shared stylesheet and the scale | S | Done |
 
 ## Owner approval
 - Approved on: 2026-11-02. The owner's answers to the four questions, in their words: "1. Focus on mobile landscape view. 2. Look "b". 3. Keep
