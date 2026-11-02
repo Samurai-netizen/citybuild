@@ -178,6 +178,7 @@ There is no "claim" command, because production and research complete on their o
 | `NOT_FOUND` | 404 | A path no endpoint has (also the dev login outside Development) |
 | `METHOD_NOT_ALLOWED` | 405 | A method the endpoint doesn't take |
 | `UNSUPPORTED_MEDIA_TYPE` | 415 | A body that isn't `application/json`, or has no `Content-Type` |
+| `UNSUPPORTED_CLIENT_VERSION` | 426 | The `X-Client-Version` build is no longer supported; update the game. *Reserved (M0-58): the server refuses no build yet.* The client treats it as `IncompatibleVersion` |
 
 `code` is for program logic. `title` and `detail` are for humans and may change. `traceId` names the HTTP request (W3C trace context; its
 second part is the `TraceId` of every log line of the request), `requestId` the command across its retries: `docs/api/logs-and-correlation.md`.

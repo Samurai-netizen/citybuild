@@ -116,6 +116,14 @@ public static class ErrorCatalogue
         "UNSUPPORTED_MEDIA_TYPE", StatusCodes.Status415UnsupportedMediaType, "Unsupported media type", "Send the body as application/json.");
 
     /// <summary>
+    /// A client build the server no longer supports (M0-58). The server does not refuse any build yet, so nothing produces it (a reserved code in
+    /// <c>ErrorCatalogueTests</c>); the Unity client already treats it as <c>IncompatibleVersion</c>.
+    /// </summary>
+    public static readonly ApiError UnsupportedClientVersion = new(
+        "UNSUPPORTED_CLIENT_VERSION", StatusCodes.Status426UpgradeRequired, "Client version unsupported",
+        "This version of the game is no longer supported; update the game.");
+
+    /// <summary>
     /// Every code of the catalogue, in the order of <c>05</c>'s table. A test checks that this list holds every member above once and that
     /// each has a row in the contract's table.
     /// </summary>
@@ -124,7 +132,7 @@ public static class ErrorCatalogue
         AuthenticationRequired, InvalidArgument, UnknownBuildingType, BuildingLocked, OutOfBounds, TileOccupied, InsufficientResource,
         InsufficientWorkers, WorkerLimit, NoFreeBuilder, BuildingNotFound, BuildingBusy, MaxLevel, UnknownResearch, ResearchLocked,
         ResearchInProgress, ResearchCompleted, IdempotencyConflict, RateLimited, ConcurrencyConflict, InternalError, NotFound, MethodNotAllowed,
-        UnsupportedMediaType,
+        UnsupportedMediaType, UnsupportedClientVersion,
     ];
 
     /// <summary>The API error of an engine rejection: its code and status in <c>05</c>.</summary>

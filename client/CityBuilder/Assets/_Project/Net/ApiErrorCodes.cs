@@ -79,6 +79,9 @@ namespace CityBuilder.Client.Net
         /// <summary>415: a body that isn't <c>application/json</c>.</summary>
         public const string UnsupportedMediaType = "UNSUPPORTED_MEDIA_TYPE";
 
+        /// <summary>426: the server no longer supports this build of the client (<c>X-Client-Version</c>). The client turns it into <c>ConnectionState.IncompatibleVersion</c>; the server sends it from the task that rejects versions on.</summary>
+        public const string UnsupportedClientVersion = "UNSUPPORTED_CLIENT_VERSION";
+
         /// <summary>No HTTP answer arrived: no connection, a refused or reset connection, a DNS failure. <see cref="ApiError.Status"/> is 0. Safe to retry.</summary>
         public const string ClientNetworkError = "CLIENT_NETWORK_ERROR";
 

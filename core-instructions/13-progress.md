@@ -9,8 +9,8 @@
 - **Branch:** `task/M0-58-version-compat`
 - **Build log entry:** `docs/build-log/2026/2026-11-02-03-M0-58.md` (In progress)
 - **Last green commit:** the M0-57 merge on `main` (`b1da1f6`)
-- **Done steps:** write-ahead; step 1 (server logs `X-Client-Version` as the `ClientVersion` log scope, sanitised, with tests and docs)
-- **Next step:** plan step 2: error `CLIENT_VERSION_UNSUPPORTED` (426) in the catalogue and `05`, then the client's constants, message and tests.
+- **Done steps:** write-ahead; step 1 (server logs `X-Client-Version` as the `ClientVersion` log scope); step 2 (error `UNSUPPORTED_CLIENT_VERSION` 426: catalogue, `05`, client constant and message; owner OK'd a `_reservedCodes` list in `ErrorCatalogueTests`)
+- **Next step:** plan step 3: the client sends `X-Client-Version` (`ApiTransportRequest`, `UnityWebRequestTransport`, `ApiClient`) with tests; first Unity compile/test run (`UNITY_EDITOR=/Applications/Unity/Hub/Editor/6000.3.25f1/Unity.app/Contents/MacOS/Unity`, Editor closed).
 - **Open questions for the owner:** CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-54: the dev database still runs the fast clock until the owner does step 7 of the waiting-loop run (`LOCAL-E2E.md`). M0-55: the [MANUAL] look at the connection states (`client/README.md`). CR-0007-T1: the [MANUAL] look at the new UI (`client/README.md`); the status label may be removed (build log follow-ups).
 - **Known broken / do not touch:** — (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55)
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·

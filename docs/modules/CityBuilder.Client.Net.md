@@ -15,7 +15,7 @@ client directly (`.claude/rules/unity.md`). `GameRoot` builds it and runs the st
 |---|---|
 | `ApiClient` | One method per endpoint (`DevLoginAsync`, `GetContentAsync`, `GetCityAsync`, and one per command); builds the URL and body, owns the timeout, returns an `ApiResult<T>`. Holds the bearer token in memory (`SetAccessToken`). Logs each request (M0-57): a Debug line (`Request GET /city -> 200 in 41 ms`) when it worked, a Warning with the error code, status and the server's trace id when it did not; never a token or a body. Takes an optional `ClientLogger` (default `ClientLog.Default`) |
 | `ApiResult<T>` / `ApiError` | The DTO or the error, never both. `ApiError`: `Code`, `Status`, `Detail`, `TraceId`, `RequestId`, `RetryAfterSeconds` |
-| `ApiErrorCodes` | The 24 server codes of `05` and the three `CLIENT_` codes (`CLIENT_NETWORK_ERROR` and `CLIENT_TIMEOUT`, status 0; `CLIENT_INVALID_RESPONSE`, the HTTP status) |
+| `ApiErrorCodes` | The 25 server codes of `05` (the last, `UNSUPPORTED_CLIENT_VERSION`, means `IncompatibleVersion`) and the three `CLIENT_` codes (`CLIENT_NETWORK_ERROR` and `CLIENT_TIMEOUT`, status 0; `CLIENT_INVALID_RESPONSE`, the HTTP status) |
 | `ApiResponseParser` | (status, body) to an `ApiResult<T>`; never throws on a bad body, never copies the body into an error |
 | `ApiJson` | The one serializer setup: camelCase members, enums as wire strings, dates kept as text, depth limit 32, no type names |
 | `IApiTransport`, `UnityWebRequestTransport` | The wire (one request in, one response or network failure out); the second is the real one, tests use a fake. It follows no redirect (`redirectLimit = 0`): the API never sends one, and following it would hand the bearer token to wherever a captive portal or a proxy points (CR-0004) |
@@ -80,7 +80,7 @@ captured from the real server, and the round-trip test. A new error code: add it
 - `ConnectionMonitorTests` (real `ApiClient`, `FakeTransport`, a fake clock): each answer's state, the single new login and its three requests, a second refusal, a refused or unreachable login, a rate limit, when `StateChanged` fires, the store untouched by other content, ticks that poll only when due, pause and resume, a network that comes back, a cancel, a poll after a command's lost connection, `PollFinished` after a successful and a failed poll.
 - `SnapshotDtoTests`, `ContentDtoTests`, `RequestDtoTests`: every fixture reads, writes back to the same text, holds the expected values;
   a missing required member and an unknown phase are refused; request bodies have exactly their members.
-- `ApiResponseParserTests`: every `error-*.json` fixture parses to its code and status, all 24 server codes parse, `Retry-After`,
+- `ApiResponseParserTests`: every `error-*.json` fixture parses to its code and status, all 25 server codes parse, `Retry-After`,
   malformed or truncated JSON, an HTML 502, empty bodies and a lost connection give clean errors.
 - `AuthServiceTests` (state machine, token on the client, what is kept, a refused or empty answer, a cancel), `AccessTokenStoreTests`
   (`PlayerPrefs` with a test-only key prefix; a release build keeps nothing), `ContentServiceTests` (the real `content.json` becomes valid
