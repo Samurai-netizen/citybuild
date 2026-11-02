@@ -1,6 +1,7 @@
 #nullable enable
 
 using System.Collections.Generic;
+using CityBuilder.Client.Core;
 using CityBuilder.Client.Presentation.Ui;
 using CityBuilder.Simulation;
 using UnityEngine;
@@ -179,7 +180,7 @@ namespace CityBuilder.Client.Presentation.Hud
             var chipLayout = Resources.Load<VisualTreeAsset>(ChipLayoutPath);
             if (panelSettings == null || layout == null || chipLayout == null)
             {
-                Debug.LogError(
+                ClientLog.Error(
                     "HudView: cannot show the HUD, an asset is missing under Assets/_Project/Resources: " +
                     $"{PanelSettingsPath} {(panelSettings == null ? "missing" : "found")}, " +
                     $"{LayoutPath} {(layout == null ? "missing" : "found")}, " +
@@ -222,7 +223,7 @@ namespace CityBuilder.Client.Presentation.Hud
                 || _researchName == null || _researchTime == null || _era == null || _connectionDot == null || _connectionText == null
                 || workersIcon == null || buildersIcon == null || ringIcon == null)
             {
-                Debug.LogError("HudView: the layout lacks one of its named elements (see the names in HudView).");
+                ClientLog.Error("HudView: the layout lacks one of its named elements (see the names in HudView).");
                 return;
             }
 

@@ -209,7 +209,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                     if (Debug.isDebugBuild)
                     {
                         CommandSender sender = _commandSender;
-                        _ = new PredictionWatch(_cityStore, _displayCity, outcome.Content!, () => sender.Pending.Count > 0, Debug.LogWarning);
+                        _ = new PredictionWatch(_cityStore, _displayCity, outcome.Content!, () => sender.Pending.Count > 0, ClientLog.Warning);
                     }
 
                     _content = outcome.Content;
@@ -241,7 +241,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                 {
                     // A failed connection is expected when no server runs: a warning, so a scene test or a player's log is not an error.
                     string reason = outcome.Error != null ? outcome.Error.ToString() : outcome.ContentErrors.Count + " content error(s)";
-                    Debug.LogWarning("GameRoot: startup did not connect: " + reason);
+                    ClientLog.Warning("GameRoot: startup did not connect: " + reason);
                 }
             }
             catch (OperationCanceledException)
@@ -250,7 +250,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             }
             catch (Exception exception)
             {
-                Debug.LogException(exception);
+                ClientLog.Exception(exception);
                 Show(ConnectionStatusModel.BadSettings("an unexpected error, see the log"));
             }
         }
@@ -524,7 +524,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             var settings = Resources.Load<ApiClientSettings>(SettingsPath);
             if (settings == null)
             {
-                Debug.LogError($"GameRoot: the settings asset is missing: Assets/_Project/Resources/{SettingsPath}.asset.");
+                ClientLog.Error($"GameRoot: the settings asset is missing: Assets/_Project/Resources/{SettingsPath}.asset.");
                 Show(ConnectionStatusModel.BadSettings("the asset " + SettingsPath + " is missing"));
                 return null;
             }
@@ -536,7 +536,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             }
             catch (ArgumentException exception)
             {
-                Debug.LogError("GameRoot: " + exception.Message);
+                ClientLog.Error("GameRoot: " + exception.Message);
                 Show(ConnectionStatusModel.BadSettings(exception.Message));
                 return null;
             }

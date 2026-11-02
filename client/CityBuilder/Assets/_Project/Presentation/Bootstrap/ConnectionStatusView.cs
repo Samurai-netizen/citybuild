@@ -1,5 +1,6 @@
 #nullable enable
 
+using CityBuilder.Client.Core;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -55,7 +56,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             var fatalErrorLayout = Resources.Load<VisualTreeAsset>(FatalErrorPath);
             if (panelSettings == null || connectionStatus == null || fatalErrorLayout == null)
             {
-                Debug.LogError(
+                ClientLog.Error(
                     "ConnectionStatusView: cannot show the connection status, an asset is missing under Assets/_Project/Resources: " +
                     $"{PanelSettingsPath} {(panelSettings == null ? "missing" : "found")}, " +
                     $"{ConnectionStatusPath} {(connectionStatus == null ? "missing" : "found")}, " +
@@ -110,7 +111,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             var label = root.Q<Label>(labelName);
             if (label == null)
             {
-                Debug.LogError($"ConnectionStatusView: the layout has no label named '{labelName}'.");
+                ClientLog.Error($"ConnectionStatusView: the layout has no label named '{labelName}'.");
                 return;
             }
 

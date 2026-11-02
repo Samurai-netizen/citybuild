@@ -1,6 +1,7 @@
 #nullable enable
 
 using System;
+using CityBuilder.Client.Core;
 using CityBuilder.Client.Presentation.Ui;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -91,7 +92,7 @@ namespace CityBuilder.Client.Presentation.Connection
             var layout = Resources.Load<VisualTreeAsset>(LayoutPath);
             if (panelSettings == null || layout == null)
             {
-                Debug.LogError(
+                ClientLog.Error(
                     "ConnectionBanner: cannot show the connection state, an asset is missing under Assets/_Project/Resources: " +
                     $"{PanelSettingsPath} {(panelSettings == null ? "missing" : "found")}, " +
                     $"{LayoutPath} {(layout == null ? "missing" : "found")}.");
@@ -156,7 +157,7 @@ namespace CityBuilder.Client.Presentation.Connection
             Elements? elements = root == null ? null : Elements.Find(root);
             if (root == null || elements == null)
             {
-                Debug.LogError("ConnectionBanner: the layout lacks one of its elements (" + RootName + ", " + BannerName + ", ... see the name constants).");
+                ClientLog.Error("ConnectionBanner: the layout lacks one of its elements (" + RootName + ", " + BannerName + ", ... see the name constants).");
                 return;
             }
 

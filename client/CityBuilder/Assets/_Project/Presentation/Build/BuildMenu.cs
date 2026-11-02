@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using CityBuilder.Client.Core;
 using CityBuilder.Client.Presentation.Ui;
 using CityBuilder.Simulation;
 using UnityEngine;
@@ -136,7 +137,7 @@ namespace CityBuilder.Client.Presentation.Build
             var cardLayout = Resources.Load<VisualTreeAsset>(CardLayoutPath);
             if (panelSettings == null || layout == null || cardLayout == null)
             {
-                Debug.LogError(
+                ClientLog.Error(
                     "BuildMenu: cannot show the build menu, an asset is missing under Assets/_Project/Resources: " +
                     $"{PanelSettingsPath} {(panelSettings == null ? "missing" : "found")}, " +
                     $"{LayoutPath} {(layout == null ? "missing" : "found")}, " +
@@ -225,7 +226,7 @@ namespace CityBuilder.Client.Presentation.Build
             _toggle = root?.Q<Button>(ToggleName);
             if (model == null || cardLayout == null || root == null || cards == null || _panel == null || _toggle == null)
             {
-                Debug.LogError($"BuildMenu: the layout lacks '{RootName}', '{PanelName}', '{CardsName}' or '{ToggleName}'.");
+                ClientLog.Error($"BuildMenu: the layout lacks '{RootName}', '{PanelName}', '{CardsName}' or '{ToggleName}'.");
                 return;
             }
 

@@ -210,7 +210,7 @@ namespace CityBuilder.Client.Net
             catch (Exception exception)
             {
                 // The frame loop discards this task, so without the log nothing would ever show this. The next poll tries again.
-                Debug.LogException(exception);
+                ClientLog.Exception(exception);
             }
             finally
             {

@@ -1,8 +1,8 @@
 #nullable enable
 
 using System;
+using CityBuilder.Client.Core;
 using CityBuilder.Client.Net;
-using UnityEngine;
 
 namespace CityBuilder.Client.Presentation.Feedback
 {
@@ -63,7 +63,7 @@ namespace CityBuilder.Client.Presentation.Feedback
                 case CommandOutcomeKind.Failed:
                     ApiError error = outcome.Error
                         ?? new ApiError(FeedbackMessages.CommandFailedCode, 0, "The command did not finish.", null, outcome.RequestId, null);
-                    Debug.LogWarning("Command " + outcome.Intent.Kind + " failed after " + outcome.Attempts + " request(s): " + error);
+                    ClientLog.Warning("Command " + outcome.Intent.Kind + " failed after " + outcome.Attempts + " request(s): " + error);
                     _queue.Show(ToastKind.Error, FeedbackMessages.ForError(error), _nowMilliseconds());
                     break;
             }

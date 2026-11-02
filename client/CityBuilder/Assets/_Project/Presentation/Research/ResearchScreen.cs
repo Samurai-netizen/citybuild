@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using CityBuilder.Client.Core;
 using CityBuilder.Client.Presentation.Ui;
 using CityBuilder.Simulation;
 using UnityEngine;
@@ -149,7 +150,7 @@ namespace CityBuilder.Client.Presentation.Research
             var nodeLayout = Resources.Load<VisualTreeAsset>(NodeLayoutPath);
             if (panelSettings == null || layout == null || nodeLayout == null)
             {
-                Debug.LogError(
+                ClientLog.Error(
                     "ResearchScreen: cannot show the research screen, an asset is missing under Assets/_Project/Resources: " +
                     $"{PanelSettingsPath} {(panelSettings == null ? "missing" : "found")}, " +
                     $"{LayoutPath} {(layout == null ? "missing" : "found")}, " +
@@ -255,7 +256,7 @@ namespace CityBuilder.Client.Presentation.Research
             Elements? elements = root == null ? null : Elements.Find(root);
             if (root == null || elements == null)
             {
-                Debug.LogError("ResearchScreen: the layout lacks one of its elements (" + RootName + ", " + PanelName + ", ... see the name constants).");
+                ClientLog.Error("ResearchScreen: the layout lacks one of its elements (" + RootName + ", " + PanelName + ", ... see the name constants).");
                 return;
             }
 

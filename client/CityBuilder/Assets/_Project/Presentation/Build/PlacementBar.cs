@@ -1,6 +1,7 @@
 #nullable enable
 
 using System;
+using CityBuilder.Client.Core;
 using CityBuilder.Client.Presentation.Ui;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -102,7 +103,7 @@ namespace CityBuilder.Client.Presentation.Build
             var layout = Resources.Load<VisualTreeAsset>(LayoutPath);
             if (panelSettings == null || layout == null)
             {
-                Debug.LogError(
+                ClientLog.Error(
                     "PlacementBar: cannot show the placement bar, an asset is missing under Assets/_Project/Resources: " +
                     $"{PanelSettingsPath} {(panelSettings == null ? "missing" : "found")}, " +
                     $"{LayoutPath} {(layout == null ? "missing" : "found")}.");
@@ -162,7 +163,7 @@ namespace CityBuilder.Client.Presentation.Build
             _cancel = root?.Q<Button>(CancelName);
             if (_model == null || root == null || _panel == null || _prompt == null || _hint == null || _error == null || _place == null || _cancel == null)
             {
-                Debug.LogError(
+                ClientLog.Error(
                     $"PlacementBar: the layout lacks '{PanelName}', '{PromptName}', '{HintName}', '{ErrorName}', '{PlaceName}' or '{CancelName}'.");
                 return;
             }

@@ -4,7 +4,6 @@ using System;
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.Settlement;
 using CityBuilder.Simulation.State;
-using UnityEngine;
 
 namespace CityBuilder.Client.Core
 {
@@ -109,7 +108,7 @@ namespace CityBuilder.Client.Core
             }
             catch (Exception exception) when (exception is InvalidOperationException || exception is ArgumentException || exception is OverflowException)
             {
-                Debug.LogError($"DisplayCity: cannot predict state version {snapshot.StateVersion} (content {snapshot.ContentVersion}): {exception.Message}");
+                ClientLog.Error($"DisplayCity: cannot predict state version {snapshot.StateVersion} (content {snapshot.ContentVersion}): {exception.Message}");
                 _predictionFailed = true;
                 city = snapshot.CopyCity();
             }

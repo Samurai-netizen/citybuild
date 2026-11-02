@@ -3,6 +3,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using CityBuilder.Client.Core;
 using CityBuilder.Client.Net;
 using CityBuilder.Client.Presentation.Ui;
 using CityBuilder.Simulation.Content;
@@ -141,7 +142,7 @@ namespace CityBuilder.Client.Presentation.Research
             }
             catch (Exception exception)
             {
-                Debug.LogException(exception);
+                ClientLog.Exception(exception);
             }
         }
     }
