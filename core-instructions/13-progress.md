@@ -4,13 +4,13 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-56 · Proving idempotent retries; the PR is open, the owner merges it)
-- **Branch:** `task/M0-56-idempotent-retries` until the owner merges
-- **Build log entry:** `docs/build-log/2026/2026-11-02-01-M0-56.md` (Done)
-- **Last green commit:** the head of `task/M0-56-idempotent-retries`
-- **Done steps:** all of M0-56
-- **Next step:** the owner merges the M0-56 PR. Then `/start-task M0-57` (client logging, `[S]`: use Sonnet 5.5).
+- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** M0-57 · Client logging (`[S]`, Sonnet 5.5; last completed: M0-56, PR #80 merged)
+- **Branch:** `task/M0-57-client-logging`
+- **Build log entry:** `docs/build-log/2026/2026-11-02-02-M0-57.md` (In progress)
+- **Last green commit:** `3836bf4` (main); the start commit is the first on the branch
+- **Done steps:** none (plan written)
+- **Next step:** step 1 of the plan: `LogLevel`, `ILogSink`, `UnityLogSink`, `ClientLog` in `Core`, with EditMode tests.
 - **Open questions for the owner:** CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-54: the dev database still runs the fast clock until the owner does step 7 of the waiting-loop run (`LOCAL-E2E.md`). M0-55: the [MANUAL] look at the connection states (`client/README.md`). CR-0007-T1: the [MANUAL] look at the new UI (`client/README.md`); the status label may be removed (build log follow-ups).
 - **Known broken / do not touch:** — (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55)
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
