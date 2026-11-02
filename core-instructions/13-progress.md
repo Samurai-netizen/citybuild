@@ -9,8 +9,8 @@
 - **Branch:** `task/M0-58-version-compat`
 - **Build log entry:** `docs/build-log/2026/2026-11-02-03-M0-58.md` (In progress)
 - **Last green commit:** the M0-57 merge on `main` (`b1da1f6`)
-- **Done steps:** write-ahead; step 1 (server logs `X-Client-Version`); step 2 (error `UNSUPPORTED_CLIENT_VERSION`); step 3 (the client sends the header); step 4 (`ContentSync`: fetch, replacing, apply, replaced; monitor and sender use it; Unity 966 + 165 green)
-- **Next step:** plan step 5: `GameRoot` builds the content-bound parts in one method and tears them down on `ContentReplacing`, builds again on `ContentReplaced`; passes `ContentSync` to the monitor and the sender. Then docs (09, the known limitation, `12` row), `/finish-task`.
+- **Done steps:** write-ahead; steps 1 to 5 (server logs the version; error `UNSUPPORTED_CLIENT_VERSION`; client sends the header; `ContentSync`; `GameRoot` rebuild). Server tests, Unity 967 + 165 green.
+- **Next step:** `/finish-task`: close Docs impact, `CHANGELOG`, docs build, self-review, PR. Owner [MANUAL]: `client/README.md` → content change (the rebuild is not covered by automated tests).
 - **Open questions for the owner:** CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-54: the dev database still runs the fast clock until the owner does step 7 of the waiting-loop run (`LOCAL-E2E.md`). M0-55: the [MANUAL] look at the connection states (`client/README.md`). CR-0007-T1: the [MANUAL] look at the new UI (`client/README.md`); the status label may be removed (build log follow-ups).
 - **Known broken / do not touch:** — (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55)
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·

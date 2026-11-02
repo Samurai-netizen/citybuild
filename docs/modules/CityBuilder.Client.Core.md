@@ -36,6 +36,7 @@ structure). It is **not** responsible for talking to the server (`CityBuilder.Cl
 - A snapshot with a lower `stateVersion` than the one held is ignored, and so is the same version with the same or an earlier clock (build log
   M0-39, decision 4); predicted values never leave the client.
 - Each prediction starts again from the snapshot, never from the last prediction: the 8-hour production cap counts from the start of an advance.
+- `DisplayCity` is disposed and made again when the content is replaced (M0-58); a disposed one keeps the city it last showed and ignores the store.
 - When the engine refuses a city (an unknown type or level, a timer before the clock, an overflow), `DisplayCity` logs one error and shows the snapshot unadvanced until the next one arrives. It never throws, because it runs from `Update` and from the store's event, inside whoever gave the store the snapshot (CR-0004).
 - Unity compiles this as C# 9: no file-scoped namespaces, no global usings.
 - Every type and member, private ones included, has an XML doc comment (`core-instructions/14-coding-standards.md` → Documentation

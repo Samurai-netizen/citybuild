@@ -165,6 +165,18 @@ The tests check the words, the threshold and the wiring; only a person can say t
    Open the **Build** sheet or the **Research** panel after Continue: they work as before. Let the game run a few minutes: the report never comes back by itself.
 4. Tell the AI coder "welcome-back report looks right", or what looks wrong. Stop Play mode without saving the scene.
 
+## [MANUAL] Look at a content change while the game runs (M0-58)
+The tests check the order (the content is fetched, the old parts let go, the snapshot applied, the new parts built) and the rules around it; only a person can
+say the real rebuild of the screens works. Use the server of `docs/testing/LOCAL-E2E.md` and press **Play**, then:
+1. Leave the game running. In another terminal stop the server (Ctrl+C), open `server/content/mvp-content.json` and change `"contentVersion": "mvp-1"` to
+   `"mvp-1b"` and the `name` of the building `house` to `"Cottage B"`. **Do not commit this.** Start the server again.
+2. Wait for the next poll (up to 2 minutes), or press **Try again** if the banner shows. The game must not stop: the Console has no error, the HUD, the Build button and
+   the city come back, and the connection state is Connected (no blocking "Update needed" screen).
+3. Open the **Build** sheet: the card for the house now says "Cottage B". Place a building, open the inspector on a building, open the **Research** panel: all work as before.
+4. Open the **Build** sheet and leave it open, then repeat steps 1 and 2: the sheet is closed by the rebuild (it is built again, closed). Nothing else is stuck (the ground still pans and zooms).
+5. Put `server/content/mvp-content.json` back (`git checkout server/content/mvp-content.json`). Tell the AI coder "content change works", or what broke (the Console text helps).
+Stop Play mode without saving the scene.
+
 ## [MANUAL] Look at the connection states (M0-55)
 The tests check the words, the rule for every button and the wiring; only a person can say the banner sits well. Nothing here is saved or committed. Use the
 server of `docs/testing/LOCAL-E2E.md` and press **Play**, then:

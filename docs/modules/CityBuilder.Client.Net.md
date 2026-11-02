@@ -102,7 +102,7 @@ captured from the real server, and the round-trip test. A new error code: add it
 - Only the placement flow uses `CommandSender` for now (the other screens come from M0-49 on). The table from error code to message is `FeedbackMessages` in `CityBuilder.Client.Presentation` (M0-47);
   `ConnectionStatusModel` words the start and the six connection states, not other errors.
 - A server that goes down while the device still has a network is found by the next 120 s poll, not sooner. A refused command (`AUTHENTICATION_REQUIRED`) does not yet ask the monitor for a poll: the views of M0-44 on call `RequestPoll`.
-- Content that changes while the app runs is not refetched (`05` Versioning): the state is `IncompatibleVersion` until the app restarts.
+- Content that changes while the app runs is refetched (M0-58), but the screens are rebuilt, not updated: an open menu or a placement in progress is closed by the rebuild. A command in flight when it happens ends normally; its screen is gone. Not run against a real server in CI (see `client/README.md` → [MANUAL] content change).
 - An unknown enum value or a missing member fails the whole answer; a server and a client of different versions during M0 need
   matching builds.
 - The real transport was walked against a running server once (M0-37 build log); it is not in CI (Unity tests are not).

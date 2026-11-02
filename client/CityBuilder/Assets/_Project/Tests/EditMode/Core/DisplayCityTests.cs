@@ -67,6 +67,29 @@ namespace CityBuilder.Client.Tests.EditMode.Core
             Assert.That(() => { display.Refresh(); }, Is.Not.AllocatingGCMemory());
         }
 
+        /// <summary>
+        /// A disposed display city no longer listens to the store (M0-58): the next snapshot, which may be of other content, neither replaces the
+        /// city it showed nor raises <see cref="DisplayCity.Changed"/>, and refreshing does nothing.
+        /// </summary>
+        [Test]
+        public void Dispose_StopsListeningToTheStore()
+        {
+            _store.Apply(CityTestData.Snapshot("snapshot-city-producing.json"));
+            var display = new DisplayCity(_store, _clock, _content);
+            CityState? shown = display.Current;
+            int changes = 0;
+            display.Changed += () => changes++;
+
+            display.Dispose();
+            display.Dispose();
+            _store.Replace(CityTestData.Snapshot("snapshot-city-start.json"));
+            _now += 30;
+
+            Assert.That(display.Refresh(), Is.False);
+            Assert.That(changes, Is.EqualTo(0));
+            Assert.That(display.Current, Is.SameAs(shown));
+        }
+
         /// <summary>The predicted city after N seconds is exactly what the engine makes of the snapshot in one advance of N, for any N and any real answer.</summary>
         [Test]
         public void Prediction_AfterNSeconds_EqualsOneAdvanceExactly(

@@ -11,9 +11,10 @@ namespace CityBuilder.Client.Core
     /// The city the client shows between snapshots (<c>core-instructions/09-unity-client.md</c>, "Display prediction"): the shared engine run on
     /// a copy of the store's snapshot, up to the <see cref="DisplayClock"/>. Each prediction starts again from the snapshot, so it equals one
     /// <see cref="Simulator.Advance"/> of the whole time, as the server's next settlement will. A new snapshot replaces it at once. It decides
-    /// nothing and is never sent anywhere. It lives as long as the store it listens to, so it never unsubscribes.
+    /// nothing and is never sent anywhere. It runs with one <see cref="GameContent"/>, so when the content is replaced (M0-58) the owner calls
+    /// <see cref="Dispose"/> and makes a new one: a disposed display city no longer listens to the store and keeps the city it last showed.
     /// </summary>
-    public sealed class DisplayCity
+    public sealed class DisplayCity : IDisposable
     {
         /// <summary>The store whose snapshot it predicts from.</summary>
         private readonly ClientCityStore _store;
@@ -23,6 +24,9 @@ namespace CityBuilder.Client.Core
 
         /// <summary>The content the engine runs with.</summary>
         private readonly GameContent _content;
+
+        /// <summary>Whether <see cref="Dispose"/> ran.</summary>
+        private bool _disposed;
 
         /// <summary>The elapsed seconds of <see cref="Current"/>.</summary>
         private long _computedElapsedSeconds;
@@ -66,7 +70,7 @@ namespace CityBuilder.Client.Core
         /// <returns>True when <see cref="Current"/> was replaced.</returns>
         public bool Refresh()
         {
-            if (Current == null || _predictionFailed)
+            if (Current == null || _predictionFailed || _disposed)
             {
                 return false;
             }
@@ -79,6 +83,18 @@ namespace CityBuilder.Client.Core
 
             Predict(elapsed);
             return true;
+        }
+
+        /// <summary>Stops listening to the store (M0-58): the content this city runs with is being replaced, and the next snapshot is another content's. Safe to call twice.</summary>
+        public void Dispose()
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            _disposed = true;
+            _store.SnapshotChanged -= OnSnapshotChanged;
         }
 
         /// <summary>The store took a new snapshot: the prediction starts over from it, whatever it showed before.</summary>
@@ -95,7 +111,7 @@ namespace CityBuilder.Client.Core
 
         /// <summary>
         /// Replaces <see cref="Current"/> with a fresh copy of the snapshot advanced by <paramref name="elapsed"/> seconds. When the engine refuses
-        /// the city (it names something this content doesn't know, until M0-58 refetches changed content), the display must not take the game
+        /// the city (it names something this content doesn't know), the display must not take the game
         /// down: it logs the error once and shows the snapshot as it is.
         /// </summary>
         private void Predict(long elapsed)
