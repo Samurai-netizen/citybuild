@@ -509,8 +509,8 @@ namespace CityBuilder.Client.Presentation.Research
                     Toggle = root.Q<Button>(ToggleName),
                     Close = root.Q<Button>(CloseName),
                 };
-                bool complete = found.Panel != null && found.Columns != null && found.Scroll != null && found.Era != null && found.Rule != null && found.Toggle != null
-                    && found.Close != null;
+                bool complete = found.Panel != null && found.Columns != null && found.Scroll != null && found.Era != null && found.Rule != null
+                    && found.Toggle != null && found.Close != null;
                 return complete ? found : null;
             }
         }
