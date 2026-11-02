@@ -37,7 +37,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         public void CreateService()
         {
             _transport = new FakeTransport();
-            _api = new ApiClient("http://localhost:8080", 15, _transport);
+            _api = new ApiClient("http://localhost:8080", 15, _transport, allowInsecureHttp: true);
             _store = new MemoryAccessTokenStore();
             _auth = new AuthService(_api, _store);
         }

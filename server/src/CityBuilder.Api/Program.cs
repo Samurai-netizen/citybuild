@@ -1,6 +1,7 @@
 // Composition root of the server (core-instructions/03-architecture.md): hosting, logging, the server clock, service registration, request
 // limits, authentication and the startup steps (content load; database settings and, in Development only, the migrations; the clock).
 
+using System.Diagnostics;
 using CityBuilder.Api.Auth;
 using CityBuilder.Api.Content;
 using CityBuilder.Api.Endpoints;
@@ -40,6 +41,9 @@ builder.Services.Configure<RouteHandlerOptions>(options => options.ThrowOnBadReq
 // names a property twice is refused instead of read as its last value, so every reader of the body sees the same values.
 builder.Services.AddRequestBodyLimit(builder.Configuration);
 builder.Services.AddResponseHeaders();
+
+// The trace id of every request is the server's own: no traceparent, tracestate or baggage header of the client is read (ServerTraceContext).
+builder.Services.AddSingleton<DistributedContextPropagator>(new ServerTraceContext());
 builder.Services.AddRateLimits(builder.Configuration);
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.AllowDuplicateProperties = false);
 builder.Services.AddOpenApi();

@@ -96,7 +96,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
                 _events.Add("request " + request.Url.Substring(request.Url.IndexOf("/api/v1", StringComparison.Ordinal) + 7)
                     + (_store.Snapshot == null ? " (store empty)" : " (store has " + _store.Snapshot.ContentVersion + ")"));
                 return request.Url.EndsWith("/content", StringComparison.Ordinal) ? _hold?.Task : null;
-            }));
+            }), allowInsecureHttp: true);
             _api.SetAccessToken("tok");
             _store = new ClientCityStore(() => 0);
             _store.SnapshotChanged += () => _events.Add("store takes " + _store.Snapshot!.ContentVersion);

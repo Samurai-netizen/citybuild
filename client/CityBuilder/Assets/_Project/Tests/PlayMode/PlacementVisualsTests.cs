@@ -48,7 +48,7 @@ namespace CityBuilder.Client.Tests.PlayMode
             _world = _host.AddComponent<CityWorld>();
             _world.ShowGrid(new CityGrid(8, 8));
             _transport = new ControllableTransport();
-            var api = new ApiClient("http://localhost:8080", 30, _transport);
+            var api = new ApiClient("http://localhost:8080", 30, _transport, allowInsecureHttp: true);
             _sender = new CommandSender(api, new ClientCityStore(), CommandPolicy.Default);
             _cancel = new CancellationTokenSource();
         }

@@ -7,7 +7,7 @@ a request and lists the events of the server's own code (M0-35). The rules for w
 ## `traceId` vs `requestId`
 | | `traceId` | `requestId` |
 |---|---|---|
-| Who makes it | The server, for every HTTP request (W3C trace context) | The client, once per command; a retry sends the same one (`05` → Idempotency) |
+| Who makes it | The server, for every HTTP request (W3C trace context); a `traceparent` the client sends is ignored (`ServerTraceContext`, M0-60) | The client, once per command; a retry sends the same one (`05` → Idempotency) |
 | Where the client sees it | In every error answer (Problem Details), as `00-<trace id>-<span id>-<flags>` | In the command body, in the snapshot of a command, and in its error answers |
 | Where the log has it | Every line written during the request, in the scope value `TraceId`: the 32 hex digits of the second part | The command lines (5000–5003), as the named value `RequestId` |
 | What it identifies | One HTTP request: two retries of a command have two trace ids | One command: all its attempts, its receipt and its ledger rows (`ref_id`) |

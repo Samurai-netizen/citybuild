@@ -25,7 +25,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation
         public async Task LoadContent()
         {
             var transport = new FakeTransport().Answer(200, Fixtures.Read("content.json"));
-            var api = new ApiClient("http://localhost:8080", 15, transport);
+            var api = new ApiClient("http://localhost:8080", 15, transport, allowInsecureHttp: true);
             _content = (await new ContentService(api).LoadAsync(CancellationToken.None)).Content!;
         }
 
@@ -175,7 +175,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation
         /// <summary>The factory's errors for a broken content text, through the same service the client uses.</summary>
         private static async Task<IReadOnlyList<ContentError>> ErrorsOf(string contentJson)
         {
-            var api = new ApiClient("http://localhost:8080", 15, new FakeTransport().Answer(200, contentJson));
+            var api = new ApiClient("http://localhost:8080", 15, new FakeTransport().Answer(200, contentJson), allowInsecureHttp: true);
             ContentLoadResult result = await new ContentService(api).LoadAsync(CancellationToken.None);
             return result.ContentErrors;
         }

@@ -180,8 +180,9 @@ There is no "claim" command, because production and research complete on their o
 | `UNSUPPORTED_MEDIA_TYPE` | 415 | A body that isn't `application/json`, or has no `Content-Type` |
 | `UNSUPPORTED_CLIENT_VERSION` | 426 | The `X-Client-Version` build is no longer supported; update the game. *Reserved (M0-58): the server refuses no build yet.* The client treats it as `IncompatibleVersion` |
 
-`code` is for program logic. `title` and `detail` are for humans and may change. `traceId` names the HTTP request (W3C trace context; its
-second part is the `TraceId` of every log line of the request), `requestId` the command across its retries: `docs/api/logs-and-correlation.md`.
+`code` is for program logic. `title` and `detail` are for humans and may change. `traceId` names the HTTP request (W3C trace context, always
+the server's own: a `traceparent` the client sends is ignored, M0-60; its second part is the `TraceId` of every log line of the request),
+`requestId` the command across its retries: `docs/api/logs-and-correlation.md`.
 
 - One writer, one list: every code above is a member of `ErrorCatalogue` (`CityBuilder.Api/Errors/`), and `ApiProblem` writes every error answer
   with exactly these members: `type` (`urn:citybuilder:error:` and the code in kebab case), `title`, `status`, `detail`, `code`, `requestId` **only
@@ -235,6 +236,8 @@ Fixed windows, in memory, one process; the numbers are configuration (`RateLimit
 - `X-Client-Version: <build version>` (M0-58), sent by the client on every request: the Unity `Application.version`, for example `0.1.0`, 1 to 32
   characters of ASCII letters, digits, `.`, `-`, `+` and `_`. The server logs it (`ClientVersion` in the log scope of the request, `docs/api/logs-and-correlation.md`)
   and refuses nothing over it yet; a missing or unusable header is logged as `none` or `invalid`. Rejecting unsupported builds is a later task.
+- No other header is read by the API beyond `Content-Type` and `Content-Length`: `traceparent`, `tracestate` and `baggage` are ignored. The
+  full list of what a client sends, and what reads it: `07` → What the client sends.
 
 ## Versioning
 Breaking changes → `/api/v2`. Content changes → a new `contentVersion`; the client refetches `/content`

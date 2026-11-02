@@ -100,7 +100,7 @@ namespace CityBuilder.Client.Tests.PlayMode
             _world.ShowCity(_display.Current!);
 
             _transport = new ControllableTransport();
-            var sender = new CommandSender(new ApiClient("http://localhost:8080", 30, _transport), _store, CommandPolicy.Default);
+            var sender = new CommandSender(new ApiClient("http://localhost:8080", 30, _transport, allowInsecureHttp: true), _store, CommandPolicy.Default);
             _menu = new BuildMenuModel(content, _display.Current!);
             var model = new PlacementFlowModel(content, grid);
             model.Update(_display.Current!);

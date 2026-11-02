@@ -102,7 +102,7 @@ namespace CityBuilder.Client.Tests.PlayMode
             _display = new DisplayCity(_store, new DisplayClock(_store, 1), content);
 
             _transport = new ControllableTransport();
-            _sender = new CommandSender(new ApiClient("http://localhost:8080", 30, _transport), _store, CommandPolicy.Default);
+            _sender = new CommandSender(new ApiClient("http://localhost:8080", 30, _transport, allowInsecureHttp: true), _store, CommandPolicy.Default);
             _placement = new PlacementFlowModel(content, grid);
             _placement.Update(_display.Current!);
             _cancel = new CancellationTokenSource();

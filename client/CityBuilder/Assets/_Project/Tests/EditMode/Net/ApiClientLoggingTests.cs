@@ -34,7 +34,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         /// <summary>A client with the token set, over <paramref name="transport"/>, logging at <paramref name="level"/> to the recording sink.</summary>
         private ApiClient NewClient(FakeTransport transport, LogLevel level = LogLevel.Debug)
         {
-            ApiClient client = new ApiClient("http://localhost:8080", 15, transport, new ClientLogger(level, _sink));
+            ApiClient client = new ApiClient("http://localhost:8080", 15, transport, new ClientLogger(level, _sink), allowInsecureHttp: true);
             client.SetAccessToken(Token);
             return client;
         }

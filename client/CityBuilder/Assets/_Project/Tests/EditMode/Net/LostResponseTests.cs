@@ -32,7 +32,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         /// <summary>A sender over <paramref name="server"/> on a store that holds the city with no building; <paramref name="delay"/> stands for its waits.</summary>
         private static (CommandSender Sender, ClientCityStore Store, ApiClient Api) Build(ReceiptServer server, Func<TimeSpan, CancellationToken, Task>? delay = null)
         {
-            var api = new ApiClient("http://localhost:8080", 15, server);
+            var api = new ApiClient("http://localhost:8080", 15, server, allowInsecureHttp: true);
             api.SetAccessToken("tok-1");
             var store = new ClientCityStore(() => 0);
             SnapshotMapper.Apply(store, ApiResult<CitySnapshotDto>.Success(CityTestData.Dto("snapshot-city-start.json")));

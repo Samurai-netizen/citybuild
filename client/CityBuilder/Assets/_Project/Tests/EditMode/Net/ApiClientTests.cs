@@ -22,7 +22,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         /// <summary>A client with a 15 second timeout over <paramref name="transport"/>.</summary>
         private static ApiClient NewClient(FakeTransport transport, string baseUrl = BaseUrl, int timeoutSeconds = 15)
         {
-            return new ApiClient(baseUrl, timeoutSeconds, transport);
+            return new ApiClient(baseUrl, timeoutSeconds, transport, allowInsecureHttp: true);
         }
 
         /// <summary>Every request, the login included and with or without a token, carries the build version for <c>X-Client-Version</c> (M0-58).</summary>
@@ -33,7 +33,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
                 .Answer(200, "{\"accessToken\":\"a.b.c\",\"expiresAtUtc\":\"2026-10-27T21:00:00+00:00\"}")
                 .Answer(200, Fixtures.Read("content.json"))
                 .Answer(200, Fixtures.Read("snapshot-city-start.json"));
-            ApiClient client = new ApiClient(BaseUrl, 15, transport, null, "1.2.3");
+            ApiClient client = new ApiClient(BaseUrl, 15, transport, null, "1.2.3", allowInsecureHttp: true);
 
             await client.DevLoginAsync("devtest", CancellationToken.None);
             client.SetAccessToken("tok");
@@ -63,7 +63,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         public async Task Request_WithABlankVersion_SendsNoHeader(string version)
         {
             FakeTransport transport = new FakeTransport().Answer(200, Fixtures.Read("snapshot-city-start.json"));
-            ApiClient client = new ApiClient(BaseUrl, 15, transport, null, version);
+            ApiClient client = new ApiClient(BaseUrl, 15, transport, null, version, allowInsecureHttp: true);
 
             await client.GetCityAsync(CancellationToken.None);
 
@@ -77,7 +77,40 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         [TestCase("ftp://localhost")]
         public void ABadBaseUrl_IsRefused(string baseUrl)
         {
-            Assert.That(() => new ApiClient(baseUrl, 15, new FakeTransport()), Throws.ArgumentException);
+            Assert.That(() => new ApiClient(baseUrl, 15, new FakeTransport(), allowInsecureHttp: true), Throws.ArgumentException);
+        }
+
+        /// <summary>
+        /// Plain http is refused unless the caller allows it (<c>07</c>, M0-60): a release build, which <c>GameRoot</c> does not allow it,
+        /// never sends its bearer token unencrypted; the default is off.
+        /// </summary>
+        [TestCase("http://localhost:8080")]
+        [TestCase("http://192.168.1.20:8080")]
+        [TestCase("HTTP://example.com")]
+        public void AnHttpBaseUrl_WithoutTheAllowance_IsRefused(string baseUrl)
+        {
+            Assert.That(() => new ApiClient(baseUrl, 15, new FakeTransport()), Throws.ArgumentException.With.Message.Contains("https"));
+            Assert.That(() => new ApiClient(baseUrl, 15, new FakeTransport(), allowInsecureHttp: false), Throws.ArgumentException);
+        }
+
+        /// <summary>The same http address is accepted when allowed, as in the Editor and a development build.</summary>
+        [Test]
+        public void AnHttpBaseUrl_WithTheAllowance_BuildsAClient()
+        {
+            Assert.That(() => new ApiClient("http://localhost:8080", 15, new FakeTransport(), allowInsecureHttp: true), Throws.Nothing);
+        }
+
+        /// <summary>An https address is accepted in every build, and its requests go to https.</summary>
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task AnHttpsBaseUrl_IsAcceptedInEveryBuild(bool allowInsecureHttp)
+        {
+            FakeTransport transport = new FakeTransport().Answer(200, Fixtures.Read("snapshot-city-start.json"));
+            ApiClient client = new ApiClient("https://api.example.com", 15, transport, allowInsecureHttp: allowInsecureHttp);
+
+            await client.GetCityAsync(CancellationToken.None);
+
+            Assert.That(transport.Requests[0].Url, Is.EqualTo("https://api.example.com/api/v1/city"));
         }
 
         /// <summary>A timeout of 0 or over 300 seconds is refused.</summary>
@@ -86,7 +119,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         [TestCase(301)]
         public void ABadTimeout_IsRefused(int seconds)
         {
-            Assert.That(() => new ApiClient(BaseUrl, seconds, new FakeTransport()), Throws.ArgumentException);
+            Assert.That(() => new ApiClient(BaseUrl, seconds, new FakeTransport(), allowInsecureHttp: true), Throws.ArgumentException);
         }
 
         /// <summary><c>GET /city</c> is a GET without a body that carries the token, to <c>/api/v1/city</c>, also when the base URL ends in a slash.</summary>

@@ -215,6 +215,35 @@ public sealed class RequestLogTests(ApiFactory factory) : IClassFixture<ApiFacto
         Assert.NotEqual(TraceIdOf(unauthorized), TraceIdOf(limited));
     }
 
+    /// <summary>
+    /// The trace id is always the server's own (core-instructions/07-security-model.md, M0-60): a <c>traceparent</c>, <c>tracestate</c> or
+    /// <c>baggage</c> header the client sends is not read, so neither the answer's <c>traceId</c> nor any log line carries the client's trace
+    /// id, its span id or its baggage, and two requests with the same header still get two trace ids.
+    /// </summary>
+    [Fact]
+    public async Task Security_TraceContextFromTheClient_IsIgnored()
+    {
+        const string ClientTraceId = "0af7651916cd43dd8448eb211c80319c";
+        const string ClientSpanId = "b7ad6b7169203331";
+        var headers = new Dictionary<string, string>
+        {
+            ["traceparent"] = "00-" + ClientTraceId + "-" + ClientSpanId + "-01",
+            ["tracestate"] = "vendor=clientstate",
+            ["baggage"] = "player=clientbaggage",
+        };
+        var logs = new CapturingLogger();
+        await using WebApplicationFactory<Program> server = Serve(logs);
+
+        ApiResponse first = await ApiClient.PostAsync(server, "/api/v1/commands/place-building", null, new StringContent("{}", System.Text.Encoding.UTF8, "application/json"), headers);
+        ApiResponse second = await ApiClient.PostAsync(server, "/api/v1/commands/place-building", null, new StringContent("{}", System.Text.Encoding.UTF8, "application/json"), headers);
+
+        Assert.Equal((HttpStatusCode.Unauthorized, HttpStatusCode.Unauthorized), (first.Status, second.Status));
+        Assert.DoesNotContain(ClientTraceId, (string)first.Json()["traceId"]!, StringComparison.Ordinal);
+        Assert.NotEqual(TraceIdOf(first), TraceIdOf(second));
+        Assert.Equal(TraceIdOf(first), logs.Events(4003)[0].Scope("TraceId"));
+        AssertNowhere(logs, ClientTraceId, ClientSpanId, "clientstate", "clientbaggage");
+    }
+
     /// <summary>The trace id of an answer: the second part of its Problem Details' <c>traceId</c>.</summary>
     /// <param name="response">An error answer.</param>
     /// <returns>The 32 hex digits of the trace.</returns>

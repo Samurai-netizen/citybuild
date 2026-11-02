@@ -38,7 +38,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation
         {
             _transport = new FakeTransport();
             _store = new MemoryAccessTokenStore();
-            var api = new ApiClient("http://localhost:8080", 15, _transport);
+            var api = new ApiClient("http://localhost:8080", 15, _transport, allowInsecureHttp: true);
             _cityStore = new ClientCityStore(() => 0);
             _flow = new StartupFlow(new AuthService(api, _store), new ContentService(api), api, "dev1", _cityStore);
         }

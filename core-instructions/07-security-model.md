@@ -9,7 +9,8 @@
 > caller's city only, and owner directive OD-13: building ids below 1 and negative coordinates refused before the lock (M0-31, tested over HTTP);
 > AssignWorkers with the same rules, negative counts refused before the lock, and the worker-moving property over HTTP (M0-32); StartResearch
 > with the same strict body, research ids that can't be content ids refused before the lock, and the research race over HTTP (M0-33); the error catalogue, the global exception handler (no exception text outside Development, no echoed
-> headers) and the per-player rate limits (M0-34, tested in memory and on PostgreSQL). The rest of the `Security_` tests are *(planned)*
+> headers) and the per-player rate limits (M0-34, tested in memory and on PostgreSQL); the client ↔ server boundary review: the inventory of what
+> the client sends and its test, the trace id the server's own, plain HTTP only in development builds (M0-60). The rest of the `Security_` tests are *(planned)*
 > (attack suite M0-74, report M0-78). A task that builds a part updates this line.
 
 **Goal for M0:** a modified client, a replayed request or a wrong clock cannot create resources, skip costs,
@@ -25,6 +26,30 @@ From Era II this matters even more: one duplication bug floods the shared market
 | Client clock | Never used | Not accepted in any request |
 | Content numbers | Server only | Costs, recipes, labor, research times and effects come from server content |
 | Snapshot on the client | Display only | Client prediction is never sent back |
+
+## What the client sends (M0-60)
+Every value a request carries, all of it, and what reads it. `ClientInputInventoryTests` holds the body and binding part: every `/api/v1`
+endpoint binds exactly these values (read from the framework's own description of the binding), so a new field or a query, route or header
+value fails it until this table changes.
+
+| Request | Values the server reads | Read as |
+|---|---|---|
+| `POST /auth/dev-login` (Development only) | `displayName` | The dev player's name, checked by its pattern; never logged |
+| `GET /city`, `GET /content` | nothing | The player from the token |
+| `POST /commands/place-building` | `requestId`, `buildingTypeId`, `x`, `y` | Intent: which type, which tile |
+| `POST /commands/upgrade-building` | `requestId`, `buildingId` | Intent: which of the caller's buildings |
+| `POST /commands/assign-workers` | `requestId`, `buildingId`, `workers` | Intent: the target count for one building; the engine checks free workers and the level's limit |
+| `POST /commands/start-research` | `requestId`, `researchId` | Intent: which node |
+| Header `Authorization` | the bearer token | The player id (its `sub`), nothing else |
+| Header `X-Client-Version` | a short version text | A log scope value only (`ClientVersionHeader`), `invalid` for anything else; it decides nothing |
+| Headers `Content-Type`, `Content-Length`, `Accept` | | JSON only (415), the body limit (400) |
+| Headers `traceparent`, `tracestate`, `baggage` | ignored | The trace id is the server's own (`ServerTraceContext`) |
+
+Nothing else is read: no query string, no route value, no cookie. Outside `/api/v1` only `GET /health` (no input) and, in Development only,
+`GET /openapi/v1.json` (the document name in its route) answer. The `requestId` is the only id the client makes; it names a command's
+receipt within the caller's own player, so it can't reach another player's receipt. No client value is a cost, a rate, a time, a level, a
+worker total, a research state or a player id: those come from content and the stored city (`04`), the clock from the server (`TimeProvider`).
+On the client the same list is pinned by `RequestDtoTests` (each body's members) and the four `CommandIntent` kinds.
 
 ## Threats in M0 and the protection for each
 
@@ -56,6 +81,9 @@ From Era II this matters even more: one duplication bug floods the shared market
 | Secret leakage | Signing key and the database connection string from environment/user-secrets; never in Unity or the repo (the compose password lives in the gitignored `.env`) | Config review prompt |
 | Information leakage in errors | Every error is the catalogue's Problem Details; the global handler gives no stack trace anywhere and no exception text outside Development (its type and message in `detail` there); the developer exception page, which echoed the request headers and so the bearer token, never answers; the 401 never says why | `Security_Throw_InProduction_SaysNothingAboutTheException`, `Throw_Unexpected_IsInternalErrorAndDevelopmentNamesTheException`, `Security_BodyThatDoesNotBind_InDevelopment_DoesNotEchoTheRequestHeaders`, `Post_BodyThatDoesNotBind_IsInvalidArgument`, `ErrorCatalogueTests` (M0-34) |
 | A shared cache keeps a player's answer; the answers name the server software | Every answer has `Cache-Control: no-store` and `X-Content-Type-Options: nosniff`, also an error answer; Kestrel's `Server` header is off | `Security_EveryAnswer_ForbidsCachingAndSniffing`, `Security_AnswerToAnException_ForbidsCachingAndSniffing`, `Security_KestrelServerHeader_IsOff` (CR-0004) |
+| Choose the trace id the server logs and answers with (reuse another request's, put text into the trace) | `ServerTraceContext`: the server reads no `traceparent`, `tracestate` or `baggage` header, so every request starts a new trace of the server's own (M0-60) | `Security_TraceContextFromTheClient_IsIgnored` (the answer's `traceId` and every log line: none has the client's trace id, span id, state or baggage) |
+| Read the token off the network | A release build talks https only: `ApiClient` refuses an `http://` address unless the build is the Editor or a development player (`GameRoot` passes `Debug.isDebugBuild`), and the Player setting "Allow downloads over HTTP" is development builds only. No redirect is followed (CR-0004) | `ApiClientTests.AnHttpBaseUrl_WithoutTheAllowance_IsRefused`, `…_WithTheAllowance_BuildsAClient`, `AnHttpsBaseUrl_IsAcceptedInEveryBuild`, `InsecureHttpSettingTests` (M0-60) |
+| Take the token from a release build's storage | Only the Editor and development players keep the token (`PlayerPrefs`, `AccessTokenStores.For(Debug.isDebugBuild)`); a release build keeps it in memory only and never writes it | `AccessTokenStoreTests.For_AReleaseBuild_KeepsNothing`, `For_ADevelopmentBuild_IsThePlayerPrefsStore` |
 | Probe server internals through `/health` (no auth) | The response is the status word only: no check details, versions or exception text | `GetHealth_AppRunning_Returns200WithStatusOnly` |
 | Read the full API description in production | OpenAPI (`/openapi/v1.json`) is mapped only in Development | `Security_OpenApiDocument_InProduction_IsNotServed` |
 
@@ -84,6 +112,10 @@ Never log: tokens, signing keys, full request bodies in production, personal dat
   path, status and duration only, a failed one with its error code and the server's trace id; no token and no body, in any build, so a release
   build (level Warning) writes the failures and nothing of the traffic. Tests: `ApiClientLoggingTests`.
 
+- Reviewed (M0-60): every server log call and every client `ClientLog` call; none writes a token, a key, a body or a display name. A failed
+  request's client line has the server's `code`, `detail` and `traceId`, and an answer that isn't Problem Details is never copied into it
+  (`ApiResponseParser`). The trace id in every server line is the server's own (`ServerTraceContext`), so a client can't plant one.
+
 ## Known limitations in M0 (document, don't hide)
 - Dev auth only: no real account system and no token revocation; a token stays valid until it expires (12 h by default), and changing
   `Auth:SigningKey` is the only way to end every token at once.
@@ -99,7 +131,14 @@ Never log: tokens, signing keys, full request bodies in production, personal dat
   missing, mistyped or repeated field, broken JSON; the handler) (M0-34). The in-memory test server has no body limit of its own, so a
   chunked body against Kestrel is tested by hand only (M0-34 build log: 20 000 bytes and 1 MiB, both 400), and in the suite as the empty 413 the
   rewrite answers: `Request_BodyStoppedByKestrel_Is400InvalidArgumentNot413`.
-- HTTP is allowed for localhost in development; production requires HTTPS.
+- Plain HTTP is allowed in the Editor and development builds only (any address there, also a LAN one for a phone); a release build needs an
+  https address, and the shipped settings asset names the dev server (`http://localhost:8080`), so a release build shows the bad-settings
+  screen until M1 gives it a real server. The server itself has no TLS settings: in M0 it runs locally, and a production deployment puts TLS
+  in front of it *(planned, M1)*.
+- The token kept by a development build is plain text in `PlayerPrefs` (the registry on Windows, a plist on macOS, shared preferences on
+  Android): anyone with the device can read it. Development builds only, and a dev token of a dev player.
+- A client may send any `requestId` it likes; one it reuses for another payload is `IDEMPOTENCY_CONFLICT`, and it can only reach its own
+  receipts.
 
 ## Rule for Claude
 When adding an endpoint or command, add its rows to the threat table above and a test for each.
