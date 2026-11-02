@@ -5,18 +5,22 @@ not commitments; each milestone ends only when its exit criteria pass.
 
 ## M0 — Technical vertical slice of Era I (14 days, realistically 16–20) ← current
 Prove the spine: server-authoritative, deterministic, real-time production with workers and research.
-- Content: 3 items, 4 buildings (levels 1–2), 4 research nodes (`23-mvp-content.md`).
+- Content: 3 items, 4 buildings (levels 1–2), 4 research nodes (`23-mvp-content.md`), plus the logistics base set of CR-0008: the
+  Courier Station, the science building, the Warehouse, road levels 1–2 and two more research nodes.
 - Engine: labor model (workers speed up production, progress-preserving reassignment), auto-staffing, research
-  timer and effects, storage caps, builder slots, offline production cap with a dormant tail, `era` in state.
-- Server: dev auth, settle-on-access, 4 commands (place, upgrade, assign workers, start research), idempotency,
-  row locks, ledger, rate limits.
+  timer and effects, builder slots, `era` in state; from CR-0008: building stores with limits and the purse, projects waiting for
+  deliveries, roads and the path search, manual trips, couriers and routes, courier stamina (it replaces the offline production cap
+  and its dormant tail).
+- Server: dev auth, settle-on-access, 4 commands (place, upgrade, assign workers, start research) and the 6 of CR-0008 (roads, trips,
+  routes, re-energize), presence from request times, idempotency, row locks, ledger, rate limits.
 - Client: grid, placement, building inspector with worker stepper, research screen, HUD with rates,
-  welcome-back report, display prediction.
+  welcome-back report, display prediction; from CR-0008: stores and projects in the inspector, the trip flow, road mode, the courier
+  station and route editor, walkers on the map, the reworked welcome-back report.
 - Tools: balance simulator CLI with research-aware strategies; DocTools (generated reference docs).
 - Process: AI workflow kit in use from Day 0 (session protocol, build log, CRs, git hooks, CI with docs checks).
 
 **Exit:**
-- golden scenario #1 works over HTTP and on a dev build;
+- golden scenarios #1 and #2 (CR-0008) work over HTTP, and #1 on a dev build;
 - state survives a server restart;
 - the attack, concurrency, determinism, split- and timer-invariance suites pass;
 - clean-clone setup is documented;
@@ -26,9 +30,9 @@ Prove the spine: server-authoritative, deterministic, real-time production with 
 Make the first 3–5 days worth playing.
 - Full Era I content: ~8 items (wood, stone, grain/flour/bread chains), ~10 buildings, ~12 research nodes in
   3–4 branches, building levels up to 3–4, Land Survey expansions, more builder slots via research.
-- Remaining research effect types (`25`): max level, land, slots, offline production bonus.
+- Remaining research effect types (`25`): max level, land, slots.
 - Guest accounts (device-bound, upgradable to platform sign-in later) replacing dev login.
-- Tutorial for the first 15 minutes, notifications (construction/research done, storage full), first art pass.
+- Tutorial for the first 15 minutes, notifications (construction/research done, storage full, couriers resting), first art pass.
 **Exit:** 5–10 external playtesters play Era I for 7 days; the balance simulator matches observed pacing within ±25 %.
 
 ## M2 — Era II: era transition, open market, guilds (≈ 6–8 weeks)

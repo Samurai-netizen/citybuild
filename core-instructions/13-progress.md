@@ -7,8 +7,8 @@
 - **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** CR-0008-T1 · Logistics rework: spec, engine and server (`[O]`; parts A–I, one PR) · branch `task/CR-0008-T1-logistics-engine-server` ·
   build log `docs/build-log/2026/2026-11-02-07-CR-0008-T1.md` (its Session 1 plan lists every part and step)
-- **Part / step:** A (design docs) · A1 the `22` edit (protected: the owner answers the permission prompt) → A2 `21` `24` `25` `26` `31` →
-  A3 `10` `12` plan `13` → A4 checks, checkpoint, draft PR. Then B (technical spec) … I (engine review), then `/finish-task`.
+- **Part / step:** A done (design docs; draft PR open). Next: B (technical spec) · B1 `04` → B2 `05` `06` `07` `09` → B3 `23` (numbers,
+  golden #1 and #2) → B4 `content-golden-v2.json` (protected: the owner answers the permission prompt). Then C … I, then `/finish-task`.
 - **Last completed:** M0-60 · Client ↔ server boundary review (PR #85, merged)
 - **Next task:** CR-0008-T2 · client and art (`[S]`), after T1 merges; then CR-0008-T3, then M0-61.
 - **Open questions for the owner:** M0-60: `test-unity.sh` on a machine with Unity (client changes not compiled in Unity). M0-58: the [MANUAL] content-change check (`client/README.md`; no automated test covers the `GameRoot` rebuild). CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-54: the dev database still runs the fast clock until the owner does step 7 of the waiting-loop run (`LOCAL-E2E.md`). M0-55: the [MANUAL] look at the connection states (`client/README.md`). CR-0007-T1: the [MANUAL] look at the new UI (`client/README.md`); the status label may be removed (build log follow-ups).
@@ -17,7 +17,7 @@
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 61 / 85
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 61 / 88
 
 | Area | State | Notes |
 |---|---|---|
@@ -35,6 +35,7 @@
 | Dev tooling (CR-0006) | done | server panel goods for the `devtest` account: `server-panel/goods.sql`, `panel.sh goods`, tests (CR-0006-T1) |
 | Resilience (limits, retries, logging) | in progress | client logging M0-57 merged (PR #81) (`ClientLogger`, `ClientLog`); version and content compatibility M0-58 merged (PR #82) (`ContentSync`, `X-Client-Version`); mobile-safe UI M0-59 merged (PR #84) (Expand scaling, `ScaleToFit`, portrait rules); error catalogue, global handler, rate limits and input limits M0-34 merged (PR #46); logging, correlation and the dev time scale M0-35 merged (PR #47) |
 | Docs automation (DocTools) + docs completeness | in progress | handbook, Pages, docs-as-code checks and a full audit: CR-0002 done (PR #27); code documentation CR-0003 done (PR #29); DocTools is M0-61 |
+| Logistics (CR-0008) | in progress | T1 (spec, engine, server) on `task/CR-0008-T1-logistics-engine-server`; T2 (client, art) and T3 (playtest) after it |
 | Balance simulator | not started | |
 | E2E / security / concurrency suites | in progress | server golden E2E over HTTP M0-36 merged (PR #48); lost responses and the kill check M0-56 merged (PR #80); boundary review M0-60 merged (PR #85) (`docs/testing/KILL-SERVER-CHECK.md`) |
 | Dev build + M0 close-out | not started | |
@@ -66,3 +67,5 @@ All run in M0-06, the handbook in CR-0002-T1 (details and the "since" task: `doc
 ## Deviations from the plan
 - M0-07 is split into M0-07a (engine) and M0-07b (JSON file, server loading), one PR each: the owner's choice in the plan approval
   (build log BL-20261014-05, decision 1). Split plan tasks carry a letter; the commit id pattern allows it (`18`).
+- CR-0008 (logistics, approved 2026-11-02) adds three tasks between M0-60 and M0-61 (`CR-0008-T1` … `T3`, board rows "10+"): 88 on the
+  board. Its design changes `22`, `04`, `05`, `06`, `23`; M0-61 onward cover the new model (plan §0.00, §7).
