@@ -13,7 +13,7 @@ client directly (`.claude/rules/unity.md`). `GameRoot` builds it and runs the st
 ## Key types
 | Type | Responsibility |
 |---|---|
-| `ApiClient` | One method per endpoint (`DevLoginAsync`, `GetContentAsync`, `GetCityAsync`, and one per command); builds the URL and body, owns the timeout, returns an `ApiResult<T>`. Holds the bearer token in memory (`SetAccessToken`). Sends the build version (`AppInfo.Version`, or the `clientVersion` a test passes; blank sends nothing) as `X-Client-Version` on every request, through `ApiTransportRequest.ClientVersion` and `UnityWebRequestTransport` (M0-58). Logs each request (M0-57): a Debug line (`Request GET /city -> 200 in 41 ms`) when it worked, a Warning with the error code, status and the server's trace id when it did not; never a token or a body. Takes an optional `ClientLogger` (default `ClientLog.Default`) |
+| `ApiClient` | One method per endpoint (`DevLoginAsync`, `GetContentAsync`, `GetCityAsync`, and one per command); builds the URL and body, owns the timeout, returns an `ApiResult<T>`. Holds the bearer token in memory (`SetAccessToken`). Sends the build version (`AppInfo.Version`, or the `clientVersion` a test passes; blank sends nothing) as `X-Client-Version` on every request, through `ApiTransportRequest.ClientVersion` and `UnityWebRequestTransport` (M0-58). Logs each request (M0-57): a Debug line (`Request GET /city -> 200 in 41 ms`) when it worked, a Warning with the error code, status and the server's trace id when it did not; never a token or a body. Takes an optional `ClientLogger` (default `ClientLog.Default`). Refuses an `http://` address unless `allowInsecureHttp` is set (default off; `GameRoot` sets it in the Editor and development builds, M0-60, `07`) |
 | `ApiResult<T>` / `ApiError` | The DTO or the error, never both. `ApiError`: `Code`, `Status`, `Detail`, `TraceId`, `RequestId`, `RetryAfterSeconds` |
 | `ApiErrorCodes` | The 25 server codes of `05` (the last, `UNSUPPORTED_CLIENT_VERSION`, means `IncompatibleVersion`) and the three `CLIENT_` codes (`CLIENT_NETWORK_ERROR` and `CLIENT_TIMEOUT`, status 0; `CLIENT_INVALID_RESPONSE`, the HTTP status) |
 | `ApiResponseParser` | (status, body) to an `ApiResult<T>`; never throws on a bad body, never copies the body into an error |
@@ -82,6 +82,7 @@ captured from the real server, and the round-trip test. A new error code: add it
 - `SnapshotDtoTests`, `ContentDtoTests`, `RequestDtoTests`: every fixture reads, writes back to the same text, holds the expected values;
   a missing required member and an unknown phase are refused; request bodies have exactly their members.
 - `ContentSyncTests` (M0-58): the order fetch, replacing, apply, replaced; nothing applied for content that cannot be had or is another version; one fetch for answers that arrive together; the same through `ConnectionMonitor` (including recovery and the 426) and `CommandSender`.
+- `ApiClientTests` (M0-60): an http address is refused without the allowance and accepted with it, an https one in every build; `InsecureHttpSettingTests`: the Player setting allows http in development builds only.
 - `ApiClientTests` (M0-58): every request carries the client version; a blank one sends no header. `UnityWebRequestTransportTests`: the header reaches the server only when there is a version.
 - `ApiResponseParserTests`: every `error-*.json` fixture parses to its code and status, all 25 server codes parse, `Retry-After`,
   malformed or truncated JSON, an HTML 502, empty bodies and a lost connection give clean errors.
@@ -107,4 +108,4 @@ captured from the real server, and the round-trip test. A new error code: add it
   matching builds.
 - The real transport was walked against a running server once (M0-37 build log); it is not in CI (Unity tests are not).
 
-Last updated: M0-58
+Last updated: M0-60

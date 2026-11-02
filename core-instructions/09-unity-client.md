@@ -14,7 +14,8 @@ It never decides outcomes.
   Scripting backend for device builds: IL2CPP.
 - Built-in modules are enabled only when the manifest or a dependency asks for them: the manifest names `com.unity.modules.unitywebrequest`
   (`ApiClient` is built on `UnityWebRequest`). No pre-release or experimental package (decision 025).
-- Player → "Allow downloads over HTTP": *Allowed in Development Builds* (needed for `http://localhost`).
+- Player → "Allow downloads over HTTP": *Allowed in Development Builds* (needed for `http://localhost`; `InsecureHttpSettingTests`). The client
+  checks it too: `ApiClient` refuses an `http://` address unless `GameRoot` allows it for `Debug.isDebugBuild`, so a release build needs https (`07`, M0-60).
 - `client/CityBuilder/.gitignore` (inside the Unity folder only — the root must not ignore server
   `.csproj` files): `Library/ Temp/ Logs/ obj/ Build/ Builds/ UserSettings/ *.csproj *.sln *.slnx`.
 
