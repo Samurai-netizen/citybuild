@@ -12,7 +12,7 @@ namespace CityBuilder.Client.Presentation.Research
 {
     /// <summary>
     /// The research screen on the screen (M0-52): a thin component over a <see cref="ResearchScreenModel"/>. It loads <c>UI/Research</c> and
-    /// <c>UI/ResearchNode</c> from <c>Resources</c>, makes one node element per node of the era and lists them in one column in the model's order (prerequisites first; the MVP's tree is a plain list, and the model still works out each node's depth for the tree of later eras), writes the
+    /// <c>UI/ResearchNode</c> from <c>Resources</c>, makes one node element per node of the era and puts them in one row of cards in the model's order (prerequisites first; the MVP's tree is a plain list, and the model still works out each node's depth for the tree of later eras), writes the
     /// model's words into the elements by name, draws the progress ring of the running node, and enables each Finance button by what the model
     /// allows. A press on Finance only raises <see cref="FinanceRequested"/> with the node's id: what is sent, and when, is the flow's, and
     /// nothing here decides or calls the server. A button at the bottom left opens and closes the panel; opening it raises
@@ -305,13 +305,13 @@ namespace CityBuilder.Client.Presentation.Research
             return text.ToString();
         }
 
-        /// <summary>Empties the list and makes one node element per node, all in one column (the MVP's tree is a one column list), in the model's order.</summary>
+        /// <summary>Empties the row and makes one node element per node, all in one row of cards (the MVP's tree is a plain row), in the model's order.</summary>
         private void BuildNodes(Elements e, ResearchScreenModel model)
         {
             e.Columns.Clear();
             _nodes.Clear();
             var list = new VisualElement();
-            list.AddToClassList("research-column");
+            list.AddToClassList("research-row");
             e.Columns.Add(list);
             for (int index = 0; index < model.Nodes.Count; index++)
             {
@@ -348,7 +348,7 @@ namespace CityBuilder.Client.Presentation.Research
             return node;
         }
 
-        /// <summary>Writes one node's words into its elements, marks its status, and shows or hides the ring, the note and the button.</summary>
+        /// <summary>Writes one node's words into its elements, marks its status (and whether the card can be tapped to finance it), and shows or hides the ring, the note and the button.</summary>
         private static void Write(NodeElements node, ResearchNodeModel model)
         {
             node.Name.text = model.Name;
@@ -361,6 +361,7 @@ namespace CityBuilder.Client.Presentation.Research
             node.Root.EnableInClassList("research-node--available", model.Status == ResearchStatus.Available);
             node.Root.EnableInClassList("research-node--running", model.Status == ResearchStatus.InProgress);
             node.Root.EnableInClassList("research-node--done", model.Status == ResearchStatus.Done);
+            node.Root.EnableInClassList("research-node--ready", model.ShowsButton && model.ButtonEnabled);
             node.Finance.style.display = model.ShowsButton ? DisplayStyle.Flex : DisplayStyle.None;
             node.Finance.SetEnabled(model.ButtonEnabled);
             node.Ring.style.display = model.Status == ResearchStatus.InProgress ? DisplayStyle.Flex : DisplayStyle.None;
