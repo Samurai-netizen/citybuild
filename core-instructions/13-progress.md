@@ -4,14 +4,15 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **State:** AWAITING OWNER   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M0-59 · Mobile-safe UI (`[S]`, Sonnet 5.5)
 - **Branch:** `claude/compassionate-meitner-sd7nr0` (designated session branch)
 - **Build log entry:** `docs/build-log/2026/2026-11-02-05-M0-59.md` (In progress)
 - **Last green commit:** the head of `task/repo-cloud-setup`
 - **Done steps:** plan; session 1 code; session 2 (Opus 5.5): review fixes 1-5 (Expand scaling in the asset, safe area on the status label and
   fatal screen, two-row portrait HUD, placement bar and toasts above the dock in portrait, research scrolls both ways), tests, docs. Unity not run here.
-- **Next step:** an approximate layout check in a browser (scratchpad), then `test-unity.sh` and the [MANUAL] Device Simulator look on a machine with Unity.
+- **Next step:** needs Unity: `test-unity.sh`, fix any error, the [MANUAL] Device Simulator steps (`client/README.md`), then `/finish-task`.
+  Owner: say whether to open the PR before the Unity run, and decide on touch targets for 360 dp phones (build log decision 13).
 - **Open questions for the owner:** M0-58: the [MANUAL] content-change check (`client/README.md`; no automated test covers the `GameRoot` rebuild). CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-54: the dev database still runs the fast clock until the owner does step 7 of the waiting-loop run (`LOCAL-E2E.md`). M0-55: the [MANUAL] look at the connection states (`client/README.md`). CR-0007-T1: the [MANUAL] look at the new UI (`client/README.md`); the status label may be removed (build log follow-ups).
 - **Known broken / do not touch:** — (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55)
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
