@@ -37,7 +37,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             public Rig(bool finishDelaysAtOnce)
             {
                 Delay.FinishAtOnce = finishDelaysAtOnce;
-                Api = new ApiClient("http://localhost:8080", 15, Transport);
+                Api = new ApiClient("http://localhost:8080", 15, Transport, allowInsecureHttp: true);
                 Api.SetAccessToken("tok-1");
                 Store = new ClientCityStore(() => 0);
                 Store.SnapshotChanged += () => SnapshotsTaken++;

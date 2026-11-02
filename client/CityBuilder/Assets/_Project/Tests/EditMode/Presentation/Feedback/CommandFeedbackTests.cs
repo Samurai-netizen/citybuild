@@ -42,7 +42,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Feedback
         {
             _transport = new FakeTransport();
             _delay = new FakeDelay { FinishAtOnce = true };
-            var api = new ApiClient("http://localhost:8080", 15, _transport);
+            var api = new ApiClient("http://localhost:8080", 15, _transport, allowInsecureHttp: true);
             api.SetAccessToken("tok-1");
             _sender = new CommandSender(api, new ClientCityStore(() => 0), CommandPolicy.Default, _delay.Delay, Guid.NewGuid);
             _queue = new ToastQueue();

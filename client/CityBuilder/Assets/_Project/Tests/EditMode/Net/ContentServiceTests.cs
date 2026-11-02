@@ -27,7 +27,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         public void CreateService()
         {
             _transport = new FakeTransport();
-            var api = new ApiClient("http://localhost:8080", 15, _transport);
+            var api = new ApiClient("http://localhost:8080", 15, _transport, allowInsecureHttp: true);
             api.SetAccessToken("tok-1");
             _service = new ContentService(api);
         }

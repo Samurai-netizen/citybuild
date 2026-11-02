@@ -70,7 +70,7 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(_store.Apply(SnapshotMapper.ToSnapshot(snapshotDto).Value!), Is.True);
             _display = new DisplayCity(_store, new DisplayClock(_store, 1), content);
             _transport = new ControllableTransport();
-            _sender = new CommandSender(new ApiClient("http://localhost:8080", 30, _transport), _store, CommandPolicy.Default);
+            _sender = new CommandSender(new ApiClient("http://localhost:8080", 30, _transport, allowInsecureHttp: true), _store, CommandPolicy.Default);
             _cancel = new CancellationTokenSource();
             _screen = ResearchScreen.Create(_host.transform)!;
             _flow = new ResearchFlow(content, _sender, _screen, _cancel.Token);

@@ -607,7 +607,9 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             ApiClient api;
             try
             {
-                api = _api = new ApiClient(settings.BaseUrl, settings.RequestTimeoutSeconds, new UnityWebRequestTransport());
+                // Plain http only in the Editor and development players (07, M0-60): a release build sends its token over https only.
+                api = _api = new ApiClient(
+                    settings.BaseUrl, settings.RequestTimeoutSeconds, new UnityWebRequestTransport(), allowInsecureHttp: Debug.isDebugBuild);
             }
             catch (ArgumentException exception)
             {

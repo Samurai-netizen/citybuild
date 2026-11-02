@@ -201,7 +201,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             CitySnapshot held = store.Snapshot!;
             store.SnapshotChanged += () => changes++;
             var transport = new FakeTransport().Answer(409, Fixtures.Read("error-409-TILE_OCCUPIED.json"));
-            var api = new ApiClient("http://localhost:8080", 15, transport);
+            var api = new ApiClient("http://localhost:8080", 15, transport, allowInsecureHttp: true);
             api.SetAccessToken("tok-1");
             now = 20;
 

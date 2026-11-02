@@ -51,13 +51,29 @@ namespace CityBuilder.Client.Net
         /// <param name="transport">The wire; <see cref="UnityWebRequestTransport"/> in the game.</param>
         /// <param name="logger">Where the request lines go; null means <see cref="ClientLog.Default"/>. A test passes a recording one.</param>
         /// <param name="clientVersion">The build version to send in <c>X-Client-Version</c>; null means <see cref="AppInfo.Version"/>, and a blank one sends no header. A test passes a fixed one.</param>
-        /// <exception cref="ArgumentException"><paramref name="baseUrl"/> is not an absolute http or https address, or the timeout is out of range: a wrong asset, found at start.</exception>
-        public ApiClient(string baseUrl, int timeoutSeconds, IApiTransport transport, ClientLogger? logger = null, string? clientVersion = null)
+        /// <param name="allowInsecureHttp">
+        /// Whether an <c>http://</c> address is accepted (<c>07</c>: HTTP only in development builds, M0-60). <c>GameRoot</c> passes
+        /// <c>Debug.isDebugBuild</c>, so the Editor and development players may talk to a local server and a release build sends its
+        /// bearer token over https only. Off by default: a caller that wants plain HTTP says so.
+        /// </param>
+        /// <exception cref="ArgumentException"><paramref name="baseUrl"/> is not an absolute https address (or http, when allowed), or the timeout is out of range: a wrong asset, found at start.</exception>
+        public ApiClient(
+            string baseUrl,
+            int timeoutSeconds,
+            IApiTransport transport,
+            ClientLogger? logger = null,
+            string? clientVersion = null,
+            bool allowInsecureHttp = false)
         {
             bool isUrl = Uri.TryCreate(baseUrl, UriKind.Absolute, out Uri? uri);
             if (!isUrl || uri == null || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
             {
                 throw new ArgumentException("The base URL must be an absolute http or https address.", nameof(baseUrl));
+            }
+
+            if (uri.Scheme == Uri.UriSchemeHttp && !allowInsecureHttp)
+            {
+                throw new ArgumentException("The base URL must be an https address: plain http is allowed in development builds only.", nameof(baseUrl));
             }
 
             if (timeoutSeconds < 1 || timeoutSeconds > MaxTimeoutSeconds)

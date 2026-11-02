@@ -57,7 +57,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         {
             _transport = new FakeTransport();
             _tokens = new MemoryAccessTokenStore { Kept = new StoredLogin("dev1", "kept-token") };
-            var api = new ApiClient("http://localhost:8080", 15, _transport);
+            var api = new ApiClient("http://localhost:8080", 15, _transport, allowInsecureHttp: true);
             var auth = new AuthService(api, _tokens);
             Assert.That(auth.TryRestore("dev1"), Is.True);
             _store = new ClientCityStore(() => 0);
@@ -541,7 +541,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         [Test]
         public void Constructor_RefusesNulls()
         {
-            var api = new ApiClient("http://localhost:8080", 15, _transport);
+            var api = new ApiClient("http://localhost:8080", 15, _transport, allowInsecureHttp: true);
             var auth = new AuthService(api, _tokens);
 
             Assert.Throws<ArgumentNullException>(() => new ConnectionMonitor(null!, auth, _store, "mvp-1", "dev1", _scheduler, () => true));

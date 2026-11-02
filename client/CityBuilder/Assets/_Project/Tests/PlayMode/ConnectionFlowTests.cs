@@ -44,7 +44,7 @@ namespace CityBuilder.Client.Tests.PlayMode
         {
             _parent = new GameObject("Test connection flow parent");
             _transport = new ControllableTransport();
-            var api = new ApiClient("http://localhost:8080", 15, _transport);
+            var api = new ApiClient("http://localhost:8080", 15, _transport, allowInsecureHttp: true);
             var auth = new AuthService(api, new NullAccessTokenStore());
             var store = new ClientCityStore(() => _now);
             _now = 1000;

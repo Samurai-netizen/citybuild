@@ -34,7 +34,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         {
             ApiClientSettings settings = Resources.Load<ApiClientSettings>("Config/ApiClientSettings");
 
-            Assert.That(() => new ApiClient(settings.BaseUrl, settings.RequestTimeoutSeconds, new FakeTransport()), Throws.Nothing);
+            Assert.That(() => new ApiClient(settings.BaseUrl, settings.RequestTimeoutSeconds, new FakeTransport(), allowInsecureHttp: true), Throws.Nothing);
         }
     }
 }
