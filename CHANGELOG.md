@@ -6,6 +6,7 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
 ## Unreleased
 
 ### Added
+- Cloud setup script `scripts/dev/cloud-setup.sh`: installs the .NET SDK pinned in `global.json` when missing, enables `.githooks` and restores the server packages with `--locked-mode`, for a cloud session's setup step (repo).
 - Version and content compatibility: the client sends `X-Client-Version` on every request and the server logs it (`ClientVersion` log scope, sanitised, nothing refused); a snapshot of another `contentVersion` is applied only after `GET /content` was fetched and found to be that version (`ContentSync`, for polls and command answers) and the screens are rebuilt on the new content; the reserved error `UNSUPPORTED_CLIENT_VERSION` (426) is `IncompatibleVersion` (M0-58)
 - Client logging: `ClientLogger` and `ClientLog` over the Unity console with a level per build type (Debug in the Editor and development builds, Warning in release), one Debug line per request, a Warning with the error code and the server's trace id for a failed one, no token and no body in any build; every `Debug.Log*` of the client goes through it (M0-57)
 - Proof of idempotent retries: tests for a lost response on the server and the client, and a manual check that kills the server with commands on their way (`docs/testing/KILL-SERVER-CHECK.md`) (M0-56).
