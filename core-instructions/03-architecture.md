@@ -23,7 +23,8 @@ and every 2 minutes in the foreground. Every command response carries the full a
    response and roll back. If found with a different hash → `IDEMPOTENCY_CONFLICT`. Steps 2 and 4 to 8 of a command are
    `CommandPipeline` (M0-26), the only thing that runs a command.
 5. **Settle:** `Simulator.Advance(city, nowSec − LastSettledUnixSec)` → settlement report.
-   (Later: mailbox deliveries are passed in as timed events, see `04` §13.)
+   (Later: mailbox deliveries are passed in as timed events, see `04` §13.) From CR-0008 *(planned, part H)* the advance also gets the
+   absence start the server derives from the city's last-seen second, and the request's own second becomes the new last-seen one (`04` §2).
 6. Commands only: apply the mutation via engine rules. On a rule failure, return the error code;
    the settlement from step 5 is still committed, because time passing is never undone.
 7. Zero-length advance → canonical state.

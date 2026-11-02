@@ -7,7 +7,7 @@
 - **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** CR-0008-T1 · Logistics rework: spec, engine and server (`[O]`; parts A–I, one PR) · branch `task/CR-0008-T1-logistics-engine-server` ·
   build log `docs/build-log/2026/2026-11-02-07-CR-0008-T1.md` (its Session 1 plan lists every part and step)
-- **Part / step:** B (technical spec; draft PR #86). B1 `04` done. Next: B2 `05` `06` `07` `09` → B3 `23` (numbers, golden #1 and #2) →
+- **Part / step:** B (technical spec; draft PR #86). B1 `04`, B2 `05` `06` `07` `09` done. Next: B3 `23` (numbers, golden #1 and #2) →
   B4 `content-golden-v2.json` (protected: the owner answers the permission prompt). Then C … I, then `/finish-task`.
 - **Last completed:** M0-60 · Client ↔ server boundary review (PR #85, merged)
 - **Next task:** CR-0008-T2 · client and art (`[S]`), after T1 merges; then CR-0008-T3, then M0-61.

@@ -102,6 +102,31 @@ build menu (locked cards name the research that unlocks them; built, M0-45) · b
 stepper − / +** with a live rate preview, upgrade section; built, M0-51) · research screen (Era I tree: nodes with cost,
 time, effect, status; finance button; built, M0-52) · welcome-back report (built, M0-53) · toasts (built, M0-47). Market and guild screens come in M2.
 
+## Logistics screens and flows (CR-0008, *planned*: built in CR-0008-T2; T1 part E keeps the client compiling)
+Every screen follows the rules below (one scroll direction at most, the rest scaled to fit, OD-17; phones from the iPhone XR on, OD-18), and
+a menu joins the `MenuGroup` (OD-16). Display only: the client runs the shared engine on its copy (`DisplayCity`, with no absence start: an
+open game is present) and sends intent; the server decides.
+- **HUD and inspector (T2 part A):** the HUD chips show each item's **city total** (`totals`) and the purse; the inspector shows the
+  building's **store** (each good as amount / limit) next to its stall reason, and what a construction site or a waiting upgrade still
+  needs. The research screen shows a research waiting for goods at the science building, and its start button is off with its reason
+  until a science building stands.
+- **Trip flow (T2 part A):** from the inspector, pick the target on the map (a building or a project), the good and All, Half or Quarter
+  (a percentage once researched); the path is drawn by the shared engine (`04` §17); the button is off with its reason (no free worker,
+  nothing to carry, nothing needed there); it sends `start-trip`. A running trip shows on both ends with its countdown.
+- **Road mode (T2 part B):** from the build menu, drag a line of tiles; ghosts show the total cost and each refused tile's reason;
+  confirming sends `place-roads`; selected road tiles can be upgraded or removed. The ground draws roads by level.
+- **Courier station and route editor (T2 part C):** the station's inspector lists its couriers (the worker stepper), each one's state,
+  stamina and route summary, and a **Re-energize** button. The route editor (a menu) adds stops by tapping buildings, gives each stop take
+  and put actions (good and amount: presets; a percentage once researched; exact shown locked with the research that unlocks it), reorders
+  and removes stops, draws the path and each walk's time, and sends `set-route`. A long route scrolls in one direction only.
+- **Walkers (T2 part D):** couriers and trip workers walk tile centre to tile centre with 90° turns, slowly across a building, from the
+  snapshot's walk (`departedAt`, `arrivesAt`) and the path the shared engine computes on the current map (a map change after the walk
+  started may draw a different path that still ends on time); resting couriers stand at their station; a load shows as an icon. Pooled
+  views, no allocations per frame when nothing changes.
+- **Welcome back (T2 part E):** time away, the couriers' working time and when they got tired (`courierSeconds`, `tiredCouriers`), goods
+  moved and delivered, produced and consumed, coins, completed buildings and research; its main button **Re-energize couriers**
+  (`reenergize-couriers`) when any courier spent stamina; a HUD notice while couriers rest. The 8 h production cap note goes.
+
 ## UX rules
 - **One menu at a time (owner directive OD-16, `15`).** The screens the player opens and closes (the build menu's sheet, the building inspector, the research screen, the welcome-back report, and every later one) are one `MenuGroup`: when one opens, the others close. A menu joins the group in `GameRoot` with the action that closes it, and tells the group when it goes from closed to open (an `Opened` event). Its close action must be safe when the menu is already closed, and must not drop state that belongs to another flow (the inspector closes by dropping the tile only while it is shown, because the placement flow owns the tile while it runs). The placement bar and the toasts are not menus: they belong to a flow or to a result.
 - No optimistic economy: never subtract resources, change worker counts or spawn a finished building
