@@ -35,7 +35,7 @@ of `Tests/Fixtures/content.json` (`Tests/EditMode/Presentation/Build/`): every s
 
 **3. The layout.** `BuildMenu.uxml` is a root (`picking-mode="Ignore"`, so empty space passes taps to the ground), a closed sheet with a
 horizontal `ScrollView` and a "Build" button. `BuildCard.uxml` is one card whose labels are found by name. `BuildMenu.uss` styles both.
-Sizes are in panel units (reference resolution 1200 × 800), so a 64 button is well above the 48 dp touch target. A state is a USS class
+Sizes are in panel units: one unit is about one dp on a landscape phone (the panel scales by its height, reference 880 × 400, CR-0007), so a button of `min-height: var(--touch)` (48) is a 48 dp touch target. Import `Common.uss` and use its tokens and shared classes (`btn`, `panel-parchment`, `t-body`, ...): a screen's own stylesheet places things and writes no colour and no font size (`SharedLookTests`). A state is a USS class
 (`build-card--locked`, `build-card--selected`, `build-panel--hidden`) switched with `EnableInClassList`.
 Add a layout test (`BuildMenuLayoutTests`): it loads the UXML and checks that every name the component looks up exists. A renamed
 element then fails a test, not a player.
@@ -71,7 +71,8 @@ updates the cards, that the sheet opens. Click a card with the component's `Tap`
 - [ ] Component thin: no rule, no `ApiClient`, no allocation per frame (refresh on events, not in `Update`).
 - [ ] A result needs no code of its own: a command's success or error is shown as a toast by `CommandFeedback` (`FeedbackMessages` holds the sentences); a screen shows an error line only when the player must see it next to the buttons, and then the same sentence, never the code or the server's text.
 - [ ] Hints are hints: the server's check decides; nothing is subtracted or spawned before it answers.
-- [ ] Touch targets of at least 48 dp, the safe area respected, pointers over the screen kept from the ground.
+- [ ] Touch targets of at least 48 dp (`btn`, which is 48 high), the safe area respected, pointers over the screen kept from the ground.
+- [ ] The layout imports `Common.uss` before its own stylesheet; every colour is a `var(--c-...)`, every font size a `var(--font-...)`, every button has `btn`; a screen that sits under the HUD starts at `var(--hud-height)`; a look at the screen's screenshot at 2400 × 1080 and 1920 × 1080 (`client/README.md`).
 - [ ] Every type and member has an XML doc comment (the repository tests check it); new `.meta` files committed.
 - [ ] Docs: `09` (the built line and the screen's paragraph), `docs/modules/CityBuilder.Client.Presentation.md`, the test index.
 

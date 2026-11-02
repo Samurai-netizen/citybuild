@@ -171,4 +171,18 @@ server of `docs/testing/LOCAL-E2E.md` and press **Play**, then:
    screen with "Update needed" covers everything and no press reaches the city. **Check again** asks once more. Stop it by pressing Stop in the Editor.
 6. Tell the AI coder "connection states look right", or what looks wrong. Stop Play mode without saving the scene.
 
-Last updated: M0-55
+## [MANUAL] Look at the new UI (CR-0007)
+The tests hold the rules of the look (the shared stylesheet, the sizes, the touch target) and the AI coder looked at screenshots of every screen at 2400 × 1080 and
+1920 × 1080, but only you can say it looks decent. Nothing here is saved or committed. Set the Game view to a landscape phone: **Free Aspect** off, choose
+**2400 × 1080** (add it with the + button of the Game view's size menu; also try **1920 × 1080**), or use the Device Simulator. Use the server of
+`docs/testing/LOCAL-E2E.md`, press **Play** and look at, one at a time:
+1. The HUD: one dark wood bar across the top with the item chips, workers, builders, the research ring, the era badge and the green dot. Nothing is cut off or touching.
+2. **Build**: a wooden tray of cream cards opens above the button. Pick a card: the bar at the bottom right asks "Build ... at (x, y)?" with **Cancel** and a green **Place**.
+3. Tap a building: the inspector opens at the right under the HUD in two columns (status, recipe and the worker stepper on the left, the upgrade on the right), and fits on the screen.
+4. **Research**: a cream panel with the nodes in columns, a **Finance** button beside each node's text, thin scrollbars. Scroll it.
+5. A toast ("Construction started", then a refusal): they appear at the bottom left above the buttons, not over the inspector.
+6. Stop the server for the offline banner (`docs/testing/LOCAL-E2E.md` step 4) and, after a long absence, the welcome-back card.
+7. Check the size of what you tap: every button should be easy to hit with a thumb (48 units high, about 7 mm on a phone). Tell the AI coder "UI looks decent", or what looks wrong
+   (which screen, at which size). Stop Play mode without saving the scene.
+
+Last updated: CR-0007-T1
