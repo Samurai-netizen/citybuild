@@ -66,5 +66,5 @@ When unsure, treat it as major and put it in the next era. The game stays simple
 ## Research UX (see `21-game-vision.md`)
 A tree view per era: nodes show cost, duration, effect and status (Locked / Available / In progress / Done).
 There is a progress ring in the HUD, and the welcome-back report lists the research that completed, with what it does (built in M0-53).
-Built in M0 (M0-52): nodes in columns by prerequisites, a **Finance** button that is off with its reason, and the rule "complete all to advance" greyed out while no later era exists (`09`, Research screen).
+Built in M0 (M0-52, a one column list since CR-0007; a branched tree comes with later eras): nodes in prerequisite order, a **Finance** button that is off with its reason, and the rule "complete all to advance" greyed out while no later era exists (`09`, Research screen).
 Cancelling research is not in M0. Decide in M1 (proposal: cancel refunds 50 %).

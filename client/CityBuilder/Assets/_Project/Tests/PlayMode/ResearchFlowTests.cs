@@ -148,14 +148,14 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(Q<Button>(ResearchScreen.ToggleName).text, Is.EqualTo("Research"));
         }
 
-        /// <summary>The header, the greyed-out rule and four nodes in two columns, each with its words.</summary>
+        /// <summary>The header, the greyed-out rule and four nodes in one list, each with its words.</summary>
         [Test]
-        public void ShowsTheEraHeaderTheRuleAndTheNodesInColumns()
+        public void ShowsTheEraHeaderTheRuleAndTheNodesInOneList()
         {
             Assert.That(Q<Label>(ResearchScreen.EraName).text, Is.EqualTo("Early Middle Ages — 0 / 4 researched"));
             Assert.That(Q<Label>(ResearchScreen.RuleName).text, Is.EqualTo("Complete all to advance"));
             Assert.That(Q<Label>(ResearchScreen.RuleName).ClassListContains("research-rule--off"), Is.True);
-            Assert.That(_screen.Root!.Query<VisualElement>(className: "research-column").ToList().Count, Is.EqualTo(2));
+            Assert.That(_screen.Root!.Query<VisualElement>(className: "research-column").ToList().Count, Is.EqualTo(1));
             List<VisualElement> nodes = Nodes();
             Assert.That(nodes.Count, Is.EqualTo(4));
             Assert.That(In(nodes[0], ResearchScreen.NodeNameName).text, Is.EqualTo("Sharpened Axes"));
@@ -163,9 +163,10 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(In(nodes[0], ResearchScreen.NodeTimeName).text, Is.EqualTo("Takes 30m"));
             Assert.That(In(nodes[0], ResearchScreen.NodeEffectName).text, Is.EqualTo("Woodcutter's Hut: −20% labor"));
             Assert.That(In(nodes[0], ResearchScreen.NodeStatusName).text, Is.EqualTo("Ready to research"));
-            Assert.That(nodes[0].parent, Is.SameAs(nodes[1].parent), "the two nodes with no prerequisite share a column");
-            Assert.That(nodes[2].parent, Is.SameAs(nodes[3].parent));
-            Assert.That(nodes[0].parent, Is.Not.SameAs(nodes[2].parent));
+            Assert.That(nodes[1].parent, Is.SameAs(nodes[0].parent), "the MVP's tree is one list: every node is in the same column");
+            Assert.That(nodes[2].parent, Is.SameAs(nodes[0].parent));
+            Assert.That(nodes[3].parent, Is.SameAs(nodes[0].parent));
+            Assert.That(In(nodes[2].parent, ResearchScreen.NodeNameName).text, Is.EqualTo("Sharpened Axes"), "the list starts with the node that has no prerequisite");
         }
 
         /// <summary>An available node can be financed; a locked one is off and names what it requires.</summary>

@@ -1,5 +1,5 @@
 /* The research screen (M0-52, docs/how-to/add-ui-screen.md): a button at the bottom left next to the Build button and, above it, a parchment panel with
-   the era header and the columns of nodes. Restyled in CR-0007; colours and sizes come from Common.uss. */
+   the era header and the list of nodes (one column, CR-0007). Restyled in CR-0007; colours and sizes come from Common.uss. */
 .research-root {
   position: absolute;
   left: 0;
@@ -43,13 +43,11 @@
 }
 
 .research-columns {
-  flex-direction: row;
-  align-items: flex-start;
+  flex-direction: column;
 }
 
 .research-column {
-  width: 330px;
-  margin-right: var(--sp-2);
+  flex-grow: 1;
 }
 
 .research-node {
@@ -110,12 +108,12 @@
   margin-left: var(--sp-1);
 }
 
-.research-node-numbers {
+.research-node-row {
   flex-direction: row;
   flex-wrap: wrap;
 }
 
-.research-node-cost {
+.research-node-row > .unity-label {
   margin-right: var(--sp-3);
 }
 

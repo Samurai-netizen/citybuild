@@ -1,7 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
   <!-- One research node of the research screen (M0-52, docs/how-to/add-ui-screen.md): ResearchScreen clones it once per node and writes the
        texts of ResearchNodeModel into the labels by name; research-node-icon gets the node's picture (UiIcons) and research-node-ring is
-       painted from the node's progress while it runs. The texts are on the left, the Finance button on the right. Its style is in Research.uss and Common.uss. -->
+       painted from the node's progress while it runs. The texts are on the left in two lines under the name, the Finance button on the right. Its style is in Research.uss and Common.uss. -->
   <ui:VisualElement name="research-node" class="research-node">
     <ui:VisualElement class="research-node-text">
       <ui:VisualElement class="research-node-header">
@@ -9,13 +9,15 @@
         <ui:Label name="research-node-name" class="research-node-name t-heading" />
         <ui:VisualElement name="research-node-ring" class="research-node-ring" picking-mode="Ignore" />
       </ui:VisualElement>
-      <ui:Label name="research-node-effect" class="research-node-effect t-note" />
-      <ui:VisualElement class="research-node-numbers">
-        <ui:Label name="research-node-cost" class="research-node-cost t-small" />
+      <ui:VisualElement class="research-node-row">
+        <ui:Label name="research-node-effect" class="research-node-effect t-note" />
+        <ui:Label name="research-node-cost" class="t-small" />
         <ui:Label name="research-node-time" class="t-small" />
       </ui:VisualElement>
-      <ui:Label name="research-node-status" class="research-node-status" />
-      <ui:Label name="research-node-note" class="t-note" />
+      <ui:VisualElement class="research-node-row">
+        <ui:Label name="research-node-status" class="research-node-status" />
+        <ui:Label name="research-node-note" class="t-note" />
+      </ui:VisualElement>
     </ui:VisualElement>
     <ui:Button name="research-node-finance" class="research-node-finance btn btn--primary" text="Finance" />
   </ui:VisualElement>

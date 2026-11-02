@@ -135,8 +135,7 @@ server of `docs/testing/LOCAL-E2E.md` and play a few minutes.
 The tests check the words and the buttons; only a person can say the screen reads well and is easy to press. Nothing here is saved or committed. Use the
 server of `docs/testing/LOCAL-E2E.md` and play a few minutes.
 1. Open the **Bootstrap** scene and press **Play**. A **Research** button sits at the bottom left, to the right of **Build**. Press it: a panel opens under the
-   HUD with "Early Middle Ages — 0 / 4 researched", the greyed-out line "Complete all to advance" and two columns of nodes (Sharpened Axes and Trade Charter on
-   the left; Frame Saw and Storehouses on the right, dimmed, with "Requires: …"). Press **Close** or the X: the panel closes.
+   HUD with "Early Middle Ages — 0 / 4 researched", the greyed-out line "Complete all to advance" and the nodes as one list (Sharpened Axes, Trade Charter, then Frame Saw and Storehouses dimmed, with "Requires: …"). Press **Close** or the X: the panel closes.
 2. Press **Finance** on Trade Charter (150 coins): the button dims with "Starting research…" and every other button says "Another research is running". About a second
    later the node has a blue border, a ring that fills, "In progress · … left", and the HUD ring runs too. Press Finance on Sharpened Axes meanwhile: nothing happens.
 3. With too few coins (spend them first) Finance is dimmed and says "Not enough Coins". When Trade Charter is done (10 minutes, or the dev time scale of
@@ -179,7 +178,7 @@ The tests hold the rules of the look (the shared stylesheet, the sizes, the touc
 1. The HUD: one dark wood bar across the top with the item chips, workers, builders, the research ring, the era badge and the green dot. Nothing is cut off or touching.
 2. **Build**: a wooden tray of cream cards opens above the button. Pick a card: the bar at the bottom right asks "Build ... at (x, y)?" with **Cancel** and a green **Place**.
 3. Tap a building: the inspector opens at the right under the HUD in two columns (status, recipe and the worker stepper on the left, the upgrade on the right), and fits on the screen.
-4. **Research**: a cream panel with the nodes in columns, a **Finance** button beside each node's text, thin scrollbars. Scroll it.
+4. **Research**: a cream panel with the nodes as one list, a **Finance** button beside each node's text, a thin scrollbar. Scroll it.
 5. A toast ("Construction started", then a refusal): they appear at the bottom left above the buttons, not over the inspector.
 6. Stop the server for the offline banner (`docs/testing/LOCAL-E2E.md` step 4) and, after a long absence, the welcome-back card.
 7. Check the size of what you tap: every button should be easy to hit with a thumb (48 units high, about 7 mm on a phone). Tell the AI coder "UI looks decent", or what looks wrong
