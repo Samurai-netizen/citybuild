@@ -77,6 +77,9 @@ Never log: tokens, signing keys, full request bodies in production, personal dat
   `Security_DevLoginRefused_LogsTheCodeNotTheName`, `Security_DevLoginPastItsLimit_LogsNoAddress`, `Security_CommandRequest_LogsNoBody`,
   `Security_PostDevLogin_LogsThePlayerNeverTheNameOrToken`.
 
+- As built (M0-58): the client's `X-Client-Version` is client-controlled text that goes into every log line of the request, so only a short run
+  of plain characters is kept (`ClientVersionHeader`); anything else is logged as `invalid`, never as the text. Tests: `Security_Get_WithUnusableClientVersion_IsServedAndLoggedAsInvalid`.
+
 - As built on the client (M0-57): every line goes through `ClientLog` (`LoggingPolicyTests` fails on a direct `Debug.Log*`). A request is logged by method,
   path, status and duration only, a failed one with its error code and the server's trace id; no token and no body, in any build, so a release
   build (level Warning) writes the failures and nothing of the traffic. Tests: `ApiClientLoggingTests`.

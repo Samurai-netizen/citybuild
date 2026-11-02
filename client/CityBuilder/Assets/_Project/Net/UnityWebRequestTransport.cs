@@ -31,6 +31,11 @@ namespace CityBuilder.Client.Net
                     web.SetRequestHeader("Content-Type", "application/json");
                 }
 
+                if (request.ClientVersion != null)
+                {
+                    web.SetRequestHeader("X-Client-Version", request.ClientVersion);
+                }
+
                 if (request.AccessToken != null)
                 {
                     web.SetRequestHeader("Authorization", "Bearer " + request.AccessToken);

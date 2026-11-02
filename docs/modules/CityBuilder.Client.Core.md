@@ -13,7 +13,7 @@ structure). It is **not** responsible for talking to the server (`CityBuilder.Cl
 ## Key types
 | Type | Responsibility |
 |---|---|
-| `AppInfo` | static, read-only facts about this build. `Version` is `Application.version`, the "Version" field of Project Settings → Player (`bundleVersion`, `0.1.0` today); M0-58 sends it to the server |
+| `AppInfo` | static, read-only facts about this build. `Version` is `Application.version`, the "Version" field of Project Settings → Player (`bundleVersion`, `0.1.0` today); `ApiClient` sends it in `X-Client-Version` on every request (M0-58) |
 | `CitySnapshot` | One server snapshot in the engine's terms: version, content version, clock, and a city that only leaves as a copy (`CopyCity()`), so the state the store holds cannot change. It also carries the `SettlementSummary` of the answer (null for a snapshot made without one). `SnapshotMapper` (Net) builds it, because Core cannot name the DTOs |
 | `SettlementSummary` | What the settlement of one request did, in the engine's terms (M0-53): elapsed and production seconds, produced and consumed per item, completed building ids, completed research ids, era changed. Immutable, copies its lists, and refuses values no settlement has (a negative number, production time above the elapsed time). The welcome-back report reads it |
 | `ClientCityStore` | The last snapshot and its receive time. `Apply` takes a snapshot whose `(stateVersion, clock)` is greater than the held one's and raises `SnapshotChanged`; anything else is ignored. `Replace` takes one whatever is held, for the answer right after a new login, which may be another city (CR-0004). The default constructor reads `Time.realtimeSinceStartupAsDouble`, tests pass their own clock |
@@ -36,6 +36,7 @@ structure). It is **not** responsible for talking to the server (`CityBuilder.Cl
 - A snapshot with a lower `stateVersion` than the one held is ignored, and so is the same version with the same or an earlier clock (build log
   M0-39, decision 4); predicted values never leave the client.
 - Each prediction starts again from the snapshot, never from the last prediction: the 8-hour production cap counts from the start of an advance.
+- `DisplayCity` is disposed and made again when the content is replaced (M0-58); a disposed one keeps the city it last showed and ignores the store.
 - When the engine refuses a city (an unknown type or level, a timer before the clock, an overflow), `DisplayCity` logs one error and shows the snapshot unadvanced until the next one arrives. It never throws, because it runs from `Update` and from the store's event, inside whoever gave the store the snapshot (CR-0004).
 - Unity compiles this as C# 9: no file-scoped namespaces, no global usings.
 - Every type and member, private ones included, has an XML doc comment (`core-instructions/14-coding-standards.md` → Documentation
@@ -63,4 +64,4 @@ folder area follows the recipe "New project, assembly or folder area" in `core-i
 - `Time.realtimeSinceStartupAsDouble` may or may not count while the app is in the background, depending on the platform. The poll on resume
   (`PollScheduler`, M0-41) replaces the snapshot, so this lasts only until that answer arrives.
 
-Last updated: M0-57
+Last updated: M0-58

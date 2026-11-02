@@ -42,6 +42,7 @@ public sealed class ErrorCatalogueTests(ApiFactory factory) : IClassFixture<ApiF
         { "NOT_FOUND", 404 },
         { "METHOD_NOT_ALLOWED", 405 },
         { "UNSUPPORTED_MEDIA_TYPE", 415 },
+        { "UNSUPPORTED_CLIENT_VERSION", 426 },
     };
 
     /// <summary>
@@ -59,6 +60,15 @@ public sealed class ErrorCatalogueTests(ApiFactory factory) : IClassFixture<ApiF
         ["NOT_FOUND"] = "ExceptionHandlerTests",
         ["METHOD_NOT_ALLOWED"] = "ExceptionHandlerTests",
         ["UNSUPPORTED_MEDIA_TYPE"] = "ExceptionHandlerTests",
+    };
+
+    /// <summary>
+    /// Codes the catalogue defines before anything produces them, each with the task that will (M0-58, owner's approval: a narrow exception to
+    /// <see cref="EveryCode_HasASourceThatProducesIt"/>). A code leaves this list the moment a source produces it, and the test fails if it stays.
+    /// </summary>
+    private static readonly Dictionary<string, string> _reservedCodes = new(StringComparer.Ordinal)
+    {
+        ["UNSUPPORTED_CLIENT_VERSION"] = "the task that makes the server refuse unsupported client versions",
     };
 
     /// <summary>A request id for the answers that carry one.</summary>
@@ -114,7 +124,16 @@ public sealed class ErrorCatalogueTests(ApiFactory factory) : IClassFixture<ApiF
 
         Assert.Equal(
             ErrorCatalogue.All.Select(error => error.Code).Order(StringComparer.Ordinal),
-            engine.Concat(_nonEngineCodes.Keys).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal));
+            engine.Concat(_nonEngineCodes.Keys).Concat(_reservedCodes.Keys).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal));
+    }
+
+    /// <summary>A reserved code is one nothing produces: once a source produces it, it must leave <see cref="_reservedCodes"/> and get its proving test class in the table above.</summary>
+    [Fact]
+    public void ReservedCodes_AreProducedByNothing()
+    {
+        string[] engine = Enum.GetValues<MutationErrorCode>().Select(code => ErrorCatalogue.Of(code).Code).ToArray();
+
+        Assert.Empty(_reservedCodes.Keys.Intersect(engine.Concat(_nonEngineCodes.Keys), StringComparer.Ordinal));
     }
 
     /// <summary>

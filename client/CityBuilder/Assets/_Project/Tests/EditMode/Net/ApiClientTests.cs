@@ -25,6 +25,51 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             return new ApiClient(baseUrl, timeoutSeconds, transport);
         }
 
+        /// <summary>Every request, the login included and with or without a token, carries the build version for <c>X-Client-Version</c> (M0-58).</summary>
+        [Test]
+        public async Task EveryRequest_CarriesTheClientVersion()
+        {
+            FakeTransport transport = new FakeTransport()
+                .Answer(200, "{\"accessToken\":\"a.b.c\",\"expiresAtUtc\":\"2026-10-27T21:00:00+00:00\"}")
+                .Answer(200, Fixtures.Read("content.json"))
+                .Answer(200, Fixtures.Read("snapshot-city-start.json"));
+            ApiClient client = new ApiClient(BaseUrl, 15, transport, null, "1.2.3");
+
+            await client.DevLoginAsync("devtest", CancellationToken.None);
+            client.SetAccessToken("tok");
+            await client.GetContentAsync(CancellationToken.None);
+            await client.GetCityAsync(CancellationToken.None);
+
+            Assert.That(transport.Requests, Has.Count.EqualTo(3));
+            Assert.That(transport.Requests.ConvertAll(sent => sent.ClientVersion), Is.All.EqualTo("1.2.3"));
+        }
+
+        /// <summary>Without a version given, the client sends the build's own (<c>AppInfo.Version</c>, the Player setting), which is not blank.</summary>
+        [Test]
+        public async Task Request_WithoutAGivenVersion_CarriesTheBuildsVersion()
+        {
+            FakeTransport transport = new FakeTransport().Answer(200, Fixtures.Read("snapshot-city-start.json"));
+            ApiClient client = NewClient(transport);
+
+            await client.GetCityAsync(CancellationToken.None);
+
+            Assert.That(transport.Requests[0].ClientVersion, Is.EqualTo(CityBuilder.Client.Core.AppInfo.Version));
+            Assert.That(transport.Requests[0].ClientVersion, Is.Not.Null.And.Not.Empty);
+        }
+
+        /// <summary>A blank version sends no header at all rather than an empty one.</summary>
+        [TestCase("")]
+        [TestCase("   ")]
+        public async Task Request_WithABlankVersion_SendsNoHeader(string version)
+        {
+            FakeTransport transport = new FakeTransport().Answer(200, Fixtures.Read("snapshot-city-start.json"));
+            ApiClient client = new ApiClient(BaseUrl, 15, transport, null, version);
+
+            await client.GetCityAsync(CancellationToken.None);
+
+            Assert.That(transport.Requests[0].ClientVersion, Is.Null);
+        }
+
         /// <summary>A base URL that is not an absolute http(s) address, or a timeout outside 1 to 300 seconds, is refused at construction.</summary>
         [TestCase("")]
         [TestCase("localhost:8080")]

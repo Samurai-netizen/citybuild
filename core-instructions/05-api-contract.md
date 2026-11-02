@@ -178,6 +178,7 @@ There is no "claim" command, because production and research complete on their o
 | `NOT_FOUND` | 404 | A path no endpoint has (also the dev login outside Development) |
 | `METHOD_NOT_ALLOWED` | 405 | A method the endpoint doesn't take |
 | `UNSUPPORTED_MEDIA_TYPE` | 415 | A body that isn't `application/json`, or has no `Content-Type` |
+| `UNSUPPORTED_CLIENT_VERSION` | 426 | The `X-Client-Version` build is no longer supported; update the game. *Reserved (M0-58): the server refuses no build yet.* The client treats it as `IncompatibleVersion` |
 
 `code` is for program logic. `title` and `detail` are for humans and may change. `traceId` names the HTTP request (W3C trace context; its
 second part is the `TraceId` of every log line of the request), `requestId` the command across its retries: `docs/api/logs-and-correlation.md`.
@@ -228,6 +229,12 @@ Fixed windows, in memory, one process; the numbers are configuration (`RateLimit
   1 to 1 000 000 and a window from 1 to 3600 seconds, or the start stops.
 - Behind a reverse proxy the remote address is the proxy's until forwarded headers are configured *(planned, with the deployment)*; the
   dev login exists in Development only (`07`).
+
+## Request headers
+- `Authorization: Bearer <token>` on everything except the dev login.
+- `X-Client-Version: <build version>` (M0-58), sent by the client on every request: the Unity `Application.version`, for example `0.1.0`, 1 to 32
+  characters of ASCII letters, digits, `.`, `-`, `+` and `_`. The server logs it (`ClientVersion` in the log scope of the request, `docs/api/logs-and-correlation.md`)
+  and refuses nothing over it yet; a missing or unusable header is logged as `none` or `invalid`. Rejecting unsupported builds is a later task.
 
 ## Versioning
 Breaking changes → `/api/v2`. Content changes → a new `contentVersion`; the client refetches `/content`

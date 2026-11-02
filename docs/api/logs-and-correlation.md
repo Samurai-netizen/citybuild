@@ -21,6 +21,12 @@ a request and lists the events of the server's own code (M0-35). The rules for w
   JSON), the framework's in its `Scopes`.
 - A successful `GET /city` or `GET /content` answer carries no trace id; its lines are found by `PlayerId` and time.
 
+## The client's build version (M0-58)
+Every line of a request also has the scope value `ClientVersion`, from the `X-Client-Version` header (`05` → Request headers): the version itself
+(for example `0.1.0`), `none` when the request has no such header, or `invalid` when it is not a version (empty, repeated, over 32 characters or with
+other characters than letters, digits, `.`, `-`, `+`, `_`). The text of an invalid header is never logged. Search `ClientVersion` to see which
+builds are in use, or to find the requests of one build.
+
 ## Events
 Every line of the server's own code has an event id from the block of its feature (decision 029 in `core-instructions/12-decisions.md`).
 `PlayerId` is the token's player (empty when the request had no working token). `DurationMs` is real time since the endpoint started its work,

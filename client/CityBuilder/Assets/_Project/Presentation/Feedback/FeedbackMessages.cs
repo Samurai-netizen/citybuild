@@ -115,6 +115,7 @@ namespace CityBuilder.Client.Presentation.Feedback
                 case ApiErrorCodes.NotFound:
                 case ApiErrorCodes.MethodNotAllowed:
                 case ApiErrorCodes.UnsupportedMediaType:
+                case ApiErrorCodes.UnsupportedClientVersion:
                     message = "The game and the server do not match. Update the game";
                     return true;
                 case ApiErrorCodes.ClientNetworkError:

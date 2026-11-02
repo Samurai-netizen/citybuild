@@ -62,6 +62,9 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         /// <summary>The content the start loaded; the status words and the monitor's content version come from it. Null until connected.</summary>
         private GameContent? _content;
 
+        /// <summary>Fetches new content before a snapshot of it is applied and announces it (M0-58); null until connected.</summary>
+        private ContentSync? _sync;
+
         /// <summary>The dev player's name from the settings, for a new login; empty until the settings were read.</summary>
         private string _displayName = string.Empty;
 
@@ -75,7 +78,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         private HudView? _hud;
 
         /// <summary>The menus the player opens and closes as one group: opening one closes the others (owner directive OD-16).</summary>
-        private readonly MenuGroup _menus = new MenuGroup();
+        private MenuGroup _menus = new MenuGroup();
 
         /// <summary>The build menu; null until the start has connected, or when its assets are missing.</summary>
         private BuildMenu? _buildMenu;
@@ -204,25 +207,13 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                 Show(ConnectionStatusModel.From(outcome));
                 if (outcome.Kind == StartupResultKind.Connected)
                 {
-                    _displayCity = new DisplayCity(_cityStore, new DisplayClock(_cityStore, outcome.TimeScale), outcome.Content!);
-                    _commandSender = new CommandSender(_api!, _cityStore, CommandPolicy.Default);
-                    if (Debug.isDebugBuild)
-                    {
-                        CommandSender sender = _commandSender;
-                        _ = new PredictionWatch(_cityStore, _displayCity, outcome.Content!, () => sender.Pending.Count > 0, ClientLog.Warning);
-                    }
-
-                    _content = outcome.Content;
+                    // One sync for the sender and the monitor, so an answer of other content from either is fetched before it is applied (M0-58).
+                    _sync = new ContentSync(new ContentService(_api!), outcome.Content!.ContentVersion);
+                    _sync.ContentReplacing += TearDownContentParts;
+                    _sync.ContentReplaced += BuildContentParts;
+                    _commandSender = new CommandSender(_api!, _cityStore, CommandPolicy.Default, _sync);
                     CreateFeedback();
-                    _world!.ShowGrid(new CityGrid(outcome.Content!.Rules.GridWidth, outcome.Content.Rules.GridHeight));
-                    _displayCity.Changed += ShowBuildings;
-                    CreateHud(outcome.Content!);
-                    CreateBuildMenu(outcome.Content!);
-                    CreatePlacement(outcome.Content!);
-                    CreateInspector(outcome.Content!);
-                    CreateResearchScreen(outcome.Content!);
-                    CreateWelcomeBack(outcome.Content!, outcome.TimeScale);
-                    ShowBuildings();
+                    BuildContentParts(outcome.Content!, outcome.TimeScale);
                     _monitor = new ConnectionMonitor(
                         _api!,
                         _auth!,
@@ -230,7 +221,8 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                         outcome.Content!.ContentVersion,
                         _displayName,
                         new PollScheduler(() => Time.realtimeSinceStartupAsDouble, PollScheduler.DefaultIntervalSeconds),
-                        () => Application.internetReachability != NetworkReachability.NotReachable);
+                        () => Application.internetReachability != NetworkReachability.NotReachable,
+                        _sync);
                     CreateConnectionBanner();
                     _monitor.StateChanged += OnConnectionChanged;
                     _commandSender.Completed += OnCommandCompleted;
@@ -252,6 +244,83 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             {
                 ClientLog.Exception(exception);
                 Show(ConnectionStatusModel.BadSettings("an unexpected error, see the log"));
+            }
+        }
+
+        /// <summary>
+        /// Builds everything that is made of the game content: the displayed city and its prediction watch, the ground for the content's grid, the HUD,
+        /// the build menu with the placement flow, the inspector, the research screen and the welcome-back report. It runs at the start and again
+        /// whenever <see cref="ContentSync"/> has fetched other content (M0-58), after <see cref="TearDownContentParts"/> and with the new
+        /// snapshot already in the city store. The command sender, the toasts, the monitor and the banner are not made of content and stay.
+        /// </summary>
+        private void BuildContentParts(GameContent content, int timeScale)
+        {
+            _content = content;
+            _displayCity = new DisplayCity(_cityStore, new DisplayClock(_cityStore, timeScale), content);
+            if (Debug.isDebugBuild && _commandSender != null)
+            {
+                CommandSender sender = _commandSender;
+                _ = new PredictionWatch(_cityStore, _displayCity, content, () => sender.Pending.Count > 0, ClientLog.Warning);
+            }
+
+            _world!.ShowGrid(new CityGrid(content.Rules.GridWidth, content.Rules.GridHeight));
+            _displayCity.Changed += ShowBuildings;
+            CreateHud(content);
+            CreateBuildMenu(content);
+            CreatePlacement(content);
+            CreateInspector(content);
+            CreateResearchScreen(content);
+            CreateWelcomeBack(content, timeScale);
+            ShowBuildings();
+            // The label and the buttons follow the monitor's state; before the monitor exists (the start) this does nothing.
+            OnConnectionChanged();
+        }
+
+        /// <summary>
+        /// Lets go of everything <see cref="BuildContentParts"/> made, because other content is about to replace the content they were made of
+        /// (M0-58): the flows stop listening, the display city stops predicting, the screens are destroyed, and the menu group starts again. The
+        /// ground and its building views are replaced by the next <see cref="CityWorld.ShowGrid"/>. Until the new parts exist nothing reads the store
+        /// with the old content: <see cref="_content"/> is null, which the connection label takes as "nothing to show".
+        /// </summary>
+        private void TearDownContentParts()
+        {
+            _placement?.Dispose();
+            _inspectorFlow?.Dispose();
+            _researchFlow?.Dispose();
+            _welcomeFlow?.Dispose();
+            if (_displayCity != null)
+            {
+                _displayCity.Changed -= ShowBuildings;
+                _displayCity.Dispose();
+            }
+
+            DestroyView(_hud);
+            DestroyView(_buildMenu);
+            DestroyView(_placementBar);
+            DestroyView(_inspector);
+            DestroyView(_researchScreen);
+            DestroyView(_welcomePanel);
+            _placement = null;
+            _inspectorFlow = null;
+            _researchFlow = null;
+            _welcomeFlow = null;
+            _displayCity = null;
+            _hud = null;
+            _buildMenu = null;
+            _placementBar = null;
+            _inspector = null;
+            _researchScreen = null;
+            _welcomePanel = null;
+            _menus = new MenuGroup();
+            _content = null;
+        }
+
+        /// <summary>Destroys the object of a screen when it was made; Unity removes it at the end of the frame.</summary>
+        private static void DestroyView(Component? view)
+        {
+            if (view != null)
+            {
+                Destroy(view.gameObject);
             }
         }
 
@@ -283,6 +352,12 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             if (_displayCity != null)
             {
                 _displayCity.Changed -= ShowBuildings;
+            }
+
+            if (_sync != null)
+            {
+                _sync.ContentReplacing -= TearDownContentParts;
+                _sync.ContentReplaced -= BuildContentParts;
             }
 
             if (_monitor != null)
@@ -325,7 +400,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         }
 
         /// <summary>
-        /// Shows the top HUD for the displayed city. The start has just connected, so the indicator begins at connected; the monitor's
+        /// Shows the top HUD for the displayed city. The indicator begins at the monitor's state, or at connected at the start (the monitor does not exist yet); the monitor's
         /// state replaces it from then on. Does nothing when there is no displayed city yet; the HUD logs an error and stays null when
         /// its assets are missing.
         /// </summary>
@@ -337,7 +412,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                 return;
             }
 
-            _hud = HudView.Create(transform, new HudModel(content, city, ConnectionState.Connected));
+            _hud = HudView.Create(transform, new HudModel(content, city, _monitor?.State ?? ConnectionState.Connected));
         }
 
         /// <summary>

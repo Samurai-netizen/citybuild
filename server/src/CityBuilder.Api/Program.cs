@@ -120,11 +120,12 @@ if (timeScale > 1)
 // login on outside Development, stops the start here.
 AuthOptions auth = app.Services.GetRequiredService<IOptions<AuthOptions>>().Value;
 
-// The response headers first, so every answer has them. Then the exception handler, so it answers whatever the rest of the pipeline throws;
-// the status code pages next, so an empty 404, 405 or
+// The response headers first, so every answer has them. Then the client version's log scope, so every line of the request has it. Then the
+// exception handler, so it answers whatever the rest of the pipeline throws; the status code pages next, so an empty 404, 405 or
 // 415 gets a Problem Details body too (without a code: the catalogue has none for them) and Kestrel's 413 is the contract's 400. Then the
 // body limit, so a body above it is refused before the token is checked or anything reads the body.
 app.UseResponseHeaders();
+app.UseClientVersionLogScope();
 app.UseExceptionHandler();
 app.UseStatusCodeProblems();
 app.UseRequestBodyLimit();
