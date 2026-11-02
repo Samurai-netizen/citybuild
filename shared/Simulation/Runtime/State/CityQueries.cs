@@ -199,6 +199,21 @@ namespace CityBuilder.Simulation.State
             return definition.IsAvailableAtStart || (unlockedBy.HasValue && city.HasCompletedResearch(unlockedBy.Value));
         }
 
+        /// <summary>What lies on a tile (<c>04</c> section 17): a building (in any phase), a road, or nothing. A road and a building never share a tile.</summary>
+        /// <param name="city">The city.</param>
+        /// <param name="x">The tile column.</param>
+        /// <param name="y">The tile row.</param>
+        /// <returns>What the tile holds; <see cref="TileContent.Ground"/> also for a tile outside the grid, which the caller checks.</returns>
+        public static TileContent TileAt(CityState city, int x, int y)
+        {
+            if (city.TryGetBuildingAt(x, y, out _))
+            {
+                return TileContent.Building;
+            }
+
+            return city.TryGetRoad(x, y, out _) ? TileContent.Road : TileContent.Ground;
+        }
+
         /// <summary>The first input of the recipe, in recipe (ordinal item) order, of which the stock holds less than the cycle needs.</summary>
         internal static bool TryFindMissingInput(CityState city, RecipeDefinition recipe, out ItemId item)
         {

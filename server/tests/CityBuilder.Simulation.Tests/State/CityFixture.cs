@@ -57,7 +57,7 @@ internal static class CityFixture
 
     /// <summary>
     /// A city at <paramref name="clock"/> (default 1000) in era 1. The next building id defaults to one above the highest id; the inventory
-    /// to nothing.
+    /// and the roads to nothing.
     /// </summary>
     public static CityState City(
         long clock = 1000,
@@ -66,7 +66,8 @@ internal static class CityFixture
         Building[]? buildings = null,
         string[]? completedResearch = null,
         ActiveResearch? activeResearch = null,
-        int? nextBuildingId = null)
+        int? nextBuildingId = null,
+        RoadTile[]? roads = null)
     {
         buildings ??= [];
         int nextId = nextBuildingId ?? (buildings.Length == 0 ? 1 : buildings.Max(building => building.Id) + 1);
@@ -77,7 +78,8 @@ internal static class CityFixture
             (inventory ?? []).Select(stock => new KeyValuePair<ItemId, long>(new ItemId(stock.Item), stock.Quantity)),
             buildings,
             (completedResearch ?? []).Select(id => new ResearchId(id)),
-            activeResearch);
+            activeResearch,
+            roads);
     }
 
     /// <summary>An idle building in canonical form: phase start 0, and no end, target level or cycle.</summary>

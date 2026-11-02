@@ -84,7 +84,7 @@ namespace CityBuilder.Client.Core
                     building.SegmentStartedAt));
             }
 
-            return new CityState(_city.Clock, _city.Era, _city.NextBuildingId, inventory, buildings, _city.CompletedResearch, _city.ActiveResearch);
+            return new CityState(_city.Clock, _city.Era, _city.NextBuildingId, inventory, buildings, _city.CompletedResearch, _city.ActiveResearch, _city.Roads);
         }
     }
 }

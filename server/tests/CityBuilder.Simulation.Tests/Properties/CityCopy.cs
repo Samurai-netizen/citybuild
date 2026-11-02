@@ -16,7 +16,8 @@ internal static class CityCopy
         city.Inventory,
         city.Buildings.Select(Of),
         city.CompletedResearch,
-        city.ActiveResearch is null ? null : new ActiveResearch(city.ActiveResearch.Id, city.ActiveResearch.StartedAt, city.ActiveResearch.EndsAt));
+        city.ActiveResearch is null ? null : new ActiveResearch(city.ActiveResearch.Id, city.ActiveResearch.StartedAt, city.ActiveResearch.EndsAt),
+        city.Roads);
 
     /// <summary>A copy of the building: every stored value.</summary>
     public static Building Of(Building building) => new(

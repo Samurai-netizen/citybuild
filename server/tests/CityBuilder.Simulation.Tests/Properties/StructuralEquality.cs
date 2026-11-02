@@ -69,6 +69,7 @@ internal static class StructuralEquality
         fields.Add(("completedResearch", string.Join(",", city.CompletedResearch)));
         ActiveResearch? active = city.ActiveResearch;
         fields.Add(("activeResearch", active is null ? "none" : $"{active.Id} {Text(active.StartedAt)}..{Text(active.EndsAt)}"));
+        fields.AddRange(city.Roads.Select(road => ($"road ({Text(road.X)},{Text(road.Y)})", Text(road.Level))));
         return fields;
     }
 

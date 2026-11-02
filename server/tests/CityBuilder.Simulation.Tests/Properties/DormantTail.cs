@@ -83,7 +83,7 @@ internal sealed class DormantTail
         }
 
         completedBuildings.Sort();
-        var city = new CityState(target, atCap.Era, atCap.NextBuildingId, inventory, buildings, completedResearch, active);
+        var city = new CityState(target, atCap.Era, atCap.NextBuildingId, inventory, buildings, completedResearch, active, atCap.Roads);
         return new DormantTail(city, produced, completedBuildings, tailResearch);
     }
 

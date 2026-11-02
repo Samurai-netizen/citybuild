@@ -35,6 +35,11 @@ internal static class CityDump
         text.Append("completed:").Append(string.Concat(city.CompletedResearch.Select(id => " " + id))).Append('\n');
         ActiveResearch? active = city.ActiveResearch;
         text.Append(active is null ? "active: none" : string.Create(CultureInfo.InvariantCulture, $"active: {active.Id} {active.StartedAt}..{active.EndsAt}"));
+        foreach (RoadTile road in city.Roads)
+        {
+            text.Append(CultureInfo.InvariantCulture, $"\nroad ({road.X},{road.Y}) L{road.Level}");
+        }
+
         return text.ToString();
     }
 

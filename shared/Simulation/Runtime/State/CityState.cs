@@ -7,8 +7,8 @@ using CityBuilder.Simulation.Content;
 namespace CityBuilder.Simulation.State
 {
     /// <summary>
-    /// Everything that is stored about one city (<c>core-instructions/04-simulation-model.md</c>, sections 3 to 5): its clock, era, stock,
-    /// buildings and research. Values derived from it and the content (workers, builders, reservations, caps, labor, unlocks) are never stored;
+    /// Everything that is stored about one city (<c>core-instructions/04-simulation-model.md</c>, sections 3 to 5 and 17): its clock, era,
+    /// stock, buildings, research and roads. Values derived from it and the content (workers, builders, reservations, caps, labor, unlocks) are never stored;
     /// <see cref="CityQueries"/> computes them. Only the engine changes a city, through <see cref="Rules.CityRules"/> and
     /// <see cref="Settlement.Simulator"/>. Every list is sorted, so iterating it is deterministic.
     /// </summary>
@@ -20,6 +20,8 @@ namespace CityBuilder.Simulation.State
         private readonly List<Building> _buildings;
         /// <summary>The completed research nodes, sorted by id, each once.</summary>
         private readonly List<ResearchId> _completedResearch;
+        /// <summary>The roads, sorted by tile (column, then row), one per tile, never on a building's tile.</summary>
+        private readonly List<RoadTile> _roads;
 
         /// <summary>
         /// Restores a city with every value, for example from the database. The city takes the building objects over: the caller must not keep
@@ -32,6 +34,7 @@ namespace CityBuilder.Simulation.State
         /// <param name="buildings">The buildings, in any order: unique ids, one building per tile.</param>
         /// <param name="completedResearch">The completed research nodes, in any order, each at most once.</param>
         /// <param name="activeResearch">The running research, or null; never a completed node.</param>
+        /// <param name="roads">The roads, in any order: one per tile, none on a building's tile; null for none.</param>
         /// <exception cref="ArgumentNullException">A list or a building is null.</exception>
         /// <exception cref="ArgumentException">The values don't form a valid city; the message says which rule they break.</exception>
         public CityState(
@@ -41,7 +44,8 @@ namespace CityBuilder.Simulation.State
             IEnumerable<KeyValuePair<ItemId, long>> inventory,
             IEnumerable<Building> buildings,
             IEnumerable<ResearchId> completedResearch,
-            ActiveResearch? activeResearch)
+            ActiveResearch? activeResearch,
+            IEnumerable<RoadTile>? roads = null)
         {
             if (inventory is null)
             {
@@ -70,9 +74,11 @@ namespace CityBuilder.Simulation.State
 
             _buildings = SortedBuildings(buildings, nextBuildingId);
             _completedResearch = SortedResearch(completedResearch, activeResearch);
+            _roads = SortedRoads(roads ?? Array.Empty<RoadTile>(), _buildings);
             Inventory = _inventory;
             Buildings = _buildings.AsReadOnly();
             CompletedResearch = _completedResearch.AsReadOnly();
+            Roads = _roads.AsReadOnly();
         }
 
         /// <summary>The city clock in seconds: how much game time the city has lived. It never decreases.</summary>
@@ -95,6 +101,9 @@ namespace CityBuilder.Simulation.State
 
         /// <summary>The research in the city's one research slot, or null when the slot is free.</summary>
         public ActiveResearch? ActiveResearch { get; private set; }
+
+        /// <summary>The roads, by tile: column, then row (<c>04</c> section 17).</summary>
+        public IReadOnlyList<RoadTile> Roads { get; }
 
         /// <summary>How many of an item the city has.</summary>
         /// <param name="item">The item.</param>
@@ -132,6 +141,38 @@ namespace CityBuilder.Simulation.State
                 else
                 {
                     high = middle - 1;
+                }
+            }
+
+            building = null;
+            return false;
+        }
+
+        /// <summary>Looks up the road on a tile.</summary>
+        /// <param name="x">The tile column.</param>
+        /// <param name="y">The tile row.</param>
+        /// <param name="road">The road, when the tile has one.</param>
+        /// <returns>True when a road lies on the tile.</returns>
+        public bool TryGetRoad(int x, int y, out RoadTile road)
+        {
+            int index = FindRoad(x, y);
+            road = index >= 0 ? _roads[index] : default;
+            return index >= 0;
+        }
+
+        /// <summary>Looks up the building standing on a tile, in any phase.</summary>
+        /// <param name="x">The tile column.</param>
+        /// <param name="y">The tile row.</param>
+        /// <param name="building">The building, when the tile has one.</param>
+        /// <returns>True when a building stands on the tile.</returns>
+        public bool TryGetBuildingAt(int x, int y, [NotNullWhen(true)] out Building? building)
+        {
+            for (int index = 0; index < _buildings.Count; index++)
+            {
+                if (_buildings[index].X == x && _buildings[index].Y == y)
+                {
+                    building = _buildings[index];
+                    return true;
                 }
             }
 
@@ -189,6 +230,24 @@ namespace CityBuilder.Simulation.State
             _buildings.Add(building);
             return building;
         }
+
+        /// <summary>Puts a level-1 road on an empty tile. The caller checks that the tile has neither a road nor a building.</summary>
+        internal void PlaceRoad(int x, int y)
+        {
+            int index = FindRoad(x, y);
+            if (index >= 0 || TryGetBuildingAt(x, y, out _))
+            {
+                throw new InvalidOperationException(FormattableString.Invariant($"The tile ({x}, {y}) is not empty; the caller must check it first."));
+            }
+
+            _roads.Insert(~index, new RoadTile(x, y, 1));
+        }
+
+        /// <summary>Sets the level of the road on a tile. The caller checks that the tile has a road and that the content has the level.</summary>
+        internal void SetRoadLevel(int x, int y, int level) => _roads[RequireRoad(x, y)] = new RoadTile(x, y, level);
+
+        /// <summary>Takes the road off a tile. The caller checks that the tile has one.</summary>
+        internal void RemoveRoad(int x, int y) => _roads.RemoveAt(RequireRoad(x, y));
 
         /// <summary>Fills the free research slot. The caller checks that it is free.</summary>
         internal void StartResearch(ResearchId id, long endsAt)
@@ -264,6 +323,69 @@ namespace CityBuilder.Simulation.State
                 if (sorted[index].Id == sorted[index - 1].Id)
                 {
                     throw new ArgumentException(FormattableString.Invariant($"Building {sorted[index].Id} is listed twice."), nameof(buildings));
+                }
+            }
+
+            return sorted;
+        }
+
+        /// <summary>The index of the road on a tile in <see cref="_roads"/>, or the bitwise complement of where it would go (binary search by tile).</summary>
+        private int FindRoad(int x, int y)
+        {
+            int low = 0;
+            int high = _roads.Count - 1;
+            while (low <= high)
+            {
+                // Overflow-free midpoint; the list is sorted by tile.
+                int middle = low + ((high - low) / 2);
+                RoadTile road = _roads[middle];
+                int order = road.X != x ? road.X.CompareTo(x) : road.Y.CompareTo(y);
+                if (order == 0)
+                {
+                    return middle;
+                }
+
+                if (order < 0)
+                {
+                    low = middle + 1;
+                }
+                else
+                {
+                    high = middle - 1;
+                }
+            }
+
+            return ~low;
+        }
+
+        /// <summary>The index of the road on a tile; throws when the tile has none (the caller's check is missing).</summary>
+        private int RequireRoad(int x, int y)
+        {
+            int index = FindRoad(x, y);
+            return index >= 0
+                ? index
+                : throw new InvalidOperationException(FormattableString.Invariant($"The tile ({x}, {y}) has no road; the caller must check it first."));
+        }
+
+        /// <summary>The restoring constructor's roads, checked and sorted by tile: one per tile, none on a building's tile.</summary>
+        private static List<RoadTile> SortedRoads(IEnumerable<RoadTile> roads, List<Building> buildings)
+        {
+            var sorted = new List<RoadTile>(roads);
+            sorted.Sort(RoadTile.CompareTiles);
+            var buildingTiles = new HashSet<(int X, int Y)>();
+            foreach (Building building in buildings)
+            {
+                buildingTiles.Add((building.X, building.Y));
+            }
+
+            for (int index = 0; index < sorted.Count; index++)
+            {
+                RoadTile road = sorted[index];
+                bool isRepeated = index > 0 && RoadTile.CompareTiles(road, sorted[index - 1]) == 0;
+                if (isRepeated || buildingTiles.Contains((road.X, road.Y)))
+                {
+                    throw new ArgumentException(
+                        FormattableString.Invariant($"The road at ({road.X}, {road.Y}) shares its tile with another road or a building."), nameof(roads));
                 }
             }
 
