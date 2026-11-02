@@ -25,6 +25,9 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         /// <summary>The request the server last saw: method, path, headers and body.</summary>
         private volatile string _seen;
 
+        /// <summary>The <c>X-Client-Version</c> header of the request the server last saw; null when it had none.</summary>
+        private volatile string _seenVersion;
+
         /// <summary>The prefix the server listens on, for example <c>http://localhost:49213/</c>.</summary>
         private string _prefix;
 
@@ -70,6 +73,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
                 }
 
                 string requestBody = new StreamReader(context.Request.InputStream, Encoding.UTF8).ReadToEnd();
+                _seenVersion = context.Request.Headers["X-Client-Version"];
                 _seen += context.Request.HttpMethod + " " + context.Request.Url.AbsolutePath + "\n"
                     + "auth=" + context.Request.Headers["Authorization"] + "\n"
                     + "type=" + context.Request.ContentType + "\n" + requestBody;
@@ -128,6 +132,24 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(call.Result.Body, Is.EqualTo("{\"ok\":true}"));
             Assert.That(call.Result.NetworkFailureMessage, Is.Null);
             Assert.That(_seen, Is.EqualTo("POST /api/v1/commands/x\nauth=Bearer tok\ntype=application/json\n{\"a\":1}"));
+        }
+
+        /// <summary>A request with a client version sends it in the <c>X-Client-Version</c> header, and one without sends no such header (M0-58).</summary>
+        [UnityTest]
+        public IEnumerator TheClientVersion_IsSentInItsHeader_OnlyWhenThereIsOne()
+        {
+            StartServer(200, "{}");
+            Task<ApiTransportResponse> with = new UnityWebRequestTransport().SendAsync(
+                new ApiTransportRequest("GET", _prefix + "api/v1/city", null, "tok", "0.1.0"), CancellationToken.None);
+            yield return Wait(with);
+            string seenWith = _seenVersion;
+
+            Task<ApiTransportResponse> without = new UnityWebRequestTransport().SendAsync(
+                new ApiTransportRequest("GET", _prefix + "api/v1/city", null, "tok"), CancellationToken.None);
+            yield return Wait(without);
+
+            Assert.That(seenWith, Is.EqualTo("0.1.0"));
+            Assert.That(_seenVersion, Is.Null);
         }
 
         /// <summary>A GET without token or body sends neither header, and a 422 with a body is an HTTP answer, not a failure.</summary>

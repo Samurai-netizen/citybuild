@@ -39,6 +39,9 @@ namespace CityBuilder.Client.Net
         /// <summary>Where the request lines go (M0-57).</summary>
         private readonly ClientLogger _log;
 
+        /// <summary>The build version every request sends in <c>X-Client-Version</c> (M0-58); null when the build has none to send.</summary>
+        private readonly string? _clientVersion;
+
         /// <summary>The bearer token of the logged-in player; kept in memory only.</summary>
         private string? _accessToken;
 
@@ -47,8 +50,9 @@ namespace CityBuilder.Client.Net
         /// <param name="timeoutSeconds">Seconds one request may take, from 1 to 300.</param>
         /// <param name="transport">The wire; <see cref="UnityWebRequestTransport"/> in the game.</param>
         /// <param name="logger">Where the request lines go; null means <see cref="ClientLog.Default"/>. A test passes a recording one.</param>
+        /// <param name="clientVersion">The build version to send in <c>X-Client-Version</c>; null means <see cref="AppInfo.Version"/>, and a blank one sends no header. A test passes a fixed one.</param>
         /// <exception cref="ArgumentException"><paramref name="baseUrl"/> is not an absolute http or https address, or the timeout is out of range: a wrong asset, found at start.</exception>
-        public ApiClient(string baseUrl, int timeoutSeconds, IApiTransport transport, ClientLogger? logger = null)
+        public ApiClient(string baseUrl, int timeoutSeconds, IApiTransport transport, ClientLogger? logger = null, string? clientVersion = null)
         {
             bool isUrl = Uri.TryCreate(baseUrl, UriKind.Absolute, out Uri? uri);
             if (!isUrl || uri == null || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
@@ -65,6 +69,8 @@ namespace CityBuilder.Client.Net
             _timeoutSeconds = timeoutSeconds;
             _transport = transport;
             _log = logger ?? ClientLog.Default;
+            string version = (clientVersion ?? AppInfo.Version ?? string.Empty).Trim();
+            _clientVersion = version.Length == 0 ? null : version;
             _parser = new ApiResponseParser(_json);
         }
 
@@ -127,7 +133,7 @@ namespace CityBuilder.Client.Net
             cancellationToken.ThrowIfCancellationRequested();
 
             string? jsonBody = body == null ? null : _json.Serialize(body);
-            ApiTransportRequest request = new ApiTransportRequest(method, _baseUrl + ApiPrefix + path, jsonBody, sendToken ? _accessToken : null);
+            ApiTransportRequest request = new ApiTransportRequest(method, _baseUrl + ApiPrefix + path, jsonBody, sendToken ? _accessToken : null, _clientVersion);
 
             Stopwatch stopwatch = Stopwatch.StartNew();
             using (CancellationTokenSource timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))

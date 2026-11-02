@@ -10,12 +10,14 @@ namespace CityBuilder.Client.Net
         /// <param name="url">The absolute URL.</param>
         /// <param name="jsonBody">The JSON text to send as <c>application/json</c>, or null for no body.</param>
         /// <param name="accessToken">The bearer token to send, or null for none.</param>
-        public ApiTransportRequest(string method, string url, string? jsonBody, string? accessToken)
+        /// <param name="clientVersion">The build version for the <c>X-Client-Version</c> header (<c>05</c>), or null to send no such header.</param>
+        public ApiTransportRequest(string method, string url, string? jsonBody, string? accessToken, string? clientVersion = null)
         {
             Method = method;
             Url = url;
             JsonBody = jsonBody;
             AccessToken = accessToken;
+            ClientVersion = clientVersion;
         }
 
         /// <summary>The HTTP method.</summary>
@@ -29,5 +31,8 @@ namespace CityBuilder.Client.Net
 
         /// <summary>The token for the <c>Authorization: Bearer</c> header, or null when the request is sent without one.</summary>
         public string? AccessToken { get; }
+
+        /// <summary>The value of the <c>X-Client-Version</c> header (M0-58), or null when the request sends none.</summary>
+        public string? ClientVersion { get; }
     }
 }
