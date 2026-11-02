@@ -21,15 +21,18 @@ structure). It is **not** responsible for talking to the server (`CityBuilder.Cl
 | `ConnectionState` | How the client stands with the server: `Connecting`, `Connected`, `Offline`, `Unauthorized`, `ServerError`, `IncompatibleVersion`. Only the names; the rules that move between them are `ConnectionMonitor`'s (Net) |
 | `PollScheduler` | When to ask for the city again (M0-41): due 120 s after the last poll ended (`DefaultIntervalSeconds`), at once after `Resume()` or `RequestPoll()`, never while `Pause()`d or while a poll runs. The caller does `TryBegin()` then `End()`. Reads an injected real-time clock, so tests move time by hand; `MarkFetched()` restarts the interval when someone else fetched the city |
 | `DisplayCity` | The predicted city: `Simulator.Advance` on a fresh copy of the snapshot up to the clock. `Refresh()` predicts at most once per second and allocates nothing otherwise; a new snapshot replaces the prediction at once. Raises `Changed`; views read `Current`. `SnapshotReplaced` hands over the city shown until a new snapshot came (M0-54) |
+| `ClientLogger`, `LogLevel`, `ILogSink` | The logger (M0-57): a level (`Debug`, `Info`, `Warning`, `Error`, `Off`) and a sink fixed at construction; a line below the level is dropped, `IsEnabled` lets a caller skip building a message. `Exception(e)` is one Error line with the stack trace. A class whose log a test reads takes a `ClientLogger` over a recording sink (`ApiClient`, `CommandFeedback`) |
+| `ClientLog`, `UnityLogSink` | The game's logger: `ClientLog.Default` is `ClientLogger` at the build's level (`DefaultLevelFor`: Debug in the Editor and development builds, Warning in release) over `UnityLogSink`, the only runtime code that calls `UnityEngine.Debug` to log. `ClientLog.Debug/Info/Warning/Error/Exception` forward to `Default`, so code with no logger handed to it logs in one line. Nothing in them can be changed after the start |
 | `PredictionWatch` | A development check (M0-54): at each new snapshot it reports when the display's clock went back and, with no command on its way, when the snapshot differs from `Simulator.Advance` of the one before it, with the cities as JSON (`ToJson`). `GameRoot` makes it when `Debug.isDebugBuild`, reporting to `Debug.LogWarning`; it changes nothing the player sees |
 
 ## Rules and invariants
 - References only `CityBuilder.Simulation` (`03` dependency table). The asmdef is not auto-referenced, so other assemblies must name it,
   and `overrideReferences` is on with no precompiled DLL listed, so Core cannot see Newtonsoft or any other package DLL by accident.
   `ClientAssemblyTests` (`server/tests/CityBuilder.Simulation.Tests`) checks all of this.
-- Keeps engine references on purpose: `ClientCityStore` reads `Time.realtimeSinceStartupAsDouble` and `DisplayCity` logs with `Debug`. Everything
+- Keeps engine references on purpose: `ClientCityStore` reads `Time.realtimeSinceStartupAsDouble` and `DisplayCity` logs with `ClientLog`. Everything
   here is plain C# that EditMode tests can run without a scene.
 - No singletons and no static mutable state; `GameRoot` builds the objects by hand (`.claude/rules/unity.md`).
+- No log line holds a token or a request or response body, in any build (`07` Logging policy). A failed request is logged as its `ApiError.ToString()`: code, status, detail and the server's trace id. `LoggingPolicyTests` fails when runtime code outside `UnityLogSink` calls `Debug.Log*`. `ClientLog` has one `static readonly` field and no settable state, so the rule "no static mutable state" holds (build log M0-57, decision 3).
 - A snapshot with a lower `stateVersion` than the one held is ignored, and so is the same version with the same or an earlier clock (build log
   M0-39, decision 4); predicted values never leave the client.
 - Each prediction starts again from the snapshot, never from the last prediction: the 8-hour production cap counts from the start of an advance.
@@ -48,6 +51,7 @@ folder area follows the recipe "New project, assembly or folder area" in `core-i
 - `AppInfoTests`: `Version` is the bundle version of the Player Settings (`PlayerSettings.bundleVersion`) and is not blank.
 - `SimulationInUnityTests`: `IntegerMath.CeilDiv` called from the local package `com.citybuilder.simulation` rounds up. It proves that the engine
   compiles and runs inside Unity; the engine's rules are tested in `server/tests/CityBuilder.Simulation.Tests`.
+- `Core/ClientLogTests`: the level filter, `IsEnabled`, the default level per build type, an exception is one Error line with the exception, a logger needs a sink. `Core/LoggingPolicyTests`: no runtime file but `UnityLogSink` calls `Debug.Log*`.
 - `Core/ClientCityStoreTests`: newer replaces, older and same-city answers are ignored, whole seconds, a copy holds every value and leaves the snapshot alone.
 - `Core/SettlementSummaryTests`: every value kept, the lists copied, impossible values and null lists refused, a snapshot made without an answer has no settlement.
 - `Core/PollSchedulerTests`: not due at the start, due after exactly 120 s from the end of the last poll, nothing while paused whatever was requested, a poll at once on resume, never two at a time, a request during a poll is served after it, bad constructor arguments.
@@ -59,4 +63,4 @@ folder area follows the recipe "New project, assembly or folder area" in `core-i
 - `Time.realtimeSinceStartupAsDouble` may or may not count while the app is in the background, depending on the platform. The poll on resume
   (`PollScheduler`, M0-41) replaces the snapshot, so this lasts only until that answer arrives.
 
-Last updated: M0-54
+Last updated: M0-57

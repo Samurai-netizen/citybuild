@@ -52,6 +52,14 @@ is already open). 2: the setup is wrong (`UNITY_EDITOR` unset or not an executab
 `client/CityBuilder/Logs/test-unity/` (git ignores the folder). The run takes about 25 seconds. Unity tests are not in CI (no license on
 the runner): paste the summary into the build log's Verification table.
 
+## Read the client logs (M0-57)
+The client logs through `ClientLog` (`Assets/_Project/Core/`). The level follows the build: in the Editor and in development builds the Console
+shows Debug lines (marked `[debug]`: one per request, `Request GET /city -> 200 in 41 ms`) and everything above; a release build shows Warning
+and Error only. A failed request or command is a Warning that ends with `[trace 00-…]`: search the server's log for the second part of that id
+to see the server's side of the same request (`docs/api/logs-and-correlation.md`). No line holds a token or a body, in any build. On a device the
+lines are in the platform log (`adb logcat -s Unity` on Android). New code logs with `ClientLog.Warning(...)` and friends, never `Debug.Log*`;
+`LoggingPolicyTests` fails otherwise.
+
 ## [MANUAL] Create the Bootstrap scene (done by the owner on 2026-10-14; kept for re-creating it)
 Claude cannot use the Editor GUI, and a scene file is never hand-edited. The scene stays **empty**: `GameBootstrap` creates the one
 `GameRoot` when a scene named exactly `Bootstrap` loads.

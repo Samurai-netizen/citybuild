@@ -48,6 +48,20 @@ to 0.1 ms; a Development fast clock doesn't change it.
 Not logged by the server's code: a body that doesn't bind (the answer says what is wrong; the framework logs it at Debug), an accepted token
 at the default level (Information), anything of a request body. The framework's own lines (`Microsoft.*`) follow `Logging:LogLevel`.
 
+## Client log lines (M0-57)
+The Unity client logs through `ClientLog` (`docs/modules/CityBuilder.Client.Core.md`). To match a client line to the server's, take the
+`traceId` of a failed request: the client's Warning for it ends with `[trace 00-<trace id>-<span id>-<flags>]`, and the second part is the
+`TraceId` of every server line of that request.
+
+| Level | Written when | Text |
+|---|---|---|
+| Debug (Editor and development builds only) | A request got a 2xx answer | `Request GET /city -> 200 in 41 ms` (method, path, status, milliseconds) |
+| Warning | A request failed (a refusal, a 5xx, no connection, a timeout) | `Request POST /commands/place-building failed in 52 ms: NO_FREE_BUILDER (409): <detail> [trace 00-…]` |
+| Warning | A command ended in failure after its retries | `Command UpgradeBuilding failed after 1 request(s): <ApiError> [trace 00-…]` |
+
+A lost connection or a timeout has no trace id: the server never answered. A command's `requestId` is in its body and in the server's lines
+5000 to 5003, not in the client's request line. No line holds a token or a body (`07` Logging policy).
+
 ## Where it is built
 The log classes are `<Feature>Log` next to the code that logs (`docs/modules/CityBuilder.Api.md`); the tests that hold these events and the
 "never logged" rules are `server/tests/CityBuilder.IntegrationTests/Logging/` and `Auth/DevLoginDatabaseTests`.
