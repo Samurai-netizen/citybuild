@@ -1,7 +1,6 @@
 #nullable enable
 
 using System;
-using System.Collections.Generic;
 using CityBuilder.Client.Core;
 using NUnit.Framework;
 
@@ -13,27 +12,14 @@ namespace CityBuilder.Client.Tests.EditMode.Core
     /// </summary>
     public sealed class ClientLogTests
     {
-        /// <summary>A sink that keeps every line it is given.</summary>
-        private sealed class RecordingSink : ILogSink
-        {
-            /// <summary>The lines written, in order.</summary>
-            public List<(LogLevel Level, string Message, Exception? Exception)> Lines { get; } = new List<(LogLevel, string, Exception?)>();
-
-            /// <summary>Keeps the line.</summary>
-            public void Write(LogLevel level, string message, Exception? exception)
-            {
-                Lines.Add((level, message, exception));
-            }
-        }
-
         /// <summary>The sink the log writes to in a test.</summary>
-        private RecordingSink _sink = null!;
+        private RecordingLogSink _sink = null!;
 
         /// <summary>Before each test: the log writes to a recording sink at the Debug level.</summary>
         [SetUp]
         public void UseARecordingSink()
         {
-            _sink = new RecordingSink();
+            _sink = new RecordingLogSink();
             ClientLog.Sink = _sink;
             ClientLog.Level = LogLevel.Debug;
         }
