@@ -1,6 +1,6 @@
 # CR-0008 — Logistics rework: goods stored in buildings, couriers, routes and roads
 
-- **Status:** Proposed
+- **Status:** In progress
 - **Type:** Design change
 - **Requested by:** owner · **Date:** 2026-11-02 (revised the same day after the owner's review: D1, D5, D10 and the task grouping)
 - **Milestone / era:** M0 / Era I (part of Era I's base set)
@@ -275,7 +275,7 @@ T1 adds the tasks to the M0 board. Model: Opus = Opus 5.5, Sonnet = Sonnet 5.5.
 
 | ID | Model | Parts | The owner is needed for | Status |
 |---|---|---|---|---|
-| CR-0008-T1 | Opus | A–I: spec, engine and server | starting it; two permission prompts (the `22` edit at the start, the golden fixture after part B); merging | Todo |
+| CR-0008-T1 | Opus | A–I: spec, engine and server | starting it; two permission prompts (the `22` edit at the start, the golden fixture after part B); merging | In progress |
 | CR-0008-T2 | Sonnet | A–F: client and art | starting it; merging | Todo |
 | CR-0008-T3 | Opus | close-out with a playtest `[MANUAL]` | about an hour of playing and looking; merging | Todo |
 
@@ -481,7 +481,7 @@ Then list every [MANUAL] look of parts A-F (what to open, what to check) in the 
 ```
 
 ## Owner approval
-- Approved on: — (waiting for the owner: approve, change or reject; D1, D5 and D10 are decided, D2–D4, D6–D9 and D11–D13 are my
-  recommendations)
+- Approved on: 2026-11-02. The owner's words, in chat: "I approve the CR, go ahead with /start-task CR-0008-T1". The approval covers the
+  whole proposal as written, so D2–D4, D6–D9 and D11–D13 stand as recommended; T1 started the same day (build log BL-20261102-07).
 - 2026-11-02: the owner reviewed the first version and decided D1, D5 and D10 (quoted under "Owner's words"); the first version's
   D2–D4 and D6–D9 were not changed.

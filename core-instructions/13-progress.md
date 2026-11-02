@@ -4,16 +4,20 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Last completed:** M0-60 · Client ↔ server boundary review, in review (PR #85, branch `claude/compassionate-meitner-sd7nr0`, build log `docs/build-log/2026/2026-11-02-06-M0-60.md`)
-- **Next task:** M0-61 · DocTools: generated reference docs (`[O]`, `[PLAN]`); start with `/start-task M0-61` after the owner merges M0-60 (CR-0008, Proposed, asks to come first: the owner decides).
+- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** CR-0008-T1 · Logistics rework: spec, engine and server (`[O]`; parts A–I, one PR) · branch `task/CR-0008-T1-logistics-engine-server` ·
+  build log `docs/build-log/2026/2026-11-02-07-CR-0008-T1.md` (its Session 1 plan lists every part and step)
+- **Part / step:** A (design docs) · A1 the `22` edit (protected: the owner answers the permission prompt) → A2 `21` `24` `25` `26` `31` →
+  A3 `10` `12` plan `13` → A4 checks, checkpoint, draft PR. Then B (technical spec) … I (engine review), then `/finish-task`.
+- **Last completed:** M0-60 · Client ↔ server boundary review (PR #85, merged)
+- **Next task:** CR-0008-T2 · client and art (`[S]`), after T1 merges; then CR-0008-T3, then M0-61.
 - **Open questions for the owner:** M0-60: `test-unity.sh` on a machine with Unity (client changes not compiled in Unity). M0-58: the [MANUAL] content-change check (`client/README.md`; no automated test covers the `GameRoot` rebuild). CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-54: the dev database still runs the fast clock until the owner does step 7 of the waiting-loop run (`LOCAL-E2E.md`). M0-55: the [MANUAL] look at the connection states (`client/README.md`). CR-0007-T1: the [MANUAL] look at the new UI (`client/README.md`); the status label may be removed (build log follow-ups).
 - **Known broken / do not touch:** — (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55)
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 60 / 85
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 61 / 85
 
 | Area | State | Notes |
 |---|---|---|
@@ -32,7 +36,7 @@
 | Resilience (limits, retries, logging) | in progress | client logging M0-57 merged (PR #81) (`ClientLogger`, `ClientLog`); version and content compatibility M0-58 merged (PR #82) (`ContentSync`, `X-Client-Version`); mobile-safe UI M0-59 merged (PR #84) (Expand scaling, `ScaleToFit`, portrait rules); error catalogue, global handler, rate limits and input limits M0-34 merged (PR #46); logging, correlation and the dev time scale M0-35 merged (PR #47) |
 | Docs automation (DocTools) + docs completeness | in progress | handbook, Pages, docs-as-code checks and a full audit: CR-0002 done (PR #27); code documentation CR-0003 done (PR #29); DocTools is M0-61 |
 | Balance simulator | not started | |
-| E2E / security / concurrency suites | in progress | server golden E2E over HTTP M0-36 merged (PR #48); lost responses and the kill check M0-56 merged (PR #80); boundary review M0-60 in review (`docs/testing/KILL-SERVER-CHECK.md`) |
+| E2E / security / concurrency suites | in progress | server golden E2E over HTTP M0-36 merged (PR #48); lost responses and the kill check M0-56 merged (PR #80); boundary review M0-60 merged (PR #85) (`docs/testing/KILL-SERVER-CHECK.md`) |
 | Dev build + M0 close-out | not started | |
 
 States: `not started` · `in progress` · `done` · `blocked (reason)`
