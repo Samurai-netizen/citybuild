@@ -98,6 +98,7 @@ Decisions: build log `docs/build-log/2026/2026-10-19-06-M0-16.md`, decisions 8, 
 | `GameContent` | `ContentVersion`, `Rules`, `StartingCity`, and the sorted lists `Eras` (by number), `Items`, `Buildings`, `Research` (by id), `RoadLevels` (by level, at least one; `MaxRoadLevel`, `GetRoadLevel(n)`), with `TryGetEra/Item/Building/Research`. Immutable; lists are read-only collections |
 | `GameRules` | Grid size, builder and research slots (research exactly 1 in M0), `BaseStorageCaps` (exactly the capped items) with `TryGetBaseStorageCap`, `MaxOfflineProductionSeconds`, `MinCycleSeconds`, `MaxLaborReductionPermille`; walking (CR-0008): `GroundTileMillis`, `CrossingSpeedPermille`, `MinWalkSeconds`, `MaxWalkBonusPermille` |
 | `RoadLevelDefinition` | One road level (CR-0008, `04` §17): `Level`, `Name`, `TileMillis` (faster than the ground and the level before, content rule 11), `Cost` (to place at level 1, to upgrade to it above) |
+| `Map.PathFinder`, `Map.WalkCost` | The path rule of `04` §17 (CR-0008): `new PathFinder(content)` allocates its arrays for the grid once; `Load(city)` reads which tiles have a building and every other tile's time (ground or its road level); `Measure(from, to)` → `WalkCost` (crossings, `D`) without allocating; `Route(from, to)` → the tiles in walking order (display and tests; allocates). A search runs Dijkstra from the end over reversed steps, ordered by crossings, then `D`, then tile index; the route then takes, from the start, the first direction in the order x+1, y+1, x−1, y−1 that stays on a best walk (the tie rule). The walk's own start and end tiles are ground; another building's tile is a crossing at `CeilDiv(ground × 1000, crossingSpeedPermille)`. `WalkCost.Seconds(bonus)` applies the walk bonus |
 | `Map.WalkTime` | The walk time formula of `04` §17: `Seconds(doubleMillis, bonusPermille)` = `max(1, CeilDiv(ApplyPermilleReduction(D, bonus), 2000))`, where `D` sums `leave + enter` over the steps; `ShortestWalkSeconds(ground, bonus)` for content rule 12 |
 | `StartingCityDefinition` | The era and the stock of a new city |
 | `EraDefinition`, `ItemDefinition` | An era (number 1..n, id, name); an item (id, name, era, `IsCapped`, `IsTradable`) |
@@ -176,7 +177,11 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
   (`ValidWith`) and `ContentAssert` checks the exact errors. `GameContentFactoryTests` (what valid data becomes), `ContentShapeTests`,
   `ContentValueRuleTests`, `ContentBuildingRuleTests`, `ContentReferenceRuleTests`, `ContentResearchRuleTests`, `ContentEraRuleTests`, `ContentWalkRuleTests` (CR-0008): at least one failing case
   per rule and error code, named after the error path.
-- `Map/` (CR-0008): `WalkTimeTests` (rounding, the bonus, at least one second, bad arguments).
+- `Map/` (CR-0008): `WalkTimeTests` (rounding, the bonus, at least one second, bad arguments); `PathFinderTests` (one rule each: straight
+  ground, adjacent buildings as ground, half of each tile per step, a faster road detour taken and a slower one not, no crossing while a
+  way around exists, the fewest crossings when every way crosses and the fastest of those, the tie rule both ways, no step, reload,
+  determinism, bad arguments); `PathFinderBruteForceTests` (180 random 3 × 3 to 5 × 3 maps from `MapFixture`, six pairs each: the finder's
+  cost and route equal the best of every simple walk by the path rule and its tie rule).
 - `State/` (`Building`, `CityState`, `CityFactory`, `CityQueries`, `StallReason` tests) and `Rules/` (one class per mutation: every success
   path, every error code, the check order where failures overlap, the items each names as spent and refunded).
 - `Display/` (`PerHourTests`, `NetPerHourTests`, `SecondsUntilFullTests`, `ProgressPermilleTests`, `SecondsUntilNextEventTests`,

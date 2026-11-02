@@ -15,11 +15,18 @@ namespace CityBuilder.Simulation.Content
         /// <summary>The largest total walk bonus content may allow, in permille (content rule 12): a walk always keeps a tenth of its time.</summary>
         private const int _walkBonusLimitPermille = 900;
 
+        /// <summary>
+        /// The largest ground time per tile content may allow, in milliseconds (1000 s). With crossings at 1 ‰ a tile then takes at most 10⁹ ms,
+        /// so the double milliseconds of any walk on a grid of at most 32767 × 32767 tiles stay far below <see cref="long.MaxValue"/>.
+        /// </summary>
+        private const long _groundTileMillisLimit = 1_000_000;
+
         /// <summary>Checks the walking rules and every road level.</summary>
         public static void Check(ContentDraft draft, ContentErrorList errors)
         {
             GameRules rules = draft.Rules;
             Positive(rules.GroundTileMillis, "rules.groundTileMillis", errors);
+            AtMost(rules.GroundTileMillis, _groundTileMillisLimit, "rules.groundTileMillis", errors);
             Positive(rules.CrossingSpeedPermille, "rules.crossingSpeedPermille", errors);
             AtMost(rules.CrossingSpeedPermille, IntegerMath.PermilleScale, "rules.crossingSpeedPermille", errors);
             Positive(rules.MinWalkSeconds, "rules.minWalkSeconds", errors);

@@ -206,7 +206,8 @@ quantities, durations, milliseconds and labor ≤ 10¹²; grid size and worker c
 9. **Stores:** a producer level's store holds every good of its recipe with a limit ≥ that good's recipe quantity; a store's goods and
    limits never shrink from one level to the next.
 10. Exactly one building type is the **science building** (kind `science`), with `maxPerCity` 1; `maxPerCity`, where given, is ≥ 1.
-11. **Roads:** levels 1..n; tile times strictly fall from level to level and are below the ground time; every level has a cost (to place
+11. **Roads:** the ground time is 1..1 000 000 ms per tile (so a walk's sum can't overflow); road levels 1..n; tile times strictly fall from
+    level to level and are below the ground time; every level has a cost (to place
     at level 1, to upgrade to it above), the currency only (CR-0008 D6). `crossingSpeedPermille` 1..1000.
 12. **The shortest possible walk** (one step between adjacent buildings, every walk bonus applied, §17) takes ≥ `MinWalkSeconds`;
     Σ walk bonuses ≤ `MaxWalkBonusPermille` (≤ 900).

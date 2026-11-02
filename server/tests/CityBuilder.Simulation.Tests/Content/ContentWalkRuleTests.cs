@@ -100,20 +100,22 @@ public sealed class ContentWalkRuleTests
             (ContentErrorCode.RoadNotFaster, "roads[1].tileMillis"));
     }
 
-    /// <summary>The crossing speed is at most 1000 ‰ (a crossing is never faster than ground), the walk bonus limit at most 900 ‰.</summary>
+    /// <summary>
+    /// The crossing speed is at most 1000 ‰ (a crossing is never faster than ground), the walk bonus limit at most 900 ‰, the ground time at
+    /// most 1 000 000 ms (so no walk's sum can overflow).
+    /// </summary>
     [Theory]
     [InlineData("rules.crossingSpeedPermille", 1001)]
     [InlineData("rules.maxWalkBonusPermille", 901)]
-    public void Create_PermilleAboveItsLimit_ReportsValueTooLarge(string path, int value)
+    [InlineData("rules.groundTileMillis", 1_000_001)]
+    public void Create_ValueAboveItsLimit_ReportsValueTooLarge(string path, long value)
     {
         GameContentData data = Valid();
-        if (path == "rules.crossingSpeedPermille")
+        switch (path)
         {
-            RulesOf(data).CrossingSpeedPermille = value;
-        }
-        else
-        {
-            RulesOf(data).MaxWalkBonusPermille = value;
+            case "rules.crossingSpeedPermille": RulesOf(data).CrossingSpeedPermille = (int)value; break;
+            case "rules.maxWalkBonusPermille": RulesOf(data).MaxWalkBonusPermille = (int)value; break;
+            default: RulesOf(data).GroundTileMillis = value; break;
         }
 
         ContentAssert.SingleError(data, ContentErrorCode.ValueTooLarge, path);
