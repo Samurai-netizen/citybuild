@@ -5,7 +5,7 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Last completed:** M0-60 · Client ↔ server boundary review, in review (branch `claude/compassionate-meitner-sd7nr0`, build log `docs/build-log/2026/2026-11-02-06-M0-60.md`)
+- **Last completed:** M0-60 · Client ↔ server boundary review, in review (PR #85, branch `claude/compassionate-meitner-sd7nr0`, build log `docs/build-log/2026/2026-11-02-06-M0-60.md`)
 - **Next task:** M0-61 · DocTools: generated reference docs (`[O]`, `[PLAN]`); start with `/start-task M0-61` after the owner merges M0-60 (CR-0008, Proposed, asks to come first: the owner decides).
 - **Open questions for the owner:** M0-60: `test-unity.sh` on a machine with Unity (client changes not compiled in Unity). M0-58: the [MANUAL] content-change check (`client/README.md`; no automated test covers the `GameRoot` rebuild). CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-54: the dev database still runs the fast clock until the owner does step 7 of the waiting-loop run (`LOCAL-E2E.md`). M0-55: the [MANUAL] look at the connection states (`client/README.md`). CR-0007-T1: the [MANUAL] look at the new UI (`client/README.md`); the status label may be removed (build log follow-ups).
 - **Known broken / do not touch:** — (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55)
