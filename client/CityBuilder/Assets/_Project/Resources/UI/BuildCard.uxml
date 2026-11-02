@@ -1,16 +1,16 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
   <!-- One card of the build menu (docs/how-to/add-ui-screen.md): BuildMenu clones it once per building type and writes the texts of
-       BuildCardModel into the labels by name and puts the building's picture (UiIcons, CR-0005-T4) on card-icon. Its style is in BuildMenu.uss. -->
+       BuildCardModel into the labels by name and puts the building's picture (UiIcons, CR-0005-T4) on card-icon. Its style is in BuildMenu.uss and Common.uss. -->
   <ui:VisualElement name="card" class="build-card">
     <ui:VisualElement class="card-header">
       <ui:VisualElement name="card-icon" class="card-icon" />
-      <ui:Label name="card-name" class="card-name" />
+      <ui:Label name="card-name" class="card-name t-heading" />
     </ui:VisualElement>
-    <ui:Label name="card-cost" class="card-line" />
-    <ui:Label name="card-time" class="card-line" />
-    <ui:Label name="card-workers" class="card-line" />
+    <ui:Label name="card-cost" class="card-line t-body" />
+    <ui:Label name="card-time" class="card-line t-body" />
+    <ui:Label name="card-workers" class="card-line t-body" />
     <ui:Label name="card-recipe" class="card-line card-recipe" />
     <ui:Label name="card-lock" class="card-lock" />
-    <ui:Label name="card-hint" class="card-hint" />
+    <ui:Label name="card-hint" class="card-hint t-note" />
   </ui:VisualElement>
 </ui:UXML>

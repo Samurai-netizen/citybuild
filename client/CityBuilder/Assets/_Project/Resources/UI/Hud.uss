@@ -1,65 +1,66 @@
-/* The top HUD (docs/how-to/add-ui-screen.md): a dark panel across the top with the item chips on one row and the workers, builders, research ring,
-   era badge and connection indicator on the next. M0-49. Sizes are in panel units (reference resolution 1200 x 800). It takes no pointer. */
+/* The top HUD (docs/how-to/add-ui-screen.md): one wood bar across the top. M0-49, restyled in CR-0007. Colours and sizes come from Common.uss. The bar is
+   40 high plus its border and the gap below: --hud-height in Common.uss is where every screen under the HUD starts. It takes no pointer. */
 .hud-root {
   position: absolute;
   left: 0;
   top: 0;
   right: 0;
   bottom: 0;
-  padding: 16px;
+  padding: var(--sp-2); /* replaced by the safe area in code */
   flex-direction: column;
   justify-content: flex-start;
 }
 
 .hud-panel {
-  padding: 8px 12px;
-  border-radius: 10px;
-  background-color: rgba(0, 0, 0, 0.7);
+  height: 40px;
+  padding: 0 var(--sp-2);
+  flex-direction: row;
+  align-items: center;
 }
 
-.hud-row {
+.hud-chips {
   flex-direction: row;
-  flex-wrap: wrap;
   align-items: center;
 }
 
 .hud-chip {
   flex-direction: row;
   align-items: center;
-  min-width: 190px;
-  margin: 2px 12px 2px 0;
-  padding: 4px 10px 4px 4px;
-  border-radius: 8px;
-  border-width: 2px;
-  border-color: rgba(0, 0, 0, 0);
-  background-color: rgba(255, 255, 255, 0.08);
+  height: 32px;
+  margin: 0 var(--sp-1) 0 0;
+  padding: 0 var(--sp-2) 0 var(--sp-1);
+  border-width: 1px;
+  border-radius: var(--radius-sm);
+  border-color: transparent;
+  background-color: var(--c-wood-deep-2);
 }
 
 .hud-chip--full {
-  border-color: rgb(255, 200, 90);
+  border-color: var(--c-warn);
 }
 
 .hud-chip-icon {
-  width: 44px;
-  height: 44px;
-  margin: 0 8px 0 0;
-  border-radius: 22px;
-  background-color: rgb(94, 110, 130);
-  color: rgb(255, 255, 255);
-  font-size: 24px;
+  width: 24px;
+  height: 24px;
+  margin: 0 var(--sp-1) 0 0;
+  border-radius: 12px;
+  background-color: var(--c-wood-dark);
+  color: var(--c-cream);
+  font-size: var(--font-md);
   -unity-font-style: bold;
   -unity-text-align: middle-center;
 }
 
-/* An item with a picture: the picture replaces the grey circle and the letter. */
+/* An item with a picture: the picture replaces the circle and the letter. */
 .hud-chip-icon--picture {
   border-radius: 0;
-  background-color: rgba(0, 0, 0, 0);
+  background-color: transparent;
   -unity-background-scale-mode: scale-to-fit;
 }
 
 .hud-chip-text {
   flex-direction: column;
+  justify-content: center;
 }
 
 .hud-chip-amount {
@@ -69,50 +70,44 @@
 
 .hud-value {
   margin: 0;
-  color: rgb(255, 255, 255);
-  font-size: 24px;
+  padding: 0;
+  color: var(--c-cream);
+  font-size: var(--font-md);
   -unity-font-style: bold;
 }
 
 .hud-caption {
-  margin: 0 0 0 6px;
-  color: rgb(190, 196, 206);
-  font-size: 20px;
+  margin: 0 0 0 var(--sp-1);
+  padding: 0;
+  color: var(--c-cream-soft);
+  font-size: var(--font-xs);
 }
 
 .hud-rate {
   margin: 0;
-  font-size: 20px;
-  color: rgb(190, 196, 206);
+  padding: 0;
+  font-size: var(--font-xs);
+  color: var(--c-cream-soft);
 }
 
 .hud-rate--rising {
-  color: rgb(120, 220, 140);
+  color: var(--c-go-light);
 }
 
 .hud-rate--falling {
-  color: rgb(255, 130, 110);
+  color: var(--c-stop-light);
 }
 
 .hud-stat {
-  min-width: 110px;
-  margin: 2px 16px 2px 0;
-  flex-direction: column;
-}
-
-.hud-stat .hud-caption {
-  margin: 0;
-}
-
-.hud-stat-line {
   flex-direction: row;
   align-items: center;
+  margin: 0 var(--sp-2) 0 var(--sp-1);
 }
 
 .hud-stat-icon {
-  width: 32px;
-  height: 32px;
-  margin: 0 6px 0 0;
+  width: 22px;
+  height: 22px;
+  margin: 0 var(--sp-1) 0 0;
   -unity-background-scale-mode: scale-to-fit;
 }
 
@@ -120,28 +115,39 @@
   flex-direction: row;
   align-items: center;
   flex-grow: 1;
-  min-width: 260px;
-  margin: 2px 16px 2px 0;
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  margin: 0 var(--sp-1);
 }
 
 .hud-ring {
-  width: 56px;
-  height: 56px;
-  margin: 0 10px 0 0;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  margin: 0 var(--sp-2) 0 0;
 }
 
 /* The research picture sits in the middle of the ring that the painter draws on .hud-ring. */
 .hud-ring-icon {
   position: absolute;
-  left: 12px;
-  top: 12px;
-  width: 32px;
-  height: 32px;
+  left: 6px;
+  top: 6px;
+  width: 18px;
+  height: 18px;
   -unity-background-scale-mode: scale-to-fit;
 }
 
 .hud-research-text {
   flex-direction: column;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.hud-research-text .hud-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .hud-research-text .hud-caption {
@@ -151,40 +157,41 @@
 .hud-meta {
   flex-direction: column;
   align-items: flex-end;
-  margin: 2px 0;
+  flex-shrink: 0;
 }
 
 .hud-era {
   margin: 0;
-  padding: 2px 12px;
-  border-radius: 12px;
-  background-color: rgb(88, 70, 40);
-  color: rgb(255, 232, 180);
-  font-size: 20px;
+  padding: 0 var(--sp-2);
+  border-radius: var(--radius-sm);
+  border-width: 1px;
+  border-color: var(--c-gold);
+  color: var(--c-gold);
+  font-size: var(--font-xs);
   -unity-font-style: bold;
 }
 
 .hud-connection {
   flex-direction: row;
   align-items: center;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .hud-dot {
-  width: 16px;
-  height: 16px;
-  border-radius: 8px;
-  background-color: rgb(150, 150, 150);
+  width: 8px;
+  height: 8px;
+  border-radius: 4px;
+  background-color: var(--c-cream-soft);
 }
 
 .hud-dot--ok {
-  background-color: rgb(90, 190, 110);
+  background-color: var(--c-go-light);
 }
 
 .hud-dot--pending {
-  background-color: rgb(255, 200, 90);
+  background-color: var(--c-warn);
 }
 
 .hud-dot--problem {
-  background-color: rgb(235, 100, 85);
+  background-color: var(--c-stop-light);
 }

@@ -1,41 +1,35 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
-  <!-- The top HUD that HudView shows (M0-49, docs/how-to/add-ui-screen.md): the item chips, workers, builders, the research ring, the era badge and
-       the connection indicator. The icons of workers, builders and research are set by HudView from UiIcons (CR-0005-T4). HudView fills the chip list with one HudChip per item and writes the HudModel's texts into the labels by name.
-       Nothing here takes the pointer, so a drag that starts on the HUD still pans the ground. Style: Hud.uss. -->
+  <!-- The top HUD that HudView shows (M0-49, docs/how-to/add-ui-screen.md): one wood bar with the item chips, workers, builders, the research ring, the
+       era badge and the connection indicator. The icons of workers, builders and research are set by HudView from UiIcons (CR-0005-T4). HudView
+       fills the chip list with one HudChip per item and writes the HudModel's texts into the labels by name.
+       Nothing here takes the pointer, so a drag that starts on the HUD still pans the ground. Style: Common.uss and Hud.uss. -->
+  <Style src="Common.uss" />
   <Style src="Hud.uss" />
   <ui:VisualElement name="hud-root" class="hud-root" picking-mode="Ignore">
-    <ui:VisualElement name="hud-panel" class="hud-panel" picking-mode="Ignore">
-      <ui:VisualElement name="hud-chips" class="hud-row" picking-mode="Ignore" />
-      <ui:VisualElement class="hud-row" picking-mode="Ignore">
-        <ui:VisualElement class="hud-stat" picking-mode="Ignore">
-          <ui:Label class="hud-caption" text="Workers" picking-mode="Ignore" />
-          <ui:VisualElement class="hud-stat-line" picking-mode="Ignore">
-            <ui:VisualElement name="hud-workers-icon" class="hud-stat-icon" picking-mode="Ignore" />
-            <ui:Label name="hud-workers" class="hud-value" picking-mode="Ignore" />
-          </ui:VisualElement>
+    <ui:VisualElement name="hud-panel" class="hud-panel panel-wood" picking-mode="Ignore">
+      <ui:VisualElement name="hud-chips" class="hud-chips" picking-mode="Ignore" />
+      <ui:VisualElement class="hud-stat" picking-mode="Ignore">
+        <ui:VisualElement name="hud-workers-icon" class="hud-stat-icon" picking-mode="Ignore" />
+        <ui:Label name="hud-workers" class="hud-value" picking-mode="Ignore" />
+      </ui:VisualElement>
+      <ui:VisualElement class="hud-stat" picking-mode="Ignore">
+        <ui:VisualElement name="hud-builders-icon" class="hud-stat-icon" picking-mode="Ignore" />
+        <ui:Label name="hud-builders" class="hud-value" picking-mode="Ignore" />
+      </ui:VisualElement>
+      <ui:VisualElement class="hud-research" picking-mode="Ignore">
+        <ui:VisualElement name="hud-ring" class="hud-ring" picking-mode="Ignore">
+          <ui:VisualElement name="hud-ring-icon" class="hud-ring-icon" picking-mode="Ignore" />
         </ui:VisualElement>
-        <ui:VisualElement class="hud-stat" picking-mode="Ignore">
-          <ui:Label class="hud-caption" text="Builders" picking-mode="Ignore" />
-          <ui:VisualElement class="hud-stat-line" picking-mode="Ignore">
-            <ui:VisualElement name="hud-builders-icon" class="hud-stat-icon" picking-mode="Ignore" />
-            <ui:Label name="hud-builders" class="hud-value" picking-mode="Ignore" />
-          </ui:VisualElement>
+        <ui:VisualElement class="hud-research-text" picking-mode="Ignore">
+          <ui:Label name="hud-research-name" class="hud-value" picking-mode="Ignore" />
+          <ui:Label name="hud-research-time" class="hud-caption" picking-mode="Ignore" />
         </ui:VisualElement>
-        <ui:VisualElement class="hud-research" picking-mode="Ignore">
-          <ui:VisualElement name="hud-ring" class="hud-ring" picking-mode="Ignore">
-            <ui:VisualElement name="hud-ring-icon" class="hud-ring-icon" picking-mode="Ignore" />
-          </ui:VisualElement>
-          <ui:VisualElement class="hud-research-text" picking-mode="Ignore">
-            <ui:Label name="hud-research-name" class="hud-value" picking-mode="Ignore" />
-            <ui:Label name="hud-research-time" class="hud-caption" picking-mode="Ignore" />
-          </ui:VisualElement>
-        </ui:VisualElement>
-        <ui:VisualElement class="hud-meta" picking-mode="Ignore">
-          <ui:Label name="hud-era" class="hud-era" picking-mode="Ignore" />
-          <ui:VisualElement class="hud-connection" picking-mode="Ignore">
-            <ui:VisualElement name="hud-connection-dot" class="hud-dot" picking-mode="Ignore" />
-            <ui:Label name="hud-connection-text" class="hud-caption" picking-mode="Ignore" />
-          </ui:VisualElement>
+      </ui:VisualElement>
+      <ui:VisualElement class="hud-meta" picking-mode="Ignore">
+        <ui:Label name="hud-era" class="hud-era" picking-mode="Ignore" />
+        <ui:VisualElement class="hud-connection" picking-mode="Ignore">
+          <ui:VisualElement name="hud-connection-dot" class="hud-dot" picking-mode="Ignore" />
+          <ui:Label name="hud-connection-text" class="hud-caption" picking-mode="Ignore" />
         </ui:VisualElement>
       </ui:VisualElement>
     </ui:VisualElement>

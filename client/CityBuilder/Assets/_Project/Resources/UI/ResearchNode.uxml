@@ -1,18 +1,24 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
   <!-- One research node of the research screen (M0-52, docs/how-to/add-ui-screen.md): ResearchScreen clones it once per node and writes the
-       texts of ResearchNodeModel into the labels by name; research-node-icon gets the node's picture (UiIcons) and research-node-ring is
-       painted from the node's progress while it runs. Its style is in Research.uss. -->
+       texts of ResearchNodeModel into the labels by name. A card, from the top: the name, the big picture (research-node-icon, the node's picture
+       from UiIcons, about 60% of the card; research-node-ring is painted over its corner from the node's progress while it runs) and the text lines; the cost and the time are two chips over the bottom of the picture.
+       research-node-finance is the Finance button laid over the whole card, so the card is the thing to tap (CR-0007); it is shown only for a node that can be financed
+       and switched off, with the reason in the note, when it cannot. Its style is in Research.uss and Common.uss. -->
   <ui:VisualElement name="research-node" class="research-node">
-    <ui:VisualElement class="research-node-header">
+    <ui:Label name="research-node-name" class="research-node-name t-heading" picking-mode="Ignore" />
+    <ui:VisualElement class="research-node-art" picking-mode="Ignore">
       <ui:VisualElement name="research-node-icon" class="research-node-icon" picking-mode="Ignore" />
-      <ui:Label name="research-node-name" class="research-node-name" />
       <ui:VisualElement name="research-node-ring" class="research-node-ring" picking-mode="Ignore" />
+      <ui:VisualElement class="research-node-numbers" picking-mode="Ignore">
+        <ui:Label name="research-node-cost" class="research-node-chip" picking-mode="Ignore" />
+        <ui:Label name="research-node-time" class="research-node-chip" picking-mode="Ignore" />
+      </ui:VisualElement>
     </ui:VisualElement>
-    <ui:Label name="research-node-effect" class="research-node-effect" />
-    <ui:Label name="research-node-cost" class="research-node-line" />
-    <ui:Label name="research-node-time" class="research-node-line" />
-    <ui:Label name="research-node-status" class="research-node-status" />
-    <ui:Label name="research-node-note" class="research-node-note" />
-    <ui:Button name="research-node-finance" class="research-button research-node-finance" text="Finance" />
+    <ui:VisualElement class="research-node-lines" picking-mode="Ignore">
+      <ui:Label name="research-node-effect" class="research-node-effect t-note" picking-mode="Ignore" />
+      <ui:Label name="research-node-status" class="research-node-status" picking-mode="Ignore" />
+      <ui:Label name="research-node-note" class="research-node-note" picking-mode="Ignore" />
+    </ui:VisualElement>
+    <ui:Button name="research-node-finance" class="research-node-finance btn" text="Finance" />
   </ui:VisualElement>
 </ui:UXML>

@@ -12,7 +12,7 @@ namespace CityBuilder.Client.Presentation.Research
 {
     /// <summary>
     /// The research screen on the screen (M0-52): a thin component over a <see cref="ResearchScreenModel"/>. It loads <c>UI/Research</c> and
-    /// <c>UI/ResearchNode</c> from <c>Resources</c>, makes one node element per node of the era in the column the model gives it, writes the
+    /// <c>UI/ResearchNode</c> from <c>Resources</c>, makes one node element per node of the era and puts them in one row of cards in the model's order (prerequisites first; the MVP's tree is a plain list, and the model still works out each node's depth for the tree of later eras), writes the
     /// model's words into the elements by name, draws the progress ring of the running node, and enables each Finance button by what the model
     /// allows. A press on Finance only raises <see cref="FinanceRequested"/> with the node's id: what is sent, and when, is the flow's, and
     /// nothing here decides or calls the server. A button at the bottom left opens and closes the panel; opening it raises
@@ -32,13 +32,13 @@ namespace CityBuilder.Client.Presentation.Research
         private const string PanelSettingsPath = "UI/PanelSettings";
 
         /// <summary>The root's padding in panel units before the safe area is added.</summary>
-        private const float BasePadding = 16f;
+        private const float BasePadding = 8f;
 
         /// <summary>Drawn over the inspector (0.8) and under the build menu (1), the placement bar (2) and the toasts (3); it is never open together with the first two.</summary>
         private const float SortingOrder = 0.9f;
 
         /// <summary>The width of a node ring's stroke in panel units.</summary>
-        private const float RingWidth = 6f;
+        private const float RingWidth = 3f;
 
         /// <summary>The name of the root element in <c>Research.uxml</c>.</summary>
         public const string RootName = "research-root";
@@ -52,7 +52,7 @@ namespace CityBuilder.Client.Presentation.Research
         /// <summary>The name of the label with the rule of the era.</summary>
         public const string RuleName = "research-rule";
 
-        /// <summary>The name of the element the columns go into.</summary>
+        /// <summary>The name of the element the list of nodes goes into.</summary>
         public const string ColumnsName = "research-columns";
 
         /// <summary>The name of the button that opens and closes the panel.</summary>
@@ -98,10 +98,10 @@ namespace CityBuilder.Client.Presentation.Research
         private const string RuleOffClass = "research-rule--off";
 
         /// <summary>The track of a node's ring.</summary>
-        private static readonly Color RingTrackColor = new Color(1f, 1f, 1f, 0.2f);
+        private static readonly Color RingTrackColor = new Color(0.48f, 0.31f, 0.18f, 0.28f);
 
         /// <summary>The finished part of a node's ring.</summary>
-        private static readonly Color RingProgressColor = new Color(0.47f, 0.76f, 1f, 1f);
+        private static readonly Color RingProgressColor = new Color(0.23f, 0.49f, 0.20f, 1f);
 
         /// <summary>The node elements, in the order of the model's nodes.</summary>
         private readonly List<NodeElements> _nodes = new List<NodeElements>();
@@ -305,24 +305,18 @@ namespace CityBuilder.Client.Presentation.Research
             return text.ToString();
         }
 
-        /// <summary>Empties the columns and makes one column element per column and one node element per node.</summary>
+        /// <summary>Empties the row and makes one node element per node, all in one row of cards (the MVP's tree is a plain row), in the model's order.</summary>
         private void BuildNodes(Elements e, ResearchScreenModel model)
         {
             e.Columns.Clear();
             _nodes.Clear();
-            var columns = new List<VisualElement>();
-            for (int column = 0; column < model.ColumnCount; column++)
-            {
-                var element = new VisualElement();
-                element.AddToClassList("research-column");
-                e.Columns.Add(element);
-                columns.Add(element);
-            }
-
+            var list = new VisualElement();
+            list.AddToClassList("research-row");
+            e.Columns.Add(list);
             for (int index = 0; index < model.Nodes.Count; index++)
             {
                 NodeElements node = MakeNode(model.Nodes[index].Id);
-                columns[model.Nodes[index].Column].Add(node.Root);
+                list.Add(node.Root);
                 _nodes.Add(node);
             }
         }
@@ -354,7 +348,7 @@ namespace CityBuilder.Client.Presentation.Research
             return node;
         }
 
-        /// <summary>Writes one node's words into its elements, marks its status, and shows or hides the ring, the note and the button.</summary>
+        /// <summary>Writes one node's words into its elements, marks its status (and whether the card can be tapped to finance it), and shows or hides the ring, the note and the button.</summary>
         private static void Write(NodeElements node, ResearchNodeModel model)
         {
             node.Name.text = model.Name;
@@ -367,6 +361,7 @@ namespace CityBuilder.Client.Presentation.Research
             node.Root.EnableInClassList("research-node--available", model.Status == ResearchStatus.Available);
             node.Root.EnableInClassList("research-node--running", model.Status == ResearchStatus.InProgress);
             node.Root.EnableInClassList("research-node--done", model.Status == ResearchStatus.Done);
+            node.Root.EnableInClassList("research-node--ready", model.ShowsButton && model.ButtonEnabled);
             node.Finance.style.display = model.ShowsButton ? DisplayStyle.Flex : DisplayStyle.None;
             node.Finance.SetEnabled(model.ButtonEnabled);
             node.Ring.style.display = model.Status == ResearchStatus.InProgress ? DisplayStyle.Flex : DisplayStyle.None;

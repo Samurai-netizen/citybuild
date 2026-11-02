@@ -1,0 +1,220 @@
+/* The shared look of every screen (CR-0007): warm wood and parchment, the colours of the Era I art palette (art/blender/palette.py), and one
+   scale. Every layout imports this file; a screen's own stylesheet only says where things sit and uses these tokens, never a colour or a font
+   size of its own (a test checks it).
+   SCALE: the panel's reference resolution is 880 x 400 matched on height (PanelSettings), so one panel unit is about one dp on a landscape
+   phone, and a 48 unit button is a 48 dp touch target. */
+:root {
+  /* Wood and parchment, from the palette: plaster, wood_end, wood, wood_dark, thatch, grass, red, blue, gold. */
+  --c-parchment: rgb(244, 232, 207);
+  --c-parchment-2: rgb(235, 217, 180);
+  --c-parchment-3: rgb(214, 190, 146);
+  --c-ink: rgb(66, 42, 24);
+  --c-ink-soft: rgb(122, 86, 52);
+  --c-wood: rgb(201, 142, 84);
+  --c-wood-dark: rgb(122, 78, 45);
+  --c-wood-deep: rgb(62, 40, 24);
+  --c-wood-deep-2: rgb(88, 58, 36);
+  --c-cream: rgb(251, 243, 223);
+  --c-cream-soft: rgb(226, 206, 170);
+  --c-go: rgb(59, 125, 52);
+  --c-go-edge: rgb(38, 86, 36);
+  --c-go-light: rgb(168, 220, 126);
+  --c-warn: rgb(229, 178, 76);
+  --c-warn-ink: rgb(150, 98, 20);
+  --c-stop: rgb(168, 59, 42);
+  --c-stop-edge: rgb(120, 38, 28);
+  --c-stop-light: rgb(255, 154, 128);
+  --c-info: rgb(79, 128, 185);
+  --c-gold: rgb(242, 194, 48);
+  --c-shade: rgba(36, 22, 12, 0.55);
+  --c-panel-wood: rgb(62, 40, 24);
+
+  /* Type: three sizes for text, one for titles. */
+  --font-xs: 11px;
+  --font-sm: 12px;
+  --font-md: 14px;
+  --font-lg: 17px;
+  --font-xl: 21px;
+
+  /* Space, radius, touch. */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --touch: 48px;
+  --hud-height: 52px; /* the HUD's bar and the gap under it: every screen that sits below the HUD starts here */
+  --dock-width: 100px; /* the Build button; the Research button sits right of it */
+  --toast-lift: 88px; /* the toasts stack up from the bottom left, above the status label and the buttons */
+  --dock-next: 108px; /* where the button after Build starts: the dock width and one gap */
+}
+
+/* Text */
+.t-title {
+  color: var(--c-ink);
+  font-size: var(--font-xl);
+  -unity-font-style: bold;
+  white-space: normal;
+}
+
+.t-heading {
+  color: var(--c-ink);
+  font-size: var(--font-lg);
+  -unity-font-style: bold;
+  white-space: normal;
+}
+
+.t-body {
+  color: var(--c-ink);
+  font-size: var(--font-md);
+  white-space: normal;
+}
+
+.t-small {
+  color: var(--c-ink-soft);
+  font-size: var(--font-sm);
+  white-space: normal;
+}
+
+.t-note {
+  color: var(--c-warn-ink);
+  font-size: var(--font-sm);
+  -unity-font-style: bold;
+  white-space: normal;
+}
+
+/* Surfaces */
+.panel-parchment {
+  padding: var(--sp-3);
+  border-width: 2px;
+  border-radius: var(--radius-md);
+  border-color: var(--c-wood-dark);
+  background-color: var(--c-parchment);
+}
+
+.panel-wood {
+  padding: var(--sp-2);
+  border-width: 2px;
+  border-radius: var(--radius-md);
+  border-color: var(--c-wood-dark);
+  background-color: var(--c-panel-wood);
+}
+
+.scrim {
+  background-color: var(--c-shade);
+}
+
+.divider {
+  height: 2px;
+  margin: var(--sp-2) 0;
+  background-color: var(--c-parchment-3);
+}
+
+/* Buttons: one height (48, the touch target), one radius; the variant sets the colours. */
+.btn {
+  min-width: var(--touch);
+  min-height: var(--touch);
+  margin: 0;
+  padding: 0 var(--sp-3);
+  border-width: 2px;
+  border-bottom-width: 4px;
+  border-radius: var(--radius-sm);
+  border-color: var(--c-wood-deep);
+  background-color: var(--c-wood-dark);
+  color: var(--c-cream);
+  font-size: var(--font-md);
+  -unity-font-style: bold;
+  -unity-text-align: middle-center;
+}
+
+.btn:hover {
+  background-color: var(--c-wood);
+}
+
+.btn:active {
+  border-bottom-width: 2px;
+  padding-top: 2px;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+}
+
+.btn--primary {
+  border-color: var(--c-go-edge);
+  background-color: var(--c-go);
+}
+
+.btn--primary:hover {
+  background-color: rgb(78, 148, 66);
+}
+
+.btn--danger {
+  border-color: var(--c-stop-edge);
+  background-color: var(--c-stop);
+}
+
+.btn--danger:hover {
+  background-color: rgb(196, 78, 58);
+}
+
+.btn--quiet {
+  border-color: var(--c-parchment-3);
+  background-color: var(--c-parchment-2);
+  color: var(--c-ink);
+}
+
+.btn--quiet:hover {
+  background-color: var(--c-parchment-3);
+}
+
+/* A label has no margin or padding of its own in this game: a screen sets what it needs. */
+.unity-label {
+  margin: 0;
+  padding: 0;
+}
+
+/* A scroll view with thin wood scrollbars and no arrow buttons (mark the ScrollView with the class). */
+.themed-scroll .unity-scroller__low-button,
+.themed-scroll .unity-scroller__high-button {
+  display: none;
+}
+
+.themed-scroll .unity-scroll-view__horizontal-scroller,
+.themed-scroll .unity-scroller--horizontal,
+.themed-scroll .unity-base-slider--horizontal {
+  height: 8px;
+  min-height: 0;
+}
+
+.themed-scroll .unity-scroll-view__vertical-scroller,
+.themed-scroll .unity-scroller--vertical,
+.themed-scroll .unity-base-slider--vertical {
+  width: 8px;
+  min-width: 0;
+}
+
+.themed-scroll .unity-scroll-view__horizontal-scroller {
+  margin-top: var(--sp-1);
+}
+
+.themed-scroll .unity-scroll-view__vertical-scroller {
+  margin-left: var(--sp-1);
+}
+
+.themed-scroll .unity-base-slider__drag-container {
+  margin: 0;
+}
+
+.themed-scroll .unity-base-slider__tracker {
+  border-width: 0;
+  border-radius: 5px;
+  background-color: var(--c-parchment-3);
+}
+
+.themed-scroll .unity-base-slider__dragger {
+  border-width: 0;
+  border-radius: 5px;
+  background-color: var(--c-wood-dark);
+}

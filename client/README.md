@@ -135,10 +135,9 @@ server of `docs/testing/LOCAL-E2E.md` and play a few minutes.
 The tests check the words and the buttons; only a person can say the screen reads well and is easy to press. Nothing here is saved or committed. Use the
 server of `docs/testing/LOCAL-E2E.md` and play a few minutes.
 1. Open the **Bootstrap** scene and press **Play**. A **Research** button sits at the bottom left, to the right of **Build**. Press it: a panel opens under the
-   HUD with "Early Middle Ages — 0 / 4 researched", the greyed-out line "Complete all to advance" and two columns of nodes (Sharpened Axes and Trade Charter on
-   the left; Frame Saw and Storehouses on the right, dimmed, with "Requires: …"). Press **Close** or the X: the panel closes.
-2. Press **Finance** on Trade Charter (150 coins): the button dims with "Starting research…" and every other button says "Another research is running". About a second
-   later the node has a blue border, a ring that fills, "In progress · … left", and the HUD ring runs too. Press Finance on Sharpened Axes meanwhile: nothing happens.
+   HUD with "Early Middle Ages — 0 / 4 researched", the greyed-out line "Complete all to advance" and the nodes as one row of cards (Sharpened Axes, Trade Charter, then Frame Saw and Storehouses dimmed, with "Requires: …"). Press **Close** or the X: the panel closes.
+2. Tap the **Trade Charter** card (150 coins; there is no visible Finance button, the whole card is it): the card says "Starting research…" and every other card says "Another research is running". About a second
+   later the card has a gold border, a ring that fills, "In progress · … left", and the HUD ring runs too. Tap the Sharpened Axes card meanwhile: nothing happens.
 3. With too few coins (spend them first) Finance is dimmed and says "Not enough Coins". When Trade Charter is done (10 minutes, or the dev time scale of
    `docs/testing/LOCAL-E2E.md`), the header says "1 / 4", the node is green with "Researched", Storehouses is no longer locked and the Trading Post can be built.
 4. Check the layout: the panel must not hide the HUD or run over the Build and Research buttons on your screen (the top margin is a fixed 124 and the button's
@@ -171,4 +170,18 @@ server of `docs/testing/LOCAL-E2E.md` and press **Play**, then:
    screen with "Update needed" covers everything and no press reaches the city. **Check again** asks once more. Stop it by pressing Stop in the Editor.
 6. Tell the AI coder "connection states look right", or what looks wrong. Stop Play mode without saving the scene.
 
-Last updated: M0-55
+## [MANUAL] Look at the new UI (CR-0007)
+The tests hold the rules of the look (the shared stylesheet, the sizes, the touch target) and the AI coder looked at screenshots of every screen at 2400 × 1080 and
+1920 × 1080, but only you can say it looks decent. Nothing here is saved or committed. Set the Game view to a landscape phone: **Free Aspect** off, choose
+**2400 × 1080** (add it with the + button of the Game view's size menu; also try **1920 × 1080**), or use the Device Simulator. Use the server of
+`docs/testing/LOCAL-E2E.md`, press **Play** and look at, one at a time:
+1. The HUD: one dark wood bar across the top with the item chips, workers, builders, the research ring, the era badge and the green dot. Nothing is cut off or touching.
+2. **Build**: a wooden tray of cream cards opens above the button. Pick a card: the bar at the bottom right asks "Build ... at (x, y)?" with **Cancel** and a green **Place**.
+3. Tap a building: the inspector opens at the right under the HUD in two columns (status, recipe and the worker stepper on the left, the upgrade on the right), and fits on the screen.
+4. **Research**: a cream panel with the nodes as one row of cards (name, a big picture, the text lines; time and cost as chips on the picture), a green border on a card you can tap to finance, a thin scrollbar at the bottom edge. Scroll it sideways.
+5. A toast ("Construction started", then a refusal): they appear at the bottom left above the buttons, not over the inspector.
+6. Stop the server for the offline banner (`docs/testing/LOCAL-E2E.md` step 4) and, after a long absence, the welcome-back card.
+7. Check the size of what you tap: every button should be easy to hit with a thumb (48 units high, about 7 mm on a phone). Tell the AI coder "UI looks decent", or what looks wrong
+   (which screen, at which size). Stop Play mode without saving the scene.
+
+Last updated: CR-0007-T1

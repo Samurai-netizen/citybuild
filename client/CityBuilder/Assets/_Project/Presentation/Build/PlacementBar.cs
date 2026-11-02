@@ -24,7 +24,7 @@ namespace CityBuilder.Client.Presentation.Build
         private const string PanelSettingsPath = "UI/PanelSettings";
 
         /// <summary>The root's padding in panel units before the safe area is added.</summary>
-        private const float BasePadding = 16f;
+        private const float BasePadding = 8f;
 
         /// <summary>Drawn above the build menu, which uses sort order 1.</summary>
         private const float SortingOrder = 2f;

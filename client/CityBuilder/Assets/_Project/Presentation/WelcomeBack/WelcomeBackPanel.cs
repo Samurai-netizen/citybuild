@@ -26,7 +26,7 @@ namespace CityBuilder.Client.Presentation.WelcomeBack
         private const string PanelSettingsPath = "UI/PanelSettings";
 
         /// <summary>The root's padding in panel units before the safe area is added.</summary>
-        private const float BasePadding = 16f;
+        private const float BasePadding = 8f;
 
         /// <summary>Drawn over every other screen (the placement bar is 2) and under the toasts (3): it is modal, and a result still shows over it.</summary>
         private const float SortingOrder = 2.5f;

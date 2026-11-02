@@ -24,7 +24,7 @@ namespace CityBuilder.Client.Presentation.Connection
         private const string PanelSettingsPath = "UI/PanelSettings";
 
         /// <summary>The padding in panel units before the safe area is added.</summary>
-        private const float BasePadding = 16f;
+        private const float BasePadding = 8f;
 
         /// <summary>Drawn over every other screen, the welcome-back report (2.5) and the toasts (3) included: a game that does not match the server shows nothing true.</summary>
         private const float SortingOrder = 4f;

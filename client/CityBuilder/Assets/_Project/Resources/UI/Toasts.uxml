@@ -1,6 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
-  <!-- The toasts that ToastHost shows (M0-47, docs/how-to/add-ui-screen.md): a column at the top centre of the screen. ToastHost fills the
-       list with one label per toast; nothing here takes the pointer, so the ground below still gets every press. Style: Toasts.uss. -->
+  <!-- The toasts that ToastHost shows (M0-47, docs/how-to/add-ui-screen.md): a column at the bottom left of the screen, above the buttons. ToastHost fills the
+       list with one label per toast; nothing here takes the pointer, so the ground below still gets every press. Style: Common.uss and Toasts.uss. -->
+  <Style src="Common.uss" />
   <Style src="Toasts.uss" />
   <ui:VisualElement name="toast-root" class="toast-root" picking-mode="Ignore">
     <ui:VisualElement name="toast-list" class="toast-list" picking-mode="Ignore" />

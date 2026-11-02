@@ -28,13 +28,13 @@ namespace CityBuilder.Client.Presentation.Hud
         private const string PanelSettingsPath = "UI/PanelSettings";
 
         /// <summary>The root's padding in panel units before the safe area is added.</summary>
-        private const float BasePadding = 16f;
+        private const float BasePadding = 8f;
 
         /// <summary>Drawn under the build menu (sort order 1), the placement bar (2) and the toasts (3).</summary>
         private const float SortingOrder = 0.5f;
 
         /// <summary>The width of the ring's stroke in panel units.</summary>
-        private const float RingWidth = 7f;
+        private const float RingWidth = 3.5f;
 
         /// <summary>The name of the root element in <c>Hud.uxml</c>.</summary>
         public const string RootName = "hud-root";
@@ -111,11 +111,11 @@ namespace CityBuilder.Client.Presentation.Hud
         /// <summary>The USS class of the connection dot while the connection is down.</summary>
         public const string DotProblemClass = "hud-dot--problem";
 
-        /// <summary>The colour of the ring's track.</summary>
-        private static readonly Color RingTrackColor = new Color(1f, 1f, 1f, 0.2f);
+        /// <summary>The colour of the ring's track: the cream of the wood bar, see through (a painter cannot read the stylesheet's tokens, CR-0007).</summary>
+        private static readonly Color RingTrackColor = new Color(0.98f, 0.95f, 0.87f, 0.25f);
 
-        /// <summary>The colour of the ring's progress.</summary>
-        private static readonly Color RingProgressColor = new Color(0.47f, 0.76f, 1f, 1f);
+        /// <summary>The colour of the ring's progress: the palette's gold.</summary>
+        private static readonly Color RingProgressColor = new Color(0.95f, 0.76f, 0.19f, 1f);
 
         /// <summary>The model the screen shows; null before <see cref="Create"/>.</summary>
         private HudModel? _model;
