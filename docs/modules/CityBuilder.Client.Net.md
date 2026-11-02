@@ -75,6 +75,7 @@ captured from the real server, and the round-trip test. A new error code: add it
 - `CommandIntentTests`, `CommandPolicyTests`, `CommandSenderTests` (real `ApiClient`, `FakeTransport`, `FakeDelay`): endpoint and body of each command; the same
   request id on every retry and the waits; 422 and the other refusals not repeated; success after two timeouts applies one snapshot; five rapid
   stepper taps send one command with the final value; the order of two targets of one building; cancellation leaves nothing pending; `Completed` (M0-47) fires once for a success, a refusal and a lost connection, not for a replaced target or a cancel, and a throwing listener is logged.
+- `LostResponseTests` (M0-56; real `ApiClient` and `CommandSender`, a wire of its own that keeps receipts by request id): a timeout after the server applied, two lost answers, and a poll before the retry, whose newer city the older stored answer does not take back. Each ends with one new building and one application.
 - `ConnectionMonitorTests` (real `ApiClient`, `FakeTransport`, a fake clock): each answer's state, the single new login and its three requests, a second refusal, a refused or unreachable login, a rate limit, when `StateChanged` fires, the store untouched by other content, ticks that poll only when due, pause and resume, a network that comes back, a cancel, a poll after a command's lost connection, `PollFinished` after a successful and a failed poll.
 - `SnapshotDtoTests`, `ContentDtoTests`, `RequestDtoTests`: every fixture reads, writes back to the same text, holds the expected values;
   a missing required member and an unknown phase are refused; request bodies have exactly their members.
@@ -102,4 +103,4 @@ captured from the real server, and the round-trip test. A new error code: add it
   matching builds.
 - The real transport was walked against a running server once (M0-37 build log); it is not in CI (Unity tests are not).
 
-Last updated: M0-55
+Last updated: M0-56
