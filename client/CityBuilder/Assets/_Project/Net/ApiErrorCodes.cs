@@ -58,6 +58,9 @@ namespace CityBuilder.Client.Net
         /// <summary>409: the research is already completed.</summary>
         public const string ResearchCompleted = "RESEARCH_COMPLETED";
 
+        /// <summary>404: a tile of a road command has no road (CR-0008).</summary>
+        public const string RoadNotFound = "ROAD_NOT_FOUND";
+
         /// <summary>409: the same request id was sent with a different command.</summary>
         public const string IdempotencyConflict = "IDEMPOTENCY_CONFLICT";
 

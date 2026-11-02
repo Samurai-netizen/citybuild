@@ -25,7 +25,8 @@ namespace CityBuilder.Simulation.Rules
         /// <param name="y">The tile row.</param>
         /// <returns>
         /// Ok, or the first failed check: <see cref="MutationErrorCode.UnknownBuildingType"/>, <see cref="MutationErrorCode.BuildingLocked"/>
-        /// (a later era than the city's, or not unlocked yet), <see cref="MutationErrorCode.OutOfBounds"/>, <see cref="MutationErrorCode.TileOccupied"/>, <see cref="MutationErrorCode.NoFreeBuilder"/>,
+        /// (a later era than the city's, or not unlocked yet), <see cref="MutationErrorCode.OutOfBounds"/>, <see cref="MutationErrorCode.TileOccupied"/>
+        /// (a building or a road), <see cref="MutationErrorCode.NoFreeBuilder"/>,
         /// <see cref="MutationErrorCode.InsufficientResource"/>.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="city"/> or <paramref name="content"/> is null.</exception>
@@ -237,19 +238,11 @@ namespace CityBuilder.Simulation.Rules
             }
         }
 
-        /// <summary>Whether any building, in any phase, stands on the tile; one building per tile (<c>04</c> section 8, placement).</summary>
-        private static bool IsTileTaken(CityState city, int x, int y)
-        {
-            foreach (Building building in city.Buildings)
-            {
-                if (building.X == x && building.Y == y)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
+        /// <summary>
+        /// Whether a building (in any phase) or a road lies on the tile: one building per tile, and never on a road (<c>04</c> section 8,
+        /// placement; CR-0008).
+        /// </summary>
+        private static bool IsTileTaken(CityState city, int x, int y) => CityQueries.TileAt(city, x, y) != TileContent.Ground;
 
         /// <summary>Whether a builder slot is free for one more construction or upgrade (<see cref="CityQueries.BuildersBusy"/> below the content's slots).</summary>
         private static bool HasFreeBuilder(CityState city, GameContent content) => CityQueries.BuildersBusy(city) < content.Rules.BuilderSlots;

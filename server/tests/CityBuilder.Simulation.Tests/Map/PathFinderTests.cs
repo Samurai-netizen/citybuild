@@ -1,6 +1,4 @@
-using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.Map;
-using CityBuilder.Simulation.State;
 
 namespace CityBuilder.Simulation.Tests.Map;
 

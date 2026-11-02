@@ -35,6 +35,7 @@ public sealed class ErrorCatalogueTests(ApiFactory factory) : IClassFixture<ApiF
         { "RESEARCH_LOCKED", 422 },
         { "RESEARCH_IN_PROGRESS", 409 },
         { "RESEARCH_COMPLETED", 409 },
+        { "ROAD_NOT_FOUND", 404 },
         { "IDEMPOTENCY_CONFLICT", 409 },
         { "RATE_LIMITED", 429 },
         { "CONCURRENCY_CONFLICT", 409 },

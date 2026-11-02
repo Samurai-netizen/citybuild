@@ -134,6 +134,15 @@ public sealed class PlaceBuildingTests
         RulesAssert.Rejected(MutationErrorCode.TileOccupied, city, city => Place(city, "lumber_camp", 3, 2));
     }
 
+    /// <summary>A tile with a road on it is rejected as <see cref="MutationErrorCode.TileOccupied"/> too (CR-0008): a building never stands on a road.</summary>
+    [Fact]
+    public void PlaceBuilding_TileWithARoad_IsRejected()
+    {
+        CityState city = City(inventory: [("gold", 100)], roads: [new RoadTile(3, 2, 1)]);
+
+        RulesAssert.Rejected(MutationErrorCode.TileOccupied, city, city => Place(city, "hut", 3, 2));
+    }
+
     /// <summary>With every builder busy (a construction and an upgrade) a placement is rejected as <see cref="MutationErrorCode.NoFreeBuilder"/>.</summary>
     [Fact]
     public void PlaceBuilding_EveryBuilderBusy_IsRejected()

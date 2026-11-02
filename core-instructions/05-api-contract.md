@@ -225,6 +225,7 @@ There is no "claim" command, because production and research complete on their o
 | `RESEARCH_LOCKED` | 422 | Prerequisites missing or the node belongs to another era |
 | `RESEARCH_IN_PROGRESS` | 409 | The research slot is busy |
 | `RESEARCH_COMPLETED` | 409 | Already researched |
+| `ROAD_NOT_FOUND` | 404 | A tile of the list has no road (CR-0008) |
 | `IDEMPOTENCY_CONFLICT` | 409 | Same `requestId`, different payload |
 | `RATE_LIMITED` | 429 | Too many requests |
 | `CONCURRENCY_CONFLICT` | 409 | Lock timeout or version mismatch; safe to retry |
@@ -235,7 +236,7 @@ There is no "claim" command, because production and research complete on their o
 | `UNSUPPORTED_CLIENT_VERSION` | 426 | The `X-Client-Version` build is no longer supported; update the game. *Reserved (M0-58): the server refuses no build yet.* The client treats it as `IncompatibleVersion` |
 
 **Planned codes (CR-0008).** Each joins the table above (and the catalogue, the client's `ApiErrorCodes` and `FeedbackMessages`) in the
-part of CR-0008-T1 that first returns it: `ROAD_NOT_FOUND` 404 (a tile of the list has no road; part D) · `BUILDING_LIMIT` 422 (the city
+part of CR-0008-T1 that first returns it: `BUILDING_LIMIT` 422 (the city
 already has the most buildings of the type, `maxPerCity`: the science building) · `NO_SCIENCE_BUILDING` 422 (research needs a completed
 science building) · `UNKNOWN_ITEM` 422 (item id not in content) · `AMOUNT_MODE_LOCKED` 422 (a percentage or exact amount before the
 research that unlocks it) · `ITEM_NOT_ACCEPTED` 422 (the trip's target neither needs the item for a project nor stores it) ·

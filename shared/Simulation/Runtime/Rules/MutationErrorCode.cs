@@ -59,5 +59,8 @@ namespace CityBuilder.Simulation.Rules
 
         /// <summary><c>RESEARCH_COMPLETED</c>: the node is already researched.</summary>
         ResearchCompleted,
+
+        /// <summary><c>ROAD_NOT_FOUND</c>: a tile of a road command has no road to upgrade or remove (CR-0008).</summary>
+        RoadNotFound,
     }
 }

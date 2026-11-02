@@ -100,6 +100,9 @@ namespace CityBuilder.Client.Presentation.Feedback
                 case ApiErrorCodes.ResearchCompleted:
                     message = "Already researched";
                     return true;
+                case ApiErrorCodes.RoadNotFound:
+                    message = "There is no road there any more";
+                    return true;
                 case ApiErrorCodes.IdempotencyConflict:
                     message = "That command was already used. Try again";
                     return true;

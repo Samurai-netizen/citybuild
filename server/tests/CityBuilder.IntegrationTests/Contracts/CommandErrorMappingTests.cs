@@ -30,6 +30,7 @@ public sealed class CommandErrorMappingTests
         { MutationErrorCode.ResearchLocked, "RESEARCH_LOCKED", 422 },
         { MutationErrorCode.ResearchInProgress, "RESEARCH_IN_PROGRESS", 409 },
         { MutationErrorCode.ResearchCompleted, "RESEARCH_COMPLETED", 409 },
+        { MutationErrorCode.RoadNotFound, "ROAD_NOT_FOUND", 404 },
     };
 
     /// <summary>Each engine code answers with the API code and status of the contract's table, and the type made from the code.</summary>

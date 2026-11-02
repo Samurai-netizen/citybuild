@@ -94,11 +94,11 @@ namespace CityBuilder.Client.Tests.EditMode.Net
                 .ToArray();
         }
 
-        /// <summary>The server's catalogue has the 25 codes of <c>05</c>; a code added there is added to <see cref="ApiErrorCodes"/> in the same change.</summary>
+        /// <summary>The server's catalogue has the 26 codes of <c>05</c> (CR-0008 added <c>ROAD_NOT_FOUND</c>); a code added there is added to <see cref="ApiErrorCodes"/> in the same change.</summary>
         [Test]
-        public void TheServerCatalogue_HasTwentyFourCodes()
+        public void TheServerCatalogue_HasTwentySixCodes()
         {
-            Assert.That(ServerCodes(), Has.Length.EqualTo(25));
+            Assert.That(ServerCodes(), Has.Length.EqualTo(26));
         }
 
         /// <summary>A 2xx answer becomes its DTO.</summary>

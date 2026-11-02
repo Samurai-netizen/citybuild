@@ -4,7 +4,8 @@ The core mechanic is **waiting while your workers run production chains and carr
 for the engine that computes what happened during that waiting. It lives in `shared/Simulation/`,
 runs authoritatively on the server, and runs on the client for display only.
 
-> **CR-0008 (logistics) is specified here and built in CR-0008-T1, part by part.** Built so far: — (part B wrote the spec). Until part E
+> **CR-0008 (logistics) is specified here and built in CR-0008-T1, part by part.** Built so far: the walking rules and road levels in
+> content (§14 rules 11, 12 without the walk bonus effect), roads in the city state, the path rule (§17) and the road mutations (§8) (part C). Until part E
 > the engine runs the M0 model this file replaced (city-wide stock, storage caps); until part H the 8 h offline production cap. Each part
 > updates this line. Sections 16 to 19 are new; sections 1 to 15 keep their numbers (other files refer to them).
 

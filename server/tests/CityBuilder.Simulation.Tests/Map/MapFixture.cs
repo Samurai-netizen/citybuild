@@ -1,5 +1,4 @@
 using CityBuilder.Simulation.Content;
-using CityBuilder.Simulation.Content.Data;
 using CityBuilder.Simulation.State;
 using CityBuilder.Simulation.Tests.Content;
 using static CityBuilder.Simulation.Tests.State.CityFixture;

@@ -84,6 +84,10 @@ public static class ErrorCatalogue
     public static readonly ApiError ResearchCompleted = new(
         "RESEARCH_COMPLETED", StatusCodes.Status409Conflict, "Research completed", "The research is already completed.");
 
+    /// <summary>A tile of a road command has no road to upgrade or remove (CR-0008).</summary>
+    public static readonly ApiError RoadNotFound = new(
+        "ROAD_NOT_FOUND", StatusCodes.Status404NotFound, "Road not found", "A tile of the list has no road.");
+
     /// <summary>A request id that was used before with another command or payload.</summary>
     public static readonly ApiError IdempotencyConflict = new(
         "IDEMPOTENCY_CONFLICT", StatusCodes.Status409Conflict, "Request id already used",
@@ -131,7 +135,7 @@ public static class ErrorCatalogue
     [
         AuthenticationRequired, InvalidArgument, UnknownBuildingType, BuildingLocked, OutOfBounds, TileOccupied, InsufficientResource,
         InsufficientWorkers, WorkerLimit, NoFreeBuilder, BuildingNotFound, BuildingBusy, MaxLevel, UnknownResearch, ResearchLocked,
-        ResearchInProgress, ResearchCompleted, IdempotencyConflict, RateLimited, ConcurrencyConflict, InternalError, NotFound, MethodNotAllowed,
+        ResearchInProgress, ResearchCompleted, RoadNotFound, IdempotencyConflict, RateLimited, ConcurrencyConflict, InternalError, NotFound, MethodNotAllowed,
         UnsupportedMediaType, UnsupportedClientVersion,
     ];
 
@@ -157,6 +161,7 @@ public static class ErrorCatalogue
         MutationErrorCode.ResearchLocked => ResearchLocked,
         MutationErrorCode.ResearchInProgress => ResearchInProgress,
         MutationErrorCode.ResearchCompleted => ResearchCompleted,
+        MutationErrorCode.RoadNotFound => RoadNotFound,
         _ => throw new InvalidOperationException($"No API error for the engine code {code}."),
     };
 }
