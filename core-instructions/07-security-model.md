@@ -45,7 +45,8 @@ value fails it until this table changes.
 | Headers `Content-Type`, `Content-Length`, `Accept` | | JSON only (415), the body limit (400) |
 | Headers `traceparent`, `tracestate`, `baggage` | ignored | The trace id is the server's own (`ServerTraceContext`) |
 
-Nothing else is read: no query string, no route value, no cookie. The `requestId` is the only id the client makes; it names a command's
+Nothing else is read: no query string, no route value, no cookie. Outside `/api/v1` only `GET /health` (no input) and, in Development only,
+`GET /openapi/v1.json` (the document name in its route) answer. The `requestId` is the only id the client makes; it names a command's
 receipt within the caller's own player, so it can't reach another player's receipt. No client value is a cost, a rate, a time, a level, a
 worker total, a research state or a player id: those come from content and the stored city (`04`), the clock from the server (`TimeProvider`).
 On the client the same list is pinned by `RequestDtoTests` (each body's members) and the four `CommandIntent` kinds.
