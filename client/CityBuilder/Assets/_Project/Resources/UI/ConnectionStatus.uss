@@ -1,10 +1,20 @@
 /* The connection status label: bottom left above the Build button (the top belongs to the HUD since M0-49), small and see-through so it never competes with
-   the city. M0-04 shows "Not connected"; M0-38 changes the text; restyled in CR-0007. */
-.connection-status {
+   the city. M0-04 shows "Not connected"; M0-38 changes the text; restyled in CR-0007. Since M0-59 the label sits in a full-screen root that ConnectionStatusView
+   pads by the safe area, so the label is placed by the root's padding and its own margin, no longer by left and bottom. */
+.connection-status-root {
   position: absolute;
-  left: var(--sp-2);
-  bottom: 64px; /* above the 48 high buttons at the bottom */
-  margin: 0;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  padding: var(--sp-2); /* replaced by the safe area in code */
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+}
+
+.connection-status {
+  margin: 0 0 var(--dock-lift) 0; /* above the 48 high buttons at the bottom */
   padding: 2px var(--sp-2);
   border-radius: var(--radius-sm);
   background-color: var(--c-shade);

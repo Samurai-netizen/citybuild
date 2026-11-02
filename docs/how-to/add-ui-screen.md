@@ -35,7 +35,7 @@ of `Tests/Fixtures/content.json` (`Tests/EditMode/Presentation/Build/`): every s
 
 **3. The layout.** `BuildMenu.uxml` is a root (`picking-mode="Ignore"`, so empty space passes taps to the ground), a closed sheet with a
 horizontal `ScrollView` and a "Build" button. `BuildCard.uxml` is one card whose labels are found by name. `BuildMenu.uss` styles both.
-Sizes are in panel units: one unit is about one dp on a landscape phone (the panel scales by its height, reference 880 × 400, CR-0007), so a button of `min-height: var(--touch)` (48) is a 48 dp touch target. Import `Common.uss` and use its tokens and shared classes (`btn`, `panel-parchment`, `t-body`, ...): a screen's own stylesheet places things and writes no colour and no font size (`SharedLookTests`). A state is a USS class
+Sizes are in panel units: one unit is about one dp on a phone (the panel expands from 400 × 400, so the short side is 400 units in either turn, M0-59), so a button of `min-height: var(--touch)` (48) is a 48 dp touch target. Import `Common.uss` and use its tokens and shared classes (`btn`, `panel-parchment`, `t-body`, ...): a screen's own stylesheet places things and writes no colour and no font size (`SharedLookTests`). A state is a USS class
 (`build-card--locked`, `build-card--selected`, `build-panel--hidden`) switched with `EnableInClassList`.
 Add a layout test (`BuildMenuLayoutTests`): it loads the UXML and checks that every name the component looks up exists. A renamed
 element then fails a test, not a player.
@@ -57,7 +57,15 @@ new stock shows within a second. No singleton, no `Find*` call.
 that predicate: a second screen means extending it, not replacing it: `GameRoot.IsOverUi` ors the menu's, the placement bar's, the building inspector's, the research screen's, the welcome-back report's and the connection banner's `IsOverUi`, and both use `UiRoot.IsOver` / `UiRoot.PadBySafeArea` (`Presentation/Ui/`).
 
 **7. Respect the safe area.** `SafeAreaInsets.From(Screen.safeArea, …)` turns the notch and the bars into panel units; the component adds
-them to its root padding when the layout is computed (`GeometryChangedEvent`).
+them to its root padding when the layout is computed (`GeometryChangedEvent`); `UiRoot.PadBySafeArea` does both. Every screen with a `UIDocument` must call it
+(`MobileLayoutTests` fails for one that does not), so give your layout a full-screen root with `picking-mode="Ignore"` and the USS padding `var(--sp-2)`
+that the code replaces. On a phone from the iPhone XR on (OD-18) the panel is 866 to 889 by 400 units in landscape and 400 by 866 to 889 in portrait:
+give a panel fixed wider than 300 units
+`max-width: 100%`, and use the root's `portrait` class (set by `PadBySafeArea`) to rearrange for the narrow width, as `Hud.uss` and
+`PlacementBar.uss` do. In portrait `--hud-height` and `--toast-lift` are larger (`Common.uss`), so a screen that uses them follows by itself.
+A scroll view scrolls one way only (`mode="Vertical"` or `"Horizontal"`, OD-17); when the content is too big across it, or something that does not
+scroll is too big for its space, scale it down with `ScaleToFit.Height` from the `GeometryChangedEvent` of the space and of the content, as
+`ResearchScreen` does for its cards. Never cut content off and never add a second scroll direction.
 
 **8. Test in the scene.** `Tests/PlayMode/BuildMenuTests.cs` creates the menu for the real content and a city, waits a frame for `Start`,
 and checks the tree: one card per type, a locked card's lock text and disabled state, that a tap on it selects nothing, that a new city

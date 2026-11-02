@@ -172,17 +172,19 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation
             Assert.That(text, Does.Not.Match(@"margin-top\s*:\s*(224|124|108)px"), name);
         }
 
-        /// <summary>The panel is matched on its height at 400 units (880 by 400), so a unit is about one dp on a landscape phone and 48 is a 48 dp touch target.</summary>
+        /// <summary>
+        /// The panel's short side is 400 units in both turns (Expand at 400 by 400, M0-59; before it, 880 by 400 matched on height), so a unit is about
+        /// one dp on a phone and 48 is a 48 dp touch target. <see cref="MobileLayoutTests"/> works out the panel sizes this gives.
+        /// </summary>
         [Test]
-        public void ThePanel_IsScaledByHeight_AtTheReferenceTheSizesAreWrittenFor()
+        public void ThePanel_HasAShortSideOf400_AtTheReferenceTheSizesAreWrittenFor()
         {
             var settings = Resources.Load<PanelSettings>("UI/PanelSettings");
 
             Assert.That(settings, Is.Not.Null);
             Assert.That(settings.scaleMode, Is.EqualTo(PanelScaleMode.ScaleWithScreenSize));
-            Assert.That(settings.referenceResolution, Is.EqualTo(new Vector2Int(880, 400)));
-            Assert.That(settings.screenMatchMode, Is.EqualTo(PanelScreenMatchMode.MatchWidthOrHeight));
-            Assert.That(settings.match, Is.EqualTo(1f));
+            Assert.That(settings.referenceResolution, Is.EqualTo(new Vector2Int(400, 400)));
+            Assert.That(settings.screenMatchMode, Is.EqualTo(PanelScreenMatchMode.Expand));
         }
     }
 }

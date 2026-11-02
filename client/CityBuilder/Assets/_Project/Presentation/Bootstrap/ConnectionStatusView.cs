@@ -1,6 +1,7 @@
 #nullable enable
 
 using CityBuilder.Client.Core;
+using CityBuilder.Client.Presentation.Ui;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -10,6 +11,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
     /// The connection status on the screen (split from <see cref="GameRoot"/> in M0-48): a thin component that writes a <see cref="ConnectionStatusModel"/>
     /// into the status label of <c>UI/ConnectionStatus</c>, or swaps in <c>UI/FatalError</c> with its lines when the model is fatal. It decides nothing:
     /// the sentences come from the model. <see cref="GameRoot"/> creates it first of all the screens, with <see cref="Create"/>, so the start has a place to show its status.
+    /// Both layouts are padded by the screen's safe area (M0-59), as every screen's root is.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class ConnectionStatusView : MonoBehaviour
@@ -26,8 +28,20 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         /// <summary>The fatal error layout (UXML), loaded by name from the same folder.</summary>
         private const string FatalErrorPath = "UI/FatalError";
 
+        /// <summary>The status root's padding in panel units before the safe area is added (its USS padding, <c>--sp-2</c>).</summary>
+        private const float StatusPadding = 8f;
+
+        /// <summary>The fatal panel's padding in panel units before the safe area is added (its USS padding, <c>--sp-4</c>).</summary>
+        private const float FatalPadding = 16f;
+
+        /// <summary>The name of the full-screen root in <c>ConnectionStatus.uxml</c> that is padded by the safe area.</summary>
+        public const string StatusRootName = "connection-status-root";
+
         /// <summary>The name of the status label in <c>ConnectionStatus.uxml</c>.</summary>
         public const string StatusLabelName = "connection-status";
+
+        /// <summary>The name of the full-screen panel in <c>FatalError.uxml</c> that is padded by the safe area.</summary>
+        public const string FatalPanelName = "fatal-error";
 
         /// <summary>The name of the title label in <c>FatalError.uxml</c>.</summary>
         public const string FatalTitleName = "fatal-error-title";
@@ -74,6 +88,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             view._document.visualTreeAsset = connectionStatus;
             view._fatalErrorLayout = fatalErrorLayout;
             uiObject.SetActive(true);
+            PadBySafeArea(view.Root, StatusRootName, StatusPadding);
             return view;
         }
 
@@ -97,12 +112,32 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                     return;
                 }
 
+                PadBySafeArea(fatalRoot, FatalPanelName, FatalPadding);
                 SetText(fatalRoot, FatalTitleName, status.Headline);
                 SetText(fatalRoot, FatalDetailsName, string.Join("\n", status.Details));
                 return;
             }
 
             SetText(root, StatusLabelName, status.Headline);
+        }
+
+        /// <summary>
+        /// Pads the element called <paramref name="elementName"/> under <paramref name="root"/> by the safe area whenever its layout is computed (a turn
+        /// of the phone included); logs an error when the layout lacks it.
+        /// </summary>
+        /// <param name="root">The document's root, or null when there is none.</param>
+        /// <param name="elementName">The full-screen element to pad.</param>
+        /// <param name="basePadding">Its padding in panel units before the safe area is added.</param>
+        private static void PadBySafeArea(VisualElement? root, string elementName, float basePadding)
+        {
+            VisualElement? element = root?.Q<VisualElement>(elementName);
+            if (element == null)
+            {
+                ClientLog.Error($"ConnectionStatusView: the layout has no element named '{elementName}'.");
+                return;
+            }
+
+            element.RegisterCallback<GeometryChangedEvent>(_ => UiRoot.PadBySafeArea(element, basePadding));
         }
 
         /// <summary>Sets the text of the label called <paramref name="labelName"/> under <paramref name="root"/>; logs an error when the layout lacks it.</summary>

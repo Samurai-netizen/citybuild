@@ -62,6 +62,9 @@ namespace CityBuilder.Client.Presentation.Research
         /// <summary>The name of the panel's close button.</summary>
         public const string CloseName = "research-close";
 
+        /// <summary>The name of the scroll view the cards scroll sideways in; the row of cards is scaled to fit its height (owner directive OD-17, M0-59).</summary>
+        public const string ScrollName = "research-scroll";
+
         /// <summary>The name of the root element of one node in <c>ResearchNode.uxml</c>.</summary>
         public const string NodeName = "research-node";
 
@@ -264,8 +267,31 @@ namespace CityBuilder.Client.Presentation.Research
             elements.Toggle.clicked += () => SetOpen(!IsOpen);
             elements.Close.clicked += () => SetOpen(false);
             root.RegisterCallback<GeometryChangedEvent>(_ => UiRoot.PadBySafeArea(root, BasePadding));
+            elements.Scroll.RegisterCallback<GeometryChangedEvent>(_ => FitCards(elements));
+            elements.Columns.RegisterCallback<GeometryChangedEvent>(_ => FitCards(elements));
             SetOpen(IsOpen);
             Refresh();
+        }
+
+        /// <summary>
+        /// Scales the cards down until they fit the scroll view's height (owner directive OD-17, M0-59): they scroll sideways only, so a panel lower
+        /// than a card, as on a landscape phone with a home bar, gets smaller cards instead of cut-off ones. Called when the scroll view or the
+        /// cards change size; the needed height is the cards' own, which does not depend on how the scroll view stretches its content.
+        /// </summary>
+        private void FitCards(Elements e)
+        {
+            float needed = 0f;
+            for (int index = 0; index < _nodes.Count; index++)
+            {
+                VisualElement card = _nodes[index].Root;
+                float bottom = card.layout.yMax + (card.parent == null ? 0f : card.parent.layout.y);
+                if (bottom > needed)
+                {
+                    needed = bottom;
+                }
+            }
+
+            ScaleToFit.Height(e.Columns, new Vector2(e.Columns.layout.width, needed), e.Scroll.contentViewport.layout.height);
         }
 
         /// <summary>Writes the model's words into the elements; makes the node elements again when the set of nodes or the columns changed.</summary>
@@ -461,6 +487,9 @@ namespace CityBuilder.Client.Presentation.Research
             /// <summary>The element the columns go into.</summary>
             public VisualElement Columns = null!;
 
+            /// <summary>The scroll view around the columns.</summary>
+            public ScrollView Scroll = null!;
+
             /// <summary>The era header and the rule.</summary>
             public Label Era = null!, Rule = null!;
 
@@ -474,13 +503,14 @@ namespace CityBuilder.Client.Presentation.Research
                 {
                     Panel = root.Q<VisualElement>(PanelName),
                     Columns = root.Q<VisualElement>(ColumnsName),
+                    Scroll = root.Q<ScrollView>(ScrollName),
                     Era = root.Q<Label>(EraName),
                     Rule = root.Q<Label>(RuleName),
                     Toggle = root.Q<Button>(ToggleName),
                     Close = root.Q<Button>(CloseName),
                 };
-                bool complete = found.Panel != null && found.Columns != null && found.Era != null && found.Rule != null && found.Toggle != null
-                    && found.Close != null;
+                bool complete = found.Panel != null && found.Columns != null && found.Scroll != null && found.Era != null && found.Rule != null
+                    && found.Toggle != null && found.Close != null;
                 return complete ? found : null;
             }
         }

@@ -1,8 +1,11 @@
 /* The shared look of every screen (CR-0007): warm wood and parchment, the colours of the Era I art palette (art/blender/palette.py), and one
    scale. Every layout imports this file; a screen's own stylesheet only says where things sit and uses these tokens, never a colour or a font
    size of its own (a test checks it).
-   SCALE: the panel's reference resolution is 880 x 400 matched on height (PanelSettings), so one panel unit is about one dp on a landscape
-   phone, and a 48 unit button is a 48 dp touch target. */
+   SCALE: the panel settings expand from 400 x 400 (M0-59), so the short side of the screen is 400 units in both turns (a phone from the iPhone XR
+   on, 19.5:9 to 20:9, is 866 to 889 by 400 in landscape and 400 by 866 to 889 in portrait; older phones are not designed for, owner directive
+   OD-18), one panel unit is about one dp, and a 48 unit button is a 48 dp touch target. What does not fit is scaled to fit (OD-17, ScaleToFit).
+   PORTRAIT: every screen root gets the class "portrait" while it is taller than wide (UiRoot.PadBySafeArea); a screen's stylesheet uses it to
+   rearrange for the 400 unit width. */
 :root {
   /* Wood and parchment, from the palette: plaster, wood_end, wood, wood_dark, thatch, grass, red, blue, gold. */
   --c-parchment: rgb(244, 232, 207);
@@ -48,6 +51,14 @@
   --dock-width: 100px; /* the Build button; the Research button sits right of it */
   --toast-lift: 88px; /* the toasts stack up from the bottom left, above the status label and the buttons */
   --dock-next: 108px; /* where the button after Build starts: the dock width and one gap */
+  --dock-lift: 56px; /* the 48 high buttons at the bottom and one gap: what sits above the dock starts here (M0-59) */
+}
+
+/* Portrait (M0-59), set on each screen root by UiRoot.PadBySafeArea: the HUD is two rows, 80 high (Hud.uss), so every screen under it starts lower;
+   the toasts stack up from above the build tray and the placement bar, which sit above the dock in portrait, so a toast never covers them. */
+.portrait {
+  --hud-height: 92px;
+  --toast-lift: 248px;
 }
 
 /* Text */

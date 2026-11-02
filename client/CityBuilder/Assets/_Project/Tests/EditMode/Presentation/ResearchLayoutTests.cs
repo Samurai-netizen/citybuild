@@ -44,6 +44,19 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation
             Assert.That(Layout("UI/Research").Q<VisualElement>(ResearchScreen.RootName).pickingMode, Is.EqualTo(PickingMode.Ignore));
         }
 
+        /// <summary>
+        /// The cards scroll sideways only (owner directive OD-17, M0-59): when the panel is lower than a card the component scales the row down
+        /// (<c>ScaleToFit</c>) instead of adding a second scroll direction.
+        /// </summary>
+        [Test]
+        public void Screen_TheCardsScrollSidewaysOnly()
+        {
+            ScrollView? scroll = Layout("UI/Research").Q<ScrollView>(ResearchScreen.ScrollName);
+
+            Assert.That(scroll, Is.Not.Null);
+            Assert.That(scroll!.mode, Is.EqualTo(ScrollViewMode.Horizontal));
+        }
+
         /// <summary>The node layout has the root, the picture, the ring, the labels and the Finance button.</summary>
         [Test]
         public void Node_HasEveryElementTheComponentLooksUp()

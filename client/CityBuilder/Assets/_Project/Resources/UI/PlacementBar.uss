@@ -14,6 +14,12 @@
 
 .placement-panel {
   width: 280px;
+  max-width: 100%;
+}
+
+/* Portrait (M0-59): at the bottom right the bar would cover the Research button (116 to 216 units from the left), so it sits above the dock. */
+.portrait .placement-panel {
+  margin-bottom: var(--dock-lift);
 }
 
 .placement-panel--hidden {
