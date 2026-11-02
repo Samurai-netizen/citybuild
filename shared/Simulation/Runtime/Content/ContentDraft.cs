@@ -20,7 +20,8 @@ namespace CityBuilder.Simulation.Content
             List<EraDefinition> eras,
             List<ItemDefinition> items,
             List<BuildingDefinition> buildings,
-            List<ResearchDefinition> research)
+            List<ResearchDefinition> research,
+            List<RoadLevelDefinition> roadLevels)
         {
             ContentVersion = contentVersion;
             Rules = rules;
@@ -29,6 +30,7 @@ namespace CityBuilder.Simulation.Content
             Items = items;
             Buildings = buildings;
             Research = research;
+            RoadLevels = roadLevels;
 
             foreach (EraDefinition era in eras)
             {
@@ -72,6 +74,9 @@ namespace CityBuilder.Simulation.Content
         /// <summary>Every research node in file order, duplicates included.</summary>
         public List<ResearchDefinition> Research { get; }
 
+        /// <summary>Every road level in file order; <see cref="WalkRules"/> checks that they are numbered 1, 2, … each once.</summary>
+        public List<RoadLevelDefinition> RoadLevels { get; }
+
         /// <summary>The first era with each number; for references from items, buildings, research and the starting city.</summary>
         public Dictionary<int, EraDefinition> ErasByNumber { get; } = new Dictionary<int, EraDefinition>();
 
@@ -94,6 +99,6 @@ namespace CityBuilder.Simulation.Content
         public bool IsFirst(ResearchDefinition node) => ReferenceEquals(ResearchById[node.Id], node);
 
         /// <summary>The validated content. Call it only when no rule reported an error.</summary>
-        public GameContent ToContent() => new GameContent(ContentVersion, Rules, StartingCity, Eras, Items, Buildings, Research);
+        public GameContent ToContent() => new GameContent(ContentVersion, Rules, StartingCity, Eras, Items, Buildings, Research, RoadLevels);
     }
 }

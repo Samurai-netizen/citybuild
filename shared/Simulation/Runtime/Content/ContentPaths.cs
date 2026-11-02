@@ -22,6 +22,9 @@ namespace CityBuilder.Simulation.Content
         public static string Level(BuildingDefinition building, BuildingLevelDefinition level) =>
             Building(building) + ".levels[" + level.Level.ToString(CultureInfo.InvariantCulture) + "]";
 
+        /// <summary>A road level by its number: <c>roads[2]</c>.</summary>
+        public static string RoadLevel(RoadLevelDefinition level) => "roads[" + level.Level.ToString(CultureInfo.InvariantCulture) + "]";
+
         /// <summary>A research node by its id: <c>research[frame_saw]</c>.</summary>
         public static string Research(ResearchDefinition node) => "research[" + node.Id.Value + "]";
 

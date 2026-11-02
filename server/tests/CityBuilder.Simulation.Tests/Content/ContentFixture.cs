@@ -5,14 +5,16 @@ namespace CityBuilder.Simulation.Tests.Content;
 /// <summary>
 /// A small, valid content in code, new on every call, so a test can break exactly one value. Its numbers are made up for the tests and
 /// are not the game's (those live in <c>server/content/*.json</c>, <c>core-instructions/24-economy-design.md</c> → Ownership of numbers).
-/// It uses every feature: two eras, a capped and an uncapped item, a house and two producers (one locked), and each effect type.
+/// It uses every feature: two eras, a capped and an uncapped item, a house and two producers (one locked), each effect type, walking rules
+/// and two road levels.
 /// </summary>
 internal static class ContentFixture
 {
     /// <summary>
     /// The valid test content, built new on every call: two eras, gold (uncapped), wood (cap 100) and boards (cap 80), a hut (3 then 5
     /// workers), a lumber camp (1 wood from 40 labor, 2 then 3 workers) and a workshop locked behind carpentry (2 wood → 1 boards, 90 labor),
-    /// and research carpentry → better_saws (−250 ‰ camp, −100 ‰ workshop) → warehouses (era 2, +50 wood, +40 boards).
+    /// and research carpentry → better_saws (−250 ‰ camp, −100 ‰ workshop) → warehouses (era 2, +50 wood, +40 boards); walking 4 000 ms per
+    /// ground tile, crossings at 250 ‰, a path (2 000 ms, 2 gold) and a paved path (1 000 ms, 6 gold).
     /// </summary>
     public static GameContentData Valid() => new()
     {
@@ -27,7 +29,16 @@ internal static class ContentFixture
             MaxOfflineProductionSeconds = 3600,
             MinCycleSeconds = 5,
             MaxLaborReductionPermille = 400,
+            GroundTileMillis = 4000,
+            CrossingSpeedPermille = 250,
+            MinWalkSeconds = 2,
+            MaxWalkBonusPermille = 300,
         },
+        Roads =
+        [
+            new RoadLevelData { Level = 1, Name = "Path", TileMillis = 2000, Cost = new() { ["gold"] = 2 } },
+            new RoadLevelData { Level = 2, Name = "Paved path", TileMillis = 1000, Cost = new() { ["gold"] = 6 } },
+        ],
         StartingCity = new StartingCityData { Era = 1, Inventory = new() { ["gold"] = 100, ["wood"] = 5 } },
         Eras =
         [
@@ -133,6 +144,9 @@ internal static class ContentFixture
 
     /// <summary>The fixture's era with the number.</summary>
     public static EraData Era(GameContentData data, int number) => data.Eras!.Single(era => era!.Number == number)!;
+
+    /// <summary>The road level with this number in <paramref name="data"/>.</summary>
+    public static RoadLevelData Road(GameContentData data, int level) => data.Roads!.Single(road => road!.Level == level)!;
 
     /// <summary>A recipe's data from its inputs (null for a raw producer), outputs and labor.</summary>
     private static RecipeData Recipe(Dictionary<string, long?>? inputs, Dictionary<string, long?> outputs, long labor) =>

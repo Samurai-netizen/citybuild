@@ -32,7 +32,8 @@ namespace CityBuilder.Simulation.Content
             IEnumerable<EraDefinition> eras,
             IEnumerable<ItemDefinition> items,
             IEnumerable<BuildingDefinition> buildings,
-            IEnumerable<ResearchDefinition> research)
+            IEnumerable<ResearchDefinition> research,
+            IEnumerable<RoadLevelDefinition> roadLevels)
         {
             ContentVersion = contentVersion ?? throw new ArgumentNullException(nameof(contentVersion));
             Rules = rules ?? throw new ArgumentNullException(nameof(rules));
@@ -41,6 +42,7 @@ namespace CityBuilder.Simulation.Content
             Items = ReadOnlyLists.Sorted(items, (left, right) => left.Id.CompareTo(right.Id));
             Buildings = ReadOnlyLists.Sorted(buildings, (left, right) => left.Id.CompareTo(right.Id));
             Research = ReadOnlyLists.Sorted(research, (left, right) => left.Id.CompareTo(right.Id));
+            RoadLevels = ReadOnlyLists.Sorted(roadLevels, (left, right) => left.Level.CompareTo(right.Level));
 
             // Add throws on a duplicate key: validation rejects duplicates first, so a throw here is a bug in the factory, not bad data.
             foreach (EraDefinition era in Eras)
@@ -84,6 +86,29 @@ namespace CityBuilder.Simulation.Content
 
         /// <summary>The research nodes of every era, by id.</summary>
         public IReadOnlyList<ResearchDefinition> Research { get; }
+
+        /// <summary>The road levels, by number: <c>RoadLevels[0]</c> is level 1, the one a road is placed at; there is at least one.</summary>
+        public IReadOnlyList<RoadLevelDefinition> RoadLevels { get; }
+
+        /// <summary>The highest level a road tile can reach.</summary>
+        public int MaxRoadLevel => RoadLevels.Count;
+
+        /// <summary>The definition of one road level.</summary>
+        /// <param name="level">The level number, from 1 to <see cref="MaxRoadLevel"/>.</param>
+        /// <returns>The level's definition.</returns>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// <paramref name="level"/> is below 1 or above <see cref="MaxRoadLevel"/>: a programmer error, since a road's level always comes from
+        /// this content and an upgrade checks <see cref="MaxRoadLevel"/> first.
+        /// </exception>
+        public RoadLevelDefinition GetRoadLevel(int level)
+        {
+            if (level < 1 || level > MaxRoadLevel)
+            {
+                throw new ArgumentOutOfRangeException(nameof(level), level, $"The road level must be between 1 and {MaxRoadLevel}.");
+            }
+
+            return RoadLevels[level - 1];
+        }
 
         /// <summary>Looks up an era by its number.</summary>
         /// <param name="number">The era number, 1 for the first era.</param>

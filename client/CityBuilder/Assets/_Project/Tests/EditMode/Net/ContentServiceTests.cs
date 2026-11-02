@@ -81,7 +81,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
 
             GameContent content = (await _service.LoadAsync(CancellationToken.None)).Content!;
 
-            Assert.That(content.ContentVersion, Is.EqualTo("mvp-1"));
+            Assert.That(content.ContentVersion, Is.EqualTo("mvp-2"));
             Assert.That(content.Rules.GridWidth, Is.EqualTo(8));
             Assert.That(content.Rules.BuilderSlots, Is.EqualTo(2));
             Assert.That(content.Rules.TryGetBaseStorageCap(new ItemId("planks"), out long planksCap), Is.True);

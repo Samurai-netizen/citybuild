@@ -95,8 +95,10 @@ Decisions: build log `docs/build-log/2026/2026-10-19-06-M0-16.md`, decisions 8, 
 | `GameContentFactory` | `Create(GameContentData)` → `GameContentResult`; `MaxQuantity` (10^12) bounds every quantity, cost, cap, duration and labor value, so sums of content numbers can't overflow a `long`; `MaxStoredSmallValue` (32767) bounds the grid size and the worker counts, which end up in `smallint` columns (CR-0004) |
 | `Content.ContentIds` | The format of every content id: a lowercase ASCII letter, then lowercase letters, digits or `_`, at most `MaxLength` (64) characters; `IsValid(text)`, `FormatDescription`. The content loader refuses other ids (`ContentErrorCode.InvalidId`); public since M0-30, so the server's command shape checks refuse text that can't be an id before a city is locked |
 | `GameContentResult`, `ContentError`, `ContentErrorCode` | Either `Content` or every error (code, path, message; `ToString()` gives all three on one line), in a fixed order: shape errors, or rule errors rule by rule in file order |
-| `GameContent` | `ContentVersion`, `Rules`, `StartingCity`, and the sorted lists `Eras` (by number), `Items`, `Buildings`, `Research` (by id), with `TryGetEra/Item/Building/Research`. Immutable; lists are read-only collections |
-| `GameRules` | Grid size, builder and research slots (research exactly 1 in M0), `BaseStorageCaps` (exactly the capped items) with `TryGetBaseStorageCap`, `MaxOfflineProductionSeconds`, `MinCycleSeconds`, `MaxLaborReductionPermille` |
+| `GameContent` | `ContentVersion`, `Rules`, `StartingCity`, and the sorted lists `Eras` (by number), `Items`, `Buildings`, `Research` (by id), `RoadLevels` (by level, at least one; `MaxRoadLevel`, `GetRoadLevel(n)`), with `TryGetEra/Item/Building/Research`. Immutable; lists are read-only collections |
+| `GameRules` | Grid size, builder and research slots (research exactly 1 in M0), `BaseStorageCaps` (exactly the capped items) with `TryGetBaseStorageCap`, `MaxOfflineProductionSeconds`, `MinCycleSeconds`, `MaxLaborReductionPermille`; walking (CR-0008): `GroundTileMillis`, `CrossingSpeedPermille`, `MinWalkSeconds`, `MaxWalkBonusPermille` |
+| `RoadLevelDefinition` | One road level (CR-0008, `04` §17): `Level`, `Name`, `TileMillis` (faster than the ground and the level before, content rule 11), `Cost` (to place at level 1, to upgrade to it above) |
+| `Map.WalkTime` | The walk time formula of `04` §17: `Seconds(doubleMillis, bonusPermille)` = `max(1, CeilDiv(ApplyPermilleReduction(D, bonus), 2000))`, where `D` sums `leave + enter` over the steps; `ShortestWalkSeconds(ground, bonus)` for content rule 12 |
 | `StartingCityDefinition` | The era and the stock of a new city |
 | `EraDefinition`, `ItemDefinition` | An era (number 1..n, id, name); an item (id, name, era, `IsCapped`, `IsTradable`) |
 | `BuildingDefinition`, `BuildingKind`, `BuildingLevelDefinition`, `RecipeDefinition` | A building type: `House` or `Producer`, cost, build seconds, `IsAvailableAtStart` or `UnlockedByResearch` (filled from the research effect, the only place the unlock is stated), levels 1..`MaxLevel` with `GetLevel(n)`. A level has `MaxWorkers` (producers, ≥ 1), `WorkersProvided` (houses, ≥ 1), neither smaller than on the level below, a `Recipe` (producers only: inputs, outputs, labor) and the cost and seconds to upgrade to it (none on level 1) |
@@ -172,8 +174,9 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
   dictionary key; `EraId` has no order. One test fails loudly where the machine has no culture data.
 - `Content/`: `ContentFixture.Valid()` is a small synthetic content in code with its own numbers; each test changes one value
   (`ValidWith`) and `ContentAssert` checks the exact errors. `GameContentFactoryTests` (what valid data becomes), `ContentShapeTests`,
-  `ContentValueRuleTests`, `ContentBuildingRuleTests`, `ContentReferenceRuleTests`, `ContentResearchRuleTests`, `ContentEraRuleTests`: at least one failing case
+  `ContentValueRuleTests`, `ContentBuildingRuleTests`, `ContentReferenceRuleTests`, `ContentResearchRuleTests`, `ContentEraRuleTests`, `ContentWalkRuleTests` (CR-0008): at least one failing case
   per rule and error code, named after the error path.
+- `Map/` (CR-0008): `WalkTimeTests` (rounding, the bonus, at least one second, bad arguments).
 - `State/` (`Building`, `CityState`, `CityFactory`, `CityQueries`, `StallReason` tests) and `Rules/` (one class per mutation: every success
   path, every error code, the check order where failures overlap, the items each names as spent and refunded).
 - `Display/` (`PerHourTests`, `NetPerHourTests`, `SecondsUntilFullTests`, `ProgressPermilleTests`, `SecondsUntilNextEventTests`,
@@ -189,7 +192,8 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
   in a class per area (`CycleRuleTests`, `StartRuleTests`, `WorkerRuleTests`, `ResearchRuleTests`, `UpgradeRuleTests`). A rule is played out
   through advances and commands (`Commands`: the mutation, then a zero-length advance); the M0-10 build log lists which broken rule each test catches.
 - `Golden/`: golden scenario #1, the first-session table of `23`. `GoldenContent` reads `Fixtures/content-golden-v1.json`, a frozen copy of
-  `mvp-content.json` that is never edited (a content change that should reach a golden scenario gets a new file and hand-checked numbers);
+  `mvp-content.json` that is never edited (until CR-0008-T1 part E it adds the walking rules and roads of `content-golden-v2.json`, which v1
+  predates) (a content change that should reach a golden scenario gets a new file and hand-checked numbers);
   `GoldenScenario1` runs the script as the server runs commands, up to any time and with any largest step; `GoldenScenario1Tests` checks
   every table row (stock, free workers, each building's phase and stall reason, research) and that one advance per action gap gives the
   same city as one-second steps.
@@ -250,4 +254,4 @@ too, but guards the Unity client's asmdefs and manifest, not the engine (see `do
   depend on `Dictionary` or `HashSet` order (`04` §9).
 - Content error messages are English text for content authors; only `ContentErrorCode` and `Path` are stable.
 
-Last updated: CR-0004-T1
+Last updated: CR-0008-T1

@@ -158,7 +158,12 @@ internal static class SettleFixture
                 MaxOfflineProductionSeconds = ProductionCapSeconds,
                 MinCycleSeconds = 10,
                 MaxLaborReductionPermille = 500,
+                GroundTileMillis = 5000,
+                CrossingSpeedPermille = 200,
+                MinWalkSeconds = 2,
+                MaxWalkBonusPermille = 500,
             },
+            Roads = [new RoadLevelData { Level = 1, Name = "Path", TileMillis = 2500, Cost = new() { ["coins"] = 5 } }],
             StartingCity = new StartingCityData { Era = 1, Inventory = new() { ["coins"] = 100 } },
             Eras = [new EraData { Number = 1, Id = "first_era", Name = "First Era" }],
             Items =

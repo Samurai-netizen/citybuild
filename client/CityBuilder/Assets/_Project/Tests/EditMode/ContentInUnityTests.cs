@@ -58,7 +58,12 @@ namespace CityBuilder.Client.Tests.EditMode
                 MaxOfflineProductionSeconds = 600,
                 MinCycleSeconds = 2,
                 MaxLaborReductionPermille = 300,
+                GroundTileMillis = 3000,
+                CrossingSpeedPermille = 200,
+                MinWalkSeconds = 1,
+                MaxWalkBonusPermille = 500,
             },
+            Roads = new List<RoadLevelData?> { new RoadLevelData { Level = 1, Name = "Path", TileMillis = 1500, Cost = new Dictionary<string, long?> { ["gold"] = 1 } } },
             StartingCity = new StartingCityData { Era = 1, Inventory = new Dictionary<string, long?> { ["gold"] = 20 } },
             Eras = new List<EraData?> { new EraData { Number = 1, Id = "first_era", Name = "First Era" } },
             Items = new List<ItemData?>

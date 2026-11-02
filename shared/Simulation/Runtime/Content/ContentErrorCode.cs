@@ -77,5 +77,17 @@ namespace CityBuilder.Simulation.Content
 
         /// <summary>With every labor reduction applied and all max workers assigned, a cycle would be shorter than <see cref="GameRules.MinCycleSeconds"/>.</summary>
         CycleTooShort,
+
+        /// <summary>
+        /// A road level is not faster than what it improves: its tile time must be below the ground time and below the level before
+        /// (<c>core-instructions/04-simulation-model.md</c>, content rule 11).
+        /// </summary>
+        RoadNotFaster,
+
+        /// <summary>
+        /// The shortest possible walk, one step between two adjacent buildings with every walk bonus applied, is shorter than
+        /// <c>rules.minWalkSeconds</c> (<c>04</c>, content rule 12).
+        /// </summary>
+        WalkTooShort,
     }
 }

@@ -62,7 +62,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             CityState city = snapshot.CopyCity();
 
             Assert.That(snapshot.StateVersion, Is.EqualTo(25L));
-            Assert.That(snapshot.ContentVersion, Is.EqualTo("mvp-1"));
+            Assert.That(snapshot.ContentVersion, Is.EqualTo("mvp-2"));
             Assert.That(snapshot.Clock, Is.EqualTo(199L));
             Assert.That(city.TryGetBuilding(3, out Building? sawmill), Is.True);
             Assert.That(sawmill!.TypeId.Value, Is.EqualTo("sawmill"));

@@ -29,5 +29,17 @@ namespace CityBuilder.Simulation.Content.Data
 
         /// <summary>Required. The largest total labor reduction of one building type, in permille.</summary>
         public int? MaxLaborReductionPermille { get; set; }
+
+        /// <summary>Required. How long a walker takes to cross one tile of open ground, in milliseconds.</summary>
+        public long? GroundTileMillis { get; set; }
+
+        /// <summary>Required. How fast a walker crosses another building's tile, in permille of the ground speed.</summary>
+        public int? CrossingSpeedPermille { get; set; }
+
+        /// <summary>Required. The shortest walk that content may allow, in seconds.</summary>
+        public long? MinWalkSeconds { get; set; }
+
+        /// <summary>Required. The largest total walk bonus of every research together, in permille.</summary>
+        public int? MaxWalkBonusPermille { get; set; }
     }
 }

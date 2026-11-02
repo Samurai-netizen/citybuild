@@ -40,6 +40,13 @@ namespace CityBuilder.Client.Net
                 Items = response.Items.ConvertAll(item => (ItemData?)ToData(item)),
                 Buildings = response.Buildings.ConvertAll(building => (BuildingData?)ToData(building)),
                 Research = response.Research.ConvertAll(research => (ResearchData?)ToData(research)),
+                Roads = response.Roads.ConvertAll(level => (RoadLevelData?)new RoadLevelData
+                {
+                    Level = level.Level,
+                    Name = level.Name,
+                    TileMillis = level.TileMillis,
+                    Cost = Quantities(level.Cost),
+                }),
             };
         }
 
@@ -56,6 +63,10 @@ namespace CityBuilder.Client.Net
                 MaxOfflineProductionSeconds = rules.MaxOfflineProductionSeconds,
                 MinCycleSeconds = rules.MinCycleSeconds,
                 MaxLaborReductionPermille = rules.MaxLaborReductionPermille,
+                GroundTileMillis = rules.GroundTileMillis,
+                CrossingSpeedPermille = rules.CrossingSpeedPermille,
+                MinWalkSeconds = rules.MinWalkSeconds,
+                MaxWalkBonusPermille = rules.MaxWalkBonusPermille,
             };
         }
 

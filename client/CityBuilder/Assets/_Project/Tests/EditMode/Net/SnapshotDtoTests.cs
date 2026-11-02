@@ -41,7 +41,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             CitySnapshotDto snapshot = _json.Deserialize<CitySnapshotDto>(Fixtures.Read("snapshot-city-start.json"));
 
             Assert.That(snapshot.RequestId, Is.Null);
-            Assert.That(snapshot.ContentVersion, Is.EqualTo("mvp-1"));
+            Assert.That(snapshot.ContentVersion, Is.EqualTo("mvp-2"));
             Assert.That(snapshot.City.Era, Is.EqualTo(1));
             Assert.That(snapshot.City.Inventory["coins"], Is.EqualTo(700L));
             Assert.That(snapshot.City.StorageCaps["logs"], Is.EqualTo(500L));

@@ -150,7 +150,7 @@ namespace CityBuilder.Client.Tests.EditMode.Core
                 new ActiveResearch(new ResearchId("trade_charter"), 4, 604));
             string expected = CityTestData.Describe(city);
 
-            CityState copy = new CitySnapshot(1, "mvp-1", city).CopyCity();
+            CityState copy = new CitySnapshot(1, "mvp-2", city).CopyCity();
 
             Assert.That(CityTestData.Describe(copy), Is.EqualTo(expected));
             Assert.That(copy, Is.Not.SameAs(city));

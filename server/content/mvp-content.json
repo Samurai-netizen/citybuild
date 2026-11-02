@@ -1,5 +1,5 @@
 {
-  "contentVersion": "mvp-1",
+  "contentVersion": "mvp-2",
   "rules": {
     "gridWidth": 8,
     "gridHeight": 8,
@@ -8,7 +8,11 @@
     "baseStorageCaps": { "logs": 500, "planks": 500 },
     "maxOfflineProductionSeconds": 28800,
     "minCycleSeconds": 10,
-    "maxLaborReductionPermille": 500
+    "maxLaborReductionPermille": 500,
+    "groundTileMillis": 5000,
+    "crossingSpeedPermille": 200,
+    "minWalkSeconds": 2,
+    "maxWalkBonusPermille": 500
   },
   "startingCity": {
     "era": 1,
@@ -21,6 +25,10 @@
     { "id": "coins", "name": "Coins", "era": 1, "capped": false, "tradable": false },
     { "id": "logs", "name": "Logs", "era": 1, "capped": true, "tradable": true },
     { "id": "planks", "name": "Planks", "era": 1, "capped": true, "tradable": true }
+  ],
+  "roads": [
+    { "level": 1, "name": "Dirt path", "tileMillis": 2500, "cost": { "coins": 5 } },
+    { "level": 2, "name": "Log road", "tileMillis": 1500, "cost": { "coins": 15 } }
   ],
   "buildings": [
     {

@@ -47,7 +47,7 @@ namespace CityBuilder.Client.Tests.EditMode.Core
         public static CitySnapshot EmptySnapshot(long stateVersion, long clock)
         {
             var city = new CityState(clock, 1, 1, Array.Empty<KeyValuePair<ItemId, long>>(), Array.Empty<Building>(), Array.Empty<ResearchId>(), null);
-            return new CitySnapshot(stateVersion, "mvp-1", city);
+            return new CitySnapshot(stateVersion, "mvp-2", city);
         }
 
         /// <summary>

@@ -250,7 +250,8 @@ public sealed class ContentShapeTests
             .Concat(data.Buildings!.Select(building => building!.Cost))
             .Concat(data.Buildings!.SelectMany(building => building!.Levels!).Select(level => level!.UpgradeCost))
             .Concat(data.Buildings!.SelectMany(building => building!.Levels!).SelectMany(level => new[] { level!.Recipe?.Inputs, level.Recipe?.Outputs }))
-            .Concat(data.Research!.Select(node => node!.Cost));
+            .Concat(data.Research!.Select(node => node!.Cost))
+            .Concat(data.Roads!.Select(level => level!.Cost));
         foreach (Dictionary<string, long?> map in maps.OfType<Dictionary<string, long?>>())
         {
             if (map.Remove(from, out long? amount))

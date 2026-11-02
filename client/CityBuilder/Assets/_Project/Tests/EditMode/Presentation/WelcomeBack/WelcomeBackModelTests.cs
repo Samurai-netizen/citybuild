@@ -58,7 +58,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.WelcomeBack
         /// <summary>A snapshot of a city with the given buildings, carrying <paramref name="settlement"/>.</summary>
         private static CitySnapshot Snapshot(SettlementSummary? settlement, params Building[] buildings)
         {
-            return new CitySnapshot(5, "mvp-1", HudTestData.City(100_000, 10, 0, 0, buildings), settlement);
+            return new CitySnapshot(5, "mvp-2", HudTestData.City(100_000, 10, 0, 0, buildings), settlement);
         }
 
         /// <summary>A building of <paramref name="typeId"/> that is finished at <paramref name="level"/>.</summary>

@@ -37,14 +37,15 @@ internal static class ContractContent
     /// <summary>The research <c>sharp_axes</c> (120 seconds): the woodcutter's labor −150 ‰.</summary>
     public static readonly ResearchId SharpAxes = new("sharp_axes");
 
-    /// <summary>The content file's text: one era, three items, three buildings and three research nodes, out of order on purpose.</summary>
+    /// <summary>The content file's text: one era, three items, three buildings, three research nodes and two road levels, out of order on purpose.</summary>
     public const string Json = """
         {
           "contentVersion": "contract-1",
           "rules": {
             "gridWidth": 6, "gridHeight": 5, "builderSlots": 2, "researchSlots": 1,
             "baseStorageCaps": { "planks": 300, "logs": 400 },
-            "maxOfflineProductionSeconds": 14400, "minCycleSeconds": 5, "maxLaborReductionPermille": 400
+            "maxOfflineProductionSeconds": 14400, "minCycleSeconds": 5, "maxLaborReductionPermille": 400,
+            "groundTileMillis": 6000, "crossingSpeedPermille": 300, "minWalkSeconds": 3, "maxWalkBonusPermille": 250
           },
           "startingCity": { "era": 1, "inventory": { "planks": 20, "coins": 300, "logs": 60 } },
           "eras": [ { "number": 1, "id": "dawn", "name": "Dawn" } ],
@@ -96,6 +97,10 @@ internal static class ContractContent
               "id": "trade_charter", "name": "Trade Charter", "era": 1, "cost": { "coins": 60 }, "durationSeconds": 90,
               "effects": [ { "type": "unlockBuilding", "building": "trading_post" } ]
             }
+          ],
+          "roads": [
+            { "level": 2, "name": "Stone path", "tileMillis": 2000, "cost": { "coins": 12 } },
+            { "level": 1, "name": "Track", "tileMillis": 4000, "cost": { "coins": 3 } }
           ]
         }
         """;

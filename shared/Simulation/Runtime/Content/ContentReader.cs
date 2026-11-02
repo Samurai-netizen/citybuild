@@ -50,13 +50,15 @@ namespace CityBuilder.Simulation.Content
             Dictionary<BuildingTypeId, ResearchId> unlocks = FirstUnlockingResearch(research);
             List<BuildingDefinition> buildings = _fields.ReadList(
                 data.Buildings, "buildings", true, building => building.Id, (building, path) => ReadBuilding(building, path, unlocks));
+            List<RoadLevelDefinition> roadLevels = _fields.ReadList(
+                data.Roads, "roads", true, level => level.Level?.ToString(CultureInfo.InvariantCulture), ReadRoadLevel);
 
             if (_errors.Count > 0 || rules is null || startingCity is null)
             {
                 return null;
             }
 
-            return new ContentDraft(version, rules, startingCity, eras, items, buildings, research);
+            return new ContentDraft(version, rules, startingCity, eras, items, buildings, research, roadLevels);
         }
 
         /// <summary>Reports a missing required object (such as <c>rules</c>) and returns null for it.</summary>
@@ -77,7 +79,11 @@ namespace CityBuilder.Simulation.Content
                 _fields.ReadItemAmounts(data.BaseStorageCaps, path + ".baseStorageCaps", true),
                 _fields.RequireLong(data.MaxOfflineProductionSeconds, path + ".maxOfflineProductionSeconds"),
                 _fields.RequireLong(data.MinCycleSeconds, path + ".minCycleSeconds"),
-                _fields.RequireInt(data.MaxLaborReductionPermille, path + ".maxLaborReductionPermille"));
+                _fields.RequireInt(data.MaxLaborReductionPermille, path + ".maxLaborReductionPermille"),
+                _fields.RequireLong(data.GroundTileMillis, path + ".groundTileMillis"),
+                _fields.RequireInt(data.CrossingSpeedPermille, path + ".crossingSpeedPermille"),
+                _fields.RequireLong(data.MinWalkSeconds, path + ".minWalkSeconds"),
+                _fields.RequireInt(data.MaxWalkBonusPermille, path + ".maxWalkBonusPermille"));
 
         /// <summary>Reads the starting city: its era number and stock (the map may be empty).</summary>
         private StartingCityDefinition ReadStartingCity(StartingCityData data, string path) =>
@@ -257,6 +263,14 @@ namespace CityBuilder.Simulation.Content
 
             return new BuildingLevelDefinition(level, data.MaxWorkers ?? 0, data.WorkersProvided ?? 0, recipe, upgradeCost, upgradeSeconds);
         }
+
+        /// <summary>Reads one road level: its number, name, tile time and cost, all required (the cost map may be empty).</summary>
+        private RoadLevelDefinition ReadRoadLevel(RoadLevelData data, string path) =>
+            new RoadLevelDefinition(
+                _fields.RequireInt(data.Level, path + ".level"),
+                _fields.RequireText(data.Name, path + ".name"),
+                _fields.RequireLong(data.TileMillis, path + ".tileMillis"),
+                _fields.ReadItemAmounts(data.Cost, path + ".cost", true));
 
         /// <summary>Reads a recipe: inputs (optional, empty for a raw producer), outputs and labor (both required).</summary>
         private RecipeDefinition ReadRecipe(RecipeData data, string path) =>

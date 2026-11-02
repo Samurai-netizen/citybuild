@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using CityBuilder.IntegrationTests.Postgres;
 using CityBuilder.Simulation;
 using CityBuilder.Simulation.Content;
@@ -22,9 +23,33 @@ internal static class GoldenScenario1Http
 
     /// <summary>
     /// The engine test's frozen content file, <c>content-golden-v1.json</c>, which the project file links into this project's output
-    /// (it is a protected file: never copied, never edited; <c>15</c>).
+    /// (it is a protected file: never edited; <c>15</c>), with the walking rules and road levels of <c>content-golden-v2.json</c> added, as the
+    /// engine test adds them (<c>GoldenContent.V1</c>): written once into the output folder next to it.
     /// </summary>
-    public static string ContentPath { get; } = Path.Combine(AppContext.BaseDirectory, "Fixtures", "content-golden-v1.json");
+    public static string ContentPath { get; } = WriteV1WithWalkingOfV2();
+
+    /// <summary>
+    /// Writes <c>content-golden-v1.json</c> with the walking rules and road levels of <c>content-golden-v2.json</c> added, the way
+    /// <c>GoldenContent.V1</c> of the engine tests completes it: v1 predates them, the engine needs them from CR-0008-T1 part C on, and
+    /// golden scenario #1 on v1 never walks. Temporary: part E moves the scenario to v2 and deletes v1 (BL-20261102-07, decision 22).
+    /// </summary>
+    /// <returns>The path of the completed file.</returns>
+    private static string WriteV1WithWalkingOfV2()
+    {
+        string folder = Path.Combine(AppContext.BaseDirectory, "Fixtures");
+        JsonObject v1 = JsonNode.Parse(File.ReadAllText(Path.Combine(folder, "content-golden-v1.json")))!.AsObject();
+        JsonObject v2 = JsonNode.Parse(File.ReadAllText(Path.Combine(folder, "content-golden-v2.json")))!.AsObject();
+        JsonObject rules = v1["rules"]!.AsObject();
+        foreach (string name in new[] { "groundTileMillis", "crossingSpeedPermille", "minWalkSeconds", "maxWalkBonusPermille" })
+        {
+            rules[name] = v2["rules"]![name]!.DeepClone();
+        }
+
+        v1["roads"] = v2["roads"]!.DeepClone();
+        string path = Path.Combine(folder, "content-golden-v1-with-walking.json");
+        File.WriteAllText(path, v1.ToJsonString());
+        return path;
+    }
 
     /// <summary>The test's server with the frozen content in place of the real one; it shares the factory's clock and database.</summary>
     /// <param name="factory">The test's server on its database.</param>

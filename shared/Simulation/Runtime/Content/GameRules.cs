@@ -19,7 +19,11 @@ namespace CityBuilder.Simulation.Content
             IReadOnlyList<ItemQuantity> baseStorageCaps,
             long maxOfflineProductionSeconds,
             long minCycleSeconds,
-            int maxLaborReductionPermille)
+            int maxLaborReductionPermille,
+            long groundTileMillis,
+            int crossingSpeedPermille,
+            long minWalkSeconds,
+            int maxWalkBonusPermille)
         {
             GridWidth = gridWidth;
             GridHeight = gridHeight;
@@ -29,6 +33,10 @@ namespace CityBuilder.Simulation.Content
             MaxOfflineProductionSeconds = maxOfflineProductionSeconds;
             MinCycleSeconds = minCycleSeconds;
             MaxLaborReductionPermille = maxLaborReductionPermille;
+            GroundTileMillis = groundTileMillis;
+            CrossingSpeedPermille = crossingSpeedPermille;
+            MinWalkSeconds = minWalkSeconds;
+            MaxWalkBonusPermille = maxWalkBonusPermille;
 
             _baseStorageCapByItem = new Dictionary<ItemId, long>();
             foreach (ItemQuantity cap in baseStorageCaps)
@@ -64,6 +72,24 @@ namespace CityBuilder.Simulation.Content
 
         /// <summary>The largest total labor reduction of one building type, in permille (500 = half the labor).</summary>
         public int MaxLaborReductionPermille { get; }
+
+        /// <summary>
+        /// How long a walker takes to cross one tile of open ground, in milliseconds (5000 in M0). A walk's own start and end buildings count
+        /// as ground too (<c>core-instructions/04-simulation-model.md</c>, section 17).
+        /// </summary>
+        public long GroundTileMillis { get; }
+
+        /// <summary>
+        /// How fast a walker crosses another building's tile, in permille of the ground speed (200 = a fifth: 25 s instead of 5 s). A walk
+        /// crosses a building only when every way does (the path rule, <c>04</c> section 17).
+        /// </summary>
+        public int CrossingSpeedPermille { get; }
+
+        /// <summary>The shortest walk content may allow, in seconds: one step between two adjacent buildings with every walk bonus applied.</summary>
+        public long MinWalkSeconds { get; }
+
+        /// <summary>The largest total walk bonus of all research together, in permille (500 = walks take half the time).</summary>
+        public int MaxWalkBonusPermille { get; }
 
         /// <summary>Looks up the base storage cap of an item.</summary>
         /// <param name="item">The item.</param>

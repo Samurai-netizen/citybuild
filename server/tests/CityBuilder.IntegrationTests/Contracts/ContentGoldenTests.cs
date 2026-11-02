@@ -53,7 +53,8 @@ public sealed class ContentGoldenTests(ApiFactory factory) : IClassFixture<ApiFa
           "rules": {
             "gridWidth": 6, "gridHeight": 5, "builderSlots": 2, "researchSlots": 1,
             "baseStorageCaps": { "logs": 400, "planks": 300 },
-            "maxOfflineProductionSeconds": 14400, "minCycleSeconds": 5, "maxLaborReductionPermille": 400, "timeScale": 1
+            "maxOfflineProductionSeconds": 14400, "minCycleSeconds": 5, "maxLaborReductionPermille": 400,
+            "groundTileMillis": 6000, "crossingSpeedPermille": 300, "minWalkSeconds": 3, "maxWalkBonusPermille": 250, "timeScale": 1
           },
           "startingCity": { "era": 1, "inventory": { "coins": 300, "logs": 60, "planks": 20 } },
           "eras": [ { "number": 1, "id": "dawn", "name": "Dawn" } ],
@@ -110,6 +111,10 @@ public sealed class ContentGoldenTests(ApiFactory factory) : IClassFixture<ApiFa
               "id": "trade_charter", "name": "Trade Charter", "era": 1, "cost": { "coins": 60 }, "durationSeconds": 90, "prerequisites": [],
               "effects": [ { "type": "unlockBuilding", "building": "trading_post", "item": null, "permille": null, "amount": null } ]
             }
+          ],
+          "roads": [
+            { "level": 1, "name": "Track", "tileMillis": 4000, "cost": { "coins": 3 } },
+            { "level": 2, "name": "Stone path", "tileMillis": 2000, "cost": { "coins": 12 } }
           ]
         }
         """;

@@ -137,6 +137,11 @@ namespace CityBuilder.Simulation.Content
             {
                 ItemsExist(draft, node.Cost, ContentPaths.Research(node) + ".cost", errors);
             }
+
+            foreach (RoadLevelDefinition level in draft.RoadLevels)
+            {
+                ItemsExist(draft, level.Cost, ContentPaths.RoadLevel(level) + ".cost", errors);
+            }
         }
 
         /// <summary>A capped item has a base storage cap and an uncapped item has none (<see cref="ContentErrorCode.StorageCapMismatch"/>).</summary>

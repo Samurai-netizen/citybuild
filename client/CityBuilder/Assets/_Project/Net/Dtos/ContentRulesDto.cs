@@ -11,7 +11,7 @@ namespace CityBuilder.Client.Net
     {
         /// <summary>Creates the DTO. Newtonsoft calls this constructor with the JSON members of the same names, so the object is never half filled.</summary>
         [JsonConstructor]
-        public ContentRulesDto(int gridWidth, int gridHeight, int builderSlots, int researchSlots, Dictionary<string, long> baseStorageCaps, long maxOfflineProductionSeconds, long minCycleSeconds, int maxLaborReductionPermille, int timeScale)
+        public ContentRulesDto(int gridWidth, int gridHeight, int builderSlots, int researchSlots, Dictionary<string, long> baseStorageCaps, long maxOfflineProductionSeconds, long minCycleSeconds, int maxLaborReductionPermille, long groundTileMillis, int crossingSpeedPermille, long minWalkSeconds, int maxWalkBonusPermille, int timeScale)
         {
             GridWidth = gridWidth;
             GridHeight = gridHeight;
@@ -21,6 +21,10 @@ namespace CityBuilder.Client.Net
             MaxOfflineProductionSeconds = maxOfflineProductionSeconds;
             MinCycleSeconds = minCycleSeconds;
             MaxLaborReductionPermille = maxLaborReductionPermille;
+            GroundTileMillis = groundTileMillis;
+            CrossingSpeedPermille = crossingSpeedPermille;
+            MinWalkSeconds = minWalkSeconds;
+            MaxWalkBonusPermille = maxWalkBonusPermille;
             TimeScale = timeScale;
         }
 
@@ -47,6 +51,18 @@ namespace CityBuilder.Client.Net
 
         /// <summary>Largest labor reduction in permille.</summary>
         public int MaxLaborReductionPermille { get; }
+
+        /// <summary>Milliseconds a walker takes to cross one tile of open ground.</summary>
+        public long GroundTileMillis { get; }
+
+        /// <summary>A walker's speed across another building's tile, in permille of the ground speed.</summary>
+        public int CrossingSpeedPermille { get; }
+
+        /// <summary>Shortest walk the content allows, in seconds.</summary>
+        public long MinWalkSeconds { get; }
+
+        /// <summary>Largest walk bonus of all research together, in permille.</summary>
+        public int MaxWalkBonusPermille { get; }
 
         /// <summary>Server seconds per real second: 1 outside Development.</summary>
         public int TimeScale { get; }

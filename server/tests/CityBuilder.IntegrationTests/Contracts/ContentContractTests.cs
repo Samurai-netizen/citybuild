@@ -34,11 +34,13 @@ public sealed class ContentContractTests(ApiFactory factory) : IClassFixture<Api
     {
         JsonNode content = (await ApiClient.GetAsync(factory, "/api/v1/content", _playerId)).Json();
 
-        JsonShape.AssertObject(content, "contentVersion:string rules:object startingCity:object eras:array items:array buildings:array research:array", "$");
+        JsonShape.AssertObject(
+            content, "contentVersion:string rules:object startingCity:object eras:array items:array buildings:array research:array roads:array", "$");
         JsonShape.AssertObject(
             content["rules"],
             "gridWidth:int gridHeight:int builderSlots:int researchSlots:int baseStorageCaps:object maxOfflineProductionSeconds:int " +
-            "minCycleSeconds:int maxLaborReductionPermille:int timeScale:int",
+            "minCycleSeconds:int maxLaborReductionPermille:int groundTileMillis:int crossingSpeedPermille:int minWalkSeconds:int " +
+            "maxWalkBonusPermille:int timeScale:int",
             "$.rules");
         JsonShape.AssertObject(content["startingCity"], "era:int inventory:object", "$.startingCity");
         AssertEach(content["eras"], "number:int id:string name:string", "$.eras");
@@ -51,6 +53,7 @@ public sealed class ContentContractTests(ApiFactory factory) : IClassFixture<Api
             content["research"],
             "id:string name:string era:int cost:object durationSeconds:int prerequisites:array effects:array",
             "$.research");
+        AssertEach(content["roads"], "level:int name:string tileMillis:int cost:object", "$.roads");
         foreach ((JsonNode building, int b) in content["buildings"]!.AsArray().Select((node, index) => (node!, index)))
         {
             AssertEach(
@@ -112,7 +115,7 @@ public sealed class ContentContractTests(ApiFactory factory) : IClassFixture<Api
         }
     }
 
-    /// <summary>The lists and the maps come in a fixed order: eras by number, the rest by id in ordinal order, levels by level, keys by item id.</summary>
+    /// <summary>The lists and the maps come in a fixed order: eras by number, the rest by id in ordinal order, levels and road levels by level, keys by item id.</summary>
     [Fact]
     public async Task Get_ListsAndMaps_AreSorted()
     {
@@ -124,6 +127,7 @@ public sealed class ContentContractTests(ApiFactory factory) : IClassFixture<Api
         AssertIdsAreOrdinal(content["research"]!);
         AssertKeysAreOrdinal(content["rules"]!["baseStorageCaps"]!);
         AssertKeysAreOrdinal(content["startingCity"]!["inventory"]!);
+        Assert.Equal(Enumerable.Range(1, content["roads"]!.AsArray().Count), content["roads"]!.AsArray().Select(level => (int)level!["level"]!));
         foreach (JsonNode building in content["buildings"]!.AsArray().Select(node => node!))
         {
             AssertKeysAreOrdinal(building["cost"]!);

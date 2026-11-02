@@ -8,8 +8,15 @@
     "baseStorageCaps": { "ore": 1000000000000 },
     "maxOfflineProductionSeconds": 28800,
     "minCycleSeconds": 10,
-    "maxLaborReductionPermille": 0
+    "maxLaborReductionPermille": 0,
+    "groundTileMillis": 5000,
+    "crossingSpeedPermille": 200,
+    "minWalkSeconds": 2,
+    "maxWalkBonusPermille": 500
   },
+  "roads": [
+    { "level": 1, "name": "Path", "tileMillis": 2500, "cost": { "coins": 5 } }
+  ],
   "startingCity": {
     "era": 1,
     "inventory": { "coins": 10000, "ore": 100 }

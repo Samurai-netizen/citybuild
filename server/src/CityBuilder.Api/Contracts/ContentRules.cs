@@ -9,6 +9,10 @@ namespace CityBuilder.Api.Contracts;
 /// <param name="MaxOfflineProductionSeconds">The longest window in which cycles can start in one settlement, JSON <c>maxOfflineProductionSeconds</c>.</param>
 /// <param name="MinCycleSeconds">The shortest a production cycle can take after research, JSON <c>minCycleSeconds</c>.</param>
 /// <param name="MaxLaborReductionPermille">The most research can reduce a cycle's labor, in permille, JSON <c>maxLaborReductionPermille</c>.</param>
+/// <param name="GroundTileMillis">How long a walker takes to cross one tile of open ground, in milliseconds, JSON <c>groundTileMillis</c>.</param>
+/// <param name="CrossingSpeedPermille">How fast a walker crosses another building's tile, in permille of the ground speed, JSON <c>crossingSpeedPermille</c>.</param>
+/// <param name="MinWalkSeconds">The shortest walk the content allows, in seconds, JSON <c>minWalkSeconds</c>.</param>
+/// <param name="MaxWalkBonusPermille">The most research can shorten a walk, in permille, JSON <c>maxWalkBonusPermille</c>.</param>
 /// <param name="TimeScale">How many city-clock seconds pass per server second, JSON <c>timeScale</c>; always 1 outside Development. The client's
 /// display clock is <c>city.clock + secondsSinceSnapshotReceived × timeScale</c> (<c>05</c>, snapshot).</param>
 public sealed record ContentRules(
@@ -20,4 +24,8 @@ public sealed record ContentRules(
     long MaxOfflineProductionSeconds,
     long MinCycleSeconds,
     int MaxLaborReductionPermille,
+    long GroundTileMillis,
+    int CrossingSpeedPermille,
+    long MinWalkSeconds,
+    int MaxWalkBonusPermille,
     int TimeScale);

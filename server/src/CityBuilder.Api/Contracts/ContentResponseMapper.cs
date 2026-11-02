@@ -28,7 +28,8 @@ public static class ContentResponseMapper
             content.Eras.Select(era => new ContentEra(era.Number, era.Id.Value, era.Name)).ToArray(),
             content.Items.Select(item => new ContentItem(item.Id.Value, item.Name, item.Era, item.IsCapped, item.IsTradable)).ToArray(),
             content.Buildings.Select(ToBuilding).ToArray(),
-            content.Research.Select(ToResearch).ToArray());
+            content.Research.Select(ToResearch).ToArray(),
+            content.RoadLevels.Select(level => new ContentRoadLevel(level.Level, level.Name, level.TileMillis, ToAmounts(level.Cost))).ToArray());
     }
 
     /// <summary>Maps the rules, adding the server's time scale.</summary>
@@ -44,6 +45,10 @@ public static class ContentResponseMapper
         rules.MaxOfflineProductionSeconds,
         rules.MinCycleSeconds,
         rules.MaxLaborReductionPermille,
+        rules.GroundTileMillis,
+        rules.CrossingSpeedPermille,
+        rules.MinWalkSeconds,
+        rules.MaxWalkBonusPermille,
         timeScale);
 
     /// <summary>Maps a building type with its levels.</summary>

@@ -5,9 +5,9 @@
 > source of truth**. Update this file in the same commit whenever the JSON changes (`docs/how-to/add-building-or-item.md`).
 > Every number is a placeholder until the balance simulator (Day 12) validates it.
 > M0 research times are short so the slice can be played in one sitting. Real Era I research takes 10 min–4 h (`25`).
-> **CR-0008 (logistics)** sets the numbers below for content version `mvp-2` (`04` §16–§19). They are *planned*: the JSON gets them in
-> CR-0008-T1 (roads part C, the rest part E; the 8 h cap goes in part H). Until then the JSON is `mvp-1`, the M0 numbers of the CR's
-> base (git history, `23` before CR-0008-T1).
+> **CR-0008 (logistics)** sets the numbers below for content version `mvp-2` (`04` §16–§19). The JSON is `mvp-2` from CR-0008-T1 part C
+> with the walking rules and road levels; the rest arrives in part E (until then its items, buildings, research and starting city are the
+> M0 numbers, git history of this file), and the 8 h cap goes in part H.
 
 ## Global rules
 

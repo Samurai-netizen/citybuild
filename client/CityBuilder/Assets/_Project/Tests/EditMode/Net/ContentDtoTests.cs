@@ -27,7 +27,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         {
             ContentResponseDto content = _json.Deserialize<ContentResponseDto>(Fixtures.Read("content.json"));
 
-            Assert.That(content.ContentVersion, Is.EqualTo("mvp-1"));
+            Assert.That(content.ContentVersion, Is.EqualTo("mvp-2"));
             Assert.That(content.Rules.GridWidth, Is.EqualTo(8));
             Assert.That(content.Rules.TimeScale, Is.EqualTo(1));
             Assert.That(content.Rules.BaseStorageCaps["planks"], Is.EqualTo(500L));
