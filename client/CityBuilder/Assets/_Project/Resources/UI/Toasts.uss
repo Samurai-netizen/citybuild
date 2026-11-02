@@ -1,40 +1,40 @@
-/* The toasts (docs/how-to/add-ui-screen.md): short messages at the top centre, under the HUD (M0-49). M0-47. Sizes are in panel units (reference resolution
-   1200 x 800). Success is green, an error is red, both on a dark pill with white text so they read over any ground. */
+/* The toasts (docs/how-to/add-ui-screen.md): short messages stacked at the bottom left, above the status label and the buttons (the top has the HUD, the banner and the inspector). M0-47, restyled in CR-0007. A toast is a dark wood pill
+   with cream text and a coloured edge: green for a success, red for an error. */
 .toast-root {
   position: absolute;
   left: 0;
   top: 0;
   right: 0;
   bottom: 0;
-  padding: 16px;
+  padding: var(--sp-2); /* replaced by the safe area in code */
   flex-direction: column;
-  justify-content: flex-start;
-  align-items: center;
+  justify-content: flex-end;
+  align-items: flex-start;
 }
 
 .toast-list {
-  margin-top: 224px; /* clears the HUD; the root's padding is replaced by the safe area in code, a margin is not */
+  margin-bottom: var(--toast-lift);
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .toast {
-  max-width: 640px;
-  margin-bottom: 8px;
-  padding: 10px 20px;
-  border-radius: 10px;
-  border-left-width: 6px;
-  color: rgb(255, 255, 255);
-  background-color: rgba(0, 0, 0, 0.85);
-  font-size: 24px;
+  max-width: 280px; /* ends before the inspector, which starts 313 units from the left on a 711 unit wide screen */
+  margin-bottom: var(--sp-1);
+  padding: var(--sp-1) var(--sp-3);
+  border-left-width: 4px;
+  border-radius: var(--radius-sm);
+  color: var(--c-cream);
+  background-color: var(--c-panel-wood);
+  font-size: var(--font-md);
   white-space: normal;
-  -unity-text-align: middle-center;
+  -unity-text-align: middle-left;
 }
 
 .toast--success {
-  border-left-color: rgb(90, 190, 110);
+  border-left-color: var(--c-go-light);
 }
 
 .toast--error {
-  border-left-color: rgb(235, 100, 85);
+  border-left-color: var(--c-stop-light);
 }

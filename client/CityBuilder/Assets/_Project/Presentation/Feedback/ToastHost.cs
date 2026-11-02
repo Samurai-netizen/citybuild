@@ -23,7 +23,7 @@ namespace CityBuilder.Client.Presentation.Feedback
         private const string PanelSettingsPath = "UI/PanelSettings";
 
         /// <summary>The root's padding in panel units before the safe area is added.</summary>
-        private const float BasePadding = 16f;
+        private const float BasePadding = 8f;
 
         /// <summary>Drawn above the build menu (1) and the placement bar (2): a result must not be hidden by the screen that caused it.</summary>
         private const float SortingOrder = 3f;

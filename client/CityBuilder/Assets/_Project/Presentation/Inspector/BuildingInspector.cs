@@ -25,7 +25,7 @@ namespace CityBuilder.Client.Presentation.Inspector
         private const string PanelSettingsPath = "UI/PanelSettings";
 
         /// <summary>The root's padding in panel units before the safe area is added.</summary>
-        private const float BasePadding = 16f;
+        private const float BasePadding = 8f;
 
         /// <summary>Drawn over the HUD (0.5) and under the build menu (1), so an open sheet covers the inspector and not the other way round.</summary>
         private const float SortingOrder = 0.8f;

@@ -32,13 +32,13 @@ namespace CityBuilder.Client.Presentation.Research
         private const string PanelSettingsPath = "UI/PanelSettings";
 
         /// <summary>The root's padding in panel units before the safe area is added.</summary>
-        private const float BasePadding = 16f;
+        private const float BasePadding = 8f;
 
         /// <summary>Drawn over the inspector (0.8) and under the build menu (1), the placement bar (2) and the toasts (3); it is never open together with the first two.</summary>
         private const float SortingOrder = 0.9f;
 
         /// <summary>The width of a node ring's stroke in panel units.</summary>
-        private const float RingWidth = 6f;
+        private const float RingWidth = 3f;
 
         /// <summary>The name of the root element in <c>Research.uxml</c>.</summary>
         public const string RootName = "research-root";
@@ -98,10 +98,10 @@ namespace CityBuilder.Client.Presentation.Research
         private const string RuleOffClass = "research-rule--off";
 
         /// <summary>The track of a node's ring.</summary>
-        private static readonly Color RingTrackColor = new Color(1f, 1f, 1f, 0.2f);
+        private static readonly Color RingTrackColor = new Color(0.48f, 0.31f, 0.18f, 0.28f);
 
         /// <summary>The finished part of a node's ring.</summary>
-        private static readonly Color RingProgressColor = new Color(0.47f, 0.76f, 1f, 1f);
+        private static readonly Color RingProgressColor = new Color(0.23f, 0.49f, 0.20f, 1f);
 
         /// <summary>The node elements, in the order of the model's nodes.</summary>
         private readonly List<NodeElements> _nodes = new List<NodeElements>();

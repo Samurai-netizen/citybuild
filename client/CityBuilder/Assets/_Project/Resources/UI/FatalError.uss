@@ -1,23 +1,23 @@
-/* The fatal error screen: a full-screen dark panel with a title and the lines of the error. M0-38 shows it for invalid server content. */
+/* The fatal error screen: a full-screen dark wood panel with a title and the lines of the error. M0-38 shows it for invalid server content; restyled in CR-0007. */
 .fatal-error {
   position: absolute;
   left: 0;
   top: 0;
   right: 0;
   bottom: 0;
-  padding: 32px;
-  background-color: rgb(40, 12, 12);
+  padding: var(--sp-4);
+  background-color: var(--c-wood-deep);
 }
 
 .fatal-error-title {
-  margin-bottom: 16px;
-  color: rgb(255, 200, 200);
-  font-size: 36px;
+  margin-bottom: var(--sp-3);
+  color: var(--c-stop-light);
+  font-size: var(--font-xl);
   -unity-font-style: bold;
 }
 
 .fatal-error-details {
-  color: rgb(255, 255, 255);
-  font-size: 22px;
+  color: var(--c-cream);
+  font-size: var(--font-md);
   white-space: normal;
 }

@@ -1,13 +1,12 @@
-/* The research screen (M0-52, docs/how-to/add-ui-screen.md): a button at the bottom left next to the Build button and, above it, a panel with
-   the era header and the columns of nodes. Sizes are in panel units (reference resolution 1200 x 800), so a 64 button is well over the 48 dp
-   touch target. */
+/* The research screen (M0-52, docs/how-to/add-ui-screen.md): a button at the bottom left next to the Build button and, above it, a parchment panel with
+   the era header and the columns of nodes. Restyled in CR-0007; colours and sizes come from Common.uss. */
 .research-root {
   position: absolute;
   left: 0;
   top: 0;
   right: 0;
   bottom: 0;
-  padding: 16px;
+  padding: var(--sp-2); /* replaced by the safe area in code */
   flex-direction: column;
   justify-content: flex-end;
   align-items: flex-start;
@@ -16,11 +15,8 @@
 .research-panel {
   align-self: stretch;
   flex-grow: 1;
-  margin-top: 124px;
-  margin-bottom: 12px;
-  padding: 12px;
-  border-radius: 10px;
-  background-color: rgba(0, 0, 0, 0.85);
+  margin-top: var(--hud-height);
+  margin-bottom: var(--sp-2);
 }
 
 .research-panel--hidden {
@@ -37,27 +33,13 @@
   flex-shrink: 1;
 }
 
-.research-era {
-  color: rgb(255, 255, 255);
-  font-size: 28px;
-  -unity-font-style: bold;
-  white-space: normal;
-}
-
-.research-rule {
-  margin-top: 2px;
-  color: rgb(225, 225, 225);
-  font-size: 20px;
-  white-space: normal;
-}
-
 .research-rule--off {
-  color: rgb(120, 120, 120);
+  opacity: 0.7;
 }
 
 .research-scroll {
   flex-grow: 1;
-  margin-top: 8px;
+  margin-top: var(--sp-2);
 }
 
 .research-columns {
@@ -66,17 +48,19 @@
 }
 
 .research-column {
-  width: 340px;
-  margin-right: 16px;
+  width: 330px;
+  margin-right: var(--sp-2);
 }
 
 .research-node {
-  margin-bottom: 10px;
-  padding: 12px;
-  border-width: 3px;
-  border-radius: 8px;
-  border-color: rgb(70, 70, 70);
-  background-color: rgb(40, 44, 52);
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: var(--sp-2);
+  padding: var(--sp-2);
+  border-width: 2px;
+  border-radius: var(--radius-md);
+  border-color: var(--c-parchment-3);
+  background-color: var(--c-parchment-2);
 }
 
 .research-node--locked {
@@ -84,15 +68,23 @@
 }
 
 .research-node--available {
-  border-color: rgb(110, 150, 210);
+  border-color: var(--c-info);
 }
 
 .research-node--running {
-  border-color: rgb(120, 194, 255);
+  border-color: var(--c-gold);
+  border-width: 3px;
 }
 
 .research-node--done {
-  border-color: rgb(80, 150, 90);
+  border-color: var(--c-go);
+}
+
+.research-node-text {
+  flex-grow: 1;
+  flex-shrink: 1;
+  min-width: 0;
+  flex-direction: column;
 }
 
 .research-node-header {
@@ -101,83 +93,45 @@
 }
 
 .research-node-icon {
-  width: 48px;
-  height: 48px;
-  margin-right: 10px;
+  width: 28px;
+  height: 28px;
+  margin-right: var(--sp-2);
   -unity-background-scale-mode: scale-to-fit;
 }
 
 .research-node-name {
   flex-grow: 1;
   flex-shrink: 1;
-  color: rgb(255, 255, 255);
-  font-size: 24px;
-  -unity-font-style: bold;
-  white-space: normal;
 }
 
 .research-node-ring {
-  width: 48px;
-  height: 48px;
-  margin-left: 8px;
+  width: 28px;
+  height: 28px;
+  margin-left: var(--sp-1);
 }
 
-.research-node-effect {
-  margin-top: 6px;
-  color: rgb(255, 214, 120);
-  font-size: 20px;
-  white-space: normal;
+.research-node-numbers {
+  flex-direction: row;
+  flex-wrap: wrap;
 }
 
-.research-node-line {
-  margin-top: 2px;
-  color: rgb(225, 225, 225);
-  font-size: 20px;
-  white-space: normal;
+.research-node-cost {
+  margin-right: var(--sp-3);
 }
 
 .research-node-status {
-  margin-top: 6px;
-  color: rgb(255, 255, 255);
-  font-size: 20px;
+  color: var(--c-ink);
+  font-size: var(--font-sm);
   -unity-font-style: bold;
   white-space: normal;
-}
-
-.research-node-note {
-  margin-top: 2px;
-  color: rgb(255, 200, 90);
-  font-size: 20px;
-  white-space: normal;
-}
-
-.research-button {
-  min-height: 64px;
-  margin: 0;
-  padding: 8px 24px;
-  border-radius: 8px;
-  color: rgb(255, 255, 255);
-  font-size: 26px;
-  -unity-font-style: bold;
-}
-
-.research-button:disabled {
-  opacity: 0.4;
 }
 
 .research-toggle {
-  min-width: 160px;
-  margin-left: 184px;
-  background-color: rgb(60, 70, 120);
-}
-
-.research-close {
-  min-width: 64px;
-  padding: 8px;
-  background-color: rgb(110, 60, 56);
+  min-width: var(--dock-width);
+  margin-left: var(--dock-next);
 }
 
 .research-node-finance {
-  margin-top: 8px;
-  background-color: rgb(46, 98, 56);
+  min-width: 80px;
+  margin-left: var(--sp-2);
 }

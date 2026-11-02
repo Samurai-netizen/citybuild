@@ -1,21 +1,22 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
-  <!-- The connection banner and the blocking screen that ConnectionBanner shows (M0-55, docs/how-to/add-ui-screen.md). The banner is a strip under the
-       HUD that says why the city may be out of date, when it was last synced and offers one action; the blocker is a full-screen scrim with a card for a
-       game that does not match the server. Both are hidden while the connection is good, and the root takes no pointer. Style: ConnectionBanner.uss. -->
+  <!-- The connection banner and the blocking screen that ConnectionBanner shows (M0-55, docs/how-to/add-ui-screen.md). The banner is a parchment strip under
+       the HUD that says why the city may be out of date, when it was last synced and offers one action; the blocker is a full-screen scrim with a card for a
+       game that does not match the server. Both are hidden while the connection is good, and the root takes no pointer. Style: Common.uss and ConnectionBanner.uss. -->
+  <Style src="Common.uss" />
   <Style src="ConnectionBanner.uss" />
   <ui:VisualElement name="connection-root" class="connection-root" picking-mode="Ignore">
-    <ui:VisualElement name="connection-banner" class="connection-banner connection-banner--hidden">
-      <ui:VisualElement class="connection-banner-text" picking-mode="Ignore">
-        <ui:Label name="connection-message" class="connection-message" picking-mode="Ignore" />
-        <ui:Label name="connection-synced" class="connection-synced" picking-mode="Ignore" />
+    <ui:VisualElement name="connection-banner" class="connection-banner panel-parchment connection-banner--hidden">
+      <ui:Label name="connection-message" class="connection-message" picking-mode="Ignore" />
+      <ui:VisualElement class="connection-banner-row" picking-mode="Ignore">
+        <ui:Label name="connection-synced" class="connection-synced t-note" picking-mode="Ignore" />
+        <ui:Button name="connection-action" class="connection-button btn" text="Try again" />
       </ui:VisualElement>
-      <ui:Button name="connection-action" class="connection-button" text="Try again" />
     </ui:VisualElement>
-    <ui:VisualElement name="connection-blocker" class="connection-blocker connection-blocker--hidden">
-      <ui:VisualElement class="connection-card">
-        <ui:Label name="connection-blocker-title" class="connection-blocker-title" />
-        <ui:Label name="connection-blocker-message" class="connection-blocker-message" />
-        <ui:Button name="connection-blocker-action" class="connection-button connection-blocker-button" text="Check again" />
+    <ui:VisualElement name="connection-blocker" class="connection-blocker scrim connection-blocker--hidden">
+      <ui:VisualElement class="connection-card panel-parchment">
+        <ui:Label name="connection-blocker-title" class="t-title" />
+        <ui:Label name="connection-blocker-message" class="connection-blocker-message t-body" />
+        <ui:Button name="connection-blocker-action" class="connection-blocker-button btn btn--primary" text="Check again" />
       </ui:VisualElement>
     </ui:VisualElement>
   </ui:VisualElement>

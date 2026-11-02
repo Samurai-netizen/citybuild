@@ -1,35 +1,24 @@
-/* The build menu (docs/how-to/add-ui-screen.md): a button at the bottom left and, above it, a sheet of cards. M0-45. Sizes are in panel
-   units (the reference resolution is 1200 x 800), so a 64 button is well over the 48 dp touch target. */
+/* The build menu (docs/how-to/add-ui-screen.md): a button at the bottom left and, above it, a wooden tray of parchment cards. M0-45, restyled in CR-0007.
+   Colours and sizes come from Common.uss. */
 .build-root {
   position: absolute;
   left: 0;
   top: 0;
   right: 0;
   bottom: 0;
-  padding: 16px;
+  padding: var(--sp-2); /* replaced by the safe area in code */
   flex-direction: column;
   justify-content: flex-end;
   align-items: flex-start;
 }
 
 .build-toggle {
-  min-width: 160px;
-  min-height: 64px;
-  margin: 0;
-  padding: 8px 24px;
-  border-radius: 8px;
-  background-color: rgb(46, 98, 56);
-  color: rgb(255, 255, 255);
-  font-size: 26px;
-  -unity-font-style: bold;
+  min-width: var(--dock-width);
 }
 
 .build-panel {
   align-self: stretch;
-  margin-bottom: 12px;
-  padding: 8px;
-  border-radius: 10px;
-  background-color: rgba(0, 0, 0, 0.75);
+  margin-bottom: var(--sp-2);
 }
 
 .build-panel--hidden {
@@ -37,68 +26,65 @@
 }
 
 .build-cards {
-  min-height: 250px;
+  min-height: 150px;
 }
 
 .build-card {
-  width: 300px;
-  margin: 6px;
-  padding: 12px;
-  border-width: 3px;
-  border-radius: 8px;
-  border-color: rgb(70, 70, 70);
-  background-color: rgb(40, 44, 52);
+  width: 184px;
+  margin: 0 var(--sp-2) 0 0;
+  padding: var(--sp-2);
+  border-width: 2px;
+  border-radius: var(--radius-md);
+  border-color: var(--c-parchment-3);
+  background-color: var(--c-parchment);
 }
 
 .build-card--selected {
-  border-color: rgb(240, 200, 60);
+  border-color: var(--c-gold);
+  border-width: 3px;
 }
 
 .build-card--locked {
-  opacity: 0.5;
+  opacity: 0.55;
 }
 
 .card-header {
   flex-direction: row;
   align-items: center;
-  margin-bottom: 6px;
+  margin-bottom: var(--sp-1);
 }
 
 .card-icon {
-  width: 64px;
-  height: 64px;
-  margin-right: 10px;
+  width: 36px;
+  height: 36px;
+  margin-right: var(--sp-2);
   flex-shrink: 0;
   -unity-background-scale-mode: scale-to-fit;
 }
 
 .card-name {
   flex-shrink: 1;
-  margin: 0;
-  color: rgb(255, 255, 255);
-  font-size: 26px;
-  -unity-font-style: bold;
+  font-size: var(--font-md);
 }
 
 .card-line {
-  color: rgb(220, 220, 220);
-  font-size: 18px;
-  white-space: normal;
+  font-size: var(--font-sm);
 }
 
 .card-recipe {
-  margin-top: 4px;
-  color: rgb(170, 220, 170);
+  margin-top: var(--sp-1);
+  color: var(--c-go);
+  font-size: var(--font-sm);
+  white-space: normal;
 }
 
 .card-lock {
-  color: rgb(255, 150, 130);
-  font-size: 18px;
+  color: var(--c-stop);
+  font-size: var(--font-sm);
+  -unity-font-style: bold;
   white-space: normal;
 }
 
 .card-hint {
-  color: rgb(255, 200, 90);
-  font-size: 18px;
-  white-space: normal;
+  margin-top: 2px;
 }

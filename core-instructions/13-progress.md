@@ -8,9 +8,9 @@
 - **Task:** CR-0007-T1 · UI visual pass, every screen (`[S]`, Sonnet 5.5); last completed: M0-55 (merged)
 - **Branch:** `task/CR-0007-T1-ui-visual-pass`, stacked on `task/CR-0007-proposal` (PR #78, the CR; not merged yet)
 - **Build log entry:** `docs/build-log/2026/2026-11-01-14-CR-0007-T1.md` (In progress)
-- **Last green commit:** `5dc8a20` (the approved CR); nothing built yet on this branch
-- **Done steps:** write-ahead
-- **Next step:** plan step 1: the screenshot harness (scratch copy only: `<scratchpad>/unity-copy`, a PlayMode test that renders each screen at 2400 × 1080 to PNG), "before" shots; then 2 tokens and scale, 3 every stylesheet, 4 tests, 5 docs and `/finish-task`. Unity tests run on the copy (the owner's Editor is open): `<scratchpad>/run-unity-copy.sh`.
+- **Last green commit:** the head of this branch after the checkpoint (EditMode 927 / 927, PlayMode 165 / 165 on a copy of the project)
+- **Done steps:** write-ahead; screenshot harness (scratch only) and the "before" shots; `Common.uss`, the panel scale (by height, 880 × 400) and every screen restyled; `SharedLookTests`
+- **Next step:** docs per the recipe (09, add-ui-screen how-to, Presentation module doc, testing README, `client/README.md` [MANUAL] look, CHANGELOG, CR-0007 task row), `check-docs.sh`, handbook build, `/finish-task`, PR. The screenshots are in the scratchpad `shots/` (harness: `<scratchpad>/harness/ScreenshotHarness.cs`, `run-shots.sh`).
 - **Open questions for the owner:** CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-54: the dev database still runs the fast clock until the owner does step 7 of the waiting-loop run (`LOCAL-E2E.md`). M0-55: the [MANUAL] look at the connection states (`client/README.md`).
 - **Known broken / do not touch:** — (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55)
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
