@@ -209,7 +209,7 @@ namespace CityBuilder.Client.Net
             catch (Exception exception)
             {
                 // A listener of the pending list threw. That is no reason to leave the caller's task unfinished and the lane blocked for good.
-                Debug.LogException(exception);
+                ClientLog.Exception(exception);
             }
 
             if (outcome != null)
@@ -315,7 +315,7 @@ namespace CityBuilder.Client.Net
             }
             catch (Exception exception)
             {
-                Debug.LogException(exception);
+                ClientLog.Exception(exception);
             }
         }
 

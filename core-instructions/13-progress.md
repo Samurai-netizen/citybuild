@@ -5,19 +5,19 @@
 
 ## Resume point
 - **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (last completed: M0-56 · Proving idempotent retries; the PR is open, the owner merges it)
-- **Branch:** `task/M0-56-idempotent-retries` until the owner merges
-- **Build log entry:** `docs/build-log/2026/2026-11-02-01-M0-56.md` (Done)
-- **Last green commit:** the head of `task/M0-56-idempotent-retries`
-- **Done steps:** all of M0-56
-- **Next step:** the owner merges the M0-56 PR. Then `/start-task M0-57` (client logging, `[S]`: use Sonnet 5.5).
+- **Task:** — (last completed: M0-57 · Client logging; the PR is open, the owner merges it)
+- **Branch:** `task/M0-57-client-logging` until the owner merges
+- **Build log entry:** `docs/build-log/2026/2026-11-02-02-M0-57.md` (Done)
+- **Last green commit:** the head of `task/M0-57-client-logging`
+- **Done steps:** all of M0-57
+- **Next step:** the owner merges the M0-57 PR. Then `/start-task M0-58` (version and content compatibility, `[S]`: Sonnet 5.5).
 - **Open questions for the owner:** CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-54: the dev database still runs the fast clock until the owner does step 7 of the waiting-loop run (`LOCAL-E2E.md`). M0-55: the [MANUAL] look at the connection states (`client/README.md`). CR-0007-T1: the [MANUAL] look at the new UI (`client/README.md`); the status label may be removed (build log follow-ups).
 - **Known broken / do not touch:** — (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55)
 - **Verify with:** `bash scripts/dev/check-docs.sh` · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 56 / 85
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 57 / 85
 
 | Area | State | Notes |
 |---|---|---|
@@ -33,7 +33,7 @@
 | Era I art (CR-0005) | in progress | T1 `art/` adopted, merged (PR #66); T2 (first import, `ArtImportPostprocessor`) merged (PR #67); T3 (models in the city) merged (PR #68); T4 (icons) merged (PR #69); M0-50 (building status, uses the anchors and the site) merged (PR #70) |
 | Inspector, worker stepper, research screen, HUD | in progress | connection states M0-55 merged (`CommandAvailability`, `ConnectionBannerModel`, `ConnectionBanner`, `ConnectionFlow`); UI visual pass CR-0007-T1 merged (PR #79) (`Common.uss`, the panel scaled by height); waiting-loop review M0-54 merged (PR #76) (`PredictionWatch`; no mismatch in the owner's run at scale 60); welcome-back report M0-53 merged (PR #73) (`WelcomeBackModel`, `WelcomeBackPanel`, `WelcomeBackFlow`, `SettlementSummary`, `ResearchEffectText`); research screen M0-52 merged (PR #72) (`ResearchScreenModel`, `ResearchNodeModel`, `ResearchScreen`, `ResearchFlow`); building inspector with the worker stepper M0-51 merged (PR #71) (`BuildingInspectorModel`, `BuildingInspector`, `InspectorFlow`, `ItemText`); HUD M0-49 merged (PR #64) (`HudView`, `HudModel`, `ItemChipModel`, `ResearchRingModel`, `PerHourText`); building status visuals M0-50 merged (PR #70) (`BuildingStatusModel`, `BuildingStatusView`, `StatusArt`, `StalledTint`) |
 | Dev tooling (CR-0006) | done | server panel goods for the `devtest` account: `server-panel/goods.sql`, `panel.sh goods`, tests (CR-0006-T1) |
-| Resilience (limits, retries, logging) | in progress | error catalogue, global handler, rate limits and input limits M0-34 merged (PR #46); logging, correlation and the dev time scale M0-35 merged (PR #47) |
+| Resilience (limits, retries, logging) | in progress | client logging M0-57 in review (`ClientLogger`, `ClientLog`); error catalogue, global handler, rate limits and input limits M0-34 merged (PR #46); logging, correlation and the dev time scale M0-35 merged (PR #47) |
 | Docs automation (DocTools) + docs completeness | in progress | handbook, Pages, docs-as-code checks and a full audit: CR-0002 done (PR #27); code documentation CR-0003 done (PR #29); DocTools is M0-61 |
 | Balance simulator | not started | |
 | E2E / security / concurrency suites | in progress | server golden E2E over HTTP M0-36 merged (PR #48); lost responses and the kill check M0-56 in review (`docs/testing/KILL-SERVER-CHECK.md`) |

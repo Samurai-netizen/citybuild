@@ -3,6 +3,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using CityBuilder.Client.Core;
 using CityBuilder.Client.Net;
 using CityBuilder.Client.Presentation.Feedback;
 using CityBuilder.Client.Presentation.City;
@@ -223,7 +224,7 @@ namespace CityBuilder.Client.Presentation.Build
             catch (Exception exception)
             {
                 // Whatever it was, the bar must not stay on "Building…" for good.
-                Debug.LogException(exception);
+                ClientLog.Exception(exception);
                 if (!_disposed)
                 {
                     Fail(new ApiError(FeedbackMessages.CommandFailedCode, 0, exception.Message, null, null, null));

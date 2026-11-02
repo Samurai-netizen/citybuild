@@ -13,7 +13,7 @@ client directly (`.claude/rules/unity.md`). `GameRoot` builds it and runs the st
 ## Key types
 | Type | Responsibility |
 |---|---|
-| `ApiClient` | One method per endpoint (`DevLoginAsync`, `GetContentAsync`, `GetCityAsync`, and one per command); builds the URL and body, owns the timeout, returns an `ApiResult<T>`. Holds the bearer token in memory (`SetAccessToken`) |
+| `ApiClient` | One method per endpoint (`DevLoginAsync`, `GetContentAsync`, `GetCityAsync`, and one per command); builds the URL and body, owns the timeout, returns an `ApiResult<T>`. Holds the bearer token in memory (`SetAccessToken`). Logs each request (M0-57): a Debug line (`Request GET /city -> 200 in 41 ms`) when it worked, a Warning with the error code, status and the server's trace id when it did not; never a token or a body. Takes an optional `ClientLogger` (default `ClientLog.Default`) |
 | `ApiResult<T>` / `ApiError` | The DTO or the error, never both. `ApiError`: `Code`, `Status`, `Detail`, `TraceId`, `RequestId`, `RetryAfterSeconds` |
 | `ApiErrorCodes` | The 24 server codes of `05` and the three `CLIENT_` codes (`CLIENT_NETWORK_ERROR` and `CLIENT_TIMEOUT`, status 0; `CLIENT_INVALID_RESPONSE`, the HTTP status) |
 | `ApiResponseParser` | (status, body) to an `ApiResult<T>`; never throws on a bad body, never copies the body into an error |
@@ -72,6 +72,7 @@ captured from the real server, and the round-trip test. A new error code: add it
 
 ## Tests
 `Assets/_Project/Tests/EditMode/Net/` (`CityBuilder.Client.Tests.EditMode`), run by `scripts/dev/test-unity.sh`:
+- `ApiClientLoggingTests` (M0-57): one Debug line per request that worked with no token and no body, nothing at the release level, a Warning with the code and the trace id for a refusal, a lost connection and a timeout, a command's path but never its body.
 - `CommandIntentTests`, `CommandPolicyTests`, `CommandSenderTests` (real `ApiClient`, `FakeTransport`, `FakeDelay`): endpoint and body of each command; the same
   request id on every retry and the waits; 422 and the other refusals not repeated; success after two timeouts applies one snapshot; five rapid
   stepper taps send one command with the final value; the order of two targets of one building; cancellation leaves nothing pending; `Completed` (M0-47) fires once for a success, a refusal and a lost connection, not for a replaced target or a cancel, and a throwing listener is logged.
@@ -103,4 +104,4 @@ captured from the real server, and the round-trip test. A new error code: add it
   matching builds.
 - The real transport was walked against a running server once (M0-37 build log); it is not in CI (Unity tests are not).
 
-Last updated: M0-56
+Last updated: M0-57

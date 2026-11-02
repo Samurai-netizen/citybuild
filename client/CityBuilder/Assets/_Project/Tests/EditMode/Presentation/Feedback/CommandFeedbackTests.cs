@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using CityBuilder.Client.Core;
 using CityBuilder.Client.Net;
 using CityBuilder.Client.Presentation.Feedback;
+using CityBuilder.Client.Tests.EditMode.Core;
 using CityBuilder.Client.Tests.EditMode.Net;
 using NUnit.Framework;
 using UnityEngine;
@@ -103,6 +104,23 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Feedback
             Assert.That(_queue.Visible.Count, Is.EqualTo(1));
             Assert.That(_queue.Visible[0].Kind, Is.EqualTo(ToastKind.Error));
             Assert.That(_queue.Visible[0].Text, Is.EqualTo("All builders are busy"));
+        }
+
+        /// <summary>The Warning for a refused command carries the server's trace id, so the client log and the server log can be matched (M0-57).</summary>
+        [Test]
+        public async Task ARefusal_LogsTheTraceIdOfTheError()
+        {
+            RecordingLogSink sink = new RecordingLogSink();
+            _feedback.Dispose();
+            _feedback = new CommandFeedback(_sender, _queue, () => 0, new ClientLogger(LogLevel.Debug, sink));
+            _transport.Answer(409, Fixtures.Read("error-409-NO_FREE_BUILDER.json"));
+
+            await _sender.SendAsync(CommandIntent.UpgradeBuilding(1), CancellationToken.None);
+
+            var commandWarning = sink.Lines.Find(line => line.Message.StartsWith("Command "));
+            Assert.That(commandWarning.Level, Is.EqualTo(LogLevel.Warning));
+            Assert.That(commandWarning.Message, Does.Contain("NO_FREE_BUILDER"));
+            Assert.That(commandWarning.Message, Does.Contain("[trace 00-"));
         }
 
         /// <summary>A command that never got an answer shows the retry hint, not a transport message.</summary>

@@ -77,6 +77,10 @@ Never log: tokens, signing keys, full request bodies in production, personal dat
   `Security_DevLoginRefused_LogsTheCodeNotTheName`, `Security_DevLoginPastItsLimit_LogsNoAddress`, `Security_CommandRequest_LogsNoBody`,
   `Security_PostDevLogin_LogsThePlayerNeverTheNameOrToken`.
 
+- As built on the client (M0-57): every line goes through `ClientLog` (`LoggingPolicyTests` fails on a direct `Debug.Log*`). A request is logged by method,
+  path, status and duration only, a failed one with its error code and the server's trace id; no token and no body, in any build, so a release
+  build (level Warning) writes the failures and nothing of the traffic. Tests: `ApiClientLoggingTests`.
+
 ## Known limitations in M0 (document, don't hide)
 - Dev auth only: no real account system and no token revocation; a token stays valid until it expires (12 h by default), and changing
   `Auth:SigningKey` is the only way to end every token at once.

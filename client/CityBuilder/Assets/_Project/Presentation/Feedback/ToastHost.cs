@@ -1,5 +1,6 @@
 #nullable enable
 
+using CityBuilder.Client.Core;
 using CityBuilder.Client.Presentation.Ui;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -74,7 +75,7 @@ namespace CityBuilder.Client.Presentation.Feedback
             var layout = Resources.Load<VisualTreeAsset>(LayoutPath);
             if (panelSettings == null || layout == null)
             {
-                Debug.LogError(
+                ClientLog.Error(
                     "ToastHost: cannot show toasts, an asset is missing under Assets/_Project/Resources: " +
                     $"{PanelSettingsPath} {(panelSettings == null ? "missing" : "found")}, " +
                     $"{LayoutPath} {(layout == null ? "missing" : "found")}.");
@@ -108,7 +109,7 @@ namespace CityBuilder.Client.Presentation.Feedback
             _list = root?.Q<VisualElement>(ListName);
             if (_queue == null || root == null || _list == null)
             {
-                Debug.LogError($"ToastHost: the layout lacks '{ListName}'.");
+                ClientLog.Error($"ToastHost: the layout lacks '{ListName}'.");
                 return;
             }
 

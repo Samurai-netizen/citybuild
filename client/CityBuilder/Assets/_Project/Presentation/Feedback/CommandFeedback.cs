@@ -1,8 +1,8 @@
 #nullable enable
 
 using System;
+using CityBuilder.Client.Core;
 using CityBuilder.Client.Net;
-using UnityEngine;
 
 namespace CityBuilder.Client.Presentation.Feedback
 {
@@ -27,16 +27,21 @@ namespace CityBuilder.Client.Presentation.Feedback
         /// <summary>Whether <see cref="Dispose"/> has run.</summary>
         private bool _disposed;
 
+        /// <summary>Where the log line of a failed command goes (M0-57).</summary>
+        private readonly ClientLogger _log;
+
         /// <summary>Starts listening to the sender.</summary>
         /// <param name="sender">The command sender.</param>
         /// <param name="queue">The toasts to add to.</param>
         /// <param name="nowMilliseconds">The time now in the queue's milliseconds (<see cref="ToastHost.NowMilliseconds"/> in the game).</param>
-        /// <exception cref="ArgumentNullException">An argument is null.</exception>
-        public CommandFeedback(CommandSender sender, ToastQueue queue, Func<long> nowMilliseconds)
+        /// <param name="logger">Where the log line of a failed command goes; null means <see cref="ClientLog.Default"/>. A test passes a recording one.</param>
+        /// <exception cref="ArgumentNullException">An argument other than the logger is null.</exception>
+        public CommandFeedback(CommandSender sender, ToastQueue queue, Func<long> nowMilliseconds, ClientLogger? logger = null)
         {
             _sender = sender ?? throw new ArgumentNullException(nameof(sender));
             _queue = queue ?? throw new ArgumentNullException(nameof(queue));
             _nowMilliseconds = nowMilliseconds ?? throw new ArgumentNullException(nameof(nowMilliseconds));
+            _log = logger ?? ClientLog.Default;
             _sender.Completed += OnCompleted;
         }
 
@@ -63,7 +68,7 @@ namespace CityBuilder.Client.Presentation.Feedback
                 case CommandOutcomeKind.Failed:
                     ApiError error = outcome.Error
                         ?? new ApiError(FeedbackMessages.CommandFailedCode, 0, "The command did not finish.", null, outcome.RequestId, null);
-                    Debug.LogWarning("Command " + outcome.Intent.Kind + " failed after " + outcome.Attempts + " request(s): " + error);
+                    _log.Warning("Command " + outcome.Intent.Kind + " failed after " + outcome.Attempts + " request(s): " + error);
                     _queue.Show(ToastKind.Error, FeedbackMessages.ForError(error), _nowMilliseconds());
                     break;
             }
