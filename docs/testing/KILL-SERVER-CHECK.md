@@ -24,7 +24,7 @@ bash docs/testing/kill-server-check.sh
 5. It counts the rows of the 60 cities.
 
 ## Reading the result
-A good run ends like this (the numbers of the first line change from run to run):
+A line from bash that says `Killed: 9` is the script's own kill, not a fault. A good run ends like this (the numbers of the first line change from run to run):
 ```
    answered 200: 7 · applied in the database: 8 · applied with the answer lost: 1 · not applied: 52
 == Starting the server again and sending every command again with the same request id
