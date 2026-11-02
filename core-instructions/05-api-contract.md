@@ -229,6 +229,12 @@ Fixed windows, in memory, one process; the numbers are configuration (`RateLimit
 - Behind a reverse proxy the remote address is the proxy's until forwarded headers are configured *(planned, with the deployment)*; the
   dev login exists in Development only (`07`).
 
+## Request headers
+- `Authorization: Bearer <token>` on everything except the dev login.
+- `X-Client-Version: <build version>` (M0-58), sent by the client on every request: the Unity `Application.version`, for example `0.1.0`, 1 to 32
+  characters of ASCII letters, digits, `.`, `-`, `+` and `_`. The server logs it (`ClientVersion` in the log scope of the request, `docs/api/logs-and-correlation.md`)
+  and refuses nothing over it yet; a missing or unusable header is logged as `none` or `invalid`. Rejecting unsupported builds is a later task.
+
 ## Versioning
 Breaking changes → `/api/v2`. Content changes → a new `contentVersion`; the client refetches `/content`
 when the snapshot's `contentVersion` differs from what it has. Market and guild endpoints (M2) will live
