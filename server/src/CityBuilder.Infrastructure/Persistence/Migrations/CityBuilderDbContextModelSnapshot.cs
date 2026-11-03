@@ -146,6 +146,37 @@ namespace CityBuilder.Infrastructure.Persistence.Migrations
                     b.ToTable("city_research", (string)null);
                 });
 
+            modelBuilder.Entity("CityBuilder.Infrastructure.Persistence.Rows.CityRoadRow", b =>
+                {
+                    b.Property<Guid>("CityId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("city_id");
+
+                    b.Property<short>("X")
+                        .HasColumnType("smallint")
+                        .HasColumnName("x");
+
+                    b.Property<short>("Y")
+                        .HasColumnType("smallint")
+                        .HasColumnName("y");
+
+                    b.Property<short>("Level")
+                        .HasColumnType("smallint")
+                        .HasColumnName("level");
+
+                    b.HasKey("CityId", "X", "Y")
+                        .HasName("pk_city_roads");
+
+                    b.ToTable("city_roads", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_city_roads_level", "level >= 1");
+
+                            t.HasCheckConstraint("ck_city_roads_x", "x >= 0");
+
+                            t.HasCheckConstraint("ck_city_roads_y", "y >= 0");
+                        });
+                });
+
             modelBuilder.Entity("CityBuilder.Infrastructure.Persistence.Rows.CityRow", b =>
                 {
                     b.Property<Guid>("Id")
@@ -355,6 +386,16 @@ namespace CityBuilder.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_city_research_cities_city_id");
+                });
+
+            modelBuilder.Entity("CityBuilder.Infrastructure.Persistence.Rows.CityRoadRow", b =>
+                {
+                    b.HasOne("CityBuilder.Infrastructure.Persistence.Rows.CityRow", null)
+                        .WithMany()
+                        .HasForeignKey("CityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_city_roads_cities_city_id");
                 });
 
             modelBuilder.Entity("CityBuilder.Infrastructure.Persistence.Rows.CityRow", b =>

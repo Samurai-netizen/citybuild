@@ -51,7 +51,26 @@ namespace CityBuilder.Client.Tests.EditMode.Net
                     Assert.That(city.TryGetBuilding(building.Id, out Building? mapped), Is.True, name);
                     Assert.That(StallReason.Of(city, content, mapped!)?.ToString(), Is.EqualTo(building.StallReason), name + " building " + building.Id);
                 }
+
+                Assert.That(
+                    city.Roads.Select(road => (road.X, road.Y, road.Level)),
+                    Is.EqualTo(dto.Roads.Select(road => (road.X, road.Y, road.Level))),
+                    name);
             }
+        }
+
+        /// <summary>The answer's roads reach the engine's city with their tiles and levels, so the client's map is the server's (CR-0008).</summary>
+        [Test]
+        public void ToSnapshot_Roads_AreKept()
+        {
+            CitySnapshotDto dto = CityTestData.Dto("snapshot-city-producing.json");
+            dto.City.Roads.Add(new SnapshotRoadDto(4, 4, 2));
+            dto.City.Roads.Add(new SnapshotRoadDto(5, 4, 1));
+
+            CityState city = SnapshotMapper.ToSnapshot(dto).Value!.CopyCity();
+
+            Assert.That(city.Roads.Select(road => (road.X, road.Y, road.Level)), Is.EqualTo(new[] { (4, 4, 2), (5, 4, 1) }));
+            Assert.That(CityQueries.TileAt(city, 4, 4), Is.EqualTo(TileContent.Road));
         }
 
         /// <summary>A producing building keeps every timer and labor value, and the version and content version come along.</summary>
@@ -143,7 +162,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(SnapshotMapper.ToSnapshot(dto).Value!.CopyCity().NextBuildingId, Is.EqualTo(1));
         }
 
-        /// <summary>Values no city can have are a broken answer, reported as such: two buildings on a tile, a producing building whose end doesn't follow from its labor, research without times.</summary>
+        /// <summary>Values no city can have are a broken answer, reported as such: two buildings on a tile, a producing building whose end doesn't follow from its labor, research without times, a road on a building's tile.</summary>
         [Test]
         public void ToSnapshot_ValuesThatFormNoCity_AreAnInvalidResponse()
         {
@@ -165,10 +184,14 @@ namespace CityBuilder.Client.Tests.EditMode.Net
                     noTimes.City.Workers,
                     noTimes.City.Builders,
                     new SnapshotResearchDto("trade_charter", null, null, noTimes.City.Research.Completed),
-                    noTimes.City.Buildings),
+                    noTimes.City.Buildings,
+                    noTimes.City.Roads),
                 noTimes.Settlement);
+            CitySnapshotDto roadOnABuilding = CityTestData.Dto("snapshot-city-producing.json");
+            SnapshotBuildingDto first = roadOnABuilding.City.Buildings[0];
+            roadOnABuilding.City.Roads.Add(new SnapshotRoadDto(first.X, first.Y, 1));
 
-            foreach (CitySnapshotDto broken in new[] { sameTile, badTimer, researchWithoutTimes })
+            foreach (CitySnapshotDto broken in new[] { sameTile, badTimer, researchWithoutTimes, roadOnABuilding })
             {
                 ApiResult<CitySnapshot> result = SnapshotMapper.ToSnapshot(broken);
 

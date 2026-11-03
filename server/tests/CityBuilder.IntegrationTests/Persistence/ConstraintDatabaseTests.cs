@@ -30,6 +30,7 @@ public sealed class ConstraintDatabaseTests(PostgresServer server) : PostgresTes
 
         await using CityBuilderDbContext db = Database.CreateContext();
         Assert.Equal(6, await db.CityBuildings.CountAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(3, await db.CityRoads.CountAsync(TestContext.Current.CancellationToken));
     }
 
     /// <summary>Two buildings of one city on the same tile break the unique index on <c>(city_id, x, y)</c>.</summary>
@@ -64,6 +65,33 @@ public sealed class ConstraintDatabaseTests(PostgresServer server) : PostgresTes
         Assert.Equal((_checkViolation, "ck_city_buildings_assigned_workers"), (error.SqlState, error.ConstraintName));
     }
 
+    /// <summary>A road at level 0 breaks <c>level &gt;= 1</c> of <c>city_roads</c> (CR-0008).</summary>
+    [Fact]
+    public async Task SaveChangesAsync_RoadBelowLevelOne_ViolatesTheRoadLevelCheck()
+    {
+        PostgresException error = await InsertFullCityFailsAsync(rows => rows.Roads[0].Level = 0);
+
+        Assert.Equal((_checkViolation, "ck_city_roads_level"), (error.SqlState, error.ConstraintName));
+    }
+
+    /// <summary>A road at a negative column breaks <c>x &gt;= 0</c> of <c>city_roads</c>.</summary>
+    [Fact]
+    public async Task SaveChangesAsync_RoadAtNegativeColumn_ViolatesTheRoadColumnCheck()
+    {
+        PostgresException error = await InsertFullCityFailsAsync(rows => rows.Roads[0].X = -1);
+
+        Assert.Equal((_checkViolation, "ck_city_roads_x"), (error.SqlState, error.ConstraintName));
+    }
+
+    /// <summary>A road at a negative row breaks <c>y &gt;= 0</c> of <c>city_roads</c>.</summary>
+    [Fact]
+    public async Task SaveChangesAsync_RoadAtNegativeRow_ViolatesTheRoadRowCheck()
+    {
+        PostgresException error = await InsertFullCityFailsAsync(rows => rows.Roads[0].Y = -1);
+
+        Assert.Equal((_checkViolation, "ck_city_roads_y"), (error.SqlState, error.ConstraintName));
+    }
+
     /// <summary>Writes the full sample city's rows changed by <paramref name="breakRows"/> and expects PostgreSQL to refuse them.</summary>
     /// <param name="breakRows">Breaks one value of the rows.</param>
     /// <returns>PostgreSQL's error.</returns>
@@ -90,6 +118,7 @@ public sealed class ConstraintDatabaseTests(PostgresServer server) : PostgresTes
         db.CityInventory.AddRange(rows.Inventory);
         db.CityBuildings.AddRange(rows.Buildings);
         db.CityResearch.AddRange(rows.Research);
+        db.CityRoads.AddRange(rows.Roads);
 
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
     }

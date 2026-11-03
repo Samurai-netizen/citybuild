@@ -141,6 +141,12 @@ namespace CityBuilder.Client.Net
                 buildings.Add(ToBuilding(building));
             }
 
+            var roads = new List<RoadTile>(city.Roads.Count);
+            foreach (SnapshotRoadDto road in city.Roads)
+            {
+                roads.Add(new RoadTile(road.X, road.Y, road.Level));
+            }
+
             return new CityState(
                 city.Clock,
                 city.Era,
@@ -148,7 +154,8 @@ namespace CityBuilder.Client.Net
                 inventory,
                 buildings,
                 city.Research.Completed.ConvertAll(id => new ResearchId(id)),
-                ToActiveResearch(city.Research));
+                ToActiveResearch(city.Research),
+                roads);
         }
 
         /// <summary>One building; the phase names match the engine's one to one.</summary>

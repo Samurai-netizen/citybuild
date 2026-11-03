@@ -37,6 +37,7 @@ public sealed partial class PersistenceModelTests
             ("cycle_labor", "bigint", true), ("labor_remaining", "bigint", true), ("segment_started_at", "bigint", true),
         ],
         ["city_research"] = [("city_id", "uuid", false), ("research_id", "text", false), ("completed_at", "bigint", false)],
+        ["city_roads"] = [("city_id", "uuid", false), ("x", "smallint", false), ("y", "smallint", false), ("level", "smallint", false)],
         ["command_receipts"] =
         [
             ("player_id", "uuid", false), ("request_id", "uuid", false), ("command_type", "text", false), ("payload_hash", "bytea", false),
@@ -53,7 +54,7 @@ public sealed partial class PersistenceModelTests
     /// <summary>The names of the tables in 06, for the theories.</summary>
     public static TheoryData<string> TableNames => [.. _expectedColumns.Keys];
 
-    /// <summary>The model has exactly the seven tables of 06 (EF's own migrations history table is not part of the model).</summary>
+    /// <summary>The model has exactly the eight tables of 06 (EF's own migrations history table is not part of the model).</summary>
     [Fact]
     public void Tables_Model_AreTheTablesOfTheDataModel()
     {
@@ -102,6 +103,7 @@ public sealed partial class PersistenceModelTests
     [InlineData("city_inventory", "city_id,item_id")]
     [InlineData("city_buildings", "city_id,building_id")]
     [InlineData("city_research", "city_id,research_id")]
+    [InlineData("city_roads", "city_id,x,y")]
     [InlineData("command_receipts", "player_id,request_id")]
     [InlineData("ledger_entries", "id")]
     public void PrimaryKey_EachTable_IsTheKeyOfTheDataModel(string tableName, string keyColumns)
@@ -148,6 +150,9 @@ public sealed partial class PersistenceModelTests
                 ("city_buildings", "ck_city_buildings_x", "x >= 0"),
                 ("city_buildings", "ck_city_buildings_y", "y >= 0"),
                 ("city_inventory", "ck_city_inventory_quantity", "quantity >= 0"),
+                ("city_roads", "ck_city_roads_level", "level >= 1"),
+                ("city_roads", "ck_city_roads_x", "x >= 0"),
+                ("city_roads", "ck_city_roads_y", "y >= 0"),
             ],
             Tables().SelectMany(t => t.CheckConstraints.Select(c => (t.Name, c.Name, c.Sql)))
                 .OrderBy(c => c.Item2, StringComparer.Ordinal));
@@ -166,6 +171,7 @@ public sealed partial class PersistenceModelTests
                 ("city_buildings", "fk_city_buildings_cities_city_id", "city_id", "cities", ReferentialAction.Cascade),
                 ("city_inventory", "fk_city_inventory_cities_city_id", "city_id", "cities", ReferentialAction.Cascade),
                 ("city_research", "fk_city_research_cities_city_id", "city_id", "cities", ReferentialAction.Cascade),
+                ("city_roads", "fk_city_roads_cities_city_id", "city_id", "cities", ReferentialAction.Cascade),
                 ("command_receipts", "fk_command_receipts_players_player_id", "player_id", "players", ReferentialAction.Restrict),
                 ("ledger_entries", "fk_ledger_entries_cities_city_id", "city_id", "cities", ReferentialAction.Restrict),
             ],

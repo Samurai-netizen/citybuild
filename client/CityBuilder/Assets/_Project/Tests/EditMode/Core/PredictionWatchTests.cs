@@ -130,5 +130,18 @@ namespace CityBuilder.Client.Tests.EditMode.Core
             Assert.That(PredictionWatch.ToJson(_store.Snapshot!.CopyCity()), Is.EqualTo(PredictionWatch.ToJson(city)));
             Assert.That(PredictionWatch.ToJson(city), Does.StartWith("{\"clock\":" + city.Clock));
         }
+
+        /// <summary>Two cities that differ only in a road give different texts: the roads are stored values too (CR-0008).</summary>
+        [Test]
+        public void ToJson_ACityWithARoad_DiffersFromTheCityWithout()
+        {
+            CityState city = _store.Snapshot!.CopyCity();
+            var withRoad = new CityState(
+                city.Clock, city.Era, city.NextBuildingId, city.Inventory, city.Buildings, city.CompletedResearch, city.ActiveResearch,
+                new[] { new RoadTile(7, 7, 2) });
+
+            Assert.That(PredictionWatch.ToJson(withRoad), Is.Not.EqualTo(PredictionWatch.ToJson(city)));
+            Assert.That(PredictionWatch.ToJson(withRoad), Does.EndWith(",\"roads\":[{\"x\":7,\"y\":7,\"level\":2}]}"));
+        }
     }
 }

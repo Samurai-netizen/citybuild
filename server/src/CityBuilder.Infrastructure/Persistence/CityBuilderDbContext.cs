@@ -26,6 +26,9 @@ public sealed class CityBuilderDbContext(DbContextOptions<CityBuilderDbContext> 
     /// <summary>The <c>city_research</c> table.</summary>
     public DbSet<CityResearchRow> CityResearch => Set<CityResearchRow>();
 
+    /// <summary>The <c>city_roads</c> table (CR-0008).</summary>
+    public DbSet<CityRoadRow> CityRoads => Set<CityRoadRow>();
+
     /// <summary>The <c>command_receipts</c> table.</summary>
     public DbSet<CommandReceiptRow> CommandReceipts => Set<CommandReceiptRow>();
 
@@ -43,6 +46,7 @@ public sealed class CityBuilderDbContext(DbContextOptions<CityBuilderDbContext> 
         modelBuilder.ApplyConfiguration(new CityInventoryConfiguration());
         modelBuilder.ApplyConfiguration(new CityBuildingConfiguration());
         modelBuilder.ApplyConfiguration(new CityResearchConfiguration());
+        modelBuilder.ApplyConfiguration(new CityRoadConfiguration());
         modelBuilder.ApplyConfiguration(new CommandReceiptConfiguration());
         modelBuilder.ApplyConfiguration(new LedgerEntryConfiguration());
     }

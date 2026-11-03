@@ -58,7 +58,8 @@ namespace CityBuilder.Client.Core
 
         /// <summary>
         /// Every stored value of <paramref name="city"/> as one line of JSON, in an order that does not depend on the dictionary or the list: items
-        /// and research by id, buildings by id, items with no stock left out. Two cities that are the same give the same text.
+        /// and research by id, buildings by id, roads by tile (column, then row, the engine's order), items with no stock left out. Two cities that
+        /// are the same give the same text.
         /// </summary>
         /// <param name="city">The city.</param>
         /// <returns>The text.</returns>
@@ -120,6 +121,14 @@ namespace CityBuilder.Client.Core
             foreach (Building building in buildings.Values)
             {
                 text.Append(separator).Append(ToJson(building));
+                separator = ",";
+            }
+
+            text.Append("],\"roads\":[");
+            separator = string.Empty;
+            foreach (RoadTile road in city.Roads)
+            {
+                text.Append(separator).Append(Invariant($"{{\"x\":{road.X},\"y\":{road.Y},\"level\":{road.Level}}}"));
                 separator = ",";
             }
 

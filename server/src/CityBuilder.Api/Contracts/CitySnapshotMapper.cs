@@ -50,7 +50,8 @@ public static class CitySnapshotMapper
                     CityQueries.WorkersProvided(state, content), CityQueries.WorkersAssigned(state), CityQueries.FreeWorkers(state, content)),
                 new SnapshotBuilders(content.Rules.BuilderSlots, CityQueries.BuildersBusy(state)),
                 ToResearch(state),
-                state.Buildings.OrderBy(building => building.Id).Select(building => ToBuilding(state, content, building)).ToArray()),
+                state.Buildings.OrderBy(building => building.Id).Select(building => ToBuilding(state, content, building)).ToArray(),
+                state.Roads.OrderBy(road => road.X).ThenBy(road => road.Y).Select(road => new SnapshotRoad(road.X, road.Y, road.Level)).ToArray()),
             new SnapshotSettlement(
                 settlement.ElapsedSeconds,
                 settlement.ProductionSeconds,

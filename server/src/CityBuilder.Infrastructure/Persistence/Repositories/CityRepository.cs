@@ -43,8 +43,9 @@ public sealed class CityRepository(CityBuilderDbContext db, TimeProvider timePro
         List<CityInventoryRow> inventory = await _db.CityInventory.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
         List<CityBuildingRow> buildings = await _db.CityBuildings.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
         List<CityResearchRow> research = await _db.CityResearch.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
+        List<CityRoadRow> roads = await _db.CityRoads.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
 
-        return CityMapping.ToAggregate(new CityRows(city, inventory, buildings, research));
+        return CityMapping.ToAggregate(new CityRows(city, inventory, buildings, research, roads));
     }
 
     /// <summary>
@@ -74,8 +75,8 @@ public sealed class CityRepository(CityBuilderDbContext db, TimeProvider timePro
 
     /// <inheritdoc />
     /// <remarks>
-    /// A loaded city's rows are updated in place: changed values are written, new buildings, items and completed research inserted, an
-    /// item the city no longer holds set to 0 (never deleted), a building or research the state no longer has deleted. A city this
+    /// A loaded city's rows are updated in place: changed values are written, new buildings, items, completed research and roads inserted, an
+    /// item the city no longer holds set to 0 (never deleted), a building, research or road the state no longer has deleted (a removed road). A city this
     /// context doesn't track is inserted with all its rows. Wall times come from one reading of the clock.
     /// </remarks>
     public void Save(CityAggregate city, IReadOnlyList<LedgerEntry> ledger, CommandReceipt? receipt)
@@ -96,6 +97,7 @@ public sealed class CityRepository(CityBuilderDbContext db, TimeProvider timePro
             _db.CityInventory.AddRange(rows.Inventory);
             _db.CityBuildings.AddRange(rows.Buildings);
             _db.CityResearch.AddRange(rows.Research);
+            _db.CityRoads.AddRange(rows.Roads);
         }
         else
         {
@@ -104,6 +106,7 @@ public sealed class CityRepository(CityBuilderDbContext db, TimeProvider timePro
             MergeInventory(city.CityId, rows.Inventory);
             Merge(_db.CityBuildings, city.CityId, rows.Buildings, row => row.CityId, row => row.BuildingId);
             Merge(_db.CityResearch, city.CityId, rows.Research, row => row.CityId, row => row.ResearchId);
+            Merge(_db.CityRoads, city.CityId, rows.Roads, row => row.CityId, row => (row.X, row.Y));
         }
 
         _db.LedgerEntries.AddRange(ledger.Select(entry => LedgerMapping.ToRow(city.CityId, entry, now)));

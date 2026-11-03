@@ -76,6 +76,17 @@ public sealed class CityMappingTests
         Assert.Equal([(CityId, "masonry", 120L)], rows.Research.Select(row => (row.CityId, row.ResearchId, row.CompletedAt)));
     }
 
+    /// <summary>Each road becomes one <c>city_roads</c> row for the city with its tile and level, in the engine's order (column, then row).</summary>
+    [Fact]
+    public void ToRows_FullCity_WritesARowPerRoad()
+    {
+        CityRows rows = CityMapping.ToRows(Full());
+
+        Assert.Equal(
+            [(CityId, (short)2, (short)1, (short)1), (CityId, (short)3, (short)1, (short)2), (CityId, (short)4, (short)0, (short)1)],
+            rows.Roads.Select(row => (row.CityId, row.X, row.Y, row.Level)));
+    }
+
     /// <summary>
     /// Each phase's row: a column is null exactly when the phase doesn't use it, and a cycle started at clock 0 stores 0, not null. Columns:
     /// phase, start, end, target level, cycle labor, labor remaining, segment start.
@@ -132,7 +143,8 @@ public sealed class CityMappingTests
 
     /// <summary>
     /// Rows that break a rule are rejected on load with <see cref="InvalidOperationException"/>: a column set or null against its building's
-    /// phase, an unknown phase, a partial running research, a research both completed and running, and a row of another city.
+    /// phase, an unknown phase, a partial running research, a research both completed and running, a row of another city, and a road on a
+    /// building's tile, on a tile twice or below level 1.
     /// </summary>
     [Theory]
     [InlineData("idle with a start")]
@@ -149,6 +161,10 @@ public sealed class CityMappingTests
     [InlineData("research completed and running")]
     [InlineData("building of another city")]
     [InlineData("research row of another city")]
+    [InlineData("road row of another city")]
+    [InlineData("road on a building's tile")]
+    [InlineData("two roads on one tile")]
+    [InlineData("road at level 0")]
     public void ToAggregate_BrokenRow_Throws(string breakage)
     {
         CityRows rows = CityMapping.ToRows(Full());
@@ -170,6 +186,10 @@ public sealed class CityMappingTests
             case "research completed and running": rows.City.ResearchId = "masonry"; break;
             case "building of another city": Building(IdleId).CityId = Guid.NewGuid(); break;
             case "research row of another city": rows.Research[0].CityId = Guid.NewGuid(); break;
+            case "road row of another city": rows.Roads[0].CityId = Guid.NewGuid(); break;
+            case "road on a building's tile": rows.Roads[0].X = 0; rows.Roads[0].Y = 0; break;
+            case "two roads on one tile": rows.Roads[1].X = rows.Roads[0].X; rows.Roads[1].Y = rows.Roads[0].Y; break;
+            case "road at level 0": rows.Roads[0].Level = 0; break;
             default: throw new ArgumentOutOfRangeException(nameof(breakage), breakage, "Not a breakage of this test.");
         }
 

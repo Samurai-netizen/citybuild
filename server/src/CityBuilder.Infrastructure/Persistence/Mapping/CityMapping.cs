@@ -29,10 +29,10 @@ public static class CityMapping
     /// <summary>
     /// The city's rows as they are now. The <c>cities</c> row carries the aggregate's <see cref="CityAggregate.StateVersion"/>; its wall
     /// times (<c>created_at</c>, <c>updated_at</c>) are left at their default for the repository to set. Inventory rows exist only for the
-    /// items the city holds (the engine drops an item at 0).
+    /// items the city holds (the engine drops an item at 0), road rows only for the tiles that have a road.
     /// </summary>
     /// <param name="city">The city.</param>
-    /// <returns>The rows, children in the engine's order (items and research by id, buildings by id).</returns>
+    /// <returns>The rows, children in the engine's order (items and research by id, buildings by id, roads by column, then row).</returns>
     /// <exception cref="InvalidOperationException">A completed research has no completion clock (the city was advanced around
     /// <see cref="CityAggregate.Advance"/>).</exception>
     /// <exception cref="OverflowException">A value doesn't fit its column (<c>smallint</c>).</exception>
@@ -64,8 +64,17 @@ public static class CityMapping
         var research = state.CompletedResearch
             .Select(id => new CityResearchRow { CityId = city.CityId, ResearchId = id.Value, CompletedAt = CompletedAt(city, id) })
             .ToList();
+        var roads = state.Roads
+            .Select(road => new CityRoadRow
+            {
+                CityId = city.CityId,
+                X = checked((short)road.X),
+                Y = checked((short)road.Y),
+                Level = checked((short)road.Level),
+            })
+            .ToList();
 
-        return new CityRows(cityRow, inventory, buildings, research);
+        return new CityRows(cityRow, inventory, buildings, research, roads);
     }
 
     /// <summary>The city the rows describe, with its engine state built from them.</summary>
@@ -87,7 +96,8 @@ public static class CityMapping
                 rows.Inventory.Select(row => new KeyValuePair<ItemId, long>(new ItemId(row.ItemId), row.Quantity)),
                 rows.Buildings.Select(ToBuilding),
                 rows.Research.Select(row => new ResearchId(row.ResearchId)),
-                ToActiveResearch(city));
+                ToActiveResearch(city),
+                rows.Roads.Select(row => new RoadTile(row.X, row.Y, row.Level)));
             IEnumerable<KeyValuePair<ResearchId, long>> completedAt =
                 rows.Research.Select(row => new KeyValuePair<ResearchId, long>(new ResearchId(row.ResearchId), row.CompletedAt));
 
@@ -236,7 +246,8 @@ public static class CityMapping
         Guid cityId = rows.City.Id;
         bool allOwn = rows.Inventory.All(row => row.CityId == cityId)
             && rows.Buildings.All(row => row.CityId == cityId)
-            && rows.Research.All(row => row.CityId == cityId);
+            && rows.Research.All(row => row.CityId == cityId)
+            && rows.Roads.All(row => row.CityId == cityId);
         if (!allOwn)
         {
             throw new InvalidOperationException($"The rows of city {cityId} include a row of another city.");

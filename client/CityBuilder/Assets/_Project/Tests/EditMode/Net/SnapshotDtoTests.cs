@@ -34,7 +34,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             return Fixtures.Names("snapshot-");
         }
 
-        /// <summary>A starter city: coins and logs in stock, no buildings, no research, <c>requestId</c> null because <c>GET /city</c> is no command.</summary>
+        /// <summary>A starter city: coins and logs in stock, no buildings, no roads, no research, <c>requestId</c> null because <c>GET /city</c> is no command.</summary>
         [Test]
         public void CityStart_HasTheStarterCityAndNoRequestId()
         {
@@ -46,9 +46,27 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(snapshot.City.Inventory["coins"], Is.EqualTo(700L));
             Assert.That(snapshot.City.StorageCaps["logs"], Is.EqualTo(500L));
             Assert.That(snapshot.City.Buildings, Is.Empty);
+            Assert.That(snapshot.City.Roads, Is.Empty);
             Assert.That(snapshot.City.Research.ActiveId, Is.Null);
             Assert.That(snapshot.City.Research.StartedAt, Is.Null);
             Assert.That(snapshot.City.Research.Completed, Is.Empty);
+        }
+
+        /// <summary>
+        /// The <c>roads</c> list in the server's form (<c>x</c>, <c>y</c>, <c>level</c>, sorted by tile) reads into its DTOs and writes back to the same
+        /// text (CR-0008).
+        /// </summary>
+        [Test]
+        public void Roads_ReadAndWriteBackToTheSameJson()
+        {
+            const string roads = "\"roads\":[{\"x\":1,\"y\":3,\"level\":2},{\"x\":4,\"y\":0,\"level\":1}]";
+            string text = Fixtures.Read("snapshot-city-start.json").Replace("\"roads\":[]", roads);
+            Assert.That(text, Does.Contain(roads), "the fixture changed: update this test");
+
+            CitySnapshotDto snapshot = _json.Deserialize<CitySnapshotDto>(text);
+
+            Assert.That(snapshot.City.Roads.ConvertAll(road => (road.X, road.Y, road.Level)), Is.EqualTo(new[] { (1, 3, 2), (4, 0, 1) }));
+            Assert.That(_json.Serialize(snapshot), Is.EqualTo(text));
         }
 
         /// <summary>A command's snapshot carries the command's request id, and the replay of a command is the same text and so the same snapshot.</summary>

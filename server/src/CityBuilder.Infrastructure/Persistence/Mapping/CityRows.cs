@@ -10,11 +10,13 @@ namespace CityBuilder.Infrastructure.Persistence.Mapping;
 /// <param name="inventory">The <c>city_inventory</c> rows.</param>
 /// <param name="buildings">The <c>city_buildings</c> rows.</param>
 /// <param name="research">The <c>city_research</c> rows, completed research only.</param>
+/// <param name="roads">The <c>city_roads</c> rows (CR-0008).</param>
 public sealed class CityRows(
     CityRow city,
     IReadOnlyList<CityInventoryRow> inventory,
     IReadOnlyList<CityBuildingRow> buildings,
-    IReadOnlyList<CityResearchRow> research)
+    IReadOnlyList<CityResearchRow> research,
+    IReadOnlyList<CityRoadRow> roads)
 {
     /// <summary>The <c>cities</c> row.</summary>
     public CityRow City { get; } = city ?? throw new ArgumentNullException(nameof(city));
@@ -27,4 +29,7 @@ public sealed class CityRows(
 
     /// <summary>The <c>city_research</c> rows, completed research only.</summary>
     public IReadOnlyList<CityResearchRow> Research { get; } = research ?? throw new ArgumentNullException(nameof(research));
+
+    /// <summary>The <c>city_roads</c> rows.</summary>
+    public IReadOnlyList<CityRoadRow> Roads { get; } = roads ?? throw new ArgumentNullException(nameof(roads));
 }

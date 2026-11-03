@@ -85,7 +85,7 @@ public sealed class CityRepositoryDatabaseTests(PostgresServer server) : Postgre
 
     /// <summary>
     /// A save writes every table: a context of the test's own, outside the server, reads the city row with the server clock as both wall
-    /// times, the inventory, building and research rows, the ledger entries in order and the receipt.
+    /// times, the inventory, building, research and road rows, the ledger entries in order and the receipt.
     /// </summary>
     [Fact]
     public async Task SaveChangesAsync_FullCityWithLedgerAndReceipt_WritesEveryTable()
@@ -110,6 +110,10 @@ public sealed class CityRepositoryDatabaseTests(PostgresServer server) : Postgre
         Assert.Equal(6, await db.CityBuildings.CountAsync(cancellationToken));
         Assert.Equal(["masonry"], await db.CityResearch.Select(row => row.ResearchId).ToListAsync(cancellationToken));
         Assert.Equal(
+            [(CityId, (short)2, (short)1, (short)1), (CityId, (short)3, (short)1, (short)2), (CityId, (short)4, (short)0, (short)1)],
+            (await db.CityRoads.OrderBy(row => row.X).ThenBy(row => row.Y).ToListAsync(cancellationToken))
+                .Select(row => (row.CityId, row.X, row.Y, row.Level)));
+        Assert.Equal(
             [
                 (CityId, "coins", -10L, 250L, "COST_PLACE", (string?)"command", (string?)_requestId.ToString(), now),
                 (CityId, "logs", 7L, 7L, "SETTLEMENT_PRODUCED", null, null, now),
@@ -125,7 +129,8 @@ public sealed class CityRepositoryDatabaseTests(PostgresServer server) : Postgre
 
     /// <summary>
     /// A loaded city saved with changes is the changed city on the next load: a changed and a new item, a finished cycle, a deleted and a new
-    /// building, a newly completed research, the running research gone; the used-up item stays as a row with quantity 0.
+    /// building, a newly completed research, the running research gone, two removed roads, an upgraded and a new one (a new building on a removed
+    /// road's tile); the used-up item stays as a row with quantity 0, the removed roads' rows are deleted.
     /// </summary>
     [Fact]
     public async Task SaveChangesAsync_LoadedCityChanged_MergesEveryTable()
@@ -145,6 +150,9 @@ public sealed class CityRepositoryDatabaseTests(PostgresServer server) : Postgre
         await using CityBuilderDbContext db = Database.CreateContext();
         Assert.Equal(0L, (await db.CityInventory.SingleAsync(row => row.ItemId == "logs", cancellationToken)).Quantity);
         Assert.False(await db.CityBuildings.AnyAsync(row => row.BuildingId == IdleId, cancellationToken));
+        Assert.Equal(
+            [((short)4, (short)0, (short)2), ((short)5, (short)5, (short)1)],
+            (await db.CityRoads.OrderBy(row => row.X).ToListAsync(cancellationToken)).Select(row => (row.X, row.Y, row.Level)));
     }
 
     /// <summary>

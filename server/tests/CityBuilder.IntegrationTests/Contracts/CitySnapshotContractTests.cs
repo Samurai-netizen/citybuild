@@ -34,7 +34,8 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
     public void Dispose() => _files.Dispose();
 
     /// <summary>
-    /// The exact text for a city with a building in every phase and every stall reason, at the instant it was last settled plus half a second:
+    /// The exact text for a city with a building in every phase and every stall reason and three roads (sorted by column, then row, in the
+    /// answer), at the instant it was last settled plus half a second:
     /// nothing elapsed, so nothing changed and nothing was saved, and the server time is shown in whole seconds.
     /// </summary>
     [Fact]
@@ -65,7 +66,9 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
         JsonShape.AssertObject(snapshot, "requestId:string? stateVersion:int serverTimeUtc:string contentVersion:string city:object settlement:object", "$");
         JsonNode city = snapshot["city"]!;
         JsonShape.AssertObject(
-            city, "clock:int era:int inventory:object storageCaps:object workers:object builders:object research:object buildings:array", "$.city");
+            city,
+            "clock:int era:int inventory:object storageCaps:object workers:object builders:object research:object buildings:array roads:array",
+            "$.city");
         JsonShape.AssertObject(city["workers"], "provided:int assigned:int free:int", "$.city.workers");
         JsonShape.AssertObject(city["builders"], "slots:int busy:int", "$.city.builders");
         JsonShape.AssertObject(city["research"], "activeId:string? startedAt:int? endsAt:int? completed:array", "$.city.research");
@@ -80,6 +83,13 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
                 $"$.city.buildings[{index}]");
         }
 
+        JsonArray roads = city["roads"]!.AsArray();
+        Assert.Equal(3, roads.Count);
+        for (int index = 0; index < roads.Count; index++)
+        {
+            JsonShape.AssertObject(roads[index], "x:int y:int level:int", $"$.city.roads[{index}]");
+        }
+
         JsonShape.AssertObject(
             snapshot["settlement"],
             "elapsedSeconds:int productionSeconds:int produced:object consumed:object completedBuildings:array completedResearch:array eraChanged:bool",
@@ -87,7 +97,9 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
         Assert.Equal(buildings.Select(building => (int)building!["id"]!).Order(), buildings.Select(building => (int)building!["id"]!));
     }
 
-    /// <summary>A new city (the content's starting city, nothing built) has an empty building list and a free research slot written as nulls.</summary>
+    /// <summary>
+    /// A new city (the content's starting city, nothing built) has empty building and road lists and a free research slot written as nulls.
+    /// </summary>
     [Fact]
     public async Task Get_StarterCity_HasNoBuildingsAndAFreeResearchSlot()
     {
@@ -108,6 +120,7 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
         Assert.Equal("""{"coins":300,"logs":60,"planks":20}""", city["inventory"]!.ToJsonString());
         Assert.Equal("""{"activeId":null,"startedAt":null,"endsAt":null,"completed":[]}""", city["research"]!.ToJsonString());
         Assert.Equal("[]", city["buildings"]!.ToJsonString());
+        Assert.Equal("[]", city["roads"]!.ToJsonString());
         Assert.Equal("""{"provided":0,"assigned":0,"free":0}""", city["workers"]!.ToJsonString());
         Assert.Equal("""{"slots":2,"busy":0}""", city["builders"]!.ToJsonString());
     }
@@ -230,7 +243,8 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
     /// A city on the frozen content at clock 1000 that is canonical (the settle's closing advance changes nothing), with a building in every
     /// phase and every stall reason: a house (level 2); a woodcutter producing with 2 workers; a level 2 woodcutter whose cycle is frozen
     /// (no workers); a trading post waiting for planks; a woodcutter waiting for room in storage; a woodcutter under construction; a house
-    /// being upgraded. The research <c>trade_charter</c> and <c>storehouses</c> are done, <c>sharp_axes</c> is running.
+    /// being upgraded. The research <c>trade_charter</c> and <c>storehouses</c> are done, <c>sharp_axes</c> is running. Roads at (2, 1) and
+    /// (2, 2) at level 1 and at (1, 1) at level 2, given out of order.
     /// </summary>
     /// <param name="playerId">The owner.</param>
     /// <param name="stateVersion">The stored version.</param>
@@ -253,7 +267,8 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
                 new Building(7, House, 1, 2, 1, 0, BuildingPhase.Upgrading, 995, 1040, 2, 0, 0, 0),
             ],
             completedResearch: [TradeCharter, Storehouses],
-            activeResearch: new ActiveResearch(SharpAxes, 990, 1110));
+            activeResearch: new ActiveResearch(SharpAxes, 990, 1110),
+            roads: [new RoadTile(2, 1, 1), new RoadTile(1, 1, 2), new RoadTile(2, 2, 1)]);
         return new CityAggregate(
             Guid.NewGuid(),
             playerId,
@@ -283,7 +298,8 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
               {"id": 5, "typeId": "woodcutter", "x": 4, "y": 0, "level": 1, "assignedWorkers": 1, "maxWorkers": 2, "phase": "Idle", "phaseStartedAt": 0, "phaseEndsAt": null, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": "StorageFull:logs"},
               {"id": 6, "typeId": "woodcutter", "x": 0, "y": 2, "level": 1, "assignedWorkers": 0, "maxWorkers": 2, "phase": "Constructing", "phaseStartedAt": 990, "phaseEndsAt": 1010, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": null},
               {"id": 7, "typeId": "house", "x": 1, "y": 2, "level": 1, "assignedWorkers": 0, "maxWorkers": 0, "phase": "Upgrading", "phaseStartedAt": 995, "phaseEndsAt": 1040, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": null}
-            ]
+            ],
+            "roads": [{"x": 1, "y": 1, "level": 2}, {"x": 2, "y": 1, "level": 1}, {"x": 2, "y": 2, "level": 1}]
           },
           "settlement": {"elapsedSeconds": 0, "productionSeconds": 0, "produced": {}, "consumed": {}, "completedBuildings": [], "completedResearch": [], "eraChanged": false}
         }

@@ -11,7 +11,7 @@ namespace CityBuilder.Client.Net
     {
         /// <summary>Creates the DTO. Newtonsoft calls this constructor with the JSON members of the same names, so the object is never half filled.</summary>
         [JsonConstructor]
-        public SnapshotCityDto(long clock, int era, Dictionary<string, long> inventory, Dictionary<string, long> storageCaps, SnapshotWorkersDto workers, SnapshotBuildersDto builders, SnapshotResearchDto research, List<SnapshotBuildingDto> buildings)
+        public SnapshotCityDto(long clock, int era, Dictionary<string, long> inventory, Dictionary<string, long> storageCaps, SnapshotWorkersDto workers, SnapshotBuildersDto builders, SnapshotResearchDto research, List<SnapshotBuildingDto> buildings, List<SnapshotRoadDto> roads)
         {
             Clock = clock;
             Era = era;
@@ -21,6 +21,7 @@ namespace CityBuilder.Client.Net
             Builders = builders;
             Research = research;
             Buildings = buildings;
+            Roads = roads;
         }
 
         /// <summary>The city clock in seconds; display prediction starts from it.</summary>
@@ -46,5 +47,8 @@ namespace CityBuilder.Client.Net
 
         /// <summary>The buildings, sorted by id.</summary>
         public List<SnapshotBuildingDto> Buildings { get; }
+
+        /// <summary>The road tiles, sorted by column, then row (CR-0008).</summary>
+        public List<SnapshotRoadDto> Roads { get; }
     }
 }

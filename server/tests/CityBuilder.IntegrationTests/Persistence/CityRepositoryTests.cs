@@ -60,6 +60,7 @@ public sealed class CityRepositoryTests : IDisposable
         Assert.Equal(2, Rows<CityInventoryRow>(EntityState.Added).Count);
         Assert.Equal(6, Rows<CityBuildingRow>(EntityState.Added).Count);
         Assert.Single(Rows<CityResearchRow>(EntityState.Added));
+        Assert.Equal(3, Rows<CityRoadRow>(EntityState.Added).Count);
         Assert.All(_db.ChangeTracker.Entries(), entry => Assert.Equal(EntityState.Added, entry.State));
     }
 
@@ -122,6 +123,25 @@ public sealed class CityRepositoryTests : IDisposable
             states);
         CityBuildingRow finished = Rows<CityBuildingRow>(EntityState.Modified).Single();
         Assert.Equal(("Idle", null, null, null, null, null), (finished.Phase, finished.PhaseStartedAt, finished.PhaseEndsAt, finished.CycleLabor, finished.LaborRemaining, finished.SegmentStartedAt));
+    }
+
+    /// <summary>
+    /// A road whose level changed is written, a new road inserted, and roads the state no longer has (removed) are deleted (CR-0008).
+    /// </summary>
+    [Fact]
+    public void Save_LoadedCity_MergesTheRoads()
+    {
+        AttachAsLoaded(Full());
+
+        _repository.Save(Later(), [], receipt: null);
+
+        Assert.Equal(
+            [
+                (2, 1, 1, EntityState.Deleted), (3, 1, 2, EntityState.Deleted), (4, 0, 2, EntityState.Modified), (5, 5, 1, EntityState.Added),
+            ],
+            _db.ChangeTracker.Entries<CityRoadRow>()
+                .Select(entry => ((int)entry.Entity.X, (int)entry.Entity.Y, (int)entry.Entity.Level, entry.State))
+                .OrderBy(row => row.Item1));
     }
 
     /// <summary>A research completed since the load is inserted with its completion clock; one completed before is left alone.</summary>
@@ -205,6 +225,7 @@ public sealed class CityRepositoryTests : IDisposable
         _db.AttachRange(rows.Inventory);
         _db.AttachRange(rows.Buildings);
         _db.AttachRange(rows.Research);
+        _db.AttachRange(rows.Roads);
     }
 
     /// <summary>The tracked rows of one table in one state.</summary>

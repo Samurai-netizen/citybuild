@@ -40,7 +40,8 @@ internal static class SampleCities
     /// <summary>
     /// A city in era 2 with something in every field: stock of two items, a building in each phase (constructing, upgrading, idle, producing,
     /// a frozen cycle with a null end, a cycle started at clock 0), the research <c>masonry</c> completed at clock 120 and <c>forestry</c>
-    /// running, the next building id above the highest one, state version 7.
+    /// running, roads at (2, 1) level 1, (3, 1) level 2 and (4, 0) level 1 (given out of order), the next building id above the highest one,
+    /// state version 7.
     /// </summary>
     public static CityAggregate Full()
     {
@@ -60,14 +61,16 @@ internal static class SampleCities
             [new(new ItemId("coins"), 250), new(new ItemId("logs"), 7)],
             buildings,
             [new ResearchId("masonry")],
-            new ActiveResearch(new ResearchId("forestry"), 300, 86_700));
+            new ActiveResearch(new ResearchId("forestry"), 300, 86_700),
+            [new RoadTile(4, 0, 1), new RoadTile(2, 1, 1), new RoadTile(3, 1, 2)]);
 
         return new CityAggregate(CityId, PlayerId, state, [new(new ResearchId("masonry"), 120)], 1_790_000_000, 7, "content-1");
     }
 
     /// <summary>
     /// <see cref="Full"/> later, at clock 90 000: coins spent, logs used up, planks new; the producing building finished its cycle, the idle one
-    /// is gone and a new one (id 7) is under construction; <c>forestry</c> completed at its end. Ids as in <see cref="Full"/>.
+    /// is gone and a new one (id 7) is under construction on the tile of the road at (2, 1), which was removed; the road at (3, 1) is gone, the
+    /// one at (4, 0) is at level 2, and a new one lies at (5, 5); <c>forestry</c> completed at its end. Ids as in <see cref="Full"/>.
     /// </summary>
     /// <param name="stateVersion">The version the city was loaded with; <see cref="Full"/>'s 7 by default.</param>
     public static CityAggregate Later(long stateVersion = 7)
@@ -86,7 +89,8 @@ internal static class SampleCities
             [new(new ItemId("coins"), 240), new(new ItemId("planks"), 3)],
             buildings,
             [new ResearchId("masonry"), new ResearchId("forestry")],
-            activeResearch: null);
+            activeResearch: null,
+            [new RoadTile(4, 0, 2), new RoadTile(5, 5, 1)]);
         KeyValuePair<ResearchId, long>[] completedAt = [new(new ResearchId("masonry"), 120), new(new ResearchId("forestry"), 86_700)];
 
         return new CityAggregate(full.CityId, full.PlayerId, state, completedAt, full.LastSettledUnixSec, stateVersion, full.ContentVersion);
@@ -154,6 +158,7 @@ internal static class SampleCities
                 $"#{building.Id} {building.TypeId} ({building.X},{building.Y}) L{building.Level} w{building.AssignedWorkers} {building.Phase} " +
                 $"{building.PhaseStartedAt}..{building.PhaseEndsAt?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "frozen"} " +
                 $"target {building.TargetLevel} labor {building.CycleLabor}/{building.LaborRemaining} segment {building.SegmentStartedAt}"),
+            "roads " + string.Join(", ", state.Roads.Select(road => $"({road.X},{road.Y}) L{road.Level}")),
         ];
         return string.Join("\n", lines);
     }
