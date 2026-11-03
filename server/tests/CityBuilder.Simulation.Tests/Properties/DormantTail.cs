@@ -6,7 +6,8 @@ namespace CityBuilder.Simulation.Tests.Properties;
 /// <summary>
 /// A test model of the dormant tail (<c>04</c> section 2): what an advance beyond the production cap must do after its window closes. From
 /// the city at the last second of the window, every timer that ends up to the target completes in time order (research before buildings at
-/// the same second, buildings by id, <c>04</c> section 6): a cycle delivers its outputs, a construction completes and auto-staffs with
+/// the same second, buildings by id, <c>04</c> section 6): a cycle delivers its outputs (goods into its own store, the currency into the
+/// purse), a construction completes and auto-staffs with
 /// <c>min(free, MaxWorkers)</c>, an upgrade raises the level, research joins the completed list. Nothing starts. The model is independent of
 /// the engine's code: it only reads public state and content, and builds the expected city through the restore constructors.
 /// </summary>
@@ -36,7 +37,7 @@ internal sealed class DormantTail
     /// <summary>The tail from <paramref name="atCap"/> (the city at the window's last second, after its starts) to <paramref name="target"/>.</summary>
     public static DormantTail Model(GameContent content, CityState atCap, long target)
     {
-        var inventory = new SortedDictionary<ItemId, long>(atCap.Inventory.ToDictionary(stock => stock.Key, stock => stock.Value));
+        long purse = atCap.Purse;
         List<Building> buildings = [.. atCap.Buildings.Select(CityCopy.Of)];
         var completedResearch = new List<ResearchId>(atCap.CompletedResearch);
         ActiveResearch? active = atCap.ActiveResearch;
@@ -60,21 +61,30 @@ internal sealed class DormantTail
             switch (building.Phase)
             {
                 case BuildingPhase.Producing:
+                    var store = new SortedDictionary<ItemId, long>(building.Store.ToDictionary(stock => stock.Key, stock => stock.Value));
                     foreach (ItemQuantity output in type.GetLevel(building.Level).Recipe!.Outputs)
                     {
-                        inventory[output.Item] = inventory.GetValueOrDefault(output.Item) + output.Quantity;
+                        if (output.Item == content.Currency)
+                        {
+                            purse += output.Quantity;
+                        }
+                        else
+                        {
+                            store[output.Item] = store.GetValueOrDefault(output.Item) + output.Quantity;
+                        }
+
                         produced[output.Item] = produced.GetValueOrDefault(output.Item) + output.Quantity;
                     }
 
-                    buildings[index] = Idle(building, building.Level, building.AssignedWorkers);
+                    buildings[index] = Idle(building, building.Level, building.AssignedWorkers, store);
                     break;
                 case BuildingPhase.Constructing:
                     long free = Provided(content, buildings) - buildings.Sum(other => (long)other.AssignedWorkers);
-                    buildings[index] = Idle(building, building.Level, (int)Math.Min(free, type.GetLevel(building.Level).MaxWorkers));
+                    buildings[index] = Idle(building, building.Level, (int)Math.Min(free, type.GetLevel(building.Level).MaxWorkers), building.Store);
                     completedBuildings.Add(building.Id);
                     break;
                 case BuildingPhase.Upgrading:
-                    buildings[index] = Idle(building, building.TargetLevel, building.AssignedWorkers);
+                    buildings[index] = Idle(building, building.TargetLevel, building.AssignedWorkers, building.Store);
                     completedBuildings.Add(building.Id);
                     break;
                 default:
@@ -83,7 +93,7 @@ internal sealed class DormantTail
         }
 
         completedBuildings.Sort();
-        var city = new CityState(target, atCap.Era, atCap.NextBuildingId, inventory, buildings, completedResearch, active, atCap.Roads);
+        var city = new CityState(target, atCap.Era, atCap.NextBuildingId, purse, buildings, completedResearch, active, atCap.Roads);
         return new DormantTail(city, produced, completedBuildings, tailResearch);
     }
 
@@ -96,7 +106,10 @@ internal sealed class DormantTail
     public static BuildingDefinition Definition(GameContent content, BuildingTypeId type) =>
         content.TryGetBuilding(type, out BuildingDefinition? definition) ? definition : throw new InvalidOperationException($"Unknown type {type}.");
 
-    /// <summary>The building idle at <paramref name="level"/> with <paramref name="workers"/>, in canonical form, as a completion leaves it.</summary>
-    private static Building Idle(Building building, int level, int workers) =>
-        new(building.Id, building.TypeId, building.X, building.Y, level, workers, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
+    /// <summary>
+    /// The building idle at <paramref name="level"/> with <paramref name="workers"/> and <paramref name="store"/>, in canonical form, as a
+    /// completion leaves it; a waiting upgrade's needs stay.
+    /// </summary>
+    private static Building Idle(Building building, int level, int workers, IEnumerable<KeyValuePair<ItemId, long>> store) =>
+        new(building.Id, building.TypeId, building.X, building.Y, level, workers, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, store, building.Needs);
 }

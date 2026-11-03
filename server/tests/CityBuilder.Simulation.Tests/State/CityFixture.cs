@@ -12,12 +12,13 @@ namespace CityBuilder.Simulation.Tests.State;
 internal static class CityFixture
 {
     /// <summary>
-    /// The valid fixture content (a 6 × 5 grid, two builders, a house <c>hut</c>, producers <c>lumber_camp</c> and, locked, <c>workshop</c>)
-    /// with four additions for the rules: the workshop gets a level 2 with 180 labor and up to 6 workers, so an upgrade can refund a cycle's
-    /// inputs and raise the worker limit, and the spec's durations (180 labor: 4 workers 45 s, 5 workers 36 s) run on it; the lumber camp's
-    /// level 2 takes 4 workers, for the spec's example of 3 workers becoming 4; <c>manor</c>, an era-2 house available at the start (10 gold,
-    /// 5 s), for the era check of placement; and <c>mint</c>, a producer of the uncapped gold (5 per 20 labor, up to 2 workers), for outputs
-    /// without a cap.
+    /// The valid fixture content (a 6 × 5 grid, two builders, a house <c>hut</c>, producers <c>lumber_camp</c> and, locked, <c>workshop</c>,
+    /// the warehouse <c>depot</c>, the courier station <c>post</c>, the science building <c>school</c>) with four additions for the rules: the
+    /// workshop gets a level 2 with 180 labor, up to 6 workers and a store of 40 wood and 160 boards, so an upgrade can refund a cycle's inputs
+    /// and raise the worker limit, and the spec's durations (180 labor: 4 workers 45 s, 5 workers 36 s) run on it; the lumber camp's level 2
+    /// takes 4 workers, for the spec's example of 3 workers becoming 4; <c>manor</c>, an era-2 house available at the start (10 gold, 5 s),
+    /// for the era check of placement; and <c>mint</c>, a producer of the currency (5 gold per 20 labor, up to 2 workers, no store), whose
+    /// output goes into the purse.
     /// </summary>
     public static GameContent TestContent { get; } = ContentAssert.Valid(ContentFixture.ValidWith(data =>
     {
@@ -28,6 +29,7 @@ internal static class CityFixture
             Level = 2,
             MaxWorkers = 6,
             Recipe = new RecipeData { Inputs = new() { ["wood"] = 2 }, Outputs = new() { ["boards"] = 1 }, Labor = 180 },
+            Storage = new() { ["wood"] = 40, ["boards"] = 160 },
             UpgradeCost = new() { ["gold"] = 30, ["wood"] = 1 },
             UpgradeSeconds = 15,
         });
@@ -56,13 +58,13 @@ internal static class CityFixture
     }));
 
     /// <summary>
-    /// A city at <paramref name="clock"/> (default 1000) in era 1. The next building id defaults to one above the highest id; the inventory
-    /// and the roads to nothing.
+    /// A city at <paramref name="clock"/> (default 1000) in era 1. The next building id defaults to one above the highest id; the purse to 0;
+    /// the roads to nothing. Goods live in the buildings' stores (the building helpers' <c>store</c>).
     /// </summary>
     public static CityState City(
         long clock = 1000,
         int era = 1,
-        (string Item, long Quantity)[]? inventory = null,
+        long purse = 0,
         Building[]? buildings = null,
         string[]? completedResearch = null,
         ActiveResearch? activeResearch = null,
@@ -75,27 +77,56 @@ internal static class CityFixture
             clock,
             era,
             nextId,
-            (inventory ?? []).Select(stock => new KeyValuePair<ItemId, long>(new ItemId(stock.Item), stock.Quantity)),
+            purse,
             buildings,
             (completedResearch ?? []).Select(id => new ResearchId(id)),
             activeResearch,
             roads);
     }
 
-    /// <summary>An idle building in canonical form: phase start 0, and no end, target level or cycle.</summary>
-    public static Building Idle(int id, string type, int x, int y, int level = 1, int workers = 0) =>
-        new(id, new BuildingTypeId(type), x, y, level, workers, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
+    /// <summary>
+    /// An idle building in canonical form: phase start 0, and no end, target level or cycle; with <paramref name="needs"/> its upgrade waits for
+    /// those goods.
+    /// </summary>
+    public static Building Idle(
+        int id, string type, int x, int y, int level = 1, int workers = 0, (string Item, long Quantity)[]? store = null, (string Item, long Quantity)[]? needs = null) =>
+        new(id, new BuildingTypeId(type), x, y, level, workers, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, Pairs(store), Pairs(needs));
 
     /// <summary>A building under construction from <paramref name="startedAt"/> to <paramref name="endsAt"/>, level 1 and no workers.</summary>
     public static Building Constructing(int id, string type, int x, int y, long startedAt, long endsAt) =>
         new(id, new BuildingTypeId(type), x, y, 1, 0, BuildingPhase.Constructing, startedAt, endsAt, 0, 0, 0, 0);
 
-    /// <summary>A building upgrading from <paramref name="level"/> to the next, keeping its workers, from <paramref name="startedAt"/> to <paramref name="endsAt"/>.</summary>
-    public static Building Upgrading(int id, string type, int x, int y, int level, int workers, long startedAt, long endsAt) =>
-        new(id, new BuildingTypeId(type), x, y, level, workers, BuildingPhase.Upgrading, startedAt, endsAt, level + 1, 0, 0, 0);
+    /// <summary>A construction site: constructing without a timer, waiting for <paramref name="needs"/> (at least one good).</summary>
+    public static Building Site(int id, string type, int x, int y, (string Item, long Quantity)[] needs, (string Item, long Quantity)[]? store = null) =>
+        new(id, new BuildingTypeId(type), x, y, 1, 0, BuildingPhase.Constructing, 0, null, 0, 0, 0, 0, Pairs(store), Pairs(needs));
 
-    /// <summary>A producing building whose cycle started at <paramref name="cycleStartedAt"/>; <paramref name="endsAt"/> null means frozen.</summary>
+    /// <summary>A building upgrading from <paramref name="level"/> to the next, keeping its workers, from <paramref name="startedAt"/> to <paramref name="endsAt"/>.</summary>
+    public static Building Upgrading(
+        int id, string type, int x, int y, int level, int workers, long startedAt, long endsAt, (string Item, long Quantity)[]? store = null) =>
+        new(id, new BuildingTypeId(type), x, y, level, workers, BuildingPhase.Upgrading, startedAt, endsAt, level + 1, 0, 0, 0, Pairs(store));
+
+    /// <summary>
+    /// A producing building whose cycle started at <paramref name="cycleStartedAt"/>; <paramref name="endsAt"/> null means frozen; with
+    /// <paramref name="needs"/> its upgrade waits for those goods.
+    /// </summary>
     public static Building Producing(
-        int id, string type, int x, int y, int level, int workers, long cycleStartedAt, long cycleLabor, long laborRemaining, long segmentStartedAt, long? endsAt) =>
-        new(id, new BuildingTypeId(type), x, y, level, workers, BuildingPhase.Producing, cycleStartedAt, endsAt, 0, cycleLabor, laborRemaining, segmentStartedAt);
+        int id,
+        string type,
+        int x,
+        int y,
+        int level,
+        int workers,
+        long cycleStartedAt,
+        long cycleLabor,
+        long laborRemaining,
+        long segmentStartedAt,
+        long? endsAt,
+        (string Item, long Quantity)[]? store = null,
+        (string Item, long Quantity)[]? needs = null) =>
+        new(id, new BuildingTypeId(type), x, y, level, workers, BuildingPhase.Producing, cycleStartedAt, endsAt, 0, cycleLabor, laborRemaining, segmentStartedAt,
+            Pairs(store), Pairs(needs));
+
+    /// <summary>Item and quantity pairs as the engine's, or null for none.</summary>
+    public static KeyValuePair<ItemId, long>[]? Pairs((string Item, long Quantity)[]? amounts) =>
+        amounts?.Select(amount => new KeyValuePair<ItemId, long>(new ItemId(amount.Item), amount.Quantity)).ToArray();
 }

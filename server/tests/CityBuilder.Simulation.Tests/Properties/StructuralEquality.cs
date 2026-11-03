@@ -6,8 +6,8 @@ namespace CityBuilder.Simulation.Tests.Properties;
 
 /// <summary>
 /// Compares two cities, or two report totals, field by field and names the first field that differs, so a failing property says what went
-/// wrong instead of "not equal". A city's fields come in a fixed order: clock, era, next building id, the stock per item, every field of every
-/// building by id, the completed research and the active research. It reads only public members, the way the server will.
+/// wrong instead of "not equal". A city's fields come in a fixed order: clock, era, next building id, the purse, every field of every
+/// building by id (its store and needs included), the completed research, the active research with its needs, and the roads. It reads only public members, the way the server will.
 /// </summary>
 internal static class StructuralEquality
 {
@@ -48,8 +48,8 @@ internal static class StructuralEquality
             ("clock", Text(city.Clock)),
             ("era", Text(city.Era)),
             ("nextBuildingId", Text(city.NextBuildingId)),
+            ("purse", Text(city.Purse)),
         };
-        fields.AddRange(city.Inventory.OrderBy(stock => stock.Key).Select(stock => ($"inventory[{stock.Key}]", Text(stock.Value))));
         foreach (Building building in city.Buildings)
         {
             string prefix = $"building {Text(building.Id)} ";
@@ -64,17 +64,26 @@ internal static class StructuralEquality
             fields.Add((prefix + "cycleLabor", Text(building.CycleLabor)));
             fields.Add((prefix + "laborRemaining", Text(building.LaborRemaining)));
             fields.Add((prefix + "segmentStartedAt", Text(building.SegmentStartedAt)));
+            fields.AddRange(building.Store.Select(stock => ($"{prefix}store[{stock.Key}]", Text(stock.Value))));
+            fields.AddRange(building.Needs.Select(need => ($"{prefix}needs[{need.Key}]", Text(need.Value))));
         }
 
         fields.Add(("completedResearch", string.Join(",", city.CompletedResearch)));
         ActiveResearch? active = city.ActiveResearch;
-        fields.Add(("activeResearch", active is null ? "none" : $"{active.Id} {Text(active.StartedAt)}..{Text(active.EndsAt)}"));
+        fields.Add(("activeResearch", active is null ? "none" : $"{active.Id} {Optional(active.StartedAt)}..{Optional(active.EndsAt)}"));
+        if (active is not null)
+        {
+            fields.AddRange(active.Needs.Select(need => ($"activeResearch needs[{need.Key}]", Text(need.Value))));
+        }
         fields.AddRange(city.Roads.Select(road => ($"road ({Text(road.X)},{Text(road.Y)})", Text(road.Level))));
         return fields;
     }
 
     /// <summary>A number as invariant text.</summary>
     public static string Text(long value) => value.ToString(CultureInfo.InvariantCulture);
+
+    /// <summary>A number that may be missing as invariant text, <c>null</c> when it is.</summary>
+    public static string Optional(long? value) => value.HasValue ? Text(value.Value) : "null";
 
     /// <summary>
     /// The first field in which <paramref name="actual"/> differs from <paramref name="expected"/>, or null: the expected fields in order, then

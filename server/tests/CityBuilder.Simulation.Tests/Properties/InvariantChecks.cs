@@ -66,60 +66,77 @@ internal sealed class InvariantChecks
         }
     }
 
-    /// <summary>Invariant 4: final = initial + produced − consumed − spent + refunded, per item, over every item any of them names.</summary>
+    /// <summary>
+    /// Invariant 4: per item, final total = initial total + produced − consumed − spent + refunded, where a total is the purse for the
+    /// currency and every building's store for a good (<c>04</c> section 16; walkers' loads arrive with trips in CR-0008-T1 part E2).
+    /// </summary>
     private string? Conservation(InvariantStep step)
     {
         Dictionary<ItemId, long> spent = Quantities(step.Mutation?.Spent ?? []);
         Dictionary<ItemId, long> refunded = Quantities(step.Mutation?.Refunded ?? []);
         CountIf(spent.Values.Any(quantity => quantity > 0), "steps that spent");
         CountIf(refunded.Values.Any(quantity => quantity > 0), "steps that refunded");
-        IEnumerable<ItemId> items = step.Before.Inventory.Keys.Concat(step.After.Inventory.Keys).Concat(step.Produced.Keys)
-            .Concat(step.Consumed.Keys).Concat(spent.Keys).Concat(refunded.Keys).Distinct().Order();
-        foreach (ItemId item in items)
+        foreach (ItemDefinition definition in _content.Items)
         {
-            long expected = step.Before.GetQuantity(item) + step.Produced.GetValueOrDefault(item) - step.Consumed.GetValueOrDefault(item)
+            ItemId item = definition.Id;
+            long before = CityQueries.Total(step.Before, _content, item);
+            long after = CityQueries.Total(step.After, _content, item);
+            long expected = before + step.Produced.GetValueOrDefault(item) - step.Consumed.GetValueOrDefault(item)
                 - spent.GetValueOrDefault(item) + refunded.GetValueOrDefault(item);
-            if (step.After.GetQuantity(item) != expected)
+            if (after != expected)
             {
-                return $"{item}: {step.Before.GetQuantity(item)} + produced {step.Produced.GetValueOrDefault(item)} − consumed "
+                return $"{item}: {before} + produced {step.Produced.GetValueOrDefault(item)} − consumed "
                     + $"{step.Consumed.GetValueOrDefault(item)} − spent {spent.GetValueOrDefault(item)} + refunded "
-                    + $"{refunded.GetValueOrDefault(item)} = {expected}, but the stock is {step.After.GetQuantity(item)}";
+                    + $"{refunded.GetValueOrDefault(item)} = {expected}, but the city total is {after}";
             }
         }
 
         return null;
     }
 
-    /// <summary>Invariant 5: no item below zero.</summary>
+    /// <summary>Invariant 5: no quantity below zero in the purse, a store, or a project's needs.</summary>
     private static string? NoNegativeStock(CityState city)
     {
-        foreach (KeyValuePair<ItemId, long> stock in city.Inventory.Where(stock => stock.Value < 0))
+        if (city.Purse < 0)
         {
-            return $"{stock.Key} is {stock.Value}";
+            return $"the purse is {city.Purse}";
+        }
+
+        foreach (Building building in city.Buildings)
+        {
+            foreach (KeyValuePair<ItemId, long> amount in building.Store.Concat(building.Needs).Where(amount => amount.Value < 0))
+            {
+                return $"building {building.Id}: {amount.Key} is {amount.Value}";
+            }
         }
 
         return null;
     }
 
     /// <summary>
-    /// Invariant 6: production never takes stock + reserved of a capped item above its cap. Only a refund may: so after the step it is at most
-    /// the cap, or what it was before plus the refund, whichever is more (a start needs room, a completion moves reserved to stock, inputs only
-    /// lower it).
+    /// Invariant 6: production never pushes a store's <c>stock + reserved</c> above its effective limit (<c>04</c> section 16); only a
+    /// refund into that building's store may, and a store already above its limit may only fall.
     /// </summary>
     private string? StorageCap(InvariantStep step)
     {
-        foreach (ItemQuantity baseCap in _content.Rules.BaseStorageCaps)
+        foreach (Building after in step.After.Buildings)
         {
-            ItemId item = baseCap.Item;
-            long cap = Cap(step.After, item);
-            long before = step.Before.GetQuantity(item) + Reserved(step.Before, item);
-            long after = step.After.GetQuantity(item) + Reserved(step.After, item);
-            long refunded = step.Mutation?.Refunded.Where(line => line.Item == item).Sum(line => line.Quantity) ?? 0;
-            CountIf(after == cap, "steps ending with an item exactly at its cap");
-            CountIf(after > cap, "steps ending with an item above its cap");
-            if (after > Math.Max(cap, before + refunded))
+            step.Before.TryGetBuilding(after.Id, out Building? before);
+            foreach (ItemQuantity good in Level(after).Storage)
             {
-                return $"{item}: stock + reserved went from {before} to {after} (refund {refunded}), the cap is {cap}";
+                ItemId item = good.Item;
+                CityQueries.TryGetEffectiveLimit(step.After, _content, after, item, out long limit);
+                long afterHeld = after.GetStock(item) + CityQueries.Reserved(_content, after, item);
+                long beforeHeld = before is null ? 0 : before.GetStock(item) + CityQueries.Reserved(_content, before, item);
+                long refunded = step.Operation is CityOperation.UpgradeBuilding upgrade && upgrade.BuildingId == after.Id
+                    ? step.Mutation?.Refunded.Where(line => line.Item == item).Sum(line => line.Quantity) ?? 0
+                    : 0;
+                CountIf(afterHeld == limit, "stores ending with a good exactly at its limit");
+                CountIf(afterHeld > limit, "stores ending with a good above its limit");
+                if (afterHeld > Math.Max(limit, beforeHeld + refunded))
+                {
+                    return $"building {after.Id}, {item}: stock + reserved went from {beforeHeld} to {afterHeld} (refund {refunded}), the limit is {limit}";
+                }
             }
         }
 
@@ -236,7 +253,7 @@ internal sealed class InvariantChecks
     /// <summary>Invariant 10: busy builders within the slots; a research starts only when none runs, and the running one is not completed.</summary>
     private string? Slots(InvariantStep step)
     {
-        int busy = step.After.Buildings.Count(building => building.Phase is BuildingPhase.Constructing or BuildingPhase.Upgrading);
+        int busy = CityQueries.BuildersBusy(step.After);
         CountIf(busy == _content.Rules.BuilderSlots, "steps with every builder busy");
         if (busy > _content.Rules.BuilderSlots)
         {
@@ -346,19 +363,6 @@ internal sealed class InvariantChecks
     /// <summary>The non-zero quantities as text in item order, for <see cref="Differ"/>.</summary>
     private static string Text(IReadOnlyDictionary<ItemId, long> quantities) =>
         string.Join(",", quantities.Where(item => item.Value != 0).OrderBy(item => item.Key).Select(item => $"{item.Key} {item.Value}"));
-
-    /// <summary>The storage cap of an item now: its base cap plus the bonuses of the completed research.</summary>
-    private long Cap(CityState city, ItemId item) =>
-        _content.Rules.BaseStorageCaps.Single(cap => cap.Item == item).Quantity
-        + city.CompletedResearch.SelectMany(id => Research(id).Effects).OfType<StorageCapBonusEffect>()
-            .Where(bonus => bonus.Item == item).Sum(bonus => bonus.Amount);
-
-    /// <summary>What the running cycles (frozen ones too) will deliver of an item.</summary>
-    private long Reserved(CityState city, ItemId item) => city.Buildings
-        .Where(building => building.Phase == BuildingPhase.Producing)
-        .SelectMany(building => Level(building).Recipe!.Outputs)
-        .Where(output => output.Item == item)
-        .Sum(output => output.Quantity);
 
     /// <summary>The definition of a building's current level.</summary>
     private BuildingLevelDefinition Level(Building building) => DormantTail.Definition(_content, building.TypeId).GetLevel(building.Level);

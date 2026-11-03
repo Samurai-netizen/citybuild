@@ -51,7 +51,7 @@ namespace CityBuilder.Simulation.Content
         /// <summary>A house level provides no workers, takes workers, or has a recipe.</summary>
         InvalidHouseLevel,
 
-        /// <summary>A producer level has no worker slot, provides workers, has no recipe or a recipe without outputs, or has no store.</summary>
+        /// <summary>A producer level has no worker slot, provides workers, has no recipe or a recipe without outputs, or has a carry limit or stamina.</summary>
         InvalidProducerLevel,
 
         /// <summary>A level has fewer max workers or provides fewer workers than the level below it.</summary>

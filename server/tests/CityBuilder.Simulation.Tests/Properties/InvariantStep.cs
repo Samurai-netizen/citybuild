@@ -7,11 +7,11 @@ namespace CityBuilder.Simulation.Tests.Properties;
 /// <summary>The invariants of <c>04</c> section 10 that the observer checks, numbered as there (1–3 are M0-14's properties).</summary>
 internal enum Invariant
 {
-    /// <summary>Every item's stock changes only by what was produced, consumed, spent and refunded.</summary>
+    /// <summary>Every item's city total (the purse, the stores) changes only by what was produced, consumed, spent and refunded.</summary>
     Conservation = 4,
-    /// <summary>No item's stock is below zero.</summary>
+    /// <summary>No quantity is below zero: the purse, a store, a project's needs.</summary>
     NoNegativeStock = 5,
-    /// <summary>Production never takes stock + reserved of a capped item above its cap; only refunds may.</summary>
+    /// <summary>Production never takes a store's stock + reserved above its effective limit; only refunds may.</summary>
     StorageCap = 6,
     /// <summary>The clock never decreases: it moves by exactly the requested seconds, or not at all.</summary>
     ClockNeverDecreases = 7,

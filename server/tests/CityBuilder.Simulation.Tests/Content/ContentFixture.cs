@@ -5,16 +5,20 @@ namespace CityBuilder.Simulation.Tests.Content;
 /// <summary>
 /// A small, valid content in code, new on every call, so a test can break exactly one value. Its numbers are made up for the tests and
 /// are not the game's (those live in <c>server/content/*.json</c>, <c>core-instructions/24-economy-design.md</c> → Ownership of numbers).
-/// It uses every feature: two eras, a capped and an uncapped item, a house and two producers (one locked), each effect type, walking rules
-/// and two road levels.
+/// It uses every feature: two eras, the currency and two goods, each building kind (a house, two producers (one locked), a warehouse, a
+/// courier station, the science building), stores per level, each effect type, walking rules, two road levels and two amount presets.
 /// </summary>
 internal static class ContentFixture
 {
     /// <summary>
-    /// The valid test content, built new on every call: two eras, gold (uncapped), wood (cap 100) and boards (cap 80), a hut (3 then 5
-    /// workers), a lumber camp (1 wood from 40 labor, 2 then 3 workers) and a workshop locked behind carpentry (2 wood → 1 boards, 90 labor),
-    /// and research carpentry → better_saws (−250 ‰ camp, −100 ‰ workshop) → warehouses (era 2, +50 wood, +40 boards); walking 4 000 ms per
-    /// ground tile, crossings at 250 ‰, a path (2 000 ms, 2 gold) and a paved path (1 000 ms, 6 gold).
+    /// The valid test content, built new on every call: two eras; gold (the currency), wood and boards; a hut (3 then 5 workers), a lumber
+    /// camp (1 wood from 40 labor, 2 then 3 workers, a store of 100 then 150 wood), a workshop locked behind carpentry (2 wood → 1 boards, 90
+    /// labor, a store of 20 wood and 80 boards; it costs 40 gold and 10 wood), a depot (warehouse: 100 wood and 100 boards, then 200 each), a
+    /// post (courier station: 2 then 3 couriers carrying 5 then 8, stamina 600 then 1 200 s) and a school (the science building, one per
+    /// city); research carpentry → better_saws (−250 ‰ camp, −100 ‰ workshop) → warehouses (era 2, +50 wood, +40 boards), tallying (percent
+    /// amounts, after carpentry), boots (walks 100 ‰ faster); walking 4 000 ms per ground tile, crossings at 250 ‰, a path (2 000 ms, 2 gold)
+    /// and a paved path (1 000 ms, 6 gold); presets all (100 %) and half (50 %); trips carry 6; routes of up to 6 stops with 3 actions each;
+    /// a new city starts with 100 gold.
     /// </summary>
     public static GameContentData Valid() => new()
     {
@@ -25,7 +29,6 @@ internal static class ContentFixture
             GridHeight = 5,
             BuilderSlots = 2,
             ResearchSlots = 1,
-            BaseStorageCaps = new() { ["wood"] = 100, ["boards"] = 80 },
             MaxOfflineProductionSeconds = 3600,
             MinCycleSeconds = 5,
             MaxLaborReductionPermille = 400,
@@ -33,13 +36,21 @@ internal static class ContentFixture
             CrossingSpeedPermille = 250,
             MinWalkSeconds = 2,
             MaxWalkBonusPermille = 300,
+            TripCarryLimit = 6,
+            MaxRouteStops = 6,
+            MaxStopActions = 3,
         },
         Roads =
         [
             new RoadLevelData { Level = 1, Name = "Path", TileMillis = 2000, Cost = new() { ["gold"] = 2 } },
             new RoadLevelData { Level = 2, Name = "Paved path", TileMillis = 1000, Cost = new() { ["gold"] = 6 } },
         ],
-        StartingCity = new StartingCityData { Era = 1, Inventory = new() { ["gold"] = 100, ["wood"] = 5 } },
+        AmountPresets =
+        [
+            new AmountPresetData { Id = "all", Name = "All", Percent = 100 },
+            new AmountPresetData { Id = "half", Name = "Half", Percent = 50 },
+        ],
+        StartingCity = new StartingCityData { Era = 1, Purse = 100 },
         Eras =
         [
             new EraData { Number = 1, Id = "first_era", Name = "First Era" },
@@ -47,9 +58,9 @@ internal static class ContentFixture
         ],
         Items =
         [
-            new ItemData { Id = "gold", Name = "Gold", Era = 1, Capped = false, Tradable = false },
-            new ItemData { Id = "wood", Name = "Wood", Era = 1, Capped = true, Tradable = true },
-            new ItemData { Id = "boards", Name = "Boards", Era = 1, Capped = true, Tradable = true },
+            new ItemData { Id = "gold", Name = "Gold", Era = 1, Currency = true, Tradable = false },
+            new ItemData { Id = "wood", Name = "Wood", Era = 1, Currency = false, Tradable = true },
+            new ItemData { Id = "boards", Name = "Boards", Era = 1, Currency = false, Tradable = true },
         ],
         Buildings =
         [
@@ -69,11 +80,15 @@ internal static class ContentFixture
                 Cost = new() { ["gold"] = 20 }, BuildSeconds = 10,
                 Levels =
                 [
-                    new BuildingLevelData { Level = 1, MaxWorkers = 2, Recipe = Recipe(inputs: null, outputs: new() { ["wood"] = 1 }, labor: 40) },
+                    new BuildingLevelData
+                    {
+                        Level = 1, MaxWorkers = 2, Recipe = Recipe(inputs: null, outputs: new() { ["wood"] = 1 }, labor: 40),
+                        Storage = new() { ["wood"] = 100 },
+                    },
                     new BuildingLevelData
                     {
                         Level = 2, MaxWorkers = 3, Recipe = Recipe(inputs: null, outputs: new() { ["wood"] = 1 }, labor: 40),
-                        UpgradeCost = new() { ["gold"] = 30 }, UpgradeSeconds = 12,
+                        Storage = new() { ["wood"] = 150 }, UpgradeCost = new() { ["gold"] = 30 }, UpgradeSeconds = 12,
                     },
                 ],
             },
@@ -83,8 +98,45 @@ internal static class ContentFixture
                 Cost = new() { ["gold"] = 40, ["wood"] = 10 }, BuildSeconds = 20,
                 Levels =
                 [
-                    new BuildingLevelData { Level = 1, MaxWorkers = 2, Recipe = Recipe(new() { ["wood"] = 2 }, new() { ["boards"] = 1 }, 90) },
+                    new BuildingLevelData
+                    {
+                        Level = 1, MaxWorkers = 2, Recipe = Recipe(new() { ["wood"] = 2 }, new() { ["boards"] = 1 }, 90),
+                        Storage = new() { ["wood"] = 20, ["boards"] = 80 },
+                    },
                 ],
+            },
+            new BuildingData
+            {
+                Id = "depot", Name = "Depot", Kind = "warehouse", Era = 1, AvailableAtStart = true,
+                Cost = new() { ["gold"] = 15 }, BuildSeconds = 6,
+                Levels =
+                [
+                    new BuildingLevelData { Level = 1, Storage = new() { ["wood"] = 100, ["boards"] = 100 } },
+                    new BuildingLevelData
+                    {
+                        Level = 2, Storage = new() { ["wood"] = 200, ["boards"] = 200 }, UpgradeCost = new() { ["gold"] = 25 }, UpgradeSeconds = 9,
+                    },
+                ],
+            },
+            new BuildingData
+            {
+                Id = "post", Name = "Post", Kind = "courierStation", Era = 1, AvailableAtStart = true,
+                Cost = new() { ["gold"] = 25 }, BuildSeconds = 6,
+                Levels =
+                [
+                    new BuildingLevelData { Level = 1, MaxWorkers = 2, CarryLimit = 5, StaminaSeconds = 600 },
+                    new BuildingLevelData
+                    {
+                        Level = 2, MaxWorkers = 3, CarryLimit = 8, StaminaSeconds = 1200, UpgradeCost = new() { ["gold"] = 35, ["boards"] = 4 },
+                        UpgradeSeconds = 10,
+                    },
+                ],
+            },
+            new BuildingData
+            {
+                Id = "school", Name = "School", Kind = "science", Era = 1, AvailableAtStart = true, MaxPerCity = 1,
+                Cost = new() { ["gold"] = 30 }, BuildSeconds = 5,
+                Levels = [new BuildingLevelData { Level = 1 }],
             },
         ],
         Research =
@@ -113,6 +165,16 @@ internal static class ContentFixture
                     new ResearchEffectData { Type = "storageCapBonus", Item = "wood", Amount = 50 },
                     new ResearchEffectData { Type = "storageCapBonus", Item = "boards", Amount = 40 },
                 ],
+            },
+            new ResearchData
+            {
+                Id = "tallying", Name = "Tallying", Era = 1, Cost = new() { ["gold"] = 15 }, DurationSeconds = 50, Prerequisites = ["carpentry"],
+                Effects = [new ResearchEffectData { Type = "unlockAmountMode", Mode = "percent" }],
+            },
+            new ResearchData
+            {
+                Id = "boots", Name = "Boots", Era = 1, Cost = new() { ["gold"] = 20, ["wood"] = 3 }, DurationSeconds = 40,
+                Effects = [new ResearchEffectData { Type = "walkSpeedBonus", Permille = 100 }],
             },
         ],
     };
@@ -147,6 +209,9 @@ internal static class ContentFixture
 
     /// <summary>The road level with this number in <paramref name="data"/>.</summary>
     public static RoadLevelData Road(GameContentData data, int level) => data.Roads!.Single(road => road!.Level == level)!;
+
+    /// <summary>The fixture's amount preset with the id.</summary>
+    public static AmountPresetData Preset(GameContentData data, string id) => data.AmountPresets!.Single(preset => preset!.Id == id)!;
 
     /// <summary>A recipe's data from its inputs (null for a raw producer), outputs and labor.</summary>
     private static RecipeData Recipe(Dictionary<string, long?>? inputs, Dictionary<string, long?> outputs, long labor) =>

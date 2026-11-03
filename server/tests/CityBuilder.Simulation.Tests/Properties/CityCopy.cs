@@ -8,15 +8,17 @@ namespace CityBuilder.Simulation.Tests.Properties;
 /// </summary>
 internal static class CityCopy
 {
-    /// <summary>A copy of the city: every stored value, with new building and research objects.</summary>
+    /// <summary>A copy of the city: every stored value (the purse, each building's store and needs, the research's needs), with new building and research objects.</summary>
     public static CityState Of(CityState city) => new(
         city.Clock,
         city.Era,
         city.NextBuildingId,
-        city.Inventory,
+        city.Purse,
         city.Buildings.Select(Of),
         city.CompletedResearch,
-        city.ActiveResearch is null ? null : new ActiveResearch(city.ActiveResearch.Id, city.ActiveResearch.StartedAt, city.ActiveResearch.EndsAt),
+        city.ActiveResearch is null
+            ? null
+            : new ActiveResearch(city.ActiveResearch.Id, city.ActiveResearch.StartedAt, city.ActiveResearch.EndsAt, city.ActiveResearch.Needs.ToArray()),
         city.Roads);
 
     /// <summary>A copy of the building: every stored value.</summary>
@@ -33,5 +35,7 @@ internal static class CityCopy
         building.TargetLevel,
         building.CycleLabor,
         building.LaborRemaining,
-        building.SegmentStartedAt);
+        building.SegmentStartedAt,
+        building.Store.ToArray(),
+        building.Needs.ToArray());
 }

@@ -55,10 +55,10 @@ public sealed class CityGeneratorTests
     [Fact]
     public void Generate_RejectedCommands_AreLeftOutAndCounted()
     {
-        CityHistory history = CityGenerator.Generate(PropertyContent.Named("golden-v1"), seed: 7);
+        CityHistory history = CityGenerator.Generate(PropertyContent.Named("golden-v2"), seed: 7);
 
         // Every listed operation was accepted (a replay accepts each one again), and the seed tried more commands than it kept.
-        Assert.Equal(history.Operations.Count, CityHistory.Replay(PropertyContent.Named("golden-v1"), 7, history.Operations).Reports.Count);
+        Assert.Equal(history.Operations.Count, CityHistory.Replay(PropertyContent.Named("golden-v2"), 7, history.Operations).Reports.Count);
         Assert.True(history.Rejected > 0, history.Describe());
     }
 
@@ -82,7 +82,7 @@ public sealed class CityGeneratorTests
     [Fact]
     public void Gap_ManyDraws_StayWithinZeroAndFourCapsAndReachBothSidesOfTheCap()
     {
-        GameContent content = PropertyContent.Named("golden-v1");
+        GameContent content = PropertyContent.Named("golden-v2");
         long cap = content.Rules.MaxOfflineProductionSeconds;
         var random = new SeededRandom(1);
 

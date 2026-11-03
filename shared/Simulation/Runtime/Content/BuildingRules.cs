@@ -100,7 +100,8 @@ namespace CityBuilder.Simulation.Content
 
         /// <summary>
         /// A producer level (rules 3 and 9): at least 1 worker slot, no workers provided, a recipe with an output, no carry limit or stamina,
-        /// and a store that holds every good of the recipe (inputs and outputs, not the currency) with a limit of at least one cycle's quantity.
+        /// and a store that holds every good of the recipe (inputs and outputs, not the currency) with a limit of at least one cycle's quantity;
+        /// a recipe of the currency only needs no store.
         /// </summary>
         private static void CheckProducerLevel(ContentDraft draft, BuildingLevelDefinition level, string path, ContentErrorList errors)
         {
@@ -118,11 +119,9 @@ namespace CityBuilder.Simulation.Content
                 errors.Add(ContentErrorCode.InvalidProducerLevel, path + ".recipe.outputs", "A recipe makes at least one item.");
             }
 
-            Require(level.Storage.Count > 0, ContentErrorCode.InvalidProducerLevel, path + ".storage", "A producer level has a store for its recipe's goods.", errors);
             foreach (ItemQuantity good in level.Recipe.Inputs.Concat(level.Recipe.Outputs))
             {
-                bool isCurrency = draft.ItemsById.TryGetValue(good.Item, out ItemDefinition? item) && item.IsCurrency;
-                if (isCurrency || level.Storage.Count == 0)
+                if (draft.ItemsById.TryGetValue(good.Item, out ItemDefinition? item) && item.IsCurrency)
                 {
                     continue;
                 }
