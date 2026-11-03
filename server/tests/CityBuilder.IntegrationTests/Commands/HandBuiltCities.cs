@@ -32,8 +32,23 @@ internal static class HandBuiltCities
     /// <param name="planks">The planks in stock.</param>
     /// <param name="buildings">The buildings, with ids from 1 up.</param>
     /// <returns>The player and their city.</returns>
-    public static async Task<(Guid Player, Guid City)> StoreCityAsync(
-        PostgresApiFactory factory, string name, long coins, long logs, long planks, params Building[] buildings)
+    public static Task<(Guid Player, Guid City)> StoreCityAsync(
+        PostgresApiFactory factory, string name, long coins, long logs, long planks, params Building[] buildings) =>
+        StoreCityWithRoadsAsync(factory, name, coins, logs, planks, [], buildings);
+
+    /// <summary>
+    /// Stores a new player with a city as <see cref="StoreCityAsync"/> does, with roads on tiles no building stands on (CR-0008).
+    /// </summary>
+    /// <param name="factory">The server on the test's database.</param>
+    /// <param name="name">The player's dev name.</param>
+    /// <param name="coins">The coins in stock.</param>
+    /// <param name="logs">The logs in stock.</param>
+    /// <param name="planks">The planks in stock.</param>
+    /// <param name="roads">The roads.</param>
+    /// <param name="buildings">The buildings, with ids from 1 up.</param>
+    /// <returns>The player and their city.</returns>
+    public static async Task<(Guid Player, Guid City)> StoreCityWithRoadsAsync(
+        PostgresApiFactory factory, string name, long coins, long logs, long planks, RoadTile[] roads, params Building[] buildings)
     {
         GameContent content = ContentOf(factory);
         var state = new CityState(
@@ -43,7 +58,8 @@ internal static class HandBuiltCities
             [new(new ItemId("coins"), coins), new(new ItemId("logs"), logs), new(new ItemId("planks"), planks)],
             buildings,
             [],
-            activeResearch: null);
+            activeResearch: null,
+            roads);
         Simulator.Advance(state, content, 0);
         (Guid player, Guid city) = (Guid.NewGuid(), Guid.NewGuid());
         var aggregate = new CityAggregate(city, player, state, [], PostgresApiFactory.Start.ToUnixTimeSeconds(), 0, content.ContentVersion);

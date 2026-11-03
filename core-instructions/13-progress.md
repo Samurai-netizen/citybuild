@@ -9,7 +9,7 @@
   build log `docs/build-log/2026/2026-11-02-07-CR-0008-T1.md` (its Session 1 plan lists every part and step)
 - **Part / step:** A, B, C done (design docs, spec, engine roads and paths; draft PR #86); Session 2 reviewed them (build log). Part D (server:
   roads end to end): D1 done (`city_roads`, migration, mapping, snapshot `roads`, the client reads them); D2 done (three endpoints,
-  `COST_ROAD`, boundary checks, contract tests). Next: D3 PostgreSQL tests → D4 docs, Unity run, verification.
+  `COST_ROAD`, boundary checks, contract tests); D3 done (PostgreSQL tests). Next: D4 docs, Unity run, full verification, self-review.
   Then E … I (build log Session 1 plan), then `/finish-task`.
 - **Last completed:** M0-60 · Client ↔ server boundary review (PR #85, merged)
 - **Next task:** CR-0008-T2 · client and art (`[S]`), after T1 merges; then CR-0008-T3, then M0-61.
