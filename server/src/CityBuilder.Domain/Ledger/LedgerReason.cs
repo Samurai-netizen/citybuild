@@ -26,4 +26,7 @@ public enum LedgerReason
 
     /// <summary><c>COST_RESEARCH</c>: the cost of starting a research.</summary>
     CostResearch,
+
+    /// <summary><c>COST_ROAD</c>: the cost of placing or upgrading roads, for every tile of the command (CR-0008).</summary>
+    CostRoad,
 }

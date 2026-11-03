@@ -75,6 +75,7 @@ public static class LedgerMapping
         LedgerReason.CostUpgrade => "COST_UPGRADE",
         LedgerReason.RefundUpgrade => "REFUND_UPGRADE",
         LedgerReason.CostResearch => "COST_RESEARCH",
+        LedgerReason.CostRoad => "COST_ROAD",
         _ => throw new ArgumentOutOfRangeException(nameof(reason), reason, "Not a defined ledger reason."),
     };
 }

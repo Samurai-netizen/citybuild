@@ -122,6 +122,20 @@ public sealed class UnauthenticatedContractTests(ApiFactory factory) : IClassFix
         AssertAuthenticationRequired(response);
     }
 
+    /// <summary>Each road command without a token gets the same 401 answer before its body is read, as every command does (CR-0008).</summary>
+    /// <param name="path">The road command's path.</param>
+    [Theory]
+    [InlineData("/api/v1/commands/place-roads")]
+    [InlineData("/api/v1/commands/upgrade-roads")]
+    [InlineData("/api/v1/commands/remove-roads")]
+    public async Task Post_RoadCommandWithoutToken_ReturnsAuthenticationRequiredProblem(string path)
+    {
+        ApiResponse response = await ApiClient.PostAsync(
+            factory, path, playerId: null, """{"requestId":"0199a1b2-c3d4-7e5f-8a9b-00000000000e","tiles":[{"x":1,"y":1}]}""");
+
+        AssertAuthenticationRequired(response);
+    }
+
     /// <summary>A valid token is not refused: the content endpoint answers 200 (the city endpoint needs a city, which the snapshot tests give it).</summary>
     [Fact]
     public async Task Get_WithValidToken_IsNotRefused()

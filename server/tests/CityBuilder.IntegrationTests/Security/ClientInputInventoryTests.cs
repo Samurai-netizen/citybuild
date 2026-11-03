@@ -36,6 +36,9 @@ public sealed class ClientInputInventoryTests(ApiFactory factory) : IClassFixtur
             ["POST /api/v1/commands/upgrade-building"] = ["Body:requestId", "Body:buildingId"],
             ["POST /api/v1/commands/assign-workers"] = ["Body:requestId", "Body:buildingId", "Body:workers"],
             ["POST /api/v1/commands/start-research"] = ["Body:requestId", "Body:researchId"],
+            ["POST /api/v1/commands/place-roads"] = ["Body:requestId", "Body:tiles"],
+            ["POST /api/v1/commands/upgrade-roads"] = ["Body:requestId", "Body:tiles"],
+            ["POST /api/v1/commands/remove-roads"] = ["Body:requestId", "Body:tiles"],
         };
         using WebApplicationFactory<Program> server = factory.WithWebHostBuilder(_ => { });
         JsonSerializerOptions json = server.Services.GetRequiredService<IOptions<HttpJsonOptions>>().Value.SerializerOptions;
@@ -68,7 +71,7 @@ public sealed class ClientInputInventoryTests(ApiFactory factory) : IClassFixtur
             .Where(path => path.StartsWith("/api/v1/", StringComparison.Ordinal))
             .Order(StringComparer.Ordinal)];
 
-        Assert.Equal(7, routed.Length);
+        Assert.Equal(10, routed.Length);
         Assert.Equal(routed, described);
     }
 
