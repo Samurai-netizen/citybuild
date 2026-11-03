@@ -6,7 +6,7 @@ using CityBuilder.Simulation.Content;
 namespace CityBuilder.Simulation.State
 {
     /// <summary>
-    /// Values derived from a city and the content, never stored (<c>core-instructions/04-simulation-model.md</c>, sections 3, 5 and 8). Every
+    /// Values derived from a city and the content, never stored (<c>core-instructions/04-simulation-model.md</c>, sections 3, 5, 8, 16 and 17). Every
     /// building type and research node the city names must exist in the content; if one doesn't, the city and the content don't belong
     /// together, and the query throws <see cref="InvalidOperationException"/>.
     /// </summary>
@@ -57,7 +57,7 @@ namespace CityBuilder.Simulation.State
         /// <returns>The free workers.</returns>
         public static long FreeWorkers(CityState city, GameContent content) => checked(WorkersProvided(city, content) - WorkersAssigned(city));
 
-        /// <summary>The builder slots in use: one per building that is constructing or upgrading.</summary>
+        /// <summary>The builder slots in use: one per building that is constructing (a construction site too) or upgrading, or whose upgrade waits for goods (<c>04</c> section 8).</summary>
         /// <param name="city">The city.</param>
         /// <returns>The number of busy builders.</returns>
         public static int BuildersBusy(CityState city)
@@ -67,7 +67,7 @@ namespace CityBuilder.Simulation.State
             for (int index = 0; index < buildings.Count; index++)
             {
                 BuildingPhase phase = buildings[index].Phase;
-                if (phase == BuildingPhase.Constructing || phase == BuildingPhase.Upgrading)
+                if (phase == BuildingPhase.Constructing || phase == BuildingPhase.Upgrading || buildings[index].HasUpgradeWaiting)
                 {
                     busy++;
                 }
@@ -77,47 +77,46 @@ namespace CityBuilder.Simulation.State
         }
 
         /// <summary>
-        /// How much of an item the running cycles will deliver: the sum of the item's outputs over every producing building, frozen cycles
-        /// included. Production may start only while stock plus reserved plus the new output fits the cap.
+        /// How much of a good a building has reserved: the output of its own running cycle (frozen ones included), which will enter its store
+        /// when the cycle completes (<c>04</c> section 16). Derived from the phase, never stored. An idle building reserves nothing.
         /// </summary>
-        /// <param name="city">The city.</param>
         /// <param name="content">The game content.</param>
-        /// <param name="item">The item.</param>
-        /// <returns>The reserved quantity, 0 when no running cycle makes the item.</returns>
-        public static long Reserved(CityState city, GameContent content, ItemId item)
+        /// <param name="building">The building.</param>
+        /// <param name="item">The good.</param>
+        /// <returns>The reserved quantity, 0 when the building isn't producing the good.</returns>
+        public static long Reserved(GameContent content, Building building, ItemId item)
         {
-            long reserved = 0;
-            IReadOnlyList<Building> buildings = city.Buildings;
-            for (int index = 0; index < buildings.Count; index++)
+            if (building.Phase != BuildingPhase.Producing)
             {
-                Building building = buildings[index];
-                if (building.Phase != BuildingPhase.Producing)
-                {
-                    continue;
-                }
+                return 0;
+            }
 
-                IReadOnlyList<ItemQuantity> outputs = RecipeOf(content, building.TypeId, building.Level).Outputs;
-                for (int outputIndex = 0; outputIndex < outputs.Count; outputIndex++)
+            long reserved = 0;
+            IReadOnlyList<ItemQuantity> outputs = RecipeOf(content, building.TypeId, building.Level).Outputs;
+            for (int index = 0; index < outputs.Count; index++)
+            {
+                if (outputs[index].Item == item)
                 {
-                    if (outputs[outputIndex].Item == item)
-                    {
-                        reserved = checked(reserved + outputs[outputIndex].Quantity);
-                    }
+                    reserved = checked(reserved + outputs[index].Quantity);
                 }
             }
 
             return reserved;
         }
 
-        /// <summary>The storage cap of an item now: its base cap plus the bonuses of every completed research. Uncapped items have none.</summary>
-        /// <param name="city">The city.</param>
+        /// <summary>
+        /// A building store's effective limit for a good (<c>04</c> section 16): its level's limit plus the <see cref="StorageCapBonusEffect"/>s
+        /// of the city's completed research for that good.
+        /// </summary>
+        /// <param name="city">The city, whose completed research raises the limits.</param>
         /// <param name="content">The game content.</param>
-        /// <param name="item">The item.</param>
-        /// <param name="cap">The cap, when the item is capped; otherwise 0.</param>
-        /// <returns>True when the item is capped.</returns>
-        public static bool TryGetEffectiveCap(CityState city, GameContent content, ItemId item, out long cap)
+        /// <param name="building">The building.</param>
+        /// <param name="item">The good.</param>
+        /// <param name="limit">The effective limit; 0 when the store doesn't hold the good.</param>
+        /// <returns>True when the building's store holds the good at its level.</returns>
+        public static bool TryGetEffectiveLimit(CityState city, GameContent content, Building building, ItemId item, out long limit)
         {
-            if (!content.Rules.TryGetBaseStorageCap(item, out cap))
+            if (!DefinitionOf(content, building.TypeId).GetLevel(building.Level).TryGetStorageLimit(item, out limit))
             {
                 return false;
             }
@@ -130,12 +129,134 @@ namespace CityBuilder.Simulation.State
                 {
                     if (effects[effectIndex] is StorageCapBonusEffect bonus && bonus.Item == item)
                     {
-                        cap = checked(cap + bonus.Amount);
+                        limit = checked(limit + bonus.Amount);
                     }
                 }
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// How much more of a good a building's store takes (<c>04</c> section 16): effective limit − stock − reserved, at least 0 (a refund or a
+        /// returned load may have put the stock above the limit); 0 when the store doesn't hold the good.
+        /// </summary>
+        /// <param name="city">The city.</param>
+        /// <param name="content">The game content.</param>
+        /// <param name="building">The building.</param>
+        /// <param name="item">The good.</param>
+        /// <returns>The room for the good.</returns>
+        public static long Room(CityState city, GameContent content, Building building, ItemId item) =>
+            TryGetEffectiveLimit(city, content, building, item, out long limit)
+                ? Math.Max(0, checked(limit - building.GetStock(item) - Reserved(content, building, item)))
+                : 0;
+
+        /// <summary>
+        /// The city's total of an item (<c>04</c> section 16): for the currency the purse; for a good the sum of every building's store (from
+        /// CR-0008-T1 part E2 also the loads of walkers).
+        /// </summary>
+        /// <param name="city">The city.</param>
+        /// <param name="content">The game content.</param>
+        /// <param name="item">The item.</param>
+        /// <returns>The total, 0 or more.</returns>
+        public static long Total(CityState city, GameContent content, ItemId item)
+        {
+            if (item == content.Currency)
+            {
+                return city.Purse;
+            }
+
+            long total = 0;
+            IReadOnlyList<Building> buildings = city.Buildings;
+            for (int index = 0; index < buildings.Count; index++)
+            {
+                total = checked(total + buildings[index].GetStock(item));
+            }
+
+            return total;
+        }
+
+        /// <summary>Every item's city total (<see cref="Total"/>) in the content's item order (ordinal ids), 0 included: the HUD's and the snapshot's totals.</summary>
+        /// <param name="city">The city.</param>
+        /// <param name="content">The game content.</param>
+        /// <returns>One quantity per item of the content.</returns>
+        public static IReadOnlyList<ItemQuantity> Totals(CityState city, GameContent content)
+        {
+            var totals = new ItemQuantity[content.Items.Count];
+            for (int index = 0; index < totals.Length; index++)
+            {
+                ItemId item = content.Items[index].Id;
+                totals[index] = new ItemQuantity(item, Total(city, content, item));
+            }
+
+            return Array.AsReadOnly(totals);
+        }
+
+        /// <summary>How many buildings of a type the city has, in any phase (a construction site included): what <c>maxPerCity</c> limits.</summary>
+        /// <param name="city">The city.</param>
+        /// <param name="type">The building type.</param>
+        /// <returns>The count.</returns>
+        public static int CountOfType(CityState city, BuildingTypeId type)
+        {
+            int count = 0;
+            IReadOnlyList<Building> buildings = city.Buildings;
+            for (int index = 0; index < buildings.Count; index++)
+            {
+                if (buildings[index].TypeId == type)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        /// <summary>
+        /// The city's completed science building, where research happens and its goods are delivered (<c>04</c> section 16), or null when it has
+        /// none yet (a construction site or a building still constructing doesn't count). Content rule 10 allows one per city.
+        /// </summary>
+        /// <param name="city">The city.</param>
+        /// <param name="content">The game content.</param>
+        /// <returns>The science building, or null.</returns>
+        public static Building? ScienceBuilding(CityState city, GameContent content)
+        {
+            IReadOnlyList<Building> buildings = city.Buildings;
+            for (int index = 0; index < buildings.Count; index++)
+            {
+                Building building = buildings[index];
+                if (building.Phase != BuildingPhase.Constructing && DefinitionOf(content, building.TypeId).Kind == BuildingKind.Science)
+                {
+                    return building;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// The city's walk bonus in permille (<c>04</c> section 17): the sum of the <see cref="WalkSpeedBonusEffect"/>s of its completed research,
+        /// at most <see cref="GameRules.MaxWalkBonusPermille"/> by content rule 12.
+        /// </summary>
+        /// <param name="city">The city.</param>
+        /// <param name="content">The game content.</param>
+        /// <returns>The bonus, 0 to 900.</returns>
+        public static int WalkBonusPermille(CityState city, GameContent content)
+        {
+            int bonus = 0;
+            IReadOnlyList<ResearchId> completed = city.CompletedResearch;
+            for (int index = 0; index < completed.Count; index++)
+            {
+                IReadOnlyList<ResearchEffect> effects = ResearchOf(content, completed[index]).Effects;
+                for (int effectIndex = 0; effectIndex < effects.Count; effectIndex++)
+                {
+                    if (effects[effectIndex] is WalkSpeedBonusEffect walk)
+                    {
+                        bonus = checked(bonus + walk.Permille);
+                    }
+                }
+            }
+
+            return bonus;
         }
 
         /// <summary>
@@ -214,13 +335,13 @@ namespace CityBuilder.Simulation.State
             return city.TryGetRoad(x, y, out _) ? TileContent.Road : TileContent.Ground;
         }
 
-        /// <summary>The first input of the recipe, in recipe (ordinal item) order, of which the stock holds less than the cycle needs.</summary>
-        internal static bool TryFindMissingInput(CityState city, RecipeDefinition recipe, out ItemId item)
+        /// <summary>The first input of the recipe, in recipe (ordinal item) order, of which the building's own store holds less than the cycle needs.</summary>
+        internal static bool TryFindMissingInput(Building building, RecipeDefinition recipe, out ItemId item)
         {
             IReadOnlyList<ItemQuantity> inputs = recipe.Inputs;
             for (int index = 0; index < inputs.Count; index++)
             {
-                if (city.GetQuantity(inputs[index].Item) < inputs[index].Quantity)
+                if (building.GetStock(inputs[index].Item) < inputs[index].Quantity)
                 {
                     item = inputs[index].Item;
                     return true;
@@ -232,16 +353,16 @@ namespace CityBuilder.Simulation.State
         }
 
         /// <summary>
-        /// The first capped output of the recipe, in recipe (ordinal item) order, that doesn't fit a new cycle: stock + reserved + the cycle's
-        /// quantity is above the effective cap (<c>04</c> section 6). Uncapped outputs always fit.
+        /// The first output of the recipe, in recipe (ordinal item) order, that doesn't fit a new cycle in the building's own store
+        /// (<see cref="FitsInStore"/>, <c>04</c> section 6). The currency always fits.
         /// </summary>
-        internal static bool TryFindFullOutput(CityState city, GameContent content, RecipeDefinition recipe, out ItemId item)
+        internal static bool TryFindFullOutput(CityState city, GameContent content, Building building, RecipeDefinition recipe, out ItemId item)
         {
             IReadOnlyList<ItemQuantity> outputs = recipe.Outputs;
             for (int index = 0; index < outputs.Count; index++)
             {
                 ItemId output = outputs[index].Item;
-                if (!FitsUnderCap(city, content, outputs[index], Reserved(city, content, output)))
+                if (!FitsInStore(city, content, building, outputs[index]))
                 {
                     item = output;
                     return true;
@@ -253,11 +374,21 @@ namespace CityBuilder.Simulation.State
         }
 
         /// <summary>
-        /// Whether one more cycle's output fits (<c>04</c> section 6): an uncapped item always fits; a capped one fits while stock +
-        /// <paramref name="reserved"/> + the output's quantity is at most the effective cap. The start rule and the stall reason share it.
+        /// Whether one output of a cycle fits the building's own store (<c>04</c> section 6): the currency always does (it goes into the purse);
+        /// a good does when <c>stock + reserved + quantity ≤ effective limit</c>, where reserved is the building's own running cycle's output (0
+        /// for an idle building, which is the one that starts).
         /// </summary>
-        internal static bool FitsUnderCap(CityState city, GameContent content, ItemQuantity output, long reserved) =>
-            !TryGetEffectiveCap(city, content, output.Item, out long cap) || checked(city.GetQuantity(output.Item) + reserved + output.Quantity) <= cap;
+        internal static bool FitsInStore(CityState city, GameContent content, Building building, ItemQuantity output)
+        {
+            if (output.Item == content.Currency)
+            {
+                return true;
+            }
+
+            // Content rule 9 makes a producer's store hold every good of its recipe; a store without the good has no room for it.
+            return TryGetEffectiveLimit(city, content, building, output.Item, out long limit)
+                && checked(building.GetStock(output.Item) + Reserved(content, building, output.Item) + output.Quantity) <= limit;
+        }
 
         /// <summary>The definition of a building type the city uses.</summary>
         internal static BuildingDefinition DefinitionOf(GameContent content, BuildingTypeId type) =>

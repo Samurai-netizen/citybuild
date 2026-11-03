@@ -62,5 +62,11 @@ namespace CityBuilder.Simulation.Rules
 
         /// <summary><c>ROAD_NOT_FOUND</c>: a tile of a road command has no road to upgrade or remove (CR-0008).</summary>
         RoadNotFound,
+
+        /// <summary><c>BUILDING_LIMIT</c>: the city already has the most buildings of the type its <c>maxPerCity</c> allows (CR-0008: the science building).</summary>
+        BuildingLimit,
+
+        /// <summary><c>NO_SCIENCE_BUILDING</c>: research needs a completed science building, and the city has none (CR-0008 D11).</summary>
+        NoScienceBuilding,
     }
 }

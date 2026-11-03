@@ -7,15 +7,14 @@ using CityBuilder.Simulation.Content;
 namespace CityBuilder.Simulation.State
 {
     /// <summary>
-    /// Everything that is stored about one city (<c>core-instructions/04-simulation-model.md</c>, sections 3 to 5 and 17): its clock, era,
-    /// stock, buildings, research and roads. Values derived from it and the content (workers, builders, reservations, caps, labor, unlocks) are never stored;
+    /// Everything that is stored about one city (<c>core-instructions/04-simulation-model.md</c>, sections 3 to 5, 16 and 17): its clock, era,
+    /// purse, buildings (with their stores and projects), research and roads. Values derived from it and the content (workers, builders,
+    /// reservations, limits, labor, unlocks, city totals) are never stored;
     /// <see cref="CityQueries"/> computes them. Only the engine changes a city, through <see cref="Rules.CityRules"/> and
     /// <see cref="Settlement.Simulator"/>. Every list is sorted, so iterating it is deterministic.
     /// </summary>
     public sealed class CityState
     {
-        /// <summary>The stock: only items above 0, sorted by item id.</summary>
-        private readonly ItemTotals _inventory = new ItemTotals();
         /// <summary>The buildings, sorted by id; ids and tiles are unique.</summary>
         private readonly List<Building> _buildings;
         /// <summary>The completed research nodes, sorted by id, each once.</summary>
@@ -30,7 +29,7 @@ namespace CityBuilder.Simulation.State
         /// <param name="clock">The city clock in seconds, at least 0.</param>
         /// <param name="era">The era number, at least 1.</param>
         /// <param name="nextBuildingId">The id the next placed building gets, above every building's id, at least 1.</param>
-        /// <param name="inventory">The stock: each item at most once, no quantity below 0. Items with 0 are left out.</param>
+        /// <param name="purse">The coins in the purse (the currency, <c>04</c> section 16), at least 0.</param>
         /// <param name="buildings">The buildings, in any order: unique ids, one building per tile.</param>
         /// <param name="completedResearch">The completed research nodes, in any order, each at most once.</param>
         /// <param name="activeResearch">The running research, or null; never a completed node.</param>
@@ -41,41 +40,26 @@ namespace CityBuilder.Simulation.State
             long clock,
             int era,
             int nextBuildingId,
-            IEnumerable<KeyValuePair<ItemId, long>> inventory,
+            long purse,
             IEnumerable<Building> buildings,
             IEnumerable<ResearchId> completedResearch,
             ActiveResearch? activeResearch,
             IEnumerable<RoadTile>? roads = null)
         {
-            if (inventory is null)
+            if (clock < 0 || era < 1 || nextBuildingId < 1 || purse < 0)
             {
-                throw new ArgumentNullException(nameof(inventory));
-            }
-
-            if (clock < 0 || era < 1 || nextBuildingId < 1)
-            {
-                throw new ArgumentException("The clock must not be negative, and the era and the next building id must be at least 1.");
+                throw new ArgumentException("The clock and the purse must not be negative, and the era and the next building id must be at least 1.");
             }
 
             Clock = clock;
             Era = era;
             NextBuildingId = nextBuildingId;
             ActiveResearch = activeResearch;
-
-            foreach (KeyValuePair<ItemId, long> stock in inventory)
-            {
-                if (stock.Value < 0 || _inventory.ContainsKey(stock.Key))
-                {
-                    throw new ArgumentException(FormattableString.Invariant($"Item {stock.Key}: listed twice or below 0."), nameof(inventory));
-                }
-
-                _inventory.Set(stock.Key, stock.Value);
-            }
+            Purse = purse;
 
             _buildings = SortedBuildings(buildings, nextBuildingId);
             _completedResearch = SortedResearch(completedResearch, activeResearch);
             _roads = SortedRoads(roads ?? Array.Empty<RoadTile>(), _buildings);
-            Inventory = _inventory;
             Buildings = _buildings.AsReadOnly();
             CompletedResearch = _completedResearch.AsReadOnly();
             Roads = _roads.AsReadOnly();
@@ -90,8 +74,11 @@ namespace CityBuilder.Simulation.State
         /// <summary>The id the next placed building gets. Ids are never reused.</summary>
         public int NextBuildingId { get; private set; }
 
-        /// <summary>The stock, in ordinal item order. It holds only items with a quantity above 0; <see cref="GetQuantity"/> gives 0 for the others.</summary>
-        public IReadOnlyDictionary<ItemId, long> Inventory { get; }
+        /// <summary>
+        /// The coins in the city's purse: the currency, in no building and uncapped; every coin cost is paid from it at once and the coins a
+        /// cycle makes go into it (<c>04</c> section 16).
+        /// </summary>
+        public long Purse { get; private set; }
 
         /// <summary>The buildings, in ascending id order (the order they were placed in).</summary>
         public IReadOnlyList<Building> Buildings { get; }
@@ -104,11 +91,6 @@ namespace CityBuilder.Simulation.State
 
         /// <summary>The roads, by tile: column, then row (<c>04</c> section 17).</summary>
         public IReadOnlyList<RoadTile> Roads { get; }
-
-        /// <summary>How many of an item the city has.</summary>
-        /// <param name="item">The item.</param>
-        /// <returns>The quantity, 0 when the city has none.</returns>
-        public long GetQuantity(ItemId item) => _inventory.Get(item);
 
         /// <summary>Whether the city has completed a research node.</summary>
         /// <param name="id">The research node.</param>
@@ -180,56 +162,35 @@ namespace CityBuilder.Simulation.State
             return false;
         }
 
-        /// <summary>Whether the city has at least every amount in the list.</summary>
-        internal bool HasItems(IReadOnlyList<ItemQuantity> amounts)
+        /// <summary>Takes coins out of the purse. The caller checks the purse first; it never drops below 0.</summary>
+        internal void PayFromPurse(long coins)
         {
-            for (int index = 0; index < amounts.Count; index++)
+            if (coins < 0 || coins > Purse)
             {
-                ItemQuantity amount = amounts[index];
-                if (GetQuantity(amount.Item) < amount.Quantity)
-                {
-                    return false;
-                }
+                throw new InvalidOperationException(FormattableString.Invariant($"The purse can't pay {coins} with {Purse}; the caller must check it first."));
             }
 
-            return true;
+            Purse = checked(Purse - coins);
         }
 
-        /// <summary>Adds every amount in the list. Storage caps don't apply: they limit production only (<c>04</c> section 8).</summary>
-        internal void AddItems(IReadOnlyList<ItemQuantity> amounts)
+        /// <summary>Puts coins into the purse (a cycle's coin output); the purse has no limit.</summary>
+        internal void AddToPurse(long coins)
         {
-            for (int index = 0; index < amounts.Count; index++)
+            if (coins < 0)
             {
-                ItemQuantity amount = amounts[index];
-                _inventory.Set(amount.Item, checked(GetQuantity(amount.Item) + amount.Quantity));
-            }
-        }
-
-        /// <summary>Takes every amount in the list. The caller checks <see cref="HasItems"/> first; stock never drops below 0.</summary>
-        internal void RemoveItems(IReadOnlyList<ItemQuantity> amounts)
-        {
-            if (!HasItems(amounts))
-            {
-                throw new InvalidOperationException("The city can't pay these amounts; the caller must check them first.");
+                throw new InvalidOperationException(FormattableString.Invariant($"Coins put into the purse are at least 0, not {coins}."));
             }
 
-            for (int index = 0; index < amounts.Count; index++)
-            {
-                ItemQuantity amount = amounts[index];
-                _inventory.Set(amount.Item, checked(GetQuantity(amount.Item) - amount.Quantity));
-            }
+            Purse = checked(Purse + coins);
         }
 
         /// <summary>Places a new building with the next id; it is constructing from now until <paramref name="endsAt"/>.</summary>
-        internal Building AddBuilding(BuildingTypeId typeId, int x, int y, long endsAt)
-        {
-            Building building = Building.StartConstruction(NextBuildingId, typeId, x, y, Clock, endsAt);
-            NextBuildingId = checked(NextBuildingId + 1);
+        internal Building AddBuilding(BuildingTypeId typeId, int x, int y, long endsAt) =>
+            Append(Building.StartConstruction(NextBuildingId, typeId, x, y, Clock, endsAt));
 
-            // Ids only grow, so appending keeps the list sorted.
-            _buildings.Add(building);
-            return building;
-        }
+        /// <summary>Places a construction site with the next id: constructing without a timer until <paramref name="needs"/> are delivered.</summary>
+        internal Building AddConstructionSite(BuildingTypeId typeId, int x, int y, IReadOnlyList<ItemQuantity> needs) =>
+            Append(Building.StartConstructionSite(NextBuildingId, typeId, x, y, needs));
 
         /// <summary>Puts a level-1 road on an empty tile. The caller checks that the tile has neither a road nor a building.</summary>
         internal void PlaceRoad(int x, int y)
@@ -249,16 +210,11 @@ namespace CityBuilder.Simulation.State
         /// <summary>Takes the road off a tile. The caller checks that the tile has one.</summary>
         internal void RemoveRoad(int x, int y) => _roads.RemoveAt(RequireRoad(x, y));
 
-        /// <summary>Fills the free research slot. The caller checks that it is free.</summary>
-        internal void StartResearch(ResearchId id, long endsAt)
-        {
-            if (ActiveResearch != null)
-            {
-                throw new InvalidOperationException("The research slot is busy; the caller must check it first.");
-            }
+        /// <summary>Fills the free research slot with a running timer from now. The caller checks that it is free.</summary>
+        internal void StartResearch(ResearchId id, long endsAt) => FillResearchSlot(new ActiveResearch(id, Clock, endsAt));
 
-            ActiveResearch = new ActiveResearch(id, Clock, endsAt);
-        }
+        /// <summary>Fills the free research slot with a research waiting for <paramref name="needs"/> at the science building.</summary>
+        internal void StartResearchWaiting(ResearchId id, IReadOnlyList<ItemQuantity> needs) => FillResearchSlot(ActiveResearch.Waiting(id, needs));
 
         /// <summary>
         /// Completes the running research: the node joins <see cref="CompletedResearch"/> and the slot is free. Its effects are derived from
@@ -274,6 +230,25 @@ namespace CityBuilder.Simulation.State
             _completedResearch.Insert(~index, running.Id);
             ActiveResearch = null;
             return running.Id;
+        }
+
+        /// <summary>Puts a research into the free slot. The caller checks that it is free.</summary>
+        private void FillResearchSlot(ActiveResearch research)
+        {
+            if (ActiveResearch != null)
+            {
+                throw new InvalidOperationException("The research slot is busy; the caller must check it first.");
+            }
+
+            ActiveResearch = research;
+        }
+
+        /// <summary>Gives the next building id to a new building and adds it; ids only grow, so appending keeps the list sorted.</summary>
+        private Building Append(Building building)
+        {
+            NextBuildingId = checked(NextBuildingId + 1);
+            _buildings.Add(building);
+            return building;
         }
 
         /// <summary>Moves the clock forward to <paramref name="clock"/>. The clock never decreases (<c>04</c> invariant 7).</summary>

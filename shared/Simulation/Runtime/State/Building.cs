@@ -1,15 +1,26 @@
 #nullable enable
 using System;
+using System.Collections.Generic;
+using CityBuilder.Simulation.Content;
 
 namespace CityBuilder.Simulation.State
 {
     /// <summary>
-    /// A building placed in a city (<c>core-instructions/04-simulation-model.md</c>, sections 3 and 4). Times are city-clock seconds and labor
-    /// is in worker-seconds. Only the engine changes a building, through <see cref="Rules.CityRules"/> and <see cref="Settlement.Simulator"/>;
-    /// everything else reads it. The fields a phase doesn't use are 0, and <see cref="PhaseEndsAt"/> is null (<see cref="BuildingPhase"/>).
+    /// A building placed in a city (<c>core-instructions/04-simulation-model.md</c>, sections 3, 4 and 16): its phase, workers and labor, its
+    /// store and the goods its project still needs. Times are city-clock seconds and labor is in worker-seconds. Only the engine changes a
+    /// building, through <see cref="Rules.CityRules"/> and <see cref="Settlement.Simulator"/>; everything else reads it. The fields a phase
+    /// doesn't use are 0, and <see cref="PhaseEndsAt"/> is null (<see cref="BuildingPhase"/>). A <b>construction site</b> is
+    /// <see cref="BuildingPhase.Constructing"/> without a timer and with needs; an <b>upgrade waiting for goods</b> is an
+    /// <see cref="BuildingPhase.Idle"/> or <see cref="BuildingPhase.Producing"/> building with needs.
     /// </summary>
     public sealed class Building
     {
+        /// <summary>The goods in the building's store, only quantities above 0, sorted by item id.</summary>
+        private readonly ItemTotals _store = new ItemTotals();
+
+        /// <summary>The goods the building's project still needs, only quantities above 0, sorted by item id; empty when no project waits.</summary>
+        private readonly ItemTotals _needs = new ItemTotals();
+
         /// <summary>
         /// Restores a building with every field, for example from the database. The values must form a valid building: the checks below are
         /// those that need no content (that the type exists and the level is within its max is the caller's business).
@@ -30,6 +41,14 @@ namespace CityBuilder.Simulation.State
         /// <param name="cycleLabor">The running cycle's labor, at least 1, while producing; otherwise 0.</param>
         /// <param name="laborRemaining">The labor left at <paramref name="segmentStartedAt"/>, 0 to <paramref name="cycleLabor"/>, while producing; otherwise 0.</param>
         /// <param name="segmentStartedAt">When the worker count last changed in the running cycle, while producing; otherwise 0.</param>
+        /// <param name="store">
+        /// The goods in the store, each at most once, none below 0 (0 is left out); null for none. Whether the level's store holds each good is
+        /// the caller's business, like the level.
+        /// </param>
+        /// <param name="needs">
+        /// The goods the project still needs, each at most once, none below 0 (0 is left out); null for none. Needs are allowed on a construction
+        /// site (constructing with no start and no end) and on an idle or producing building (its upgrade waits for them), nowhere else.
+        /// </param>
         /// <exception cref="ArgumentException">The values don't form a valid building; the message says which rule they break.</exception>
         public Building(
             int id,
@@ -44,7 +63,9 @@ namespace CityBuilder.Simulation.State
             int targetLevel,
             long cycleLabor,
             long laborRemaining,
-            long segmentStartedAt)
+            long segmentStartedAt,
+            IEnumerable<KeyValuePair<ItemId, long>>? store = null,
+            IEnumerable<KeyValuePair<ItemId, long>>? needs = null)
         {
             Id = id;
             TypeId = typeId;
@@ -59,8 +80,10 @@ namespace CityBuilder.Simulation.State
             CycleLabor = cycleLabor;
             LaborRemaining = laborRemaining;
             SegmentStartedAt = segmentStartedAt;
+            Store = _store;
+            Needs = _needs;
 
-            string? problem = FindProblem();
+            string? problem = Fill(_store, store, "store") ?? Fill(_needs, needs, "needs") ?? FindProblem();
             if (problem != null)
             {
                 throw new ArgumentException(FormattableString.Invariant($"Building {Id} is not valid: {problem}"));
@@ -112,15 +135,135 @@ namespace CityBuilder.Simulation.State
         /// <summary>When the running cycle's current labor segment (a stretch with one worker count) started; 0 unless producing.</summary>
         public long SegmentStartedAt { get; private set; }
 
+        /// <summary>
+        /// The goods in the building's store (<c>04</c> section 16), by item id; a good it holds none of is absent. The level's
+        /// <see cref="BuildingLevelDefinition.Storage"/> says which goods the store holds and their limits.
+        /// </summary>
+        public IReadOnlyDictionary<ItemId, long> Store { get; }
+
+        /// <summary>
+        /// The goods the building's project still needs (<c>04</c> section 16), by item id: a construction site's or a waiting upgrade's. Empty
+        /// when no project waits.
+        /// </summary>
+        public IReadOnlyDictionary<ItemId, long> Needs { get; }
+
+        /// <summary>Whether the building is a construction site: placed, waiting for goods, its build timer not running yet.</summary>
+        public bool IsConstructionSite => Phase == BuildingPhase.Constructing && _needs.Count > 0;
+
+        /// <summary>Whether an upgrade waits for goods: the building keeps working, and its builder slot is taken (<c>04</c> section 8).</summary>
+        public bool HasUpgradeWaiting => (Phase == BuildingPhase.Idle || Phase == BuildingPhase.Producing) && _needs.Count > 0;
+
+        /// <summary>How much of a good the store holds.</summary>
+        /// <param name="item">The good.</param>
+        /// <returns>The quantity, 0 when it holds none.</returns>
+        public long GetStock(ItemId item) => _store.Get(item);
+
+        /// <summary>How much of a good the project still needs.</summary>
+        /// <param name="item">The good.</param>
+        /// <returns>The quantity, 0 when it needs none.</returns>
+        public long GetNeed(ItemId item) => _needs.Get(item);
+
         /// <summary>Starts a new building: level 1, no workers, constructing from <paramref name="startedAt"/> to <paramref name="endsAt"/>.</summary>
         internal static Building StartConstruction(int id, BuildingTypeId typeId, int x, int y, long startedAt, long endsAt) =>
             new Building(id, typeId, x, y, 1, 0, BuildingPhase.Constructing, startedAt, endsAt, 0, 0, 0, 0);
+
+        /// <summary>
+        /// Starts a construction site: level 1, no workers, constructing without a timer, waiting for <paramref name="needs"/> (at least one good
+        /// above 0). <see cref="StartConstructionTimer"/> starts it when they are in.
+        /// </summary>
+        internal static Building StartConstructionSite(int id, BuildingTypeId typeId, int x, int y, IReadOnlyList<ItemQuantity> needs)
+        {
+            var building = new Building(id, typeId, x, y, 1, 0, BuildingPhase.Constructing, 0, null, 0, 0, 0, 0, null, ToPairs(needs));
+            if (!building.IsConstructionSite)
+            {
+                throw new InvalidOperationException(FormattableString.Invariant($"Building {id}: a construction site needs at least one good."));
+            }
+
+            return building;
+        }
+
+        /// <summary>A construction site's needs are in: the build timer runs from <paramref name="startedAt"/> to <paramref name="endsAt"/>.</summary>
+        internal void StartConstructionTimer(long startedAt, long endsAt)
+        {
+            RequirePhase(BuildingPhase.Constructing);
+            if (_needs.Count > 0 || PhaseEndsAt.HasValue || endsAt < startedAt)
+            {
+                throw new InvalidOperationException(FormattableString.Invariant($"Building {Id}: only a site whose goods are in starts its build timer."));
+            }
+
+            PhaseStartedAt = startedAt;
+            PhaseEndsAt = endsAt;
+        }
+
+        /// <summary>An upgrade was ordered and waits for <paramref name="needs"/> (at least one good above 0); the building keeps working meanwhile.</summary>
+        internal void WaitForUpgrade(IReadOnlyList<ItemQuantity> needs)
+        {
+            if ((Phase != BuildingPhase.Idle && Phase != BuildingPhase.Producing) || _needs.Count > 0)
+            {
+                throw new InvalidOperationException(FormattableString.Invariant($"Building {Id}: only an idle or producing building without a project waits for an upgrade."));
+            }
+
+            AddAll(_needs, needs);
+            if (_needs.Count == 0)
+            {
+                throw new InvalidOperationException(FormattableString.Invariant($"Building {Id}: a waiting upgrade needs at least one good."));
+            }
+        }
+
+        /// <summary>
+        /// Hands up to <paramref name="quantity"/> of a good to the project: at most what it still needs. Returns what it took; the caller keeps
+        /// the rest (<c>04</c> section 16, deliveries).
+        /// </summary>
+        internal long FillNeed(ItemId item, long quantity)
+        {
+            long taken = Math.Min(Math.Max(quantity, 0), _needs.Get(item));
+            _needs.Set(item, checked(_needs.Get(item) - taken));
+            return taken;
+        }
+
+        /// <summary>Puts goods into the store. The caller checks the room; a refund and a returned load may go above the limit (<c>04</c> section 16).</summary>
+        internal void AddToStore(ItemId item, long quantity) => _store.Set(item, checked(_store.Get(item) + quantity));
+
+        /// <summary>Puts every amount of a list into the store (a refund, an output), as <see cref="AddToStore(ItemId, long)"/>.</summary>
+        internal void AddToStore(IReadOnlyList<ItemQuantity> amounts)
+        {
+            for (int index = 0; index < amounts.Count; index++)
+            {
+                AddToStore(amounts[index].Item, amounts[index].Quantity);
+            }
+        }
+
+        /// <summary>Takes goods out of the store. The caller checks the stock; taking more than there is throws (the engine's own bug).</summary>
+        internal void TakeFromStore(ItemId item, long quantity)
+        {
+            long left = checked(_store.Get(item) - quantity);
+            if (left < 0)
+            {
+                throw new InvalidOperationException(FormattableString.Invariant($"Building {Id}: took {quantity} {item} with only {_store.Get(item)} in its store."));
+            }
+
+            _store.Set(item, left);
+        }
+
+        /// <summary>Takes every amount of a list out of the store (a cycle's inputs), as <see cref="TakeFromStore(ItemId, long)"/>.</summary>
+        internal void TakeFromStore(IReadOnlyList<ItemQuantity> amounts)
+        {
+            for (int index = 0; index < amounts.Count; index++)
+            {
+                TakeFromStore(amounts[index].Item, amounts[index].Quantity);
+            }
+        }
 
         /// <summary>
         /// Starts the upgrade to the next level. A running cycle ends without output: the caller refunds its inputs. The workers stay assigned.
         /// </summary>
         internal void StartUpgrade(long startedAt, long endsAt)
         {
+            if (_needs.Count > 0)
+            {
+                throw new InvalidOperationException(FormattableString.Invariant($"Building {Id}: an upgrade starts only when its goods are in."));
+            }
+
             int targetLevel = checked(Level + 1);
             ClearPhaseFields();
             Phase = BuildingPhase.Upgrading;
@@ -239,13 +382,17 @@ namespace CityBuilder.Simulation.State
             switch (Phase)
             {
                 case BuildingPhase.Constructing:
-                    return PhaseEndsAt >= PhaseStartedAt && AssignedWorkers == 0 && TargetLevel == 0 && HasNoCycle()
+                    bool timerOrSite = _needs.Count == 0
+                        ? PhaseEndsAt >= PhaseStartedAt
+                        : PhaseStartedAt == 0 && PhaseEndsAt == null;
+                    return timerOrSite && AssignedWorkers == 0 && TargetLevel == 0 && HasNoCycle()
                         ? null
-                        : "a constructing building has an end not before its start, no workers, and no target level or cycle.";
+                        : "a constructing building has no workers, no target level or cycle, and either an end not before its start, or (a "
+                          + "construction site) needs and no start or end.";
                 case BuildingPhase.Upgrading:
-                    return PhaseEndsAt >= PhaseStartedAt && TargetLevel == (long)Level + 1 && HasNoCycle()
+                    return PhaseEndsAt >= PhaseStartedAt && TargetLevel == (long)Level + 1 && HasNoCycle() && _needs.Count == 0
                         ? null
-                        : "an upgrading building has an end not before its start, the target level one above its level, and no cycle.";
+                        : "an upgrading building has an end not before its start, the target level one above its level, no cycle and no needs.";
                 case BuildingPhase.Idle:
                     return PhaseStartedAt == 0 && PhaseEndsAt == null && TargetLevel == 0 && HasNoCycle()
                         ? null
@@ -259,6 +406,52 @@ namespace CityBuilder.Simulation.State
                 default:
                     return "the phase is not one of the defined phases.";
             }
+        }
+
+        /// <summary>
+        /// Fills one of the building's quantity lists from the restoring constructor's values: each good at most once and none below 0 (0 is
+        /// left out). Returns why the values can't be used, or null.
+        /// </summary>
+        private static string? Fill(ItemTotals totals, IEnumerable<KeyValuePair<ItemId, long>>? values, string name)
+        {
+            if (values is null)
+            {
+                return null;
+            }
+
+            var seen = new HashSet<ItemId>();
+            foreach (KeyValuePair<ItemId, long> value in values)
+            {
+                if (value.Value < 0 || !seen.Add(value.Key))
+                {
+                    return FormattableString.Invariant($"its {name} lists {value.Key} twice or below 0.");
+                }
+
+                totals.Set(value.Key, value.Value);
+            }
+
+            return null;
+        }
+
+        /// <summary>Adds every amount of a list to a quantity list, <c>checked</c>.</summary>
+        private static void AddAll(ItemTotals totals, IReadOnlyList<ItemQuantity> amounts)
+        {
+            for (int index = 0; index < amounts.Count; index++)
+            {
+                totals.Set(amounts[index].Item, checked(totals.Get(amounts[index].Item) + amounts[index].Quantity));
+            }
+        }
+
+        /// <summary>A list of amounts as pairs, for the restoring constructor.</summary>
+        private static List<KeyValuePair<ItemId, long>> ToPairs(IReadOnlyList<ItemQuantity> amounts)
+        {
+            var pairs = new List<KeyValuePair<ItemId, long>>(amounts.Count);
+            for (int index = 0; index < amounts.Count; index++)
+            {
+                pairs.Add(new KeyValuePair<ItemId, long>(amounts[index].Item, amounts[index].Quantity));
+            }
+
+            return pairs;
         }
 
         /// <summary>Whether no cycle field is set: required in every phase except producing.</summary>

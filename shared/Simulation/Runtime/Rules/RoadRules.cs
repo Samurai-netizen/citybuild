@@ -58,19 +58,20 @@ namespace CityBuilder.Simulation.Rules
                 AddAmounts(cost, content.GetRoadLevel(1).Cost);
             }
 
-            IReadOnlyList<ItemQuantity> spent = cost.ToQuantities();
-            if (!city.HasItems(spent))
+            // Content rule 11 makes every road cost the currency only, so the cost is coins, paid from the purse.
+            long coins = Costs.CoinsOf(content, cost.ToQuantities());
+            if (city.Purse < coins)
             {
                 return MutationResult.Rejected(MutationErrorCode.InsufficientResource);
             }
 
-            city.RemoveItems(spent);
+            city.PayFromPurse(coins);
             for (int index = 0; index < tiles.Count; index++)
             {
                 city.PlaceRoad(tiles[index].X, tiles[index].Y);
             }
 
-            return MutationResult.Applied(spent);
+            return MutationResult.Applied(Costs.AsSpent(content, coins));
         }
 
         /// <summary>
@@ -111,20 +112,20 @@ namespace CityBuilder.Simulation.Rules
                 AddAmounts(cost, content.GetRoadLevel(road.Level + 1).Cost);
             }
 
-            IReadOnlyList<ItemQuantity> spent = cost.ToQuantities();
-            if (!city.HasItems(spent))
+            long coins = Costs.CoinsOf(content, cost.ToQuantities());
+            if (city.Purse < coins)
             {
                 return MutationResult.Rejected(MutationErrorCode.InsufficientResource);
             }
 
-            city.RemoveItems(spent);
+            city.PayFromPurse(coins);
             for (int index = 0; index < tiles.Count; index++)
             {
                 city.TryGetRoad(tiles[index].X, tiles[index].Y, out RoadTile road);
                 city.SetRoadLevel(road.X, road.Y, road.Level + 1);
             }
 
-            return MutationResult.Applied(spent);
+            return MutationResult.Applied(Costs.AsSpent(content, coins));
         }
 
         /// <summary>Takes the road off every tile of the list. Nothing is refunded (CR-0008 D6).</summary>
