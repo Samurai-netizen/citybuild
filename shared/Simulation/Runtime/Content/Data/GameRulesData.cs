@@ -1,5 +1,4 @@
 #nullable enable
-using System.Collections.Generic;
 
 namespace CityBuilder.Simulation.Content.Data
 {
@@ -17,9 +16,6 @@ namespace CityBuilder.Simulation.Content.Data
 
         /// <summary>Required. How many research nodes may run at once; exactly 1 in M0.</summary>
         public int? ResearchSlots { get; set; }
-
-        /// <summary>Required. The base storage cap of every capped item, keyed by item id.</summary>
-        public Dictionary<string, long?>? BaseStorageCaps { get; set; }
 
         /// <summary>Required. How many seconds of a settlement may start production cycles.</summary>
         public long? MaxOfflineProductionSeconds { get; set; }
@@ -41,5 +37,14 @@ namespace CityBuilder.Simulation.Content.Data
 
         /// <summary>Required. The largest total walk bonus of every research together, in permille.</summary>
         public int? MaxWalkBonusPermille { get; set; }
+
+        /// <summary>Required. The most goods one manual trip carries, all goods together (<c>04</c> section 18).</summary>
+        public long? TripCarryLimit { get; set; }
+
+        /// <summary>Required. The most stops a courier's route may have, 2 to 16 (<c>04</c> section 19).</summary>
+        public int? MaxRouteStops { get; set; }
+
+        /// <summary>Required. The most actions one stop of a route may have, 1 to 8 (<c>04</c> section 19).</summary>
+        public int? MaxStopActions { get; set; }
     }
 }

@@ -33,7 +33,8 @@ namespace CityBuilder.Simulation.Content
             IEnumerable<ItemDefinition> items,
             IEnumerable<BuildingDefinition> buildings,
             IEnumerable<ResearchDefinition> research,
-            IEnumerable<RoadLevelDefinition> roadLevels)
+            IEnumerable<RoadLevelDefinition> roadLevels,
+            IEnumerable<AmountPresetDefinition> amountPresets)
         {
             ContentVersion = contentVersion ?? throw new ArgumentNullException(nameof(contentVersion));
             Rules = rules ?? throw new ArgumentNullException(nameof(rules));
@@ -43,6 +44,7 @@ namespace CityBuilder.Simulation.Content
             Buildings = ReadOnlyLists.Sorted(buildings, (left, right) => left.Id.CompareTo(right.Id));
             Research = ReadOnlyLists.Sorted(research, (left, right) => left.Id.CompareTo(right.Id));
             RoadLevels = ReadOnlyLists.Sorted(roadLevels, (left, right) => left.Level.CompareTo(right.Level));
+            AmountPresets = ReadOnlyLists.Sorted(amountPresets, (left, right) => left.Id.CompareTo(right.Id));
 
             // Add throws on a duplicate key: validation rejects duplicates first, so a throw here is a bug in the factory, not bad data.
             foreach (EraDefinition era in Eras)
@@ -53,6 +55,10 @@ namespace CityBuilder.Simulation.Content
             foreach (ItemDefinition item in Items)
             {
                 _itemsById.Add(item.Id, item);
+                if (item.IsCurrency)
+                {
+                    Currency = item.Id;
+                }
             }
 
             foreach (BuildingDefinition building in Buildings)
@@ -92,6 +98,12 @@ namespace CityBuilder.Simulation.Content
 
         /// <summary>The highest level a road tile can reach.</summary>
         public int MaxRoadLevel => RoadLevels.Count;
+
+        /// <summary>The amount presets, sorted by id (ordinal): the shares of a base every city may use without research (<c>04</c> section 19).</summary>
+        public IReadOnlyList<AmountPresetDefinition> AmountPresets { get; }
+
+        /// <summary>The currency: the one item that lives in the purse (content rule 4, <c>04</c> section 14).</summary>
+        public ItemId Currency { get; }
 
         /// <summary>The definition of one road level.</summary>
         /// <param name="level">The level number, from 1 to <see cref="MaxRoadLevel"/>.</param>
@@ -135,5 +147,24 @@ namespace CityBuilder.Simulation.Content
         /// <returns>True when the content defines the research node.</returns>
         public bool TryGetResearch(ResearchId id, [NotNullWhen(true)] out ResearchDefinition? research) =>
             _researchById.TryGetValue(id, out research);
+
+        /// <summary>Looks up an amount preset by its id.</summary>
+        /// <param name="id">The preset's id.</param>
+        /// <param name="preset">The preset, when the content has it.</param>
+        /// <returns>True when the content has a preset with the id.</returns>
+        public bool TryGetAmountPreset(AmountPresetId id, [NotNullWhen(true)] out AmountPresetDefinition? preset)
+        {
+            for (int index = 0; index < AmountPresets.Count; index++)
+            {
+                if (AmountPresets[index].Id == id)
+                {
+                    preset = AmountPresets[index];
+                    return true;
+                }
+            }
+
+            preset = null;
+            return false;
+        }
     }
 }

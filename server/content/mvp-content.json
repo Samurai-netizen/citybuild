@@ -5,30 +5,37 @@
     "gridHeight": 8,
     "builderSlots": 2,
     "researchSlots": 1,
-    "baseStorageCaps": { "logs": 500, "planks": 500 },
     "maxOfflineProductionSeconds": 28800,
     "minCycleSeconds": 10,
     "maxLaborReductionPermille": 500,
     "groundTileMillis": 5000,
     "crossingSpeedPermille": 200,
     "minWalkSeconds": 2,
-    "maxWalkBonusPermille": 500
+    "maxWalkBonusPermille": 500,
+    "tripCarryLimit": 10,
+    "maxRouteStops": 8,
+    "maxStopActions": 4
   },
   "startingCity": {
     "era": 1,
-    "inventory": { "coins": 700, "logs": 40, "planks": 10 }
+    "purse": 800
   },
   "eras": [
     { "number": 1, "id": "early_medieval", "name": "Early Middle Ages" }
   ],
   "items": [
-    { "id": "coins", "name": "Coins", "era": 1, "capped": false, "tradable": false },
-    { "id": "logs", "name": "Logs", "era": 1, "capped": true, "tradable": true },
-    { "id": "planks", "name": "Planks", "era": 1, "capped": true, "tradable": true }
+    { "id": "coins", "name": "Coins", "era": 1, "currency": true, "tradable": false },
+    { "id": "logs", "name": "Logs", "era": 1, "currency": false, "tradable": true },
+    { "id": "planks", "name": "Planks", "era": 1, "currency": false, "tradable": true }
   ],
   "roads": [
     { "level": 1, "name": "Dirt path", "tileMillis": 2500, "cost": { "coins": 5 } },
     { "level": 2, "name": "Log road", "tileMillis": 1500, "cost": { "coins": 15 } }
+  ],
+  "amountPresets": [
+    { "id": "all", "name": "All", "percent": 100 },
+    { "id": "half", "name": "Half", "percent": 50 },
+    { "id": "quarter", "name": "Quarter", "percent": 25 }
   ],
   "buildings": [
     {
@@ -56,12 +63,14 @@
         {
           "level": 1,
           "maxWorkers": 2,
-          "recipe": { "outputs": { "logs": 1 }, "labor": 60 }
+          "recipe": { "outputs": { "logs": 1 }, "labor": 60 },
+          "storage": { "logs": 40 }
         },
         {
           "level": 2,
           "maxWorkers": 4,
           "recipe": { "outputs": { "logs": 1 }, "labor": 60 },
+          "storage": { "logs": 80 },
           "upgradeCost": { "coins": 150, "planks": 20 },
           "upgradeSeconds": 120
         }
@@ -73,18 +82,20 @@
       "kind": "producer",
       "era": 1,
       "availableAtStart": true,
-      "cost": { "coins": 150, "logs": 30 },
+      "cost": { "coins": 150, "logs": 10 },
       "buildSeconds": 120,
       "levels": [
         {
           "level": 1,
           "maxWorkers": 3,
-          "recipe": { "inputs": { "logs": 2 }, "outputs": { "planks": 1 }, "labor": 180 }
+          "recipe": { "inputs": { "logs": 2 }, "outputs": { "planks": 1 }, "labor": 180 },
+          "storage": { "logs": 40, "planks": 20 }
         },
         {
           "level": 2,
           "maxWorkers": 6,
           "recipe": { "inputs": { "logs": 2 }, "outputs": { "planks": 1 }, "labor": 180 },
+          "storage": { "logs": 80, "planks": 40 },
           "upgradeCost": { "coins": 250, "planks": 30 },
           "upgradeSeconds": 180
         }
@@ -96,20 +107,73 @@
       "kind": "producer",
       "era": 1,
       "availableAtStart": false,
-      "cost": { "coins": 200, "planks": 20 },
+      "cost": { "coins": 200, "planks": 10 },
       "buildSeconds": 180,
       "levels": [
         {
           "level": 1,
           "maxWorkers": 2,
-          "recipe": { "inputs": { "planks": 2 }, "outputs": { "coins": 10 }, "labor": 120 }
+          "recipe": { "inputs": { "planks": 2 }, "outputs": { "coins": 10 }, "labor": 120 },
+          "storage": { "planks": 40 }
         },
         {
           "level": 2,
           "maxWorkers": 4,
           "recipe": { "inputs": { "planks": 2 }, "outputs": { "coins": 10 }, "labor": 120 },
+          "storage": { "planks": 80 },
           "upgradeCost": { "coins": 400, "planks": 40 },
           "upgradeSeconds": 300
+        }
+      ]
+    },
+    {
+      "id": "scriptorium",
+      "name": "Scriptorium",
+      "kind": "science",
+      "era": 1,
+      "availableAtStart": true,
+      "maxPerCity": 1,
+      "cost": { "coins": 100 },
+      "buildSeconds": 30,
+      "levels": [
+        { "level": 1 }
+      ]
+    },
+    {
+      "id": "courier_station",
+      "name": "Courier Station",
+      "kind": "courierStation",
+      "era": 1,
+      "availableAtStart": true,
+      "cost": { "coins": 120 },
+      "buildSeconds": 60,
+      "levels": [
+        { "level": 1, "maxWorkers": 2, "carryLimit": 10, "staminaSeconds": 14400 },
+        {
+          "level": 2,
+          "maxWorkers": 4,
+          "carryLimit": 15,
+          "staminaSeconds": 28800,
+          "upgradeCost": { "coins": 250, "planks": 30 },
+          "upgradeSeconds": 180
+        }
+      ]
+    },
+    {
+      "id": "warehouse",
+      "name": "Warehouse",
+      "kind": "warehouse",
+      "era": 1,
+      "availableAtStart": true,
+      "cost": { "coins": 100, "logs": 20 },
+      "buildSeconds": 60,
+      "levels": [
+        { "level": 1, "storage": { "logs": 100, "planks": 100 } },
+        {
+          "level": 2,
+          "storage": { "logs": 200, "planks": 200 },
+          "upgradeCost": { "coins": 200, "planks": 30 },
+          "upgradeSeconds": 120
         }
       ]
     }
@@ -154,8 +218,29 @@
       "durationSeconds": 2700,
       "prerequisites": ["trade_charter"],
       "effects": [
-        { "type": "storageCapBonus", "item": "logs", "amount": 250 },
-        { "type": "storageCapBonus", "item": "planks", "amount": 250 }
+        { "type": "storageCapBonus", "item": "logs", "amount": 40 },
+        { "type": "storageCapBonus", "item": "planks", "amount": 40 }
+      ]
+    },
+    {
+      "id": "tally_sticks",
+      "name": "Tally Sticks",
+      "era": 1,
+      "cost": { "coins": 150 },
+      "durationSeconds": 900,
+      "prerequisites": ["trade_charter"],
+      "effects": [
+        { "type": "unlockAmountMode", "mode": "percent" }
+      ]
+    },
+    {
+      "id": "sturdy_boots",
+      "name": "Sturdy Boots",
+      "era": 1,
+      "cost": { "coins": 200, "logs": 20 },
+      "durationSeconds": 1200,
+      "effects": [
+        { "type": "walkSpeedBonus", "permille": 200 }
       ]
     }
   ]

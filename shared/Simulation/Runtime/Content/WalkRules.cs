@@ -32,7 +32,8 @@ namespace CityBuilder.Simulation.Content
             Positive(rules.MinWalkSeconds, "rules.minWalkSeconds", errors);
             AtLeastZero(rules.MaxWalkBonusPermille, "rules.maxWalkBonusPermille", errors);
             AtMost(rules.MaxWalkBonusPermille, _walkBonusLimitPermille, "rules.maxWalkBonusPermille", errors);
-            CheckShortestWalk(rules, errors);
+            CheckWalkBonusTotal(draft, errors);
+            CheckShortestWalk(draft, errors);
             CheckRoadLevelNumbers(draft, errors);
             long slowerTime = rules.GroundTileMillis;
             string slowerName = "the ground time";
@@ -62,19 +63,56 @@ namespace CityBuilder.Simulation.Content
         }
 
         /// <summary>
-        /// The shortest possible walk (one step between adjacent buildings, every walk bonus applied) takes at least
-        /// <see cref="GameRules.MinWalkSeconds"/> (<see cref="ContentErrorCode.WalkTooShort"/>). Nothing is computed when the ground time is not
-        /// positive (already reported). The content has no walk bonus yet; the bonus effect arrives with CR-0008-T1 part E.
+        /// Rule 12: the walk bonuses of every research node add up to at most <see cref="GameRules.MaxWalkBonusPermille"/>
+        /// (<see cref="ContentErrorCode.WalkBonusTooHigh"/>), so a city with all of them still walks.
         /// </summary>
-        private static void CheckShortestWalk(GameRules rules, ContentErrorList errors)
+        private static void CheckWalkBonusTotal(ContentDraft draft, ContentErrorList errors)
         {
+            long total = TotalWalkBonus(draft);
+            int limit = draft.Rules.MaxWalkBonusPermille;
+            if (limit >= 0 && limit <= _walkBonusLimitPermille && total > limit)
+            {
+                errors.Add(
+                    ContentErrorCode.WalkBonusTooHigh,
+                    "research",
+                    FormattableString.Invariant($"The walk bonuses of all research add up to {total} permille, more than maxWalkBonusPermille ({limit})."));
+            }
+        }
+
+        /// <summary>The sum of the walk bonuses of every research node, each counted only when it is 1 to 1000 (others are the value rules').</summary>
+        private static long TotalWalkBonus(ContentDraft draft)
+        {
+            // A long sum of values of at most 1000 each cannot overflow.
+            long total = 0;
+            foreach (ResearchDefinition node in draft.Research.Where(draft.IsFirst))
+            {
+                foreach (WalkSpeedBonusEffect bonus in node.Effects.OfType<WalkSpeedBonusEffect>())
+                {
+                    if (bonus.Permille >= 1 && bonus.Permille <= IntegerMath.PermilleScale)
+                    {
+                        total = checked(total + bonus.Permille);
+                    }
+                }
+            }
+
+            return total;
+        }
+
+        /// <summary>
+        /// The shortest possible walk (one step between adjacent buildings, every walk bonus applied, at most the allowed total) takes at least
+        /// <see cref="GameRules.MinWalkSeconds"/> (<see cref="ContentErrorCode.WalkTooShort"/>). Nothing is computed when the ground time is not
+        /// positive (already reported).
+        /// </summary>
+        private static void CheckShortestWalk(ContentDraft draft, ContentErrorList errors)
+        {
+            GameRules rules = draft.Rules;
             if (rules.GroundTileMillis <= 0)
             {
                 return;
             }
 
-            const int everyWalkBonusPermille = 0;
-            long shortest = WalkTime.ShortestWalkSeconds(rules.GroundTileMillis, everyWalkBonusPermille);
+            int everyWalkBonusPermille = (int)Math.Min(TotalWalkBonus(draft), Math.Min(rules.MaxWalkBonusPermille, _walkBonusLimitPermille));
+            long shortest = WalkTime.ShortestWalkSeconds(rules.GroundTileMillis, Math.Max(everyWalkBonusPermille, 0));
             if (shortest < rules.MinWalkSeconds)
             {
                 errors.Add(

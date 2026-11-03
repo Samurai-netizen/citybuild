@@ -25,6 +25,9 @@ namespace CityBuilder.Simulation.Content
         /// <summary>A road level by its number: <c>roads[2]</c>.</summary>
         public static string RoadLevel(RoadLevelDefinition level) => "roads[" + level.Level.ToString(CultureInfo.InvariantCulture) + "]";
 
+        /// <summary>The path of an amount preset, by its id: <c>amountPresets[half]</c>.</summary>
+        public static string AmountPreset(AmountPresetDefinition preset) => "amountPresets[" + preset.Id.Value + "]";
+
         /// <summary>A research node by its id: <c>research[frame_saw]</c>.</summary>
         public static string Research(ResearchDefinition node) => "research[" + node.Id.Value + "]";
 

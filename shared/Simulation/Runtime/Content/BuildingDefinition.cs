@@ -19,6 +19,7 @@ namespace CityBuilder.Simulation.Content
             IReadOnlyList<ItemQuantity> cost,
             long buildSeconds,
             bool isAvailableAtStart,
+            int? maxPerCity,
             ResearchId? unlockedByResearch,
             IReadOnlyList<BuildingLevelDefinition> levels)
         {
@@ -29,6 +30,7 @@ namespace CityBuilder.Simulation.Content
             Cost = cost ?? throw new ArgumentNullException(nameof(cost));
             BuildSeconds = buildSeconds;
             IsAvailableAtStart = isAvailableAtStart;
+            MaxPerCity = maxPerCity;
             UnlockedByResearch = unlockedByResearch;
             Levels = levels ?? throw new ArgumentNullException(nameof(levels));
         }
@@ -59,6 +61,9 @@ namespace CityBuilder.Simulation.Content
         /// unlock is stated only in the research effect; this is filled from it, for the build menu ("needs Trade Charter").
         /// </summary>
         public ResearchId? UnlockedByResearch { get; }
+
+        /// <summary>The most buildings of this type one city may have, at least 1, or null for no limit (the science building has 1; <c>04</c> section 14 rule 10).</summary>
+        public int? MaxPerCity { get; }
 
         /// <summary>The levels in order: <c>Levels[0]</c> is level 1, and the last one is the max level.</summary>
         public IReadOnlyList<BuildingLevelDefinition> Levels { get; }
