@@ -4,7 +4,8 @@
 > (M0-19; `docs/modules/CityBuilder.Infrastructure.md`), and PostgreSQL 18.6 in Docker; the mapping to the engine's city state, the
 > repositories and the unit of work (M0-20); the row lock and the write transaction, `ICityTransactionRunner` (M0-22); the settle with its
 > ledger rows (M0-23); the first login's insert of a player and their city (M0-25); the command receipts, their lookup, a command's ledger
-> rows and the migration `ReceiptResponseAsJson` (M0-26). A task that builds a part updates this line.
+> rows and the migration `ReceiptResponseAsJson` (M0-26); `city_roads` with the migration `AddCityRoads`, its mapping and the `COST_ROAD`
+> rows (CR-0008-T1 part D). A task that builds a part updates this line.
 
 PostgreSQL is the only source of truth. Wall timestamps are `timestamptz` (UTC). Simulation times and labor
 are `bigint` city-clock seconds and worker-seconds. Quantities are `bigint`. Item, building, research and era ids are `text` from content.
@@ -22,7 +23,7 @@ are `bigint` city-clock seconds and worker-seconds. Quantities are `bigint`. Ite
 | `ledger_entries` | `id bigint identity pk`, `city_id`, `item_id`, `delta bigint`, `balance_after bigint`, `reason text`, `ref_type text`, `ref_id text`, `created_at` | `index (city_id, created_at)` |
 
 Ledger reasons in M0: `STARTING_GRANT`, `SETTLEMENT_PRODUCED`, `SETTLEMENT_CONSUMED`, `COST_PLACE`, `COST_UPGRADE`,
-`REFUND_UPGRADE`, `COST_RESEARCH`; CR-0008 adds `COST_ROAD`, `SETTLEMENT_DELIVERED` and `SETTLEMENT_REFUNDED` (below, *planned*). `DEV_ADJUST` is written only by the developer's goods script of the server panel (`server-panel/goods.sql`, CR-0006) on the dev database,
+`REFUND_UPGRADE`, `COST_RESEARCH`; CR-0008 adds `COST_ROAD` (built, part D), `SETTLEMENT_DELIVERED` and `SETTLEMENT_REFUNDED` (below, *planned*). `DEV_ADJUST` is written only by the developer's goods script of the server panel (`server-panel/goods.sql`, CR-0006) on the dev database,
 never by the server (`ref_type` `dev-panel`, `ref_id` the mode: add, remove or set); the delta is the change really made. Later: `MARKET_ESCROW`, `MARKET_PROCEEDS`, `MARKET_FEE`, `MAILBOX_DELIVERY`, `ERA_CHARTER`.
 A settlement writes, per item in ordinal order, one `SETTLEMENT_PRODUCED` row (its total output) and then one `SETTLEMENT_CONSUMED` row
 (its total input, negative), with `ref_type` = `settlement` and `ref_id` = the settlement's id, a UUID v7 made for it (there is no
@@ -34,21 +35,22 @@ what an upgrade refunded, so its rows never come first.
 
 Derived on load, never stored: reserved outputs, stall reasons, workers provided/free, builders busy, effective caps and labor.
 
-## Tables for logistics (CR-0008, *planned*: built in CR-0008-T1 parts D, E, G and H)
+## Tables for logistics (CR-0008: `city_roads` built in CR-0008-T1 part D; the rest *planned*, parts E, G and H)
 | Table / column | Key columns | Constraints / notes |
 |---|---|---|
 | `cities` + `purse bigint`, `next_trip_id int`, `last_seen_unix bigint` | — | `purse >= 0` (the currency, `04` §16); `last_seen_unix` is the server second of the last request that settled the city (part H), on the same clock as `last_settled_unix`; `research_started_at` and `research_ends_at` are null while a running research waits for goods |
 | `city_stores` (replaces `city_inventory`) | `(city_id, building_id, item_id) pk`, `quantity bigint` | `quantity >= 0`; FK to `city_buildings`, cascade; a row per good the store holds, kept at 0 |
 | `city_project_needs` | `(city_id, building_id, item_id) pk`, `quantity bigint` | `quantity > 0`; the goods a construction site or a waiting upgrade still needs; no rows = no project waiting |
 | `city_research_needs` | `(city_id, item_id) pk`, `quantity bigint` | `quantity > 0`; only while a research waits at the science building |
-| `city_roads` | `(city_id, x, y) pk`, `level smallint` | `x, y >= 0`, `level >= 1`; never on a building's tile (the engine checks it) |
+| `city_roads` (built) | `(city_id, x, y) pk`, `x smallint`, `y smallint`, `level smallint` | `x, y >= 0`, `level >= 1`; never on a building's tile (the engine checks it on load); FK to `cities`, cascade; a removed road's row is deleted |
 | `city_trips` | `(city_id, trip_id) pk`, `source_id int`, `target_id int`, `item_id text`, `quantity bigint`, `departed_at bigint`, `arrives_at bigint` | `quantity > 0`, `arrives_at > departed_at`; the row goes when the trip arrives |
 | `city_couriers` | `(city_id, station_id, slot) pk`, `state text`, `to_stop smallint`, `departed_at bigint null`, `arrives_at bigint null`, `stamina_seconds bigint` | `slot >= 1`, `stamina_seconds >= 0`; `state` is the API's spelling; the times are set exactly while walking or returning |
 | `city_courier_loads` | `(city_id, station_id, slot, item_id, from_building_id) pk`, `quantity bigint` | `quantity > 0`; FK to `city_couriers`, cascade |
 | `city_route_actions` | `(city_id, station_id, slot, stop_index, action_index) pk`, `building_id int`, `kind text`, `item_id text`, `amount text` | a route is its actions in order; every action of one stop names the same building; `amount` as the API writes it (`05`) |
 
 - **Ledger (CR-0008):** `balance_after` is the item's **city total** (`04` §16). Coins go through the purse: `COST_*` rows are coins only.
-  New reasons: `COST_ROAD` (placing and upgrading roads, per command), `SETTLEMENT_DELIVERED` (goods walkers handed to projects, negative,
+  New reasons: `COST_ROAD` (placing and upgrading roads, one row per item and command like every `COST_*`; built, part D; until part E its
+  `balance_after` is the city-wide stock), `SETTLEMENT_DELIVERED` (goods walkers handed to projects, negative,
   per settlement and item) and `SETTLEMENT_REFUNDED` (inputs back when an upgrade started inside the advance). A move between two stores, a
   load and a returned load change no total and write no row. The starting grant is coins only.
 - **The reset migration (CR-0008 D10, part E):** it deletes every player and everything of theirs (cities and their rows, receipts,
@@ -71,7 +73,7 @@ Derived on load, never stored: reserved outputs, stall reasons, workers provided
 A column without `null` in the table is `NOT NULL`; `ledger_entries.ref_type` and `ref_id` are nullable too (a `STARTING_GRANT` has no
 reference). `players.id` and `cities.id` are set by the application; `ledger_entries.id` is the only identity.
 
-**Foreign keys:** `cities.player_id` → `players`; `city_inventory`, `city_buildings` and `city_research` → `cities` with `ON DELETE CASCADE`
+**Foreign keys:** `cities.player_id` → `players`; `city_inventory`, `city_buildings`, `city_research` and `city_roads` → `cities` with `ON DELETE CASCADE`
 (the city owns its state); `ledger_entries.city_id` → `cities` and `command_receipts.player_id` → `players` with `ON DELETE RESTRICT` (the audit
 trail never disappears with what it belongs to), and `cities.player_id` is `RESTRICT` as well.
 
@@ -84,10 +86,10 @@ trail never disappears with what it belongs to), and `cities.player_id` is `REST
 BEGIN
   SELECT * FROM cities WHERE player_id = @p FOR UPDATE      -- serializes all writes to this city
   (command) SELECT receipt → replay or conflict, then ROLLBACK
-  load city_buildings, city_inventory, city_research
+  load city_buildings, city_inventory, city_research, city_roads
   settle → mutate (if command) → zero-length advance
   UPDATE cities SET …, state_version = state_version + 1 WHERE id = @c AND state_version = @v
-  upsert inventory, upsert buildings, insert research completions, insert ledger rows, insert receipt
+  upsert inventory, upsert buildings, insert research completions, merge roads (insert, update, delete), insert ledger rows, insert receipt
 COMMIT
 ```
 

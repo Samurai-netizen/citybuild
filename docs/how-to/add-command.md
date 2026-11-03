@@ -36,6 +36,8 @@ public sealed record PlaceBuildingCommand(Guid RequestId, string BuildingTypeId,
         CityRules.PlaceBuilding(city, content, new BuildingTypeId(BuildingTypeId), X, Y);
 }
 ```
+A list in the body becomes a list of a small record with properties, as the road commands' tiles are `CommandTile(X, Y)` (CR-0008-T1
+part D): the payload serializes properties, so a value tuple's fields would hash every list alike. Its order is part of the payload.
 `ValidateShape` refuses only what no city state could make valid: an id that can't be a content id (`ContentIds`, the format the content
 loader enforces), checked before the lock (M0-30). Everything else is the rule's job: coordinates outside the
 grid are `OUT_OF_BOUNDS`, not a shape error. A renamed property or command type changes every stored hash, and an old request id then

@@ -91,6 +91,34 @@ Content-Type: application/json
 
 { "requestId": "{{$guid}}", "buildingId": 1 }
 
+### Roads (CR-0008): a Dirt path on three tiles of column 6, 5 coins a tile; `city.roads` lists them, no builder is taken
+POST {{baseUrl}}/api/v1/commands/place-roads
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}", "tiles": [{ "x": 6, "y": 0 }, { "x": 6, "y": 1 }, { "x": 6, "y": 2 }] }
+
+### Roads: upgrade (6, 0) to a Log road, 15 coins; again on the same tile is 422 `MAX_LEVEL` (level 2 is the last)
+POST {{baseUrl}}/api/v1/commands/upgrade-roads
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}", "tiles": [{ "x": 6, "y": 0 }] }
+
+### Roads: remove (6, 2); nothing is refunded. A tile without a road is 404 `ROAD_NOT_FOUND`
+POST {{baseUrl}}/api/v1/commands/remove-roads
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}", "tiles": [{ "x": 6, "y": 2 }] }
+
+### Refusal: a road on a building (Cottage 1 at (0, 0)), 409 `TILE_OCCUPIED`; the same tile twice would be 400 `INVALID_ARGUMENT`
+POST {{baseUrl}}/api/v1/commands/place-roads
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}", "tiles": [{ "x": 0, "y": 0 }] }
+
 ### Replay: send this twice. The second answer is the first one, byte for byte (a fixed requestId; change it for a new command)
 POST {{baseUrl}}/api/v1/commands/assign-workers
 Authorization: Bearer {{token}}

@@ -8,10 +8,11 @@
 > transaction `ICityTransactionRunner` (M0-22), and the settle use case `SettleCity` on it (M0-13, complete with M0-23); the dev login
 > `DevLogin`, `ICurrentPlayer` and `INewCityRepository` (M0-25); the command pipeline `CommandPipeline` with `ICityCommand` and the receipt
 > port, and the settle's steps shared with it, `CitySettler` (M0-26); the commands `PlaceBuildingCommand` (M0-29), `UpgradeBuildingCommand`
-> (M0-31), `AssignWorkersCommand` (M0-32) and `StartResearchCommand` (M0-33).
+> (M0-31), `AssignWorkersCommand` (M0-32) and `StartResearchCommand` (M0-33); the road commands `PlaceRoadsCommand`, `UpgradeRoadsCommand`
+> and `RemoveRoadsCommand` (CR-0008-T1 part D).
 
 ## Purpose
-The use cases (`SettleCity`, `DevLogin`, `PlaceBuilding`, `UpgradeBuilding`, `AssignWorkers`, `StartResearch`), the ports they
+The use cases (`SettleCity`, `DevLogin`, `PlaceBuilding`, `UpgradeBuilding`, `AssignWorkers`, `StartResearch`, the three road commands), the ports they
 need (`ICityRepository`, `IUnitOfWork`, `IContentProvider`, `ICommandReceiptRepository`) and the command pipeline, as described in
 `core-instructions/03-architecture.md`. It decides what happens; it doesn't know about HTTP or databases.
 
@@ -42,6 +43,8 @@ need (`ICityRepository`, `IUnitOfWork`, `IContentProvider`, `ICommandReceiptRepo
 | `Commands/UpgradeBuilding/UpgradeBuildingCommand` | `upgrade-building` (M0-31): `RequestId`, `BuildingId`; `Apply` is `CityRules.UpgradeBuilding`; pays `COST_UPGRADE` and gives a running cycle's inputs back as `REFUND_UPGRADE`; `ValidateShape` refuses an id below 1, which no city has (OD-13), so it never locks the city; an id of 1 or more the acting player's city doesn't have (ids count from 1 in each city) is the rule's `BUILDING_NOT_FOUND`. Its payload hash is pinned in a test |
 | `Commands/StartResearch/StartResearchCommand` | `start-research` (M0-33): `RequestId`, `ResearchId`; `Apply` is `CityRules.StartResearch`; `COST_RESEARCH` for the cost paid up front, no refund reason; `ValidateShape` refuses an id that can't be a content id (`ContentIds`, OD-13), so it never locks the city; an id of the right form the content doesn't have is the rule's `UNKNOWN_RESEARCH`. The research completes in a later settle, which applies its effects. Its payload hash is pinned in a test |
 | `Commands/AssignWorkers/AssignWorkersCommand` | `assign-workers` (M0-32): `RequestId`, `BuildingId`, `Workers` (absolute, 0 pauses); `Apply` is `CityRules.AssignWorkers`; no ledger reasons (workers are no resource); `ValidateShape` refuses an id below 1 and a negative count (OD-13), so neither ever locks the city; a count above the level's max is the rule's `WORKER_LIMIT`, more than the free workers `INSUFFICIENT_WORKERS`. Its payload hash is pinned in a test |
+| `Commands/Roads/PlaceRoadsCommand`, `UpgradeRoadsCommand`, `RemoveRoadsCommand` | `place-roads`, `upgrade-roads`, `remove-roads` (CR-0008-T1 part D): `RequestId`, `Tiles` (a list of `CommandTile`); `Apply` is `RoadRules.PlaceRoads`, `UpgradeRoads`, `RemoveRoads` with the tiles in the player's order; placing and upgrading pay `COST_ROAD`, removing pays and refunds nothing (no ledger reasons). Their payload hashes are pinned in a test; the tiles' order is part of the payload |
+| `Commands/Roads/CommandTile`, `RoadTileList` | A tile a road command names (`X`, `Y`; a record with properties, so the payload hash holds both numbers, which a value tuple's fields would not) and the shape check the three share: 1 to `MaxTiles` (64) tiles, no null, coordinates ≥ 0, each tile once (OD-13), so such a list never locks the city; tiles past the grid are the rule's (`OUT_OF_BOUNDS`, `ROAD_NOT_FOUND`) |
 | `Cities/Settlement` | One settlement: the window's advance and the closing zero-length advance as one. Its `Id` (a UUID v7 per settlement), `Window`, `ClockBehindSeconds` (how far the server second was behind the last settled second; 0 unless `Window.IsClockBehind`), `ElapsedSeconds`, `ProductionSeconds`, and the totals of both advances (`Produced`, `Consumed`, `CompletedBuildings`, `CompletedResearch`, `EraChanged`; `IsEmpty`). `LedgerEntries(quantitiesBefore)` gives its ledger rows: per item in ordinal order `SETTLEMENT_PRODUCED`, then `SETTLEMENT_CONSUMED` (a negative delta), each balance running on from the quantity before; `ref_type` `settlement` (`LedgerRefType`), `ref_id` the id (`06`) |
 
 ## Rules and invariants
@@ -78,9 +81,10 @@ steps, the receipt, what the response writer gets, the cost after the settlement
 another player's request id, the receipt race won by the same or another payload, a duplicate key without a receipt) and
 `CommandPipelineRuleTests` (shape, empty request id, a rejection commits only the settlement, a retried rejection runs again, settle before
 mutation, a refund the closing advance consumes). `PipelineFixture` runs the pipeline over the fakes with two test commands
-(`PlaceTestCommand`, `UpgradeTestCommand`) and a response writer that records `respond`. `PlaceBuildingCommandTests`, `UpgradeBuildingCommandTests`, `AssignWorkersCommandTests` and `StartResearchCommandTests` cover
+(`PlaceTestCommand`, `UpgradeTestCommand`) and a response writer that records `respond`. `PlaceBuildingCommandTests`, `UpgradeBuildingCommandTests`, `AssignWorkersCommandTests`, `StartResearchCommandTests` and `RoadCommandsTests` (CR-0008-T1 part D: all three road commands, their shared
+shape check and its messages, a reordered list being another hash) cover
 the real commands: the shape check, the pinned payload and hash, the ledger reasons, `Apply` equal to the rule, one run through the pipeline
-(the upgrade of a producing sawmill: its refund and cost rows; 0 workers on a producing sawmill: frozen, no command ledger row; a research started: its `COST_RESEARCH` row). On PostgreSQL (M0-27), `CityBuilder.IntegrationTests`
+(the upgrade of a producing sawmill: its refund and cost rows; 0 workers on a producing sawmill: frozen, no command ledger row; a research started: its `COST_RESEARCH` row; two roads placed: one `COST_ROAD` row; a road removed: no command ledger row). On PostgreSQL (M0-27), `CityBuilder.IntegrationTests`
 → `Commands/` runs the server's registered pipeline with test commands of its own (`DatabaseCommands`): `CommandIdempotencyDatabaseTests` (a
 retry writes nothing, also on a restarted host; conflicts; another player's request id), `CommandConcurrencyDatabaseTests` (ten identical
 requests queued behind the lock apply once; the receipt race through the unique key, with the same or another payload) and
@@ -103,8 +107,9 @@ back in time, so a clock behind is a last settled second ahead of now. The conte
 
 ## Known limitations
 - No log lines here: Application has no logging package (`14`). Its results carry what the Api logs (the settlement, `ClockBehindSeconds`).
-- The four commands of M0 (PlaceBuilding, UpgradeBuilding, AssignWorkers, StartResearch); the pipeline's own tests keep their test commands.
+- The four commands of M0 (PlaceBuilding, UpgradeBuilding, AssignWorkers, StartResearch) and the three road commands of CR-0008; the
+  other CR-0008 commands come with CR-0008-T1 parts E, G and H. The pipeline's own tests keep their test commands.
 - `DevLogin` has no tests with fakes: what it does is all persistence (one transaction, a unique index, a race), so it is tested on
   PostgreSQL (`CityBuilder.IntegrationTests`, `Auth/DevLoginDatabaseTests`).
 
-Last updated: CR-0004-T1
+Last updated: CR-0008-T1

@@ -23,7 +23,7 @@ structure). It is **not** responsible for talking to the server (`CityBuilder.Cl
 | `DisplayCity` | The predicted city: `Simulator.Advance` on a fresh copy of the snapshot up to the clock. `Refresh()` predicts at most once per second and allocates nothing otherwise; a new snapshot replaces the prediction at once. Raises `Changed`; views read `Current`. `SnapshotReplaced` hands over the city shown until a new snapshot came (M0-54) |
 | `ClientLogger`, `LogLevel`, `ILogSink` | The logger (M0-57): a level (`Debug`, `Info`, `Warning`, `Error`, `Off`) and a sink fixed at construction; a line below the level is dropped, `IsEnabled` lets a caller skip building a message. `Exception(e)` is one Error line with the stack trace. A class whose log a test reads takes a `ClientLogger` over a recording sink (`ApiClient`, `CommandFeedback`) |
 | `ClientLog`, `UnityLogSink` | The game's logger: `ClientLog.Default` is `ClientLogger` at the build's level (`DefaultLevelFor`: Debug in the Editor and development builds, Warning in release) over `UnityLogSink`, the only runtime code that calls `UnityEngine.Debug` to log. `ClientLog.Debug/Info/Warning/Error/Exception` forward to `Default`, so code with no logger handed to it logs in one line. Nothing in them can be changed after the start |
-| `PredictionWatch` | A development check (M0-54): at each new snapshot it reports when the display's clock went back and, with no command on its way, when the snapshot differs from `Simulator.Advance` of the one before it, with the cities as JSON (`ToJson`). `GameRoot` makes it when `Debug.isDebugBuild`, reporting to `Debug.LogWarning`; it changes nothing the player sees |
+| `PredictionWatch` | A development check (M0-54): at each new snapshot it reports when the display's clock went back and, with no command on its way, when the snapshot differs from `Simulator.Advance` of the one before it, with the cities as JSON (`ToJson`: every stored value, the roads included since CR-0008-T1 part D). `GameRoot` makes it when `Debug.isDebugBuild`, reporting to `Debug.LogWarning`; it changes nothing the player sees |
 
 ## Rules and invariants
 - References only `CityBuilder.Simulation` (`03` dependency table). The asmdef is not auto-referenced, so other assemblies must name it,
@@ -58,10 +58,12 @@ folder area follows the recipe "New project, assembly or folder area" in `core-i
 - `Core/PollSchedulerTests`: not due at the start, due after exactly 120 s from the end of the last poll, nothing while paused whatever was requested, a poll at once on resume, never two at a time, a request during a poll is served after it, bad constructor arguments.
 - `Core/DisplayCityTests`: the prediction equals one `Simulator.Advance` exactly on real snapshots at seconds up to past the production cap, a research
   completes on its second, a construction auto-staffs, at most one prediction per second, a new snapshot wins, the time scale, an engine refusal.
+- `Core/PredictionWatchTests`: a snapshot as predicted reports nothing, going back and mismatches are reported (with both cities), nothing while a command is pending, the same city the same
+  text, and a city with a road a different text (CR-0008-T1 part D).
 
 ## Known limitations
 - A lower `stateVersion` is ignored for as long as the app runs, so after a dev database reset the store keeps the old city until the app restarts.
 - `Time.realtimeSinceStartupAsDouble` may or may not count while the app is in the background, depending on the platform. The poll on resume
   (`PollScheduler`, M0-41) replaces the snapshot, so this lasts only until that answer arrives.
 
-Last updated: M0-58
+Last updated: CR-0008-T1
