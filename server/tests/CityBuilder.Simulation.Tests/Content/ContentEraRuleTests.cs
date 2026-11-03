@@ -15,11 +15,9 @@ public sealed class ContentEraRuleTests
     /// <summary>Each place of era 1 where the era-2 item iron can be used, by the expected error path.</summary>
     private static readonly Dictionary<string, Action<GameContentData>> _laterEraUses = new()
     {
-        ["startingCity.inventory.iron"] = data => data.StartingCity!.Inventory!["iron"] = 1,
         ["buildings[hut].cost.iron"] = data => Building(data, "hut").Cost!["iron"] = 1,
         ["buildings[hut].levels[2].upgradeCost.iron"] = data => Level(data, "hut", 2).UpgradeCost!["iron"] = 1,
-        ["buildings[workshop].levels[1].recipe.inputs.iron"] = data => Level(data, "workshop", 1).Recipe!.Inputs!["iron"] = 1,
-        ["buildings[lumber_camp].levels[1].recipe.outputs.iron"] = data => Level(data, "lumber_camp", 1).Recipe!.Outputs!["iron"] = 1,
+        ["buildings[depot].levels[2].storage.iron"] = data => Level(data, "depot", 2).Storage!["iron"] = 10,
         ["research[carpentry].cost.iron"] = data => Research(data, "carpentry").Cost!["iron"] = 1,
     };
 
@@ -31,6 +29,29 @@ public sealed class ContentEraRuleTests
     [MemberData(nameof(LaterEraUsePaths))]
     public void Create_ItemOfALaterEraUsed_ReportsItemInLaterEraAtItsPath(string path) =>
         ContentAssert.SingleError(WithIron(_laterEraUses[path]), ContentErrorCode.ItemInLaterEra, path);
+
+    /// <summary>
+    /// Iron in an era-1 recipe is an item of a later era there, and the producer's store doesn't hold it either (rule 9, which the building
+    /// rules check first): both errors, in the factory's order. With iron added to the store too, the store's iron is a third use of it.
+    /// </summary>
+    /// <param name="building">The producer.</param>
+    /// <param name="side">The recipe side, <c>inputs</c> or <c>outputs</c>.</param>
+    [Theory]
+    [InlineData("workshop", "inputs")]
+    [InlineData("lumber_camp", "outputs")]
+    public void Create_ItemOfALaterEraInARecipe_ReportsItAndTheStoreWithoutIt(string building, string side)
+    {
+        GameContentData data = WithIron(data =>
+        {
+            RecipeData recipe = Level(data, building, 1).Recipe!;
+            (side == "inputs" ? recipe.Inputs ??= [] : recipe.Outputs!)["iron"] = 1;
+        });
+
+        ContentAssert.Errors(
+            data,
+            (ContentErrorCode.StoreMismatch, $"buildings[{building}].levels[1].storage"),
+            (ContentErrorCode.ItemInLaterEra, $"buildings[{building}].levels[1].recipe.{side}.iron"));
+    }
 
     /// <summary>An era-2 research node may cost the era-2 item.</summary>
     [Fact]
@@ -74,10 +95,10 @@ public sealed class ContentEraRuleTests
         ContentAssert.SingleError(data, ContentErrorCode.UnknownReference, "items[iron].era");
     }
 
-    /// <summary>The valid fixture with an uncapped era-2 item <c>iron</c>, and then the change.</summary>
+    /// <summary>The valid fixture with an era-2 good <c>iron</c>, and then the change.</summary>
     private static GameContentData WithIron(Action<GameContentData> change) => ValidWith(data =>
     {
-        data.Items!.Add(new ItemData { Id = "iron", Name = "Iron", Era = 2, Capped = false, Tradable = true });
+        data.Items!.Add(new ItemData { Id = "iron", Name = "Iron", Era = 2, Currency = false, Tradable = true });
         change(data);
     });
 }

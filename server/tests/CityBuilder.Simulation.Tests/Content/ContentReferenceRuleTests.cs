@@ -5,9 +5,10 @@ using static CityBuilder.Simulation.Tests.Content.ContentFixture;
 namespace CityBuilder.Simulation.Tests.Content;
 
 /// <summary>
-/// The cross-reference rules: ids are unique, every reference names something that exists, eras are numbered 1..n, storage caps match the
-/// capped items, effects target the right kind of thing, and every locked building type is unlocked by exactly one research node. The
-/// case names are the expected error paths.
+/// The cross-reference rules: ids are unique, every reference names something that exists, eras are numbered 1..n, exactly one currency used
+/// only where goods aren't needed (content rules 4 and 11), stores that hold their recipe's goods and never shrink (rule 9), exactly one
+/// science building (rule 10), effects target the right kind of thing, and every locked building type is unlocked by exactly one research
+/// node. The case names are the expected error paths.
 /// </summary>
 public sealed class ContentReferenceRuleTests
 {
@@ -26,6 +27,7 @@ public sealed class ContentReferenceRuleTests
         ["buildings[hut]"] = data => data.Buildings!.Add(Copy(Building(data, "hut"))),
         ["research[carpentry]"] = data => data.Research!.Add(Copy(Research(data, "carpentry"))),
         ["research[better_saws].prerequisites[carpentry]"] = data => Research(data, "better_saws").Prerequisites = ["carpentry", "carpentry"],
+        ["amountPresets[all]"] = data => data.AmountPresets!.Add(new AmountPresetData { Id = "all", Name = "Everything", Percent = 100 }),
     };
 
     /// <summary>Era numberings with a gap, and no eras at all.</summary>
@@ -46,8 +48,7 @@ public sealed class ContentReferenceRuleTests
         ["items[wood].era"] = data => Item(data, "wood").Era = 7,
         ["buildings[hut].era"] = data => Building(data, "hut").Era = 0,
         ["research[warehouses].era"] = data => Research(data, "warehouses").Era = 3,
-        ["rules.baseStorageCaps.stone"] = data => RulesOf(data).BaseStorageCaps!["stone"] = 10,
-        ["startingCity.inventory.stone"] = data => data.StartingCity!.Inventory!["stone"] = 1,
+        ["buildings[depot].levels[2].storage.stone"] = data => Level(data, "depot", 2).Storage!["stone"] = 10,
         ["buildings[hut].cost.stone"] = data => Building(data, "hut").Cost!["stone"] = 1,
         ["buildings[hut].levels[2].upgradeCost.stone"] = data => Level(data, "hut", 2).UpgradeCost!["stone"] = 1,
         ["buildings[workshop].levels[1].recipe.inputs.stone"] = data => Level(data, "workshop", 1).Recipe!.Inputs!["stone"] = 1,
@@ -60,17 +61,34 @@ public sealed class ContentReferenceRuleTests
         ["research[better_saws].prerequisites[alchemy]"] = data => Research(data, "better_saws").Prerequisites!.Add("alchemy"),
     };
 
-    /// <summary>A capped item without a base cap, and an uncapped item with one.</summary>
-    private static readonly Dictionary<string, Action<GameContentData>> _storageCapMismatches = new()
+    /// <summary>Each break of the store rules (9 and 4): a store with the currency, a producer's store without a recipe good or below a cycle's quantity, a shrinking store.</summary>
+    private static readonly Dictionary<string, (ContentErrorCode Code, Action<GameContentData> Change)> _storeRules = new()
     {
-        ["rules.baseStorageCaps.boards"] = data => RulesOf(data).BaseStorageCaps!.Remove("boards"),
-        ["rules.baseStorageCaps.gold"] = data => RulesOf(data).BaseStorageCaps!["gold"] = 10,
+        ["buildings[depot].levels[2].storage.gold"] = (ContentErrorCode.StoreMismatch, data => Level(data, "depot", 2).Storage!["gold"] = 10),
+        ["buildings[workshop].levels[1].storage"] = (ContentErrorCode.StoreMismatch, data => Level(data, "workshop", 1).Storage!.Remove("boards")),
+        ["buildings[workshop].levels[1].storage.wood"] = (ContentErrorCode.StoreMismatch, data => Level(data, "workshop", 1).Storage!["wood"] = 1),
+        ["buildings[depot].levels[2].storage.boards"] = (ContentErrorCode.StoreShrinks, data => Level(data, "depot", 2).Storage!.Remove("boards")),
+        ["buildings[depot].levels[2].storage.wood"] = (ContentErrorCode.StoreShrinks, data => Level(data, "depot", 2).Storage!["wood"] = 50),
     };
 
-    /// <summary>A labor reduction on a house and a storage bonus on an uncapped item.</summary>
+    /// <summary>
+    /// Each break of the currency rules (4 and 11) and the science building rule (10): two currencies, the currency as a recipe input, a road
+    /// cost in goods, no science building, two, and one whose <c>maxPerCity</c> isn't 1.
+    /// </summary>
+    private static readonly Dictionary<string, (ContentErrorCode Code, Action<GameContentData> Change)> _currencyAndScience = new()
+    {
+        ["items"] = (ContentErrorCode.CurrencyCount, data => data.Items!.Add(new ItemData { Id = "silver", Name = "Silver", Era = 1, Currency = true, Tradable = false })),
+        ["buildings[workshop].levels[1].recipe.inputs.gold"] = (ContentErrorCode.InvalidCurrencyUse, data => Level(data, "workshop", 1).Recipe!.Inputs!["gold"] = 1),
+        ["roads[1].cost.wood"] = (ContentErrorCode.InvalidCurrencyUse, data => Road(data, 1).Cost!["wood"] = 1),
+        ["buildings"] = (ContentErrorCode.ScienceBuildingMismatch, data => data.Buildings!.Remove(Building(data, "school"))),
+        ["buildings[school].maxPerCity"] = (ContentErrorCode.ScienceBuildingMismatch, data => Building(data, "school").MaxPerCity = null),
+    };
+
+    /// <summary>A labor reduction on a house and on a warehouse, and a storage bonus on the currency.</summary>
     private static readonly Dictionary<string, Action<GameContentData>> _invalidEffectTargets = new()
     {
         ["research[better_saws].effects[#0].building"] = data => Research(data, "better_saws").Effects![0]!.Building = "hut",
+        ["research[better_saws].effects[#1].building"] = data => Research(data, "better_saws").Effects![1]!.Building = "depot",
         ["research[warehouses].effects[#0].item"] = data => Research(data, "warehouses").Effects![0]!.Item = "gold",
     };
 
@@ -94,8 +112,11 @@ public sealed class ContentReferenceRuleTests
     /// <summary>The error paths of <see cref="_unknownReferences"/>.</summary>
     public static TheoryData<string> UnknownReferencePaths => new(_unknownReferences.Keys);
 
-    /// <summary>The error paths of <see cref="_storageCapMismatches"/>.</summary>
-    public static TheoryData<string> StorageCapMismatchPaths => new(_storageCapMismatches.Keys);
+    /// <summary>The error paths of <see cref="_storeRules"/>.</summary>
+    public static TheoryData<string> StoreRulePaths => new(_storeRules.Keys);
+
+    /// <summary>The error paths of <see cref="_currencyAndScience"/>.</summary>
+    public static TheoryData<string> CurrencyAndSciencePaths => new(_currencyAndScience.Keys);
 
     /// <summary>The error paths of <see cref="_invalidEffectTargets"/>.</summary>
     public static TheoryData<string> InvalidEffectTargetPaths => new(_invalidEffectTargets.Keys);
@@ -121,11 +142,46 @@ public sealed class ContentReferenceRuleTests
     public void Create_ReferenceToSomethingNotDefined_ReportsUnknownReference(string path) =>
         ContentAssert.SingleError(ValidWith(_unknownReferences[path]), ContentErrorCode.UnknownReference, path);
 
-    /// <summary>Base caps that don't match the capped items give one <see cref="ContentErrorCode.StorageCapMismatch"/>.</summary>
+    /// <summary>A store that breaks rule 9 or holds the currency gives one <see cref="ContentErrorCode.StoreMismatch"/> or <see cref="ContentErrorCode.StoreShrinks"/>.</summary>
+    /// <param name="path">The expected error path.</param>
     [Theory]
-    [MemberData(nameof(StorageCapMismatchPaths))]
-    public void Create_BaseCapsNotMatchingTheCappedItems_ReportsStorageCapMismatch(string path) =>
-        ContentAssert.SingleError(ValidWith(_storageCapMismatches[path]), ContentErrorCode.StorageCapMismatch, path);
+    [MemberData(nameof(StoreRulePaths))]
+    public void Create_StoreBreakingItsRules_ReportsTheStoreError(string path) =>
+        ContentAssert.SingleError(ValidWith(_storeRules[path].Change), _storeRules[path].Code, path);
+
+    /// <summary>A break of the currency or science building rules gives one error with the rule's code.</summary>
+    /// <param name="path">The expected error path.</param>
+    [Theory]
+    [MemberData(nameof(CurrencyAndSciencePaths))]
+    public void Create_CurrencyOrScienceBuildingRuleBroken_ReportsItsCode(string path) =>
+        ContentAssert.SingleError(ValidWith(_currencyAndScience[path].Change), _currencyAndScience[path].Code, path);
+
+    /// <summary>Two science building types are one <see cref="ContentErrorCode.ScienceBuildingMismatch"/> for the content: research happens at one.</summary>
+    [Fact]
+    public void Create_TwoScienceBuildingTypes_ReportsScienceBuildingMismatch()
+    {
+        GameContentData data = ValidWith(data =>
+        {
+            BuildingData academy = Copy(Building(data, "school"));
+            academy.Id = "academy";
+            data.Buildings!.Add(academy);
+        });
+
+        ContentAssert.SingleError(data, ContentErrorCode.ScienceBuildingMismatch, "buildings");
+    }
+
+    /// <summary>A producer whose recipe makes only the currency needs no store: the coins go into the purse (rule 9).</summary>
+    [Fact]
+    public void Create_ProducerOfTheCurrencyOnlyWithoutAStore_IsAccepted()
+    {
+        GameContentData data = ValidWith(data => data.Buildings!.Add(new BuildingData
+        {
+            Id = "mint", Name = "Mint", Kind = "producer", Era = 1, AvailableAtStart = true, Cost = new() { ["gold"] = 1 }, BuildSeconds = 1,
+            Levels = [new BuildingLevelData { Level = 1, MaxWorkers = 1, Recipe = new RecipeData { Outputs = new() { ["gold"] = 1 }, Labor = 10 } }],
+        }));
+
+        ContentAssert.Valid(data);
+    }
 
     /// <summary>An effect on the wrong kind of target gives one <see cref="ContentErrorCode.InvalidEffectTarget"/>.</summary>
     [Theory]
@@ -155,7 +211,7 @@ public sealed class ContentReferenceRuleTests
     {
         // Ids are unique per kind of definition: an item and a building type are different things even with the same text.
         GameContentData data = Valid();
-        data.Items!.Add(new ItemData { Id = "hut", Name = "Hut Token", Era = 1, Capped = false, Tradable = false });
+        data.Items!.Add(new ItemData { Id = "hut", Name = "Hut Token", Era = 1, Currency = false, Tradable = false });
 
         ContentAssert.Valid(data);
     }
@@ -175,7 +231,7 @@ public sealed class ContentReferenceRuleTests
 
     /// <summary>A second item definition with the same id and values: only the duplicate itself is wrong.</summary>
     private static ItemData Copy(ItemData item) =>
-        new() { Id = item.Id, Name = item.Name, Era = item.Era, Capped = item.Capped, Tradable = item.Tradable };
+        new() { Id = item.Id, Name = item.Name, Era = item.Era, Currency = item.Currency, Tradable = item.Tradable };
 
     /// <summary>A second building type definition with the same id and the same (valid) values: only the duplicate itself is wrong.</summary>
     private static BuildingData Copy(BuildingData building) =>
@@ -186,6 +242,7 @@ public sealed class ContentReferenceRuleTests
             Kind = building.Kind,
             Era = building.Era,
             AvailableAtStart = building.AvailableAtStart,
+            MaxPerCity = building.MaxPerCity,
             Cost = building.Cost,
             BuildSeconds = building.BuildSeconds,
             Levels = building.Levels,

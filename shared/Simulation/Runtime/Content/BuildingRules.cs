@@ -121,7 +121,8 @@ namespace CityBuilder.Simulation.Content
 
             foreach (ItemQuantity good in level.Recipe.Inputs.Concat(level.Recipe.Outputs))
             {
-                if (draft.ItemsById.TryGetValue(good.Item, out ItemDefinition? item) && item.IsCurrency)
+                // An unknown item is the reference rules' to report; the currency goes into the purse, not the store.
+                if (!draft.ItemsById.TryGetValue(good.Item, out ItemDefinition? item) || item.IsCurrency)
                 {
                     continue;
                 }
