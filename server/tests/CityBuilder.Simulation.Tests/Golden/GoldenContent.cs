@@ -13,6 +13,9 @@ namespace CityBuilder.Simulation.Tests.Golden;
 /// </summary>
 internal static class GoldenContent
 {
+    /// <summary>The reader options for the road levels taken from v2: the content file's camel-case names.</summary>
+    private static readonly JsonSerializerOptions _camelCase = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+
     /// <summary>
     /// <c>Fixtures/content-golden-v1.json</c>: the content <c>mvp-1</c> as it was in M0-11, for golden scenario #1, with the walking rules and
     /// road levels of <c>content-golden-v2.json</c> added (<see cref="WithWalkingOfV2"/>). The file stays as it was frozen.
@@ -35,7 +38,7 @@ internal static class GoldenContent
         rules.CrossingSpeedPermille = v2Rules["crossingSpeedPermille"]!.GetValue<int>();
         rules.MinWalkSeconds = v2Rules["minWalkSeconds"]!.GetValue<long>();
         rules.MaxWalkBonusPermille = v2Rules["maxWalkBonusPermille"]!.GetValue<int>();
-        v1.Roads = v2["roads"]!.Deserialize<List<RoadLevelData?>>(new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        v1.Roads = v2["roads"]!.Deserialize<List<RoadLevelData?>>(_camelCase);
         return v1;
     }
 }
