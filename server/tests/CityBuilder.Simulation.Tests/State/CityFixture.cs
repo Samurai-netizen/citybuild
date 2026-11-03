@@ -14,9 +14,10 @@ internal static class CityFixture
     /// <summary>
     /// The valid fixture content (a 6 × 5 grid, two builders, a house <c>hut</c>, producers <c>lumber_camp</c> and, locked, <c>workshop</c>,
     /// the warehouse <c>depot</c>, the courier station <c>post</c>, the science building <c>school</c>) with four additions for the rules: the
-    /// workshop gets a level 2 with 180 labor, up to 6 workers and a store of 40 wood and 160 boards, so an upgrade can refund a cycle's inputs
-    /// and raise the worker limit, and the spec's durations (180 labor: 4 workers 45 s, 5 workers 36 s) run on it; the lumber camp's level 2
-    /// takes 4 workers, for the spec's example of 3 workers becoming 4; <c>manor</c>, an era-2 house available at the start (10 gold, 5 s),
+    /// workshop gets a level 2 with 180 labor, up to 6 workers and a store of 40 wood and 160 boards for 30 gold (coins only, so it starts at
+    /// once), so an upgrade can refund a cycle's inputs and raise the worker limit, and the spec's durations (180 labor: 4 workers 45 s, 5
+    /// workers 36 s) run on it; the lumber camp's level 2 takes 4 workers, for the spec's example of 3 workers becoming 4, and costs 30 gold and
+    /// 2 boards, so its upgrade waits for the boards while the camp keeps producing (CR-0008 D12); <c>manor</c>, an era-2 house available at the start (10 gold, 5 s),
     /// for the era check of placement; and <c>mint</c>, a producer of the currency (5 gold per 20 labor, up to 2 workers, no store), whose
     /// output goes into the purse.
     /// </summary>
@@ -24,13 +25,14 @@ internal static class CityFixture
     {
         // "!" reaches into the valid fixture, which sets the building list and every building's levels (ContentFixture.Valid).
         ContentFixture.Level(data, "lumber_camp", 2).MaxWorkers = 4;
+        ContentFixture.Level(data, "lumber_camp", 2).UpgradeCost = new() { ["gold"] = 30, ["boards"] = 2 };
         ContentFixture.Building(data, "workshop").Levels!.Add(new BuildingLevelData
         {
             Level = 2,
             MaxWorkers = 6,
             Recipe = new RecipeData { Inputs = new() { ["wood"] = 2 }, Outputs = new() { ["boards"] = 1 }, Labor = 180 },
             Storage = new() { ["wood"] = 40, ["boards"] = 160 },
-            UpgradeCost = new() { ["gold"] = 30, ["wood"] = 1 },
+            UpgradeCost = new() { ["gold"] = 30 },
             UpgradeSeconds = 15,
         });
         data.Buildings!.Add(new BuildingData

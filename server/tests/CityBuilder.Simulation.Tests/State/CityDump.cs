@@ -43,8 +43,25 @@ internal static class CityDump
     private static string Amounts(IReadOnlyDictionary<ItemId, long> amounts) =>
         string.Concat(amounts.Select(amount => string.Create(CultureInfo.InvariantCulture, $" {amount.Key}={amount.Value}")));
 
-    /// <summary>The line of <see cref="Describe"/> for one building.</summary>
-    public static string BuildingLine(CityState city, int buildingId) =>
+    /// <summary>
+    /// The line of <see cref="Describe"/> for one building without its store and needs: its phase, workers and labor, what the phase and
+    /// labor tests compare. <see cref="StoreLine"/> gives the rest.
+    /// </summary>
+    public static string BuildingLine(CityState city, int buildingId)
+    {
+        string line = FullLine(city, buildingId);
+        return line[..line.IndexOf(" store:", StringComparison.Ordinal)];
+    }
+
+    /// <summary>One building's store and needs as <see cref="Describe"/> writes them, for example <c>store: wood=3 needs: boards=2</c>.</summary>
+    public static string StoreLine(CityState city, int buildingId)
+    {
+        string line = FullLine(city, buildingId);
+        return line[(line.IndexOf(" store:", StringComparison.Ordinal) + 1)..];
+    }
+
+    /// <summary>The whole line of <see cref="Describe"/> for one building.</summary>
+    private static string FullLine(CityState city, int buildingId) =>
         Describe(city).Split('\n').Single(line => line.StartsWith($"building {buildingId} ", StringComparison.Ordinal));
 
     /// <summary>A nullable time as text, <c>null</c> for none.</summary>

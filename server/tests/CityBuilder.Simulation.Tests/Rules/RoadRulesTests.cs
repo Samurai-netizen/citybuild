@@ -15,19 +15,19 @@ public sealed class RoadRulesTests
     [Fact]
     public void PlaceRoads_EmptyTiles_PaysPerTileAndBuildsLevelOne()
     {
-        CityState city = City(clock: 1000, inventory: [("gold", 10)], buildings: [Idle(1, "hut", 0, 0)]);
+        CityState city = City(clock: 1000, purse: 10, buildings: [Idle(1, "hut", 0, 0)]);
 
         RulesAssert.Moved(Place(city, (2, 1), (1, 1), (3, 1)), spent: "gold=6", refunded: "");
 
         Assert.Equal([new RoadTile(1, 1, 1), new RoadTile(2, 1, 1), new RoadTile(3, 1, 1)], city.Roads);
-        Assert.Equal(4, city.GetQuantity(new ItemId("gold")));
+        Assert.Equal(4, city.Purse);
     }
 
     /// <summary>No builder is needed: roads are placed even while every builder slot is busy.</summary>
     [Fact]
     public void PlaceRoads_EveryBuilderBusy_StillPlaces()
     {
-        CityState city = City(inventory: [("gold", 10)], buildings:
+        CityState city = City(purse: 10, buildings:
         [
             Constructing(1, "hut", 0, 0, startedAt: 998, endsAt: 1003),
             Constructing(2, "hut", 1, 0, startedAt: 998, endsAt: 1003),
@@ -40,7 +40,7 @@ public sealed class RoadRulesTests
     [Fact]
     public void AnyRoadCommand_NoTileOrATileTwice_IsInvalidArgument()
     {
-        CityState city = City(inventory: [("gold", 100)], roads: [new RoadTile(1, 1, 1)]);
+        CityState city = City(purse: 100, roads: [new RoadTile(1, 1, 1)]);
 
         RulesAssert.Rejected(MutationErrorCode.InvalidArgument, city, city => Place(city));
         RulesAssert.Rejected(MutationErrorCode.InvalidArgument, city, city => Place(city, (2, 2), (2, 2)));
@@ -56,13 +56,13 @@ public sealed class RoadRulesTests
     [InlineData(0, 5)]
     [InlineData(-1, 0)]
     public void PlaceRoads_TileOutsideTheGrid_IsRejected(int x, int y) =>
-        RulesAssert.Rejected(MutationErrorCode.OutOfBounds, City(inventory: [("gold", 100)]), city => Place(city, (1, 1), (x, y)));
+        RulesAssert.Rejected(MutationErrorCode.OutOfBounds, City(purse: 100), city => Place(city, (1, 1), (x, y)));
 
     /// <summary>A tile with a building (in any phase) or a road is <see cref="MutationErrorCode.TileOccupied"/>.</summary>
     [Fact]
     public void PlaceRoads_TileWithABuildingOrARoad_IsRejected()
     {
-        CityState city = City(inventory: [("gold", 100)], buildings: [Constructing(1, "hut", 0, 0, 998, 1003)], roads: [new RoadTile(2, 0, 1)]);
+        CityState city = City(purse: 100, buildings: [Constructing(1, "hut", 0, 0, 998, 1003)], roads: [new RoadTile(2, 0, 1)]);
 
         RulesAssert.Rejected(MutationErrorCode.TileOccupied, city, city => Place(city, (1, 0), (0, 0)));
         RulesAssert.Rejected(MutationErrorCode.TileOccupied, city, city => Place(city, (1, 0), (2, 0)));
@@ -71,13 +71,13 @@ public sealed class RoadRulesTests
     /// <summary>The cost of the whole list must be affordable: 3 tiles cost 6 gold, 5 is not enough.</summary>
     [Fact]
     public void PlaceRoads_NotEnoughForTheWholeList_IsRejected() =>
-        RulesAssert.Rejected(MutationErrorCode.InsufficientResource, City(inventory: [("gold", 5)]), city => Place(city, (1, 1), (2, 1), (3, 1)));
+        RulesAssert.Rejected(MutationErrorCode.InsufficientResource, City(purse: 5), city => Place(city, (1, 1), (2, 1), (3, 1)));
 
     /// <summary>The checks run over the whole list in the order bounds, occupancy, cost: an occupied first tile and an outside second tile is out of bounds.</summary>
     [Fact]
     public void PlaceRoads_SeveralProblems_ReportsTheFirstCheckOverTheWholeList()
     {
-        CityState city = City(inventory: [("gold", 0)], buildings: [Idle(1, "hut", 0, 0)]);
+        CityState city = City(purse: 0, buildings: [Idle(1, "hut", 0, 0)]);
 
         RulesAssert.Rejected(MutationErrorCode.OutOfBounds, city, city => Place(city, (0, 0), (9, 9)));
         RulesAssert.Rejected(MutationErrorCode.TileOccupied, city, city => Place(city, (1, 1), (0, 0)));
@@ -87,12 +87,12 @@ public sealed class RoadRulesTests
     [Fact]
     public void UpgradeRoads_RoadsBelowTheLastLevel_PaysAndRaisesThem()
     {
-        CityState city = City(inventory: [("gold", 20)], roads: [new RoadTile(1, 1, 1), new RoadTile(2, 1, 1), new RoadTile(4, 4, 1)]);
+        CityState city = City(purse: 20, roads: [new RoadTile(1, 1, 1), new RoadTile(2, 1, 1), new RoadTile(4, 4, 1)]);
 
         RulesAssert.Moved(Upgrade(city, (2, 1), (1, 1)), spent: "gold=12", refunded: "");
 
         Assert.Equal([new RoadTile(1, 1, 2), new RoadTile(2, 1, 2), new RoadTile(4, 4, 1)], city.Roads);
-        Assert.Equal(8, city.GetQuantity(new ItemId("gold")));
+        Assert.Equal(8, city.Purse);
     }
 
     /// <summary>A tile without a road, also one outside the grid, is <see cref="MutationErrorCode.RoadNotFound"/>.</summary>
@@ -100,13 +100,13 @@ public sealed class RoadRulesTests
     [InlineData(2, 2)]
     [InlineData(40, 40)]
     public void UpgradeRoads_TileWithoutARoad_IsRejected(int x, int y) =>
-        RulesAssert.Rejected(MutationErrorCode.RoadNotFound, City(inventory: [("gold", 100)], roads: [new RoadTile(1, 1, 1)]), city => Upgrade(city, (1, 1), (x, y)));
+        RulesAssert.Rejected(MutationErrorCode.RoadNotFound, City(purse: 100, roads: [new RoadTile(1, 1, 1)]), city => Upgrade(city, (1, 1), (x, y)));
 
     /// <summary>A road at the last level is <see cref="MutationErrorCode.MaxLevel"/>; a missing road is reported before it.</summary>
     [Fact]
     public void UpgradeRoads_RoadAtTheLastLevel_IsRejectedAfterTheRoadCheck()
     {
-        CityState city = City(inventory: [("gold", 100)], roads: [new RoadTile(1, 1, 1), new RoadTile(2, 1, 2)]);
+        CityState city = City(purse: 100, roads: [new RoadTile(1, 1, 1), new RoadTile(2, 1, 2)]);
 
         RulesAssert.Rejected(MutationErrorCode.MaxLevel, city, city => Upgrade(city, (1, 1), (2, 1)));
         RulesAssert.Rejected(MutationErrorCode.RoadNotFound, city, city => Upgrade(city, (2, 1), (3, 1)));
@@ -117,20 +117,20 @@ public sealed class RoadRulesTests
     public void UpgradeRoads_NotEnoughForTheWholeList_IsRejected() =>
         RulesAssert.Rejected(
             MutationErrorCode.InsufficientResource,
-            City(inventory: [("gold", 11)], roads: [new RoadTile(1, 1, 1), new RoadTile(2, 1, 1)]),
+            City(purse: 11, roads: [new RoadTile(1, 1, 1), new RoadTile(2, 1, 1)]),
             city => Upgrade(city, (1, 1), (2, 1)));
 
     /// <summary>Removing takes the roads off their tiles and refunds nothing; the tile is ground again.</summary>
     [Fact]
     public void RemoveRoads_RoadsOnTheTiles_RemovesThemWithoutRefund()
     {
-        CityState city = City(inventory: [("gold", 3)], roads: [new RoadTile(1, 1, 2), new RoadTile(2, 1, 1)]);
+        CityState city = City(purse: 3, roads: [new RoadTile(1, 1, 2), new RoadTile(2, 1, 1)]);
 
         RulesAssert.Moved(Remove(city, (1, 1)), spent: "", refunded: "");
 
         Assert.Equal([new RoadTile(2, 1, 1)], city.Roads);
         Assert.Equal(TileContent.Ground, CityQueries.TileAt(city, 1, 1));
-        Assert.Equal(3, city.GetQuantity(new ItemId("gold")));
+        Assert.Equal(3, city.Purse);
     }
 
     /// <summary>A tile without a road is <see cref="MutationErrorCode.RoadNotFound"/>, and no road of the list is removed.</summary>
