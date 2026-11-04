@@ -1,4 +1,5 @@
-"""Era-independent models (visual v2): ground tiles, road tiles, nature, people, carried loads, item props and smoke.
+"""Era-independent models (visual v2): nature, people, carried loads, item props and smoke; the ground tiles and road tiles come from
+assets_ground.py.
 
 Placement of small details (tufts, flowers, pebbles) comes from a fixed seed per model, so every build makes the same files.
 Grid directions: the client puts tile (x, y) at Unity (x + 0.5, 0, y + 0.5). Grid +X is Unity +X, which is Blender -X; grid +Y is
@@ -9,157 +10,9 @@ import random
 
 from lib import Model, anchor, blob, group
 
-TILE_SLAB = (1.0, 1.0, 0.1)
-EDGE = 0.44  # small details stay this far from the tile centre, inside the bevel that draws the grid line
-
-
-# --- ground tiles -------------------------------------------------------------------------------------------------
-
-def slab(m, color="grass"):
-    """The tile block: 1 x 1, 0.1 deep, top face at z = 0; the bevel draws the grid lines between neighbours."""
-    m.box(TILE_SLAB, (0, 0, -0.1), color, bevel=0.025)
-
-
-def _spot(rng, keep_out=0.0):
-    """A random point on the tile, inside EDGE and outside a centre square of half-size keep_out."""
-    while True:
-        x, y = rng.uniform(-EDGE + 0.04, EDGE - 0.04), rng.uniform(-EDGE + 0.04, EDGE - 0.04)
-        if max(abs(x), abs(y)) >= keep_out:
-            return x, y
-
-
-def flower(m, at, petal, h=0.04):
-    """A small flower: a stem with a leaf and a head of petals around a gold centre."""
-    x, y, z = at
-    m.blade((x, y, z), h, "grass_dark", r=0.007)
-    m.ico(0.009, (x + 0.008, y, z + h * 0.35), "leaf", scale=(1.4, 0.7, 0.35), sub=0)
-    m.ico(0.017, (x, y, z + h), petal, scale=(1, 1, 0.55), sub=0)
-    m.ico(0.0075, (x, y, z + h + 0.006), "gold", sub=0)
-
-
-def pebble(m, at, r, color="stone", turn=0):
-    m.ico(r, (at[0], at[1], r * 0.25), color, scale=(1.0, 0.8, 0.55), sub=0, rot=(0, 0, turn))
-
-
-def grass_tile(name, seed, patches, tufts, flowers=0, pebbles=0, clover=0):
-    """A grass tile with darker and lighter patches, tufts, and optionally flowers, pebbles or clover. The middle of the tile
-    keeps only flat patches, so a building's foundation covers its details and the tile still reads as free ground."""
-    def build():
-        rng = random.Random(seed)
-        m = Model()
-        slab(m)
-        for k in range(patches):
-            x, y = _spot(rng)
-            dark = k % 3 == 1
-            r = rng.uniform(0.06, 0.1) if dark else rng.uniform(0.09, 0.15)
-            m.decal(blob(rng, r, n=10, stretch=(1.0, rng.uniform(0.6, 0.9)), turn=rng.uniform(0, 180)),
-                    "grass_dark" if dark else "grass_light", z=0.0015 + 0.0005 * k, at=(x, y))
-        for _ in range(tufts):
-            x, y = _spot(rng, keep_out=0.24)
-            m.tuft((x, y, 0), h=rng.uniform(0.05, 0.066), spin=rng.uniform(0, 360))
-        colors = ["plaster", "flower_pink", "gold", "flower_purple"]
-        for k in range(flowers):
-            x, y = _spot(rng, keep_out=0.22)
-            for j in range(3):
-                flower(m, (x + rng.uniform(-0.035, 0.035), y + rng.uniform(-0.035, 0.035), 0), colors[(k + j) % 4],
-                       h=rng.uniform(0.032, 0.046))
-        for k in range(pebbles):
-            x, y = _spot(rng, keep_out=0.2)
-            pebble(m, (x, y), rng.uniform(0.024, 0.036), ("stone", "stone_light", "stone_dark")[k % 3], turn=rng.uniform(0, 90))
-        for _ in range(clover):
-            x, y = _spot(rng, keep_out=0.22)
-            for j in range(3):
-                a = math.radians(j * 120 + rng.uniform(0, 40))
-                m.ico(0.018, (x + 0.018 * math.cos(a), y + 0.018 * math.sin(a), 0.008), "leaf", scale=(1, 1, 0.35), sub=0)
-        return m.to_object(name)
-    return build
-
-
-def dirt_tile():
-    """A bare dirt tile (paths in previews): two wheel ruts, a few pebbles and grass at the corners."""
-    rng = random.Random(7)
-    m = Model()
-    slab(m, "dirt")
-    for s in (-1, 1):
-        m.decal([(-0.47, s * 0.09 - 0.016), (0.47, s * 0.09 - 0.016), (0.47, s * 0.09 + 0.016), (-0.47, s * 0.09 + 0.016)],
-                "dirt_dark", z=0.0015)
-    for k in range(5):
-        x, y = _spot(rng, keep_out=0.16)
-        pebble(m, (x, y), rng.uniform(0.012, 0.02), ("stone", "stone_light")[k % 2])
-    for x, y in ((0.4, 0.4), (-0.4, -0.38)):
-        m.tuft((x, y, 0), h=0.032, spin=rng.uniform(0, 360))
-    return m.to_object("tile_dirt")
-
-
-# --- road tiles ---------------------------------------------------------------------------------------------------
-
-# Arm name -> the direction it points in Blender (x, y). See the module docstring for the grid directions.
-ARMS = {"Road_XPlus": (-1, 0), "Road_XMinus": (1, 0), "Road_YPlus": (0, -1), "Road_YMinus": (0, 1)}
-ROAD_HALF = 0.17  # half the width of a road arm; arms of neighbouring tiles meet edge to edge
-
-
-def _arm_box(m, dx, dy, length, width, z, h, color, start=0.0):
-    """A box from `start` along the arm's direction to `start + length`, `width` across it, `h` high from z."""
-    mid = start + length / 2
-    size = (length, width, h) if dx else (width, length, h)
-    m.box(size, (dx * mid, dy * mid, z), color, bevel=min(0.004, h * 0.3))
-
-
-def road_l1():
-    """Dirt path: a packed dirt patch in the middle and four arms to the tile edges, each with wheel ruts and a pebble edge."""
-    rng = random.Random(11)
-    m = Model()
-    slab(m)
-    m.prism(blob(rng, 0.2, n=12, wobble=0.05), 0.008, (0, 0, 0.004), "dirt", axis="Z", cap="dirt")
-    pebble(m, (0.07, -0.05), 0.014, "stone_light")
-    root = m.to_object("road_l1")
-    for name, (dx, dy) in ARMS.items():
-        a = Model()
-        _arm_box(a, dx, dy, 0.5 - 0.12, 2 * ROAD_HALF, 0.0, 0.008, "dirt", start=0.12)
-        for s in (-1, 1):  # ruts
-            off = s * 0.075
-            length = 0.5 - 0.2
-            mid = 0.2 + length / 2
-            cx, cy = dx * mid + (off if dy else 0), dy * mid + (off if dx else 0)
-            w = (length, 0.026) if dx else (0.026, length)
-            a.decal([(-w[0] / 2, -w[1] / 2), (w[0] / 2, -w[1] / 2), (w[0] / 2, w[1] / 2), (-w[0] / 2, w[1] / 2)], "dirt_dark",
-                    z=0.0085, at=(cx, cy))
-        for k in range(3):  # pebbles along both edges
-            t = 0.24 + k * 0.09
-            for s in (-1, 1):
-                off = s * (ROAD_HALF + 0.012)
-                px, py = dx * t + (off if dy else 0), dy * t + (off if dx else 0)
-                pebble(a, (px, py), 0.013 + 0.004 * ((k + (s > 0)) % 2), ("stone", "stone_light")[(k + (s > 0)) % 2])
-        a.to_object(name, parent=root)
-    return root
-
-
-def road_l2():
-    """Log road: a plank platform in the middle and four arms of logs laid across the way on a dirt bed, with a rail log on
-    each side."""
-    m = Model()
-    slab(m)
-    m.box((0.4, 0.4, 0.008), (0, 0, 0), "dirt_dark", bevel=0.004)
-    for k in range(5):
-        m.box((0.075, 0.38, 0.018), (-0.152 + k * 0.076, 0, 0.008), "wood_end", bevel=0.005)
-    for s in (-1, 1):
-        m.box((0.38, 0.02, 0.022), (0, s * 0.19, 0.008), "wood_dark", bevel=0.005)
-    root = m.to_object("road_l2")
-    for name, (dx, dy) in ARMS.items():
-        a = Model()
-        _arm_box(a, dx, dy, 0.3, 2 * ROAD_HALF + 0.02, 0.0, 0.008, "dirt_dark", start=0.2)
-        for k in range(5):
-            t = 0.235 + k * 0.057
-            p = (dx * t, dy * t, 0.026)
-            a.cyl(0.021, 2 * ROAD_HALF - 0.02, p, "wood" if k % 2 else "wood_dark", axis="Y" if dx else "X", seg=6,
-                  cap="wood_end")
-        for s in (-1, 1):
-            off = s * (ROAD_HALF + 0.004)
-            mid = 0.35
-            p = (dx * mid + (off if dy else 0), dy * mid + (off if dx else 0), 0.018)
-            a.cyl(0.016, 0.3, p, "wood_dark", axis="X" if dx else "Y", seg=6, cap="wood_end")
-        a.to_object(name, parent=root)
-    return root
+# The ground (tiles, roads and their small details) lives in assets_ground.py since the second pass; these names stay here for the
+# modules that import them from assets_common.
+from assets_ground import ARMS, EDGE, ROAD_HALF, ROADS, TILES, flower, pebble, slab  # noqa: E402,F401
 
 
 # --- nature -------------------------------------------------------------------------------------------------------
@@ -403,16 +256,6 @@ def smoke_puff():
     m.ico(0.03, (0.03, 0.01, 0.02), "smoke", sub=1)
     return m.to_object("fx_smoke_puff")
 
-
-TILES = {
-    "tile_grass": grass_tile("tile_grass", 101, patches=3, tufts=3),
-    "tile_grass_b": grass_tile("tile_grass_b", 202, patches=2, tufts=2, flowers=3),
-    "tile_grass_c": grass_tile("tile_grass_c", 303, patches=2, tufts=2, pebbles=4),
-    "tile_grass_d": grass_tile("tile_grass_d", 404, patches=3, tufts=5, clover=2),
-    "tile_dirt": dirt_tile,
-}
-
-ROADS = {"road_l1": road_l1, "road_l2": road_l2}
 
 ASSETS = {
     "tree_pine": tree_pine, "tree_round": tree_round, "bush": bush, "rock": rock, "stump": stump, "flowers": flowers,

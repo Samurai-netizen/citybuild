@@ -80,7 +80,7 @@
 | 5 | Fill steps (the owner left them to me): Woodcutter logs 3; Sawmill logs 2 and planks 3; Trading Post planks 2; Warehouse logs 3 and planks 3. Cottage, Scriptorium, Courier Station and the construction site keep no goods (CR-0008 §1) | One step per third of the store; the Sawmill's input yard is smaller than its output stack; the Trading Post's store holds only the planks it sells, coins go to the purse |
 | 6 | Smoke is a separate model, `fx_smoke_puff`, that the client loops at `Anchor_Smoke`: puffs rise, grow and shrink to nothing; opaque | Keeps the one shared material; a fading puff would need a transparent one |
 | 7 | A road tile is one model per level: a grass tile with a centre patch and four arms `Road_N`, `Road_E`, `Road_S`, `Road_W`; the client shows the arms that point at neighbouring roads | One model per level instead of six shapes in four turns |
-| 8 | Ground variety: four grass tiles (`tile_grass`, `tile_grass_b`, `tile_grass_c`, `tile_grass_d`), picked per tile by a fixed hash of its coordinates | Same picture on every device and every run |
+| 8 | Ground variety: four grass tiles (`tile_grass`, `tile_grass_b`, `tile_grass_c`, `tile_grass_d`), picked per tile by a fixed hash of its coordinates (replaced by decision 19) | Same picture on every device and every run |
 | 9 | Triangle budgets: buildings 6,000 (was 4,500), store fill and props 1,500, tiles 700 (was 200), road tiles 1,000, the smoke puff 300 | One more step of detail took the level 2 buildings to 4,900-5,600. A full 8 x 8 town (64 tiles, about 20 buildings) stays under 200,000 triangles with one material and a handful of draw calls; every phone from the iPhone XR on (OD-18) draws that easily |
 | 10 | New palette colours go only into free slots (from 20); no slot moves | The art README's rule |
 | 12 | Fonts of the showcase: Fredoka (titles, buttons, numbers) and Nunito (labels, text), SIL OFL 1.1, as static instances (Fredoka 600, Nunito 700 and 800) made with fontTools from Google Fonts' variable files; the licences sit beside them | Unity's text engine draws one weight per font file. OFL allows this, and neither font has a reserved name |
@@ -90,6 +90,29 @@
 | 16 | `--touch` grows from 48 to 52 and the dock buttons with it (`--dock-lift` 60); the HUD is 40 high in landscape and three rows in portrait (`--hud-height` 52 and 122) | Chunkier buttons like the showcase's; the tests' relations (dock lift = touch + gap, HUD height + 12) still hold |
 | 17 | UI Toolkit has no `:first-child`, `:last-child` or `gap`: spacing uses margins on every item and a negative margin on the row | The rule check rejects those selectors |
 | 11 | The package's change id is `CR-0009`; its CR file is written at adoption | Commits need an id (`.githooks/commit-msg`); a CR file now would edit `docs/changes/README.md`, a shared file. If the main session takes CR-0009 first, the adoption renumbers |
+
+## Ground, second pass (2026-11-04)
+- **Owner input** (in chat, after the preview page): "iterate on the tiles and roads. Make them more detailed, less blend. Add more random
+  variety where applicable and feasible".
+- **Done:** the ground moved to `blender/assets_ground.py`. Eight grass tiles instead of four, each with soft mottling, tufts in mixed
+  greens, short speckles and its own features (lush grass, daisies and poppies, mossy stone clusters, clover, a dry patch with dandelions,
+  a ring of mushrooms with ferns, a molehill, bluebells); a quarter turn per tile; three variants of each road level with wobbling sides
+  (exact at the tile edges), ruts, edge tufts and pebbles, and per variant a puddle and hoof prints, grass between the ruts, a missing log,
+  moss or a loose plank; the log road's logs differ in size, colour and angle; the dirt tile has mottling, wavy ruts and a puddle. The
+  client's `GroundVariants` (weights, `RotationFor`, `Hash`) and `RoadArms` (`Variants`, `PathOf(level, variant)`, `VariantFor`) follow,
+  with their tests; `GroundTiles` turns each grass tile (`unity-wiring.patch`). 57 models now.
+- **Verification:** all 57 models pass `build_all.py`'s checks; the C# compiles against the engine with the Unity stubs and the 82 tests
+  without Unity objects pass (new vectors for the variants, the turns and the road variants, computed by the previews' Python); the
+  previews, the GIFs and the road icons were rendered again.
+
+| # | Decision | Why / alternative |
+|---|---|---|
+| 19 | Eight grass tiles with weights per 20 tiles (plain 5, clover 3, the others 2) and a quarter turn per tile from other bits of the same hash: 32 looks | The plain tile stays the most common so the town is calm; turns cost nothing because the tiles are square and their details have no direction |
+| 20 | Three variants per road level, picked per tile by the hash's top bits; the arms keep the same width and rut places at the tile edge | Any two variants join, so the client needs no rule about neighbours' variants. Roads are not turned (their arms point somewhere) |
+| 21 | Three colours in free slots: `grass_warm`, `grass_cool` (mottling a step off the grass) and `grass_dry` (the dry patch) | Low contrast patches make the ground less flat without reading as holes; the first dry patch in thatch yellow looked like a stain |
+| 22 | Budgets: tiles 1,000 triangles (the richest is 902), road tiles 2,000 (the log road's variants 1,574 to 1,796) | 64 tiles stay under 60,000 triangles; a town's 15 or so road tiles add about 30,000 |
+| 23 | Flat patches are clipped to the tile's flat top (0.465 from the centre) | Patches that reached past the edge painted over the grid line between tiles (also in the first pass) |
+| 24 | A grass or dirt tile is two meshes: the flat ground (top at y = 0) and a child `Details` with everything that rises above it; `build_all.py` and `ArtModelsV2Tests` check it | `GroundTilesTests.Tiles_StandOnTheirTiles_WithTheirTopAtTheGround` reads the tile's first renderer and wants its top at 0; with tufts in the same mesh it would fail (it would have with the first pass too). The split keeps that test as it is, and placement hints now tint only the ground, not the flowers. Cost: two renderers per tile, one material |
 
 ## Follow-ups
 - [MANUAL] The Unity steps of `FIT-TEST.md`: compile, `test-unity.sh`, a play session for the motion and the fill, the UI in the Device

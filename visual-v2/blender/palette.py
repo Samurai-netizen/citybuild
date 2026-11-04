@@ -24,6 +24,8 @@ PALETTE = [
     ("grass_light", "96C95A"), ("smoke", "ECE8E1"), ("flower_pink", "E98AB0"), ("flower_purple", "9C82D4"),
     ("iron", "5A606B"), ("canvas", "D9C7A0"), ("dirt_dark", "9A6E45"), ("foam", "D2F0F8"),
     ("lamp", "FFD36B"), ("stone_light", "CEC8BC"), ("dirt_light", "CFA777"),
+    # ground, second pass: soft mottling a step warmer and a step cooler than the grass
+    ("grass_warm", "88B94F"), ("grass_cool", "6EA845"), ("grass_dry", "B4BD5C"),
 ]
 
 INDEX = {name: i for i, (name, _) in enumerate(PALETTE)}

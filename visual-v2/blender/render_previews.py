@@ -27,17 +27,39 @@ import lib  # noqa: E402
 OUT = os.path.join(ba.PACKAGE, "previews")
 
 
-def ground_variant(x, y):
-    """The grass tile of grid tile (x, y): the client's GroundVariants rule (a fixed hash; plain 40 %, flowers, pebbles and clover
-    20 % each). Index into GRASS."""
+def ground_hash(x, y):
+    """The client's fixed hash of a grid tile (GroundVariants.Hash): unsigned 32-bit arithmetic."""
     h = (x * 374761393 + y * 668265263) & 0xFFFFFFFF
     h = ((h ^ (h >> 13)) * 1274126177) & 0xFFFFFFFF
-    h ^= h >> 16
-    bucket = h % 10
-    return 0 if bucket < 4 else 1 if bucket < 6 else 2 if bucket < 8 else 3
+    return h ^ (h >> 16)
 
 
-GRASS = ["tile_grass", "tile_grass_b", "tile_grass_c", "tile_grass_d"]
+# Of every 20 tiles: plain 5, meadow 2, stones 2, clover 3, dry 2, mushrooms 2, molehill 2, bluebells 2 (GroundVariants.Weights).
+GRASS_WEIGHTS = (5, 2, 2, 3, 2, 2, 2, 2)
+
+
+def ground_variant(x, y):
+    """The grass tile of grid tile (x, y): the client's GroundVariants.For. Index into GRASS."""
+    bucket = ground_hash(x, y) % 20
+    for variant, weight in enumerate(GRASS_WEIGHTS):
+        if bucket < weight:
+            return variant
+        bucket -= weight
+    return 0
+
+
+def ground_turns(x, y):
+    """Quarter turns of grid tile (x, y)'s grass tile: the client's GroundVariants.RotationFor."""
+    return (ground_hash(x, y) >> 20) & 3
+
+
+def road_variant(x, y):
+    """The road variant (0, 1, 2) of grid tile (x, y): the client's RoadArms.VariantFor."""
+    return (ground_hash(x, y) >> 24) % 3
+
+
+GRASS = ["tile_grass", "tile_grass_b", "tile_grass_c", "tile_grass_d", "tile_grass_e", "tile_grass_f", "tile_grass_g", "tile_grass_h"]
+ROAD_SUFFIX = ("", "_b", "_c")
 
 
 def at_grid(i, j):
@@ -96,7 +118,7 @@ def lineup_buildings():
     for r, row in enumerate(rows):
         for c, name in enumerate(row):
             pos = slot(c, r)
-            ba.place(ac.TILES[GRASS[(c + r) % 4]], pos)
+            ba.place(ac.TILES[GRASS[(c + 3 * r) % len(GRASS)]], pos, rot_z=90 * ((c + r) % 4))
             root = ba.place(e1.BUILDINGS[name], pos)
             add_fill(root, name, {"logs": 3, "planks": 3})
             a = ba.anchors(root)
@@ -115,14 +137,14 @@ def lineup_ground():
     lib.clear_scene()
     for c, name in enumerate(list(ac.TILES)):
         ba.place(ac.TILES[name], slot(c, 0))
-    # roads: alone, a straight, a corner, a T and a cross, for both levels
+    # roads: alone, a straight, a corner, a T and a cross, for both levels, cycling through the three variants of each
     shapes = [set(), {"Road_XPlus", "Road_XMinus"}, {"Road_XPlus", "Road_YPlus"}, {"Road_XPlus", "Road_XMinus", "Road_YPlus"},
-              set(ac.ARMS)]
+              set(ac.ARMS), {"Road_YPlus", "Road_YMinus"}]
     for r, name in enumerate(("road_l1", "road_l2")):
         for c, arms in enumerate(shapes):
-            root = ba.place(ac.ROADS[name], slot(c, r + 1))
+            root = ba.place(ac.ROADS[name + ROAD_SUFFIX[c % 3]], slot(c + 1.5, r + 1))
             show_arms(root, arms)
-    lib.setup_render(2000, 1100)
+    lib.setup_render(2200, 1100)
     lib.frame_camera(meshes(), margin=1.03)
     lib.render(os.path.join(OUT, "lineup_ground.png"))
     to_jpeg(os.path.join(OUT, "lineup_ground.png"))
@@ -171,13 +193,13 @@ def town_scene():
     for i in range(8):
         for j in range(8):
             if (i, j) in ROADS:
-                root = ba.place(ac.ROADS[ROADS[(i, j)]], at_grid(i, j))
+                root = ba.place(ac.ROADS[ROADS[(i, j)] + ROAD_SUFFIX[road_variant(i, j)]], at_grid(i, j))
                 keep = {name for name, (dx, dy) in (("Road_XPlus", (1, 0)), ("Road_XMinus", (-1, 0)), ("Road_YPlus", (0, 1)),
                                                      ("Road_YMinus", (0, -1))) if (i + dx, j + dy) in ROADS}
                 show_arms(root, keep)
                 tiles[i, j] = root
             else:
-                tiles[i, j] = ba.place(ac.TILES[GRASS[ground_variant(i, j)]], at_grid(i, j))
+                tiles[i, j] = ba.place(ac.TILES[GRASS[ground_variant(i, j)]], at_grid(i, j), rot_z=90 * ground_turns(i, j))
     ground = lib.Model()
     ground.box((16, 16, 0.3), (0, 0, -0.4), "grass_dark", bevel=0)
     ground.to_object("ground")
