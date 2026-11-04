@@ -25,7 +25,6 @@ public sealed class ContentShapeTests
         ["amountPresets"] = data => data.AmountPresets = null,
         ["rules.gridWidth"] = data => RulesOf(data).GridWidth = null,
         ["rules.researchSlots"] = data => RulesOf(data).ResearchSlots = null,
-        ["rules.maxOfflineProductionSeconds"] = data => RulesOf(data).MaxOfflineProductionSeconds = null,
         ["rules.minCycleSeconds"] = data => RulesOf(data).MinCycleSeconds = null,
         ["rules.maxLaborReductionPermille"] = data => RulesOf(data).MaxLaborReductionPermille = null,
         ["rules.tripCarryLimit"] = data => RulesOf(data).TripCarryLimit = null,
@@ -124,7 +123,6 @@ public sealed class ContentShapeTests
     /// <summary>Numbers just above <see cref="GameContentFactory.MaxQuantity"/>, by the expected error path.</summary>
     private static readonly Dictionary<string, Action<GameContentData>> _valuesTooLarge = new()
     {
-        ["rules.maxOfflineProductionSeconds"] = data => RulesOf(data).MaxOfflineProductionSeconds = GameContentFactory.MaxQuantity + 1,
         ["buildings[lumber_camp].levels[1].storage.wood"] = data => Level(data, "lumber_camp", 1).Storage!["wood"] = long.MaxValue,
         ["startingCity.purse"] = data => data.StartingCity!.Purse = GameContentFactory.MaxQuantity + 1,
         ["rules.tripCarryLimit"] = data => RulesOf(data).TripCarryLimit = GameContentFactory.MaxQuantity + 1,
@@ -185,7 +183,7 @@ public sealed class ContentShapeTests
     public void Create_NumbersExactlyAtMaxQuantity_AreAccepted()
     {
         GameContentData data = Valid();
-        RulesOf(data).MaxOfflineProductionSeconds = GameContentFactory.MaxQuantity;
+        RulesOf(data).TripCarryLimit = GameContentFactory.MaxQuantity;
         data.StartingCity!.Purse = GameContentFactory.MaxQuantity;
 
         ContentAssert.Valid(data);

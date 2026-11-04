@@ -6,8 +6,8 @@ using static CityBuilder.Simulation.Tests.State.CityFixture;
 namespace CityBuilder.Simulation.Tests.Settlement;
 
 /// <summary>
-/// The loop of <c>Simulator.Advance</c> (<c>04</c> sections 2, 7 and 11): the clock, the window, the target time and bad input. The fixture's
-/// production cap is 3600 s; a hut takes 5 s to build.
+/// The loop of <c>Simulator.Advance</c> (<c>04</c> sections 2, 7 and 11): the clock, the window, the target time and bad input. A hut takes 5 s
+/// to build.
 /// </summary>
 public sealed class AdvanceTests
 {
@@ -20,7 +20,8 @@ public sealed class AdvanceTests
         SettlementReport report = Simulator.Advance(city, TestContent, 50);
 
         Assert.Equal(1050, city.Clock);
-        Assert.Equal((50L, 50L), (report.ElapsedSeconds, report.ProductionSeconds));
+        Assert.Equal((50L, 0L), (report.ElapsedSeconds, report.CourierSeconds));
+        Assert.Empty(report.TiredCouriers);
         Assert.Empty(report.Produced);
         Assert.Empty(report.Consumed);
         Assert.Empty(report.CompletedBuildings);
@@ -28,16 +29,16 @@ public sealed class AdvanceTests
         Assert.False(report.EraChanged);
     }
 
-    /// <summary>Beyond the cap the clock moves fully, but the report's production seconds stop at the cap.</summary>
+    /// <summary>A long advance (30 days) moves the clock by all of it: there is no offline cap (CR-0008, <c>04</c> section 2).</summary>
     [Fact]
-    public void Advance_ElapsedBeyondTheProductionCap_ReportsTheCapAsProductionSeconds()
+    public void Advance_ThirtyDays_MovesTheClockByAllOfIt()
     {
         CityState city = City(clock: 1000);
 
-        SettlementReport report = Simulator.Advance(city, TestContent, 10_000);
+        SettlementReport report = Simulator.Advance(city, TestContent, 30 * 86_400);
 
-        Assert.Equal(11_000, city.Clock);
-        Assert.Equal((10_000L, 3600L), (report.ElapsedSeconds, report.ProductionSeconds));
+        Assert.Equal(1000 + (30 * 86_400), city.Clock);
+        Assert.Equal((30 * 86_400L, 0L), (report.ElapsedSeconds, report.CourierSeconds));
     }
 
     /// <summary>A zero-length advance keeps the clock.</summary>
@@ -49,7 +50,7 @@ public sealed class AdvanceTests
         SettlementReport report = Simulator.Advance(city, TestContent, 0);
 
         Assert.Equal(1000, city.Clock);
-        Assert.Equal((0L, 0L), (report.ElapsedSeconds, report.ProductionSeconds));
+        Assert.Equal((0L, 0L), (report.ElapsedSeconds, report.CourierSeconds));
         Assert.Equal(BuildingPhase.Constructing, city.Buildings[0].Phase);
     }
 
@@ -63,7 +64,7 @@ public sealed class AdvanceTests
         SettlementReport report = Simulator.Advance(city, TestContent, -5);
 
         Assert.Equal(before, CityDump.Describe(city));
-        Assert.Equal((0L, 0L), (report.ElapsedSeconds, report.ProductionSeconds));
+        Assert.Equal((0L, 0L), (report.ElapsedSeconds, report.CourierSeconds));
     }
 
     /// <summary>A timer ending exactly at the target completes in this advance.</summary>

@@ -85,7 +85,7 @@ internal sealed class CitySettler
 
     /// <summary>
     /// Begins the settlement of the locked city: records it as it is, advances it by the server seconds from its last settled second to
-    /// <paramref name="now"/> (timers for the whole window, cycle starts only during the first <c>MaxOfflineProductionSeconds</c>), and
+    /// <paramref name="now"/> (every timer, cycle start and walk of the window, with no cap), and
     /// records the new last settled second and content version.
     /// </summary>
     /// <param name="city">The acting player's city, locked in its transaction.</param>
@@ -249,8 +249,8 @@ internal sealed class CitySettler
     /// <summary>
     /// Everything an advance can change in a city as one text, to tell whether the settlement changed something its report doesn't show (a
     /// cycle without inputs starting, a trip whose whole load went back, a research timer started by a delivery): every building's phase
-    /// fields, workers, store and needs, the purse, the research with its times and needs, and the trips under way. The clock is left out (the
-    /// window says whether it moved).
+    /// fields, workers, store and needs, the purse, the research with its times and needs, the trips under way, and every courier's state, walk,
+    /// stamina and loads (a walk started or ended without goods, stamina spent). The clock is left out (the window says whether it moved).
     /// </summary>
     /// <param name="city">The city.</param>
     /// <returns>The text; equal for two states an advance can't tell apart.</returns>
@@ -278,6 +278,18 @@ internal sealed class CitySettler
         foreach (Trip trip in city.Trips)
         {
             text.Append(CultureInfo.InvariantCulture, $"trip {trip.Id}\n");
+        }
+
+        foreach (Courier courier in city.Couriers)
+        {
+            text.Append(CultureInfo.InvariantCulture,
+                $"c {courier.StationId}/{courier.Slot} {courier.State} {courier.ToStop} {courier.DepartedAt}..{courier.ArrivesAt} {courier.Stamina}");
+            foreach (CourierLoad load in courier.Loads)
+            {
+                text.Append(CultureInfo.InvariantCulture, $" {load.Item}@{load.FromId}={load.Quantity}");
+            }
+
+            text.Append('\n');
         }
 
         return text.ToString();

@@ -282,7 +282,8 @@ is sent or stored. All values are integers, rounded down: seconds, permille (0..
   courier carries of that good, delivered by §16; the rest stays on the courier. A courier never waits: it does what it can and walks on.
 - **Load:** every carried quantity remembers the building it came from. When a courier stops working (its worker is removed, its route is
   replaced, its station starts an upgrade), each quantity goes back into the store it came from at once, even above its limit (a returned
-  load), and the courier stands `AtStation` (a resting one stays resting). Otherwise a resting courier keeps its load.
+  load), and the courier stands `AtStation` (one without stamina, resting or walking home tired, rests). Otherwise a resting courier
+  keeps its load.
 - **Amounts:** a **preset** (content: All 100 %, Half 50 %, Quarter 25 %) is always allowed; **percent** (1..100) and **exact** (≥ 1) only
   after a research with `UnlockAmountMode` (else `AMOUNT_MODE_LOCKED`). Of a base `b` (the stock for a take or a trip, the carried quantity
   for a put): a percentage gives `max(1, b × p / 100 rounded down)` when `b ≥ 1`, else 0; an exact number gives itself; then the limits above apply.

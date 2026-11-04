@@ -50,7 +50,7 @@ public sealed class ContentGoldenTests(ApiFactory factory) : IClassFixture<ApiFa
     private const string _expectedResponse = """
         {
           "contentVersion": "contract-2",
-          "rules": {"gridWidth": 6, "gridHeight": 5, "builderSlots": 2, "researchSlots": 1, "maxOfflineProductionSeconds": 14400, "minCycleSeconds": 5, "maxLaborReductionPermille": 400, "groundTileMillis": 6000, "crossingSpeedPermille": 300, "minWalkSeconds": 3, "maxWalkBonusPermille": 250, "tripCarryLimit": 8, "maxRouteStops": 5, "maxStopActions": 2, "timeScale": 1},
+          "rules": {"gridWidth": 6, "gridHeight": 5, "builderSlots": 2, "researchSlots": 1, "minCycleSeconds": 5, "maxLaborReductionPermille": 400, "groundTileMillis": 6000, "crossingSpeedPermille": 300, "minWalkSeconds": 3, "maxWalkBonusPermille": 250, "tripCarryLimit": 8, "maxRouteStops": 5, "maxStopActions": 2, "timeScale": 1},
           "startingCity": {"era": 1, "purse": 300},
           "eras": [
             {"number": 1, "id": "dawn", "name": "Dawn"}

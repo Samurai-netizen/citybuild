@@ -77,7 +77,6 @@ namespace CityBuilder.Client.Tests.EditMode
                     GridHeight = 4,
                     BuilderSlots = 2,
                     ResearchSlots = 1,
-                    MaxOfflineProductionSeconds = 600,
                     MinCycleSeconds = 2,
                     MaxLaborReductionPermille = 300,
                     GroundTileMillis = 3000,

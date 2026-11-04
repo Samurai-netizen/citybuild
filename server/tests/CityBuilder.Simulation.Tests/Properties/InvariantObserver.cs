@@ -11,10 +11,9 @@ namespace CityBuilder.Simulation.Tests.Properties;
 /// any two events, not only between the generated operations:
 /// <list type="bullet">
 /// <item>a command is one step: the mutation and its zero-length advance;</item>
-/// <item>an advance within the production cap is a zero-length step, then one step to each next due time (a timer's end, a trip's
-/// arrival), so every start, completion and delivery falls on a step's end. Split invariance (property 2) makes this the same city as one advance;</item>
-/// <item>an advance beyond the cap runs whole on the city. A copy is stepped like above to the end of the window, and the rest, the dormant
-/// tail, is one step from the copy to the city, with what <see cref="DormantTail"/> says it must do;</item>
+/// <item>an advance is a zero-length step, then one step to each next due time (a timer's end, a trip's or a courier's arrival), each
+/// with the advance's one <c>absentFrom</c>, so every start, completion, delivery and stamina spend falls on a step's end. Split invariance
+/// (property 2) makes this the same city as one advance;</item>
 /// <item>after some steps a <b>branch</b> leaves the history: on a copy, a random command (mostly an upgrade or a worker change on a running
 /// cycle, at whatever second the step ended), then a short stepped advance, checked with a fork of the checks. Branches never change the
 /// replayed city, so the history stays valid.</item>
@@ -31,15 +30,12 @@ internal sealed class InvariantObserver
     private readonly GameContent _content;
     /// <summary>The observer's own random numbers: where branches leave, what they do, and the negative advance at the end.</summary>
     private readonly SeededRandom _random;
-    /// <summary>The production cap in seconds (<see cref="GameRules.MaxOfflineProductionSeconds"/>): a longer advance has a dormant tail.</summary>
-    private readonly long _cap;
 
     /// <summary>An observer of one history on <paramref name="content"/>, drawing its own choices from <paramref name="random"/>.</summary>
     private InvariantObserver(GameContent content, SeededRandom random)
     {
         _content = content;
         _random = random;
-        _cap = content.Rules.MaxOfflineProductionSeconds;
     }
 
     /// <summary>
@@ -62,8 +58,7 @@ internal sealed class InvariantObserver
             List<SettlementReport> reports = operation switch
             {
                 CityOperation.Command command => [Command(city, command, index + 1, line)!],
-                CityOperation.Advance advance when advance.Seconds <= _cap => Stepped(city, advance, index + 1, advance.Seconds, city.Clock, line),
-                CityOperation.Advance advance => [Dormant(city, advance, index + 1, line)],
+                CityOperation.Advance advance => Stepped(city, advance, index + 1, advance.Seconds, advance.AbsentFrom(city.Clock), line),
                 _ => throw new InvalidOperationException($"Unknown operation {operation}."),
             };
             Same($"operation {index + 1}'s report", ReportTotals.Sum(history.Reports[index]).Fields(), ReportTotals.Sum(reports).Fields());
@@ -72,8 +67,8 @@ internal sealed class InvariantObserver
         Same("the final city", StructuralEquality.Fields(history.City), StructuralEquality.Fields(city));
 
         // A negative time counts as 0 (04 section 1): the clock stays.
-        var backwards = new CityOperation.Advance(-_random.Between(1, _cap));
-        Piece(CityCopy.Of(city), backwards, 0, backwards.Seconds, city.Clock, line with { Branch = "after the history, on a copy" });
+        var backwards = new CityOperation.Advance(-_random.Between(1, CityGenerator.LongGapOf(_content)));
+        Piece(CityCopy.Of(city), backwards, 0, backwards.Seconds, absentFrom: null, line with { Branch = "after the history, on a copy" });
     }
 
     /// <summary>
@@ -90,18 +85,18 @@ internal sealed class InvariantObserver
         }
 
         SettlementReport report = Simulator.Advance(city, _content, 0);
-        line.Checks.Check(Step(before, city, command, number, result, requested: 0, report, city.Clock, line));
+        line.Checks.Check(Step(before, city, command, number, result, requested: 0, report, absentFrom: null, line));
         return report;
     }
 
     /// <summary>
-    /// An advance in steps: a zero-length piece first (after a dormant tail the city may have idle producers that can start), then one piece
-    /// to each next due time, until <paramref name="seconds"/> have passed.
+    /// An advance in steps, each with the advance's <paramref name="absentFrom"/>: a zero-length piece first, then one piece to each next due
+    /// time, until <paramref name="seconds"/> have passed.
     /// </summary>
-    private List<SettlementReport> Stepped(CityState city, CityOperation operation, int number, long seconds, long windowStart, Line line)
+    private List<SettlementReport> Stepped(CityState city, CityOperation operation, int number, long seconds, long? absentFrom, Line line)
     {
         long target = city.Clock + seconds;
-        var reports = new List<SettlementReport> { Piece(city, operation, number, 0, windowStart, line) };
+        var reports = new List<SettlementReport> { Piece(city, operation, number, 0, absentFrom, line) };
         while (city.Clock < target)
         {
             long next = NextDueAt(city) ?? target;
@@ -110,18 +105,18 @@ internal sealed class InvariantObserver
                 throw new InvalidOperationException($"After operation {number} a timer is due at {next}, not after the clock {city.Clock}.");
             }
 
-            reports.Add(Piece(city, operation, number, Math.Min(next, target) - city.Clock, windowStart, line));
+            reports.Add(Piece(city, operation, number, Math.Min(next, target) - city.Clock, absentFrom, line));
         }
 
         return reports;
     }
 
     /// <summary>One piece of an advance, checked as a step; after a step of the history itself a branch may leave (<see cref="_branchPercent"/>).</summary>
-    private SettlementReport Piece(CityState city, CityOperation operation, int number, long seconds, long windowStart, Line line)
+    private SettlementReport Piece(CityState city, CityOperation operation, int number, long seconds, long? absentFrom, Line line)
     {
         CityState before = CityCopy.Of(city);
-        SettlementReport report = Simulator.Advance(city, _content, seconds);
-        line.Checks.Check(Step(before, city, operation, number, mutation: null, requested: seconds, report, windowStart, line));
+        SettlementReport report = Simulator.Advance(city, _content, seconds, absentFrom);
+        line.Checks.Check(Step(before, city, operation, number, mutation: null, requested: seconds, report, absentFrom, line));
         if (line.Branch is null && _random.Chance(_branchPercent))
         {
             BranchFrom(city, number, line);
@@ -131,14 +126,14 @@ internal sealed class InvariantObserver
     }
 
     /// <summary>
-    /// Leaves the history on a copy of the city: an aimed command and, when it is applied, a stepped advance of 0 to 600 seconds (never more
-    /// than the cap), checked with a fork of the checks. The replayed city does not change.
+    /// Leaves the history on a copy of the city: an aimed command and, when it is applied, a stepped advance of 0 to 600 seconds with the
+    /// player present, checked with a fork of the checks. The replayed city does not change.
     /// </summary>
     private void BranchFrom(CityState city, int number, Line line)
     {
         CityState branch = CityCopy.Of(city);
         CityOperation.Command? command = AimedCommand(branch);
-        long gap = _random.Between(0, Math.Min(600, _cap));
+        long gap = _random.Between(0, 600);
         if (command is null)
         {
             return;
@@ -149,7 +144,7 @@ internal sealed class InvariantObserver
             string.Create(CultureInfo.InvariantCulture, $"branch at clock {city.Clock}: {command}, then Advance {gap}"));
         if (Command(branch, command, number, branchLine) is not null)
         {
-            Stepped(branch, new CityOperation.Advance(gap), number, gap, branch.Clock, branchLine);
+            Stepped(branch, new CityOperation.Advance(gap), number, gap, absentFrom: null, branchLine);
         }
     }
 
@@ -189,45 +184,12 @@ internal sealed class InvariantObserver
     }
 
     /// <summary>The definition of a building's current level.</summary>
-    private BuildingLevelDefinition Level(Building building) => DormantTail.Definition(_content, building.TypeId).GetLevel(building.Level);
-
-    /// <summary>
-    /// An advance beyond the cap: the city advances in one call, a copy is stepped through the window, and the rest, from the copy to the
-    /// city, is checked as one dormant-tail step against <see cref="DormantTail.Model"/>.
-    /// </summary>
-    private SettlementReport Dormant(CityState city, CityOperation.Advance advance, int number, Line line)
-    {
-        long windowStart = city.Clock;
-        CityState window = CityCopy.Of(city);
-        SettlementReport whole = Simulator.Advance(city, _content, advance.Seconds);
-
-        List<SettlementReport> prefix = Stepped(window, advance, number, _cap, windowStart, line);
-        line.Checks.Check(new InvariantStep
-        {
-            Before = window,
-            After = city,
-            Operation = advance,
-            OperationNumber = number,
-            Requested = advance.Seconds - _cap,
-            ReportedElapsed = whole.ElapsedSeconds - prefix.Sum(report => report.ElapsedSeconds),
-            Produced = Minus(whole.Produced, prefix.Select(report => report.Produced)),
-            Consumed = Minus(whole.Consumed, prefix.Select(report => report.Consumed)),
-            Delivered = Minus(whole.Delivered, prefix.Select(report => report.Delivered)),
-            Moved = Minus(whole.Moved, prefix.Select(report => report.Moved)),
-            Refunded = Minus(whole.Refunded, prefix.Select(report => report.Refunded)),
-            EventAligned = false,
-            ProductionUntil = windowStart + _cap,
-            ExpectedTail = DormantTail.Model(_content, window, city.Clock),
-            CompletedBuildings = [.. whole.CompletedBuildings.Except(prefix.SelectMany(report => report.CompletedBuildings))],
-            CompletedResearch = [.. whole.CompletedResearch.Except(prefix.SelectMany(report => report.CompletedResearch))],
-        });
-        return whole;
-    }
+    private BuildingLevelDefinition Level(Building building) => ContentLookup.Definition(_content, building.TypeId).GetLevel(building.Level);
 
     /// <summary>The step from <paramref name="before"/> to <paramref name="after"/>, with what the report says happened in between.</summary>
-    private InvariantStep Step(
+    private static InvariantStep Step(
         CityState before, CityState after, CityOperation operation, int number, MutationResult? mutation, long requested, SettlementReport report,
-        long windowStart, Line line) => new()
+        long? absentFrom, Line line) => new()
         {
             Before = before,
             After = after,
@@ -242,8 +204,9 @@ internal sealed class InvariantObserver
             Delivered = report.Delivered,
             Moved = report.Moved,
             Refunded = report.Refunded,
-            EventAligned = true,
-            ProductionUntil = windowStart + _cap,
+            AbsentFrom = absentFrom,
+            CourierSeconds = report.CourierSeconds,
+            TiredCouriers = report.TiredCouriers,
             CompletedBuildings = report.CompletedBuildings,
             CompletedResearch = report.CompletedResearch,
         };
@@ -280,18 +243,6 @@ internal sealed class InvariantObserver
         }
 
         return next;
-    }
-
-    /// <summary>The quantities of the whole advance less those of its stepped pieces: what the dormant tail did.</summary>
-    private static SortedDictionary<ItemId, long> Minus(IReadOnlyDictionary<ItemId, long> whole, IEnumerable<IReadOnlyDictionary<ItemId, long>> parts)
-    {
-        var rest = new SortedDictionary<ItemId, long>(whole.ToDictionary(item => item.Key, item => item.Value));
-        foreach (KeyValuePair<ItemId, long> part in parts.SelectMany(quantities => quantities))
-        {
-            rest[part.Key] = rest.GetValueOrDefault(part.Key) - part.Value;
-        }
-
-        return rest;
     }
 
     /// <summary>Throws when the observed values differ from the generated ones: then the observer did not replay the history it was given.</summary>

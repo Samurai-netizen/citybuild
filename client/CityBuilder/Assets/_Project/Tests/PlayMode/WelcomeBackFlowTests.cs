@@ -11,6 +11,7 @@ using CityBuilder.Client.Presentation.Build;
 using CityBuilder.Client.Presentation.Ui;
 using CityBuilder.Client.Presentation.WelcomeBack;
 using CityBuilder.Simulation;
+using CityBuilder.Simulation.Settlement;
 using CityBuilder.Simulation.Content;
 using NUnit.Framework;
 using UnityEngine;
@@ -84,9 +85,10 @@ namespace CityBuilder.Client.Tests.PlayMode
             CitySnapshot start = Snapshot(basis);
             var settlement = new SettlementSummary(
                 elapsed,
-                elapsed,
                 new[] { new KeyValuePair<ItemId, long>(new ItemId("logs"), 5) },
                 new KeyValuePair<ItemId, long>[0],
+                0,
+                new TiredCourier[0],
                 new int[0],
                 new ResearchId[0],
                 false);
@@ -137,7 +139,6 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(
                 Texts(WelcomeBackPanel.LineClass),
                 Is.EqualTo(new[] { "21 Logs", "Trade Charter — Unlocks Trading Post" }));
-            Assert.That(Label(WelcomeBackPanel.CapNoteName).style.display.value, Is.EqualTo(DisplayStyle.None));
             Assert.That(Label(WelcomeBackPanel.EmptyName).style.display.value, Is.EqualTo(DisplayStyle.None));
         }
 
@@ -246,7 +247,7 @@ namespace CityBuilder.Client.Tests.PlayMode
         {
             yield return Start(null);
             var settlement = new SettlementSummary(
-                7200, 7200, new KeyValuePair<ItemId, long>[0], new KeyValuePair<ItemId, long>[0], new int[0], new ResearchId[0], false);
+                7200, new KeyValuePair<ItemId, long>[0], new KeyValuePair<ItemId, long>[0], 0, new TiredCourier[0], new int[0], new ResearchId[0], false);
             CitySnapshot start = Snapshot("snapshot-city-start.json");
 
             _store.Apply(new CitySnapshot(10, start.ContentVersion, start.CopyCity(), settlement));
@@ -256,22 +257,6 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(Label(WelcomeBackPanel.EmptyName).text, Is.EqualTo(WelcomeBackModel.NothingHappenedText));
             Assert.That(Label(WelcomeBackPanel.EmptyName).style.display.value, Is.EqualTo(DisplayStyle.Flex));
             Assert.That(Texts(WelcomeBackPanel.HeadingClass), Is.Empty);
-        }
-
-        /// <summary>When production hit the cap, the note is shown under the sections.</summary>
-        [UnityTest]
-        public IEnumerator TheCapNote_IsShownWhenProductionWasCut()
-        {
-            yield return Start(null);
-            var settlement = new SettlementSummary(
-                36_000, 28_800, new KeyValuePair<ItemId, long>[0], new KeyValuePair<ItemId, long>[0], new int[0], new ResearchId[0], false);
-            CitySnapshot start = Snapshot("snapshot-city-start.json");
-
-            _store.Apply(new CitySnapshot(10, start.ContentVersion, start.CopyCity(), settlement));
-            yield return null;
-
-            Assert.That(Label(WelcomeBackPanel.CapNoteName).text, Is.EqualTo("Production paused after 8 h. Check in more often or research storage."));
-            Assert.That(Label(WelcomeBackPanel.CapNoteName).style.display.value, Is.EqualTo(DisplayStyle.Flex));
         }
 
         /// <summary>While the report is open the whole screen is the UI's; when closed, the middle of the screen is the ground's.</summary>

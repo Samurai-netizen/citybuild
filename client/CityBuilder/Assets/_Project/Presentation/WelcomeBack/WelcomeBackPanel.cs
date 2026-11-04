@@ -50,9 +50,6 @@ namespace CityBuilder.Client.Presentation.WelcomeBack
         /// <summary>The name of the label shown when nothing happened.</summary>
         public const string EmptyName = "welcome-empty";
 
-        /// <summary>The name of the label with the production-cap note.</summary>
-        public const string CapNoteName = "welcome-cap-note";
-
         /// <summary>The name of the Continue button.</summary>
         public const string ContinueName = "welcome-continue";
 
@@ -213,7 +210,6 @@ namespace CityBuilder.Client.Presentation.WelcomeBack
             }
 
             SetLine(e.Empty, model.IsEmpty ? WelcomeBackModel.NothingHappenedText : string.Empty);
-            SetLine(e.CapNote, model.CapNote);
         }
 
         /// <summary>A label with a USS class and a text.</summary>
@@ -241,7 +237,7 @@ namespace CityBuilder.Client.Presentation.WelcomeBack
             public VisualElement Sections = null!;
 
             /// <summary>The labels the panel writes.</summary>
-            public Label Title = null!, Empty = null!, CapNote = null!;
+            public Label Title = null!, Empty = null!;
 
             /// <summary>The Continue button.</summary>
             public Button Continue = null!;
@@ -255,11 +251,10 @@ namespace CityBuilder.Client.Presentation.WelcomeBack
                     Sections = root.Q<VisualElement>(SectionsName),
                     Title = root.Q<Label>(TitleName),
                     Empty = root.Q<Label>(EmptyName),
-                    CapNote = root.Q<Label>(CapNoteName),
                     Continue = root.Q<Button>(ContinueName),
                 };
                 bool complete = found.Scrim != null && found.Sections != null && found.Title != null && found.Empty != null
-                    && found.CapNote != null && found.Continue != null;
+                    && found.Continue != null;
                 return complete ? found : null;
             }
         }

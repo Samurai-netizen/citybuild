@@ -13,8 +13,7 @@ namespace CityBuilder.Simulation.Settlement
     /// (<c>04</c> section 2); at a stop a courier does the stop's actions in order, then walks to the next stop (after the last, the first), or
     /// home when its stamina reached 0; at home it stands at its station, or rests without stamina. Their departures are the last part of step 5
     /// (<see cref="StartWalks"/>): a courier at its station with a route and stamina, whose station is neither constructing nor upgrading,
-    /// leaves for the first stop. Until CR-0008-T1 part H a courier that arrives after the production cap stops working instead (decision 45),
-    /// and none leaves then (the start pass doesn't run). The arrivals are an indexed heap keyed by station and slot (the station's building
+    /// leaves for the first stop. The arrivals are an indexed heap keyed by station and slot (the station's building
     /// index times the content's most courier slots, plus the slot), which stays valid while auto-staffing adds couriers during the advance
     /// and orders arrivals at one second by (station, slot); a courier stopped inside the advance (its station's upgrade started) leaves a
     /// stale entry, which is dropped when it comes up.
@@ -33,9 +32,6 @@ namespace CityBuilder.Simulation.Settlement
         /// <summary>The walk times between buildings, searched once per pair.</summary>
         private readonly WalkTimes _walks;
 
-        /// <summary>The last second of the production window; a courier arriving later stops working (decision 45).</summary>
-        private readonly long _productionUntil;
-
         /// <summary>The city-clock second the player is absent from, or null when present for the whole advance (<c>04</c> section 2).</summary>
         private readonly long? _absentFrom;
 
@@ -46,11 +42,10 @@ namespace CityBuilder.Simulation.Settlement
         private readonly List<CourierLoad> _putParts = new List<CourierLoad>();
 
         /// <summary>Creates the source for one advance of the city.</summary>
-        public CourierArrivalSource(CityState city, GameContent content, BuildingTimerQueue timers, WalkTimes walks, long productionUntil, long? absentFrom)
+        public CourierArrivalSource(CityState city, GameContent content, BuildingTimerQueue timers, WalkTimes walks, long? absentFrom)
         {
             _timers = timers;
             _walks = walks;
-            _productionUntil = productionUntil;
             _absentFrom = absentFrom;
             _slots = MostSlots(content);
             IReadOnlyList<Courier> couriers = city.Couriers;
@@ -138,7 +133,7 @@ namespace CityBuilder.Simulation.Settlement
                 return;
             }
 
-            if (time > _productionUntil || !city.TryGetRoute(courier.StationId, courier.Slot, out Route? route))
+            if (!city.TryGetRoute(courier.StationId, courier.Slot, out Route? route))
             {
                 CourierRules.StopWorking(city, courier);
                 return;

@@ -13,7 +13,7 @@ public sealed class SimulationOptions
     public const int MinDevTimeScale = 1;
 
     /// <summary>
-    /// The highest allowed <see cref="DevTimeScale"/>: a thousand seconds per second (the 8-hour production cap in under 30 seconds). Higher
+    /// The highest allowed <see cref="DevTimeScale"/>: a thousand seconds per second (8 hours of the game in under 30 seconds). Higher
     /// scales would also carry the scaled clock past the year 9999, which no <see cref="DateTimeOffset"/> holds, within a few years of
     /// <see cref="ScaledTimeProvider.Origin"/>.
     /// </summary>

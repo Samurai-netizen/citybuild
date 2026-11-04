@@ -62,12 +62,12 @@ public sealed class SettleCityLedgerTests
     }
 
     /// <summary>
-    /// After 30 days the window made 481 logs (the woodcutter's last cycle started at the cap's end, clock 28920) and the sawmill took 480 of
-    /// its store (240 starts, 240 to 28920), leaving 2 there, and made 241 planks. The closing zero-length advance restarts the sawmill at once,
-    /// and those 2 logs belong to the settlement: 482 consumed, and the ledger ends logs at 482, the city's total (all in the woodcutter's store).
+    /// After 30 days, with no cap (CR-0008, <c>04</c> section 2), the woodcutter filled its store (999 more logs, to 1 000) and the sawmill
+    /// used up its 482 logs in 241 cycles, making 242 planks with the cycle that was running. The closing zero-length advance starts nothing,
+    /// as the sawmill has no logs left, and the ledger ends logs at 1 000, the city's total (all in the woodcutter's store).
     /// </summary>
     [Fact]
-    public async Task ExecuteAsync_LongerThanTheCap_LedgersWhatTheClosingAdvanceConsumes()
+    public async Task ExecuteAsync_ThirtyDays_LedgersEveryTotalTheWindowChanged()
     {
         const long thirtyDays = 30 * 86_400;
         InMemoryCityRepository repository = SawmillRepository();
@@ -76,14 +76,14 @@ public sealed class SettleCityLedgerTests
 
         SettleCityResult result = await UseCase(repository, clock).ExecuteAsync(PlayerId, TestContext.Current.CancellationToken);
 
-        Assert.Equal(481, result.Settlement.Produced[Logs]);
-        Assert.Equal(482, result.Settlement.Consumed[Logs]);
-        Assert.Equal(241, result.Settlement.Produced[Planks]);
+        Assert.Equal(999, result.Settlement.Produced[Logs]);
+        Assert.Equal(SawmillLogs, result.Settlement.Consumed[Logs]);
+        Assert.Equal(242, result.Settlement.Produced[Planks]);
         Building sawmill = result.City.State.Buildings.Single(building => building.Id == _sawmillId);
-        Assert.Equal((BuildingPhase.Producing, result.City.State.Clock), (sawmill.Phase, sawmill.PhaseStartedAt));
+        Assert.Equal(BuildingPhase.Idle, sawmill.Phase);
         Assert.Equal(
-            [(Logs.Value, 481L, 964L), (Logs.Value, -482L, 482L), (Planks.Value, 241L, 241L)],
+            [(Logs.Value, 999L, 1482L), (Logs.Value, -482L, 1000L), (Planks.Value, 242L, 242L)],
             repository.LastLedger!.Select(entry => (entry.Item.Value, entry.Delta, entry.BalanceAfter)));
-        Assert.Equal((482L, 0L), (Total(result.City.State, Logs), sawmill.GetStock(Logs)));
+        Assert.Equal((1000L, 0L), (Total(result.City.State, Logs), sawmill.GetStock(Logs)));
     }
 }

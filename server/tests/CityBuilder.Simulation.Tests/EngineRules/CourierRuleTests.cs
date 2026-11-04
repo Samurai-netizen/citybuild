@@ -13,9 +13,9 @@ namespace CityBuilder.Simulation.Tests.EngineRules;
 
 /// <summary>
 /// Couriers in the advance (<c>04</c> sections 6, 16 and 19): leaving the station, the loop over the route, a stop's takes and puts with
-/// their amounts and the carry limit, puts to projects, a station that upgrades, the production cap (CR-0008-T1 decision 45). Fixture
+/// their amounts and the carry limit, puts to projects, a station that upgrades, a long advance. Fixture
 /// numbers: a post (courier station) level 1 carries 5 with 600 s of stamina; walking 4 000 ms per ground tile, so 16 s from the post to the
-/// camp (four tiles) and 20 s between the camp and the depot (five); the production cap is 3 600 s. The test city: hut 1 at (0,4) (3
+/// camp (four tiles) and 20 s between the camp and the depot (five). The test city: hut 1 at (0,4) (3
 /// workers), post 2 at (2,2) with 1 worker (courier 2/1), lumber camp 3 at (0,0) with 20 wood and no workers, depot 4 at (5,0), clock 1000.
 /// </summary>
 public sealed class CourierRuleTests
@@ -181,20 +181,20 @@ public sealed class CourierRuleTests
     }
 
     /// <summary>
-    /// Until part H a courier that arrives after the production cap (3 600 s) stops working (decision 45): its load goes back to the camp it
-    /// came from and it stands at its station, so the camp and depot hold all 20 wood between them.
+    /// A courier keeps working through a long advance while the player is present (no offline cap since part H, <c>04</c> section 2): after
+    /// 4 000 s it has carried all 20 wood to the depot and spent no stamina.
     /// </summary>
     [Fact]
-    public void Courier_ArrivingAfterTheCap_StopsWorking()
+    public void Courier_LongAdvanceWhilePresent_KeepsWorkingAndSpendsNoStamina()
     {
         CityState city = CourierCity();
         Commands.SetRoute(city, 2, 1, Stops(_campToDepot));
 
-        Simulator.Advance(city, TestContent, 4000);
+        SettlementReport report = Simulator.Advance(city, TestContent, 4000);
 
-        Assert.Equal("\ncourier 2/1 AtStation stamina=600 load:", CourierOf(city));
-        Assert.Equal(20, CityQueries.Total(city, TestContent, _wood));
-        Assert.Equal(20, city.Buildings[2].GetStock(_wood) + city.Buildings[3].GetStock(_wood));
+        Assert.Equal((0L, 20L), (city.Buildings[2].GetStock(_wood), city.Buildings[3].GetStock(_wood)));
+        Assert.Equal(600, city.Couriers[0].Stamina);
+        Assert.Equal(0, report.CourierSeconds);
     }
 
     /// <summary>

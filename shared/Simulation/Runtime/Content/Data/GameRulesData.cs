@@ -17,9 +17,6 @@ namespace CityBuilder.Simulation.Content.Data
         /// <summary>Required. How many research nodes may run at once; exactly 1 in M0.</summary>
         public int? ResearchSlots { get; set; }
 
-        /// <summary>Required. How many seconds of a settlement may start production cycles.</summary>
-        public long? MaxOfflineProductionSeconds { get; set; }
-
         /// <summary>Required. The shortest cycle that content may allow, in seconds.</summary>
         public long? MinCycleSeconds { get; set; }
 

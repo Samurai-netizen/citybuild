@@ -5,7 +5,6 @@
     "gridHeight": 8,
     "builderSlots": 2,
     "researchSlots": 1,
-    "maxOfflineProductionSeconds": 28800,
     "minCycleSeconds": 10,
     "maxLaborReductionPermille": 500,
     "groundTileMillis": 5000,

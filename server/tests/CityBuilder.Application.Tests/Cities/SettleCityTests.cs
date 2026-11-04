@@ -17,15 +17,18 @@ public sealed class SettleCityTests
     private const int _woodcutterId = 2;
 
     /// <summary>
-    /// The city advances by the elapsed whole seconds and produces for at most the cap: after 0 s, 1 s, exactly the cap (480 logs) and one
-    /// second more (still 480), with nothing completed yet.
+    /// The city advances by the elapsed whole seconds and produces for all of them, with no cap (CR-0008, <c>04</c> section 2): one log per
+    /// minute after 0 s, 1 s, 8 h (480 logs) and 8 h and a second, until the woodcutter's store of 1 000 is full (after 60 000 s and after
+    /// 90 000 s), with nothing completed yet.
     /// </summary>
     [Theory]
-    [InlineData(0L, 0L, 0L)]
-    [InlineData(1L, 1L, 0L)]
-    [InlineData(ProductionCapSeconds, ProductionCapSeconds, 480L)] // the cycles ending at 120, 180, …, 28860
-    [InlineData(ProductionCapSeconds + 1, ProductionCapSeconds, 480L)]
-    public async Task ExecuteAsync_WithinAndJustBeyondTheCap_AdvancesByTheElapsedSeconds(long seconds, long productionSeconds, long logs)
+    [InlineData(0L, 0L)]
+    [InlineData(1L, 0L)]
+    [InlineData(8 * 3600L, 480L)] // the cycles ending at 120, 180, …, 28860
+    [InlineData((8 * 3600L) + 1, 480L)]
+    [InlineData(60_000L, WoodcutterStoreLimit)]
+    [InlineData(90_000L, WoodcutterStoreLimit)]
+    public async Task ExecuteAsync_ElapsedSeconds_AdvancesByThemAndProducesUntilTheStoreIsFull(long seconds, long logs)
     {
         InMemoryCityRepository repository = Repository();
         FakeTimeProvider clock = ClockAtLastSettled();
@@ -34,7 +37,6 @@ public sealed class SettleCityTests
         SettleCityResult result = await UseCase(repository, clock).ExecuteAsync(PlayerId, TestContext.Current.CancellationToken);
 
         Assert.Equal(seconds, result.Settlement.ElapsedSeconds);
-        Assert.Equal(productionSeconds, result.Settlement.ProductionSeconds);
         Assert.Equal(logs, Total(result.City.State, Logs));
         Assert.Equal(StartClock + seconds, result.City.State.Clock);
         Assert.Equal(LastSettled.ToUnixTimeSeconds() + seconds, result.City.LastSettledUnixSec);
@@ -42,30 +44,36 @@ public sealed class SettleCityTests
         Assert.Empty(result.Settlement.CompletedBuildings);
     }
 
-    /// <summary>At the cap and one second beyond, the woodcutter runs the cycle that started at the cap's last second.</summary>
-    [Theory]
-    [InlineData(ProductionCapSeconds)]
-    [InlineData(ProductionCapSeconds + 1)]
-    public async Task ExecuteAsync_ExactlyAtOrJustBeyondTheCap_KeepsTheCycleThatStartedAtTheCap(long seconds)
+    /// <summary>
+    /// The woodcutter keeps producing past 8 h (the cap CR-0008 removed): at 8 h and a second it runs the cycle that started at 8 h, and
+    /// once its store is full it starts no more and stands idle.
+    /// </summary>
+    [Fact]
+    public async Task ExecuteAsync_PastEightHoursAndAtAFullStore_KeepsProducingThenStops()
     {
         InMemoryCityRepository repository = Repository();
         FakeTimeProvider clock = ClockAtLastSettled();
-        clock.Advance(TimeSpan.FromSeconds(seconds));
+        SettleCity settle = UseCase(repository, clock);
 
-        SettleCityResult result = await UseCase(repository, clock).ExecuteAsync(PlayerId, TestContext.Current.CancellationToken);
+        clock.Advance(TimeSpan.FromSeconds((8 * 3600) + 1));
+        SettleCityResult eightHours = await settle.ExecuteAsync(PlayerId, TestContext.Current.CancellationToken);
+        Building running = eightHours.City.State.Buildings.Single(building => building.Id == _woodcutterId);
+        Assert.Equal(BuildingPhase.Producing, running.Phase);
+        Assert.Equal(StartClock + (8 * 3600), running.PhaseStartedAt);
 
-        // The cycle ending at the last second of the cap (t = T0 + 8 h) is followed by one more: starts are allowed while t ≤ T0 + cap.
-        Building woodcutter = result.City.State.Buildings.Single(building => building.Id == _woodcutterId);
-        Assert.Equal(BuildingPhase.Producing, woodcutter.Phase);
-        Assert.Equal(StartClock + ProductionCapSeconds, woodcutter.PhaseStartedAt);
+        clock.Advance(TimeSpan.FromSeconds(60_000));
+        SettleCityResult full = await settle.ExecuteAsync(PlayerId, TestContext.Current.CancellationToken);
+        Building stopped = full.City.State.Buildings.Single(building => building.Id == _woodcutterId);
+        Assert.Equal(BuildingPhase.Idle, stopped.Phase);
+        Assert.Equal(WoodcutterStoreLimit, Total(full.City.State, Logs));
     }
 
     /// <summary>
-    /// After 30 days away the research and the manor have completed, 481 logs were made (480 cycles within the cap and the one that started at
-    /// its last second), nothing started after the cap, and the closing zero-length advance has restarted the woodcutter at the settled clock.
+    /// After 30 days away the research and the manor have completed and the woodcutter filled its store of 1 000 logs, then stopped; the
+    /// closing zero-length advance starts nothing, as the store is still full. No courier worked, so no courier seconds.
     /// </summary>
     [Fact]
-    public async Task ExecuteAsync_ThirtyDaysAway_FinishesTheTimersStopsAfterTheCapAndRestartsAtTheEnd()
+    public async Task ExecuteAsync_ThirtyDaysAway_FinishesTheTimersAndProducesUntilTheStoreIsFull()
     {
         const long thirtyDays = 30 * 86_400;
         InMemoryCityRepository repository = Repository();
@@ -76,20 +84,19 @@ public sealed class SettleCityTests
 
         CityState city = result.City.State;
         Assert.Equal(thirtyDays, result.Settlement.ElapsedSeconds);
-        Assert.Equal(ProductionCapSeconds, result.Settlement.ProductionSeconds);
         Assert.Equal(StartClock + thirtyDays, city.Clock);
         Assert.Equal([Forestry], result.Settlement.CompletedResearch);
         Assert.True(city.HasCompletedResearch(Forestry));
         Assert.Null(city.ActiveResearch);
         Assert.Equal([ManorId], result.Settlement.CompletedBuildings);
         Assert.Equal(BuildingPhase.Idle, city.Buildings.Single(building => building.Id == ManorId).Phase);
+        Assert.Equal(0, result.Settlement.CourierSeconds);
+        Assert.Empty(result.Settlement.TiredCouriers);
 
-        // 480 cycles end within the cap, and the one that started at its last second ends a minute later; then nothing starts.
-        Assert.Equal(481, Total(city, Logs));
-        Assert.Equal(481, result.Settlement.Produced[Logs]);
+        Assert.Equal(WoodcutterStoreLimit, Total(city, Logs));
+        Assert.Equal(WoodcutterStoreLimit, result.Settlement.Produced[Logs]);
         Building woodcutter = city.Buildings.Single(building => building.Id == _woodcutterId);
-        Assert.Equal(BuildingPhase.Producing, woodcutter.Phase);
-        Assert.Equal(StartClock + thirtyDays, woodcutter.PhaseStartedAt);
+        Assert.Equal(BuildingPhase.Idle, woodcutter.Phase);
         Assert.Equal(1, woodcutter.AssignedWorkers);
     }
 

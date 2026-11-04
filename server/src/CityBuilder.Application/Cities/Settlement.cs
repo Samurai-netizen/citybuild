@@ -6,7 +6,7 @@ namespace CityBuilder.Application.Cities;
 
 /// <summary>
 /// One settlement of a city (<c>core-instructions/04-simulation-model.md</c>, sections 7 and 11): the advance by the window's elapsed seconds
-/// and the closing zero-length advance after it, as one. The closing advance restarts production after a window longer than the cap, so its
+/// and the closing zero-length advance after it, as one. The closing advance starts the cycles a command's mutation made startable, so its
 /// consumption belongs to the settlement. The totals are those of both advances; the ledger rows are aggregated over both, one per item and
 /// direction, and carry the settlement's id. Immutable.
 /// </summary>
@@ -29,7 +29,9 @@ public sealed class Settlement
         Advance = advance;
         Closing = closing;
         ElapsedSeconds = advance.ElapsedSeconds;
-        ProductionSeconds = advance.ProductionSeconds;
+        CourierSeconds = Math.Max(advance.CourierSeconds, closing.CourierSeconds);
+        TiredCouriers = advance.TiredCouriers.Concat(closing.TiredCouriers)
+            .OrderBy(tired => tired.StationId).ThenBy(tired => tired.Slot).ThenBy(tired => tired.At).ToArray();
         Produced = Sum(advance.Produced, closing.Produced);
         Consumed = Sum(advance.Consumed, closing.Consumed);
         Delivered = Sum(advance.Delivered, closing.Delivered);
@@ -61,8 +63,14 @@ public sealed class Settlement
     /// <summary>The seconds the city clock moved (the closing advance moves it by none).</summary>
     public long ElapsedSeconds { get; }
 
-    /// <summary>The seconds of the window in which cycles could start: <c>min(ElapsedSeconds, MaxOfflineProductionSeconds)</c>.</summary>
-    public long ProductionSeconds { get; }
+    /// <summary>
+    /// The most stamina one courier spent in the settlement, in seconds (<c>04</c> sections 2 and 11): the larger of the two advances' (the
+    /// closing advance spends none, as no walk ends in it after the window); 0 while the player was present.
+    /// </summary>
+    public long CourierSeconds { get; }
+
+    /// <summary>The couriers whose stamina ran out in the settlement, by (station, slot), each with the city second it did.</summary>
+    public IReadOnlyList<TiredCourier> TiredCouriers { get; }
 
     /// <summary>The outputs of the cycles that completed, per item in ordinal order; only items above 0.</summary>
     public IReadOnlyDictionary<ItemId, long> Produced { get; }
@@ -89,12 +97,12 @@ public sealed class Settlement
     public bool EraChanged { get; }
 
     /// <summary>
-    /// Whether the report is empty: nothing produced, consumed, delivered, moved, refunded or completed (the clock may still have moved, and a
-    /// trip may have brought all its load back).
+    /// Whether the report is empty: nothing produced, consumed, delivered, moved, refunded or completed, and no courier tired (the clock may
+    /// still have moved, a trip may have brought all its load back, and a courier may have spent stamina without tiring).
     /// </summary>
     public bool IsEmpty =>
         Produced.Count == 0 && Consumed.Count == 0 && Delivered.Count == 0 && Moved.Count == 0 && Refunded.Count == 0
-        && CompletedBuildings.Count == 0 && CompletedResearch.Count == 0 && !EraChanged;
+        && CompletedBuildings.Count == 0 && CompletedResearch.Count == 0 && !EraChanged && TiredCouriers.Count == 0;
 
     /// <summary>
     /// The settlement's ledger rows (<c>06</c>, <c>ledger_entries</c>; <see cref="LedgerWriter.AddSettlement"/>): per item in ordinal order,

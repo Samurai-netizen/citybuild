@@ -12,7 +12,6 @@ namespace CityBuilder.Simulation.Settlement
         /// <summary>Creates the report; only <see cref="SettlementReportBuilder.Build"/> does, with sorted lists. Each value is described on its property.</summary>
         internal SettlementReport(
             long elapsedSeconds,
-            long productionSeconds,
             IReadOnlyDictionary<ItemId, long> produced,
             IReadOnlyDictionary<ItemId, long> consumed,
             IReadOnlyDictionary<ItemId, long> delivered,
@@ -25,7 +24,6 @@ namespace CityBuilder.Simulation.Settlement
             IReadOnlyList<TiredCourier> tiredCouriers)
         {
             ElapsedSeconds = elapsedSeconds;
-            ProductionSeconds = productionSeconds;
             Produced = produced;
             Consumed = consumed;
             Delivered = delivered;
@@ -40,12 +38,6 @@ namespace CityBuilder.Simulation.Settlement
 
         /// <summary>The seconds the city clock moved: the elapsed time asked for, or 0 when that was below 0.</summary>
         public long ElapsedSeconds { get; }
-
-        /// <summary>
-        /// The seconds of the window in which cycles could start: <c>min(ElapsedSeconds, MaxOfflineProductionSeconds)</c>. After them the city
-        /// is dormant (<c>04</c> section 2).
-        /// </summary>
-        public long ProductionSeconds { get; }
 
         /// <summary>The outputs of the cycles that completed, per item in ordinal order; only items above 0.</summary>
         public IReadOnlyDictionary<ItemId, long> Produced { get; }

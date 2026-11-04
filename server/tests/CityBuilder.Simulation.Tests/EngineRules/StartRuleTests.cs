@@ -7,10 +7,10 @@ namespace CityBuilder.Simulation.Tests.EngineRules;
 
 /// <summary>
 /// When a producer starts a cycle (<c>04</c> sections 2, 6 and 16): only when it is idle with at least 1 worker, every input in its own store
-/// and room in its own store for every output that is not the currency, and only while production is allowed. Fixture numbers: a hut
+/// and room in its own store for every output that is not the currency. Fixture numbers: a hut
 /// provides 3 workers; a workshop makes 1 boards from 2 wood (90 labor, up to 2 workers, 20 s to build) and its store holds 20 wood and 80
 /// boards; a lumber camp makes 1 wood (40 labor, up to 2 workers) and holds 100 wood; a mint makes 5 gold, the currency (20 labor, up to 2
-/// workers), into the purse; the production cap is 3600 s.
+/// workers), into the purse.
 /// </summary>
 public sealed class StartRuleTests
 {
@@ -131,13 +131,15 @@ public sealed class StartRuleTests
         Assert.Equal("building 2 mint (1,0) L1 w=2 Producing 1100..1110 target=0 labor=20/20@1100", CityDump.BuildingLine(city, 2));
     }
 
-    /// <summary>After the production cap no cycle starts, but construction and research timers still complete in the dormant tail.</summary>
+    /// <summary>
+    /// A long advance starts cycles for all of it (no offline cap, CR-0008, <c>04</c> section 2), until each store is full, and its timers
+    /// complete on time.
+    /// </summary>
     [Fact]
-    public void ProductionCap_DormantTail_StartsNoCycleWhileTimersStillComplete()
+    public void Advance_LongWindow_StartsCyclesUntilTheStoresAreFull()
     {
-        // The window is 1000..8200, and cycles may start until 1000 + 3600 = 4600. Camp 2 (1 worker, 40 s cycles) starts its last cycle at
-        // 4600 exactly. Camp 3's construction ends one second later, and carpentry in the middle of the tail; both are longer than the
-        // fixture's durations, which are all shorter than the cap (the engine reads only the end times).
+        // The window is 1000..8200. Camp 2 (1 worker, 40 s cycles) fills its store of 100 wood by 5000. Camp 3's construction ends at 4601;
+        // it gets min(2 free, 2) workers and, with 20 s cycles, fills its store by 6601. Carpentry completes at 6000.
         CityState city = City(
             clock: 1000,
             buildings: [Idle(1, "hut", 0, 0), Idle(2, "lumber_camp", 1, 0, workers: 1), Constructing(3, "lumber_camp", 2, 0, startedAt: 1000, endsAt: 4601)],
@@ -145,9 +147,7 @@ public sealed class StartRuleTests
 
         SettlementReport report = Simulator.Advance(city, TestContent, 7200);
 
-        // 91 cycles (1000, 1040, ... 4600), all done by 4640, in camp 2's store (limit 100). Camp 3 completed and got min(2 free, 2) workers
-        // but started nothing.
-        Assert.Equal(91, city.Buildings[1].GetStock(_wood));
+        Assert.Equal((100L, 100L), (city.Buildings[1].GetStock(_wood), city.Buildings[2].GetStock(_wood)));
         Assert.Equal("building 3 lumber_camp (2,0) L1 w=2 Idle 0..null target=0 labor=0/0@0", CityDump.BuildingLine(city, 3));
         Assert.Equal([3], report.CompletedBuildings);
         Assert.Equal([new ResearchId("carpentry")], report.CompletedResearch);

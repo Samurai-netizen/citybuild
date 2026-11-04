@@ -18,9 +18,9 @@ namespace CityBuilder.Simulation.Settlement
         /// in this order: the research that is due completes, then the buildings that are due complete in ascending id order, then the trips
         /// that arrive deliver their goods in ascending trip id order (<c>04</c> sections 16 and 18), then the couriers that arrive do their
         /// stops' actions and walk on in ascending (station, slot) (section 19), then idle producers start cycles in ascending id order, each on
-        /// its own store, and couriers at their stations leave for their routes, but only while the time is within
-        /// <see cref="GameRules.MaxOfflineProductionSeconds"/> of the start (the dormant tail; a courier arriving after it stops working,
-        /// CR-0008-T1 decision 45). Timers run for the whole window, and the clock always moves by the full elapsed time. A zero-length
+        /// its own store, and couriers at their stations leave for their routes. There is no offline cap (<c>04</c> section 2): production
+        /// stops on its own when stores fill or inputs run out, and couriers stop when their stamina does. Timers run for the whole window, and
+        /// the clock always moves by the full elapsed time. A zero-length
         /// advance only starts the cycles that can start at the clock; the caller ends every city request with one, after its mutation if any.
         /// </summary>
         /// <param name="city">The city; it changes in place.</param>
@@ -52,14 +52,13 @@ namespace CityBuilder.Simulation.Settlement
             long start = city.Clock;
             long elapsed = Math.Max(elapsedSeconds, 0);
             long target = checked(start + elapsed);
-            long productionUntil = checked(start + content.Rules.MaxOfflineProductionSeconds);
 
             // What this advance keeps up to date instead of scanning every building at every event time (04 section 12). Making it changes
             // nothing in the city. The order of the sources is the order at the same second (04 section 6): research completion, then
             // building completions by id, then trip arrivals by trip id, then courier arrivals by (station, slot); the mailbox deliveries of 04
             // section 13 will go before the buildings.
             BuildingTimerQueue timers = BuildingTimerQueue.Of(city);
-            var couriers = new CourierArrivalSource(city, content, timers, new WalkTimes(city, content), productionUntil, absentFrom);
+            var couriers = new CourierArrivalSource(city, content, timers, new WalkTimes(city, content), absentFrom);
             IEventSource[] sources = { new ResearchTimerSource(), new BuildingTimerSource(timers), new TripArrivalSource(city, timers), couriers };
             long? firstDueAt = NextDueAt(sources, city);
             if (firstDueAt < start)
@@ -81,11 +80,8 @@ namespace CityBuilder.Simulation.Settlement
                     sources[index].CompleteDue(city, content, time, report);
                 }
 
-                if (time <= productionUntil)
-                {
-                    StartEligible(city, content, time, report, timers);
-                    couriers.StartWalks(city, time);
-                }
+                StartEligible(city, content, time, report, timers);
+                couriers.StartWalks(city, time);
 
                 long? next = NextDueAt(sources, city);
                 if (!next.HasValue || next.Value > target)
@@ -97,7 +93,7 @@ namespace CityBuilder.Simulation.Settlement
             }
 
             city.AdvanceClockTo(target);
-            return report.Build(elapsed, Math.Min(elapsed, content.Rules.MaxOfflineProductionSeconds));
+            return report.Build(elapsed);
         }
 
         /// <summary>

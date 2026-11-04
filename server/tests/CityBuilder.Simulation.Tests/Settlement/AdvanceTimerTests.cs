@@ -8,7 +8,7 @@ namespace CityBuilder.Simulation.Tests.Settlement;
 /// <summary>
 /// Timer completions during <c>Simulator.Advance</c> (<c>04</c> sections 3, 5 and 6): research, construction with auto-staffing, upgrades
 /// and cycle ends. Fixture numbers: a hut provides 3 workers at level 1 and 5 at level 2; a lumber camp takes up to 2 workers at level 1 and
-/// 4 at level 2 and makes 1 wood per cycle; <c>carpentry</c> unlocks the workshop; the production cap is 3600 s.
+/// 4 at level 2 and makes 1 wood per cycle; <c>carpentry</c> unlocks the workshop.
 /// </summary>
 public sealed class AdvanceTimerTests
 {
@@ -37,11 +37,11 @@ public sealed class AdvanceTimerTests
         Assert.True(CityQueries.IsUnlocked(city, TestContent, new BuildingTypeId("workshop")));
     }
 
-    /// <summary>Timers after the production cap still complete on time; only starts stop (the dormant tail).</summary>
+    /// <summary>Timers hours into a long advance complete on time, each at its own second.</summary>
     [Fact]
-    public void Advance_TimersAfterTheProductionCap_StillCompleteOnTime()
+    public void Advance_TimersHoursIntoALongAdvance_CompleteOnTime()
     {
-        // The window is 1000..8200 and production may start only until 4600; timers run to the end (the dormant tail).
+        // The window is 1000..8200; the timers end at 5100, 6000 and 8200.
         CityState city = City(
             clock: 1000,
             buildings: [Constructing(1, "hut", 0, 0, startedAt: 995, endsAt: 6000), Upgrading(2, "hut", 1, 0, level: 1, workers: 0, startedAt: 990, endsAt: 8200)],

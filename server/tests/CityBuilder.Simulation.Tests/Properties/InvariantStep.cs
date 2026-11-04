@@ -1,10 +1,14 @@
 using System.Globalization;
 using CityBuilder.Simulation.Rules;
+using CityBuilder.Simulation.Settlement;
 using CityBuilder.Simulation.State;
 
 namespace CityBuilder.Simulation.Tests.Properties;
 
-/// <summary>The invariants of <c>04</c> section 10 that the observer checks, numbered as there (1–3 are M0-14's properties).</summary>
+/// <summary>
+/// The invariants of <c>04</c> section 10 that the observer checks, numbered as there (1–3 are M0-14's properties). Invariant 12, the path
+/// rule, is a property of the path search, checked against a brute force over small maps (<c>Map/PathFinderBruteForceTests</c>).
+/// </summary>
 internal enum Invariant
 {
     /// <summary>Every item's city total (the purse, the stores, the loads) changes only by what was produced, consumed, delivered, spent and refunded.</summary>
@@ -23,18 +27,16 @@ internal enum Invariant
     BuilderAndResearchSlots = 10,
     /// <summary>A cycle completes at the first second its worker-seconds reach its labor, over every worker change (<see cref="LaborLedger"/>).</summary>
     LaborAccounting = 11,
-    /// <summary>No cycle starts after the last second of its settlement window.</summary>
-    NoStartAfterTheCap = 12,
     /// <summary>Locked buildings are never placed, research prerequisites are always respected, and a locked amount mode is never used.</summary>
     UnlockAndPrerequisites = 13,
 
-    /// <summary>A load never exceeds its carry limit (the stamina half arrives with couriers, CR-0008-T1 part H).</summary>
-    Loads = 14,
+    /// <summary>No stamina is spent before <c>absentFrom</c>, a walk spends exactly its absent seconds, and a load never exceeds its carry limit.</summary>
+    StaminaAndLoads = 14,
 }
 
 /// <summary>
-/// One observed step of a city's history (<see cref="InvariantObserver"/>): a command with its zero-length advance, a piece of an advance, or
-/// the dormant tail of an advance beyond the production cap. It holds a copy of the city before, the city after, and what the engine said
+/// One observed step of a city's history (<see cref="InvariantObserver"/>): a command with its zero-length advance, or a piece of an advance
+/// that ends at the next due time or earlier, so every start and completion of the step happens at its end. It holds a copy of the city before, the city after, and what the engine said
 /// happened in between. The invariants are checked on every step.
 /// </summary>
 internal sealed class InvariantStep
@@ -78,17 +80,14 @@ internal sealed class InvariantStep
     /// <summary>The inputs refunded during the step by upgrades that a delivery started (an upgrade command's refund is in <see cref="Mutation"/>).</summary>
     public required IReadOnlyDictionary<ItemId, long> Refunded { get; init; }
 
-    /// <summary>
-    /// Whether no event can lie strictly inside the step: it ends at the next due time or earlier. Then every start and completion of the
-    /// step happens at its end. False only for the dormant tail.
-    /// </summary>
-    public required bool EventAligned { get; init; }
+    /// <summary>The city second from which the player was absent in the step's advance; null when present (and for a command).</summary>
+    public long? AbsentFrom { get; init; }
 
-    /// <summary>The last second at which the step's settlement window lets cycles start (its start plus the production cap).</summary>
-    public required long ProductionUntil { get; init; }
+    /// <summary>The most stamina one courier spent in the step, as its report says.</summary>
+    public required long CourierSeconds { get; init; }
 
-    /// <summary>For the dormant tail: what the test model says the tail does. Null for every other step.</summary>
-    public DormantTail? ExpectedTail { get; init; }
+    /// <summary>The couriers whose stamina ran out in the step, as its report says.</summary>
+    public required IReadOnlyList<TiredCourier> TiredCouriers { get; init; }
 
     /// <summary>The ids of the buildings whose construction or upgrade completed during the step.</summary>
     public required IReadOnlyList<int> CompletedBuildings { get; init; }
@@ -99,5 +98,5 @@ internal sealed class InvariantStep
     /// <summary>Where the step is, for a failure message.</summary>
     public string Describe() => string.Create(
         CultureInfo.InvariantCulture,
-        $"operation {OperationNumber}{(Branch is null ? $" ({Operation})" : $", {Branch}")}, step from clock {Before.Clock} to {After.Clock}{(EventAligned ? "" : " (dormant tail)")}");
+        $"operation {OperationNumber}{(Branch is null ? $" ({Operation})" : $", {Branch}")}, step from clock {Before.Clock} to {After.Clock}{(AbsentFrom is { } absent ? $" (absent from {absent})" : "")}");
 }

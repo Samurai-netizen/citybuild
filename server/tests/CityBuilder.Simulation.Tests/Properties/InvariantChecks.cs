@@ -53,9 +53,8 @@ internal sealed class InvariantChecks
         Report(Invariant.WorkerLimits, step, Workers(step.After));
         Report(Invariant.BuilderAndResearchSlots, step, Slots(step));
         Report(Invariant.LaborAccounting, step, _labor.Check(step, _count));
-        Report(Invariant.NoStartAfterTheCap, step, NoStartAfterTheCap(step));
         Report(Invariant.UnlockAndPrerequisites, step, Unlocks(step));
-        Report(Invariant.Loads, step, Loads(step));
+        Report(Invariant.StaminaAndLoads, step, Stamina(step) ?? Loads(step));
     }
 
     /// <summary>Hands a failure, if there is one, to the callback, prefixed with where the step is.</summary>
@@ -258,7 +257,7 @@ internal sealed class InvariantChecks
     /// </summary>
     private string? Workers(CityState city)
     {
-        long provided = DormantTail.Provided(_content, city.Buildings);
+        long provided = ContentLookup.Provided(_content, city.Buildings);
         long assigned = city.Buildings.Sum(building => (long)building.AssignedWorkers);
         CountIf(assigned + city.Trips.Count == provided && provided > 0, "steps with every worker assigned or on a trip");
         CountIf(city.Trips.Count > 0, "steps with workers on trips");
@@ -277,7 +276,7 @@ internal sealed class InvariantChecks
             }
 
             int[] slots = [.. city.Couriers.Where(courier => courier.StationId == building.Id).Select(courier => courier.Slot)];
-            bool isStation = DormantTail.Definition(_content, building.TypeId).Kind == BuildingKind.CourierStation;
+            bool isStation = ContentLookup.Definition(_content, building.TypeId).Kind == BuildingKind.CourierStation;
             int expected = isStation ? building.AssignedWorkers : 0;
             CountIf(isStation && expected > 0, "steps with a staffed courier station");
             if (!slots.SequenceEqual(Enumerable.Range(1, expected)))
@@ -314,38 +313,6 @@ internal sealed class InvariantChecks
     }
 
     /// <summary>
-    /// Invariant 12: every cycle that starts in a step starts within its window; and the dormant tail of an advance beyond the cap does
-    /// exactly what the model says: timers complete, nothing starts, nothing is consumed.
-    /// </summary>
-    private string? NoStartAfterTheCap(InvariantStep step)
-    {
-        foreach (Building after in step.After.Buildings.Where(building => building.Phase == BuildingPhase.Producing))
-        {
-            bool running = step.Before.TryGetBuilding(after.Id, out Building? before)
-                && before.Phase == BuildingPhase.Producing && before.PhaseStartedAt == after.PhaseStartedAt;
-            CountIf(!running && after.PhaseStartedAt == step.ProductionUntil, "cycles started at the last second of a window");
-            if (!running && after.PhaseStartedAt > step.ProductionUntil)
-            {
-                return $"building {after.Id} started a cycle at {after.PhaseStartedAt}, after the window's last second {step.ProductionUntil}";
-            }
-        }
-
-        if (step.ExpectedTail is not { } tail)
-        {
-            return null;
-        }
-
-        _count("dormant tails");
-        CountIf(tail.CompletedBuildings.Count > 0 || tail.CompletedResearch.Count > 0 || tail.Produced.Count > 0, "dormant tails with a completion");
-        string? consumed = step.Consumed.Where(item => item.Value != 0).Select(item => $"{item.Key} {item.Value}").FirstOrDefault();
-        return StructuralEquality.FirstDifference(tail.City, step.After)
-            ?? (consumed is not null ? $"the tail consumed {consumed}" : null)
-            ?? Differ("produced", Text(tail.Produced), Text(step.Produced))
-            ?? Differ("completed buildings", string.Join(",", tail.CompletedBuildings), string.Join(",", step.CompletedBuildings.Order()))
-            ?? Differ("completed research", string.Join(",", tail.CompletedResearch), string.Join(",", step.CompletedResearch));
-    }
-
-    /// <summary>
     /// Invariant 13: a placed type was unlocked and of the city's era or earlier when it was placed; a research started had its
     /// prerequisites and the city's era; a trip's percentage or exact amount had its mode unlocked; and at every step the completed research
     /// has all its prerequisites, and every building's type is unlocked.
@@ -379,7 +346,7 @@ internal sealed class InvariantChecks
         if (step.Mutation is not null && step.Operation is CityOperation.PlaceBuilding
             && step.After.TryGetBuilding(step.Before.NextBuildingId, out Building? placed))
         {
-            BuildingDefinition type = DormantTail.Definition(_content, placed.TypeId);
+            BuildingDefinition type = ContentLookup.Definition(_content, placed.TypeId);
             CountIf(!type.IsAvailableAtStart, "placements of a type locked at the start");
             if (!IsUnlocked(step.Before, type))
             {
@@ -409,12 +376,80 @@ internal sealed class InvariantChecks
             }
         }
 
-        Building? locked = step.After.Buildings.FirstOrDefault(building => !IsUnlocked(step.After, DormantTail.Definition(_content, building.TypeId)));
+        Building? locked = step.After.Buildings.FirstOrDefault(building => !IsUnlocked(step.After, ContentLookup.Definition(_content, building.TypeId)));
         return locked is null ? null : $"building {locked.Id} of the locked type {locked.TypeId} stands in the city";
     }
 
     /// <summary>
-    /// Invariant 14, the carry half (stamina comes in part H): every trip carries at most the content's trip carry limit, every courier at
+    /// Invariant 14, the stamina half (<c>04</c> sections 2 and 19): every courier's stamina stays between 0 and its station level's; a new
+    /// courier and a re-energized one have all of it; in a time step a courier spends only when its walk ends at the step's end, and then
+    /// exactly the walk's seconds after <c>absentFrom</c> (none when the player is present), at most what it had; a command spends none. A
+    /// courier left with none walks home or rests, and the step's report names exactly the couriers that ran out in it, at its end, and the
+    /// most one of them spent.
+    /// </summary>
+    private string? Stamina(InvariantStep step)
+    {
+        long most = 0;
+        var tired = new List<(int StationId, int Slot)>();
+        foreach (Courier after in step.After.Couriers)
+        {
+            step.After.TryGetBuilding(after.StationId, out Building? station);
+            long full = station is null ? 0 : Level(station).StaminaSeconds;
+            string name = $"courier {after.StationId}/{after.Slot}";
+            if (after.Stamina < 0 || after.Stamina > full)
+            {
+                return $"{name} has {after.Stamina} s of stamina, its station level's is {full}";
+            }
+
+            if (after.Stamina == 0 && after.State is not (CourierState.Returning or CourierState.Resting))
+            {
+                return $"{name} has no stamina left and is {after.State}";
+            }
+
+            Courier? before = step.Before.Couriers.FirstOrDefault(courier => courier.StationId == after.StationId && courier.Slot == after.Slot);
+            bool reenergized = step.Operation is CityOperation.ReenergizeCouriers && step.Mutation is not null;
+            if (before is null || reenergized)
+            {
+                CountIf(reenergized && before is not null && before.Stamina < full, "couriers re-energized");
+                if (after.Stamina != full)
+                {
+                    return $"{name} is {(before is null ? "new" : "re-energized")} with {after.Stamina} s of stamina, not its station level's {full}";
+                }
+
+                continue;
+            }
+
+            long expected = 0;
+            if (step.Mutation is null && before.ArrivesAt == step.After.Clock && before.DepartedAt is { } departed
+                && step.After.Clock > step.Before.Clock && step.AbsentFrom is { } absentFrom)
+            {
+                expected = Math.Min(before.Stamina, Math.Max(0, step.After.Clock - Math.Max(departed, absentFrom)));
+            }
+
+            long spent = before.Stamina - after.Stamina;
+            if (spent != expected)
+            {
+                return $"{name} spent {spent} s of stamina in the step, the model says {expected} (its walk {before.DepartedAt}..{before.ArrivesAt})";
+            }
+
+            CountIf(spent > 0, "courier walks that spent stamina");
+            CountIf(spent > 0 && before.DepartedAt < step.AbsentFrom, "courier walks that spent part of their seconds");
+            most = Math.Max(most, spent);
+            if (spent > 0 && after.Stamina == 0)
+            {
+                tired.Add((after.StationId, after.Slot));
+            }
+        }
+
+        CountIf(tired.Count > 0, "steps with a courier tiring");
+        CountIf(step.After.Couriers.Any(courier => courier.State == CourierState.Resting), "steps with a courier resting");
+        string expectedTired = string.Join(", ", tired.Select(courier => $"{courier.StationId}/{courier.Slot}@{step.After.Clock}"));
+        string reportedTired = string.Join(", ", step.TiredCouriers.Select(courier => $"{courier.StationId}/{courier.Slot}@{courier.At}"));
+        return Differ("tired couriers", expectedTired, reportedTired) ?? Differ("courier seconds", StructuralEquality.Text(most), StructuralEquality.Text(step.CourierSeconds));
+    }
+
+    /// <summary>
+    /// Invariant 14, the carry half: every trip carries at most the content's trip carry limit, every courier at
     /// most its station level's, and a trip a step started took its load out of its source's store, at most what the store had.
     /// </summary>
     private string? Loads(InvariantStep step)
@@ -469,7 +504,7 @@ internal sealed class InvariantChecks
         string.Join(",", quantities.Where(item => item.Value != 0).OrderBy(item => item.Key).Select(item => $"{item.Key} {item.Value}"));
 
     /// <summary>The definition of a building's current level.</summary>
-    private BuildingLevelDefinition Level(Building building) => DormantTail.Definition(_content, building.TypeId).GetLevel(building.Level);
+    private BuildingLevelDefinition Level(Building building) => ContentLookup.Definition(_content, building.TypeId).GetLevel(building.Level);
 
     /// <summary>The definition of a research node; throws for one the content doesn't know.</summary>
     private ResearchDefinition Research(ResearchId id) =>

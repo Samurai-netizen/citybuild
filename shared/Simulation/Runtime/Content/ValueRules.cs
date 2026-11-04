@@ -49,7 +49,7 @@ namespace CityBuilder.Simulation.Content
         }
 
         /// <summary>
-        /// The grid, the slots, the production cap, the minimum cycle and the base caps are greater than zero; exactly one research slot; the labor
+        /// The grid, the slots, the minimum cycle and the base caps are greater than zero; exactly one research slot; the labor
         /// reduction limit is 0 to 1000 permille.
         /// </summary>
         private static void CheckRules(GameRules rules, ContentErrorList errors)
@@ -68,7 +68,6 @@ namespace CityBuilder.Simulation.Content
                     FormattableString.Invariant($"The engine holds one active research in M0, so researchSlots must be {_supportedResearchSlots}, but is {rules.ResearchSlots}."));
             }
 
-            Positive(rules.MaxOfflineProductionSeconds, "rules.maxOfflineProductionSeconds", errors);
             Positive(rules.MinCycleSeconds, "rules.minCycleSeconds", errors);
             AtLeastZero(rules.MaxLaborReductionPermille, "rules.maxLaborReductionPermille", errors);
             AtMostOneThousand(rules.MaxLaborReductionPermille, "rules.maxLaborReductionPermille", errors);

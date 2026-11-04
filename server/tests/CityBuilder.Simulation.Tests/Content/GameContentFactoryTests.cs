@@ -33,7 +33,7 @@ public sealed class GameContentFactoryTests
         GameRules rules = ContentAssert.Valid(Valid()).Rules;
 
         Assert.Equal((6, 5, 2, 1), (rules.GridWidth, rules.GridHeight, rules.BuilderSlots, rules.ResearchSlots));
-        Assert.Equal((3600L, 5L, 400), (rules.MaxOfflineProductionSeconds, rules.MinCycleSeconds, rules.MaxLaborReductionPermille));
+        Assert.Equal((5L, 400), (rules.MinCycleSeconds, rules.MaxLaborReductionPermille));
         Assert.Equal((6L, 6, 3), (rules.TripCarryLimit, rules.MaxRouteStops, rules.MaxStopActions));
     }
 

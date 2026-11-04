@@ -89,6 +89,22 @@ public sealed class StaminaRuleTests
         Assert.Equal((2, 1, 1016L, 10L), (tired.StationId, tired.Slot, tired.At, report.CourierSeconds));
     }
 
+    /// <summary>
+    /// A tired courier walking home whose route is replaced stops working (<c>04</c> section 19): its 5 wood go back to the camp and, with no
+    /// stamina, it rests at the station instead of standing ready there.
+    /// </summary>
+    [Fact]
+    public void SetRoute_TiredCourierWalkingHome_GivesItsLoadBackAndRests()
+    {
+        CityState city = StaminaCity(stamina: 10);
+        Simulator.Advance(city, TestContent, 20, absentFrom: 1000);
+
+        Commands.SetRoute(city, 2, 1, Stops(_campToDepot));
+
+        Assert.Equal("\ncourier 2/1 Resting stamina=0 load:", CityDump.CourierLine(city.Couriers[0]));
+        Assert.Equal("store: wood=20 needs:", CityDump.StoreLine(city, 3));
+    }
+
     /// <summary>A resting courier never leaves, however long the player stays away.</summary>
     [Fact]
     public void Advance_Resting_StaysAtTheStation()

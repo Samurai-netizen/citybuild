@@ -131,27 +131,22 @@ internal sealed class LaborLedger
             return $"the cycle ended after {work} of its {cycle.Labor} worker-seconds";
         }
 
-        return step.EventAligned && work - workers >= cycle.Labor
+        return work - workers >= cycle.Labor
             ? $"the cycle reached its {cycle.Labor} worker-seconds a second before it ended (at {work - workers} of them)"
             : null;
     }
 
     /// <summary>
-    /// A new cycle: recorded with the worker-seconds since its start; on an event-aligned step it must start at the step's end, with the
+    /// A new cycle: recorded with the worker-seconds since its start; it must start at the step's end (every step is event-aligned), with the
     /// effective labor, and end when that labor gives.
     /// </summary>
     private string? Started(Building after, InvariantStep step, Action<string> count)
     {
-        // Within a step every start happens at its end; a start inside the dormant tail is invariant 12's to report.
+        // Within a step every start happens at its end.
         long work = after.AssignedWorkers * (step.After.Clock - after.PhaseStartedAt);
         _cycles[after.Id] = new Cycle(after.PhaseStartedAt, after.CycleLabor, work, Reassigned: false);
-        if (!step.EventAligned)
-        {
-            return null;
-        }
-
         long labor = EffectiveLabor(step.After, after);
-        if (labor < DormantTail.Definition(_content, after.TypeId).GetLevel(after.Level).Recipe!.Labor)
+        if (labor < ContentLookup.Definition(_content, after.TypeId).GetLevel(after.Level).Recipe!.Labor)
         {
             count("cycles started with a labor reduction");
         }
@@ -166,7 +161,7 @@ internal sealed class LaborLedger
     /// <summary>The recipe's labor less the reductions of the completed research, rounded up (<c>04</c> section 3).</summary>
     private long EffectiveLabor(CityState city, Building building)
     {
-        long labor = DormantTail.Definition(_content, building.TypeId).GetLevel(building.Level).Recipe!.Labor;
+        long labor = ContentLookup.Definition(_content, building.TypeId).GetLevel(building.Level).Recipe!.Labor;
         long permille = city.CompletedResearch
             .SelectMany(id => _content.TryGetResearch(id, out ResearchDefinition? node) ? node.Effects : [])
             .OfType<LaborReductionEffect>()

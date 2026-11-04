@@ -4,15 +4,14 @@ namespace CityBuilder.Simulation.Tests.Properties;
 
 /// <summary>
 /// The sum of one or more settlement reports, so the reports of an advance split into pieces can be compared with the report of one advance
-/// over the whole time: seconds and quantities add up, the completed buildings and research of all pieces are listed together (sorted, as one
-/// report lists them), and the era changed if it changed in any piece.
+/// over the whole time: seconds and quantities add up, the completed buildings and research and the tired couriers of all pieces are listed
+/// together (sorted, as one report lists them), and the era changed if it changed in any piece. The courier seconds are left out: they are
+/// the most one courier spent, which doesn't add up over pieces (a courier's spending is checked step by step, invariant 14).
 /// </summary>
 internal sealed class ReportTotals
 {
     /// <summary>The seconds that passed, over all reports.</summary>
     private readonly long _elapsedSeconds;
-    /// <summary>The seconds in which cycles could start, over all reports.</summary>
-    private readonly long _productionSeconds;
     /// <summary>The quantity produced per item, over all reports.</summary>
     private readonly SortedDictionary<ItemId, long> _produced = [];
     /// <summary>The quantity consumed per item, over all reports.</summary>
@@ -27,6 +26,8 @@ internal sealed class ReportTotals
     private readonly List<int> _completedBuildings = [];
     /// <summary>The research that completed in any report, sorted.</summary>
     private readonly List<ResearchId> _completedResearch = [];
+    /// <summary>The couriers that got tired in any report, as <c>station/slot@second</c>, sorted.</summary>
+    private readonly List<string> _tiredCouriers = [];
     /// <summary>Whether the era changed in any report.</summary>
     private readonly bool _eraChanged;
 
@@ -36,7 +37,6 @@ internal sealed class ReportTotals
         foreach (SettlementReport report in reports)
         {
             _elapsedSeconds = checked(_elapsedSeconds + report.ElapsedSeconds);
-            _productionSeconds = checked(_productionSeconds + report.ProductionSeconds);
             Add(_produced, report.Produced);
             Add(_consumed, report.Consumed);
             Add(_delivered, report.Delivered);
@@ -44,23 +44,24 @@ internal sealed class ReportTotals
             Add(_refunded, report.Refunded);
             _completedBuildings.AddRange(report.CompletedBuildings);
             _completedResearch.AddRange(report.CompletedResearch);
+            _tiredCouriers.AddRange(report.TiredCouriers.Select(tired => StructuralEquality.Text(tired.StationId) + "/" + StructuralEquality.Text(tired.Slot) + "@" + StructuralEquality.Text(tired.At)));
             _eraChanged |= report.EraChanged;
         }
 
         _completedBuildings.Sort();
         _completedResearch.Sort();
+        _tiredCouriers.Sort(StringComparer.Ordinal);
     }
 
     /// <summary>The totals of the reports, in any number (none gives zeros and empty lists).</summary>
     public static ReportTotals Sum(params IEnumerable<SettlementReport> reports) => new(reports);
 
-    /// <summary>Every value, as a path and a value: seconds, the quantities per item (produced, consumed, delivered, moved, refunded), the completions, the era flag.</summary>
+    /// <summary>Every value, as a path and a value: seconds, the quantities per item (produced, consumed, delivered, moved, refunded), the completions, the tired couriers, the era flag.</summary>
     public IReadOnlyList<(string Path, string Value)> Fields()
     {
         var fields = new List<(string Path, string Value)>
         {
             ("elapsedSeconds", StructuralEquality.Text(_elapsedSeconds)),
-            ("productionSeconds", StructuralEquality.Text(_productionSeconds)),
         };
         fields.AddRange(_produced.Select(item => ($"produced[{item.Key}]", StructuralEquality.Text(item.Value))));
         fields.AddRange(_consumed.Select(item => ($"consumed[{item.Key}]", StructuralEquality.Text(item.Value))));
@@ -69,6 +70,7 @@ internal sealed class ReportTotals
         fields.AddRange(_refunded.Select(item => ($"refunded[{item.Key}]", StructuralEquality.Text(item.Value))));
         fields.Add(("completedBuildings", string.Join(",", _completedBuildings)));
         fields.Add(("completedResearch", string.Join(",", _completedResearch)));
+        fields.Add(("tiredCouriers", string.Join(",", _tiredCouriers)));
         fields.Add(("eraChanged", _eraChanged ? "true" : "false"));
         return fields;
     }

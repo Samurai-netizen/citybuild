@@ -6,8 +6,7 @@ namespace CityBuilder.Application.Cities;
 /// <summary>
 /// Settles a player's city to now (<c>core-instructions/04-simulation-model.md</c>, sections 1, 2 and 7; <c>03</c>, request lifecycle): in
 /// the city's transaction (<see cref="ICityTransactionRunner"/>) the server clock, floored to whole seconds, gives the window from the last
-/// settled second; the engine advances the city by it (timers for the whole window, cycle starts only during the first
-/// <c>MaxOfflineProductionSeconds</c>), and the closing zero-length advance leaves it canonical. The city is saved with the settlement's
+/// settled second; the engine advances the city by it (every timer, cycle start and walk of the window, with no cap), and the closing zero-length advance leaves it canonical. The city is saved with the settlement's
 /// ledger rows (one per item and direction, <see cref="Settlement.LedgerEntries"/>) only if anything changed, so <c>state_version</c>
 /// rises only then. The steps are <see cref="CitySettler"/>'s, which the command pipeline runs as well.
 /// </summary>

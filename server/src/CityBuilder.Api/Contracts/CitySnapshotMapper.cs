@@ -63,12 +63,13 @@ public static class CitySnapshotMapper
                 state.Routes.OrderBy(route => route.StationId).ThenBy(route => route.Slot).Select(ToRoute).ToArray()),
             new SnapshotSettlement(
                 settlement.ElapsedSeconds,
-                settlement.ProductionSeconds,
                 ToAmounts(settlement.Produced),
                 ToAmounts(settlement.Consumed),
                 ToAmounts(settlement.Delivered),
                 ToAmounts(settlement.Moved),
                 ToAmounts(settlement.Refunded),
+                settlement.CourierSeconds,
+                settlement.TiredCouriers.Select(tired => new SnapshotTiredCourier(tired.StationId, tired.Slot, tired.At)).ToArray(),
                 settlement.CompletedBuildings.Order().ToArray(),
                 settlement.CompletedResearch.Select(id => id.Value).Order(StringComparer.Ordinal).ToArray(),
                 settlement.EraChanged));

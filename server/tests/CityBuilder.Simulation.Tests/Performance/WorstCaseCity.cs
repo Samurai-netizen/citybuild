@@ -9,12 +9,13 @@ namespace CityBuilder.Simulation.Tests.Performance;
 
 /// <summary>
 /// The worst case of the performance budget (<c>04</c> section 12): 64 producers with 10-second cycles at full staffing that never stall,
-/// over <c>Fixtures/content-performance.json</c>. Half are mines (no inputs, 2 ore a cycle into a store whose limit no one reaches), half
+/// over <c>Fixtures/content-performance.json</c>. Half are mines (no inputs, 2 ore a cycle into a store of <see cref="MineOreLimit"/>, which
+/// fills only in a long advance after 8 hours), half
 /// are smelters (1 ore in, 1 ingot out, each with 6 000 ore in its own store: enough for every cycle of the tests, as no courier brings ore
 /// before CR-0008-T1 part F; part I sets the courier worst case of <c>04</c> section 12). The city is built through
 /// <see cref="CityRules"/> as a player would build it, one producer a second, so the 64 cycles end on all ten seconds of every ten
 /// (28,800 event times in 8 hours) instead of on one (2,880): that is the most work a 10-second cycle can cause. A 2-day research runs,
-/// so a long advance also has a timer to complete in its dormant tail.
+/// so a long advance also has a timer to complete.
 /// </summary>
 internal static class WorstCaseCity
 {
@@ -36,7 +37,13 @@ internal static class WorstCaseCity
     /// <summary>The smelter: 1 ore in, 1 ingot out.</summary>
     public static readonly BuildingTypeId Smelter = new("smelter");
 
-    /// <summary>The mines' output, capped so high it never fills.</summary>
+    /// <summary>
+    /// A mine's store limit of ore (<c>content-performance.json</c>): more than a mine makes in the build and 8 hours (about 5,800), so it
+    /// fills only in a long advance after them, as a store does in the game while the player is away.
+    /// </summary>
+    public const long MineOreLimit = 12_000;
+
+    /// <summary>The mines' output.</summary>
     public static readonly ItemId Ore = new("ore");
 
     /// <summary>The smelters' uncapped output.</summary>
@@ -46,12 +53,12 @@ internal static class WorstCaseCity
     public static readonly BuildingTypeId Lab = new("lab");
 
     /// <summary>
-    /// The ore each smelter starts with in its own store: more than the 5,762 cycles it starts in the build, an 8-hour advance and a 7-day
-    /// advance after it (1 + 2,880 + 2,881).
+    /// The ore each smelter starts with in its own store: the cycles it starts in the build, the 2,880 of an 8-hour advance, and about 3,100
+    /// for a 7-day advance after it, which uses them up and leaves the smelter idle.
     /// </summary>
     public const long SmelterOre = 6000;
 
-    /// <summary>The 2-day research the city starts last, so a long advance has a timer in its dormant tail.</summary>
+    /// <summary>The 2-day research the city starts last, so a long advance has a timer to complete.</summary>
     public static readonly ResearchId DeepVaults = new("deep_vaults");
 
     /// <summary>The performance content of <c>Fixtures/content-performance.json</c>, loaded once and checked like the server's.</summary>

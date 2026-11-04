@@ -1,6 +1,7 @@
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.Settlement;
 using CityBuilder.Simulation.State;
+using CityBuilder.Simulation.Tests.State;
 
 namespace CityBuilder.Simulation.Tests.Properties;
 
@@ -8,12 +9,23 @@ namespace CityBuilder.Simulation.Tests.Properties;
 /// Makes a random city from a seed: from the starting city, a random number of random operations, each run through the rules
 /// (<see cref="CityOperation"/>), so every city it makes is one a player could reach. The commands are random but aimed: tiles are free,
 /// buildings and research nodes exist, workers are within the level's limit; the rules still decide, and a rejected command is dropped.
-/// Gaps between commands range from 0 s to several production caps, so cities are seen mid-cycle, stalled, dormant and after long absences.
+/// Gaps between commands range from 0 s to four long gaps (<see cref="LongGapOf"/>), so cities are seen mid-cycle, stalled, with tired
+/// couriers and after long absences; some gaps are absences that start within the presence grace (<c>04</c> section 2).
 /// </summary>
 internal static class CityGenerator
 {
     /// <summary>The most commands one history tries; each history tries a random number from 0 up to this.</summary>
     public const int MaxAttempts = 120;
+
+    /// <summary>The longest presence grace a generated absence starts after: the server's 300 s (<c>04</c> section 2).</summary>
+    public const long MaxGraceSeconds = 300;
+
+    /// <summary>
+    /// The length of a long gap on <paramref name="content"/>: the offline cap each property content had before CR-0008-T1 part H removed it
+    /// (1 hour for the fixture, 8 hours for golden-v2), so the seeds keep the scale of their gaps and the stepped observation its cost. The
+    /// third quarter of gaps reaches it, the fourth goes up to four of them.
+    /// </summary>
+    public static long LongGapOf(GameContent content) => ReferenceEquals(content, CityFixture.TestContent) ? 3600 : 8 * 3600;
 
     /// <summary>The history of seed <paramref name="seed"/> over <paramref name="content"/>. The same seed always gives the same history.</summary>
     public static CityHistory Generate(GameContent content, int seed)
@@ -42,19 +54,30 @@ internal static class CityGenerator
     }
 
     /// <summary>
-    /// A random gap: a quarter each up to a minute, up to ten minutes, up to the production cap, and beyond it (up to four caps), so most
-    /// gaps keep production running and some make the city dormant.
+    /// A random gap: a quarter each up to a minute, up to ten minutes, up to <paramref name="longGap"/>, and beyond it (up to four of them).
     /// </summary>
-    public static long Gap(SeededRandom random, GameContent content)
+    public static long Gap(SeededRandom random, long longGap) => random.Between(1, 4) switch
     {
-        long cap = content.Rules.MaxOfflineProductionSeconds;
-        return random.Between(1, 4) switch
-        {
-            1 => random.Between(0, 60),
-            2 => random.Between(61, 600),
-            3 => random.Between(601, Math.Max(601, cap)),
-            _ => random.Between(cap + 1, 4 * cap),
-        };
+        1 => random.Between(0, 60),
+        2 => random.Between(61, 600),
+        3 => random.Between(601, longGap),
+        _ => random.Between(longGap + 1, 4 * longGap),
+    };
+
+    /// <summary>
+    /// Time passing for a random gap (<see cref="Gap"/>), with the player present or absent. Whether and from when the player is absent comes
+    /// from the gap itself, not from more random draws: the seeds share one random stream (seed n starts n draws into seed 0's), so one more
+    /// draw per gap reshuffles every history, and the seeds kept the cities they reached before part H. A gap over ten minutes is an
+    /// absence two times in five (<c>gap % 5 &lt; 2</c>), from 0 to <see cref="MaxGraceSeconds"/> in (the player left; couriers spend stamina
+    /// after the grace), else presence (the game stayed open, as the client's display always advances); a shorter gap is an absence one time
+    /// in four (<c>gap % 4 == 0</c>), from anywhere in it.
+    /// </summary>
+    public static CityOperation.Advance TimePasses(SeededRandom random, long longGap)
+    {
+        long gap = Gap(random, longGap);
+        long? absentAfter = gap > 600 ? (gap % 5 < 2 ? gap / 5 % (MaxGraceSeconds + 1) : null)
+            : gap % 4 == 0 ? gap / 4 % (gap + 1) : null;
+        return new CityOperation.Advance(gap, absentAfter);
     }
 
     /// <summary>A random command (no time passing), chosen in the same proportions as the generator's commands.</summary>
@@ -69,22 +92,30 @@ internal static class CityGenerator
     };
 
     /// <summary>
-    /// The next operation to try: time passes in 26 of 100 attempts and a route is set in 4 (time passes instead in a city without a courier
-    /// station); the rest are commands, trips (which bring every project and producer its goods) the most, then placing and assigning workers,
+    /// The next operation to try: time passes in 26 of 100 attempts (the couriers are re-energized instead when one is tired) and a route is
+    /// set in 4 (time passes instead in a city without a courier station); the rest are commands, trips (which bring every project and producer its goods) the most, then placing and assigning workers,
     /// then upgrading and research. A trip with nothing to carry gives way to a placement or time passing, so young cities grow and fill their stores. Null
     /// when the chosen command has nothing to act on.
     /// </summary>
     private static CityOperation? Next(SeededRandom random, CityState city, GameContent content) => random.Between(1, 100) switch
     {
-        <= 26 => new CityOperation.Advance(Gap(random, content)),
-        <= 30 => (CityOperation?)SetRoute(random, city, content) ?? new CityOperation.Advance(Gap(random, content)),
+        <= 26 => (CityOperation?)Reenergize(city) ?? TimePasses(random, LongGapOf(content)),
+        <= 30 => (CityOperation?)SetRoute(random, city, content) ?? TimePasses(random, LongGapOf(content)),
         <= 42 => PlaceBuilding(random, city, content),
         <= 54 => AssignWorkers(random, city, content),
         <= 64 => UpgradeBuilding(random, city),
         <= 72 => StartResearch(random, city, content),
         _ => (CityOperation?)StartTrip(random, city, content)
-            ?? (random.Chance(50) ? PlaceBuilding(random, city, content) : new CityOperation.Advance(Gap(random, content))),
+            ?? (random.Chance(50) ? PlaceBuilding(random, city, content) : TimePasses(random, LongGapOf(content))),
     };
+
+    /// <summary>
+    /// The player, back in the city, re-energizes the couriers (<c>04</c> section 8) when one is tired (resting, or walking home tired); null
+    /// otherwise, so time passes instead. It draws no random number, so the seeds' streams stay as they were.
+    /// </summary>
+    private static CityOperation.ReenergizeCouriers? Reenergize(CityState city) =>
+        city.Couriers.Any(courier => courier.State == CourierState.Resting || (courier.State == CourierState.Returning && courier.Stamina == 0))
+            ? new CityOperation.ReenergizeCouriers() : null;
 
     /// <summary>
     /// A trip that can usually go: a target and a good it accepts (three times in four one its waiting project needs, when there is one, else

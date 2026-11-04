@@ -6,9 +6,9 @@ using static CityBuilder.Simulation.Tests.State.CityFixture;
 namespace CityBuilder.Simulation.Tests.Settlement;
 
 /// <summary>
-/// Production during <c>Simulator.Advance</c> (<c>04</c> sections 2, 3, 5 and 6): the start rule, cycles, chains, research effects and the
-/// production cap. Fixture numbers: a hut provides 3 workers; a lumber camp makes 1 wood from 40 labor (2 workers: 20 s), 30 labor once
-/// <c>better_saws</c> is done; a workshop makes 1 boards from 2 wood and 90 labor; the wood cap is 100; the production cap is 3600 s.
+/// Production during <c>Simulator.Advance</c> (<c>04</c> sections 2, 3, 5 and 6): the start rule, cycles, chains, research effects and long
+/// windows. Fixture numbers: a hut provides 3 workers; a lumber camp makes 1 wood from 40 labor (2 workers: 20 s), 30 labor once
+/// <c>better_saws</c> is done; a workshop makes 1 boards from 2 wood and 90 labor; the wood cap is 100.
 /// </summary>
 public sealed class AdvanceProductionTests
 {
@@ -166,32 +166,34 @@ public sealed class AdvanceProductionTests
         Assert.Equal((0L, 0L), (CityQueries.Room(city, TestContent, city.Buildings[2], _wood), CityQueries.Room(city, TestContent, city.Buildings[3], _wood)));
     }
 
-    /// <summary>No cycle starts after the production cap; the one started at the cap's last second still finishes in the dormant tail.</summary>
+    /// <summary>
+    /// A long advance runs production for all of it (no offline cap, CR-0008, <c>04</c> section 2): the camp runs on to its store's limit of
+    /// 100 and then stands idle.
+    /// </summary>
     [Fact]
-    public void Advance_BeyondTheProductionCap_StartsNoCycleButFinishesTheRunningOne()
+    public void Advance_LongWindow_RunsOnToTheStoreLimit()
     {
-        // One worker: 40 s cycles. They may start until 1000 + 3600 = 4600, the last one at 4600 (the 91st); it ends at 4640, in the dormant
-        // tail. Without the cap the camp would run on to its store's limit of 100.
+        // One worker: 40 s cycles from 1000; the 100th ends at 5000 and fills the store.
         CityState city = City(clock: 1000, buildings: [Idle(1, "hut", 0, 0), Idle(2, "lumber_camp", 1, 0, workers: 1)]);
 
         SettlementReport report = Simulator.Advance(city, TestContent, 7200);
 
-        Assert.Equal(91, city.Buildings[1].GetStock(_wood));
+        Assert.Equal(100, city.Buildings[1].GetStock(_wood));
         Assert.Equal("building 2 lumber_camp (1,0) L1 w=1 Idle 0..null target=0 labor=0/0@0", CityDump.BuildingLine(city, 2));
-        Assert.Equal((8200L, 3600L), (city.Clock, report.ProductionSeconds));
+        Assert.Equal((8200L, 100L), (city.Clock, report.Produced[_wood]));
     }
 
-    /// <summary>The next request opens a new window, so a zero-length advance after the tail starts production again.</summary>
+    /// <summary>A zero-length advance after it starts nothing: the store is still full (nothing waits for a new window any more).</summary>
     [Fact]
-    public void Advance_AfterADormantTail_AZeroLengthAdvanceRestartsProduction()
+    public void Advance_ZeroLengthAfterTheStoreFilled_StartsNothing()
     {
         CityState city = City(clock: 1000, buildings: [Idle(1, "hut", 0, 0), Idle(2, "lumber_camp", 1, 0, workers: 1)]);
         Simulator.Advance(city, TestContent, 7200);
 
-        // The next request opens a new window at 8200.
-        Simulator.Advance(city, TestContent, 0);
+        SettlementReport report = Simulator.Advance(city, TestContent, 0);
 
-        Assert.Equal("building 2 lumber_camp (1,0) L1 w=1 Producing 8200..8240 target=0 labor=40/40@8200", CityDump.BuildingLine(city, 2));
+        Assert.Equal("building 2 lumber_camp (1,0) L1 w=1 Idle 0..null target=0 labor=0/0@0", CityDump.BuildingLine(city, 2));
+        Assert.Empty(report.Consumed);
     }
 
     /// <summary>A hut and an idle lumber camp with 2 workers at 1000; carpentry is done and better_saws (−250 ‰ camp labor) runs.</summary>

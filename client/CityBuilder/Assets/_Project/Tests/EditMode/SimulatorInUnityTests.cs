@@ -39,7 +39,7 @@ namespace CityBuilder.Client.Tests.EditMode
             // TryGetBuilding returned true, so camp is set.
             Assert.That((camp!.AssignedWorkers, camp.Phase, camp.PhaseStartedAt, camp.PhaseEndsAt), Is.EqualTo((2, BuildingPhase.Producing, 26L, (long?)36)));
             Assert.That(second.Produced.Select(total => total.Key.Value + "=" + total.Value), Is.EqualTo(new[] { "wood=2" }));
-            Assert.That((city.Clock, CityQueries.Total(city, content, new ItemId("wood")), second.ProductionSeconds), Is.EqualTo((31L, 2L, 25L)));
+            Assert.That((city.Clock, CityQueries.Total(city, content, new ItemId("wood")), second.ElapsedSeconds), Is.EqualTo((31L, 2L, 25L)));
         }
 
         /// <summary>The stall reasons of a house, a camp without workers and a camp whose output is full read as their API text.</summary>
@@ -70,7 +70,6 @@ namespace CityBuilder.Client.Tests.EditMode
                     GridHeight = 4,
                     BuilderSlots = 2,
                     ResearchSlots = 1,
-                    MaxOfflineProductionSeconds = 600,
                     MinCycleSeconds = 2,
                     MaxLaborReductionPermille = 300,
                     GroundTileMillis = 3000,

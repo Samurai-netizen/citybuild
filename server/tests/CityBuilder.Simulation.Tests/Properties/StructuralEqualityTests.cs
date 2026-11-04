@@ -125,12 +125,12 @@ public sealed class StructuralEqualityTests
         Assert.Equal("elapsedSeconds: expected 0, actual 60", StructuralEquality.FirstDifference(expected, actual));
     }
 
-    /// <summary>The totals of no reports are zero seconds, no quantities, no completions and no era change.</summary>
+    /// <summary>The totals of no reports are zero seconds, no quantities, no completions, no tired couriers and no era change.</summary>
     [Fact]
     public void Sum_NoReports_IsZeroAndEmpty()
     {
         Assert.Equal(
-            [("elapsedSeconds", "0"), ("productionSeconds", "0"), ("completedBuildings", ""), ("completedResearch", ""), ("eraChanged", "false")],
+            [("elapsedSeconds", "0"), ("completedBuildings", ""), ("completedResearch", ""), ("tiredCouriers", ""), ("eraChanged", "false")],
             ReportTotals.Sum().Fields());
     }
 

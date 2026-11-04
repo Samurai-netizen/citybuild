@@ -171,11 +171,18 @@ namespace CityBuilder.Simulation.Rules
             return MutationResult.Ok;
         }
 
-        /// <summary>A courier stops working (<c>04</c> section 19): its load goes back, and it stands at its station unless it rests.</summary>
+        /// <summary>
+        /// A courier stops working (<c>04</c> section 19): its load goes back, and it stands at its station, unless it has no stamina (resting,
+        /// or walking home tired): then it rests there until it is re-energized.
+        /// </summary>
         internal static void StopWorking(CityState city, Courier courier)
         {
             GiveLoadBack(city, courier);
-            if (courier.State != CourierState.Resting)
+            if (courier.State == CourierState.Resting || courier.Stamina == 0)
+            {
+                courier.Rest();
+            }
+            else
             {
                 courier.StandAtStation();
             }

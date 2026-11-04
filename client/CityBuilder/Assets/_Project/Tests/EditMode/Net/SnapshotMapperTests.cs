@@ -179,7 +179,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             SettlementSummary research = CityTestData.Snapshot("snapshot-city-research-completed.json").Settlement!;
             SettlementSummary buildings = CityTestData.Snapshot("snapshot-city-settled-buildings.json").Settlement!;
 
-            Assert.That((research.ElapsedSeconds, research.ProductionSeconds), Is.EqualTo((620L, 620L)));
+            Assert.That((research.ElapsedSeconds, research.CourierSeconds, research.TiredCouriers.Count), Is.EqualTo((620L, 0L, 0)));
             Assert.That(research.Produced.Select(line => line.Key.Value + "=" + line.Value), Is.EqualTo(new[] { "logs=21" }));
             Assert.That(research.Consumed, Is.Empty);
             Assert.That(research.CompletedResearch.Select(id => id.Value), Is.EqualTo(new[] { "trade_charter" }));

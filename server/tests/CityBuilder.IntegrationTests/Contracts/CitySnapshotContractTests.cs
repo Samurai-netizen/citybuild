@@ -118,8 +118,8 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
 
         JsonShape.AssertObject(
             snapshot["settlement"],
-            "elapsedSeconds:int productionSeconds:int produced:object consumed:object delivered:object moved:object refunded:object " +
-            "completedBuildings:array completedResearch:array eraChanged:bool",
+            "elapsedSeconds:int produced:object consumed:object delivered:object moved:object refunded:object courierSeconds:int " +
+            "tiredCouriers:array completedBuildings:array completedResearch:array eraChanged:bool",
             "$.settlement");
         Assert.Equal(buildings.Select(building => (int)building!["id"]!).Order(), buildings.Select(building => (int)building!["id"]!));
     }
@@ -176,7 +176,7 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
         Assert.Equal("""{"coins":100,"logs":17,"planks":0}""", snapshot["city"]!["totals"]!.ToJsonString());
         Assert.Equal("""{"logs":17}""", snapshot["city"]!["buildings"]![1]!["store"]!.ToJsonString());
         Assert.Equal(
-            """{"elapsedSeconds":100,"productionSeconds":100,"produced":{"logs":7},"consumed":{},"delivered":{},"moved":{},"refunded":{},"completedBuildings":[],"completedResearch":[],"eraChanged":false}""",
+            """{"elapsedSeconds":100,"produced":{"logs":7},"consumed":{},"delivered":{},"moved":{},"refunded":{},"courierSeconds":0,"tiredCouriers":[],"completedBuildings":[],"completedResearch":[],"eraChanged":false}""",
             snapshot["settlement"]!.ToJsonString());
         JsonNode woodcutter = snapshot["city"]!["buildings"]![1]!;
         Assert.Equal((2, "Producing", 1095, 1110, 30), ((int)woodcutter["id"]!, (string)woodcutter["phase"]!, (int)woodcutter["phaseStartedAt"]!, (int)woodcutter["phaseEndsAt"]!, (int)woodcutter["laborRemaining"]!));
@@ -207,7 +207,7 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
             ((int)first["stateVersion"]!, (int)second["stateVersion"]!, (int)third["stateVersion"]!));
         Assert.Equal(first["city"]!.ToJsonString(), second["city"]!.ToJsonString());
         Assert.Equal(
-            """{"elapsedSeconds":0,"productionSeconds":0,"produced":{},"consumed":{},"delivered":{},"moved":{},"refunded":{},"completedBuildings":[],"completedResearch":[],"eraChanged":false}""",
+            """{"elapsedSeconds":0,"produced":{},"consumed":{},"delivered":{},"moved":{},"refunded":{},"courierSeconds":0,"tiredCouriers":[],"completedBuildings":[],"completedResearch":[],"eraChanged":false}""",
             second["settlement"]!.ToJsonString());
         Assert.Equal(1101, (int)third["city"]!["clock"]!);
         Assert.Equal(2, store.SaveCount);
@@ -371,7 +371,7 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
               {"stationId": 10, "slot": 2, "stops": [{"buildingId": 2, "actions": [{"kind": "take", "itemId": "logs", "amount": "6"}]}, {"buildingId": 6, "actions": [{"kind": "put", "itemId": "logs", "amount": "all"}]}]}
             ]
           },
-          "settlement": {"elapsedSeconds": 0, "productionSeconds": 0, "produced": {}, "consumed": {}, "delivered": {}, "moved": {}, "refunded": {}, "completedBuildings": [], "completedResearch": [], "eraChanged": false}
+          "settlement": {"elapsedSeconds": 0, "produced": {}, "consumed": {}, "delivered": {}, "moved": {}, "refunded": {}, "courierSeconds": 0, "tiredCouriers": [], "completedBuildings": [], "completedResearch": [], "eraChanged": false}
         }
         """;
 }

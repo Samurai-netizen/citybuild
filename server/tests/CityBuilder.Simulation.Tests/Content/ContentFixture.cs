@@ -29,7 +29,6 @@ internal static class ContentFixture
             GridHeight = 5,
             BuilderSlots = 2,
             ResearchSlots = 1,
-            MaxOfflineProductionSeconds = 3600,
             MinCycleSeconds = 5,
             MaxLaborReductionPermille = 400,
             GroundTileMillis = 4000,

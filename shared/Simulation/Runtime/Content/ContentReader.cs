@@ -99,7 +99,6 @@ namespace CityBuilder.Simulation.Content
                 _fields.RequireInt(data.GridHeight, path + ".gridHeight"),
                 _fields.RequireInt(data.BuilderSlots, path + ".builderSlots"),
                 _fields.RequireInt(data.ResearchSlots, path + ".researchSlots"),
-                _fields.RequireLong(data.MaxOfflineProductionSeconds, path + ".maxOfflineProductionSeconds"),
                 _fields.RequireLong(data.MinCycleSeconds, path + ".minCycleSeconds"),
                 _fields.RequireInt(data.MaxLaborReductionPermille, path + ".maxLaborReductionPermille"),
                 _fields.RequireLong(data.GroundTileMillis, path + ".groundTileMillis"),

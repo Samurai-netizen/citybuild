@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using CityBuilder.Client.Core;
 using CityBuilder.Simulation;
+using CityBuilder.Simulation.Settlement;
 using CityBuilder.Simulation.State;
 
 namespace CityBuilder.Client.Net
@@ -99,14 +100,15 @@ namespace CityBuilder.Client.Net
         }
 
         /// <summary>The settlement part of the answer: item ids and research ids become the engine's, in the order the server sent them.</summary>
-        /// <exception cref="ArgumentException">The values are no settlement: a negative number, production above the elapsed time, a blank id.</exception>
+        /// <exception cref="ArgumentException">The values are no settlement: a negative number, a blank id.</exception>
         private static SettlementSummary ToSettlement(SnapshotSettlementDto settlement)
         {
             return new SettlementSummary(
                 settlement.ElapsedSeconds,
-                settlement.ProductionSeconds,
                 ToQuantities(settlement.Produced),
                 ToQuantities(settlement.Consumed),
+                settlement.CourierSeconds,
+                settlement.TiredCouriers.ConvertAll(tired => new TiredCourier(tired.StationId, tired.Slot, tired.At)),
                 settlement.CompletedBuildings,
                 settlement.CompletedResearch.ConvertAll(id => new ResearchId(id)),
                 settlement.EraChanged);

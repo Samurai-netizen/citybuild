@@ -42,7 +42,6 @@ public static class ContentResponseMapper
         rules.GridHeight,
         rules.BuilderSlots,
         rules.ResearchSlots,
-        rules.MaxOfflineProductionSeconds,
         rules.MinCycleSeconds,
         rules.MaxLaborReductionPermille,
         rules.GroundTileMillis,

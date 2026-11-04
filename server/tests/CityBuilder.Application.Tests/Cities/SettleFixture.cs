@@ -12,12 +12,12 @@ namespace CityBuilder.Application.Tests.Cities;
 
 /// <summary>
 /// A small content in code and a city on it for the settle tests. The numbers are made up for the tests, not the game's
-/// (<c>server/content/*.json</c>), except the production cap, which is the M0 value of 8 hours, so the tests read like the spec.
+/// (<c>server/content/*.json</c>).
 /// </summary>
 internal static class SettleFixture
 {
-    /// <summary>The production cap: the M0 value of 8 hours, in seconds.</summary>
-    public const long ProductionCapSeconds = 8 * 3600;
+    /// <summary>The woodcutter's store limit of logs (<see cref="Content"/>): a settlement long enough fills it, and then it stops.</summary>
+    public const long WoodcutterStoreLimit = 1000;
 
     /// <summary>The woodcutter's cycle: 60 labor with its one worker.</summary>
     public const long CycleSeconds = 60;
@@ -30,11 +30,11 @@ internal static class SettleFixture
 
     /// <summary>
     /// The research <c>forestry</c> (2 days, started at <see cref="StartClock"/>, once the study completed: research needs a science building,
-    /// CR-0008 D11) ends at this city-clock second, after the production cap.
+    /// CR-0008 D11) ends at this city-clock second, long after 8 hours.
     /// </summary>
     public const long ResearchEndsAt = StartClock + ResearchSeconds;
 
-    /// <summary>The manor (3 days, placed at <see cref="StartClock"/>) completes at this city-clock second, after the production cap.</summary>
+    /// <summary>The manor (3 days, placed at <see cref="StartClock"/>) completes at this city-clock second, after the research.</summary>
     public const long ManorEndsAt = StartClock + (3 * 86_400);
 
     /// <summary>The manor's building id: it is the fourth building placed, after the cottage, the woodcutter and the study.</summary>
@@ -190,7 +190,6 @@ internal static class SettleFixture
                 GridHeight = 4,
                 BuilderSlots = 3,
                 ResearchSlots = 1,
-                MaxOfflineProductionSeconds = ProductionCapSeconds,
                 MinCycleSeconds = 10,
                 MaxLaborReductionPermille = 500,
                 GroundTileMillis = 5000,
@@ -224,7 +223,7 @@ internal static class SettleFixture
                         new BuildingLevelData
                         {
                             Level = 1, MaxWorkers = 1, Recipe = new RecipeData { Outputs = new() { ["logs"] = 1 }, Labor = CycleSeconds },
-                            Storage = new() { ["logs"] = 1000 },
+                            Storage = new() { ["logs"] = WoodcutterStoreLimit },
                         },
                     ],
                 },

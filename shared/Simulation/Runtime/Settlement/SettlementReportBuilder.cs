@@ -67,14 +67,13 @@ namespace CityBuilder.Simulation.Settlement
         /// Makes the report. Completions are recorded in time order; the report lists them sorted. A building completes at most one
         /// construction or upgrade per advance, because only a mutation orders one (a delivery only starts what was ordered), so each id appears once.
         /// </summary>
-        public SettlementReport Build(long elapsedSeconds, long productionSeconds)
+        public SettlementReport Build(long elapsedSeconds)
         {
             _completedBuildings.Sort();
             _completedResearch.Sort();
             _tiredCouriers.Sort((left, right) => left.StationId != right.StationId ? left.StationId.CompareTo(right.StationId) : left.Slot.CompareTo(right.Slot));
             return new SettlementReport(
                 elapsedSeconds,
-                productionSeconds,
                 _produced,
                 _consumed,
                 _delivered,

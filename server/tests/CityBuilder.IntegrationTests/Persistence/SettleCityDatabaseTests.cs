@@ -23,9 +23,6 @@ public sealed class SettleCityDatabaseTests(PostgresServer server) : PostgresTes
     /// <summary>The state version of a city as stored before each test: its 0, saved once.</summary>
     private const long _storedVersion = 1;
 
-    /// <summary>The production cap of the server's content (<c>maxOfflineProductionSeconds</c>): 8 hours.</summary>
-    private const long _capSeconds = 8 * 3600;
-
     /// <summary>The first player, owner of <see cref="_cityId"/>.</summary>
     private static readonly Guid _playerId = new("5e771e00-0000-4000-8000-000000000001");
 
@@ -69,21 +66,22 @@ public sealed class SettleCityDatabaseTests(PostgresServer server) : PostgresTes
 
     /// <summary>
     /// A city with the 1-hour research <c>frame_saw</c> running, left alone for 30 h: the research completes at its end, clock 3600, and is
-    /// stored in <c>city_research</c> with that clock; production stops after 8 h: the same city settled once after 8 h 2 min (every cycle
-    /// started by the cap has finished by then; the longest takes 90 s) made and used exactly the same, ledger row by ledger row.
+    /// stored in <c>city_research</c> with that clock; production runs for the whole window, with no cap (CR-0008, <c>04</c> section 2): its
+    /// twin, settled after 8 h 2 min and again at 30 h, made and used exactly the same through the database, ledger total by ledger total.
     /// </summary>
     [Fact]
-    public async Task ExecuteAsync_ThirtyHoursAwayWithAOneHourResearch_CompletesItOnTimeAndProducesOnlyForEightHours()
+    public async Task ExecuteAsync_ThirtyHoursAwayWithAOneHourResearch_CompletesItOnTimeAndProducesForTheWholeWindow()
     {
         CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         await StoreFrameSawCitiesAsync();
-        Factory.Clock.Advance(TimeSpan.FromSeconds(_capSeconds + 120));
-        SettleCityResult afterCap = await SettleAsync(Factory, _otherPlayerId);
-        Factory.Clock.Advance(TimeSpan.FromHours(30) - TimeSpan.FromSeconds(_capSeconds + 120));
+        Factory.Clock.Advance(TimeSpan.FromSeconds((8 * 3600) + 120));
+        await SettleAsync(Factory, _otherPlayerId);
+        Factory.Clock.Advance(TimeSpan.FromHours(30) - TimeSpan.FromSeconds((8 * 3600) + 120));
+        SettleCityResult twin = await SettleAsync(Factory, _otherPlayerId);
 
         SettleCityResult away = await SettleAsync(Factory, _playerId);
 
-        Assert.Equal((30 * 3600L, _capSeconds), (away.Settlement.ElapsedSeconds, away.Settlement.ProductionSeconds));
+        Assert.Equal((30 * 3600L, 0L), (away.Settlement.ElapsedSeconds, away.Settlement.CourierSeconds));
         Assert.Equal([FrameSaw], away.Settlement.CompletedResearch);
         await using CityBuilderDbContext db = Database.CreateContext();
         Assert.Equal(
@@ -94,7 +92,7 @@ public sealed class SettleCityDatabaseTests(PostgresServer server) : PostgresTes
         Assert.Equal((30 * 3600L, null, null, null), (city.ClockSeconds, city.ResearchId, city.ResearchStartedAt, city.ResearchEndsAt));
         Assert.NotEmpty(away.Settlement.Produced);
         Assert.Equal(Totals(await LedgerAsync(Database, _otherCityId)), Totals(await LedgerAsync(Database, _cityId)));
-        Assert.Equal(Describe(TotalsOf(afterCap.City.State)), Describe(TotalsOf(away.City.State)));
+        Assert.Equal(Describe(TotalsOf(twin.City.State)), Describe(TotalsOf(away.City.State)));
     }
 
     /// <summary>

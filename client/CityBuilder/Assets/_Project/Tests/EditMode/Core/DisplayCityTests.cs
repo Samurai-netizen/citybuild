@@ -110,8 +110,8 @@ namespace CityBuilder.Client.Tests.EditMode.Core
         }
 
         /// <summary>
-        /// Refreshing all along gives the same city as one late refresh, past the 8-hour production cap too: each prediction starts again from the
-        /// snapshot, so the dormant tail is measured from the snapshot as on the server, not from the last prediction.
+        /// Refreshing all along gives the same city as one late refresh, over 10 hours: each prediction starts again from the snapshot, so it
+        /// is the same advance from the snapshot as on the server, not a chain of predictions.
         /// </summary>
         [Test]
         public void Prediction_RefreshedAlongTheWay_EqualsOneAdvanceOfTheWholeTime()
@@ -119,7 +119,7 @@ namespace CityBuilder.Client.Tests.EditMode.Core
             CitySnapshot snapshot = CityTestData.Snapshot("snapshot-city-producing.json");
             _store.Apply(snapshot);
             var display = new DisplayCity(_store, _clock, _content);
-            long whole = _content.Rules.MaxOfflineProductionSeconds + 7200;
+            const long whole = 10 * 3600;
 
             for (long seconds = 3600; seconds <= whole; seconds += 3600)
             {

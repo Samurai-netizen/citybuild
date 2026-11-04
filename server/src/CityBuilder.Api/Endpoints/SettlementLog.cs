@@ -27,7 +27,7 @@ internal static partial class SettlementLog
 
         int events = settlement.CompletedBuildings.Count + settlement.CompletedResearch.Count + (settlement.EraChanged ? 1 : 0);
         string researchCompleted = string.Join(",", settlement.CompletedResearch.Select(research => research.Value));
-        Settled(logger, playerId, trigger, settlement.ElapsedSeconds, settlement.ProductionSeconds, events, researchCompleted, durationMs);
+        Settled(logger, playerId, trigger, settlement.ElapsedSeconds, settlement.CourierSeconds, settlement.TiredCouriers.Count, events, researchCompleted, durationMs);
         if (settlement.Window.IsClockBehind)
         {
             ClockBehind(logger, playerId, settlement.ClockBehindSeconds);
@@ -35,7 +35,8 @@ internal static partial class SettlementLog
     }
 
     /// <summary>
-    /// Logs one settlement (event id 6000): the seconds the city clock moved, the seconds in which cycles could start, the number of events
+    /// Logs one settlement (event id 6000): the seconds the city clock moved, the most stamina one courier spent, the couriers that got
+    /// tired, the number of events
     /// (constructions, upgrades and research completed, an era entered) and the research completed, by id. The source generator writes the
     /// method's body.
     /// </summary>
@@ -43,15 +44,17 @@ internal static partial class SettlementLog
     /// <param name="playerId">The player whose city was settled.</param>
     /// <param name="trigger"><see cref="CityTrigger"/> or the command type.</param>
     /// <param name="elapsedSeconds">The seconds the city clock moved.</param>
-    /// <param name="productionSeconds">The seconds of the window in which cycles could start.</param>
+    /// <param name="courierSeconds">The most stamina one courier spent, in seconds.</param>
+    /// <param name="tiredCouriers">How many couriers' stamina ran out.</param>
     /// <param name="events">How many timed events completed.</param>
     /// <param name="researchCompleted">The research completed, ids joined by commas; empty for none.</param>
     /// <param name="durationMs">How long the request took so far, in milliseconds.</param>
     [LoggerMessage(EventId = 6000, Level = LogLevel.Information,
-        Message = "Settled city of player {PlayerId} for {Trigger}: {ElapsedSeconds} s elapsed, {ProductionSeconds} s of production, " +
+        Message = "Settled city of player {PlayerId} for {Trigger}: {ElapsedSeconds} s elapsed, {CourierSeconds} courier s, " +
+            "{TiredCouriers} couriers tired, " +
             "{Events} events, research completed [{ResearchCompleted}], in {DurationMs} ms")]
     private static partial void Settled(
-        ILogger logger, Guid playerId, string trigger, long elapsedSeconds, long productionSeconds, int events, string researchCompleted, double durationMs);
+        ILogger logger, Guid playerId, string trigger, long elapsedSeconds, long courierSeconds, int tiredCouriers, int events, string researchCompleted, double durationMs);
 
     /// <summary>
     /// Logs that the server clock is behind the city's last settled second (event id 6001): it was set back, so nothing elapsed and the

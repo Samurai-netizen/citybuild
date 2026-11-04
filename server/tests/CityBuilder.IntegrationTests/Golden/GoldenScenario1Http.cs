@@ -1,4 +1,3 @@
-using System.Text.Json.Nodes;
 using CityBuilder.IntegrationTests.Postgres;
 using CityBuilder.Simulation;
 using CityBuilder.Simulation.Content;
@@ -23,12 +22,10 @@ internal static class GoldenScenario1Http
     public static readonly long[] ActionTimes = [0, 30, 60, 360, 490, 660];
 
     /// <summary>
-    /// A copy of the frozen content file <c>content-golden-v2.json</c> (linked into this project's output; protected, never edited, <c>15</c>)
-    /// with the M0 offline production cap of 28 800 s added, written once to a temporary file. v2 was frozen without the cap, which the engine
-    /// requires until CR-0008-T1 part H; the engine test adds it the same way (<c>GoldenContent.V2</c>, build log BL-20261102-07, decision
-    /// 22). No row reaches 8 h, so the cap changes no expectation. Temporary: part H removes the cap and this copy.
+    /// The frozen content file <c>content-golden-v2.json</c>, linked into this project's output (protected, never edited, <c>15</c>). Since
+    /// CR-0008-T1 part H the engine has no offline cap, so the file is read as it was frozen.
     /// </summary>
-    public static string ContentPath { get; } = WriteWithTheOfflineCap();
+    public static string ContentPath { get; } = Path.Combine(AppContext.BaseDirectory, "Fixtures", "content-golden-v2.json");
 
     /// <summary>The test's server with the frozen content in place of the real one; it shares the factory's clock and database.</summary>
     /// <param name="factory">The test's server on its database.</param>
@@ -142,17 +139,5 @@ internal static class GoldenScenario1Http
     {
         Assert.True(result.IsOk, result.ToString());
         Simulator.Advance(city, content, 0);
-    }
-
-    /// <summary>Writes the copy of <see cref="ContentPath"/>: v2 with <c>rules.maxOfflineProductionSeconds</c> set to 28 800.</summary>
-    /// <returns>The copy's path, in the temporary folder.</returns>
-    private static string WriteWithTheOfflineCap()
-    {
-        string frozen = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Fixtures", "content-golden-v2.json"));
-        JsonNode content = JsonNode.Parse(frozen) ?? throw new InvalidOperationException("content-golden-v2.json is JSON null.");
-        content["rules"]!["maxOfflineProductionSeconds"] = 28_800;
-        string path = Path.Combine(Path.GetTempPath(), "citybuilder-golden-v2-with-cap-" + Guid.NewGuid().ToString("N") + ".json");
-        File.WriteAllText(path, content.ToJsonString());
-        return path;
     }
 }

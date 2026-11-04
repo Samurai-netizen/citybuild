@@ -8,6 +8,7 @@ using CityBuilder.Client.Presentation.WelcomeBack;
 using CityBuilder.Client.Tests.EditMode.Core;
 using CityBuilder.Client.Tests.EditMode.Presentation.Hud;
 using CityBuilder.Simulation;
+using CityBuilder.Simulation.Settlement;
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.State;
 using NUnit.Framework;
@@ -30,10 +31,9 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.WelcomeBack
             _content = HudTestData.Content();
         }
 
-        /// <summary>A settlement with the given times and lists, which the tests fill in as they need.</summary>
+        /// <summary>A settlement with the given time and lists, which the tests fill in as they need; no courier worked.</summary>
         private static SettlementSummary Settlement(
             long elapsed,
-            long? production = null,
             (string Item, long Quantity)[]? produced = null,
             (string Item, long Quantity)[]? consumed = null,
             int[]? buildings = null,
@@ -41,9 +41,10 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.WelcomeBack
         {
             return new SettlementSummary(
                 elapsed,
-                production ?? elapsed,
                 Quantities(produced),
                 Quantities(consumed),
+                0,
+                new TiredCourier[0],
                 buildings ?? new int[0],
                 (research ?? new string[0]).Select(id => new ResearchId(id)).ToList(),
                 false);
@@ -242,33 +243,14 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.WelcomeBack
             Assert.That(Lines(model, WelcomeBackModel.ResearchHeading), Is.EqualTo(new[] { "lost_art" }));
         }
 
-        /// <summary>When production counted fewer seconds than passed, the note names the hours of production and what to do.</summary>
+        /// <summary>A long absence reports all of it: production has no cap since CR-0008-T1 part H, so there is no cap note.</summary>
         [Test]
-        public void CapNote_WhenProductionWasCut()
+        public void LongAbsence_TitleNamesAllOfIt()
         {
-            WelcomeBackModel model = Report(Settlement(36_000, production: 28_800));
+            WelcomeBackModel model = Report(Settlement(36_000, produced: new[] { ("logs", 600L) }));
 
-            Assert.That(model.HasCapNote, Is.True);
-            Assert.That(model.CapNote, Is.EqualTo("Production paused after 8 h. Check in more often or research storage."));
             Assert.That(model.Title, Is.EqualTo("While you were away (10 h)"));
-        }
-
-        /// <summary>The note names the minutes of a cap that is not a whole number of hours, and the seconds of a very short one.</summary>
-        [Test]
-        public void CapNote_NamesMinutesAndSeconds()
-        {
-            Assert.That(Report(Settlement(40_000, production: 30_600)).CapNote, Does.StartWith("Production paused after 8 h 30 m. "));
-            Assert.That(Report(Settlement(400, production: 30)).CapNote, Does.StartWith("Production paused after 30 s. "));
-        }
-
-        /// <summary>No note when production ran for the whole time, also exactly at the cap.</summary>
-        [Test]
-        public void CapNote_NotWhenProductionRanTheWholeTime()
-        {
-            WelcomeBackModel model = Report(Settlement(28_800, production: 28_800));
-
-            Assert.That(model.HasCapNote, Is.False);
-            Assert.That(model.CapNote, Is.Empty);
+            Assert.That(Lines(model, WelcomeBackModel.ProducedHeading), Is.EqualTo(new[] { "600 Logs" }));
         }
 
         /// <summary>A long absence in which nothing happened still gets a report: the title, no section, and the empty flag.</summary>
@@ -295,7 +277,6 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.WelcomeBack
             Assert.That(Lines(model, "Produced"), Is.EqualTo(new[] { "21 Logs" }));
             Assert.That(model.Sections.Select(section => section.Heading), Does.Not.Contain("Used"), "nothing was used");
             Assert.That(Lines(model, "Research"), Is.EqualTo(new[] { "Trade Charter — Unlocks Trading Post" }));
-            Assert.That(model.HasCapNote, Is.False);
         }
 
         /// <summary>A real answer of 42 s that completed two cottages is a routine settlement: no report.</summary>

@@ -117,14 +117,35 @@ internal abstract record CityOperation
                 + string.Join("; ", stop.Actions.Select(action => $"{action.Kind} {action.Item} {action.Amount}")) + "]"));
     }
 
-    /// <summary>Lets <paramref name="Seconds"/> pass: one settlement over that window.</summary>
+    /// <summary>
+    /// Lets <paramref name="Seconds"/> pass: one settlement over that window, with the player present all of it or absent from
+    /// <paramref name="AbsentAfter"/> seconds after its start (<c>04</c> section 2).
+    /// </summary>
     /// <param name="Seconds">The seconds to pass; the engine counts a negative value as 0 (<c>04</c> section 1).</param>
-    public sealed record Advance(long Seconds) : CityOperation
+    /// <param name="AbsentAfter">Null when the player is present the whole window; else the seconds after the window's start at which the
+    /// absence begins (the engine's <c>absentFrom</c> is the start plus this).</param>
+    public sealed record Advance(long Seconds, long? AbsentAfter = null) : CityOperation
     {
         /// <summary>Advances the city by <see cref="Seconds"/>; time passing is never rejected, so the report is never null.</summary>
-        public override SettlementReport? TryApply(CityState city, GameContent content) => Simulator.Advance(city, content, Seconds);
+        public override SettlementReport? TryApply(CityState city, GameContent content) =>
+            Simulator.Advance(city, content, Seconds, AbsentFrom(city.Clock));
 
-        /// <summary>The text a failing property prints, for example <c>Advance 600</c>.</summary>
-        public override string ToString() => string.Create(CultureInfo.InvariantCulture, $"Advance {Seconds}");
+        /// <summary>The engine's <c>absentFrom</c> for a window that starts at <paramref name="start"/>: null when the player stays present.</summary>
+        public long? AbsentFrom(long start) => AbsentAfter is { } after ? start + after : null;
+
+        /// <summary>The text a failing property prints, for example <c>Advance 600</c> or <c>Advance 3600 absent after 120</c>.</summary>
+        public override string ToString() => AbsentAfter is { } after
+            ? string.Create(CultureInfo.InvariantCulture, $"Advance {Seconds} absent after {after}")
+            : string.Create(CultureInfo.InvariantCulture, $"Advance {Seconds}");
+    }
+
+    /// <summary>Re-energizes every courier of the city (<c>04</c> section 8).</summary>
+    public sealed record ReenergizeCouriers : Command
+    {
+        /// <inheritdoc/>
+        public override MutationResult Mutate(CityState city, GameContent content) => CourierRules.ReenergizeCouriers(city, content);
+
+        /// <summary>The text a failing property prints: <c>ReenergizeCouriers</c>.</summary>
+        public override string ToString() => "ReenergizeCouriers";
     }
 }

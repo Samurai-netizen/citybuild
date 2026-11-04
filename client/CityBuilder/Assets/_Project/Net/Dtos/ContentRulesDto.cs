@@ -11,13 +11,12 @@ namespace CityBuilder.Client.Net
     {
         /// <summary>Creates the DTO. Newtonsoft calls this constructor with the JSON members of the same names, so the object is never half filled.</summary>
         [JsonConstructor]
-        public ContentRulesDto(int gridWidth, int gridHeight, int builderSlots, int researchSlots, long maxOfflineProductionSeconds, long minCycleSeconds, int maxLaborReductionPermille, long groundTileMillis, int crossingSpeedPermille, long minWalkSeconds, int maxWalkBonusPermille, long tripCarryLimit, int maxRouteStops, int maxStopActions, int timeScale)
+        public ContentRulesDto(int gridWidth, int gridHeight, int builderSlots, int researchSlots, long minCycleSeconds, int maxLaborReductionPermille, long groundTileMillis, int crossingSpeedPermille, long minWalkSeconds, int maxWalkBonusPermille, long tripCarryLimit, int maxRouteStops, int maxStopActions, int timeScale)
         {
             GridWidth = gridWidth;
             GridHeight = gridHeight;
             BuilderSlots = builderSlots;
             ResearchSlots = researchSlots;
-            MaxOfflineProductionSeconds = maxOfflineProductionSeconds;
             MinCycleSeconds = minCycleSeconds;
             MaxLaborReductionPermille = maxLaborReductionPermille;
             GroundTileMillis = groundTileMillis;
@@ -41,9 +40,6 @@ namespace CityBuilder.Client.Net
 
         /// <summary>Research slots every city has.</summary>
         public int ResearchSlots { get; }
-
-        /// <summary>Most seconds of production one settlement counts.</summary>
-        public long MaxOfflineProductionSeconds { get; }
 
         /// <summary>Shortest production cycle in seconds, after labor reductions.</summary>
         public long MinCycleSeconds { get; }

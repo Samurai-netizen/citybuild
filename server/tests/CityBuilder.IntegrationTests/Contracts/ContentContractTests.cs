@@ -40,7 +40,7 @@ public sealed class ContentContractTests(ApiFactory factory) : IClassFixture<Api
             "$");
         JsonShape.AssertObject(
             content["rules"],
-            "gridWidth:int gridHeight:int builderSlots:int researchSlots:int maxOfflineProductionSeconds:int " +
+            "gridWidth:int gridHeight:int builderSlots:int researchSlots:int " +
             "minCycleSeconds:int maxLaborReductionPermille:int groundTileMillis:int crossingSpeedPermille:int minWalkSeconds:int " +
             "maxWalkBonusPermille:int tripCarryLimit:int maxRouteStops:int maxStopActions:int timeScale:int",
             "$.rules");

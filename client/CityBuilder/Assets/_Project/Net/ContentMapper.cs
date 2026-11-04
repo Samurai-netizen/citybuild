@@ -59,7 +59,6 @@ namespace CityBuilder.Client.Net
                 GridHeight = rules.GridHeight,
                 BuilderSlots = rules.BuilderSlots,
                 ResearchSlots = rules.ResearchSlots,
-                MaxOfflineProductionSeconds = rules.MaxOfflineProductionSeconds,
                 MinCycleSeconds = rules.MinCycleSeconds,
                 MaxLaborReductionPermille = rules.MaxLaborReductionPermille,
                 GroundTileMillis = rules.GroundTileMillis,

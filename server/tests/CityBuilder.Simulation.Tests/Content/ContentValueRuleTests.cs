@@ -19,7 +19,6 @@ public sealed class ContentValueRuleTests
         ["rules.gridHeight"] = data => RulesOf(data).GridHeight = -3,
         ["rules.builderSlots"] = data => RulesOf(data).BuilderSlots = 0,
         ["rules.researchSlots"] = data => RulesOf(data).ResearchSlots = 0,
-        ["rules.maxOfflineProductionSeconds"] = data => RulesOf(data).MaxOfflineProductionSeconds = 0,
         ["rules.minCycleSeconds"] = data => RulesOf(data).MinCycleSeconds = 0,
         ["rules.tripCarryLimit"] = data => RulesOf(data).TripCarryLimit = 0,
         ["rules.maxRouteStops"] = data => RulesOf(data).MaxRouteStops = 0,

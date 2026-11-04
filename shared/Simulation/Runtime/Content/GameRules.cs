@@ -11,7 +11,6 @@ namespace CityBuilder.Simulation.Content
             int gridHeight,
             int builderSlots,
             int researchSlots,
-            long maxOfflineProductionSeconds,
             long minCycleSeconds,
             int maxLaborReductionPermille,
             long groundTileMillis,
@@ -26,7 +25,6 @@ namespace CityBuilder.Simulation.Content
             GridHeight = gridHeight;
             BuilderSlots = builderSlots;
             ResearchSlots = researchSlots;
-            MaxOfflineProductionSeconds = maxOfflineProductionSeconds;
             MinCycleSeconds = minCycleSeconds;
             MaxLaborReductionPermille = maxLaborReductionPermille;
             GroundTileMillis = groundTileMillis;
@@ -49,12 +47,6 @@ namespace CityBuilder.Simulation.Content
 
         /// <summary>How many research nodes may run at once: exactly 1 in M0.</summary>
         public int ResearchSlots { get; }
-
-        /// <summary>
-        /// How many seconds of one settlement may start production cycles; after that the city is dormant and only timers run. The M0 cap,
-        /// which CR-0008 replaces with courier stamina (<c>04</c> section 2): CR-0008-T1 part H removes it.
-        /// </summary>
-        public long MaxOfflineProductionSeconds { get; }
 
         /// <summary>The shortest cycle content may allow, in seconds: with every labor reduction and all max workers, no cycle is shorter.</summary>
         public long MinCycleSeconds { get; }
