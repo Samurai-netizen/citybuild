@@ -129,6 +129,42 @@ namespace CityBuilder.Simulation.State
             ArrivesAt = arrivesAt;
         }
 
+        /// <summary>
+        /// Spends stamina for a walk that ended (<c>04</c> section 2), at most what is left. Returns what it spent; the stamina never goes below
+        /// 0.
+        /// </summary>
+        internal long Spend(long seconds)
+        {
+            long spent = Math.Min(Math.Max(seconds, 0), Stamina);
+            Stamina -= spent;
+            return spent;
+        }
+
+        /// <summary>Fills its stamina again to <paramref name="stamina"/>, its station level's (<c>ReenergizeCouriers</c>, <c>04</c> section 8).</summary>
+        internal void Reenergize(long stamina)
+        {
+            if (stamina < 0)
+            {
+                throw new InvalidOperationException(FormattableString.Invariant($"Courier {StationId}/{Slot}: a stamina of {stamina} is below 0."));
+            }
+
+            Stamina = stamina;
+        }
+
+        /// <summary>Starts its walk home from <paramref name="departedAt"/> to <paramref name="arrivesAt"/>, tired (<c>04</c> section 19).</summary>
+        internal void ReturnHome(long departedAt, long arrivesAt)
+        {
+            if (departedAt < 0 || arrivesAt <= departedAt)
+            {
+                throw new InvalidOperationException(FormattableString.Invariant($"Courier {StationId}/{Slot}: a walk home from {departedAt} to {arrivesAt} is not a walk."));
+            }
+
+            State = CourierState.Returning;
+            ToStop = 0;
+            DepartedAt = departedAt;
+            ArrivesAt = arrivesAt;
+        }
+
         /// <summary>Ends whatever it does and puts it at its station, ready to leave (its load is the caller's business).</summary>
         internal void StandAtStation()
         {

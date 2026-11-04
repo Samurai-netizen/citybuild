@@ -25,6 +25,10 @@ namespace CityBuilder.Simulation.Settlement
         private readonly List<int> _completedBuildings = new List<int>();
         /// <summary>The research nodes that completed, in time order until <see cref="Build"/> sorts them.</summary>
         private readonly List<ResearchId> _completedResearch = new List<ResearchId>();
+        /// <summary>The couriers whose stamina ran out, in time order until <see cref="Build"/> sorts them by (station, slot).</summary>
+        private readonly List<TiredCourier> _tiredCouriers = new List<TiredCourier>();
+        /// <summary>The most stamina, in seconds, one courier has spent so far in the advance.</summary>
+        private long _courierSeconds;
 
         /// <summary>Counts the outputs of a completed cycle.</summary>
         public void AddProduced(IReadOnlyList<ItemQuantity> outputs) => Add(_produced, outputs);
@@ -47,6 +51,18 @@ namespace CityBuilder.Simulation.Settlement
         /// <summary>Records a completed research node.</summary>
         public void AddCompletedResearch(ResearchId researchId) => _completedResearch.Add(researchId);
 
+        /// <summary>Notes what one courier has spent in the advance so far, in seconds: the report keeps the most (<c>04</c> section 11).</summary>
+        public void RecordCourierSeconds(long spentSoFar)
+        {
+            if (spentSoFar > _courierSeconds)
+            {
+                _courierSeconds = spentSoFar;
+            }
+        }
+
+        /// <summary>Notes a courier whose stamina reached 0 at <paramref name="at"/>; a courier tires at most once per advance (only a mutation re-energizes).</summary>
+        public void AddTiredCourier(int stationId, int slot, long at) => _tiredCouriers.Add(new TiredCourier(stationId, slot, at));
+
         /// <summary>
         /// Makes the report. Completions are recorded in time order; the report lists them sorted. A building completes at most one
         /// construction or upgrade per advance, because only a mutation orders one (a delivery only starts what was ordered), so each id appears once.
@@ -55,6 +71,7 @@ namespace CityBuilder.Simulation.Settlement
         {
             _completedBuildings.Sort();
             _completedResearch.Sort();
+            _tiredCouriers.Sort((left, right) => left.StationId != right.StationId ? left.StationId.CompareTo(right.StationId) : left.Slot.CompareTo(right.Slot));
             return new SettlementReport(
                 elapsedSeconds,
                 productionSeconds,
@@ -65,7 +82,9 @@ namespace CityBuilder.Simulation.Settlement
                 _refunded,
                 _completedBuildings.AsReadOnly(),
                 _completedResearch.AsReadOnly(),
-                eraChanged: false);
+                eraChanged: false,
+                _courierSeconds,
+                _tiredCouriers.AsReadOnly());
         }
 
         /// <summary>Adds each amount to its item's total, <c>checked</c> (<c>04</c> section 9): an overflow throws instead of wrapping around.</summary>

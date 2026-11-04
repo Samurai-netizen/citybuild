@@ -26,13 +26,18 @@ namespace CityBuilder.Simulation.Settlement
         /// <param name="city">The city; it changes in place.</param>
         /// <param name="content">The game content the city was built with.</param>
         /// <param name="elapsedSeconds">The seconds to advance. 0 is a zero-length advance; a value below 0 counts as 0.</param>
+        /// <param name="absentFrom">
+        /// The city-clock second the player is absent from (<c>04</c> section 2), which the server derives from its own presence record; null
+        /// when the player is present for the whole window (the client's display prediction always passes null). Couriers spend stamina only
+        /// on walks, for the part of each walk at or after it.
+        /// </param>
         /// <returns>What happened during the window.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="city"/> or <paramref name="content"/> is null.</exception>
         /// <exception cref="InvalidOperationException">
         /// A timer or a trip of the city is due before its clock, or the city names a building type the content doesn't know. Nothing has
         /// changed when something is due before the clock.
         /// </exception>
-        public static SettlementReport Advance(CityState city, GameContent content, long elapsedSeconds)
+        public static SettlementReport Advance(CityState city, GameContent content, long elapsedSeconds, long? absentFrom = null)
         {
             if (city is null)
             {
@@ -54,7 +59,7 @@ namespace CityBuilder.Simulation.Settlement
             // building completions by id, then trip arrivals by trip id, then courier arrivals by (station, slot); the mailbox deliveries of 04
             // section 13 will go before the buildings.
             BuildingTimerQueue timers = BuildingTimerQueue.Of(city);
-            var couriers = new CourierArrivalSource(city, content, timers, new WalkTimes(city, content), productionUntil);
+            var couriers = new CourierArrivalSource(city, content, timers, new WalkTimes(city, content), productionUntil, absentFrom);
             IEventSource[] sources = { new ResearchTimerSource(), new BuildingTimerSource(timers), new TripArrivalSource(city, timers), couriers };
             long? firstDueAt = NextDueAt(sources, city);
             if (firstDueAt < start)

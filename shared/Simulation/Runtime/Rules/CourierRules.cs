@@ -8,7 +8,7 @@ namespace CityBuilder.Simulation.Rules
 {
     /// <summary>
     /// Couriers and routes (<c>core-instructions/04-simulation-model.md</c>, sections 8 and 19): <see cref="SetRoute"/>, the mutation that gives
-    /// a station's slot its route, and the courier side of staffing a station and of starting its upgrade, which <see cref="CityRules"/> and
+    /// a station's slot its route, <see cref="ReenergizeCouriers"/>, which fills every courier's stamina again, and the courier side of staffing a station and of starting its upgrade, which <see cref="CityRules"/> and
     /// the project rules call. Couriers walk their routes in <see cref="Settlement.Simulator"/>.
     /// </summary>
     public static class CourierRules
@@ -133,6 +133,42 @@ namespace CityBuilder.Simulation.Rules
                     StopWorking(city, couriers[index]);
                 }
             }
+        }
+
+        /// <summary>
+        /// Re-energizes every courier of the city (<c>04</c> section 8): its stamina is its station level's <see cref="BuildingLevelDefinition.StaminaSeconds"/>
+        /// again; a resting courier stands at its station with its load, ready to leave in the request's zero-length advance, and a returning
+        /// one stands there when it arrives (section 19). It always succeeds and moves no goods, so the result spends and refunds nothing.
+        /// </summary>
+        /// <param name="city">The city, settled to now.</param>
+        /// <param name="content">The game content.</param>
+        /// <returns>Ok.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="city"/> or <paramref name="content"/> is null.</exception>
+        public static MutationResult ReenergizeCouriers(CityState city, GameContent content)
+        {
+            if (city is null)
+            {
+                throw new ArgumentNullException(nameof(city));
+            }
+
+            if (content is null)
+            {
+                throw new ArgumentNullException(nameof(content));
+            }
+
+            IReadOnlyList<Courier> couriers = city.Couriers;
+            for (int index = 0; index < couriers.Count; index++)
+            {
+                Courier courier = couriers[index];
+                Building station = city.Buildings[city.IndexOfBuilding(courier.StationId)];
+                courier.Reenergize(CityQueries.DefinitionOf(content, station.TypeId).GetLevel(station.Level).StaminaSeconds);
+                if (courier.State == CourierState.Resting)
+                {
+                    courier.StandAtStation();
+                }
+            }
+
+            return MutationResult.Ok;
         }
 
         /// <summary>A courier stops working (<c>04</c> section 19): its load goes back, and it stands at its station unless it rests.</summary>

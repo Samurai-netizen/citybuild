@@ -20,7 +20,9 @@ namespace CityBuilder.Simulation.Settlement
             IReadOnlyDictionary<ItemId, long> refunded,
             IReadOnlyList<int> completedBuildings,
             IReadOnlyList<ResearchId> completedResearch,
-            bool eraChanged)
+            bool eraChanged,
+            long courierSeconds,
+            IReadOnlyList<TiredCourier> tiredCouriers)
         {
             ElapsedSeconds = elapsedSeconds;
             ProductionSeconds = productionSeconds;
@@ -32,6 +34,8 @@ namespace CityBuilder.Simulation.Settlement
             CompletedBuildings = completedBuildings;
             CompletedResearch = completedResearch;
             EraChanged = eraChanged;
+            CourierSeconds = courierSeconds;
+            TiredCouriers = tiredCouriers;
         }
 
         /// <summary>The seconds the city clock moved: the elapsed time asked for, or 0 when that was below 0.</summary>
@@ -69,5 +73,14 @@ namespace CityBuilder.Simulation.Settlement
 
         /// <summary>Whether the city entered a new era. Always false until the era transition exists (M2, <c>25</c>).</summary>
         public bool EraChanged { get; }
+
+        /// <summary>
+        /// The most stamina one courier spent during the advance, in seconds (<c>04</c> sections 2 and 11): 0 when none did, so always 0 while
+        /// the player is present. A walk spends at its arrival.
+        /// </summary>
+        public long CourierSeconds { get; }
+
+        /// <summary>The couriers whose stamina ran out during the advance, by (station, slot), each with the second it did.</summary>
+        public IReadOnlyList<TiredCourier> TiredCouriers { get; }
     }
 }

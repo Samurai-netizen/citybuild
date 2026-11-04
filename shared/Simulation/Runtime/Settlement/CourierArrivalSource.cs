@@ -9,8 +9,9 @@ namespace CityBuilder.Simulation.Settlement
 {
     /// <summary>
     /// Couriers in an advance (<c>core-instructions/04-simulation-model.md</c>, sections 6 and 19). Their arrivals are step 4 of the order at one
-    /// second, after the trips, in ascending (station, slot): at a stop a courier does the stop's actions in order, then walks to the next stop
-    /// (after the last, the first); at home it stands at its station, or rests without stamina. Their departures are the last part of step 5
+    /// second, after the trips, in ascending (station, slot): every arrival first spends the walk's stamina from the absence start on
+    /// (<c>04</c> section 2); at a stop a courier does the stop's actions in order, then walks to the next stop (after the last, the first), or
+    /// home when its stamina reached 0; at home it stands at its station, or rests without stamina. Their departures are the last part of step 5
     /// (<see cref="StartWalks"/>): a courier at its station with a route and stamina, whose station is neither constructing nor upgrading,
     /// leaves for the first stop. Until CR-0008-T1 part H a courier that arrives after the production cap stops working instead (decision 45),
     /// and none leaves then (the start pass doesn't run). The arrivals are an indexed heap keyed by station and slot (the station's building
@@ -35,18 +36,26 @@ namespace CityBuilder.Simulation.Settlement
         /// <summary>The last second of the production window; a courier arriving later stops working (decision 45).</summary>
         private readonly long _productionUntil;
 
+        /// <summary>The city-clock second the player is absent from, or null when present for the whole advance (<c>04</c> section 2).</summary>
+        private readonly long? _absentFrom;
+
+        /// <summary>The stamina each courier spent so far in the advance, by <see cref="Key"/>, for the report's most (<c>04</c> section 11).</summary>
+        private readonly long[] _spent;
+
         /// <summary>The load parts a put took off a courier, reused from put to put.</summary>
         private readonly List<CourierLoad> _putParts = new List<CourierLoad>();
 
         /// <summary>Creates the source for one advance of the city.</summary>
-        public CourierArrivalSource(CityState city, GameContent content, BuildingTimerQueue timers, WalkTimes walks, long productionUntil)
+        public CourierArrivalSource(CityState city, GameContent content, BuildingTimerQueue timers, WalkTimes walks, long productionUntil, long? absentFrom)
         {
             _timers = timers;
             _walks = walks;
             _productionUntil = productionUntil;
+            _absentFrom = absentFrom;
             _slots = MostSlots(content);
             IReadOnlyList<Courier> couriers = city.Couriers;
             _arrivals = new TimerHeap(checked(city.Buildings.Count * _slots));
+            _spent = new long[checked(city.Buildings.Count * _slots)];
             for (int index = 0; index < couriers.Count; index++)
             {
                 long? arrivesAt = couriers[index].ArrivesAt;
@@ -108,9 +117,13 @@ namespace CityBuilder.Simulation.Settlement
             }
         }
 
-        /// <summary>What a courier does when it arrives at <paramref name="time"/>: at home it stands or rests; at a stop it acts and walks on.</summary>
+        /// <summary>
+        /// What a courier does when it arrives at <paramref name="time"/>: it spends the walk's stamina, then at home stands or rests; at a stop it
+        /// acts and walks on, or home when it is tired.
+        /// </summary>
         private void Arrive(CityState city, GameContent content, Courier courier, long time, SettlementReportBuilder report)
         {
+            SpendWalk(city, courier, time, report);
             if (courier.State == CourierState.Returning)
             {
                 if (courier.Stamina < 1)
@@ -133,9 +146,50 @@ namespace CityBuilder.Simulation.Settlement
 
             RouteStop stop = route.Stops[courier.ToStop - 1];
             int building = city.IndexOfBuilding(stop.BuildingId);
-            if (RunActions(city, content, courier, stop, building, time, report))
+            if (!RunActions(city, content, courier, stop, building, time, report))
             {
-                WalkOn(city, courier, building, route, (courier.ToStop % route.Stops.Count) + 1, time);
+                return;
+            }
+
+            if (courier.Stamina < 1)
+            {
+                // Tired: it did this stop's actions and walks home with what it carries (04 section 19).
+                int station = city.IndexOfBuilding(courier.StationId);
+                long home = checked(time + _walks.Seconds(building, station));
+                courier.ReturnHome(time, home);
+                _arrivals.Set(Key(city, courier), home);
+                return;
+            }
+
+            WalkOn(city, courier, building, route, (courier.ToStop % route.Stops.Count) + 1, time);
+        }
+
+        /// <summary>
+        /// Spends the stamina of the walk that ends now (<c>04</c> section 2): the part of it from the absence start on, <c>max(0, a − max(d,
+        /// absentFrom))</c>, at most what is left; nothing while the player is present. Notes the courier's total for the report and, when the
+        /// last of its stamina goes, that it is tired at this second.
+        /// </summary>
+        private void SpendWalk(CityState city, Courier courier, long time, SettlementReportBuilder report)
+        {
+            if (!_absentFrom.HasValue || courier.Stamina < 1)
+            {
+                return;
+            }
+
+            // A courier that arrives walked since its DepartedAt; the walk is set exactly while it walks.
+            long from = Math.Max(courier.DepartedAt!.Value, _absentFrom.Value);
+            long spent = courier.Spend(time - from);
+            if (spent < 1)
+            {
+                return;
+            }
+
+            int key = Key(city, courier);
+            _spent[key] = checked(_spent[key] + spent);
+            report.RecordCourierSeconds(_spent[key]);
+            if (courier.Stamina < 1)
+            {
+                report.AddTiredCourier(courier.StationId, courier.Slot, time);
             }
         }
 

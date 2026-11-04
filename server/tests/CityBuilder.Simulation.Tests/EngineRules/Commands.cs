@@ -33,6 +33,9 @@ internal static class Commands
     public static void SetRoute(CityState city, int stationId, int slot, RouteStop[] stops) =>
         Run(city, target => CourierRules.SetRoute(target, TestContent, stationId, slot, stops));
 
+    /// <summary>Re-energizes every courier on the test content and ends with the zero-length advance (CR-0008-T1 part H).</summary>
+    public static void ReenergizeCouriers(CityState city) => Run(city, target => CourierRules.ReenergizeCouriers(target, TestContent));
+
     /// <summary>Applies a mutation, asserts it was applied, and ends with the zero-length advance every city request ends with (<c>04</c> section 7).</summary>
     private static void Run(CityState city, Func<CityState, MutationResult> mutation)
     {
