@@ -200,9 +200,10 @@ public sealed class SettleCityTests
         FakeTimeProvider clock = ClockAtLastSettled();
         IContentProvider content = new FixedContent(SettleFixture.Content);
 
-        Assert.Throws<ArgumentNullException>("transactions", () => new SettleCity(null!, content, clock));
-        Assert.Throws<ArgumentNullException>("content", () => new SettleCity(runner, null!, clock));
-        Assert.Throws<ArgumentNullException>("timeProvider", () => new SettleCity(runner, content, null!));
+        Assert.Throws<ArgumentNullException>("transactions", () => new SettleCity(null!, content, clock, Presence));
+        Assert.Throws<ArgumentNullException>("content", () => new SettleCity(runner, null!, clock, Presence));
+        Assert.Throws<ArgumentNullException>("timeProvider", () => new SettleCity(runner, content, null!, Presence));
+        Assert.Throws<ArgumentNullException>("presence", () => new SettleCity(runner, content, clock, null!));
     }
 
     /// <summary>

@@ -26,6 +26,8 @@ public sealed class CityAggregate
     /// <param name="lastSettledUnixSec">The server second, since the Unix epoch, the city was last settled at.</param>
     /// <param name="stateVersion">The stored version of the city, 0 or more; a save writes the next one (<c>06</c>, <c>state_version</c>).</param>
     /// <param name="contentVersion">The content version the city was last settled with; not blank.</param>
+    /// <param name="lastSeenUnixSec">The server second, since the Unix epoch, of the player's last request that settled the city
+    /// (<c>04</c> section 2); null means <paramref name="lastSettledUnixSec"/>, which every request so far also was.</param>
     /// <exception cref="ArgumentException">A value breaks one of the rules above.</exception>
     /// <exception cref="ArgumentNullException">A reference is null.</exception>
     public CityAggregate(
@@ -35,7 +37,8 @@ public sealed class CityAggregate
         IEnumerable<KeyValuePair<ResearchId, long>> researchCompletedAt,
         long lastSettledUnixSec,
         long stateVersion,
-        string contentVersion)
+        string contentVersion,
+        long? lastSeenUnixSec = null)
     {
         ArgumentNullException.ThrowIfNull(state);
         ArgumentNullException.ThrowIfNull(researchCompletedAt);
@@ -71,6 +74,7 @@ public sealed class CityAggregate
         PlayerId = playerId;
         State = state;
         LastSettledUnixSec = lastSettledUnixSec;
+        LastSeenUnixSec = lastSeenUnixSec ?? lastSettledUnixSec;
         StateVersion = stateVersion;
         ContentVersion = contentVersion;
         ResearchCompletedAt = _researchCompletedAt.AsReadOnly();
@@ -94,6 +98,12 @@ public sealed class CityAggregate
     /// <summary>The server second, since the Unix epoch, the city was last settled at. It never decreases.</summary>
     public long LastSettledUnixSec { get; private set; }
 
+    /// <summary>
+    /// The server second, since the Unix epoch, of the player's last request that settled the city: the start of their presence grace
+    /// (<c>04</c> section 2). It never decreases; <see cref="MarkSeen"/> records the next one.
+    /// </summary>
+    public long LastSeenUnixSec { get; private set; }
+
     /// <summary>The stored version of the city, as loaded; a save writes this plus 1, and the stored row must still have this one.</summary>
     public long StateVersion { get; }
 
@@ -106,12 +116,14 @@ public sealed class CityAggregate
     /// </summary>
     /// <param name="content">The game content.</param>
     /// <param name="elapsedSeconds">The seconds to advance; 0 is the zero-length advance every command ends with.</param>
+    /// <param name="absentFrom">The city-clock second from which the player counts as away (<see cref="PresencePolicy"/>); null: present the
+    /// whole window, as in a zero-length advance.</param>
     /// <returns>The engine's report of the advance.</returns>
     /// <exception cref="InvalidOperationException">The engine completed a research that wasn't running (an engine bug).</exception>
-    public SettlementReport Advance(GameContent content, long elapsedSeconds)
+    public SettlementReport Advance(GameContent content, long elapsedSeconds, long? absentFrom = null)
     {
         ActiveResearch? running = State.ActiveResearch;
-        SettlementReport report = Simulator.Advance(State, content, elapsedSeconds);
+        SettlementReport report = Simulator.Advance(State, content, elapsedSeconds, absentFrom);
         foreach (ResearchId completed in report.CompletedResearch)
         {
             // One research slot, and only commands start research, so at most the one running at the start completes; it completes at its
@@ -126,6 +138,13 @@ public sealed class CityAggregate
 
         return report;
     }
+
+    /// <summary>
+    /// Records that the player made a request at <paramref name="unixSec"/> (<c>04</c> section 2): the last-seen second becomes it, unless
+    /// it is earlier (a server clock set back), so it never decreases.
+    /// </summary>
+    /// <param name="unixSec">The server second of the request.</param>
+    public void MarkSeen(long unixSec) => LastSeenUnixSec = Math.Max(LastSeenUnixSec, unixSec);
 
     /// <summary>Records the settlement that ended at <paramref name="lastSettledUnixSec"/>, run with <paramref name="contentVersion"/>.</summary>
     /// <param name="lastSettledUnixSec">The new last settled second, from the settlement window.</param>

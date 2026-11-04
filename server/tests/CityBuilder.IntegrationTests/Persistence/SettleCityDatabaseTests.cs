@@ -38,7 +38,7 @@ public sealed class SettleCityDatabaseTests(PostgresServer server) : PostgresTes
     /// <summary>
     /// The starter city (no buildings) after 0 s, 30 s and 2 h: the clock and the last settled second move by the elapsed seconds and nothing
     /// is produced, so no ledger rows. After 0 s nothing changed: the city isn't saved and keeps its version and <c>updated_at</c>; otherwise
-    /// it is saved once, at the next version.
+    /// it is saved once, at the next version, with the request's second as <c>last_seen_unix</c> (<c>04</c> section 2).
     /// </summary>
     /// <param name="seconds">The seconds since the city was last settled.</param>
     /// <param name="saved">Whether the settle changes anything.</param>
@@ -59,6 +59,7 @@ public sealed class SettleCityDatabaseTests(PostgresServer server) : PostgresTes
         Assert.Equal(saved, result.Saved);
         Assert.Equal(saved ? _storedVersion + 1 : _storedVersion, after.StateVersion);
         Assert.Equal((seconds, before.LastSettledUnix + seconds), (after.ClockSeconds, after.LastSettledUnix));
+        Assert.Equal(before.LastSeenUnix + seconds, after.LastSeenUnix);
         Assert.Equal(saved, after.UpdatedAt != before.UpdatedAt);
         Assert.Empty(await LedgerAsync(Database, _cityId));
         Assert.Equal(Describe(TotalsOf(starter.State)), Describe(await InventoryAsync(_cityId)));

@@ -28,7 +28,7 @@ internal static class PipelineFixture
     /// its own, with a new <see cref="CityTransactionRunner"/>, so a test can send commands again and again.
     /// </summary>
     public static CommandPipeline Pipeline(InMemoryCityRepository repository, TimeProvider clock) =>
-        new(new RunnerPerRequest(repository), repository, new FixedContent(SettleFixture.Content), clock);
+        new(new RunnerPerRequest(repository), repository, new FixedContent(SettleFixture.Content), clock, SettleFixture.Presence);
 
     /// <summary>
     /// A response writer that records <c>respond</c> and writes the request id, the new state version, the city clock, the server second

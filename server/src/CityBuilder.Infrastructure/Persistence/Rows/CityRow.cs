@@ -21,6 +21,9 @@ public sealed class CityRow
     /// <summary><c>last_settled_unix</c>: the server time (Unix seconds) of the last settlement.</summary>
     public long LastSettledUnix { get; set; }
 
+    /// <summary><c>last_seen_unix</c>: the server time (Unix seconds) of the player's last request that settled the city (CR-0008).</summary>
+    public long LastSeenUnix { get; set; }
+
     /// <summary><c>next_building_id</c>: the id the next placed building gets.</summary>
     public int NextBuildingId { get; set; }
 

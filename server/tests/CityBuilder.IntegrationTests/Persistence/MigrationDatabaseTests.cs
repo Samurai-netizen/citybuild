@@ -79,6 +79,30 @@ public sealed class MigrationDatabaseTests(PostgresServer server) : PostgresTest
     }
 
     /// <summary>
+    /// <c>AddLastSeen</c> (CR-0008-T1 part H) gives a stored city a last-seen second equal to its last settled one: every settle so far was
+    /// the player's request, so no one counts as away since 1970.
+    /// </summary>
+    [Fact]
+    public async Task Migrate_AddLastSeen_SetsLastSeenToLastSettled()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        await using CityBuilderDbContext db = Database.CreateContext();
+        IMigrator migrator = db.GetService<IMigrator>();
+        await migrator.MigrateAsync("20261104190147_AddCouriersAndRoutes", cancellationToken: cancellationToken);
+        await db.Database.ExecuteSqlRawAsync(
+            "INSERT INTO players (id, dev_name, created_at) VALUES ('91a7e400-0000-4000-8000-000000000002', 'dev2', now()); " +
+            "INSERT INTO cities (id, player_id, era, clock_seconds, last_settled_unix, next_building_id, purse, next_trip_id, state_version, " +
+            "content_version, created_at, updated_at) VALUES ('c17e0000-0000-4000-8000-000000000002', '91a7e400-0000-4000-8000-000000000002', " +
+            "1, 60, 1790000123, 2, 800, 1, 3, 'mvp-2', now(), now());",
+            cancellationToken);
+
+        await migrator.MigrateAsync(cancellationToken: cancellationToken);
+
+        var city = await db.Cities.AsNoTracking().Select(row => new { row.LastSettledUnix, row.LastSeenUnix }).SingleAsync(cancellationToken);
+        Assert.Equal((1_790_000_123L, 1_790_000_123L), (city.LastSettledUnix, city.LastSeenUnix));
+    }
+
+    /// <summary>
     /// The logistics migration resets the dev database (CR-0008 D10, the owner's OK): a player with a city, a receipt and ledger rows stored
     /// under <c>AddCityRoads</c> are all gone after <c>LogisticsStoresTripsAndReset</c>, so the dev name logs in to a new starting city.
     /// </summary>

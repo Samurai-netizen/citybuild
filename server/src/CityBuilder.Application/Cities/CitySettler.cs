@@ -28,6 +28,8 @@ internal sealed class CitySettler
     private readonly DateTimeOffset _now;
     /// <summary>The last settled second before the settlement.</summary>
     private readonly long _settledBefore;
+    /// <summary>The player's last-seen second before the settlement (<see cref="CityAggregate.LastSeenUnixSec"/>).</summary>
+    private readonly long _seenBefore;
     /// <summary>The content version before the settlement.</summary>
     private readonly string _contentBefore;
     /// <summary>The city's total of each item before the settlement: stores, loads and, for the currency, the purse (<c>04</c> section 16).</summary>
@@ -50,12 +52,14 @@ internal sealed class CitySettler
     /// <param name="city">The locked city.</param>
     /// <param name="content">The game content.</param>
     /// <param name="now">The server time, read under the lock.</param>
-    private CitySettler(CityAggregate city, GameContent content, DateTimeOffset now)
+    /// <param name="presence">When the player counts as away.</param>
+    private CitySettler(CityAggregate city, GameContent content, DateTimeOffset now, PresencePolicy presence)
     {
         _city = city;
         _content = content;
         _now = now;
         _settledBefore = city.LastSettledUnixSec;
+        _seenBefore = city.LastSeenUnixSec;
         _contentBefore = city.ContentVersion;
         _quantitiesBefore = Totals(city.State, content);
         _stateBefore = StateFingerprint(city.State);
@@ -63,12 +67,13 @@ internal sealed class CitySettler
         // ToUnixTimeSeconds rounds down (it divides ticks since year 1, which are never negative): 29.7 s is second 29. Each window starts at
         // the second the last one ended, so the dropped fractions are never lost, only counted by a later settlement.
         _window = SettlementWindow.Compute(_settledBefore, now.ToUnixTimeSeconds());
-        _advance = city.Advance(content, _window.ElapsedSeconds);
+        _advance = city.Advance(content, _window.ElapsedSeconds, presence.AbsentFrom(city));
         city.MarkSettled(_window.NewLastSettledUnixSec, content.ContentVersion);
+        city.MarkSeen(now.ToUnixTimeSeconds());
     }
 
     /// <summary>
-    /// Whether the settlement changed the city: the clock or the content version moved, the report is not empty, the state changed in a way the
+    /// Whether the settlement changed the city: the clock, the last-seen second or the content version moved, the report is not empty, the state changed in a way the
     /// report doesn't show (a cycle without inputs starting, a trip bringing its whole load back, a research timer starting), or a command was
     /// recorded. Known once <see cref="Close"/> has run.
     /// </summary>
@@ -78,26 +83,30 @@ internal sealed class CitySettler
         get
         {
             Settlement settlement = ClosedSettlement();
-            return _command is not null || _city.LastSettledUnixSec != _settledBefore || _city.ContentVersion != _contentBefore
+            return _command is not null || _city.LastSettledUnixSec != _settledBefore || _city.LastSeenUnixSec != _seenBefore
+                || _city.ContentVersion != _contentBefore
                 || !settlement.IsEmpty || _stateBefore != StateFingerprint(_city.State);
         }
     }
 
     /// <summary>
     /// Begins the settlement of the locked city: records it as it is, advances it by the server seconds from its last settled second to
-    /// <paramref name="now"/> (every timer, cycle start and walk of the window, with no cap), and
-    /// records the new last settled second and content version.
+    /// <paramref name="now"/> (every timer, cycle start and walk of the window, with no cap; couriers spend stamina only after the player's
+    /// absence starts, <see cref="PresencePolicy.AbsentFrom"/>), and records the new last settled second, the content version and
+    /// <paramref name="now"/> as the player's last-seen second (<c>04</c> section 2).
     /// </summary>
     /// <param name="city">The acting player's city, locked in its transaction.</param>
     /// <param name="content">The game content.</param>
     /// <param name="now">The server time, read under the lock: a request that waited for the lock settles from where the one before it ended.</param>
+    /// <param name="presence">When the player counts as away.</param>
     /// <returns>The settlement, advanced; record a command or close it next.</returns>
     /// <exception cref="ArgumentNullException">A reference is null.</exception>
-    public static CitySettler Begin(CityAggregate city, GameContent content, DateTimeOffset now)
+    public static CitySettler Begin(CityAggregate city, GameContent content, DateTimeOffset now, PresencePolicy presence)
     {
         ArgumentNullException.ThrowIfNull(city);
         ArgumentNullException.ThrowIfNull(content);
-        return new CitySettler(city, content, now);
+        ArgumentNullException.ThrowIfNull(presence);
+        return new CitySettler(city, content, now, presence);
     }
 
     /// <summary>

@@ -43,6 +43,7 @@ public sealed class CityMappingTests
         Assert.Equal(2, row.Era);
         Assert.Equal(Clock, row.ClockSeconds);
         Assert.Equal(1_790_000_000, row.LastSettledUnix);
+        Assert.Equal(LastSeen, row.LastSeenUnix);
         Assert.Equal(10, row.NextBuildingId);
         Assert.Equal("forestry", row.ResearchId);
         Assert.Equal(300, row.ResearchStartedAt);

@@ -56,6 +56,7 @@ public static class CityMapping
             Era = checked((short)state.Era),
             ClockSeconds = state.Clock,
             LastSettledUnix = city.LastSettledUnixSec,
+            LastSeenUnix = city.LastSeenUnixSec,
             NextBuildingId = state.NextBuildingId,
             Purse = state.Purse,
             NextTripId = state.NextTripId,
@@ -188,7 +189,8 @@ public static class CityMapping
             IEnumerable<KeyValuePair<ResearchId, long>> completedAt =
                 rows.Research.Select(row => new KeyValuePair<ResearchId, long>(new ResearchId(row.ResearchId), row.CompletedAt));
 
-            return new CityAggregate(city.Id, city.PlayerId, state, completedAt, city.LastSettledUnix, city.StateVersion, city.ContentVersion);
+            return new CityAggregate(
+                city.Id, city.PlayerId, state, completedAt, city.LastSettledUnix, city.StateVersion, city.ContentVersion, city.LastSeenUnix);
         }
         catch (ArgumentException exception)
         {

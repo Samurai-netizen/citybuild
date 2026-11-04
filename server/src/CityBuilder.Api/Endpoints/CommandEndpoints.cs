@@ -6,6 +6,7 @@ using CityBuilder.Api.Http;
 using CityBuilder.Application.Commands;
 using CityBuilder.Application.Commands.AssignWorkers;
 using CityBuilder.Application.Commands.PlaceBuilding;
+using CityBuilder.Application.Commands.ReenergizeCouriers;
 using CityBuilder.Application.Commands.Roads;
 using CityBuilder.Application.Commands.SetRoute;
 using CityBuilder.Application.Commands.StartResearch;
@@ -45,6 +46,7 @@ public static class CommandEndpoints
         commands.MapPost("/remove-roads", RemoveRoadsAsync).Produces<CitySnapshot>(StatusCodes.Status200OK, "application/json");
         commands.MapPost("/start-trip", StartTripAsync).Produces<CitySnapshot>(StatusCodes.Status200OK, "application/json");
         commands.MapPost("/set-route", SetRouteAsync).Produces<CitySnapshot>(StatusCodes.Status200OK, "application/json");
+        commands.MapPost("/reenergize-couriers", ReenergizeCouriersAsync).Produces<CitySnapshot>(StatusCodes.Status200OK, "application/json");
         return commands;
     }
 
@@ -230,6 +232,36 @@ public static class CommandEndpoints
 
         var command = new SetRouteCommand(request.RequestId, request.StationId, request.Slot, ToCommandStops(request.Stops));
         return await ExecuteAsync(command, player, pipeline, content, json, loggers, cancellationToken);
+    }
+
+    /// <summary>
+    /// Re-energizes every courier of the acting player's city (<see cref="ReenergizeCouriersCommand"/>, CR-0008). The body names only the
+    /// request id: intent, no stamina; a body with an unknown property, a missing field or a value of the wrong type is refused by the
+    /// binding (400) before anything runs.
+    /// </summary>
+    /// <param name="request">The body, or <see langword="null"/> when there is none.</param>
+    /// <param name="player">The acting player, from the access token.</param>
+    /// <param name="pipeline">Runs the command.</param>
+    /// <param name="content">The server's content, for the snapshot.</param>
+    /// <param name="json">The HTTP JSON settings, so the snapshot reads as <c>GET /city</c>'s.</param>
+    /// <param name="loggers">Gives the logger of the command lines.</param>
+    /// <param name="cancellationToken">The request's cancellation; nothing is committed then.</param>
+    /// <returns>200 with the snapshot, or Problem Details.</returns>
+    private static async Task<Results<ContentHttpResult, ProblemHttpResult>> ReenergizeCouriersAsync(
+        ReenergizeCouriersRequest? request,
+        ICurrentPlayer player,
+        CommandPipeline pipeline,
+        IContentProvider content,
+        IOptions<HttpJsonOptions> json,
+        ILoggerFactory loggers,
+        CancellationToken cancellationToken)
+    {
+        if (request is null)
+        {
+            return ApiProblem.Of(ErrorCatalogue.InvalidArgument.WithDetail("The body must be a JSON object."));
+        }
+
+        return await ExecuteAsync(new ReenergizeCouriersCommand(request.RequestId), player, pipeline, content, json, loggers, cancellationToken);
     }
 
     /// <summary>

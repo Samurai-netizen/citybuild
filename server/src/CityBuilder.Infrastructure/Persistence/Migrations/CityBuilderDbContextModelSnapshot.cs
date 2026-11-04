@@ -368,6 +368,10 @@ namespace CityBuilder.Infrastructure.Persistence.Migrations
                         .HasColumnType("smallint")
                         .HasColumnName("era");
 
+                    b.Property<long>("LastSeenUnix")
+                        .HasColumnType("bigint")
+                        .HasColumnName("last_seen_unix");
+
                     b.Property<long>("LastSettledUnix")
                         .HasColumnType("bigint")
                         .HasColumnName("last_settled_unix");

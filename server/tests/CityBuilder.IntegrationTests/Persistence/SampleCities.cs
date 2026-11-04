@@ -87,7 +87,7 @@ internal static class SampleCities
                 Route(StationId, 2, (IdleId, [(true, "planks", "50%")]), (SiteId, [(false, "planks", "3")])),
             ]);
 
-        return new CityAggregate(CityId, PlayerId, state, [new(new ResearchId("masonry"), 120)], 1_790_000_000, 7, "content-1");
+        return new CityAggregate(CityId, PlayerId, state, [new(new ResearchId("masonry"), 120)], 1_790_000_000, 7, "content-1", LastSeen);
     }
 
     /// <summary>
@@ -123,7 +123,8 @@ internal static class SampleCities
             routes: [Route(StationId, 1, (ProducingId, [(true, "logs", "half")]), (7, [(false, "logs", "all")]), (SiteId, [(false, "logs", "quarter")]))]);
         KeyValuePair<ResearchId, long>[] completedAt = [new(new ResearchId("masonry"), 120), new(new ResearchId("forestry"), 86_700)];
 
-        return new CityAggregate(full.CityId, full.PlayerId, state, completedAt, full.LastSettledUnixSec, stateVersion, full.ContentVersion);
+        return new CityAggregate(
+            full.CityId, full.PlayerId, state, completedAt, full.LastSettledUnixSec, stateVersion, full.ContentVersion, full.LastSeenUnixSec);
     }
 
     /// <summary>
@@ -159,7 +160,14 @@ internal static class SampleCities
     /// <summary>The city as a load returns it after one save: the same values with the next state version.</summary>
     /// <param name="city">The city that was saved.</param>
     public static CityAggregate Saved(CityAggregate city) =>
-        new(city.CityId, city.PlayerId, city.State, city.ResearchCompletedAt, city.LastSettledUnixSec, city.StateVersion + 1, city.ContentVersion);
+        new(city.CityId, city.PlayerId, city.State, city.ResearchCompletedAt, city.LastSettledUnixSec, city.StateVersion + 1, city.ContentVersion,
+            city.LastSeenUnixSec);
+
+    /// <summary>
+    /// The full city's last-seen second: 100 s before it was last settled, so a mapping that writes the settled second into
+    /// <c>last_seen_unix</c> shows.
+    /// </summary>
+    public const long LastSeen = 1_789_999_900;
 
     /// <summary>A new city: clock 0, era 1, no coins, buildings or research, state version 0.</summary>
     public static CityAggregate Empty()
@@ -176,7 +184,7 @@ internal static class SampleCities
         CityState state = city.State;
         IEnumerable<string> lines =
         [
-            $"city {city.CityId} player {city.PlayerId} settled {city.LastSettledUnixSec} version {city.StateVersion} content {city.ContentVersion}",
+            $"city {city.CityId} player {city.PlayerId} settled {city.LastSettledUnixSec} seen {city.LastSeenUnixSec} version {city.StateVersion} content {city.ContentVersion}",
             $"clock {state.Clock}, era {state.Era}, next id {state.NextBuildingId}, purse {state.Purse}, next trip {state.NextTripId}",
             "research done " + string.Join(", ", city.ResearchCompletedAt.Select(done => $"{done.Key}@{done.Value}")),
             "research done (state) " + string.Join(", ", state.CompletedResearch),

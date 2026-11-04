@@ -23,7 +23,8 @@ public sealed partial class PersistenceModelTests
         ["cities"] =
         [
             ("id", "uuid", false), ("player_id", "uuid", false), ("era", "smallint", false), ("clock_seconds", "bigint", false),
-            ("last_settled_unix", "bigint", false), ("next_building_id", "integer", false), ("purse", "bigint", false),
+            ("last_settled_unix", "bigint", false), ("last_seen_unix", "bigint", false), ("next_building_id", "integer", false),
+            ("purse", "bigint", false),
             ("next_trip_id", "integer", false), ("research_id", "text", true),
             ("research_started_at", "bigint", true), ("research_ends_at", "bigint", true), ("state_version", "bigint", false),
             ("content_version", "text", false), ("created_at", "timestamp with time zone", false),

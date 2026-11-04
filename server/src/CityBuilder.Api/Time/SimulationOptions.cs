@@ -25,4 +25,14 @@ public sealed class SimulationOptions
     /// <see cref="MaxDevTimeScale"/>, and exactly 1 outside Development, or the start stops. The engine never sees it: the server clock does.
     /// </summary>
     public int DevTimeScale { get; set; } = MinDevTimeScale;
+
+    /// <summary>The highest allowed <see cref="PresenceGraceSeconds"/>: a day.</summary>
+    public const long MaxPresenceGraceSeconds = 86_400;
+
+    /// <summary>
+    /// <c>Simulation:PresenceGraceSeconds</c>: how long, in real seconds, the player still counts as present after a request
+    /// (<c>04</c> section 2): couriers spend stamina only after it. Default 300 (five minutes); 0 to <see cref="MaxPresenceGraceSeconds"/>.
+    /// The settle uses it times the clock's scale (<see cref="ServerClock.AddServerClock"/>), so it stays real time on a fast clock.
+    /// </summary>
+    public long PresenceGraceSeconds { get; set; } = 300;
 }

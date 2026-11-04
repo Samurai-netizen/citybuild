@@ -145,7 +145,10 @@ internal static class SettleFixture
     /// own, with a new <see cref="CityTransactionRunner"/> (<see cref="RunnerPerRequest"/>), so a test can settle with it again and again.
     /// </summary>
     public static SettleCity UseCase(InMemoryCityRepository repository, TimeProvider clock) =>
-        new(new RunnerPerRequest(repository), new FixedContent(Content), clock);
+        new(new RunnerPerRequest(repository), new FixedContent(Content), clock, Presence);
+
+    /// <summary>The server's presence policy: the player counts as away 300 s after a request (<c>04</c> section 2).</summary>
+    public static PresencePolicy Presence { get; } = new(300);
 
     /// <summary>The city's state as text, field by field, so two cities compare in one assertion that shows the first difference.</summary>
     public static string Describe(CityState city)

@@ -23,6 +23,7 @@ public sealed class CityConfiguration : IEntityTypeConfiguration<CityRow>
         builder.Property(c => c.Era).HasColumnName("era");
         builder.Property(c => c.ClockSeconds).HasColumnName("clock_seconds");
         builder.Property(c => c.LastSettledUnix).HasColumnName("last_settled_unix");
+        builder.Property(c => c.LastSeenUnix).HasColumnName("last_seen_unix");
         builder.Property(c => c.NextBuildingId).HasColumnName("next_building_id");
         builder.Property(c => c.Purse).HasColumnName("purse");
         builder.Property(c => c.NextTripId).HasColumnName("next_trip_id");
