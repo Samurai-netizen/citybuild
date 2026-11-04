@@ -102,7 +102,7 @@ public sealed class WorkerLaborDatabaseTests(PostgresServer server) : PostgresTe
         string run = $"seed {seed}";
         AssertSnapshotAgrees(end, assigned, run + ", end");
         long clock = (long)end["city"]!["clock"]!;
-        long logs = (long?)end["city"]!["inventory"]!["logs"] ?? 0;
+        long logs = (long)end["city"]!["totals"]!["logs"]!;
         long inCycles = LaborDone(Find(end, 2), clock) + LaborDone(Find(end, 3), clock);
         long accounted = (_laborPerLog * logs) + inCycles;
         string totals = $"{run}: delivered {delivered}, logs {logs}, in cycles {inCycles}";
