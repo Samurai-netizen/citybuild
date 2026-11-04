@@ -33,7 +33,7 @@
 
 ## Progress
 - Steps 1-6 done: 49 models (5 grass and dirt tiles, 2 road tiles, 6 nature models, the worker, the courier, 2 loads, the smoke puff,
-  13 buildings, 9 store fill models, 9 item props) built by `blender/build_all.py`, every check passing (tile bounds with every moving
+  14 building models, 8 store fill models, 9 item props) built by `blender/build_all.py`, every check passing (tile bounds with every moving
   part along its cycle and the full store, floor, triangle budgets, one material, anchors, poses, fill steps, road arms).
 
 - Step 7 done: `previews/` (lineups, a CR-0008 town, eight GIFs of moving parts with the store filling, a sheet of their frames),
@@ -48,6 +48,9 @@
 
 - Step 10 done: the fit test on `claude/visual-v2-fit-test` (`FIT-TEST.md`); the wiring of today's client is `unity-wiring.patch`.
 - Step 11 done: `README.md` (contents, pictures, rebuild, adoption), this log.
+- 2026-11-04, after the close-out, at the owner's request ("Do it", to the offer of the previews on a page for the phone): a private
+  page with every preview, published as an Artifact: https://claude.ai/artifact/B8XjuyHGiaafZ3owaxNzKX. Writing its facts corrected two
+  counts in this log and `FIT-TEST.md`: 14 building models and 8 store fill models (not 13 and 9).
 
 ## Verification
 - `blender -b --factory-startup --python visual-v2/blender/build_all.py -- --no-render`: all 49 models pass every check (Blender 5.2.3,
