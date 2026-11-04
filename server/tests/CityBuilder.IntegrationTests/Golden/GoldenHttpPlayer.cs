@@ -74,6 +74,15 @@ internal sealed class GoldenHttpPlayer : IDisposable
     public Task<JsonNode> AssignWorkersAsync(int buildingId, int workers) =>
         PostAsync("assign-workers", new { requestId = Guid.NewGuid(), buildingId, workers });
 
+    /// <summary><c>POST /api/v1/commands/start-trip</c> with a new request id (CR-0008).</summary>
+    /// <param name="sourceId">The building the goods come from.</param>
+    /// <param name="targetId">The building they go to.</param>
+    /// <param name="itemId">The good.</param>
+    /// <param name="amount">The amount in its text form: a preset id, a percentage or a number.</param>
+    /// <returns>The snapshot.</returns>
+    public Task<JsonNode> StartTripAsync(int sourceId, int targetId, string itemId, string amount) =>
+        PostAsync("start-trip", new { requestId = Guid.NewGuid(), sourceId, targetId, itemId, amount });
+
     /// <summary>Disposes the client.</summary>
     public void Dispose() => _client.Dispose();
 
