@@ -108,7 +108,9 @@ namespace CityBuilder.Client.Tests.PlayMode
                 new SnapshotResearchDto(null, null, null, none, new List<string>()),
                 buildings,
                 new List<SnapshotRoadDto>(),
-                new List<SnapshotTripDto>());
+                new List<SnapshotTripDto>(),
+                new List<SnapshotCourierDto>(),
+                new List<SnapshotRouteDto>());
             return json.Serialize(new CitySnapshotDto(real.RequestId, stateVersion, real.ServerTimeUtc, real.ContentVersion, cityDto, real.Settlement));
         }
 

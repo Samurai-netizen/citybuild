@@ -80,7 +80,8 @@ namespace CityBuilder.Client.Tests.EditMode.Core
 
         /// <summary>
         /// Every stored value of <paramref name="city"/> as text. A building's values are read by reflection, so a field added to
-        /// <see cref="Building"/> later is compared too, and a copy that forgets it fails; its store and needs are listed by good.
+        /// <see cref="Building"/> later is compared too, and a copy that forgets it fails; its store and needs are listed by good. Trips,
+        /// couriers with their loads and routes with their stops follow (CR-0008).
         /// </summary>
         public static string Describe(CityState city)
         {
@@ -91,11 +92,20 @@ namespace CityBuilder.Client.Tests.EditMode.Core
             IEnumerable<string> trips = city.Trips.Select(
                 trip => "trip " + trip.Id + " " + trip.SourceId + "->" + trip.TargetId + " " + trip.Quantity + " " + trip.Item + " " + trip.DepartedAt
                     + " to " + trip.ArrivesAt);
+            IEnumerable<string> couriers = city.Couriers.Select(
+                courier => "courier " + courier.StationId + "/" + courier.Slot + " " + courier.State + " to " + courier.ToStop + " " + courier.DepartedAt
+                    + " to " + courier.ArrivesAt + " stamina " + courier.Stamina + " load "
+                    + string.Join(" ", courier.Loads.Select(part => part.Item + "@" + part.FromId + "=" + part.Quantity)));
+            IEnumerable<string> routes = city.Routes.Select(
+                route => "route " + route.StationId + "/" + route.Slot + " " + string.Join(" ", route.Stops.Select(
+                    stop => stop.BuildingId + "[" + string.Join("; ", stop.Actions.Select(action => action.Kind + " " + action.Item + " " + action.Amount)) + "]")));
             return "clock " + city.Clock + ", era " + city.Era + ", next id " + city.NextBuildingId + ", next trip " + city.NextTripId + "\n"
                 + "purse " + city.Purse + "\n"
                 + "research " + research + ", completed " + string.Join(" ", city.CompletedResearch) + "\n"
                 + string.Join("\n", city.Buildings.Select(Describe)) + "\n"
-                + string.Join("\n", trips);
+                + string.Join("\n", trips) + "\n"
+                + string.Join("\n", couriers) + "\n"
+                + string.Join("\n", routes);
         }
 
         /// <summary>Every public property of <paramref name="building"/> as text.</summary>

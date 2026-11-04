@@ -128,6 +128,24 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That((trip.DepartedAt, trip.ArrivesAt, city.NextTripId), Is.EqualTo((197L, 217L, 2)));
         }
 
+        /// <summary>The couriers and the route keep every value, in the engine's types (CR-0008-T1 part G).</summary>
+        [Test]
+        public void ToSnapshot_CouriersAndRoute_AreKept()
+        {
+            CityState city = CityTestData.Snapshot("snapshot-command-set-route.json").CopyCity();
+
+            Assert.That(city.TryGetRoute(5, 1, out Route? route), Is.True);
+            Assert.That(route!.Stops.Select(stop => stop.BuildingId), Is.EqualTo(new[] { 2, 4 }));
+            RouteAction take = route.Stops[0].Actions.Single();
+            Assert.That((take.Kind, take.Item.Value, take.Amount.ToString()), Is.EqualTo((RouteActionKind.Take, "logs", "all")));
+            Assert.That(route.Stops[1].Actions.Single().Kind, Is.EqualTo(RouteActionKind.Put));
+            Courier walking = city.Couriers[0];
+            Assert.That(
+                (walking.StationId, walking.Slot, walking.State, walking.ToStop, walking.DepartedAt, walking.ArrivesAt, walking.Stamina),
+                Is.EqualTo((5, 1, CourierState.Walking, 1, (long?)894, (long?)904, 14400L)));
+            Assert.That((city.Couriers[1].Slot, city.Couriers[1].State), Is.EqualTo((2, CourierState.AtStation)));
+        }
+
         /// <summary>The running research and the completed list come along.</summary>
         [Test]
         public void ToSnapshot_Research_IsKept()
@@ -331,7 +349,8 @@ namespace CityBuilder.Client.Tests.EditMode.Net
                 dto.ServerTimeUtc,
                 dto.ContentVersion,
                 new SnapshotCityDto(
-                    city.Clock, city.Era, city.Purse, city.Totals, city.Workers, city.Builders, research, city.Buildings, city.Roads, city.Trips),
+                    city.Clock, city.Era, city.Purse, city.Totals, city.Workers, city.Builders, research, city.Buildings, city.Roads, city.Trips,
+                    city.Couriers, city.Routes),
                 dto.Settlement);
         }
 

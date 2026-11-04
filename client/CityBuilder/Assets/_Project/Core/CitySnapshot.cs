@@ -81,13 +81,21 @@ namespace CityBuilder.Client.Core
             }
 
             // The research changes in place when a delivery fills its needs or starts its timer (CR-0008), so it is copied too; trips never change.
+            // Couriers walk, load and unload in place (CR-0008-T1 part G), so each is copied; routes never change in an advance.
             ActiveResearch? research = _city.ActiveResearch;
             ActiveResearch? researchCopy = research == null
                 ? null
                 : new ActiveResearch(research.Id, research.StartedAt, research.EndsAt, new List<KeyValuePair<ItemId, long>>(research.Needs));
+            var couriers = new List<Courier>(_city.Couriers.Count);
+            foreach (Courier courier in _city.Couriers)
+            {
+                couriers.Add(new Courier(
+                    courier.StationId, courier.Slot, courier.State, courier.ToStop, courier.DepartedAt, courier.ArrivesAt, courier.Stamina, courier.Loads));
+            }
+
             return new CityState(
                 _city.Clock, _city.Era, _city.NextBuildingId, _city.Purse, buildings, _city.CompletedResearch, researchCopy, _city.Roads, _city.Trips,
-                _city.NextTripId);
+                _city.NextTripId, couriers, _city.Routes);
         }
     }
 }

@@ -137,7 +137,7 @@ namespace CityBuilder.Client.Tests.EditMode.Core
                 new[] { new RoadTile(7, 7, 2) });
 
             Assert.That(PredictionWatch.ToJson(withRoad), Is.Not.EqualTo(PredictionWatch.ToJson(city)));
-            Assert.That(PredictionWatch.ToJson(withRoad), Does.EndWith(",\"roads\":[{\"x\":7,\"y\":7,\"level\":2}],\"trips\":[]}"));
+            Assert.That(PredictionWatch.ToJson(withRoad), Does.EndWith(",\"roads\":[{\"x\":7,\"y\":7,\"level\":2}],\"trips\":[],\"couriers\":[],\"routes\":[]}"));
         }
 
         /// <summary>
@@ -154,6 +154,23 @@ namespace CityBuilder.Client.Tests.EditMode.Core
             Assert.That(text, Does.Contain("\"purse\":420"));
             Assert.That(text, Does.Contain("\"store\":{},\"needs\":{\"logs\":10}"));
             Assert.That(text, Does.Contain("\"trips\":[{\"id\":1,\"sourceId\":2,\"targetId\":4,\"itemId\":\"logs\",\"quantity\":4,"));
+        }
+
+        /// <summary>The text holds the couriers and the routes too (CR-0008-T1 part G), so a courier predicted wrongly shows.</summary>
+        [Test]
+        public void ToJson_ACityWithCouriersAndARoute_WritesThemAll()
+        {
+            CityState city = CityTestData.Snapshot("snapshot-command-set-route.json").CopyCity();
+
+            string text = PredictionWatch.ToJson(city);
+
+            Assert.That(
+                text,
+                Does.Contain("\"couriers\":[{\"stationId\":5,\"slot\":1,\"state\":\"Walking\",\"toStop\":1,\"departedAt\":894,\"arrivesAt\":904,\"stamina\":14400,\"load\":[]},"));
+            Assert.That(
+                text,
+                Does.EndWith("\"routes\":[{\"stationId\":5,\"slot\":1,\"stops\":[{\"buildingId\":2,\"actions\":[{\"kind\":\"Take\",\"itemId\":\"logs\",\"amount\":\"all\"}]},"
+                    + "{\"buildingId\":4,\"actions\":[{\"kind\":\"Put\",\"itemId\":\"logs\",\"amount\":\"all\"}]}]}]}"));
         }
     }
 }

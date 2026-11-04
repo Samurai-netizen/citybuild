@@ -59,7 +59,8 @@ namespace CityBuilder.Client.Core
         /// <summary>
         /// Every stored value of <paramref name="city"/> as one line of JSON, in an order that does not depend on the dictionary or the list: the
         /// purse, research by id, buildings by id with their store and needs (goods by id), roads by tile (column, then row, the engine's order),
-        /// trips by id (CR-0008). Two cities that are the same give the same text.
+        /// trips by id (CR-0008), couriers with their loads and routes with their stops, both by (station, slot) as the engine keeps them
+    /// (CR-0008-T1 part G). Two cities that are the same give the same text.
         /// </summary>
         /// <param name="city">The city.</param>
         /// <returns>The text.</returns>
@@ -122,6 +123,47 @@ namespace CityBuilder.Client.Core
             {
                 text.Append(separator).Append(Invariant(
                     $"{{\"id\":{trip.Id},\"sourceId\":{trip.SourceId},\"targetId\":{trip.TargetId},\"itemId\":\"{trip.Item.Value}\",\"quantity\":{trip.Quantity},\"departedAt\":{trip.DepartedAt},\"arrivesAt\":{trip.ArrivesAt}}}"));
+                separator = ",";
+            }
+
+            text.Append("],\"couriers\":[");
+            separator = string.Empty;
+            foreach (Courier courier in city.Couriers)
+            {
+                text.Append(separator).Append(Invariant(
+                    $"{{\"stationId\":{courier.StationId},\"slot\":{courier.Slot},\"state\":\"{courier.State}\",\"toStop\":{courier.ToStop},\"departedAt\":{Time(courier.DepartedAt)},\"arrivesAt\":{Time(courier.ArrivesAt)},\"stamina\":{courier.Stamina},\"load\":["));
+                string partSeparator = string.Empty;
+                foreach (CourierLoad part in courier.Loads)
+                {
+                    text.Append(partSeparator).Append(Invariant($"{{\"itemId\":\"{part.Item.Value}\",\"fromId\":{part.FromId},\"quantity\":{part.Quantity}}}"));
+                    partSeparator = ",";
+                }
+
+                text.Append("]}");
+                separator = ",";
+            }
+
+            text.Append("],\"routes\":[");
+            separator = string.Empty;
+            foreach (Route route in city.Routes)
+            {
+                text.Append(separator).Append(Invariant($"{{\"stationId\":{route.StationId},\"slot\":{route.Slot},\"stops\":["));
+                string stopSeparator = string.Empty;
+                foreach (RouteStop stop in route.Stops)
+                {
+                    text.Append(stopSeparator).Append(Invariant($"{{\"buildingId\":{stop.BuildingId},\"actions\":["));
+                    string actionSeparator = string.Empty;
+                    foreach (RouteAction action in stop.Actions)
+                    {
+                        text.Append(actionSeparator).Append(Invariant($"{{\"kind\":\"{action.Kind}\",\"itemId\":\"{action.Item.Value}\",\"amount\":\"{action.Amount}\"}}"));
+                        actionSeparator = ",";
+                    }
+
+                    text.Append("]}");
+                    stopSeparator = ",";
+                }
+
+                text.Append("]}");
                 separator = ",";
             }
 

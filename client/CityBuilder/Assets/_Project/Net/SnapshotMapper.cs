@@ -150,6 +150,18 @@ namespace CityBuilder.Client.Net
                 trips.Add(new Trip(trip.Id, trip.SourceId, trip.TargetId, new ItemId(trip.ItemId), trip.Quantity, trip.DepartedAt, trip.ArrivesAt));
             }
 
+            var couriers = new List<Courier>(city.Couriers.Count);
+            foreach (SnapshotCourierDto courier in city.Couriers)
+            {
+                couriers.Add(ToCourier(courier));
+            }
+
+            var routes = new List<Route>(city.Routes.Count);
+            foreach (SnapshotRouteDto route in city.Routes)
+            {
+                routes.Add(ToRoute(route));
+            }
+
             return new CityState(
                 city.Clock,
                 city.Era,
@@ -160,7 +172,67 @@ namespace CityBuilder.Client.Net
                 ToActiveResearch(city.Research),
                 roads,
                 trips,
-                highestTripId + 1);
+                highestTripId + 1,
+                couriers,
+                routes);
+        }
+
+        /// <summary>One courier; the state names match the engine's one to one (CR-0008).</summary>
+        /// <exception cref="ArgumentException">The values don't form a valid courier.</exception>
+        private static Courier ToCourier(SnapshotCourierDto courier)
+        {
+            var loads = new List<CourierLoad>(courier.Load.Count);
+            foreach (SnapshotCourierLoadDto part in courier.Load)
+            {
+                loads.Add(new CourierLoad(new ItemId(part.ItemId), part.FromId, part.Quantity));
+            }
+
+            return new Courier(
+                courier.StationId, courier.Slot, ToCourierState(courier.State), courier.ToStop, courier.DepartedAt, courier.ArrivesAt, courier.Stamina, loads);
+        }
+
+        /// <summary>A courier's state in the engine's form.</summary>
+        /// <exception cref="ArgumentException">The state is none the engine knows.</exception>
+        private static CourierState ToCourierState(CourierStateDto state)
+        {
+            switch (state)
+            {
+                case CourierStateDto.AtStation:
+                    return CourierState.AtStation;
+                case CourierStateDto.Walking:
+                    return CourierState.Walking;
+                case CourierStateDto.Returning:
+                    return CourierState.Returning;
+                case CourierStateDto.Resting:
+                    return CourierState.Resting;
+                default:
+                    throw new ArgumentException("Unknown courier state: " + state);
+            }
+        }
+
+        /// <summary>One slot's route: its stops and actions in order, each amount parsed from the API's form (CR-0008).</summary>
+        /// <exception cref="ArgumentException">The values don't form a valid route, or an amount has no valid form.</exception>
+        private static Route ToRoute(SnapshotRouteDto route)
+        {
+            var stops = new List<RouteStop>(route.Stops.Count);
+            foreach (SnapshotRouteStopDto stop in route.Stops)
+            {
+                var actions = new List<RouteAction>(stop.Actions.Count);
+                foreach (SnapshotRouteActionDto action in stop.Actions)
+                {
+                    if (!Amount.TryParse(action.Amount, out Amount? amount))
+                    {
+                        throw new ArgumentException("Not an amount: " + action.Amount);
+                    }
+
+                    actions.Add(new RouteAction(
+                        action.Kind == RouteActionKindDto.Take ? RouteActionKind.Take : RouteActionKind.Put, new ItemId(action.ItemId), amount!));
+                }
+
+                stops.Add(new RouteStop(stop.BuildingId, actions));
+            }
+
+            return new Route(route.StationId, route.Slot, stops);
         }
 
         /// <summary>One building; the phase names match the engine's one to one.</summary>

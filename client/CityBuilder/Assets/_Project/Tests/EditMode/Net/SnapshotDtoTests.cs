@@ -147,6 +147,29 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(snapshot.City.Totals["logs"], Is.EqualTo(4L), "the load counts in the city's total");
         }
 
+        /// <summary>
+        /// A route answer reads with the slot's route as it was sent and the station's couriers (CR-0008-T1 part G): courier 5/1 left at once for
+        /// stop 1, the woodcutter (a 10 s walk), carrying nothing yet; courier 5/2 stands at the station without times.
+        /// </summary>
+        [Test]
+        public void SetRoute_ShowsTheRouteAndTheCouriers()
+        {
+            CitySnapshotDto snapshot = _json.Deserialize<CitySnapshotDto>(Fixtures.Read("snapshot-command-set-route.json"));
+
+            SnapshotRouteDto route = snapshot.City.Routes.Single();
+            Assert.That((route.StationId, route.Slot, route.Stops.Count), Is.EqualTo((5, 1, 2)));
+            SnapshotRouteActionDto take = route.Stops[0].Actions.Single();
+            SnapshotRouteActionDto put = route.Stops[1].Actions.Single();
+            Assert.That((route.Stops[0].BuildingId, take.Kind, take.ItemId, take.Amount), Is.EqualTo((2, RouteActionKindDto.Take, "logs", "all")));
+            Assert.That((route.Stops[1].BuildingId, put.Kind, put.ItemId, put.Amount), Is.EqualTo((4, RouteActionKindDto.Put, "logs", "all")));
+            SnapshotCourierDto walking = snapshot.City.Couriers[0];
+            SnapshotCourierDto waiting = snapshot.City.Couriers[1];
+            Assert.That(
+                (walking.Slot, walking.State, walking.ToStop, walking.ArrivesAt - walking.DepartedAt, walking.Stamina, walking.Load.Count),
+                Is.EqualTo((1, CourierStateDto.Walking, 1, (long?)10, 14400L, 0)));
+            Assert.That((waiting.Slot, waiting.State, waiting.ToStop, waiting.DepartedAt, waiting.ArrivesAt), Is.EqualTo((2, CourierStateDto.AtStation, 0, (long?)null, (long?)null)));
+        }
+
         /// <summary>The settlement lists what completed in the request's own time span.</summary>
         [Test]
         public void SettlementFixtures_ListWhatCompleted()

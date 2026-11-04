@@ -32,6 +32,7 @@ namespace CityBuilder.Client.Tests.EditMode.Core
             "snapshot-city-settled-buildings.json",
             "snapshot-sawmill-constructing.json",
             "snapshot-command-assign-workers.json",
+            "snapshot-command-set-route.json",
         };
 
         /// <summary>The real content.</summary>

@@ -11,7 +11,7 @@ namespace CityBuilder.Client.Net
     {
         /// <summary>Creates the DTO. Newtonsoft calls this constructor with the JSON members of the same names, so the object is never half filled.</summary>
         [JsonConstructor]
-        public SnapshotCityDto(long clock, int era, long purse, Dictionary<string, long> totals, SnapshotWorkersDto workers, SnapshotBuildersDto builders, SnapshotResearchDto research, List<SnapshotBuildingDto> buildings, List<SnapshotRoadDto> roads, List<SnapshotTripDto> trips)
+        public SnapshotCityDto(long clock, int era, long purse, Dictionary<string, long> totals, SnapshotWorkersDto workers, SnapshotBuildersDto builders, SnapshotResearchDto research, List<SnapshotBuildingDto> buildings, List<SnapshotRoadDto> roads, List<SnapshotTripDto> trips, List<SnapshotCourierDto> couriers, List<SnapshotRouteDto> routes)
         {
             Clock = clock;
             Era = era;
@@ -23,6 +23,8 @@ namespace CityBuilder.Client.Net
             Buildings = buildings;
             Roads = roads;
             Trips = trips;
+            Couriers = couriers;
+            Routes = routes;
         }
 
         /// <summary>The city clock in seconds; display prediction starts from it.</summary>
@@ -54,5 +56,11 @@ namespace CityBuilder.Client.Net
 
         /// <summary>The manual trips under way, sorted by id (CR-0008).</summary>
         public List<SnapshotTripDto> Trips { get; }
+
+        /// <summary>The couriers, sorted by station id, then slot (CR-0008).</summary>
+        public List<SnapshotCourierDto> Couriers { get; }
+
+        /// <summary>The courier stations' routes, sorted by station id, then slot (CR-0008).</summary>
+        public List<SnapshotRouteDto> Routes { get; }
     }
 }
