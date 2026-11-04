@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Server panel: starts and stops the local dev database and API for testing the Unity client (docs/testing/LOCAL-E2E.md).
 # Usage: panel.sh [start|stop|restart|status|logs|stop-all]   (no argument opens the menu)
-#        panel.sh goods show | add <item> <amount> | remove <item> <amount> | set <item> <amount>   (the stock of the player the Unity client uses, or of $PLAYER; CR-0006)
+#        panel.sh goods show | add|remove|set <item> <amount> [<building id>]   (the purse, or a building's store, of the player the Unity
+#        client uses, or of $PLAYER; CR-0006; a good needs the building id, the currency goes to the purse, CR-0008 decision 35)
 set -u
 
 PANEL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -121,22 +122,32 @@ item_ids() {
   python3 -c 'import json,sys; print("\n".join(i["id"] for i in json.load(open(sys.argv[1]))["items"]))' "$CONTENT_FILE" 2>/dev/null
 }
 
-# Runs goods.sql for the player $GOODS_PLAYER in the database container. $1 mode, $2 item id ("" for show), $3 amount ("" for show).
+# Prints the content's currency item id (the one item with "currency": true), whose coins live in the purse.
+currency_id() {
+  python3 -c 'import json,sys; print(next(i["id"] for i in json.load(open(sys.argv[1]))["items"] if i.get("currency")))' "$CONTENT_FILE" 2>/dev/null
+}
+
+# Runs goods.sql for the player $GOODS_PLAYER in the database container. $1 mode, $2 item id ("" for show), $3 amount ("" for show),
+# $4 building id ("" for the currency and show), $5 the currency id.
 # The values travel as arguments of the container's shell, never inside a command line that is built from them.
 goods_sql() {
   docker compose exec -T postgres sh -c \
-    'psql -X -q -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -v "player=$1" -v "mode=$2" -v "item=$3" -v "amount=$4" -f -' \
-    sh "$GOODS_PLAYER" "$1" "${2:-x}" "${3:-0}" < "$GOODS_SQL"
+    'psql -X -q -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -v "player=$1" -v "mode=$2" -v "item=$3" -v "amount=$4" -v "building=$5" -v "currency=$6" -f -' \
+    sh "$GOODS_PLAYER" "$1" "${2:-x}" "${3:-0}" "${4:-0}" "$5" < "$GOODS_SQL"
 }
 
-# The goods commands: `goods show` or `goods add|remove|set <item> <amount>`. Checks the arguments first, then changes the stock.
+# The goods commands: `goods show` or `goods add|remove|set <item> <amount> [<building id>]`. The currency goes to the purse; any other
+# item needs the id of the building whose store gets it. Checks the arguments first, then changes the purse or the store.
 goods() {
-  local mode="${1:-}" item="${2:-}" amount="${3:-}"
+  local mode="${1:-}" item="${2:-}" amount="${3:-}" building="${4:-}"
+  local usage="Usage: panel.sh goods show | add|remove|set <item> <amount> [<building id>]"
   GOODS_PLAYER="$(goods_player)" || { say "$GOODS_PLAYER"; return 1; }
+  local currency; currency="$(currency_id)" || currency=""
+  if [ -z "$currency" ]; then say "Could not read the currency from $CONTENT_FILE (python3 is needed)."; return 1; fi
   case "$mode" in
     show) [ $# -eq 1 ] || { say "Usage: panel.sh goods show"; return 2; } ;;
-    add|remove|set) [ $# -eq 3 ] || { say "Usage: panel.sh goods $mode <item> <amount>"; return 2; } ;;
-    *) say "Usage: panel.sh goods show | add <item> <amount> | remove <item> <amount> | set <item> <amount>"; return 2 ;;
+    add|remove|set) [ $# -eq 3 ] || [ $# -eq 4 ] || { say "$usage"; return 2; } ;;
+    *) say "$usage"; return 2 ;;
   esac
   if [ "$mode" != "show" ]; then
     local ids; ids="$(item_ids)" || ids=""
@@ -145,18 +156,24 @@ goods() {
       say "Unknown item '$item'. Items: $(printf '%s' "$ids" | tr '\n' ' ')"; return 2
     fi
     if ! [[ "$amount" =~ ^[0-9]{1,12}$ ]]; then say "The amount must be a whole number from 0 to 999999999999."; return 2; fi
+    if [ "$item" = "$currency" ]; then
+      [ -z "$building" ] || { say "$currency goes to the purse: give no building id."; return 2; }
+    elif ! [[ "$building" =~ ^[1-9][0-9]{0,8}$ ]]; then
+      say "A good lives in a building's store: give the building id (panel.sh goods show lists them)."; return 2
+    fi
   fi
   if ! db_running; then say "The database is not running. Start it first (option 1 of the menu, or: panel.sh start)."; return 1; fi
   say "Player: $GOODS_PLAYER"
-  local out; out="$(goods_sql "$mode" "$item" "$amount" 2>&1)"; local code=$?
+  local out; out="$(goods_sql "$mode" "$item" "$amount" "$building" "$currency" 2>&1)"; local code=$?
   say "$out"
   [ $code -eq 0 ] && ! printf '%s\n' "$out" | grep -q '^REFUSED' && return 0
   return 1
 }
 
-# The goods part of the menu: shows the stock, then asks for an item, add / remove / set and an amount.
+# The goods part of the menu: shows the purse and the stores, then asks for an item, add / remove / set, an amount and, for a good, the
+# building whose store gets it.
 goods_menu() {
-  local ids i=0 item choice mode amount
+  local ids i=0 item choice mode amount building
   ids="$(item_ids)" || ids=""
   [ -z "$ids" ] && { say "Could not read the item ids from $CONTENT_FILE (python3 is needed)."; return 1; }
   goods show || return 1
@@ -170,7 +187,12 @@ goods_menu() {
   read -r -p "a = add, r = remove, s = set: " mode
   case "$mode" in a) mode=add ;; r) mode=remove ;; s) mode=set ;; *) say "Unknown choice."; return 1 ;; esac
   read -r -p "Amount: " amount
-  goods "$mode" "$item" "$amount"
+  if [ "$item" = "$(currency_id)" ]; then
+    goods "$mode" "$item" "$amount"
+  else
+    read -r -p "Building id (its store gets the goods): " building
+    goods "$mode" "$item" "$amount" "$building"
+  fi
 }
 
 # The interactive menu.

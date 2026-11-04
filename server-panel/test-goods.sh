@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Tests of the goods commands of panel.sh (CR-0006) that need no database: the arguments are checked before anything is run, and a valid
-# command reaches the database container with exactly the player (the one the Unity client logs in as, or $PLAYER), the mode, the item and the amount. A fake `docker` stands in for
+# command reaches the database container with exactly the player (the one the Unity client logs in as, or $PLAYER), the mode, the item, the amount,
+# the building id (0 for the currency) and the currency (CR-0008 decision 35). A fake `docker` stands in for
 # the real one. The SQL itself is tested against PostgreSQL by GoodsPanelScriptTests (docs/testing/README.md).
 # Usage: bash server-panel/test-goods.sh   (exit 0 when every case passes)
 set -u
@@ -42,32 +43,42 @@ expect_refused() {
 
 expect_refused "no mode" "Usage" 
 expect_refused "unknown mode" "Usage" give planks 5
-expect_refused "add without amount" "Usage: panel.sh goods add" add planks
+expect_refused "add without amount" "Usage: panel.sh goods show | add|remove|set" add planks
 expect_refused "show with arguments" "Usage: panel.sh goods show" show planks
 expect_refused "unknown item" "Unknown item" add gold 5
 expect_refused "item with a quote" "Unknown item" add "planks'; drop table cities; --" 5
 expect_refused "negative amount" "whole number" add planks -5
 expect_refused "text amount" "whole number" add planks five
 expect_refused "amount too big" "whole number" add planks 1000000000000
+expect_refused "good without a building" "building id" add planks 5
+expect_refused "good with a bad building" "building id" add planks 5 0
+expect_refused "good with a text building" "building id" add planks 5 "3; drop"
+expect_refused "coins with a building" "purse" add coins 5 3
+expect_refused "too many arguments" "Usage" add planks 5 3 4
 
 # A name that cannot be a dev name is refused.
-PLAYER='bad name; drop' expect_refused "bad PLAYER" "not a valid dev name" add planks 5
+PLAYER='bad name; drop' expect_refused "bad PLAYER" "not a valid dev name" add planks 5 3
 
 # Without $PLAYER the command works on the player the Unity client logs in as.
 CLIENT_PLAYER="$(sed -n 's/^ *devDisplayName: *//p' "$PANEL_DIR/../client/CityBuilder/Assets/_Project/Resources/Config/ApiClientSettings.asset" | head -n 1 | tr -d '\r"')"
 [ -n "$CLIENT_PLAYER" ] || fail "the client settings have no devDisplayName"
-run_goods add planks 50
+run_goods add planks 50 3
 [ "$CODE" -eq 0 ] || fail "valid add: exit code $CODE ($OUT)"
 case "$OUT" in *"Player: $CLIENT_PLAYER"*) ;; *) fail "valid add: the output does not name the player '$CLIENT_PLAYER': $OUT" ;; esac
-case "$(cat "$FAKE_DOCKER_LOG")" in *"sh $CLIENT_PLAYER add planks 50"*) ;; *) fail "valid add: arguments were '$(cat "$FAKE_DOCKER_LOG")'" ;; esac
+case "$(cat "$FAKE_DOCKER_LOG")" in *"sh $CLIENT_PLAYER add planks 50 3 coins"*) ;; *) fail "valid add: arguments were '$(cat "$FAKE_DOCKER_LOG")'" ;; esac
 [ "$(wc -l < "$FAKE_DOCKER_LOG" | tr -d ' ')" = "1" ] || fail "valid add: docker exec ran more than once"
 
-PLAYER=someone run_goods remove logs 3
+PLAYER=someone run_goods remove logs 3 2
 [ "$CODE" -eq 0 ] || fail "PLAYER: exit code $CODE"
-case "$(cat "$FAKE_DOCKER_LOG")" in *"sh someone remove logs 3"*) ;; *) fail "PLAYER: arguments were '$(cat "$FAKE_DOCKER_LOG")'" ;; esac
+case "$(cat "$FAKE_DOCKER_LOG")" in *"sh someone remove logs 3 2 coins"*) ;; *) fail "PLAYER: arguments were '$(cat "$FAKE_DOCKER_LOG")'" ;; esac
 
-run_goods set logs 0
+run_goods set logs 0 2
 [ "$CODE" -eq 0 ] || fail "set 0: exit code $CODE"
+
+# The currency goes to the purse: no building id (0 reaches the script).
+run_goods add coins 100
+[ "$CODE" -eq 0 ] || fail "coins: exit code $CODE ($OUT)"
+case "$(cat "$FAKE_DOCKER_LOG")" in *"sh $CLIENT_PLAYER add coins 100 0 coins"*) ;; *) fail "coins: arguments were '$(cat "$FAKE_DOCKER_LOG")'" ;; esac
 run_goods show
 [ "$CODE" -eq 0 ] || fail "show: exit code $CODE"
 case "$(cat "$FAKE_DOCKER_LOG")" in *"sh $CLIENT_PLAYER show"*) ;; *) fail "show: arguments were '$(cat "$FAKE_DOCKER_LOG")'" ;; esac

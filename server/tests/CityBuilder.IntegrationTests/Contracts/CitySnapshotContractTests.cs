@@ -67,21 +67,25 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
         JsonNode city = snapshot["city"]!;
         JsonShape.AssertObject(
             city,
-            "clock:int era:int inventory:object storageCaps:object workers:object builders:object research:object buildings:array roads:array",
+            "clock:int era:int purse:int totals:object workers:object builders:object research:object buildings:array roads:array trips:array",
             "$.city");
-        JsonShape.AssertObject(city["workers"], "provided:int assigned:int free:int", "$.city.workers");
+        JsonShape.AssertObject(city["workers"], "provided:int assigned:int onTrips:int free:int", "$.city.workers");
         JsonShape.AssertObject(city["builders"], "slots:int busy:int", "$.city.builders");
-        JsonShape.AssertObject(city["research"], "activeId:string? startedAt:int? endsAt:int? completed:array", "$.city.research");
+        JsonShape.AssertObject(city["research"], "activeId:string? startedAt:int? endsAt:int? needs:object completed:array", "$.city.research");
         JsonArray buildings = city["buildings"]!.AsArray();
-        Assert.Equal(7, buildings.Count);
+        Assert.Equal(9, buildings.Count);
         for (int index = 0; index < buildings.Count; index++)
         {
             JsonShape.AssertObject(
                 buildings[index],
                 "id:int typeId:string x:int y:int level:int assignedWorkers:int maxWorkers:int phase:string phaseStartedAt:int phaseEndsAt:int? " +
-                "cycleLabor:int laborRemaining:int segmentStartedAt:int stallReason:string?",
+                "cycleLabor:int laborRemaining:int segmentStartedAt:int stallReason:string? store:object storeLimits:object needs:object project:string?",
                 $"$.city.buildings[{index}]");
         }
+
+        JsonArray trips = city["trips"]!.AsArray();
+        Assert.Single(trips);
+        JsonShape.AssertObject(trips[0], "id:int sourceId:int targetId:int itemId:string quantity:int departedAt:int arrivesAt:int", "$.city.trips[0]");
 
         JsonArray roads = city["roads"]!.AsArray();
         Assert.Equal(3, roads.Count);
@@ -92,7 +96,8 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
 
         JsonShape.AssertObject(
             snapshot["settlement"],
-            "elapsedSeconds:int productionSeconds:int produced:object consumed:object completedBuildings:array completedResearch:array eraChanged:bool",
+            "elapsedSeconds:int productionSeconds:int produced:object consumed:object delivered:object moved:object refunded:object " +
+            "completedBuildings:array completedResearch:array eraChanged:bool",
             "$.settlement");
         Assert.Equal(buildings.Select(building => (int)building!["id"]!).Order(), buildings.Select(building => (int)building!["id"]!));
     }
@@ -112,16 +117,19 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
             [],
             _settledAt.ToUnixTimeSeconds(),
             stateVersion: 1,
-            "contract-1"));
+            "contract-2"));
         await using WebApplicationFactory<Program> server = store.Serve(factory, new FakeTimeProvider(_settledAt), contentPath);
 
         JsonNode city = (await ApiClient.GetAsync(server, "/api/v1/city", _playerId)).Json()["city"]!;
 
-        Assert.Equal("""{"coins":300,"logs":60,"planks":20}""", city["inventory"]!.ToJsonString());
-        Assert.Equal("""{"activeId":null,"startedAt":null,"endsAt":null,"completed":[]}""", city["research"]!.ToJsonString());
+        // A new city has coins only (CR-0008 D2).
+        Assert.Equal(300, (int)city["purse"]!);
+        Assert.Equal("""{"coins":300,"logs":0,"planks":0}""", city["totals"]!.ToJsonString());
+        Assert.Equal("""{"activeId":null,"startedAt":null,"endsAt":null,"needs":{},"completed":[]}""", city["research"]!.ToJsonString());
         Assert.Equal("[]", city["buildings"]!.ToJsonString());
         Assert.Equal("[]", city["roads"]!.ToJsonString());
-        Assert.Equal("""{"provided":0,"assigned":0,"free":0}""", city["workers"]!.ToJsonString());
+        Assert.Equal("[]", city["trips"]!.ToJsonString());
+        Assert.Equal("""{"provided":0,"assigned":0,"onTrips":0,"free":0}""", city["workers"]!.ToJsonString());
         Assert.Equal("""{"slots":2,"busy":0}""", city["builders"]!.ToJsonString());
     }
 
@@ -142,10 +150,11 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
         Assert.Equal(1, (int)snapshot["stateVersion"]!);
         Assert.Equal("2026-10-26T12:01:40Z", (string)snapshot["serverTimeUtc"]!);
         Assert.Equal(1100, (int)snapshot["city"]!["clock"]!);
-        // The 15-second cycles end at 1005, 1020, ..., 1095: seven logs; the next cycle started at 1095 and ends at 1110.
-        Assert.Equal("""{"coins":100,"logs":17}""", snapshot["city"]!["inventory"]!.ToJsonString());
+        // The 15-second cycles end at 1005, 1020, ..., 1095: seven logs into the woodcutter's store; the next cycle started at 1095 and ends at 1110.
+        Assert.Equal("""{"coins":100,"logs":17,"planks":0}""", snapshot["city"]!["totals"]!.ToJsonString());
+        Assert.Equal("""{"logs":17}""", snapshot["city"]!["buildings"]![1]!["store"]!.ToJsonString());
         Assert.Equal(
-            """{"elapsedSeconds":100,"productionSeconds":100,"produced":{"logs":7},"consumed":{},"completedBuildings":[],"completedResearch":[],"eraChanged":false}""",
+            """{"elapsedSeconds":100,"productionSeconds":100,"produced":{"logs":7},"consumed":{},"delivered":{},"moved":{},"refunded":{},"completedBuildings":[],"completedResearch":[],"eraChanged":false}""",
             snapshot["settlement"]!.ToJsonString());
         JsonNode woodcutter = snapshot["city"]!["buildings"]![1]!;
         Assert.Equal((2, "Producing", 1095, 1110, 30), ((int)woodcutter["id"]!, (string)woodcutter["phase"]!, (int)woodcutter["phaseStartedAt"]!, (int)woodcutter["phaseEndsAt"]!, (int)woodcutter["laborRemaining"]!));
@@ -176,7 +185,7 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
             ((int)first["stateVersion"]!, (int)second["stateVersion"]!, (int)third["stateVersion"]!));
         Assert.Equal(first["city"]!.ToJsonString(), second["city"]!.ToJsonString());
         Assert.Equal(
-            """{"elapsedSeconds":0,"productionSeconds":0,"produced":{},"consumed":{},"completedBuildings":[],"completedResearch":[],"eraChanged":false}""",
+            """{"elapsedSeconds":0,"productionSeconds":0,"produced":{},"consumed":{},"delivered":{},"moved":{},"refunded":{},"completedBuildings":[],"completedResearch":[],"eraChanged":false}""",
             second["settlement"]!.ToJsonString());
         Assert.Equal(1101, (int)third["city"]!["clock"]!);
         Assert.Equal(2, store.SaveCount);
@@ -195,13 +204,13 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
         JsonNode asked = (await ApiClient.GetAsync(server, $"/api/v1/city?playerId={_otherPlayerId}", _playerId)).Json();
         JsonNode other = (await ApiClient.GetAsync(server, "/api/v1/city", _otherPlayerId)).Json();
 
-        Assert.Equal((7, 7, 2), (own["city"]!["buildings"]!.AsArray().Count, asked["city"]!["buildings"]!.AsArray().Count, other["city"]!["buildings"]!.AsArray().Count));
+        Assert.Equal((9, 9, 2), (own["city"]!["buildings"]!.AsArray().Count, asked["city"]!["buildings"]!.AsArray().Count, other["city"]!["buildings"]!.AsArray().Count));
         Assert.Equal(own.ToJsonString(), asked.ToJsonString());
     }
 
     /// <summary>
     /// A small producing city on the frozen content at clock 1000: a house (3 workers) and a woodcutter with 2 workers in a 15-second cycle that
-    /// started at 990 and ends at 1005, 10 logs and 100 coins in stock (cap 400 logs). Canonical, last settled at <see cref="_settledAt"/>.
+    /// started at 990 and ends at 1005, with 10 logs in its store (a limit of 40), and 100 coins. Canonical, last settled at <see cref="_settledAt"/>.
     /// </summary>
     /// <param name="playerId">The owner.</param>
     /// <returns>The city, at state version 0.</returns>
@@ -212,18 +221,18 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
             clock: 1000,
             era: 1,
             nextBuildingId: 3,
-            inventory: [new(Coins, 100), new(Logs, 10)],
+            purse: 100,
             buildings:
             [
                 new Building(1, House, 0, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
-                new Building(2, Woodcutter, 1, 0, 1, 2, BuildingPhase.Producing, 990, 1005, 0, 30, 30, 990),
+                new Building(2, Woodcutter, 1, 0, 1, 2, BuildingPhase.Producing, 990, 1005, 0, 30, 30, 990, [new(Logs, 10)]),
             ],
             completedResearch: [],
             activeResearch: null),
         [],
         _settledAt.ToUnixTimeSeconds(),
         stateVersion: 0,
-        "contract-1");
+        "contract-2");
 
     /// <summary>Builds a store with the cities.</summary>
     /// <param name="cities">The cities to store, one per player.</param>
@@ -241,10 +250,12 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
 
     /// <summary>
     /// A city on the frozen content at clock 1000 that is canonical (the settle's closing advance changes nothing), with a building in every
-    /// phase and every stall reason: a house (level 2); a woodcutter producing with 2 workers; a level 2 woodcutter whose cycle is frozen
-    /// (no workers); a trading post waiting for planks; a woodcutter waiting for room in storage; a woodcutter under construction; a house
-    /// being upgraded. The research <c>trade_charter</c> and <c>storehouses</c> are done, <c>sharp_axes</c> is running. Roads at (2, 1) and
-    /// (2, 2) at level 1 and at (1, 1) at level 2, given out of order.
+    /// phase and every stall reason, goods in its stores (CR-0008): a house (level 2); a woodcutter producing with 2 workers (12 logs); a level
+    /// 2 woodcutter whose cycle is frozen (no workers, 5 logs); a trading post waiting for planks (1 plank, 3 logs); a woodcutter whose store
+    /// is full (140 logs: 40 and the storehouses' 100); a woodcutter's construction site waiting for 10 logs; a house being upgraded; the
+    /// study; a depot with 4 planks, from which trip 1 carries 2 more planks to the trading post. 150 coins. The research
+    /// <c>trade_charter</c> and <c>storehouses</c> are done, <c>sharp_axes</c> is running. Roads at (2, 1) and (2, 2) at level 1 and at
+    /// (1, 1) at level 2, given out of order.
     /// </summary>
     /// <param name="playerId">The owner.</param>
     /// <param name="stateVersion">The stored version.</param>
@@ -254,21 +265,25 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
         var state = new CityState(
             clock: 1000,
             era: 1,
-            nextBuildingId: 8,
-            inventory: [new(Coins, 150), new(Logs, 498), new(Planks, 1)],
+            nextBuildingId: 10,
+            purse: 150,
             buildings:
             [
                 new Building(1, House, 0, 0, 2, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
-                new Building(2, Woodcutter, 1, 0, 1, 2, BuildingPhase.Producing, 990, 1005, 0, 30, 30, 990),
-                new Building(3, Woodcutter, 2, 0, 2, 0, BuildingPhase.Producing, 980, null, 0, 30, 18, 995),
-                new Building(4, TradingPost, 3, 0, 1, 1, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
-                new Building(5, Woodcutter, 4, 0, 1, 1, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
-                new Building(6, Woodcutter, 0, 2, 1, 0, BuildingPhase.Constructing, 990, 1010, 0, 0, 0, 0),
+                new Building(2, Woodcutter, 1, 0, 1, 2, BuildingPhase.Producing, 990, 1005, 0, 30, 30, 990, [new(Logs, 12)]),
+                new Building(3, Woodcutter, 2, 0, 2, 0, BuildingPhase.Producing, 980, null, 0, 30, 18, 995, [new(Logs, 5)]),
+                new Building(4, TradingPost, 3, 0, 1, 1, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, [new(Logs, 3), new(Planks, 1)]),
+                new Building(5, Woodcutter, 4, 0, 1, 1, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, [new(Logs, 140)]),
+                new Building(6, Woodcutter, 0, 2, 1, 0, BuildingPhase.Constructing, 0, null, 0, 0, 0, 0, null, [new(Logs, 10)]),
                 new Building(7, House, 1, 2, 1, 0, BuildingPhase.Upgrading, 995, 1040, 2, 0, 0, 0),
+                new Building(8, Study, 3, 2, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
+                new Building(9, Depot, 4, 2, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, [new(Planks, 4)]),
             ],
             completedResearch: [TradeCharter, Storehouses],
             activeResearch: new ActiveResearch(SharpAxes, 990, 1110),
-            roads: [new RoadTile(2, 1, 1), new RoadTile(1, 1, 2), new RoadTile(2, 2, 1)]);
+            roads: [new RoadTile(2, 1, 1), new RoadTile(1, 1, 2), new RoadTile(2, 2, 1)],
+            trips: [new Trip(1, 9, 4, Planks, 2, 995, 1012)],
+            nextTripId: 2);
         return new CityAggregate(
             Guid.NewGuid(),
             playerId,
@@ -276,32 +291,34 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
             [new(TradeCharter, 400), new(Storehouses, 900)],
             _settledAt.ToUnixTimeSeconds(),
             stateVersion,
-            "contract-1");
+            "contract-2");
     }
 
     /// <summary>The contract's text for <see cref="EveryPhaseCity"/>: every value checked by hand against the rules of the engine.</summary>
     private const string _everyPhaseResponse = """
         {
-          "requestId": null, "stateVersion": 7, "serverTimeUtc": "2026-10-26T12:00:00Z", "contentVersion": "contract-1",
+          "requestId": null, "stateVersion": 7, "serverTimeUtc": "2026-10-26T12:00:00Z", "contentVersion": "contract-2",
           "city": {
-            "clock": 1000, "era": 1,
-            "inventory": {"coins": 150, "logs": 498, "planks": 1},
-            "storageCaps": {"logs": 500, "planks": 350},
-            "workers": {"provided": 8, "assigned": 4, "free": 4},
+            "clock": 1000, "era": 1, "purse": 150,
+            "totals": {"coins": 150, "logs": 160, "planks": 7},
+            "workers": {"provided": 8, "assigned": 4, "onTrips": 1, "free": 3},
             "builders": {"slots": 2, "busy": 2},
-            "research": {"activeId": "sharp_axes", "startedAt": 990, "endsAt": 1110, "completed": ["storehouses", "trade_charter"]},
+            "research": {"activeId": "sharp_axes", "startedAt": 990, "endsAt": 1110, "needs": {}, "completed": ["storehouses", "trade_charter"]},
             "buildings": [
-              {"id": 1, "typeId": "house", "x": 0, "y": 0, "level": 2, "assignedWorkers": 0, "maxWorkers": 0, "phase": "Idle", "phaseStartedAt": 0, "phaseEndsAt": null, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": "NoRecipe"},
-              {"id": 2, "typeId": "woodcutter", "x": 1, "y": 0, "level": 1, "assignedWorkers": 2, "maxWorkers": 2, "phase": "Producing", "phaseStartedAt": 990, "phaseEndsAt": 1005, "cycleLabor": 30, "laborRemaining": 30, "segmentStartedAt": 990, "stallReason": null},
-              {"id": 3, "typeId": "woodcutter", "x": 2, "y": 0, "level": 2, "assignedWorkers": 0, "maxWorkers": 3, "phase": "Producing", "phaseStartedAt": 980, "phaseEndsAt": null, "cycleLabor": 30, "laborRemaining": 18, "segmentStartedAt": 995, "stallReason": "NoWorkers"},
-              {"id": 4, "typeId": "trading_post", "x": 3, "y": 0, "level": 1, "assignedWorkers": 1, "maxWorkers": 1, "phase": "Idle", "phaseStartedAt": 0, "phaseEndsAt": null, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": "MissingInput:planks"},
-              {"id": 5, "typeId": "woodcutter", "x": 4, "y": 0, "level": 1, "assignedWorkers": 1, "maxWorkers": 2, "phase": "Idle", "phaseStartedAt": 0, "phaseEndsAt": null, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": "StorageFull:logs"},
-              {"id": 6, "typeId": "woodcutter", "x": 0, "y": 2, "level": 1, "assignedWorkers": 0, "maxWorkers": 2, "phase": "Constructing", "phaseStartedAt": 990, "phaseEndsAt": 1010, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": null},
-              {"id": 7, "typeId": "house", "x": 1, "y": 2, "level": 1, "assignedWorkers": 0, "maxWorkers": 0, "phase": "Upgrading", "phaseStartedAt": 995, "phaseEndsAt": 1040, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": null}
+              {"id": 1, "typeId": "house", "x": 0, "y": 0, "level": 2, "assignedWorkers": 0, "maxWorkers": 0, "phase": "Idle", "phaseStartedAt": 0, "phaseEndsAt": null, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": "NoRecipe", "store": {}, "storeLimits": {}, "needs": {}, "project": null},
+              {"id": 2, "typeId": "woodcutter", "x": 1, "y": 0, "level": 1, "assignedWorkers": 2, "maxWorkers": 2, "phase": "Producing", "phaseStartedAt": 990, "phaseEndsAt": 1005, "cycleLabor": 30, "laborRemaining": 30, "segmentStartedAt": 990, "stallReason": null, "store": {"logs": 12}, "storeLimits": {"logs": 140}, "needs": {}, "project": null},
+              {"id": 3, "typeId": "woodcutter", "x": 2, "y": 0, "level": 2, "assignedWorkers": 0, "maxWorkers": 3, "phase": "Producing", "phaseStartedAt": 980, "phaseEndsAt": null, "cycleLabor": 30, "laborRemaining": 18, "segmentStartedAt": 995, "stallReason": "NoWorkers", "store": {"logs": 5}, "storeLimits": {"logs": 160}, "needs": {}, "project": null},
+              {"id": 4, "typeId": "trading_post", "x": 3, "y": 0, "level": 1, "assignedWorkers": 1, "maxWorkers": 1, "phase": "Idle", "phaseStartedAt": 0, "phaseEndsAt": null, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": "MissingInput:planks", "store": {"logs": 3, "planks": 1}, "storeLimits": {"logs": 110, "planks": 70}, "needs": {}, "project": null},
+              {"id": 5, "typeId": "woodcutter", "x": 4, "y": 0, "level": 1, "assignedWorkers": 1, "maxWorkers": 2, "phase": "Idle", "phaseStartedAt": 0, "phaseEndsAt": null, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": "StorageFull:logs", "store": {"logs": 140}, "storeLimits": {"logs": 140}, "needs": {}, "project": null},
+              {"id": 6, "typeId": "woodcutter", "x": 0, "y": 2, "level": 1, "assignedWorkers": 0, "maxWorkers": 2, "phase": "Constructing", "phaseStartedAt": 0, "phaseEndsAt": null, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": null, "store": {}, "storeLimits": {"logs": 140}, "needs": {"logs": 10}, "project": "Construction"},
+              {"id": 7, "typeId": "house", "x": 1, "y": 2, "level": 1, "assignedWorkers": 0, "maxWorkers": 0, "phase": "Upgrading", "phaseStartedAt": 995, "phaseEndsAt": 1040, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": null, "store": {}, "storeLimits": {}, "needs": {}, "project": null},
+              {"id": 8, "typeId": "study", "x": 3, "y": 2, "level": 1, "assignedWorkers": 0, "maxWorkers": 0, "phase": "Idle", "phaseStartedAt": 0, "phaseEndsAt": null, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": "NoRecipe", "store": {}, "storeLimits": {}, "needs": {}, "project": null},
+              {"id": 9, "typeId": "depot", "x": 4, "y": 2, "level": 1, "assignedWorkers": 0, "maxWorkers": 0, "phase": "Idle", "phaseStartedAt": 0, "phaseEndsAt": null, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": "NoRecipe", "store": {"planks": 4}, "storeLimits": {"logs": 200, "planks": 150}, "needs": {}, "project": null}
             ],
-            "roads": [{"x": 1, "y": 1, "level": 2}, {"x": 2, "y": 1, "level": 1}, {"x": 2, "y": 2, "level": 1}]
+            "roads": [{"x": 1, "y": 1, "level": 2}, {"x": 2, "y": 1, "level": 1}, {"x": 2, "y": 2, "level": 1}],
+            "trips": [{"id": 1, "sourceId": 9, "targetId": 4, "itemId": "planks", "quantity": 2, "departedAt": 995, "arrivesAt": 1012}]
           },
-          "settlement": {"elapsedSeconds": 0, "productionSeconds": 0, "produced": {}, "consumed": {}, "completedBuildings": [], "completedResearch": [], "eraChanged": false}
+          "settlement": {"elapsedSeconds": 0, "productionSeconds": 0, "produced": {}, "consumed": {}, "delivered": {}, "moved": {}, "refunded": {}, "completedBuildings": [], "completedResearch": [], "eraChanged": false}
         }
         """;
 }

@@ -292,8 +292,8 @@ public sealed class StartResearchContractTests(ApiFactory factory) : IClassFixtu
     }
 
     /// <summary>
-    /// The city of the tests at clock 0, with the starting stock (700 coins, 40 logs, 10 planks), no buildings, the trade charter completed
-    /// (at clock 0) and the research slot free.
+    /// The city of the tests at clock 0, with 700 coins, the completed scriptorium (research needs the science building, CR-0008 D11) and
+    /// nothing else, the trade charter completed (at clock 0) and the research slot free.
     /// </summary>
     /// <param name="content">The server's content.</param>
     /// <returns>The city at state version 0.</returns>
@@ -303,9 +303,9 @@ public sealed class StartResearchContractTests(ApiFactory factory) : IClassFixtu
         var state = new CityState(
             0,
             era: 1,
-            nextBuildingId: 1,
-            [new(new ItemId("coins"), 700), new(new ItemId("logs"), 40), new(new ItemId("planks"), 10)],
-            [],
+            nextBuildingId: 2,
+            purse: 700,
+            [new Building(1, new BuildingTypeId("scriptorium"), 0, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0)],
             [tradeCharter],
             activeResearch: null);
         return new CityAggregate(
@@ -322,6 +322,6 @@ public sealed class StartResearchContractTests(ApiFactory factory) : IClassFixtu
         CityAggregate city = store.Stored(_playerId);
         Assert.Equal(0, city.StateVersion);
         Assert.Null(city.State.ActiveResearch);
-        Assert.Equal(700, city.State.GetQuantity(new ItemId("coins")));
+        Assert.Equal(700, city.State.Purse);
     }
 }

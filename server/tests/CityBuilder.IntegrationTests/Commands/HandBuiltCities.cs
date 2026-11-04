@@ -151,7 +151,7 @@ internal static class HandBuiltCities
     }
 
     /// <summary>
-    /// A city's stored totals above 0 as text in ordinal item order (<see cref="DatabaseCities.StoredTotalsAsync"/>: the purse for coins, the
+    /// A city's stored totals above 0 as text in ordinal item order (<see cref="Persistence.DatabaseCities.StoredTotalsAsync"/>: the purse for coins, the
     /// stores and loads for goods), read by a context of the test's own.
     /// </summary>
     /// <param name="database">The test's database.</param>

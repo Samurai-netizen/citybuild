@@ -13,11 +13,17 @@ internal static class ContractContent
     /// <summary>The item <c>coins</c> of the content.</summary>
     public static readonly ItemId Coins = new("coins");
 
-    /// <summary>The item <c>logs</c> of the content (capped at 400).</summary>
+    /// <summary>The item <c>logs</c> of the content: the woodcutter's store holds 40 (60 at level 2).</summary>
     public static readonly ItemId Logs = new("logs");
 
-    /// <summary>The item <c>planks</c> of the content (capped at 300).</summary>
+    /// <summary>The item <c>planks</c> of the content: the trading post's store holds 20.</summary>
     public static readonly ItemId Planks = new("planks");
+
+    /// <summary>The building type <c>study</c>: the science building (one per city), where research happens.</summary>
+    public static readonly BuildingTypeId Study = new("study");
+
+    /// <summary>The building type <c>depot</c>: a warehouse holding 100 logs and 100 planks.</summary>
+    public static readonly BuildingTypeId Depot = new("depot");
 
     /// <summary>The building type <c>house</c>: level 1 provides 3 workers, level 2 provides 5.</summary>
     public static readonly BuildingTypeId House = new("house");
@@ -31,36 +37,43 @@ internal static class ContractContent
     /// <summary>The research <c>trade_charter</c> (90 seconds): unlocks the trading post.</summary>
     public static readonly ResearchId TradeCharter = new("trade_charter");
 
-    /// <summary>The research <c>storehouses</c> (300 seconds, needs the trade charter): +100 logs and +50 planks of storage.</summary>
+    /// <summary>The research <c>storehouses</c> (300 seconds, needs the trade charter): +100 logs and +50 planks in every store that holds them.</summary>
     public static readonly ResearchId Storehouses = new("storehouses");
 
     /// <summary>The research <c>sharp_axes</c> (120 seconds): the woodcutter's labor −150 ‰.</summary>
     public static readonly ResearchId SharpAxes = new("sharp_axes");
 
-    /// <summary>The content file's text: one era, three items, three buildings, three research nodes and two road levels, out of order on purpose.</summary>
+    /// <summary>
+    /// The content file's text (CR-0008's model): one era, three items (coins the currency), a building of each kind, four research nodes,
+    /// two road levels and two amount presets, out of order on purpose.
+    /// </summary>
     public const string Json = """
         {
-          "contentVersion": "contract-1",
+          "contentVersion": "contract-2",
           "rules": {
             "gridWidth": 6, "gridHeight": 5, "builderSlots": 2, "researchSlots": 1,
-            "baseStorageCaps": { "planks": 300, "logs": 400 },
             "maxOfflineProductionSeconds": 14400, "minCycleSeconds": 5, "maxLaborReductionPermille": 400,
-            "groundTileMillis": 6000, "crossingSpeedPermille": 300, "minWalkSeconds": 3, "maxWalkBonusPermille": 250
+            "groundTileMillis": 6000, "crossingSpeedPermille": 300, "minWalkSeconds": 3, "maxWalkBonusPermille": 250,
+            "tripCarryLimit": 8, "maxRouteStops": 5, "maxStopActions": 2
           },
-          "startingCity": { "era": 1, "inventory": { "planks": 20, "coins": 300, "logs": 60 } },
+          "startingCity": { "era": 1, "purse": 300 },
           "eras": [ { "number": 1, "id": "dawn", "name": "Dawn" } ],
           "items": [
-            { "id": "planks", "name": "Planks", "era": 1, "capped": true, "tradable": true },
-            { "id": "coins", "name": "Coins", "era": 1, "capped": false, "tradable": false },
-            { "id": "logs", "name": "Logs", "era": 1, "capped": true, "tradable": true }
+            { "id": "planks", "name": "Planks", "era": 1, "currency": false, "tradable": true },
+            { "id": "coins", "name": "Coins", "era": 1, "currency": true, "tradable": false },
+            { "id": "logs", "name": "Logs", "era": 1, "currency": false, "tradable": true }
+          ],
+          "amountPresets": [
+            { "id": "half", "name": "Half", "percent": 50 },
+            { "id": "all", "name": "All", "percent": 100 }
           ],
           "buildings": [
             {
               "id": "woodcutter", "name": "Woodcutter", "kind": "producer", "era": 1, "availableAtStart": true,
               "cost": { "logs": 10, "coins": 40 }, "buildSeconds": 20,
               "levels": [
-                { "level": 1, "maxWorkers": 2, "recipe": { "outputs": { "logs": 1 }, "labor": 30 } },
-                { "level": 2, "maxWorkers": 3, "recipe": { "outputs": { "logs": 1 }, "labor": 30 },
+                { "level": 1, "maxWorkers": 2, "recipe": { "outputs": { "logs": 1 }, "labor": 30 }, "storage": { "logs": 40 } },
+                { "level": 2, "maxWorkers": 3, "recipe": { "outputs": { "logs": 1 }, "labor": 30 }, "storage": { "logs": 60 },
                   "upgradeCost": { "planks": 5, "coins": 60 }, "upgradeSeconds": 45 }
               ]
             },
@@ -68,8 +81,24 @@ internal static class ContractContent
               "id": "trading_post", "name": "Trading Post", "kind": "producer", "era": 1, "availableAtStart": false,
               "cost": { "coins": 90 }, "buildSeconds": 60,
               "levels": [
-                { "level": 1, "maxWorkers": 1, "recipe": { "inputs": { "planks": 2, "logs": 1 }, "outputs": { "coins": 6 }, "labor": 90 } }
+                { "level": 1, "maxWorkers": 1, "recipe": { "inputs": { "planks": 2, "logs": 1 }, "outputs": { "coins": 6 }, "labor": 90 },
+                  "storage": { "planks": 20, "logs": 10 } }
               ]
+            },
+            {
+              "id": "study", "name": "Study", "kind": "science", "era": 1, "availableAtStart": true, "maxPerCity": 1,
+              "cost": { "coins": 30 }, "buildSeconds": 15,
+              "levels": [ { "level": 1 } ]
+            },
+            {
+              "id": "post", "name": "Post", "kind": "courierStation", "era": 1, "availableAtStart": true,
+              "cost": { "coins": 35 }, "buildSeconds": 25,
+              "levels": [ { "level": 1, "maxWorkers": 2, "carryLimit": 6, "staminaSeconds": 900 } ]
+            },
+            {
+              "id": "depot", "name": "Depot", "kind": "warehouse", "era": 1, "availableAtStart": true,
+              "cost": { "logs": 5, "coins": 25 }, "buildSeconds": 20,
+              "levels": [ { "level": 1, "storage": { "planks": 100, "logs": 100 } } ]
             },
             {
               "id": "house", "name": "Cottage", "kind": "house", "era": 1, "availableAtStart": true,
@@ -96,6 +125,10 @@ internal static class ContractContent
             {
               "id": "trade_charter", "name": "Trade Charter", "era": 1, "cost": { "coins": 60 }, "durationSeconds": 90,
               "effects": [ { "type": "unlockBuilding", "building": "trading_post" } ]
+            },
+            {
+              "id": "tallies", "name": "Tallies", "era": 1, "cost": { "coins": 40 }, "durationSeconds": 60,
+              "effects": [ { "type": "walkSpeedBonus", "permille": 100 }, { "type": "unlockAmountMode", "mode": "percent" } ]
             }
           ],
           "roads": [

@@ -294,7 +294,7 @@ public sealed class AssignWorkersContractTests(ApiFactory factory) : IClassFixtu
             0,
             era: 1,
             nextBuildingId: 4,
-            [new(new ItemId("coins"), 700), new(new ItemId("logs"), 40), new(new ItemId("planks"), 10)],
+            purse: 700,
             buildings,
             [],
             activeResearch: null);

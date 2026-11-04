@@ -276,7 +276,7 @@ public sealed class UpgradeBuildingContractTests(ApiFactory factory) : IClassFix
             0,
             era: 1,
             nextBuildingId: 3,
-            [new(new ItemId("coins"), 700), new(new ItemId("logs"), 40), new(new ItemId("planks"), 10)],
+            purse: 700,
             buildings,
             [],
             activeResearch: null);

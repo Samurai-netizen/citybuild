@@ -361,7 +361,7 @@ public sealed class RoadCommandsContractTests(ApiFactory factory) : IClassFixtur
             0,
             era: 1,
             nextBuildingId: 3,
-            [new(new ItemId("coins"), 20), new(new ItemId("logs"), 40), new(new ItemId("planks"), 10)],
+            purse: 20,
             buildings,
             [],
             activeResearch: null,
@@ -379,6 +379,6 @@ public sealed class RoadCommandsContractTests(ApiFactory factory) : IClassFixtur
         CityAggregate city = store.Stored(_playerId);
         Assert.Equal(0, city.StateVersion);
         Assert.Equal([new RoadTile(1, 1, 1), new RoadTile(2, 1, 2), new RoadTile(3, 1, 1)], city.State.Roads);
-        Assert.Equal(20, city.State.GetQuantity(new ItemId("coins")));
+        Assert.Equal(20, city.State.Purse);
     }
 }
