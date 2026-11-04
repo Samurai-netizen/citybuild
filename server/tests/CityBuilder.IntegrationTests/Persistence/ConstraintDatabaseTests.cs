@@ -47,13 +47,40 @@ public sealed class ConstraintDatabaseTests(PostgresServer server) : PostgresTes
         Assert.Equal((_uniqueViolation, "ux_city_buildings_city_id_x_y"), (error.SqlState, error.ConstraintName));
     }
 
-    /// <summary>A negative stock breaks <c>quantity &gt;= 0</c>.</summary>
+    /// <summary>A negative stock in a store breaks <c>quantity &gt;= 0</c> (CR-0008).</summary>
     [Fact]
-    public async Task SaveChangesAsync_NegativeQuantity_ViolatesTheQuantityCheck()
+    public async Task SaveChangesAsync_NegativeStoreQuantity_ViolatesTheQuantityCheck()
     {
-        PostgresException error = await InsertFullCityFailsAsync(rows => rows.Inventory[0].Quantity = -1);
+        PostgresException error = await InsertFullCityFailsAsync(rows => rows.Stores[0].Quantity = -1);
 
-        Assert.Equal((_checkViolation, "ck_city_inventory_quantity"), (error.SqlState, error.ConstraintName));
+        Assert.Equal((_checkViolation, "ck_city_stores_quantity"), (error.SqlState, error.ConstraintName));
+    }
+
+    /// <summary>A need of 0 (a filled need's row must go) breaks <c>quantity &gt; 0</c> (CR-0008).</summary>
+    [Fact]
+    public async Task SaveChangesAsync_ZeroNeed_ViolatesTheNeedCheck()
+    {
+        PostgresException error = await InsertFullCityFailsAsync(rows => rows.ProjectNeeds[0].Quantity = 0);
+
+        Assert.Equal((_checkViolation, "ck_city_project_needs_quantity"), (error.SqlState, error.ConstraintName));
+    }
+
+    /// <summary>A negative purse breaks <c>purse &gt;= 0</c> (CR-0008).</summary>
+    [Fact]
+    public async Task SaveChangesAsync_NegativePurse_ViolatesThePurseCheck()
+    {
+        PostgresException error = await InsertFullCityFailsAsync(rows => rows.City.Purse = -1);
+
+        Assert.Equal((_checkViolation, "ck_cities_purse"), (error.SqlState, error.ConstraintName));
+    }
+
+    /// <summary>A trip that arrives when it leaves breaks <c>arrives_at &gt; departed_at</c> (CR-0008).</summary>
+    [Fact]
+    public async Task SaveChangesAsync_TripArrivingWhenItLeaves_ViolatesTheArrivalCheck()
+    {
+        PostgresException error = await InsertFullCityFailsAsync(rows => rows.Trips[0].ArrivesAt = rows.Trips[0].DepartedAt);
+
+        Assert.Equal((_checkViolation, "ck_city_trips_arrives_at"), (error.SqlState, error.ConstraintName));
     }
 
     /// <summary>A negative worker count breaks <c>assigned_workers &gt;= 0</c>.</summary>
@@ -115,10 +142,13 @@ public sealed class ConstraintDatabaseTests(PostgresServer server) : PostgresTes
         await using CityBuilderDbContext db = Database.CreateContext();
         db.Players.Add(new PlayerRow { Id = PlayerId, DevName = "dev1", CreatedAt = PostgresApiFactory.Start });
         db.Cities.Add(rows.City);
-        db.CityInventory.AddRange(rows.Inventory);
         db.CityBuildings.AddRange(rows.Buildings);
+        db.CityStores.AddRange(rows.Stores);
+        db.CityProjectNeeds.AddRange(rows.ProjectNeeds);
         db.CityResearch.AddRange(rows.Research);
+        db.CityResearchNeeds.AddRange(rows.ResearchNeeds);
         db.CityRoads.AddRange(rows.Roads);
+        db.CityTrips.AddRange(rows.Trips);
 
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
     }

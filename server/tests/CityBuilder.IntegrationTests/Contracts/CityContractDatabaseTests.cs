@@ -42,7 +42,7 @@ public sealed class CityContractDatabaseTests(PostgresServer server) : PostgresT
 
         await using CityBuilderDbContext db = Database.CreateContext();
         CityRow row = await db.Cities.AsNoTracking().SingleAsync(TestContext.Current.CancellationToken);
-        List<CityInventoryRow> stock = await db.CityInventory.AsNoTracking().Where(item => item.Quantity > 0).ToListAsync(TestContext.Current.CancellationToken);
+        Dictionary<string, long> stock = await StoredTotalsAsync(Database, city, ContentOf(Factory).Currency);
         int buildingRows = await db.CityBuildings.CountAsync(TestContext.Current.CancellationToken);
         List<LedgerEntryRow> ledger = await LedgerAsync(Database, city);
 
@@ -54,9 +54,11 @@ public sealed class CityContractDatabaseTests(PostgresServer server) : PostgresT
         Assert.Equal(row.ContentVersion, (string)snapshot["contentVersion"]!);
         Assert.Equal(3630, row.ClockSeconds);
         Assert.Equal(row.ClockSeconds, (long)snapshot["city"]!["clock"]!);
-        Assert.Equal(Map(stock.Select(item => (item.ItemId, item.Quantity))), snapshot["city"]!["inventory"]!.ToJsonString());
+        Assert.Equal(Map(ContentOf(Factory).Items.Select(item => (item.Id.Value, stock.GetValueOrDefault(item.Id.Value)))), snapshot["city"]!["totals"]!.ToJsonString());
+        Assert.Equal(row.Purse, (long)snapshot["city"]!["purse"]!);
         Assert.Equal(buildingRows, snapshot["city"]!["buildings"]!.AsArray().Count);
-        Assert.Equal("""{"activeId":null,"startedAt":null,"endsAt":null,"completed":["frame_saw","sharp_axes"]}""", snapshot["city"]!["research"]!.ToJsonString());
+        Assert.Equal(
+            """{"activeId":null,"startedAt":null,"endsAt":null,"needs":{},"completed":["frame_saw","sharp_axes"]}""", snapshot["city"]!["research"]!.ToJsonString());
 
         JsonNode settlement = snapshot["settlement"]!;
         Assert.Equal(3630, (long)settlement["elapsedSeconds"]!);
@@ -101,10 +103,13 @@ public sealed class CityContractDatabaseTests(PostgresServer server) : PostgresT
 
         JsonNode snapshot = response.Json();
         await using CityBuilderDbContext db = Database.CreateContext();
-        List<CityInventoryRow> stock = await db.CityInventory.AsNoTracking().Where(item => item.Quantity > 0).ToListAsync(TestContext.Current.CancellationToken);
+        CityRow row = await db.Cities.AsNoTracking().SingleAsync(TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.Status);
         Assert.Equal((1L, "2026-10-26T12:00:00Z", 0L), ((long)snapshot["stateVersion"]!, (string)snapshot["serverTimeUtc"]!, (long)snapshot["city"]!["clock"]!));
-        Assert.Equal(Map(stock.Select(item => (item.ItemId, item.Quantity))), snapshot["city"]!["inventory"]!.ToJsonString());
+        // A new city has coins only (CR-0008 D2): its purse, and every good at 0 in the totals.
+        Assert.Equal(row.Purse, (long)snapshot["city"]!["purse"]!);
+        Assert.Equal(
+            Map(ContentOf(Factory).Items.Select(item => (item.Id.Value, item.IsCurrency ? row.Purse : 0L))), snapshot["city"]!["totals"]!.ToJsonString());
         Assert.Equal("[]", snapshot["city"]!["buildings"]!.ToJsonString());
     }
 
@@ -118,8 +123,8 @@ public sealed class CityContractDatabaseTests(PostgresServer server) : PostgresT
         JsonNode ofFirst = (await ApiClient.GetAsync(Factory, "/api/v1/city", first)).Json();
         JsonNode ofSecond = (await ApiClient.GetAsync(Factory, "/api/v1/city", second)).Json();
 
-        // The first player's city has a house, a woodcutter and a sawmill; the second's is the starter city with nothing built.
-        Assert.Equal(3, ofFirst["city"]!["buildings"]!.AsArray().Count);
+        // The first player's city has a house, a woodcutter, a sawmill and the scriptorium; the second's is the starter city with nothing built.
+        Assert.Equal(4, ofFirst["city"]!["buildings"]!.AsArray().Count);
         Assert.Empty(ofSecond["city"]!["buildings"]!.AsArray());
     }
 

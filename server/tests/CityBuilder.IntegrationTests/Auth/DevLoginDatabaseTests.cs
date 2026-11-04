@@ -47,7 +47,6 @@ public sealed class DevLoginDatabaseTests(PostgresServer server) : PostgresTest(
         await using CityBuilderDbContext db = Database.CreateContext();
         PlayerRow player = await db.Players.SingleAsync(TestContext.Current.CancellationToken);
         CityRow city = await db.Cities.SingleAsync(TestContext.Current.CancellationToken);
-        List<CityInventoryRow> inventory = await db.CityInventory.ToListAsync(TestContext.Current.CancellationToken);
         List<LedgerEntryRow> ledger = await LedgerAsync(Database, city.Id);
         CityState expected = CityFactory.CreateStarterCity(ContentOf(Factory));
 
@@ -57,13 +56,13 @@ public sealed class DevLoginDatabaseTests(PostgresServer server) : PostgresTest(
             (playerId, (short)expected.Era, 0L, PostgresApiFactory.Start.ToUnixTimeSeconds(), 1L, ContentOf(Factory).ContentVersion),
             (city.PlayerId, city.Era, city.ClockSeconds, city.LastSettledUnix, city.StateVersion, city.ContentVersion));
         Assert.Empty(await db.CityBuildings.ToListAsync(TestContext.Current.CancellationToken));
+        Assert.Empty(await db.CityStores.ToListAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(expected.Purse, city.Purse);
+        // A new city has coins only (CR-0008 D2): one grant row, the purse's.
+        LedgerEntryRow grant = Assert.Single(ledger);
         Assert.Equal(
-            expected.Inventory.Select(stock => (stock.Key.Value, stock.Value)).Order(),
-            inventory.Select(row => (row.ItemId, row.Quantity)).Order());
-        Assert.All(ledger, row => Assert.Equal(("STARTING_GRANT", row.Delta, (string?)null, (string?)null), (row.Reason, row.BalanceAfter, row.RefType, row.RefId)));
-        Assert.Equal(
-            inventory.Select(row => (row.ItemId, row.Quantity)).Order(),
-            ledger.GroupBy(row => row.ItemId).Select(item => (item.Key, item.Sum(row => row.Delta))).Order());
+            (ContentOf(Factory).Currency.Value, expected.Purse, expected.Purse, "STARTING_GRANT", (string?)null, (string?)null),
+            (grant.ItemId, grant.Delta, grant.BalanceAfter, grant.Reason, grant.RefType, grant.RefId));
     }
 
     /// <summary>
@@ -83,9 +82,7 @@ public sealed class DevLoginDatabaseTests(PostgresServer server) : PostgresTest(
         Assert.Equal(1, await db.Players.CountAsync(TestContext.Current.CancellationToken));
         CityRow city = await db.Cities.SingleAsync(TestContext.Current.CancellationToken);
         Assert.Equal(1L, city.StateVersion);
-        Assert.Equal(
-            CityFactory.CreateStarterCity(ContentOf(Factory)).Inventory.Count(stock => stock.Value > 0),
-            (await LedgerAsync(Database, city.Id)).Count);
+        Assert.Single(await LedgerAsync(Database, city.Id));
     }
 
     /// <summary>Two names are two players, each with a city of their own.</summary>

@@ -64,16 +64,37 @@ public sealed class CityMappingTests
         Assert.Null(row.ResearchEndsAt);
     }
 
-    /// <summary>Inventory and completed research become one row each, for the city; the completed research carries its completion clock.</summary>
+    /// <summary>
+    /// The purse and the next trip id go into the <c>cities</c> row; every good of a store, every need of a waiting project and every trip
+    /// becomes one row of its table, for the city, in the engine's order; a completed research carries its completion clock (CR-0008).
+    /// </summary>
     [Fact]
-    public void ToRows_FullCity_WritesInventoryAndCompletedResearch()
+    public void ToRows_FullCity_WritesThePurseStoresNeedsTripsAndCompletedResearch()
     {
         CityRows rows = CityMapping.ToRows(Full());
 
+        Assert.Equal((250L, 3), (rows.City.Purse, rows.City.NextTripId));
         Assert.Equal(
-            [(CityId, "coins", 250L), (CityId, "logs", 7L)],
-            rows.Inventory.Select(row => (row.CityId, row.ItemId, row.Quantity)));
+            [(CityId, UpgradingId, "logs", 3L), (CityId, IdleId, "logs", 2L), (CityId, ProducingId, "logs", 7L)],
+            rows.Stores.Select(row => (row.CityId, row.BuildingId, row.ItemId, row.Quantity)));
+        Assert.Equal(
+            [(CityId, IdleId, "planks", 5L), (CityId, SiteId, "logs", 10L)],
+            rows.ProjectNeeds.Select(row => (row.CityId, row.BuildingId, row.ItemId, row.Quantity)));
+        Assert.Equal(
+            [(CityId, 1, ProducingId, IdleId, "logs", 2L, 410L, 430L)],
+            rows.Trips.Select(row => (row.CityId, row.TripId, row.SourceId, row.TargetId, row.ItemId, row.Quantity, row.DepartedAt, row.ArrivesAt)));
+        Assert.Empty(rows.ResearchNeeds);
         Assert.Equal([(CityId, "masonry", 120L)], rows.Research.Select(row => (row.CityId, row.ResearchId, row.CompletedAt)));
+    }
+
+    /// <summary>A research waiting for goods has no start and no end, and its needs become <c>city_research_needs</c> rows (CR-0008).</summary>
+    [Fact]
+    public void ToRows_WaitingResearch_HasNoTimesAndNeedRows()
+    {
+        CityRows rows = CityMapping.ToRows(Later());
+
+        Assert.Equal(("carpentry", (long?)null, (long?)null), (rows.City.ResearchId, rows.City.ResearchStartedAt, rows.City.ResearchEndsAt));
+        Assert.Equal([(CityId, "planks", 4L)], rows.ResearchNeeds.Select(row => (row.CityId, row.ItemId, row.Quantity)));
     }
 
     /// <summary>Each road becomes one <c>city_roads</c> row for the city with its tile and level, in the engine's order (column, then row).</summary>
@@ -88,8 +109,9 @@ public sealed class CityMappingTests
     }
 
     /// <summary>
-    /// Each phase's row: a column is null exactly when the phase doesn't use it, and a cycle started at clock 0 stores 0, not null. Columns:
-    /// phase, start, end, target level, cycle labor, labor remaining, segment start.
+    /// Each phase's row: a column is null exactly when the phase doesn't use it, and a cycle started at clock 0 stores 0, not null; a
+    /// construction site has no start and no end (CR-0008). Columns: phase, start, end, target level, cycle labor, labor remaining, segment
+    /// start.
     /// </summary>
     [Theory]
     [InlineData(ConstructingId, "Constructing", 400L, 700L, null, null, null, null)]
@@ -98,6 +120,7 @@ public sealed class CityMappingTests
     [InlineData(ProducingId, "Producing", 300L, 440L, null, 120L, 80L, 400L)]
     [InlineData(FrozenId, "Producing", 350L, null, null, 60L, 60L, 350L)]
     [InlineData(StartedAtZeroId, "Producing", 0L, 600L, null, 600L, 600L, 0L)]
+    [InlineData(SiteId, "Constructing", null, null, null, null, null, null)]
     public void ToRows_EachPhase_SetsExactlyTheColumnsThePhaseUses(
         int buildingId, string phase, long? startedAt, long? endsAt, short? targetLevel, long? cycleLabor, long? laborRemaining, long? segmentStartedAt)
     {
@@ -117,23 +140,47 @@ public sealed class CityMappingTests
         Assert.Equal((CityId, "woodcutter", (short)3, (short)0, (short)1, (short)2), (row.CityId, row.TypeId, row.X, row.Y, row.Level, row.AssignedWorkers));
     }
 
-    /// <summary>An inventory row at 0 (an item the city used up) loads as no stock of that item.</summary>
+    /// <summary>A store row at 0 (a good the store gave away; its row stays) loads as no stock of that good.</summary>
     [Fact]
-    public void ToAggregate_InventoryRowAtZero_LoadsAsNoStock()
+    public void ToAggregate_StoreRowAtZero_LoadsAsNoStock()
     {
         CityRows rows = CityMapping.ToRows(Full());
-        rows.Inventory[1].Quantity = 0;
+        rows.Stores[0].Quantity = 0;
 
         CityAggregate loaded = CityMapping.ToAggregate(rows);
 
-        Assert.Equal([new ItemId("coins")], loaded.State.Inventory.Keys);
+        Assert.Empty(loaded.State.Buildings.Single(building => building.Id == UpgradingId).Store);
+    }
+
+    /// <summary>
+    /// Rows that break the mapping's CR-0008 rules fail the load: a running research with need rows, a research without times or needs, and a
+    /// store row of a building the city doesn't have.
+    /// </summary>
+    [Fact]
+    public void ToAggregate_BrokenLogisticsRows_Throw()
+    {
+        CityRows timedWithNeeds = CityMapping.ToRows(Full());
+        CityRows waitingWithoutNeeds = CityMapping.ToRows(Later());
+        CityRows unknownStore = CityMapping.ToRows(Full());
+
+        CityRows withNeeds = new(
+            timedWithNeeds.City, timedWithNeeds.Buildings, timedWithNeeds.Stores, timedWithNeeds.ProjectNeeds, timedWithNeeds.Research,
+            [new CityResearchNeedRow { CityId = CityId, ItemId = "planks", Quantity = 1 }], timedWithNeeds.Roads, timedWithNeeds.Trips);
+        CityRows withoutNeeds = new(
+            waitingWithoutNeeds.City, waitingWithoutNeeds.Buildings, waitingWithoutNeeds.Stores, waitingWithoutNeeds.ProjectNeeds,
+            waitingWithoutNeeds.Research, [], waitingWithoutNeeds.Roads, waitingWithoutNeeds.Trips);
+        unknownStore.Stores[0].BuildingId = 77;
+
+        Assert.Throws<InvalidOperationException>(() => CityMapping.ToAggregate(withNeeds));
+        Assert.Throws<InvalidOperationException>(() => CityMapping.ToAggregate(withoutNeeds));
+        Assert.Throws<InvalidOperationException>(() => CityMapping.ToAggregate(unknownStore));
     }
 
     /// <summary>A completed research the aggregate has no completion clock for can't be mapped: it was advanced around <see cref="CityAggregate.Advance"/>.</summary>
     [Fact]
     public void ToRows_ResearchCompletedAroundTheAggregate_Throws()
     {
-        var state = new CityState(100, 1, 1, [], [], [], new ActiveResearch(new ResearchId("sharp_axes"), 0, 100));
+        var state = new CityState(100, 1, 1, 0, [], [], new ActiveResearch(new ResearchId("sharp_axes"), 0, 100));
         var city = new CityAggregate(CityId, PlayerId, state, [], 0, 0, "content-1");
         Simulator.Advance(state, ContentFileLoader.Load(ContentFiles.RealMvpContentPath), 0);
         Assert.True(state.HasCompletedResearch(new ResearchId("sharp_axes")));

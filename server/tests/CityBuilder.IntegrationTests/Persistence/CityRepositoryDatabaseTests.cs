@@ -32,7 +32,7 @@ public sealed class CityRepositoryDatabaseTests(PostgresServer server) : Postgre
 
     /// <summary>
     /// The starter city of the real content (its era and stock, clock 0, no buildings or research), saved for a new player with its
-    /// starting grants, loads in a new scope with every value equal and state version 1; the ledger holds one grant per item.
+    /// starting grant, loads in a new scope with every value equal and state version 1; the ledger holds one grant, the purse's coins (CR-0008).
     /// </summary>
     [Fact]
     public async Task LoadForUpdateAsync_SavedStarterCity_IsTheStarterCity()
@@ -40,17 +40,18 @@ public sealed class CityRepositoryDatabaseTests(PostgresServer server) : Postgre
         GameContent content = Factory.Services.GetRequiredService<IContentProvider>().Content;
         var starter = new CityAggregate(
             CityId, PlayerId, CityFactory.CreateStarterCity(content), [], Factory.Clock.GetUtcNow().ToUnixTimeSeconds(), 0, content.ContentVersion);
-        LedgerEntry[] grants = [.. starter.State.Inventory.Select(stock => new LedgerEntry(stock.Key, stock.Value, stock.Value, LedgerReason.StartingGrant))];
+        long purse = starter.State.Purse;
+        LedgerEntry[] grants = [new LedgerEntry(content.Currency, purse, purse, LedgerReason.StartingGrant)];
         await AddPlayerAsync();
 
         await SaveAsync(starter, grants, receipt: null);
 
         CityAggregate loaded = await LoadAsync();
         Assert.Equal(Describe(Saved(starter)), Describe(loaded));
-        Assert.NotEmpty(loaded.State.Inventory);
+        Assert.True(loaded.State.Purse > 0);
         await using CityBuilderDbContext db = Database.CreateContext();
         Assert.Equal(
-            starter.State.Inventory.Select(stock => (stock.Key.ToString(), stock.Value, stock.Value, "STARTING_GRANT")),
+            [(content.Currency.ToString(), purse, purse, "STARTING_GRANT")],
             (await db.LedgerEntries.OrderBy(row => row.Id).ToListAsync(TestContext.Current.CancellationToken))
                 .Select(row => (row.ItemId, row.Delta, row.BalanceAfter, row.Reason)));
     }
@@ -106,8 +107,11 @@ public sealed class CityRepositoryDatabaseTests(PostgresServer server) : Postgre
         await using CityBuilderDbContext db = Database.CreateContext();
         CityRow city = await db.Cities.SingleAsync(cancellationToken);
         Assert.Equal((CityId, PlayerId, 8L, now, now), (city.Id, city.PlayerId, city.StateVersion, city.CreatedAt, city.UpdatedAt));
-        Assert.Equal(2, await db.CityInventory.CountAsync(cancellationToken));
-        Assert.Equal(6, await db.CityBuildings.CountAsync(cancellationToken));
+        Assert.Equal(250L, city.Purse);
+        Assert.Equal(7, await db.CityBuildings.CountAsync(cancellationToken));
+        Assert.Equal(3, await db.CityStores.CountAsync(cancellationToken));
+        Assert.Equal(2, await db.CityProjectNeeds.CountAsync(cancellationToken));
+        Assert.Equal(1, await db.CityTrips.CountAsync(cancellationToken));
         Assert.Equal(["masonry"], await db.CityResearch.Select(row => row.ResearchId).ToListAsync(cancellationToken));
         Assert.Equal(
             [(CityId, (short)2, (short)1, (short)1), (CityId, (short)3, (short)1, (short)2), (CityId, (short)4, (short)0, (short)1)],
@@ -148,7 +152,9 @@ public sealed class CityRepositoryDatabaseTests(PostgresServer server) : Postgre
 
         Assert.Equal(Describe(Saved(Later(stateVersion: 8))), Describe(await LoadAsync()));
         await using CityBuilderDbContext db = Database.CreateContext();
-        Assert.Equal(0L, (await db.CityInventory.SingleAsync(row => row.ItemId == "logs", cancellationToken)).Quantity);
+        Assert.Equal(0L, (await db.CityStores.SingleAsync(row => row.BuildingId == ProducingId, cancellationToken)).Quantity);
+        Assert.False(await db.CityTrips.AnyAsync(cancellationToken));
+        Assert.Equal(["planks"], await db.CityResearchNeeds.Select(row => row.ItemId).ToListAsync(cancellationToken));
         Assert.False(await db.CityBuildings.AnyAsync(row => row.BuildingId == IdleId, cancellationToken));
         Assert.Equal(
             [((short)4, (short)0, (short)2), ((short)5, (short)5, (short)1)],

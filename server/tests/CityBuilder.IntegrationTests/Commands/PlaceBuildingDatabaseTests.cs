@@ -275,14 +275,8 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
     private Task<ApiResponse> PlaceAsync(Guid player, Guid requestId, string typeId, int x, int y) =>
         ApiClient.PostAsync(Factory, _path, player, $$"""{"requestId":"{{requestId}}","buildingTypeId":"{{typeId}}","x":{{x}},"y":{{y}}}""");
 
-    /// <summary>A city's stored stock above 0 as text in ordinal item order, read by a context of the test's own.</summary>
+    /// <summary>A city's stored totals above 0 as text in ordinal item order (<see cref="HandBuiltCities.StockAsync"/>).</summary>
     /// <param name="city">The city.</param>
     /// <returns>For example <c>coins 550, logs 10</c>.</returns>
-    private async Task<string> StockAsync(Guid city)
-    {
-        await using CityBuilderDbContext db = Database.CreateContext();
-        List<CityInventoryRow> rows = await db.CityInventory.AsNoTracking().Where(row => row.CityId == city && row.Quantity > 0)
-            .ToListAsync(TestContext.Current.CancellationToken);
-        return string.Join(", ", rows.OrderBy(row => row.ItemId, StringComparer.Ordinal).Select(row => $"{row.ItemId} {row.Quantity}"));
-    }
+    private Task<string> StockAsync(Guid city) => HandBuiltCities.StockAsync(Database, city);
 }
