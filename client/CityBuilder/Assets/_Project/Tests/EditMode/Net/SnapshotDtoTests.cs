@@ -186,6 +186,24 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(research.Settlement.Moved, Is.Empty);
             Assert.That(research.Settlement.Refunded, Is.Empty);
             Assert.That(research.Settlement.EraChanged, Is.False);
+            Assert.That(research.Settlement.CourierSeconds, Is.EqualTo(0L));
+            Assert.That(research.Settlement.TiredCouriers, Is.Empty);
+        }
+
+        /// <summary>A settlement's tired couriers read with their station, slot and second (<c>05</c> Snapshot, CR-0008).</summary>
+        [Test]
+        public void Settlement_TiredCouriers_AreRead()
+        {
+            string text = Fixtures.Read("snapshot-city-research-completed.json")
+                .Replace("\"courierSeconds\":0,\"tiredCouriers\":[]", "\"courierSeconds\":14045,\"tiredCouriers\":[{\"stationId\":3,\"slot\":1,\"at\":15095}]");
+
+            CitySnapshotDto snapshot = _json.Deserialize<CitySnapshotDto>(text);
+
+            Assert.That(snapshot.Settlement.CourierSeconds, Is.EqualTo(14_045L));
+            Assert.That(snapshot.Settlement.TiredCouriers.Count, Is.EqualTo(1));
+            Assert.That(
+                (snapshot.Settlement.TiredCouriers[0].StationId, snapshot.Settlement.TiredCouriers[0].Slot, snapshot.Settlement.TiredCouriers[0].At),
+                Is.EqualTo((3, 1, 15_095L)));
         }
 
         /// <summary>A snapshot without a member the contract requires is refused instead of read with a zero in its place.</summary>

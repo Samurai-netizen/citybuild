@@ -188,19 +188,45 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(buildings.Produced, Is.Empty);
         }
 
-        /// <summary>A settlement that says production counted more seconds than passed is a broken answer.</summary>
+        /// <summary>The settlement's courier seconds and tired couriers come along in the engine's terms (CR-0008).</summary>
         [Test]
-        public void ToSnapshot_ProductionAboveElapsed_IsAnInvalidResponse()
+        public void ToSnapshot_TiredCouriers_AreKept()
         {
             CitySnapshotDto good = CityTestData.Dto("snapshot-city-research-completed.json");
             var settlement = new SnapshotSettlementDto(
                 10,
-                11,
                 good.Settlement.Produced,
                 good.Settlement.Consumed,
                 good.Settlement.Delivered,
                 good.Settlement.Moved,
                 good.Settlement.Refunded,
+                14_045,
+                new List<SnapshotTiredCourierDto> { new SnapshotTiredCourierDto(3, 1, 15_095) },
+                good.Settlement.CompletedBuildings,
+                good.Settlement.CompletedResearch,
+                false);
+            var dto = new CitySnapshotDto(good.RequestId, good.StateVersion, good.ServerTimeUtc, good.ContentVersion, good.City, settlement);
+
+            SettlementSummary summary = SnapshotMapper.ToSnapshot(dto).Value!.Settlement!;
+
+            Assert.That(summary.CourierSeconds, Is.EqualTo(14_045L));
+            Assert.That(summary.TiredCouriers.Select(tired => (tired.StationId, tired.Slot, tired.At)), Is.EqualTo(new[] { (3, 1, 15_095L) }));
+        }
+
+        /// <summary>A settlement that says a courier spent a negative number of seconds is a broken answer.</summary>
+        [Test]
+        public void ToSnapshot_NegativeCourierSeconds_IsAnInvalidResponse()
+        {
+            CitySnapshotDto good = CityTestData.Dto("snapshot-city-research-completed.json");
+            var settlement = new SnapshotSettlementDto(
+                10,
+                good.Settlement.Produced,
+                good.Settlement.Consumed,
+                good.Settlement.Delivered,
+                good.Settlement.Moved,
+                good.Settlement.Refunded,
+                -1,
+                good.Settlement.TiredCouriers,
                 good.Settlement.CompletedBuildings,
                 good.Settlement.CompletedResearch,
                 false);
