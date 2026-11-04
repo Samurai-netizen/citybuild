@@ -43,7 +43,7 @@ public sealed class CityMappingTests
         Assert.Equal(2, row.Era);
         Assert.Equal(Clock, row.ClockSeconds);
         Assert.Equal(1_790_000_000, row.LastSettledUnix);
-        Assert.Equal(9, row.NextBuildingId);
+        Assert.Equal(10, row.NextBuildingId);
         Assert.Equal("forestry", row.ResearchId);
         Assert.Equal(300, row.ResearchStartedAt);
         Assert.Equal(86_700, row.ResearchEndsAt);
@@ -174,6 +174,65 @@ public sealed class CityMappingTests
         Assert.Throws<InvalidOperationException>(() => CityMapping.ToAggregate(withNeeds));
         Assert.Throws<InvalidOperationException>(() => CityMapping.ToAggregate(withoutNeeds));
         Assert.Throws<InvalidOperationException>(() => CityMapping.ToAggregate(unknownStore));
+    }
+
+    /// <summary>
+    /// Courier and route rows that form no courier or route fail the load (CR-0008-T1 part G): an unknown courier state, a walking courier
+    /// without times, a load of a courier the city doesn't have, a route whose stops skip an index, a stop whose actions name two buildings,
+    /// an action kind other than take or put, an amount that is no amount, and a route of one stop.
+    /// </summary>
+    [Theory]
+    [InlineData("courier state")]
+    [InlineData("walking without times")]
+    [InlineData("load of no courier")]
+    [InlineData("stop index gap")]
+    [InlineData("stop of two buildings")]
+    [InlineData("action kind")]
+    [InlineData("amount")]
+    [InlineData("one stop")]
+    public void ToAggregate_BrokenCourierOrRouteRows_Throw(string broken)
+    {
+        CityRows rows = CityMapping.ToRows(Full());
+        CityRouteActionRow first = rows.RouteActions.First(row => row.Slot == 1);
+        List<CityRouteActionRow> actions = [.. rows.RouteActions];
+        List<CityCourierLoadRow> loads = [.. rows.CourierLoads];
+        switch (broken)
+        {
+            case "courier state":
+                rows.Couriers[0].State = "Dancing";
+                break;
+            case "walking without times":
+                rows.Couriers[0].DepartedAt = null;
+                rows.Couriers[0].ArrivesAt = null;
+                break;
+            case "load of no courier":
+                loads.Add(new CityCourierLoadRow { CityId = CityId, StationId = StationId, Slot = 5, ItemId = "logs", FromBuildingId = IdleId, Quantity = 1 });
+                break;
+            case "stop index gap":
+                foreach (CityRouteActionRow row in actions.Where(row => row.Slot == 2 && row.StopIndex == 1))
+                {
+                    row.StopIndex = 2;
+                }
+
+                break;
+            case "stop of two buildings":
+                actions.Single(row => row.Slot == 1 && row.StopIndex == 0 && row.ActionIndex == 1).BuildingId = SiteId;
+                break;
+            case "action kind":
+                first.Kind = "drop";
+                break;
+            case "amount":
+                first.Amount = "1.5%";
+                break;
+            default:
+                actions.RemoveAll(row => row.Slot == 2 && row.StopIndex == 1);
+                break;
+        }
+
+        var changed = new CityRows(
+            rows.City, rows.Buildings, rows.Stores, rows.ProjectNeeds, rows.Research, rows.ResearchNeeds, rows.Roads, rows.Trips, rows.Couriers, loads, actions);
+
+        Assert.Throws<InvalidOperationException>(() => CityMapping.ToAggregate(changed));
     }
 
     /// <summary>A completed research the aggregate has no completion clock for can't be mapped: it was advanced around <see cref="CityAggregate.Advance"/>.</summary>

@@ -57,13 +57,16 @@ public sealed class CityRepositoryTests : IDisposable
 
         CityRow city = Assert.Single(Rows<CityRow>(EntityState.Added));
         Assert.Equal((8L, _now, _now), (city.StateVersion, city.CreatedAt, city.UpdatedAt));
-        Assert.Equal(7, Rows<CityBuildingRow>(EntityState.Added).Count);
+        Assert.Equal(8, Rows<CityBuildingRow>(EntityState.Added).Count);
         Assert.Equal(3, Rows<CityStoreRow>(EntityState.Added).Count);
         Assert.Equal(2, Rows<CityProjectNeedRow>(EntityState.Added).Count);
         Assert.Single(Rows<CityResearchRow>(EntityState.Added));
         Assert.Empty(Rows<CityResearchNeedRow>(EntityState.Added));
         Assert.Equal(3, Rows<CityRoadRow>(EntityState.Added).Count);
         Assert.Single(Rows<CityTripRow>(EntityState.Added));
+        Assert.Equal(2, Rows<CityCourierRow>(EntityState.Added).Count);
+        Assert.Equal(3, Rows<CityCourierLoadRow>(EntityState.Added).Count);
+        Assert.Equal(5, Rows<CityRouteActionRow>(EntityState.Added).Count);
         Assert.All(_db.ChangeTracker.Entries(), entry => Assert.Equal(EntityState.Added, entry.State));
     }
 
@@ -128,6 +131,32 @@ public sealed class CityRepositoryTests : IDisposable
     }
 
     /// <summary>
+    /// Couriers, their loads and the routes merge like the other rows (CR-0008): courier 9/1 is written (it stands at its station now), 9/2
+    /// and every load part are deleted; of the routes' action rows the unchanged one stays, the changed one is written, a new third stop is
+    /// inserted, and slot 1's second take and slot 2's route are deleted.
+    /// </summary>
+    [Fact]
+    public void Save_LoadedCity_MergesTheCouriersAndRoutes()
+    {
+        AttachAsLoaded(Full());
+
+        _repository.Save(Later(), [], receipt: null);
+
+        Assert.Equal(
+            [(1, EntityState.Modified), (2, EntityState.Deleted)],
+            _db.ChangeTracker.Entries<CityCourierRow>().Select(entry => ((int)entry.Entity.Slot, entry.State)).Order());
+        Assert.All(_db.ChangeTracker.Entries<CityCourierLoadRow>(), entry => Assert.Equal(EntityState.Deleted, entry.State));
+        Assert.Equal(
+            [
+                ((short)1, (short)0, (short)0, EntityState.Unchanged), ((short)1, (short)0, (short)1, EntityState.Deleted),
+                ((short)1, (short)1, (short)0, EntityState.Modified), ((short)1, (short)2, (short)0, EntityState.Added),
+                ((short)2, (short)0, (short)0, EntityState.Deleted), ((short)2, (short)1, (short)0, EntityState.Deleted),
+            ],
+            _db.ChangeTracker.Entries<CityRouteActionRow>()
+                .Select(entry => (entry.Entity.Slot, entry.Entity.StopIndex, entry.Entity.ActionIndex, entry.State)).Order());
+    }
+
+    /// <summary>
     /// A changed building is written (a finished cycle clears its cycle columns), a new one inserted, one the state no longer has deleted, and
     /// the others are left alone.
     /// </summary>
@@ -151,9 +180,10 @@ public sealed class CityRepositoryTests : IDisposable
                 [StartedAtZeroId] = EntityState.Unchanged,
                 [7] = EntityState.Added,
                 [SiteId] = EntityState.Unchanged,
+                [StationId] = EntityState.Modified,
             },
             states);
-        CityBuildingRow finished = Rows<CityBuildingRow>(EntityState.Modified).Single();
+        CityBuildingRow finished = Rows<CityBuildingRow>(EntityState.Modified).Single(row => row.BuildingId == ProducingId);
         Assert.Equal(("Idle", null, null, null, null, null), (finished.Phase, finished.PhaseStartedAt, finished.PhaseEndsAt, finished.CycleLabor, finished.LaborRemaining, finished.SegmentStartedAt));
     }
 
@@ -261,6 +291,9 @@ public sealed class CityRepositoryTests : IDisposable
         _db.AttachRange(rows.ResearchNeeds);
         _db.AttachRange(rows.Roads);
         _db.AttachRange(rows.Trips);
+        _db.AttachRange(rows.Couriers);
+        _db.AttachRange(rows.CourierLoads);
+        _db.AttachRange(rows.RouteActions);
     }
 
     /// <summary>The tracked rows of one table in one state.</summary>

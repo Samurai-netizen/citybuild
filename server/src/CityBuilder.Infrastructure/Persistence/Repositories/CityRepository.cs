@@ -47,8 +47,12 @@ public sealed class CityRepository(CityBuilderDbContext db, TimeProvider timePro
         List<CityResearchNeedRow> researchNeeds = await _db.CityResearchNeeds.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
         List<CityRoadRow> roads = await _db.CityRoads.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
         List<CityTripRow> trips = await _db.CityTrips.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
+        List<CityCourierRow> couriers = await _db.CityCouriers.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
+        List<CityCourierLoadRow> courierLoads = await _db.CityCourierLoads.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
+        List<CityRouteActionRow> routeActions = await _db.CityRouteActions.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
 
-        return CityMapping.ToAggregate(new CityRows(city, buildings, stores, projectNeeds, research, researchNeeds, roads, trips));
+        return CityMapping.ToAggregate(
+            new CityRows(city, buildings, stores, projectNeeds, research, researchNeeds, roads, trips, couriers, courierLoads, routeActions));
     }
 
     /// <summary>
@@ -104,6 +108,9 @@ public sealed class CityRepository(CityBuilderDbContext db, TimeProvider timePro
             _db.CityResearchNeeds.AddRange(rows.ResearchNeeds);
             _db.CityRoads.AddRange(rows.Roads);
             _db.CityTrips.AddRange(rows.Trips);
+            _db.CityCouriers.AddRange(rows.Couriers);
+            _db.CityCourierLoads.AddRange(rows.CourierLoads);
+            _db.CityRouteActions.AddRange(rows.RouteActions);
         }
         else
         {
@@ -116,6 +123,9 @@ public sealed class CityRepository(CityBuilderDbContext db, TimeProvider timePro
             Merge(_db.CityResearchNeeds, city.CityId, rows.ResearchNeeds, row => row.CityId, row => row.ItemId);
             Merge(_db.CityRoads, city.CityId, rows.Roads, row => row.CityId, row => (row.X, row.Y));
             Merge(_db.CityTrips, city.CityId, rows.Trips, row => row.CityId, row => row.TripId);
+            Merge(_db.CityCouriers, city.CityId, rows.Couriers, row => row.CityId, row => (row.StationId, row.Slot));
+            Merge(_db.CityCourierLoads, city.CityId, rows.CourierLoads, row => row.CityId, row => (row.StationId, row.Slot, row.ItemId, row.FromBuildingId));
+            Merge(_db.CityRouteActions, city.CityId, rows.RouteActions, row => row.CityId, row => (row.StationId, row.Slot, row.StopIndex, row.ActionIndex));
         }
 
         _db.LedgerEntries.AddRange(ledger.Select(entry => LedgerMapping.ToRow(city.CityId, entry, now)));

@@ -29,10 +29,13 @@ public sealed class ConstraintDatabaseTests(PostgresServer server) : PostgresTes
         await InsertFullCityAsync(_ => { });
 
         await using CityBuilderDbContext db = Database.CreateContext();
-        Assert.Equal(7, await db.CityBuildings.CountAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(8, await db.CityBuildings.CountAsync(TestContext.Current.CancellationToken));
         Assert.Equal(3, await db.CityStores.CountAsync(TestContext.Current.CancellationToken));
         Assert.Equal(3, await db.CityRoads.CountAsync(TestContext.Current.CancellationToken));
         Assert.Equal(1, await db.CityTrips.CountAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(2, await db.CityCouriers.CountAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(3, await db.CityCourierLoads.CountAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(5, await db.CityRouteActions.CountAsync(TestContext.Current.CancellationToken));
     }
 
     /// <summary>Two buildings of one city on the same tile break the unique index on <c>(city_id, x, y)</c>.</summary>
@@ -83,6 +86,42 @@ public sealed class ConstraintDatabaseTests(PostgresServer server) : PostgresTes
         PostgresException error = await InsertFullCityFailsAsync(rows => rows.Trips[0].ArrivesAt = rows.Trips[0].DepartedAt);
 
         Assert.Equal((_checkViolation, "ck_city_trips_arrives_at"), (error.SqlState, error.ConstraintName));
+    }
+
+    /// <summary>A courier with negative stamina breaks <c>stamina_seconds &gt;= 0</c> (CR-0008).</summary>
+    [Fact]
+    public async Task SaveChangesAsync_CourierWithNegativeStamina_ViolatesTheStaminaCheck()
+    {
+        PostgresException error = await InsertFullCityFailsAsync(rows => rows.Couriers[0].StaminaSeconds = -1);
+
+        Assert.Equal((_checkViolation, "ck_city_couriers_stamina_seconds"), (error.SqlState, error.ConstraintName));
+    }
+
+    /// <summary>A walk with a departure and no arrival breaks the walk check of <c>city_couriers</c> (CR-0008).</summary>
+    [Fact]
+    public async Task SaveChangesAsync_CourierWithHalfAWalk_ViolatesTheWalkCheck()
+    {
+        PostgresException error = await InsertFullCityFailsAsync(rows => rows.Couriers[0].ArrivesAt = null);
+
+        Assert.Equal((_checkViolation, "ck_city_couriers_walk"), (error.SqlState, error.ConstraintName));
+    }
+
+    /// <summary>A load part of 0 breaks <c>quantity &gt; 0</c> of <c>city_courier_loads</c> (CR-0008).</summary>
+    [Fact]
+    public async Task SaveChangesAsync_EmptyCourierLoad_ViolatesTheQuantityCheck()
+    {
+        PostgresException error = await InsertFullCityFailsAsync(rows => rows.CourierLoads[0].Quantity = 0);
+
+        Assert.Equal((_checkViolation, "ck_city_courier_loads_quantity"), (error.SqlState, error.ConstraintName));
+    }
+
+    /// <summary>A route action that is neither take nor put breaks the kind check of <c>city_route_actions</c> (CR-0008).</summary>
+    [Fact]
+    public async Task SaveChangesAsync_RouteActionOfAnotherKind_ViolatesTheKindCheck()
+    {
+        PostgresException error = await InsertFullCityFailsAsync(rows => rows.RouteActions[0].Kind = "drop");
+
+        Assert.Equal((_checkViolation, "ck_city_route_actions_kind"), (error.SqlState, error.ConstraintName));
     }
 
     /// <summary>A negative worker count breaks <c>assigned_workers &gt;= 0</c>.</summary>
@@ -151,6 +190,9 @@ public sealed class ConstraintDatabaseTests(PostgresServer server) : PostgresTes
         db.CityResearchNeeds.AddRange(rows.ResearchNeeds);
         db.CityRoads.AddRange(rows.Roads);
         db.CityTrips.AddRange(rows.Trips);
+        db.CityCouriers.AddRange(rows.Couriers);
+        db.CityCourierLoads.AddRange(rows.CourierLoads);
+        db.CityRouteActions.AddRange(rows.RouteActions);
 
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
     }

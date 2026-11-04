@@ -40,12 +40,16 @@ internal static class SampleCities
     /// <summary>The id of the construction site (constructing without a timer, waiting for goods; CR-0008) in <see cref="Full"/>.</summary>
     public const int SiteId = 8;
 
+    /// <summary>The id of the courier station with two couriers and two routes (CR-0008) in <see cref="Full"/>.</summary>
+    public const int StationId = 9;
+
     /// <summary>
     /// A city in era 2 with something in every field: 250 coins in the purse, goods in three stores, a building in each phase (constructing,
     /// upgrading, idle with an upgrade waiting for planks, producing, a frozen cycle with a null end, a cycle started at clock 0, a construction
     /// site waiting for logs), the research <c>masonry</c> completed at clock 120 and <c>forestry</c> running, roads at (2, 1) level 1, (3, 1)
-    /// level 2 and (4, 0) level 1 (given out of order), trip 1 carrying 2 logs (the next trip id 3: trip 2 has arrived), the next building id
-    /// above the highest one, state version 7.
+    /// level 2 and (4, 0) level 1 (given out of order), trip 1 carrying 2 logs (the next trip id 3: trip 2 has arrived), a courier station
+    /// with courier 1 walking to stop 2 with logs and planks from two buildings and courier 2 resting with logs, and routes for both slots
+    /// (every amount form), the next building id above the highest one, state version 7.
     /// </summary>
     public static CityAggregate Full()
     {
@@ -58,18 +62,30 @@ internal static class SampleCities
             new(FrozenId, new BuildingTypeId("quarry"), 0, 1, 1, 0, BuildingPhase.Producing, 350, null, 0, 60, 60, 350),
             new(StartedAtZeroId, new BuildingTypeId("farm"), 1, 1, 1, 1, BuildingPhase.Producing, 0, 600, 0, 600, 600, 0),
             new(SiteId, new BuildingTypeId("sawmill"), 2, 2, 1, 0, BuildingPhase.Constructing, 0, null, 0, 0, 0, 0, null, Goods(("logs", 10))),
+            new(StationId, new BuildingTypeId("courier_station"), 3, 3, 1, 2, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
         ];
         var state = new CityState(
             Clock,
             era: 2,
-            nextBuildingId: 9,
+            nextBuildingId: 10,
             purse: 250,
             buildings,
             [new ResearchId("masonry")],
             new ActiveResearch(new ResearchId("forestry"), 300, 86_700),
             [new RoadTile(4, 0, 1), new RoadTile(2, 1, 1), new RoadTile(3, 1, 2)],
             [new Trip(1, ProducingId, IdleId, new ItemId("logs"), 2, 410, 430)],
-            nextTripId: 3);
+            nextTripId: 3,
+            couriers:
+            [
+                new Courier(StationId, 1, CourierState.Walking, 2, 400, 430, 500,
+                    [new CourierLoad(new ItemId("logs"), ProducingId, 3), new CourierLoad(new ItemId("planks"), IdleId, 1)]),
+                new Courier(StationId, 2, CourierState.Resting, 0, null, null, 0, [new CourierLoad(new ItemId("logs"), UpgradingId, 2)]),
+            ],
+            routes:
+            [
+                Route(StationId, 1, (ProducingId, [(true, "logs", "half"), (true, "planks", "all")]), (IdleId, [(false, "logs", "all")])),
+                Route(StationId, 2, (IdleId, [(true, "planks", "50%")]), (SiteId, [(false, "planks", "3")])),
+            ]);
 
         return new CityAggregate(CityId, PlayerId, state, [new(new ResearchId("masonry"), 120)], 1_790_000_000, 7, "content-1");
     }
@@ -78,7 +94,8 @@ internal static class SampleCities
     /// <see cref="Full"/> later, at clock 90 000: 240 coins; the producing building finished its cycle and its logs went (its store row stays,
     /// at 0), the idle one is gone and a new one (id 7) is under construction on the tile of the road at (2, 1), which was removed; the site got
     /// 6 of its logs and holds a plank; trip 1 has arrived; the road at (3, 1) is gone, the one at (4, 0) is at level 2, and a new one lies at
-    /// (5, 5); <c>forestry</c> completed at its end and <c>carpentry</c> waits for 4 planks. Ids as in <see cref="Full"/>.
+    /// (5, 5); <c>forestry</c> completed at its end and <c>carpentry</c> waits for 4 planks; the station has one worker: courier 1 stands
+    /// at the station with nothing, courier 2 is gone, slot 1's route has a third stop and slot 2's lost its route. Ids as in <see cref="Full"/>.
     /// </summary>
     /// <param name="stateVersion">The version the city was loaded with; <see cref="Full"/>'s 7 by default.</param>
     public static CityAggregate Later(long stateVersion = 7)
@@ -86,7 +103,8 @@ internal static class SampleCities
         CityAggregate full = Full();
         Building[] buildings =
         [
-            .. full.State.Buildings.Where(building => building.Id is not (IdleId or ProducingId or SiteId)).Select(CityCopy),
+            .. full.State.Buildings.Where(building => building.Id is not (IdleId or ProducingId or SiteId or StationId)).Select(CityCopy),
+            new(StationId, new BuildingTypeId("courier_station"), 3, 3, 1, 1, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
             new(ProducingId, new BuildingTypeId("woodcutter"), 3, 0, 1, 2, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
             new(7, new BuildingTypeId("cottage"), 2, 1, 1, 0, BuildingPhase.Constructing, 89_000, 89_900, 0, 0, 0, 0),
             new(SiteId, new BuildingTypeId("sawmill"), 2, 2, 1, 0, BuildingPhase.Constructing, 0, null, 0, 0, 0, 0, Goods(("planks", 1)), Goods(("logs", 4))),
@@ -100,7 +118,9 @@ internal static class SampleCities
             [new ResearchId("masonry"), new ResearchId("forestry")],
             new ActiveResearch(new ResearchId("carpentry"), null, null, Goods(("planks", 4))),
             [new RoadTile(4, 0, 2), new RoadTile(5, 5, 1)],
-            nextTripId: 3);
+            nextTripId: 3,
+            couriers: [new Courier(StationId, 1, CourierState.AtStation, 0, null, null, 500)],
+            routes: [Route(StationId, 1, (ProducingId, [(true, "logs", "half")]), (7, [(false, "logs", "all")]), (SiteId, [(false, "logs", "quarter")]))]);
         KeyValuePair<ResearchId, long>[] completedAt = [new(new ResearchId("masonry"), 120), new(new ResearchId("forestry"), 86_700)];
 
         return new CityAggregate(full.CityId, full.PlayerId, state, completedAt, full.LastSettledUnixSec, stateVersion, full.ContentVersion);
@@ -171,9 +191,25 @@ internal static class SampleCities
             "roads " + string.Join(", ", state.Roads.Select(road => $"({road.X},{road.Y}) L{road.Level}")),
             "trips " + string.Join(", ", state.Trips.Select(trip =>
                 $"{trip.Id} {trip.SourceId}->{trip.TargetId} {trip.Item}={trip.Quantity} {trip.DepartedAt}..{trip.ArrivesAt}")),
+            .. state.Couriers.Select(courier =>
+                $"courier {courier.StationId}/{courier.Slot} {courier.State} to {courier.ToStop} {courier.DepartedAt}..{courier.ArrivesAt} " +
+                $"stamina {courier.Stamina} load " + string.Join(" ", courier.Loads.Select(part => $"{part.Item}@{part.FromId}={part.Quantity}"))),
+            .. state.Routes.Select(route => $"route {route.StationId}/{route.Slot} " + string.Join(" ", route.Stops.Select(stop =>
+                $"{stop.BuildingId}[" + string.Join("; ", stop.Actions.Select(action => $"{action.Kind} {action.Item} {action.Amount}")) + "]"))),
         ];
         return string.Join("\n", lines);
     }
+
+    /// <summary>A route of a station's slot over stops written as (building, actions), each action as (take?, good, amount text).</summary>
+    /// <param name="stationId">The courier station's id.</param>
+    /// <param name="slot">The slot.</param>
+    /// <param name="stops">The stops.</param>
+    /// <returns>The route.</returns>
+    public static Route Route(int stationId, int slot, params (int BuildingId, (bool Take, string Item, string Amount)[] Actions)[] stops) =>
+        new(stationId, slot, stops.Select(stop => new RouteStop(stop.BuildingId, stop.Actions.Select(action => new RouteAction(
+            action.Take ? RouteActionKind.Take : RouteActionKind.Put,
+            new ItemId(action.Item),
+            Amount.TryParse(action.Amount, out Amount? amount) ? amount : throw new ArgumentException("Not an amount: " + action.Amount))))));
 
     /// <summary>Goods and quantities as the engine's pairs, for a store or a project's needs.</summary>
     /// <param name="goods">The goods.</param>

@@ -29,6 +29,15 @@ public sealed class CityBuilderDbContext(DbContextOptions<CityBuilderDbContext> 
     /// <summary>The <c>city_trips</c> table: the trips under way (CR-0008).</summary>
     public DbSet<CityTripRow> CityTrips => Set<CityTripRow>();
 
+    /// <summary><c>city_couriers</c>: one courier per worker of a courier station (CR-0008).</summary>
+    public DbSet<CityCourierRow> CityCouriers => Set<CityCourierRow>();
+
+    /// <summary><c>city_courier_loads</c>: the parts of the couriers' loads (CR-0008).</summary>
+    public DbSet<CityCourierLoadRow> CityCourierLoads => Set<CityCourierLoadRow>();
+
+    /// <summary><c>city_route_actions</c>: the routes, an action per row (CR-0008).</summary>
+    public DbSet<CityRouteActionRow> CityRouteActions => Set<CityRouteActionRow>();
+
     /// <summary>The <c>city_buildings</c> table.</summary>
     public DbSet<CityBuildingRow> CityBuildings => Set<CityBuildingRow>();
 
@@ -59,6 +68,9 @@ public sealed class CityBuilderDbContext(DbContextOptions<CityBuilderDbContext> 
         modelBuilder.ApplyConfiguration(new CityResearchNeedConfiguration());
         modelBuilder.ApplyConfiguration(new CityRoadConfiguration());
         modelBuilder.ApplyConfiguration(new CityTripConfiguration());
+        modelBuilder.ApplyConfiguration(new CityCourierConfiguration());
+        modelBuilder.ApplyConfiguration(new CityCourierLoadConfiguration());
+        modelBuilder.ApplyConfiguration(new CityRouteActionConfiguration());
         modelBuilder.ApplyConfiguration(new CommandReceiptConfiguration());
         modelBuilder.ApplyConfiguration(new LedgerEntryConfiguration());
     }

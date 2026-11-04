@@ -108,10 +108,13 @@ public sealed class CityRepositoryDatabaseTests(PostgresServer server) : Postgre
         CityRow city = await db.Cities.SingleAsync(cancellationToken);
         Assert.Equal((CityId, PlayerId, 8L, now, now), (city.Id, city.PlayerId, city.StateVersion, city.CreatedAt, city.UpdatedAt));
         Assert.Equal(250L, city.Purse);
-        Assert.Equal(7, await db.CityBuildings.CountAsync(cancellationToken));
+        Assert.Equal(8, await db.CityBuildings.CountAsync(cancellationToken));
         Assert.Equal(3, await db.CityStores.CountAsync(cancellationToken));
         Assert.Equal(2, await db.CityProjectNeeds.CountAsync(cancellationToken));
         Assert.Equal(1, await db.CityTrips.CountAsync(cancellationToken));
+        Assert.Equal(2, await db.CityCouriers.CountAsync(cancellationToken));
+        Assert.Equal(3, await db.CityCourierLoads.CountAsync(cancellationToken));
+        Assert.Equal(5, await db.CityRouteActions.CountAsync(cancellationToken));
         Assert.Equal(["masonry"], await db.CityResearch.Select(row => row.ResearchId).ToListAsync(cancellationToken));
         Assert.Equal(
             [(CityId, (short)2, (short)1, (short)1), (CityId, (short)3, (short)1, (short)2), (CityId, (short)4, (short)0, (short)1)],

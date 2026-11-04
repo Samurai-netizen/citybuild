@@ -26,6 +26,12 @@ public static class CityMapping
     /// <summary>The <c>phase</c> text of <see cref="BuildingPhase.Producing"/>.</summary>
     private const string _producing = "Producing";
 
+    /// <summary>The stored spelling of a take action (CR-0008), as the API writes it.</summary>
+    private const string _take = "take";
+
+    /// <summary>The stored spelling of a put action (CR-0008), as the API writes it.</summary>
+    private const string _put = "put";
+
     /// <summary>
     /// The city's rows as they are now. The <c>cities</c> row carries the aggregate's <see cref="CityAggregate.StateVersion"/>; its wall
     /// times (<c>created_at</c>, <c>updated_at</c>) are left at their default for the repository to set. Store rows exist only for the goods
@@ -108,7 +114,46 @@ public static class CityMapping
             })
             .ToList();
 
-        return new CityRows(cityRow, buildings, stores, projectNeeds, research, researchNeeds, roads, trips);
+        var couriers = state.Couriers
+            .Select(courier => new CityCourierRow
+            {
+                CityId = city.CityId,
+                StationId = courier.StationId,
+                Slot = checked((short)courier.Slot),
+                State = courier.State.ToString(),
+                ToStop = checked((short)courier.ToStop),
+                DepartedAt = courier.DepartedAt,
+                ArrivesAt = courier.ArrivesAt,
+                StaminaSeconds = courier.Stamina,
+            })
+            .ToList();
+        var courierLoads = state.Couriers
+            .SelectMany(courier => courier.Loads.Select(part => new CityCourierLoadRow
+            {
+                CityId = city.CityId,
+                StationId = courier.StationId,
+                Slot = checked((short)courier.Slot),
+                ItemId = part.Item.Value,
+                FromBuildingId = part.FromId,
+                Quantity = part.Quantity,
+            }))
+            .ToList();
+        var routeActions = state.Routes
+            .SelectMany(route => route.Stops.SelectMany((stop, stopIndex) => stop.Actions.Select((action, actionIndex) => new CityRouteActionRow
+            {
+                CityId = city.CityId,
+                StationId = route.StationId,
+                Slot = checked((short)route.Slot),
+                StopIndex = checked((short)stopIndex),
+                ActionIndex = checked((short)actionIndex),
+                BuildingId = stop.BuildingId,
+                Kind = action.Kind == RouteActionKind.Take ? _take : _put,
+                ItemId = action.Item.Value,
+                Amount = action.Amount.ToString(),
+            })))
+            .ToList();
+
+        return new CityRows(cityRow, buildings, stores, projectNeeds, research, researchNeeds, roads, trips, couriers, courierLoads, routeActions);
     }
 
     /// <summary>The city the rows describe, with its engine state built from them.</summary>
@@ -137,7 +182,9 @@ public static class CityMapping
                 rows.Roads.Select(row => new RoadTile(row.X, row.Y, row.Level)),
                 rows.Trips.Select(row => new Trip(
                     row.TripId, row.SourceId, row.TargetId, new ItemId(row.ItemId), row.Quantity, row.DepartedAt, row.ArrivesAt)),
-                city.NextTripId);
+                city.NextTripId,
+                ToCouriers(rows),
+                ToRoutes(rows));
             IEnumerable<KeyValuePair<ResearchId, long>> completedAt =
                 rows.Research.Select(row => new KeyValuePair<ResearchId, long>(new ResearchId(row.ResearchId), row.CompletedAt));
 
@@ -295,6 +342,85 @@ public static class CityMapping
             : throw new InvalidOperationException(
                 $"City {city.CityId}: research {id} completed without a completion clock; advance a city only through CityAggregate.Advance.");
 
+    /// <summary>The couriers of the rows, each with its load parts; a state the engine doesn't name fails the load.</summary>
+    /// <param name="rows">The city's rows.</param>
+    /// <returns>The couriers.</returns>
+    /// <exception cref="ArgumentException">A row's state is not a courier state, or its values form no courier.</exception>
+    private static IEnumerable<Courier> ToCouriers(CityRows rows)
+    {
+        ILookup<(int Station, short Slot), CityCourierLoadRow> loads = rows.CourierLoads.ToLookup(row => (row.StationId, row.Slot));
+        if (rows.CourierLoads.Any(load => !rows.Couriers.Any(courier => courier.StationId == load.StationId && courier.Slot == load.Slot)))
+        {
+            throw new ArgumentException("A courier load row names a courier the city doesn't have.");
+        }
+
+        return rows.Couriers.Select(row => new Courier(
+            row.StationId,
+            row.Slot,
+            row.State switch
+            {
+                nameof(CourierState.AtStation) => CourierState.AtStation,
+                nameof(CourierState.Walking) => CourierState.Walking,
+                nameof(CourierState.Returning) => CourierState.Returning,
+                nameof(CourierState.Resting) => CourierState.Resting,
+                _ => throw new ArgumentException($"Courier {row.StationId}/{row.Slot} has the state '{row.State}', which no courier has."),
+            },
+            row.ToStop,
+            row.DepartedAt,
+            row.ArrivesAt,
+            row.StaminaSeconds,
+            loads[(row.StationId, row.Slot)].Select(load => new CourierLoad(new ItemId(load.ItemId), load.FromBuildingId, load.Quantity))));
+    }
+
+    /// <summary>
+    /// The routes of the rows: per (station, slot) the actions in order of stop, then action, both counted from 0 without a gap; every action
+    /// of one stop names the same building; the kind is <c>take</c> or <c>put</c> and the amount an amount's text (<c>05</c> → Amounts).
+    /// </summary>
+    /// <param name="rows">The city's rows.</param>
+    /// <returns>The routes.</returns>
+    /// <exception cref="ArgumentException">The rows form no route.</exception>
+    private static List<Route> ToRoutes(CityRows rows)
+    {
+        var routes = new List<Route>();
+        foreach (var slot in rows.RouteActions.GroupBy(row => (row.StationId, row.Slot)).OrderBy(group => group.Key))
+        {
+            var stops = new List<RouteStop>();
+            foreach (var stop in slot.GroupBy(row => row.StopIndex).OrderBy(group => group.Key))
+            {
+                CityRouteActionRow[] actions = [.. stop.OrderBy(row => row.ActionIndex)];
+                bool ordered = stop.Key == stops.Count && actions.Select((row, index) => row.ActionIndex == index).All(fits => fits);
+                if (!ordered || actions.Any(row => row.BuildingId != actions[0].BuildingId))
+                {
+                    throw new ArgumentException(
+                        $"Route {slot.Key.StationId}/{slot.Key.Slot}, stop {stop.Key}: its stops and actions are not counted from 0 without a gap, or its actions name two buildings.");
+                }
+
+                stops.Add(new RouteStop(actions[0].BuildingId, actions.Select(ToAction)));
+            }
+
+            routes.Add(new Route(slot.Key.StationId, slot.Key.Slot, stops));
+        }
+
+        return routes;
+    }
+
+    /// <summary>One route action of its row.</summary>
+    /// <param name="row">The row.</param>
+    /// <returns>The action.</returns>
+    /// <exception cref="ArgumentException">The kind is not <c>take</c> or <c>put</c>, or the amount is no amount.</exception>
+    private static RouteAction ToAction(CityRouteActionRow row)
+    {
+        RouteActionKind kind = row.Kind switch
+        {
+            _take => RouteActionKind.Take,
+            _put => RouteActionKind.Put,
+            _ => throw new ArgumentException($"Route action kind '{row.Kind}' is neither {_take} nor {_put}."),
+        };
+        return Amount.TryParse(row.Amount, out Amount? amount)
+            ? new RouteAction(kind, new ItemId(row.ItemId), amount)
+            : throw new ArgumentException($"Route action amount '{row.Amount}' is no amount.");
+    }
+
     /// <summary>Checks that every store and need row belongs to a building of the city (the foreign key's rule, checked again on load).</summary>
     /// <param name="rows">The city's rows.</param>
     /// <exception cref="ArgumentException">A store or need row names a building the city doesn't have.</exception>
@@ -323,7 +449,10 @@ public static class CityMapping
             && rows.Research.All(row => row.CityId == cityId)
             && rows.ResearchNeeds.All(row => row.CityId == cityId)
             && rows.Roads.All(row => row.CityId == cityId)
-            && rows.Trips.All(row => row.CityId == cityId);
+            && rows.Trips.All(row => row.CityId == cityId)
+            && rows.Couriers.All(row => row.CityId == cityId)
+            && rows.CourierLoads.All(row => row.CityId == cityId)
+            && rows.RouteActions.All(row => row.CityId == cityId);
         if (!allOwn)
         {
             throw new InvalidOperationException($"The rows of city {cityId} include a row of another city.");
