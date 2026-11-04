@@ -5,7 +5,7 @@ is a test bed: it is not meant to be merged as is, because CR-0008-T2 changes th
 
 ## What changed against `main`
 - `bash visual-v2/adopt.sh`: the overlay `visual-v2/unity/` copied into `client/CityBuilder/Assets/_Project/`: 49 models (22 replaced,
-  27 new, 9 of them store fill models), the palette, 25 icons, 8 glyphs, 3 fonts with their licences, every UI layout and stylesheet,
+  27 new, 8 of them store fill models), the palette, 25 icons, 8 glyphs, 3 fonts with their licences, every UI layout and stylesheet,
   11 new scripts and 9 new test files.
 - The wiring, five files of today's client (`visual-v2/unity-wiring.patch` on the package branch is the same change):
   - `BuildingView`: `Animator` and `Fill`; the wheel's comment.
