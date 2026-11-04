@@ -23,7 +23,7 @@ is a test bed: it is not meant to be merged as is, because CR-0008-T2 changes th
 - `blender -b --factory-startup --python visual-v2/blender/build_all.py -- --no-render --out client/CityBuilder/Assets/_Project`: all
   checks pass and the models land where the client loads them; the files differ from the overlay's only in the FBX header (creation time
   and file path), so the overlay copies are kept.
-- The new scripts and tests compiled against the real engine with stubs for Unity (see `LOG.md`); the 66 tests without Unity objects pass.
+- The new scripts and tests compiled against the real engine with stubs for Unity (see `LOG.md`); the 82 tests without Unity objects pass.
 
 ## Not checked here: [MANUAL] on a machine with Unity 6000.3.25f1
 1. Open `client/CityBuilder` on this branch and let Unity import: no `error CS` in the Console; the new FBX, PNG and TTF files get their

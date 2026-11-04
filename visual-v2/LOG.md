@@ -116,6 +116,13 @@
 | 23 | Flat patches are clipped to the tile's flat top (0.465 from the centre) | Patches that reached past the edge painted over the grid line between tiles (also in the first pass) |
 | 24 | A grass or dirt tile is two meshes: the flat ground (top at y = 0) and a child `Details` with everything that rises above it; `build_all.py` and `ArtModelsV2Tests` check it | `GroundTilesTests.Tiles_StandOnTheirTiles_WithTheirTopAtTheGround` reads the tile's first renderer and wants its top at 0; with tufts in the same mesh it would fail (it would have with the first pass too). The split keeps that test as it is, and placement hints now tint only the ground, not the flowers. Cost: two renderers per tile, one material |
 
+## Adoption instructions (2026-11-04)
+- **Owner input** (in chat): "make a clear instruction for AI on how to implement these new graphics, after the finish on CR-0008".
+- **Done:** `ADOPT.md`: the preconditions, the CR text to approve, a script that sorts every overlay file into new, take, merge and
+  same-name-on-both-sides (tried against the CR-0008-T1 branch: its five placeholder models and five icons come out as the last group),
+  the art merge into `art/blender/`, the UI merge, the wiring, the hooks into CR-0008 (building stores, when the new kinds work, roads,
+  walkers, icons), tests, docs, removing this folder and the [MANUAL] looks. `README.md` "Adopting it" now points there.
+
 ## Follow-ups
 - [MANUAL] The Unity steps of `FIT-TEST.md`: compile, `test-unity.sh`, a play session for the motion and the fill, the UI in the Device
   Simulator (fonts: if UI Toolkit draws the TTF files in its default font, make Font Assets of them).
