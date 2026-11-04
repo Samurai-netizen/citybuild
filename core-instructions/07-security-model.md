@@ -46,7 +46,7 @@ value fails it until this table changes.
 | `POST /commands/start-research` | `requestId`, `researchId` | Intent: which node |
 | `POST /commands/place-roads`, `upgrade-roads`, `remove-roads` (CR-0008-T1 part D) | `requestId`, `tiles` (`x`, `y`) | Intent: which tiles; 1 to 64, each once, coordinates ≥ 0 at the boundary; bounds, occupancy, levels and coins in the engine |
 | `POST /commands/start-trip` (CR-0008-T1 part E) | `requestId`, `sourceId`, `targetId`, `itemId`, `amount` | Intent: from which to which of the caller's buildings, which good, how much as a rule (a preset, a percentage, an exact number); the quantity, the worker and the walk are the engine's |
-| `POST /commands/set-route` (CR-0008, *planned*) | `requestId`, `stationId`, `slot`, `stops` (`buildingId`, `actions`: `kind`, `itemId`, `amount`) | Intent: a route; at most 16 stops and 8 actions per stop at the boundary, the content's limits in the engine |
+| `POST /commands/set-route` (CR-0008) | `requestId`, `stationId`, `slot`, `stops` (`buildingId`, `actions`: `kind`, `itemId`, `amount`) | Intent: a route; at most 16 stops and 8 actions per stop at the boundary, the content's limits in the engine |
 | `POST /commands/reenergize-couriers` (CR-0008, *planned*) | `requestId` | Intent only: no stamina value is sent |
 | Header `Authorization` | the bearer token | The player id (its `sub`), nothing else |
 | Header `X-Client-Version` | a short version text | A log scope value only (`ClientVersionHeader`), `invalid` for anything else; it decides nothing |

@@ -148,6 +148,30 @@ Content-Type: application/json
 
 { "requestId": "{{$guid}}", "tiles": [{ "x": 0, "y": 0 }] }
 
+### Couriers (CR-0008-T1 part G): a Courier Station at (7, 7), 120 coins, built in 60 s; when it completes, free workers staff it as couriers
+POST {{baseUrl}}/api/v1/commands/place-building
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}", "buildingTypeId": "courier_station", "x": 7, "y": 7 }
+
+### Couriers: slot 1 of the station (id 7 after the golden walk) carries half the hut's logs to the Sawmill in a loop; `city.routes` shows
+# the route, `city.couriers` the courier walking. One stop, a slot above the level's 2, or the hut twice in a row is 422 `INVALID_ROUTE`
+POST {{baseUrl}}/api/v1/commands/set-route
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}", "stationId": 7, "slot": 1, "stops": [
+  { "buildingId": 2, "actions": [{ "kind": "take", "itemId": "logs", "amount": "half" }] },
+  { "buildingId": 4, "actions": [{ "kind": "put", "itemId": "logs", "amount": "all" }] }] }
+
+### Couriers: no stops clear the route; the courier gives its load back and stands at its station
+POST {{baseUrl}}/api/v1/commands/set-route
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}", "stationId": 7, "slot": 1, "stops": [] }
+
 ### Replay: send this twice. The second answer is the first one, byte for byte (a fixed requestId; change it for a new command)
 POST {{baseUrl}}/api/v1/commands/assign-workers
 Authorization: Bearer {{token}}

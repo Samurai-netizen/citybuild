@@ -7,7 +7,8 @@
 > rows and the migration `ReceiptResponseAsJson` (M0-26); `city_roads` with the migration `AddCityRoads`, its mapping and the `COST_ROAD`
 > rows (CR-0008-T1 part D); `cities.purse` and `next_trip_id`, `city_stores`, `city_project_needs`, `city_research_needs` and `city_trips`
 > in place of `city_inventory`, with the reset migration `LogisticsStoresTripsAndReset` (D10), their mapping and the
-> `SETTLEMENT_DELIVERED` and `SETTLEMENT_REFUNDED` rows (part E). A task that builds a part updates this line.
+> `SETTLEMENT_DELIVERED` and `SETTLEMENT_REFUNDED` rows (part E); `city_couriers`, `city_courier_loads` and `city_route_actions` with
+> the migration `AddCouriersAndRoutes` and their mapping (part G). A task that builds a part updates this line.
 
 PostgreSQL is the only source of truth. Wall timestamps are `timestamptz` (UTC). Simulation times and labor
 are `bigint` city-clock seconds and worker-seconds. Quantities are `bigint`. Item, building, research and era ids are `text` from content.
@@ -43,14 +44,14 @@ what an upgrade refunded, so its rows never come first.
 Derived on load, never stored: reserved outputs, stall reasons, workers provided/on trips/free, builders busy, effective store limits and
 labor, city totals, a building's project.
 
-## Tables for logistics (CR-0008: `city_roads` built in CR-0008-T1 part D, the stores, needs and trips above in part E; the rest *planned*, parts G and H)
+## Tables for logistics (CR-0008: `city_roads` built in CR-0008-T1 part D, the stores, needs and trips above in part E, the courier tables in part G; `last_seen_unix` *planned*, part H)
 | Table / column | Key columns | Constraints / notes |
 |---|---|---|
 | `cities` + `last_seen_unix bigint` *(planned, part H)* | — | the server second of the last request that settled the city, on the same clock as `last_settled_unix` |
 | `city_roads` (built) | `(city_id, x, y) pk`, `x smallint`, `y smallint`, `level smallint` | `x, y >= 0`, `level >= 1`; never on a building's tile (the engine checks it on load); FK to `cities`, cascade; a removed road's row is deleted |
-| `city_couriers` | `(city_id, station_id, slot) pk`, `state text`, `to_stop smallint`, `departed_at bigint null`, `arrives_at bigint null`, `stamina_seconds bigint` | `slot >= 1`, `stamina_seconds >= 0`; `state` is the API's spelling; the times are set exactly while walking or returning |
-| `city_courier_loads` | `(city_id, station_id, slot, item_id, from_building_id) pk`, `quantity bigint` | `quantity > 0`; FK to `city_couriers`, cascade |
-| `city_route_actions` | `(city_id, station_id, slot, stop_index, action_index) pk`, `building_id int`, `kind text`, `item_id text`, `amount text` | a route is its actions in order; every action of one stop names the same building; `amount` as the API writes it (`05`) |
+| `city_couriers` (built) | `(city_id, station_id, slot) pk`, `state text`, `to_stop smallint`, `departed_at bigint null`, `arrives_at bigint null`, `stamina_seconds bigint` | `slot >= 1`, `to_stop >= 0`, `stamina_seconds >= 0`, a walk has both times (`departed_at >= 0`, `arrives_at > departed_at`) or neither; `state` is the API's spelling; the times are set exactly while walking or returning; FK `(city_id, station_id)` to `city_buildings`, cascade |
+| `city_courier_loads` (built) | `(city_id, station_id, slot, item_id, from_building_id) pk`, `quantity bigint` | `quantity > 0`; FK to `city_couriers`, cascade; `from_building_id` gets the goods back when the courier is stopped (no FK; the engine checks it names a building of the city) |
+| `city_route_actions` (built) | `(city_id, station_id, slot, stop_index, action_index) pk`, `building_id int`, `kind text`, `item_id text`, `amount text` | `slot >= 1`, indices from 0, `kind in ('take', 'put')`; a route is its actions in order, its stops without a gap; every action of one stop names the same building (the mapping checks both on load); `amount` as the API writes it (`05`); FK `(city_id, station_id)` to `city_buildings`, cascade; a slot's route may outlive its courier |
 
 - **Ledger (CR-0008):** `balance_after` is the item's **city total** (`04` §16). Coins go through the purse: `COST_*` rows are coins only.
   New reasons (built, parts D and E): `COST_ROAD` (placing and upgrading roads, one row per item and command like every `COST_*`), `SETTLEMENT_DELIVERED` (goods walkers handed to projects, negative,
