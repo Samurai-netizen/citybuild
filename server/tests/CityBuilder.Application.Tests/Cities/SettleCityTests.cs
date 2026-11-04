@@ -35,7 +35,7 @@ public sealed class SettleCityTests
 
         Assert.Equal(seconds, result.Settlement.ElapsedSeconds);
         Assert.Equal(productionSeconds, result.Settlement.ProductionSeconds);
-        Assert.Equal(logs, result.City.State.GetQuantity(Logs));
+        Assert.Equal(logs, Total(result.City.State, Logs));
         Assert.Equal(StartClock + seconds, result.City.State.Clock);
         Assert.Equal(LastSettled.ToUnixTimeSeconds() + seconds, result.City.LastSettledUnixSec);
         Assert.Empty(result.Settlement.CompletedResearch);
@@ -85,7 +85,7 @@ public sealed class SettleCityTests
         Assert.Equal(BuildingPhase.Idle, city.Buildings.Single(building => building.Id == ManorId).Phase);
 
         // 480 cycles end within the cap, and the one that started at its last second ends a minute later; then nothing starts.
-        Assert.Equal(481, city.GetQuantity(Logs));
+        Assert.Equal(481, Total(city, Logs));
         Assert.Equal(481, result.Settlement.Produced[Logs]);
         Building woodcutter = city.Buildings.Single(building => building.Id == _woodcutterId);
         Assert.Equal(BuildingPhase.Producing, woodcutter.Phase);

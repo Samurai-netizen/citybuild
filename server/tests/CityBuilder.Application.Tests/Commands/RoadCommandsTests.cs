@@ -156,7 +156,7 @@ public sealed class RoadCommandsTests
     public async Task ExecuteAsync_PlaceRoadsOnTwoFreeTiles_StoresThemPaysAndStoresTheReceipt()
     {
         InMemoryCityRepository repository = PipelineFixture.TwoSawmillsRepository();
-        long coinsBefore = repository.Stored(PlayerId).State.GetQuantity(new ItemId("coins"));
+        long coinsBefore = repository.Stored(PlayerId).State.Purse;
         var command = new PlaceRoadsCommand(_requestId, [new CommandTile(2, 1), new CommandTile(1, 1)]);
 
         CommandResult result = await PipelineFixture.Pipeline(repository, ClockAtLastSettled())

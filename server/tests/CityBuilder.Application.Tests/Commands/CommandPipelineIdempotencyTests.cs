@@ -52,7 +52,7 @@ public sealed class CommandPipelineIdempotencyTests
 
         Assert.Equal(CommandOutcome.IdempotencyConflict, conflict.Outcome);
         Assert.Equal(1, repository.SaveCount);
-        Assert.Equal(4, repository.Stored(PlayerId).State.Buildings.Count);
+        Assert.Equal(5, repository.Stored(PlayerId).State.Buildings.Count);
     }
 
     /// <summary>The same request id on another command is a conflict too: the command type is part of the hash.</summary>

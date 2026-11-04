@@ -25,14 +25,23 @@ internal static class SettleFixture
     /// <summary>The city clock when the player last settled: the cottage and the woodcutter completed then, and the first cycle started.</summary>
     public const long StartClock = 60;
 
-    /// <summary>The research <c>forestry</c> (2 days, started at clock 0) ends at this city-clock second, after the production cap.</summary>
-    public const long ResearchEndsAt = 2 * 86_400;
+    /// <summary>How long the research <c>forestry</c> takes: 2 days.</summary>
+    public const long ResearchSeconds = 2 * 86_400;
+
+    /// <summary>
+    /// The research <c>forestry</c> (2 days, started at <see cref="StartClock"/>, once the study completed: research needs a science building,
+    /// CR-0008 D11) ends at this city-clock second, after the production cap.
+    /// </summary>
+    public const long ResearchEndsAt = StartClock + ResearchSeconds;
 
     /// <summary>The manor (3 days, placed at <see cref="StartClock"/>) completes at this city-clock second, after the production cap.</summary>
     public const long ManorEndsAt = StartClock + (3 * 86_400);
 
-    /// <summary>The manor's building id: it is the third building placed.</summary>
-    public const int ManorId = 3;
+    /// <summary>The manor's building id: it is the fourth building placed, after the cottage, the woodcutter and the study.</summary>
+    public const int ManorId = 4;
+
+    /// <summary>The logs in the sawmill's store of <see cref="SawmillRepository"/> after its running cycle took its two.</summary>
+    public const long SawmillLogs = 482;
 
     /// <summary>The id of the player's city.</summary>
     public static readonly Guid CityId = new("6f1d2c3b-0000-4000-8000-0000000000c1");
@@ -60,39 +69,63 @@ internal static class SettleFixture
 
     /// <summary>
     /// A repository with the player's city, built with the engine's rules from the starter city: at clock 0 the player places a cottage
-    /// (2 workers) and a woodcutter (1 log per 60 labor, 1 worker) and starts the 2-day research <c>forestry</c>; at clock 60 both buildings
-    /// have completed, the woodcutter got its worker and started a cycle, and the player places a manor (3 days). The city was settled then,
-    /// at <see cref="LastSettled"/>.
+    /// (2 workers), a woodcutter (1 log per 60 labor into its own store, 1 worker) and a study (the science building); at clock 60 all three
+    /// have completed, the woodcutter got its worker and started a cycle, the player starts the 2-day research <c>forestry</c> at the study
+    /// (coins only, so its timer runs at once) and places a manor (3 days). The city was settled then, at <see cref="LastSettled"/>; its purse
+    /// holds 50 coins.
     /// </summary>
     public static InMemoryCityRepository Repository(DateTimeOffset? lastSettled = null)
     {
         CityState state = CityFactory.CreateStarterCity(Content);
         Apply(state, CityRules.PlaceBuilding(state, Content, new BuildingTypeId("cottage"), 0, 0));
         Apply(state, CityRules.PlaceBuilding(state, Content, new BuildingTypeId("woodcutter"), 1, 0));
-        Apply(state, CityRules.StartResearch(state, Content, Forestry));
+        Apply(state, CityRules.PlaceBuilding(state, Content, new BuildingTypeId("study"), 3, 3));
         Simulator.Advance(state, Content, StartClock);
+        Apply(state, CityRules.StartResearch(state, Content, Forestry));
         Apply(state, CityRules.PlaceBuilding(state, Content, new BuildingTypeId("manor"), 2, 0));
 
         return RepositoryWith(state, lastSettled);
     }
 
     /// <summary>
-    /// A repository with a sawmill city, built with the engine's rules from the starter city: at clock 0 the player places a cottage
-    /// (2 workers) and a woodcutter (1 log per 60 labor); at clock 60 both have completed, the woodcutter got its worker and started a cycle,
-    /// and the player places a sawmill (2 logs into 1 plank per 120 labor); at clock 120 it completes and gets the cottage's second worker,
-    /// but waits for logs: the woodcutter's first log has just come in. Settled then, at <see cref="LastSettled"/>.
+    /// A repository with a sawmill city at clock 120, restored as stored (goods reach a store only by walkers, so a sawmill with logs is set up
+    /// directly): cottage 1 (0,0) gives 2 workers; woodcutter 2 (1,0) is producing (its cycle from 120 to 180) with 1 log in its store; sawmill 3
+    /// (2,0) is producing (2 logs into 1 plank per 120 labor, its cycle from 120 to 240) with <see cref="SawmillLogs"/> logs left in its store.
+    /// Settled then, at <see cref="LastSettled"/>; 70 coins in the purse.
     /// </summary>
     public static InMemoryCityRepository SawmillRepository()
     {
-        CityState state = CityFactory.CreateStarterCity(Content);
-        Apply(state, CityRules.PlaceBuilding(state, Content, new BuildingTypeId("cottage"), 0, 0));
-        Apply(state, CityRules.PlaceBuilding(state, Content, new BuildingTypeId("woodcutter"), 1, 0));
-        Simulator.Advance(state, Content, StartClock);
-        Apply(state, CityRules.PlaceBuilding(state, Content, new BuildingTypeId("sawmill"), 2, 0));
-        Simulator.Advance(state, Content, StartClock);
-        Simulator.Advance(state, Content, 0);
+        var state = new CityState(
+            2 * StartClock,
+            1,
+            4,
+            70,
+            [
+                new Building(1, new BuildingTypeId("cottage"), 0, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
+                new Building(2, new BuildingTypeId("woodcutter"), 1, 0, 1, 1, BuildingPhase.Producing, 120, 180, 0, 60, 60, 120, Store(("logs", 1))),
+                new Building(3, new BuildingTypeId("sawmill"), 2, 0, 1, 1, BuildingPhase.Producing, 120, 240, 0, 120, 120, 120, Store(("logs", SawmillLogs))),
+            ],
+            [],
+            activeResearch: null);
         return RepositoryWith(state);
     }
+
+    /// <summary>A store's contents as the engine's pairs.</summary>
+    /// <param name="goods">The goods and their quantities.</param>
+    /// <returns>The pairs.</returns>
+    public static KeyValuePair<ItemId, long>[] Store(params (string Item, long Quantity)[] goods) =>
+        [.. goods.Select(good => new KeyValuePair<ItemId, long>(new ItemId(good.Item), good.Quantity))];
+
+    /// <summary>The starter city with a completed study (the science building) at (3,3): research can start there.</summary>
+    /// <returns>A city at clock 0 with the starting purse.</returns>
+    public static CityState StarterCityWithStudy() => new(
+        0, 1, 2, Content.StartingCity.Purse, [new Building(1, new BuildingTypeId("study"), 3, 3, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0)], [], null);
+
+    /// <summary>The city's total of an item (<see cref="CityQueries.Total"/>): every store and load, or the purse for coins.</summary>
+    /// <param name="city">The city.</param>
+    /// <param name="item">The item.</param>
+    /// <returns>The total.</returns>
+    public static long Total(CityState city, ItemId item) => CityQueries.Total(city, Content, item);
 
     /// <summary>A repository with the player's city in <paramref name="state"/>, at state version 0, with no completed research.</summary>
     /// <param name="state">The city's state.</param>
@@ -119,8 +152,10 @@ internal static class SettleFixture
     {
         IEnumerable<string> lines =
         [
-            $"clock {city.Clock}, era {city.Era}, next id {city.NextBuildingId}",
-            "stock " + string.Join(", ", city.Inventory.Select(stock => $"{stock.Key}={stock.Value}")),
+            $"clock {city.Clock}, era {city.Era}, next id {city.NextBuildingId}, purse {city.Purse}, next trip {city.NextTripId}",
+            "stores " + string.Join(", ", city.Buildings.SelectMany(building => building.Store.Select(stock => $"#{building.Id} {stock.Key}={stock.Value}"))),
+            "needs " + string.Join(", ", city.Buildings.SelectMany(building => building.Needs.Select(need => $"#{building.Id} {need.Key}={need.Value}"))),
+            "trips " + string.Join(", ", city.Trips.Select(trip => $"{trip.Id} {trip.SourceId}->{trip.TargetId} {trip.Item}={trip.Quantity} {trip.DepartedAt}..{trip.ArrivesAt}")),
             "research done " + string.Join(", ", city.CompletedResearch),
             city.ActiveResearch is null ? "no active research" : $"research {city.ActiveResearch.Id} {city.ActiveResearch.StartedAt}..{city.ActiveResearch.EndsAt}",
             .. city.Buildings.Select(building =>
@@ -139,9 +174,10 @@ internal static class SettleFixture
     }
 
     /// <summary>
-    /// The fixture's content: a 4 × 4 grid, two houses (cottage and manor), the woodcutter, the sawmill (2 logs into 1 plank; a level 2 for
-    /// 10 coins and 60 s, for the upgrade tests), and the research <c>forestry</c> (−100 ‰ on the woodcutter's labor). Invalid content fails the
-    /// test with every error.
+    /// The fixture's content: a 4 × 4 grid, three builder slots, two houses (cottage and manor), the woodcutter (a store of 1 000 logs), the
+    /// sawmill (2 logs into 1 plank; stores of 1 000 each; a level 2 for 10 coins and 60 s, for the upgrade tests), the study (the science
+    /// building, one per city), coins as the currency (100 to start), the preset <c>all</c>, trips of up to 1 000, and the research
+    /// <c>forestry</c> (−100 ‰ on the woodcutter's labor). Invalid content fails the test with every error.
     /// </summary>
     private static GameContent CreateContent()
     {
@@ -152,9 +188,8 @@ internal static class SettleFixture
             {
                 GridWidth = 4,
                 GridHeight = 4,
-                BuilderSlots = 2,
+                BuilderSlots = 3,
                 ResearchSlots = 1,
-                BaseStorageCaps = new() { ["logs"] = 1000, ["planks"] = 1000 },
                 MaxOfflineProductionSeconds = ProductionCapSeconds,
                 MinCycleSeconds = 10,
                 MaxLaborReductionPermille = 500,
@@ -162,15 +197,19 @@ internal static class SettleFixture
                 CrossingSpeedPermille = 200,
                 MinWalkSeconds = 2,
                 MaxWalkBonusPermille = 500,
+                TripCarryLimit = 1000,
+                MaxRouteStops = 4,
+                MaxStopActions = 2,
             },
+            AmountPresets = [new AmountPresetData { Id = "all", Name = "All", Percent = 100 }],
             Roads = [new RoadLevelData { Level = 1, Name = "Path", TileMillis = 2500, Cost = new() { ["coins"] = 5 } }],
-            StartingCity = new StartingCityData { Era = 1, Inventory = new() { ["coins"] = 100 } },
+            StartingCity = new StartingCityData { Era = 1, Purse = 100 },
             Eras = [new EraData { Number = 1, Id = "first_era", Name = "First Era" }],
             Items =
             [
-                new ItemData { Id = "coins", Name = "Coins", Era = 1, Capped = false, Tradable = false },
-                new ItemData { Id = "logs", Name = "Logs", Era = 1, Capped = true, Tradable = true },
-                new ItemData { Id = "planks", Name = "Planks", Era = 1, Capped = true, Tradable = true },
+                new ItemData { Id = "coins", Name = "Coins", Era = 1, Currency = true, Tradable = false },
+                new ItemData { Id = "logs", Name = "Logs", Era = 1, Currency = false, Tradable = true },
+                new ItemData { Id = "planks", Name = "Planks", Era = 1, Currency = false, Tradable = true },
             ],
             Buildings =
             [
@@ -185,6 +224,7 @@ internal static class SettleFixture
                         new BuildingLevelData
                         {
                             Level = 1, MaxWorkers = 1, Recipe = new RecipeData { Outputs = new() { ["logs"] = 1 }, Labor = CycleSeconds },
+                            Storage = new() { ["logs"] = 1000 },
                         },
                     ],
                 },
@@ -198,20 +238,27 @@ internal static class SettleFixture
                         {
                             Level = 1, MaxWorkers = 1,
                             Recipe = new RecipeData { Inputs = new() { ["logs"] = 2 }, Outputs = new() { ["planks"] = 1 }, Labor = 2 * CycleSeconds },
+                            Storage = new() { ["logs"] = 1000, ["planks"] = 1000 },
                         },
                         new BuildingLevelData
                         {
                             Level = 2, MaxWorkers = 1, UpgradeCost = new() { ["coins"] = 10 }, UpgradeSeconds = CycleSeconds,
                             Recipe = new RecipeData { Inputs = new() { ["logs"] = 2 }, Outputs = new() { ["planks"] = 1 }, Labor = 2 * CycleSeconds },
+                            Storage = new() { ["logs"] = 1000, ["planks"] = 1000 },
                         },
                     ],
+                },
+                new BuildingData
+                {
+                    Id = "study", Name = "Study", Kind = "science", Era = 1, AvailableAtStart = true, MaxPerCity = 1,
+                    Cost = new() { ["coins"] = 10 }, BuildSeconds = StartClock, Levels = [new BuildingLevelData { Level = 1 }],
                 },
             ],
             Research =
             [
                 new ResearchData
                 {
-                    Id = "forestry", Name = "Forestry", Era = 1, Cost = new() { ["coins"] = 10 }, DurationSeconds = ResearchEndsAt,
+                    Id = "forestry", Name = "Forestry", Era = 1, Cost = new() { ["coins"] = 10 }, DurationSeconds = ResearchSeconds,
                     Effects = [new ResearchEffectData { Type = "laborReduction", Building = "woodcutter", Permille = 100 }],
                 },
             ],

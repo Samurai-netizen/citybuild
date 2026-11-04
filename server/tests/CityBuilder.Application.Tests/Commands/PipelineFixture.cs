@@ -55,29 +55,27 @@ internal static class PipelineFixture
     }
 
     /// <summary>
-    /// A city with two sawmills, settled at clock 180 with no logs: cottages A (0,0) and B (3,0) give 4 workers; the woodcutter (1,0) makes a
-    /// log every 60 s; sawmill 3 (2,0) took the 2 logs of clock 180 and is producing; sawmill 5 (0,1) completed at 180, has a worker and waits
-    /// for logs. Upgrading sawmill 3 gives its 2 logs back, and the closing advance starts sawmill 5 with them.
+    /// A city with two sawmills at clock 180, restored as stored (goods reach a store only by walkers, CR-0008, so the running cycle is set up
+    /// directly), with 50 coins and no goods anywhere: cottages 1 (0,0) and 4 (3,0) give 4 workers; woodcutter 2 (1,0) is producing (its cycle
+    /// from 180 to 240); sawmill 3 (2,0) is producing (its cycle from 180 to 300 took 2 logs); sawmill 5 (0,1) is idle with a worker and an
+    /// empty store. Upgrading sawmill 3 gives its 2 logs back into its own store.
     /// </summary>
     public static InMemoryCityRepository TwoSawmillsRepository()
     {
-        CityState state = CityFactory.CreateStarterCity(SettleFixture.Content);
-        Apply(state, CityRules.PlaceBuilding(state, SettleFixture.Content, new BuildingTypeId("cottage"), 0, 0));
-        Apply(state, CityRules.PlaceBuilding(state, SettleFixture.Content, new BuildingTypeId("woodcutter"), 1, 0));
-        Simulator.Advance(state, SettleFixture.Content, StartClock);
-        Apply(state, CityRules.PlaceBuilding(state, SettleFixture.Content, new BuildingTypeId("sawmill"), 2, 0));
-        Apply(state, CityRules.PlaceBuilding(state, SettleFixture.Content, new BuildingTypeId("cottage"), 3, 0));
-        Simulator.Advance(state, SettleFixture.Content, StartClock);
-        Apply(state, CityRules.PlaceBuilding(state, SettleFixture.Content, new BuildingTypeId("sawmill"), 0, 1));
-        Simulator.Advance(state, SettleFixture.Content, StartClock);
-        Simulator.Advance(state, SettleFixture.Content, 0);
+        var state = new CityState(
+            3 * StartClock,
+            1,
+            6,
+            50,
+            [
+                new Building(1, new BuildingTypeId("cottage"), 0, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
+                new Building(2, new BuildingTypeId("woodcutter"), 1, 0, 1, 1, BuildingPhase.Producing, 180, 240, 0, 60, 60, 180),
+                new Building(3, new BuildingTypeId("sawmill"), 2, 0, 1, 1, BuildingPhase.Producing, 180, 300, 0, 120, 120, 180),
+                new Building(4, new BuildingTypeId("cottage"), 3, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
+                new Building(5, new BuildingTypeId("sawmill"), 0, 1, 1, 1, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
+            ],
+            [],
+            activeResearch: null);
         return RepositoryWith(state);
-    }
-
-    /// <summary>A mutation followed by the zero-length advance every command gets; a rejected mutation fails the test.</summary>
-    private static void Apply(CityState state, MutationResult result)
-    {
-        Assert.True(result.IsOk, result.ToString());
-        Simulator.Advance(state, SettleFixture.Content, 0);
     }
 }
