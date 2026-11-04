@@ -127,6 +127,24 @@ namespace CityBuilder.Client.Tests.EditMode.Art
             Assert.That(Resources.Load<GameObject>(BuildingDecor.SmokePuffPath), Is.Not.Null);
         }
 
+        /// <summary>
+        /// Every grass tile is flat ground with its top at y = 0 (the renderer GroundTiles tints for placement hints, and what buildings stand
+        /// on, as GroundTilesTests checks) and a <c>Details</c> child with everything that rises above it.
+        /// </summary>
+        [Test]
+        public void EveryGrassTile_IsFlatGround_WithItsDetailsAsAChild()
+        {
+            for (int v = 0; v < GroundVariants.Count; v++)
+            {
+                string path = GroundVariants.PathOf(v);
+                GameObject tile = Resources.Load<GameObject>(path);
+                Assert.That(tile, Is.Not.Null, path);
+                Mesh ground = tile.GetComponent<MeshFilter>().sharedMesh;
+                Assert.That(ground.bounds.max.y, Is.EqualTo(0f).Within(0.01f), path);
+                Assert.That(tile.transform.Find("Details"), Is.Not.Null, path);
+            }
+        }
+
         /// <summary>The number of step objects of a fill view.</summary>
         private static int CountSteps(FillView fill)
         {

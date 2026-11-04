@@ -112,6 +112,7 @@
 | 21 | Three colours in free slots: `grass_warm`, `grass_cool` (mottling a step off the grass) and `grass_dry` (the dry patch) | Low contrast patches make the ground less flat without reading as holes; the first dry patch in thatch yellow looked like a stain |
 | 22 | Budgets: tiles 1,000 triangles (the richest is 902), road tiles 2,000 (the log road's variants 1,574 to 1,796) | 64 tiles stay under 60,000 triangles; a town's 15 or so road tiles add about 30,000 |
 | 23 | Flat patches are clipped to the tile's flat top (0.465 from the centre) | Patches that reached past the edge painted over the grid line between tiles (also in the first pass) |
+| 24 | A grass or dirt tile is two meshes: the flat ground (top at y = 0) and a child `Details` with everything that rises above it; `build_all.py` and `ArtModelsV2Tests` check it | `GroundTilesTests.Tiles_StandOnTheirTiles_WithTheirTopAtTheGround` reads the tile's first renderer and wants its top at 0; with tufts in the same mesh it would fail (it would have with the first pass too). The split keeps that test as it is, and placement hints now tint only the ground, not the flowers. Cost: two renderers per tile, one material |
 
 ## Follow-ups
 - [MANUAL] The Unity steps of `FIT-TEST.md`: compile, `test-unity.sh`, a play session for the motion and the fill, the UI in the Device

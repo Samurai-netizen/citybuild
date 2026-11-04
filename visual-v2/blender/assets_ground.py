@@ -5,6 +5,7 @@ Variety comes in three layers, all picked by fixed hashes so every device shows 
 - a quarter turn per grass tile (GroundVariants.RotationFor; the tiles are square and their details have no direction);
 - three variants of each road level (RoadArms.VariantFor), with the same arm widths at the tile edges so any two of them join.
 Details keep inside the bevel that draws the grid line (EDGE) and tall ones keep out of the middle (CLEAR), which a foundation covers.
+A grass or dirt tile is two meshes: the flat ground (top at z = 0, the one the client tints for placement hints) and its child `Details`.
 Grid directions and arm names are in assets_common's docstring.
 """
 import math
@@ -19,6 +20,7 @@ ARMS = {"Road_XPlus": (-1, 0), "Road_XMinus": (1, 0), "Road_YPlus": (0, -1), "Ro
 ROAD_HALF = 0.17  # half the width of a dirt path arm at the tile edge, where neighbouring arms meet
 LOG_HALF = 0.19   # half the width of a log road's bed at the tile edge
 ROAD_VARIANTS = ("", "_b", "_c")
+DETAILS = "Details"  # the child mesh of a ground tile that holds what rises above its flat top
 
 
 # --- shared bits ------------------------------------------------------------------------------------------------------
@@ -163,10 +165,13 @@ def stone_cluster(m, rng, at):
 
 def grass_tile(name, seed, tufts=5, lush=False, daisies=0, poppies=0, stones=0, pebbles=0, clovers=0, dry=False,
                dandelions=0, mushrooms=0, ferns=0, molehill=False, bluebells=0):
-    """A grass tile: the slab, soft mottling, tufts, and this variant's features, placed from its own seed."""
+    """A grass tile: the slab, soft mottling, tufts, and this variant's features, placed from its own seed. The flat ground (the slab and
+    its patches, top at z = 0) is the model's own mesh, the one the client tints for placement hints and whose top a test checks; everything
+    that rises above it is the child mesh `Details`."""
     def build():
         rng = random.Random(seed)
         m = Model()
+        d = Model()
         slab(m)
         mottle(m, rng, 7 if lush else 5)
         for k in range(2):  # one or two small accents in stronger greens
@@ -176,22 +181,22 @@ def grass_tile(name, seed, tufts=5, lush=False, daisies=0, poppies=0, stones=0, 
             x, y = spot(rng, keep_out=0.1)
             patch(m, blob(rng, 0.14, n=11, wobble=0.25, stretch=(1, 0.75)), "grass_dry", 0.0042, (x, y))
             for _ in range(5):
-                tuft(m, rng, (x + rng.uniform(-0.09, 0.09), y + rng.uniform(-0.07, 0.07)), rng.uniform(0.04, 0.06),
+                tuft(d, rng, (x + rng.uniform(-0.09, 0.09), y + rng.uniform(-0.07, 0.07)), rng.uniform(0.04, 0.06),
                      colors=("grass_dry", "thatch", "thatch_dark"))
         if molehill:
             x, y = spot(rng, keep_out=CLEAR + 0.04)
-            m.decal(blob(rng, 0.075, n=10, wobble=0.3), "dirt_dark", z=0.0045, at=(x, y))
-            m.ico(0.05, (x, y, 0.004), "dirt", scale=(1.0, 0.9, 0.45), sub=1)
+            patch(m, blob(rng, 0.075, n=10, wobble=0.3), "dirt_dark", 0.0045, (x, y))
+            d.ico(0.05, (x, y, 0.004), "dirt", scale=(1.0, 0.9, 0.45), sub=1)
             for _ in range(5):
                 a = rng.uniform(0, 2 * math.pi)
-                d = rng.uniform(0.05, 0.08)
-                m.ico(rng.uniform(0.006, 0.01), (x + d * math.cos(a), y + d * math.sin(a), 0.003), "dirt_dark", sub=0)
+                r = rng.uniform(0.05, 0.08)
+                d.ico(rng.uniform(0.006, 0.01), (x + r * math.cos(a), y + r * math.sin(a), 0.003), "dirt_dark", sub=0)
         for _ in range(tufts + (3 if lush else 0)):
-            tuft(m, rng, spot(rng, keep_out=CLEAR), rng.uniform(0.05, 0.085))
+            tuft(d, rng, spot(rng, keep_out=CLEAR), rng.uniform(0.05, 0.085))
         for _ in range(14):  # speckles: pairs of short blades all over, low enough for a foundation to hide
             x, y = spot(rng)
             for j in range(2):
-                m.blade((x + 0.008 * j, y + 0.004 * j, 0), rng.uniform(0.014, 0.02), ("grass_light", "grass_dark", "grass_cool")[(j + _) % 3],
+                d.blade((x + 0.008 * j, y + 0.004 * j, 0), rng.uniform(0.014, 0.02), ("grass_light", "grass_dark", "grass_cool")[(j + _) % 3],
                         r=0.01, lean=(rng.uniform(-15, 15), rng.uniform(-15, 15)))
         groups = [(daisies, daisy), (poppies, poppy), (bluebells, bluebell), (clovers, clover), (ferns, fern)]
         for count, make in groups:
@@ -202,29 +207,32 @@ def grass_tile(name, seed, tufts=5, lush=False, daisies=0, poppies=0, stones=0, 
                 p = (centre[0] + rng.uniform(-0.045, 0.045), centre[1] + rng.uniform(-0.045, 0.045))
                 if max(abs(p[0]), abs(p[1])) > EDGE - 0.02:
                     continue
-                make(m, rng, p)
+                make(d, rng, p)
         for k in range(dandelions):
-            dandelion(m, rng, spot(rng, keep_out=CLEAR), seed_head=k % 3 == 2)
+            dandelion(d, rng, spot(rng, keep_out=CLEAR), seed_head=k % 3 == 2)
         if mushrooms:  # a little ring of mushrooms
             cx, cy = spot(rng, keep_out=CLEAR + 0.06)
             for k in range(mushrooms):
                 a = 2 * math.pi * k / mushrooms + rng.uniform(-0.3, 0.3)
-                mushroom(m, rng, (cx + 0.045 * math.cos(a), cy + 0.045 * math.sin(a)), red=k % 2 == 0)
+                mushroom(d, rng, (cx + 0.045 * math.cos(a), cy + 0.045 * math.sin(a)), red=k % 2 == 0)
         for _ in range(stones):
-            stone_cluster(m, rng, spot(rng, keep_out=CLEAR + 0.04))
+            stone_cluster(d, rng, spot(rng, keep_out=CLEAR + 0.04))
         for k in range(pebbles):
-            pebble(m, spot(rng, keep_out=0.18), rng.uniform(0.012, 0.024), ("stone", "stone_light", "stone_dark")[k % 3],
+            pebble(d, spot(rng, keep_out=0.18), rng.uniform(0.012, 0.024), ("stone", "stone_light", "stone_dark")[k % 3],
                    turn=rng.uniform(0, 90))
-        return m.to_object(name)
+        root = m.to_object(name)
+        d.to_object(DETAILS, parent=root)
+        return root
     return build
 
 
 # --- the dirt tile ------------------------------------------------------------------------------------------------------
 
 def dirt_tile():
-    """A bare dirt tile: mottled dirt, wheel ruts with a puddle, stones, and grass at the corners."""
+    """A bare dirt tile: mottled dirt, wheel ruts with a puddle (the flat model), stones and grass at the corners (its Details)."""
     rng = random.Random(7)
     m = Model()
+    d = Model()
     slab(m, "dirt")
     mottle(m, rng, 6, colors=("dirt_light", "dirt_dark"), r=(0.07, 0.13))
     for s in (-1, 1):
@@ -232,10 +240,12 @@ def dirt_tile():
     m.decal(blob(rng, 0.04, n=9, wobble=0.2, stretch=(1.6, 1.0)), "water", z=0.0048, at=(0.12, 0.09))
     m.decal(blob(rng, 0.018, n=7, wobble=0.2, stretch=(1.6, 1.0)), "foam", z=0.005, at=(0.105, 0.095))
     for k in range(6):
-        pebble(m, spot(rng, keep_out=0.12), rng.uniform(0.01, 0.02), ("stone", "stone_light")[k % 2], turn=rng.uniform(0, 90))
+        pebble(d, spot(rng, keep_out=0.12), rng.uniform(0.01, 0.02), ("stone", "stone_light")[k % 2], turn=rng.uniform(0, 90))
     for x, y in ((0.4, 0.4), (-0.4, -0.38), (0.38, -0.41)):
-        tuft(m, rng, (x, y), rng.uniform(0.03, 0.045))
-    return m.to_object("tile_dirt")
+        tuft(d, rng, (x, y), rng.uniform(0.03, 0.045))
+    root = m.to_object("tile_dirt")
+    d.to_object(DETAILS, parent=root)
+    return root
 
 
 # --- road tiles -----------------------------------------------------------------------------------------------------------

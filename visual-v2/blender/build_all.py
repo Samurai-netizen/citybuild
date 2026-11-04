@@ -114,6 +114,10 @@ def structure_problems(kind, root):
         for item, ks in steps.items():
             if sorted(ks) != list(range(1, len(ks) + 1)) or not 1 <= len(ks) <= 3:
                 out.append(f"{item} steps {sorted(ks)} are not 1..n with n in 1..3")
+    if kind == "tile":
+        top = max((v.co.z for v in root.data.vertices), default=0.0) if root.type == "MESH" else 1.0
+        if top > 0.01:
+            out.append(f"the tile's own mesh reaches z = {top:.3f}: what rises above the ground belongs in its Details child")
     if kind == "road":
         arms = {o.name for o in root.children}
         if arms != set(assets_common.ARMS):
