@@ -29,8 +29,10 @@ public sealed class ConstraintDatabaseTests(PostgresServer server) : PostgresTes
         await InsertFullCityAsync(_ => { });
 
         await using CityBuilderDbContext db = Database.CreateContext();
-        Assert.Equal(6, await db.CityBuildings.CountAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(7, await db.CityBuildings.CountAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(3, await db.CityStores.CountAsync(TestContext.Current.CancellationToken));
         Assert.Equal(3, await db.CityRoads.CountAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(1, await db.CityTrips.CountAsync(TestContext.Current.CancellationToken));
     }
 
     /// <summary>Two buildings of one city on the same tile break the unique index on <c>(city_id, x, y)</c>.</summary>

@@ -54,7 +54,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
         Assert.Equal(HttpStatusCode.OK, response.Status);
         Assert.Equal("(2,2) L1, (3,2) L1, (4,2) L1", await RoadsAsync(city));
         Assert.Equal([$"coins -15 985 COST_ROAD command {_requestId}"], (await LedgerAsync(Database, city)).Select(Line));
-        Assert.Equal("coins 985, logs 100, planks 50", await StockAsync(Database, city));
+        Assert.Equal("coins 985", await StockAsync(Database, city));
         CommandReceiptRow receipt = Assert.Single(await ReceiptsAsync(Database, player));
         Assert.Equal((_requestId, PlaceRoadsCommand.Type, response.Body), (receipt.RequestId, receipt.CommandType, receipt.ResponseJson));
         Assert.Equal(
@@ -95,7 +95,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
         Assert.Equal(HttpStatusCode.OK, response.Status);
         Assert.Equal("(2,2) L1", await RoadsAsync(city));
         Assert.Empty(await LedgerAsync(Database, city));
-        Assert.Equal("coins 1000, logs 100, planks 50", await StockAsync(Database, city));
+        Assert.Equal("coins 1000", await StockAsync(Database, city));
         Assert.Equal(RemoveRoadsCommand.Type, Assert.Single(await ReceiptsAsync(Database, player)).CommandType);
 
         ApiResponse place = await ApiClient.PostAsync(
@@ -304,7 +304,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
         Assert.Equal(HttpStatusCode.OK, response.Status);
         Assert.Equal(30L, (long)response.Json()["city"]!["clock"]!);
         Assert.Equal(
-            ["logs 1 101 SETTLEMENT_PRODUCED settlement", $"coins -5 995 COST_ROAD command {_requestId}"],
+            ["logs 1 1 SETTLEMENT_PRODUCED settlement", $"coins -5 995 COST_ROAD command {_requestId}"],
             (await LedgerAsync(Database, city)).Select(row => row.RefType == "settlement" ? Line(row)[..^(row.RefId!.Length + 1)] : Line(row)));
     }
 

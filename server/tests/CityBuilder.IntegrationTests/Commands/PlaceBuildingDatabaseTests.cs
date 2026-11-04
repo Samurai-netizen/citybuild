@@ -31,9 +31,10 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
     private static readonly Guid _requestId = new("1de9e700-0000-4000-8000-0000000002a1");
 
     /// <summary>
-    /// A sawmill on a free tile: the stock pays its cost, the building row is level 1, <c>Constructing</c> from clock 0 to its 120 seconds,
-    /// with no workers; the ledger holds one <c>COST_PLACE</c> row per item of the cost, referenced by the request id; the receipt holds the
-    /// response text and the payload's hash; and the response shows the stored version and stock.
+    /// A sawmill on a free tile: the purse pays the cost's 150 coins (800 → 650), the building row is level 1, a construction site
+    /// (<c>Constructing</c> without a start or an end) waiting for the cost's 10 logs, with no workers (CR-0008); the ledger holds the one
+    /// <c>COST_PLACE</c> row of the coins, referenced by the request id; the receipt holds the response text and the payload's hash; and the
+    /// response shows the stored version and purse.
     /// </summary>
     [Fact]
     public async Task Post_Sawmill_PaysPlacesAndStoresTheReceipt()
@@ -49,19 +50,21 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
         Assert.Equal((2L, 0L), (row.StateVersion, row.ClockSeconds));
         Assert.Equal(row.StateVersion, (long)snapshot["stateVersion"]!);
 
-        Assert.Equal("coins 550, logs 10, planks 10", await StockAsync(city));
-        Assert.Equal("""{"coins":550,"logs":10,"planks":10}""", snapshot["city"]!["inventory"]!.ToJsonString());
+        Assert.Equal("coins 650", await StockAsync(city));
+        Assert.Equal(650, (long)snapshot["city"]!["purse"]!);
 
         CityBuildingRow building = await db.CityBuildings.AsNoTracking().SingleAsync(TestContext.Current.CancellationToken);
         Assert.Equal(
-            (1, "sawmill", (short)3, (short)4, (short)1, (short)0, "Constructing", (long?)0, (long?)120),
+            (1, "sawmill", (short)3, (short)4, (short)1, (short)0, "Constructing", (long?)null, (long?)null),
             (building.BuildingId, building.TypeId, building.X, building.Y, building.Level, building.AssignedWorkers, building.Phase,
                 building.PhaseStartedAt, building.PhaseEndsAt));
+        CityProjectNeedRow need = await db.CityProjectNeeds.AsNoTracking().SingleAsync(TestContext.Current.CancellationToken);
+        Assert.Equal((1, "logs", 10L), (need.BuildingId, need.ItemId, need.Quantity));
         Assert.Equal(2, row.NextBuildingId);
 
         List<LedgerEntryRow> ledger = await LedgerAsync(Database, city);
         Assert.Equal(
-            ["coins -150 550 COST_PLACE command " + _requestId, "logs -30 10 COST_PLACE command " + _requestId],
+            ["coins -150 650 COST_PLACE command " + _requestId],
             ledger.Select(entry => $"{entry.ItemId} {entry.Delta} {entry.BalanceAfter} {entry.Reason} {entry.RefType} {entry.RefId}").Order(StringComparer.Ordinal));
 
         CommandReceiptRow receipt = Assert.Single(await ReceiptsAsync(Database, player));
@@ -72,7 +75,8 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
     /// <summary>
     /// Each rule refuses with its code and status, and a refusal with no time elapsed stores nothing: the city, its stock, ledger and
     /// receipts are as they were after the commands before it. The commands before it set the city up (a tile taken, both builders busy,
-    /// the logs spent).
+    /// the one scriptorium a city may have). The starter's 800 coins outlast what two builders can place, so the coins are short in
+    /// <see cref="Post_CoinsShort_Is422InsufficientResourceAndStoresNothing"/>.
     /// </summary>
     /// <param name="before">The placements that succeed first, as <c>type x y</c>.</param>
     /// <param name="typeId">The refused placement's type.</param>
@@ -86,7 +90,7 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
     [InlineData(new string[0], "house", 8, 0, HttpStatusCode.UnprocessableEntity, "OUT_OF_BOUNDS")]
     [InlineData(new[] { "woodcutter 2 3" }, "house", 2, 3, HttpStatusCode.Conflict, "TILE_OCCUPIED")]
     [InlineData(new[] { "house 0 0", "house 1 0" }, "house", 2, 0, HttpStatusCode.Conflict, "NO_FREE_BUILDER")]
-    [InlineData(new[] { "sawmill 0 0" }, "sawmill", 1, 0, HttpStatusCode.UnprocessableEntity, "INSUFFICIENT_RESOURCE")]
+    [InlineData(new[] { "scriptorium 0 0" }, "scriptorium", 1, 0, HttpStatusCode.UnprocessableEntity, "BUILDING_LIMIT")]
     public async Task Post_RuleRefuses_AnswersItsCodeAndStoresNothing(string[] before, string typeId, int x, int y, HttpStatusCode status, string code)
     {
         (Guid player, Guid city) = await StoreStarterAsync("builder");
@@ -156,8 +160,24 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
         Assert.Single(responses.Select(response => response.Body).Distinct(StringComparer.Ordinal));
         Assert.Single((await LoadAsync(Factory, player)).State.Buildings);
         Assert.Single(await ReceiptsAsync(Database, player));
-        Assert.Equal("coins 650, logs 40, planks 10", await StockAsync(city));
+        Assert.Equal("coins 750", await StockAsync(city));
         Assert.Single(await LedgerAsync(Database, city));
+    }
+
+    /// <summary>
+    /// With 100 coins a sawmill (150 coins) is <c>INSUFFICIENT_RESOURCE</c> (422), and the refusal with no time elapsed stores nothing.
+    /// </summary>
+    [Fact]
+    public async Task Post_CoinsShort_Is422InsufficientResourceAndStoresNothing()
+    {
+        (Guid player, Guid city) = await HandBuiltCities.StoreCityAsync(Factory, "poor", 100, HandBuiltCities.House(1));
+        string stored = await StoredAsync(Factory, Database, player, city);
+
+        ApiResponse response = await PlaceAsync(player, _requestId, "sawmill", 3, 4);
+
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.Status);
+        Assert.Equal("INSUFFICIENT_RESOURCE", (string)response.Json()["code"]!);
+        Assert.Equal(stored, await StoredAsync(Factory, Database, player, city));
     }
 
     /// <summary>
@@ -179,7 +199,7 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
         // prove that the second request ran in the second city and the first one's receipt didn't answer it.
         Assert.Equal(firstStored, await StoredAsync(Factory, Database, first, firstCity));
         Assert.Single((await LoadAsync(Factory, second)).State.Buildings);
-        Assert.Equal("coins 650, logs 40, planks 10", await StockAsync(secondCity));
+        Assert.Equal("coins 750", await StockAsync(secondCity));
         Assert.Equal(_requestId, Assert.Single(await ReceiptsAsync(Database, second)).RequestId);
     }
 
@@ -228,7 +248,7 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
 
         JsonNode snapshot = (await ApiClient.GetAsync(Factory, "/api/v1/city", player)).Json();
 
-        Assert.Equal("""{"provided":4,"assigned":2,"free":2}""", snapshot["city"]!["workers"]!.ToJsonString());
+        Assert.Equal("""{"provided":4,"assigned":2,"onTrips":0,"free":2}""", snapshot["city"]!["workers"]!.ToJsonString());
         JsonNode woodcutter = snapshot["city"]!["buildings"]![1]!;
         Assert.Equal(("woodcutter", 2, "Producing"), ((string)woodcutter["typeId"]!, (int)woodcutter["assignedWorkers"]!, (string)woodcutter["phase"]!));
 
