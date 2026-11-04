@@ -281,7 +281,7 @@ namespace CityBuilder.Client.Tests.EditMode.Core
         public void ALevelTheContentDoesNotHave_ShowsTheSnapshot_WithoutThrowing()
         {
             var unknownLevel = new Building(1, new BuildingTypeId("woodcutter"), 0, 0, 9, 1, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
-            var city = new CityState(50, 1, 2, Array.Empty<KeyValuePair<ItemId, long>>(), new[] { unknownLevel }, Array.Empty<ResearchId>(), null);
+            var city = new CityState(50, 1, 2, 0, new[] { unknownLevel }, Array.Empty<ResearchId>(), null);
             _store.Apply(new CitySnapshot(5, "mvp-2", city));
             LogAssert.Expect(LogType.Error, new Regex("cannot predict state version 5 \\(content mvp-2\\)"));
 
@@ -300,7 +300,7 @@ namespace CityBuilder.Client.Tests.EditMode.Core
         public void EngineRefusesTheCity_ShowsTheSnapshotAndRecoversWithTheNext()
         {
             var ghost = new Building(1, new BuildingTypeId("ghost"), 0, 0, 1, 0, BuildingPhase.Constructing, 40, 52, 0, 0, 0, 0);
-            var city = new CityState(50, 1, 2, Array.Empty<KeyValuePair<ItemId, long>>(), new[] { ghost }, Array.Empty<ResearchId>(), null);
+            var city = new CityState(50, 1, 2, 0, new[] { ghost }, Array.Empty<ResearchId>(), null);
             _store.Apply(new CitySnapshot(5, "mvp-2", city));
             var display = new DisplayCity(_store, _clock, _content);
             LogAssert.Expect(LogType.Error, new Regex("cannot predict state version 5 \\(content mvp-2\\)"));

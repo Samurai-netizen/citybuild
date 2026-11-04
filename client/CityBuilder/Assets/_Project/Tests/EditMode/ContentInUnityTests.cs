@@ -44,7 +44,7 @@ namespace CityBuilder.Client.Tests.EditMode
                 Is.EqualTo(new[] { "NotPositive rules.gridWidth", "Negative buildings[hut].cost.gold" }));
         }
 
-        /// <summary>One era, a capped and an uncapped item, and a house; the numbers are made up for this test.</summary>
+        /// <summary>One era, a good and the currency, a house and the science building; the numbers are made up for this test.</summary>
         private static GameContentData SmallContent() => new GameContentData
         {
             ContentVersion = "unity-test-1",
@@ -54,7 +54,6 @@ namespace CityBuilder.Client.Tests.EditMode
                 GridHeight = 4,
                 BuilderSlots = 1,
                 ResearchSlots = 1,
-                BaseStorageCaps = new Dictionary<string, long?> { ["wood"] = 50 },
                 MaxOfflineProductionSeconds = 600,
                 MinCycleSeconds = 2,
                 MaxLaborReductionPermille = 300,
@@ -62,14 +61,17 @@ namespace CityBuilder.Client.Tests.EditMode
                 CrossingSpeedPermille = 200,
                 MinWalkSeconds = 1,
                 MaxWalkBonusPermille = 500,
+                TripCarryLimit = 5,
+                MaxRouteStops = 4,
+                MaxStopActions = 2,
             },
             Roads = new List<RoadLevelData?> { new RoadLevelData { Level = 1, Name = "Path", TileMillis = 1500, Cost = new Dictionary<string, long?> { ["gold"] = 1 } } },
-            StartingCity = new StartingCityData { Era = 1, Inventory = new Dictionary<string, long?> { ["gold"] = 20 } },
+            StartingCity = new StartingCityData { Era = 1, Purse = 20 },
             Eras = new List<EraData?> { new EraData { Number = 1, Id = "first_era", Name = "First Era" } },
             Items = new List<ItemData?>
             {
-                new ItemData { Id = "wood", Name = "Wood", Era = 1, Capped = true, Tradable = true },
-                new ItemData { Id = "gold", Name = "Gold", Era = 1, Capped = false, Tradable = false },
+                new ItemData { Id = "wood", Name = "Wood", Era = 1, Currency = false, Tradable = true },
+                new ItemData { Id = "gold", Name = "Gold", Era = 1, Currency = true, Tradable = false },
             },
             Buildings = new List<BuildingData?>
             {
@@ -84,8 +86,21 @@ namespace CityBuilder.Client.Tests.EditMode
                     BuildSeconds = 3,
                     Levels = new List<BuildingLevelData?> { new BuildingLevelData { Level = 1, WorkersProvided = 2 } },
                 },
+                new BuildingData
+                {
+                    Id = "study",
+                    Name = "Study",
+                    Kind = "science",
+                    Era = 1,
+                    AvailableAtStart = true,
+                    MaxPerCity = 1,
+                    Cost = new Dictionary<string, long?> { ["gold"] = 4 },
+                    BuildSeconds = 2,
+                    Levels = new List<BuildingLevelData?> { new BuildingLevelData { Level = 1 } },
+                },
             },
             Research = new List<ResearchData?>(),
+            AmountPresets = new List<AmountPresetData?> { new AmountPresetData { Id = "all", Name = "All", Percent = 100 } },
         };
     }
 }

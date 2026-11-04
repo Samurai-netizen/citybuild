@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using CityBuilder.Client.Net;
 using NUnit.Framework;
 
@@ -34,7 +36,10 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             return Fixtures.Names("snapshot-");
         }
 
-        /// <summary>A starter city: coins and logs in stock, no buildings, no roads, no research, <c>requestId</c> null because <c>GET /city</c> is no command.</summary>
+        /// <summary>
+        /// A starter city: coins in the purse and no goods (CR-0008), no buildings, roads, trips or research, <c>requestId</c> null because
+        /// <c>GET /city</c> is no command.
+        /// </summary>
         [Test]
         public void CityStart_HasTheStarterCityAndNoRequestId()
         {
@@ -43,10 +48,12 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(snapshot.RequestId, Is.Null);
             Assert.That(snapshot.ContentVersion, Is.EqualTo("mvp-2"));
             Assert.That(snapshot.City.Era, Is.EqualTo(1));
-            Assert.That(snapshot.City.Inventory["coins"], Is.EqualTo(700L));
-            Assert.That(snapshot.City.StorageCaps["logs"], Is.EqualTo(500L));
+            Assert.That(snapshot.City.Purse, Is.EqualTo(800L));
+            Assert.That(snapshot.City.Totals, Is.EqualTo(new Dictionary<string, long> { ["coins"] = 800, ["logs"] = 0, ["planks"] = 0 }));
             Assert.That(snapshot.City.Buildings, Is.Empty);
             Assert.That(snapshot.City.Roads, Is.Empty);
+            Assert.That(snapshot.City.Trips, Is.Empty);
+            Assert.That(snapshot.City.Research.Needs, Is.Empty);
             Assert.That(snapshot.City.Research.ActiveId, Is.Null);
             Assert.That(snapshot.City.Research.StartedAt, Is.Null);
             Assert.That(snapshot.City.Research.Completed, Is.Empty);
@@ -94,22 +101,47 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(snapshot.City.Research.EndsAt - snapshot.City.Research.StartedAt, Is.EqualTo(600L));
         }
 
-        /// <summary>A city with producers: phases read as enums, a running cycle has an end time and no stall reason, a house says <c>NoRecipe</c>.</summary>
+        /// <summary>
+        /// A city with a producer: phases read as enums, a running cycle has an end time and no stall reason, a house says <c>NoRecipe</c>, the
+        /// producer's store and limits read, and a construction site waits for goods with no end time (CR-0008).
+        /// </summary>
         [Test]
-        public void CityProducing_ReadsPhasesAndStallReasons()
+        public void CityProducing_ReadsPhasesStallReasonsStoresAndTheSite()
         {
             CitySnapshotDto snapshot = _json.Deserialize<CitySnapshotDto>(Fixtures.Read("snapshot-city-producing.json"));
 
             SnapshotBuildingDto house = snapshot.City.Buildings[0];
-            SnapshotBuildingDto sawmill = snapshot.City.Buildings[2];
+            SnapshotBuildingDto woodcutter = snapshot.City.Buildings[1];
+            SnapshotBuildingDto site = snapshot.City.Buildings[3];
             Assert.That(house.Phase, Is.EqualTo(BuildingPhaseDto.Idle));
             Assert.That(house.StallReason, Is.EqualTo("NoRecipe"));
             Assert.That(house.PhaseEndsAt, Is.Null);
-            Assert.That(sawmill.TypeId, Is.EqualTo("sawmill"));
-            Assert.That(sawmill.Phase, Is.EqualTo(BuildingPhaseDto.Producing));
-            Assert.That(sawmill.StallReason, Is.Null);
-            Assert.That(sawmill.PhaseEndsAt, Is.Not.Null);
-            Assert.That(snapshot.City.Workers.Free, Is.EqualTo(snapshot.City.Workers.Provided - snapshot.City.Workers.Assigned));
+            Assert.That((house.Store, house.StoreLimits, house.Needs, house.Project), Is.EqualTo((new Dictionary<string, long>(), new Dictionary<string, long>(), new Dictionary<string, long>(), (string)null)));
+            Assert.That(woodcutter.TypeId, Is.EqualTo("woodcutter"));
+            Assert.That(woodcutter.Phase, Is.EqualTo(BuildingPhaseDto.Producing));
+            Assert.That(woodcutter.StallReason, Is.Null);
+            Assert.That(woodcutter.PhaseEndsAt, Is.Not.Null);
+            Assert.That(woodcutter.Store["logs"], Is.EqualTo(4L));
+            Assert.That(woodcutter.StoreLimits["logs"], Is.EqualTo(40L));
+            Assert.That((site.TypeId, site.Phase, site.PhaseEndsAt, site.Project), Is.EqualTo(("sawmill", BuildingPhaseDto.Constructing, (long?)null, "Construction")));
+            Assert.That(site.Needs["logs"], Is.EqualTo(10L));
+            Assert.That(snapshot.City.Totals["logs"], Is.EqualTo(4L));
+            SnapshotWorkersDto workers = snapshot.City.Workers;
+            Assert.That(workers.Free, Is.EqualTo(workers.Provided - workers.Assigned - workers.OnTrips));
+        }
+
+        /// <summary>A started trip reads with its source, target, good, load and times, and its worker counts as on a trip (CR-0008).</summary>
+        [Test]
+        public void StartTrip_ShowsTheTripAndItsWorker()
+        {
+            CitySnapshotDto snapshot = _json.Deserialize<CitySnapshotDto>(Fixtures.Read("snapshot-command-start-trip.json"));
+
+            SnapshotTripDto trip = snapshot.City.Trips.Single();
+            Assert.That(
+                (trip.Id, trip.SourceId, trip.TargetId, trip.ItemId, trip.Quantity, trip.ArrivesAt - trip.DepartedAt),
+                Is.EqualTo((1, 2, 4, "logs", 4L, 20L)));
+            Assert.That((snapshot.City.Workers.OnTrips, snapshot.City.Workers.Free), Is.EqualTo((1L, 1L)));
+            Assert.That(snapshot.City.Totals["logs"], Is.EqualTo(4L), "the load counts in the city's total");
         }
 
         /// <summary>The settlement lists what completed in the request's own time span.</summary>
@@ -123,7 +155,9 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(research.Settlement.CompletedResearch, Is.EqualTo(new[] { "trade_charter" }));
             Assert.That(research.City.Research.Completed, Is.EqualTo(new[] { "trade_charter" }));
             Assert.That(research.City.Research.ActiveId, Is.Null);
-            Assert.That(research.Settlement.Produced["planks"], Is.GreaterThan(0L));
+            Assert.That(research.Settlement.Produced["logs"], Is.GreaterThan(0L));
+            Assert.That(research.Settlement.Delivered["logs"], Is.EqualTo(4L), "the trip arrived at the site in the same span");
+            Assert.That((research.Settlement.Moved, research.Settlement.Refunded), Is.EqualTo((new Dictionary<string, long>(), new Dictionary<string, long>())));
             Assert.That(research.Settlement.EraChanged, Is.False);
         }
 
@@ -131,9 +165,9 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         [Test]
         public void ASnapshotWithoutARequiredMember_IsRefused()
         {
-            string text = Fixtures.Read("snapshot-city-start.json").Replace("\"storageCaps\":{\"logs\":500,\"planks\":500},", string.Empty);
+            string text = Fixtures.Read("snapshot-city-start.json").Replace("\"totals\":{\"coins\":800,\"logs\":0,\"planks\":0},", string.Empty);
 
-            Assert.That(text, Does.Not.Contain("storageCaps"), "the fixture changed: update this test");
+            Assert.That(text, Does.Not.Contain("totals"), "the fixture changed: update this test");
             Assert.That(() => _json.Deserialize<CitySnapshotDto>(text), Throws.Exception);
         }
 

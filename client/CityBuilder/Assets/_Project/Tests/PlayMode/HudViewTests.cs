@@ -56,20 +56,14 @@ namespace CityBuilder.Client.Tests.PlayMode
             Object.DestroyImmediate(_host);
         }
 
-        /// <summary>A city of Era I at <paramref name="clock"/> with a cottage, <paramref name="coins"/>, 40 logs and 10 planks.</summary>
+        /// <summary>A city of Era I at <paramref name="clock"/> with a cottage and <paramref name="coins"/> in the purse (no goods; CR-0008).</summary>
         private static CityState City(long clock, long coins, ActiveResearch? research)
         {
-            var stock = new List<KeyValuePair<ItemId, long>>
-            {
-                new KeyValuePair<ItemId, long>(new ItemId("coins"), coins),
-                new KeyValuePair<ItemId, long>(new ItemId("logs"), 40),
-                new KeyValuePair<ItemId, long>(new ItemId("planks"), 10),
-            };
             var buildings = new List<Building>
             {
                 new Building(1, new BuildingTypeId("house"), 0, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
             };
-            return new CityState(clock, 1, 2, stock, buildings, new List<ResearchId>(), research);
+            return new CityState(clock, 1, 2, coins, buildings, new List<ResearchId>(), research);
         }
 
         /// <summary>The chip elements on the screen, in order.</summary>

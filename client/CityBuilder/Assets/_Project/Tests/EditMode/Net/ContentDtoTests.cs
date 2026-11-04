@@ -30,13 +30,20 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(content.ContentVersion, Is.EqualTo("mvp-2"));
             Assert.That(content.Rules.GridWidth, Is.EqualTo(8));
             Assert.That(content.Rules.TimeScale, Is.EqualTo(1));
-            Assert.That(content.Rules.BaseStorageCaps["planks"], Is.EqualTo(500L));
-            Assert.That(content.StartingCity.Inventory["coins"], Is.EqualTo(700L));
+            Assert.That(content.Rules.TripCarryLimit, Is.EqualTo(10L));
+            Assert.That((content.Rules.MaxRouteStops, content.Rules.MaxStopActions), Is.EqualTo((8, 4)));
+            Assert.That(content.StartingCity.Purse, Is.EqualTo(800L));
+            Assert.That(content.Items.Find(item => item.Id == "coins").Currency, Is.True);
+            Assert.That(content.Items.Find(item => item.Id == "logs").Currency, Is.False);
+            Assert.That(content.AmountPresets.ConvertAll(preset => preset.Id + "=" + preset.Percent), Is.EqualTo(new[] { "all=100", "half=50", "quarter=25" }));
             Assert.That(content.Eras, Is.Not.Empty);
             Assert.That(content.Items, Is.Not.Empty);
         }
 
-        /// <summary>Buildings: kinds read as enums, a house has no recipe, a producer has one, level 1 has no upgrade cost, a gated type names its research.</summary>
+        /// <summary>
+        /// Buildings: kinds read as enums, a house has no recipe or store, a producer has both, level 1 has no upgrade cost, a gated type names its
+        /// research, the science building has its limit and a courier station its carry limit and stamina (CR-0008).
+        /// </summary>
         [Test]
         public void TheBuildings_ReadKindsRecipesAndNulls()
         {
@@ -55,6 +62,19 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(sawmill.Levels[0].UpgradeSeconds, Is.Null);
             Assert.That(post.UnlockedBy, Is.EqualTo("trade_charter"));
             Assert.That(post.AvailableAtStart, Is.False);
+            Assert.That(house.Levels[0].Storage, Is.Null);
+            Assert.That(house.MaxPerCity, Is.Null);
+            Assert.That(sawmill.Levels[0].Storage["planks"], Is.EqualTo(20L));
+            Assert.That(sawmill.Levels[0].CarryLimit, Is.Null);
+            ContentBuildingDto scriptorium = content.Buildings.Find(b => b.Id == "scriptorium");
+            ContentBuildingDto station = content.Buildings.Find(b => b.Id == "courier_station");
+            ContentBuildingDto warehouse = content.Buildings.Find(b => b.Id == "warehouse");
+            Assert.That((scriptorium.Kind, scriptorium.MaxPerCity), Is.EqualTo((BuildingKindDto.Science, (int?)1)));
+            Assert.That(station.Kind, Is.EqualTo(BuildingKindDto.CourierStation));
+            Assert.That(station.Levels[0].CarryLimit, Is.GreaterThan(0L));
+            Assert.That(station.Levels[0].StaminaSeconds, Is.GreaterThan(0L));
+            Assert.That(warehouse.Kind, Is.EqualTo(BuildingKindDto.Warehouse));
+            Assert.That(warehouse.Levels[0].Storage["logs"], Is.EqualTo(100L));
         }
 
         /// <summary>Research: every effect type of the content reads, and only the members its type uses are set.</summary>
@@ -73,7 +93,11 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(labor.Permille, Is.EqualTo(200));
             Assert.That(storage.Type, Is.EqualTo(ResearchEffectTypeDto.StorageCapBonus));
             Assert.That(storage.Item, Is.EqualTo("logs"));
-            Assert.That(storage.Amount, Is.EqualTo(250L));
+            Assert.That(storage.Amount, Is.EqualTo(40L));
+            ContentResearchEffectDto mode = content.Research.Find(r => r.Id == "tally_sticks").Effects[0];
+            ContentResearchEffectDto walk = content.Research.Find(r => r.Id == "sturdy_boots").Effects[0];
+            Assert.That((mode.Type, mode.Mode, mode.Item), Is.EqualTo((ResearchEffectTypeDto.UnlockAmountMode, "percent", (string)null)));
+            Assert.That((walk.Type, walk.Permille, walk.Mode), Is.EqualTo((ResearchEffectTypeDto.WalkSpeedBonus, (int?)200, (string)null)));
             Assert.That(content.Research.Find(r => r.Id == "frame_saw").Prerequisites, Is.EqualTo(new[] { "sharp_axes" }));
         }
     }

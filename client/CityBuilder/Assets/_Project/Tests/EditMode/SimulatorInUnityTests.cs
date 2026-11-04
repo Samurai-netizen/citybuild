@@ -39,7 +39,7 @@ namespace CityBuilder.Client.Tests.EditMode
             // TryGetBuilding returned true, so camp is set.
             Assert.That((camp!.AssignedWorkers, camp.Phase, camp.PhaseStartedAt, camp.PhaseEndsAt), Is.EqualTo((2, BuildingPhase.Producing, 26L, (long?)36)));
             Assert.That(second.Produced.Select(total => total.Key.Value + "=" + total.Value), Is.EqualTo(new[] { "wood=2" }));
-            Assert.That((city.Clock, city.GetQuantity(new ItemId("wood")), second.ProductionSeconds), Is.EqualTo((31L, 6L, 25L)));
+            Assert.That((city.Clock, CityQueries.Total(city, content, new ItemId("wood")), second.ProductionSeconds), Is.EqualTo((31L, 2L, 25L)));
         }
 
         /// <summary>The stall reasons of a house, a camp without workers and a camp whose output is full read as their API text.</summary>
@@ -49,16 +49,16 @@ namespace CityBuilder.Client.Tests.EditMode
             GameContent content = SmallContent();
             var hut = new Building(1, new BuildingTypeId("hut"), 0, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
             var idleCamp = new Building(2, new BuildingTypeId("camp"), 1, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
-            var staffedCamp = new Building(3, new BuildingTypeId("camp"), 2, 0, 1, 2, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
-            var stock = new List<KeyValuePair<ItemId, long>> { new KeyValuePair<ItemId, long>(new ItemId("wood"), 50) };
-            var city = new CityState(100, 1, 4, stock, new[] { hut, idleCamp, staffedCamp }, System.Array.Empty<ResearchId>(), null);
+            var full = new[] { new KeyValuePair<ItemId, long>(new ItemId("wood"), 50) };
+            var staffedCamp = new Building(3, new BuildingTypeId("camp"), 2, 0, 1, 2, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, full);
+            var city = new CityState(100, 1, 4, 0, new[] { hut, idleCamp, staffedCamp }, System.Array.Empty<ResearchId>(), null);
 
             string?[] reasons = city.Buildings.Select(building => StallReason.Of(city, content, building)?.ToString()).ToArray();
 
             Assert.That(reasons, Is.EqualTo(new[] { "NoRecipe", "NoWorkers", "StorageFull:wood" }));
         }
 
-        /// <summary>One era, a capped and an uncapped item, a house and a producer; the numbers are made up for this test.</summary>
+        /// <summary>One era, a good and the currency, a house, a producer with a store and the science building; the numbers are made up for this test.</summary>
         private static GameContent SmallContent()
         {
             var data = new GameContentData
@@ -70,7 +70,6 @@ namespace CityBuilder.Client.Tests.EditMode
                     GridHeight = 4,
                     BuilderSlots = 2,
                     ResearchSlots = 1,
-                    BaseStorageCaps = new Dictionary<string, long?> { ["wood"] = 50 },
                     MaxOfflineProductionSeconds = 600,
                     MinCycleSeconds = 2,
                     MaxLaborReductionPermille = 300,
@@ -78,14 +77,17 @@ namespace CityBuilder.Client.Tests.EditMode
                     CrossingSpeedPermille = 200,
                     MinWalkSeconds = 1,
                     MaxWalkBonusPermille = 500,
+                    TripCarryLimit = 5,
+                    MaxRouteStops = 4,
+                    MaxStopActions = 2,
                 },
                 Roads = new List<RoadLevelData?> { new RoadLevelData { Level = 1, Name = "Path", TileMillis = 1500, Cost = new Dictionary<string, long?> { ["gold"] = 1 } } },
-                StartingCity = new StartingCityData { Era = 1, Inventory = new Dictionary<string, long?> { ["wood"] = 4, ["gold"] = 20 } },
+                StartingCity = new StartingCityData { Era = 1, Purse = 20 },
                 Eras = new List<EraData?> { new EraData { Number = 1, Id = "first_era", Name = "First Era" } },
                 Items = new List<ItemData?>
                 {
-                    new ItemData { Id = "wood", Name = "Wood", Era = 1, Capped = true, Tradable = true },
-                    new ItemData { Id = "gold", Name = "Gold", Era = 1, Capped = false, Tradable = false },
+                    new ItemData { Id = "wood", Name = "Wood", Era = 1, Currency = false, Tradable = true },
+                    new ItemData { Id = "gold", Name = "Gold", Era = 1, Currency = true, Tradable = false },
                 },
                 Buildings = new List<BuildingData?>
                 {
@@ -106,11 +108,19 @@ namespace CityBuilder.Client.Tests.EditMode
                                 Level = 1,
                                 MaxWorkers = 2,
                                 Recipe = new RecipeData { Outputs = new Dictionary<string, long?> { ["wood"] = 1 }, Labor = 20 },
+                                Storage = new Dictionary<string, long?> { ["wood"] = 50 },
                             },
                         },
                     },
+                    new BuildingData
+                    {
+                        Id = "study", Name = "Study", Kind = "science", Era = 1, AvailableAtStart = true, MaxPerCity = 1,
+                        Cost = new Dictionary<string, long?> { ["gold"] = 4 }, BuildSeconds = 2,
+                        Levels = new List<BuildingLevelData?> { new BuildingLevelData { Level = 1 } },
+                    },
                 },
                 Research = new List<ResearchData?>(),
+                AmountPresets = new List<AmountPresetData?> { new AmountPresetData { Id = "all", Name = "All", Percent = 100 } },
             };
 
             GameContentResult result = GameContentFactory.Create(data);
