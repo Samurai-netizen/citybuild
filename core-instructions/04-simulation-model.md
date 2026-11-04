@@ -5,8 +5,10 @@ for the engine that computes what happened during that waiting. It lives in `sha
 runs authoritatively on the server, and runs on the client for display only.
 
 > **CR-0008 (logistics) is specified here and built in CR-0008-T1, part by part.** Built so far: the walking rules and road levels in
-> content (§14 rules 11, 12 without the walk bonus effect), roads in the city state, the path rule (§17) and the road mutations (§8) (part C). Until part E
-> the engine runs the M0 model this file replaced (city-wide stock, storage caps); until part H the 8 h offline production cap. Each part
+> content (§14 rules 11, 12), roads in the city state, the path rule (§17) and the road mutations (§8) (part C); stores, the purse and
+> projects (§16), the delivery rule (§6), amounts and presets (§19 without routes), trips (§18) with `StartTrip` (§8), the report's
+> `delivered`, `moved` and `refunded` (§11), and the start rule per store (part E). Until part F there are no couriers or routes (a
+> courier station's workers are only a count); until part H the engine keeps the 8 h offline production cap of the old §2. Each part
 > updates this line. Sections 16 to 19 are new; sections 1 to 15 keep their numbers (other files refer to them).
 
 ## 1. Time
@@ -242,6 +244,9 @@ is sent or stored. All values are integers, rounded down: seconds, permille (0..
 - **Deliveries** (§6): a walker arriving at a building hands each carried good first to the building's project (the research for the
   science building), at most what it still needs, used up at once (`delivered` in the report); then into the store, at most its room
   (`moved`). Nothing else ever enters a store above its limit, except a refund (§8) and a returned load (§18, §19).
+  A science building that also has a project of its own (a construction site, an upgrade waiting for goods) fills that project first,
+  then the waiting research, then its store: one fixed order keeps the engine deterministic (CR-0008-T1 decision 37; M0's science
+  building has one level and costs only coins, so the case needs later content).
 - A new city has coins only (CR-0008 D2); the science building is one per city (§14 rule 10).
 
 ## 17. The map: tiles, roads and walks (CR-0008)
