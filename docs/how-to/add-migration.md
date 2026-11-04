@@ -58,6 +58,12 @@ dotnet ef database update --project server/src/CityBuilder.Infrastructure --star
   --connection "<connection string>"
 ```
 
+**A migration that changes or deletes data** goes into `Up` as `migrationBuilder.Sql(…)` before the schema steps that need it, and
+needs the owner's approval in a plan task or CR (G-Destructive, `15`). The one so far is CR-0008's `LogisticsStoresTripsAndReset`
+(owner decision D10): its first statements delete every ledger row, receipt, city and player, in the order the foreign keys need, so it can
+then drop `city_inventory` and add the stores; `MigrationDatabaseTests` has a test that it leaves no player. A test that needs data from
+before such a migration migrates only up to the one before it.
+
 **6. Docs.** Update the table in `06`, the module doc `docs/modules/CityBuilder.Infrastructure.md` if a table is new, and the build log's Docs
 impact table. A column that changes what the engine stores also changes the mapping (M0-20) and its round-trip tests.
 
