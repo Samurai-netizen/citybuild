@@ -130,6 +130,34 @@
   engine except `BuildingDecor.Show`'s two lines on the city's stock (T1 moved goods into `Building.Store` with
   `CityQueries.TryGetEffectiveLimit`); Route A names the fix. The package itself still targets `main` (the fit branch), so it is unchanged.
 
+- **Owner input** (in chat, the same day): "Check everything again to make sure that this change in plans will go smooth. Note that T1
+  task is currently stopped because of token limits, so it will automatically continue with old context upon resuming. You need to check
+  every edge case and make sure that nothing breaks upon merging new graphics and doing altered T1, T2, T3 CRs".
+- **Checked** on throwaway copies of `main` and of the T1 branch at `6029f17`:
+  - the FBX root transforms against `main`'s known-good models (identical: no rotation or scale on any root, fill models' roots are
+    empties);
+  - `ArtImportTests`' house values (lowest point -0.0006 within 0.001, status anchor above the top, door toward -Z);
+  - every content id of T1 against the models and icons;
+  - the store limits against the fill models;
+  - the UI rules against T1's views;
+  - `check-docs.sh` and `CityBuilder.Repository.Tests` (22) on the adopted T1 copy;
+  - the handbook's page list (it doesn't read `visual-v2/`);
+  - open PRs (only T1's draft and a dependabot PR).
+- **Fixed:**
+  - `adopt.sh` overwrote any file, so a later T1 edit of a layout would have been lost. It now copies only new or unchanged files,
+    replaces same-named art on purpose, and holds back the palette and changed text files (exit 3). Tried on `main`, on T1, and with a
+    simulated later edit of a stylesheet and the palette. It is bash 3.2-safe (no arrays) for a Mac.
+  - `after-cr0008.patch`: the package's `BuildingDecor` didn't compile against T1's engine (the city's stock is gone). The patch reads
+    the building's store and gives `IsWorking` the city and the three new kinds. It compiles against T1 with the Unity stubs, and the
+    same 82 tests pass.
+  - `ADOPT.md`:
+    - the owner's prompt as `/start-task` arguments, so T2's first plan is already Route A;
+    - a fallback branch for the folder, and never merging either branch;
+    - the id rename limited to the step's own files;
+    - the test cases for the patched rules;
+    - the art move's details: `AGENTS.md`'s command stays valid, the palette copy in `art/textures`, `.gitignore`'s `art/previews/*`,
+      the README picture, the phone view the package lacks, and `art/MOTIONS.md` as a handbook page.
+
 ## Follow-ups
 - [MANUAL] The Unity steps of `FIT-TEST.md`: compile, `test-unity.sh`, a play session for the motion and the fill, the UI in the Device
   Simulator (fonts: if UI Toolkit draws the TTF files in its default font, make Font Assets of them).

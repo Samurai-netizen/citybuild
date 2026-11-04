@@ -53,7 +53,8 @@ client, and `FIT-TEST.md` says what was checked there.
 | `blender/` | Blender 5.2 sources: `build_all.py` (models and checks), `render_previews.py`, `render_ui.py` (icons), and the models in `assets_*.py` |
 | `unity/` | A drop-in overlay of `client/CityBuilder/Assets/_Project/` |
 | `unity-wiring.patch` | The five small edits of today's client that wire the new code in (the same as on the fit branch) |
-| `adopt.sh` | Copies `unity/` into the Unity project as it was at the base (`3c0dcac`); after CR-0008 copy by `ADOPT.md` §1 instead |
+| `adopt.sh` | Copies `unity/` into the Unity project; never overwrites a text file changed after the base `3c0dcac` (lists it, exit 3); replaces same-named art on purpose |
+| `after-cr0008.patch` | `BuildingDecor` on CR-0008's engine: building stores and when the new kinds work (`ADOPT.md` Route A) |
 | `ui-preview/` | `preview.js` (the UI in a browser), `check-ui-rules.py` (the rules the client's UI tests read), `render-glyphs.js` |
 | `previews/` | Pictures; `previews/models/` (one per model) is git-ignored |
 | `ADOPT.md` | How to bring this package into the game after CR-0008 (instructions for the AI coder) |

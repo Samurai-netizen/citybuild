@@ -1,0 +1,135 @@
+After CR-0008-T1: the package's BuildingDecor on the engine of CR-0008 (Route A of visual-v2/ADOPT.md, step 2). The store fill reads
+the building's own store against CityQueries.TryGetEffectiveLimit (T1 removed the city's stock and TryGetEffectiveCap), and IsWorking
+takes the city and covers the three new kinds: the science building while a research timer runs, a courier station while one of its
+couriers walks, a warehouse while a trip goes to or from it or a courier walks to it; a construction site that waits for goods stands
+still. Apply after adopt.sh: git apply visual-v2/after-cr0008.patch. Compiled against the T1 branch at 6029f17 (H1) with Unity stubs.
+
+diff --git a/client/CityBuilder/Assets/_Project/Presentation/City/BuildingDecor.cs b/client/CityBuilder/Assets/_Project/Presentation/City/BuildingDecor.cs
+--- a/client/CityBuilder/Assets/_Project/Presentation/City/BuildingDecor.cs
++++ b/client/CityBuilder/Assets/_Project/Presentation/City/BuildingDecor.cs
+@@ -117,9 +117,8 @@
+         }
+ 
+         /// <summary>
+-        /// Shows whether the building works and how full its store is. The store of each item the fill model has steps for is today the city's
+-        /// stock of the item against its storage cap (an item without a cap shows nothing); CR-0008 moves goods into the buildings, and then this
+-        /// reads the building's own store.
++        /// Shows whether the building works and how full its store is: for each item the fill model has steps for, the building's own store
++        /// against its effective limit (<see cref="CityQueries.TryGetEffectiveLimit"/>); an item the store doesn't hold shows nothing.
+         /// </summary>
+         /// <param name="view">The building's view.</param>
+         /// <param name="city">The displayed city.</param>
+@@ -151,7 +150,7 @@
+ 
+             if (view.Animator != null)
+             {
+-                view.Animator.Working = IsWorking(content, building, status);
++                view.Animator.Working = IsWorking(city, content, building, status);
+             }
+ 
+             FillView? fill = view.Fill;
+@@ -163,25 +162,27 @@
+             for (int i = 0; i < fill.ItemCount; i++)
+             {
+                 ItemId item = fill.ItemAt(i);
+-                city.Inventory.TryGetValue(item, out long amount);
+-                long limit = CityQueries.TryGetEffectiveCap(city, content, item, out long cap) ? cap : 0;
+-                fill.Show(i, StorageFill.StepFor(amount, limit, fill.StepCountAt(i)));
++                long limit = CityQueries.TryGetEffectiveLimit(city, content, building, item, out long found) ? found : 0;
++                fill.Show(i, StorageFill.StepFor(building.GetStock(item), limit, fill.StepCountAt(i)));
+             }
+         }
+ 
+         /// <summary>
+-        /// Whether a building moves: a construction site always (its builder hammers), a producer while a cycle runs and nothing stalls it, a
+-        /// cottage always (smoke from its chimney). Kinds CR-0008 adds (science, couriers, warehouse) stay still until that task decides.
++        /// Whether a building moves: a construction site or an upgrade while its timer runs (its builder hammers; a site that waits for goods
++        /// stands still), a producer while a cycle runs and nothing stalls it, a cottage always (smoke from its chimney), the science building
++        /// while a research timer runs, a courier station while one of its couriers walks, a warehouse while a trip goes to or from it or a
++        /// courier walks to it. Loops by index, so it allocates nothing.
+         /// </summary>
++        /// <param name="city">The displayed city.</param>
+         /// <param name="content">The game content.</param>
+         /// <param name="building">The building.</param>
+         /// <param name="status">Its status.</param>
+         /// <returns>True when the building's parts and smoke should move.</returns>
+-        public static bool IsWorking(GameContent content, Building building, BuildingStatus status)
++        public static bool IsWorking(CityState city, GameContent content, Building building, BuildingStatus status)
+         {
+             if (BuildingLooks.ShowsConstructionSite(building.Phase))
+             {
+-                return true;
++                return !building.IsConstructionSite;
+             }
+ 
+             if (!content.TryGetBuilding(building.TypeId, out BuildingDefinition? definition))
+@@ -195,9 +196,69 @@
+                     return true;
+                 case BuildingKind.Producer:
+                     return building.Phase == BuildingPhase.Producing && !status.Stalled;
++                case BuildingKind.Science:
++                    return city.ActiveResearch != null && city.ActiveResearch.StartedAt.HasValue;
++                case BuildingKind.CourierStation:
++                    return HasCourierOnTheRoad(city, building.Id);
++                case BuildingKind.Warehouse:
++                    return HasGoodsMoving(city, building.Id);
+                 default:
+                     return false;
+             }
+         }
++
++        /// <summary>Whether a courier of a station walks: to a stop of its route, or home when its stamina ran out.</summary>
++        /// <param name="city">The displayed city.</param>
++        /// <param name="stationId">The courier station's building id.</param>
++        /// <returns>True when one of its couriers is on the road.</returns>
++        private static bool HasCourierOnTheRoad(CityState city, int stationId)
++        {
++            for (int i = 0; i < city.Couriers.Count; i++)
++            {
++                Courier courier = city.Couriers[i];
++                if (courier.StationId == stationId && (courier.State == CourierState.Walking || courier.State == CourierState.Returning))
++                {
++                    return true;
++                }
++            }
++
++            return false;
++        }
++
++        /// <summary>Whether goods move at a building: a trip from or to it, or a courier walking to a stop there.</summary>
++        /// <param name="city">The displayed city.</param>
++        /// <param name="buildingId">The building's id.</param>
++        /// <returns>True when a walker brings or takes goods there.</returns>
++        private static bool HasGoodsMoving(CityState city, int buildingId)
++        {
++            for (int i = 0; i < city.Trips.Count; i++)
++            {
++                if (city.Trips[i].SourceId == buildingId || city.Trips[i].TargetId == buildingId)
++                {
++                    return true;
++                }
++            }
++
++            for (int i = 0; i < city.Couriers.Count; i++)
++            {
++                Courier courier = city.Couriers[i];
++                if (courier.State != CourierState.Walking || courier.ToStop < 1)
++                {
++                    continue;
++                }
++
++                for (int r = 0; r < city.Routes.Count; r++)
++                {
++                    Route route = city.Routes[r];
++                    if (route.StationId == courier.StationId && route.Slot == courier.Slot && courier.ToStop <= route.Stops.Count
++                        && route.Stops[courier.ToStop - 1].BuildingId == buildingId)
++                    {
++                        return true;
++                    }
++                }
++            }
++
++            return false;
++        }
+     }
+ }
