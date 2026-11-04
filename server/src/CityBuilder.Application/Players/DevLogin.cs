@@ -86,7 +86,7 @@ public sealed class DevLogin(
 
     /// <summary>
     /// Creates the player and their starter city in one transaction: the player, the city (clock 0, settled at the server's current second,
-    /// with the content's version) and a <c>STARTING_GRANT</c> entry per item of the starting stock, in item order.
+    /// with the content's version) and a <c>STARTING_GRANT</c> entry for the coins of its purse (CR-0008: a new city has no goods).
     /// </summary>
     /// <param name="displayName">The new player's name.</param>
     /// <param name="cancellationToken">Cancels the creation; nothing is committed then.</param>
@@ -100,11 +100,10 @@ public sealed class DevLogin(
         CityState state = CityFactory.CreateStarterCity(content);
         var city = new CityAggregate(
             Guid.CreateVersion7(now), player.Id, state, [], now.ToUnixTimeSeconds(), stateVersion: 0, content.ContentVersion);
-        LedgerEntry[] startingGrant = state.Inventory
-            .Where(stock => stock.Value > 0)
-            .OrderBy(stock => stock.Key)
-            .Select(stock => new LedgerEntry(stock.Key, stock.Value, stock.Value, LedgerReason.StartingGrant))
-            .ToArray();
+        // A new city has coins only (CR-0008 D2): one row for its purse, none when it starts without coins.
+        LedgerEntry[] startingGrant = state.Purse > 0
+            ? [new LedgerEntry(content.Currency, state.Purse, state.Purse, LedgerReason.StartingGrant)]
+            : [];
 
         await using IUnitOfWorkTransaction transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
         _players.Add(player);

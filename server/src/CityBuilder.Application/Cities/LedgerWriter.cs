@@ -45,21 +45,23 @@ internal sealed class LedgerWriter
     }
 
     /// <summary>
-    /// Writes what an advance produced and consumed: per item in ordinal order, <c>SETTLEMENT_PRODUCED</c> with the item's output, then
-    /// <c>SETTLEMENT_CONSUMED</c> with its input as a negative delta. Produced comes first: an item can be consumed after it was produced in
-    /// the same window, and a balance is never below 0 that way.
+    /// Writes what an advance did to the city's totals (<c>06</c>, ledger, CR-0008): per item in ordinal order, <c>SETTLEMENT_PRODUCED</c>
+    /// with the item's output, <c>SETTLEMENT_REFUNDED</c> with the inputs that upgrades started by a delivery gave back, then
+    /// <c>SETTLEMENT_CONSUMED</c> and <c>SETTLEMENT_DELIVERED</c> as negative deltas. What came in comes first: an item can be consumed or
+    /// delivered after it was produced in the same window, and a balance is never below 0 that way. Goods moved between stores and loads
+    /// change no total and write no row.
     /// </summary>
-    /// <param name="produced">The outputs per item.</param>
-    /// <param name="consumed">The inputs per item.</param>
+    /// <param name="report">The advance's report.</param>
     /// <param name="refType">The <c>ref_type</c> of the rows.</param>
     /// <param name="refId">The <c>ref_id</c> of the rows.</param>
-    public void AddProduction(
-        IReadOnlyDictionary<ItemId, long> produced, IReadOnlyDictionary<ItemId, long> consumed, string refType, string refId)
+    public void AddSettlement(SettlementTotals report, string refType, string refId)
     {
-        foreach (ItemId item in produced.Keys.Union(consumed.Keys).Order())
+        foreach (ItemId item in report.Produced.Keys.Union(report.Refunded.Keys).Union(report.Consumed.Keys).Union(report.Delivered.Keys).Order())
         {
-            Add(item, produced.GetValueOrDefault(item), LedgerReason.SettlementProduced, refType, refId);
-            Add(item, -consumed.GetValueOrDefault(item), LedgerReason.SettlementConsumed, refType, refId);
+            Add(item, report.Produced.GetValueOrDefault(item), LedgerReason.SettlementProduced, refType, refId);
+            Add(item, report.Refunded.GetValueOrDefault(item), LedgerReason.SettlementRefunded, refType, refId);
+            Add(item, -report.Consumed.GetValueOrDefault(item), LedgerReason.SettlementConsumed, refType, refId);
+            Add(item, -report.Delivered.GetValueOrDefault(item), LedgerReason.SettlementDelivered, refType, refId);
         }
     }
 }

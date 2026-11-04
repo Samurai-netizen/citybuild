@@ -6,7 +6,7 @@ namespace CityBuilder.Domain.Ledger;
 /// </summary>
 public enum LedgerReason
 {
-    /// <summary><c>STARTING_GRANT</c>: the starting inventory of a new city, so the ledger reconciles from the first row.</summary>
+    /// <summary><c>STARTING_GRANT</c>: the coins of a new city's purse, so the ledger reconciles from the first row (CR-0008: coins only).</summary>
     StartingGrant,
 
     /// <summary><c>SETTLEMENT_PRODUCED</c>: the outputs of the cycles a settlement completed.</summary>
@@ -29,4 +29,10 @@ public enum LedgerReason
 
     /// <summary><c>COST_ROAD</c>: the cost of placing or upgrading roads, for every tile of the command (CR-0008).</summary>
     CostRoad,
+
+    /// <summary><c>SETTLEMENT_DELIVERED</c>: the goods walkers handed to projects during a settlement, used up there (CR-0008, <c>04</c> section 16).</summary>
+    SettlementDelivered,
+
+    /// <summary><c>SETTLEMENT_REFUNDED</c>: the inputs given back when an upgrade started inside a settlement, at its last delivery (CR-0008).</summary>
+    SettlementRefunded,
 }

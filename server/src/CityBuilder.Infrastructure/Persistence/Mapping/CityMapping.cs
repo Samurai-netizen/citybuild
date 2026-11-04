@@ -8,8 +8,8 @@ namespace CityBuilder.Infrastructure.Persistence.Mapping;
 /// <summary>
 /// Maps a <see cref="CityAggregate"/> to its rows and back, explicitly and without a database (<c>core-instructions/06-data-model.md</c>,
 /// EF Core conventions). Only the engine's own state is stored; reserved outputs, stall reasons, workers provided and free, builders busy,
-/// effective caps and labor are derived from it after load. A building's nullable columns are null exactly when its phase doesn't use them
-/// (<see cref="ToBuildingRow"/>). Loading rows that break a rule of the engine or of this mapping throws, so a broken row is never
+/// effective limits, totals and labor are derived from it after load. A building's nullable columns are null exactly when its phase doesn't
+/// use them (<see cref="ToBuildingRow"/>); a construction site and a research waiting for goods have no times and need rows (CR-0008). Loading rows that break a rule of the engine or of this mapping throws, so a broken row is never
 /// settled.
 /// </summary>
 public static class CityMapping
@@ -28,11 +28,12 @@ public static class CityMapping
 
     /// <summary>
     /// The city's rows as they are now. The <c>cities</c> row carries the aggregate's <see cref="CityAggregate.StateVersion"/>; its wall
-    /// times (<c>created_at</c>, <c>updated_at</c>) are left at their default for the repository to set. Inventory rows exist only for the
-    /// items the city holds (the engine drops an item at 0), road rows only for the tiles that have a road.
+    /// times (<c>created_at</c>, <c>updated_at</c>) are left at their default for the repository to set. Store rows exist only for the goods
+    /// a store holds now (the engine drops a good at 0; the repository keeps an emptied row at 0), need rows only for what is still missing,
+    /// road rows only for the tiles that have a road, trip rows only for the trips under way.
     /// </summary>
     /// <param name="city">The city.</param>
-    /// <returns>The rows, children in the engine's order (items and research by id, buildings by id, roads by column, then row).</returns>
+    /// <returns>The rows, children in the engine's order (buildings, trips and research by id, goods by id, roads by column, then row).</returns>
     /// <exception cref="InvalidOperationException">A completed research has no completion clock (the city was advanced around
     /// <see cref="CityAggregate.Advance"/>).</exception>
     /// <exception cref="OverflowException">A value doesn't fit its column (<c>smallint</c>).</exception>
@@ -50,6 +51,8 @@ public static class CityMapping
             ClockSeconds = state.Clock,
             LastSettledUnix = city.LastSettledUnixSec,
             NextBuildingId = state.NextBuildingId,
+            Purse = state.Purse,
+            NextTripId = state.NextTripId,
             ResearchId = active?.Id.Value,
             ResearchStartedAt = active?.StartedAt,
             ResearchEndsAt = active?.EndsAt,
@@ -57,10 +60,35 @@ public static class CityMapping
             ContentVersion = city.ContentVersion,
         };
 
-        var inventory = state.Inventory
-            .Select(stock => new CityInventoryRow { CityId = city.CityId, ItemId = stock.Key.Value, Quantity = stock.Value })
-            .ToList();
         var buildings = state.Buildings.Select(building => ToBuildingRow(city.CityId, building)).ToList();
+        var stores = state.Buildings
+            .SelectMany(building => building.Store.Select(stock => new CityStoreRow
+            {
+                CityId = city.CityId, BuildingId = building.Id, ItemId = stock.Key.Value, Quantity = stock.Value,
+            }))
+            .ToList();
+        var projectNeeds = state.Buildings
+            .SelectMany(building => building.Needs.Select(need => new CityProjectNeedRow
+            {
+                CityId = city.CityId, BuildingId = building.Id, ItemId = need.Key.Value, Quantity = need.Value,
+            }))
+            .ToList();
+        var researchNeeds = (active?.Needs ?? new Dictionary<ItemId, long>())
+            .Select(need => new CityResearchNeedRow { CityId = city.CityId, ItemId = need.Key.Value, Quantity = need.Value })
+            .ToList();
+        var trips = state.Trips
+            .Select(trip => new CityTripRow
+            {
+                CityId = city.CityId,
+                TripId = trip.Id,
+                SourceId = trip.SourceId,
+                TargetId = trip.TargetId,
+                ItemId = trip.Item.Value,
+                Quantity = trip.Quantity,
+                DepartedAt = trip.DepartedAt,
+                ArrivesAt = trip.ArrivesAt,
+            })
+            .ToList();
         var research = state.CompletedResearch
             .Select(id => new CityResearchRow { CityId = city.CityId, ResearchId = id.Value, CompletedAt = CompletedAt(city, id) })
             .ToList();
@@ -74,7 +102,7 @@ public static class CityMapping
             })
             .ToList();
 
-        return new CityRows(cityRow, inventory, buildings, research, roads);
+        return new CityRows(cityRow, buildings, stores, projectNeeds, research, researchNeeds, roads, trips);
     }
 
     /// <summary>The city the rows describe, with its engine state built from them.</summary>
@@ -89,15 +117,21 @@ public static class CityMapping
         RequireOwnRows(rows);
         try
         {
+            ILookup<int, CityStoreRow> stores = rows.Stores.ToLookup(row => row.BuildingId);
+            ILookup<int, CityProjectNeedRow> needs = rows.ProjectNeeds.ToLookup(row => row.BuildingId);
+            RequireKnownBuildings(rows);
             var state = new CityState(
                 city.ClockSeconds,
                 city.Era,
                 city.NextBuildingId,
-                rows.Inventory.Select(row => new KeyValuePair<ItemId, long>(new ItemId(row.ItemId), row.Quantity)),
-                rows.Buildings.Select(ToBuilding),
+                city.Purse,
+                rows.Buildings.Select(row => ToBuilding(row, stores[row.BuildingId], needs[row.BuildingId])),
                 rows.Research.Select(row => new ResearchId(row.ResearchId)),
-                ToActiveResearch(city),
-                rows.Roads.Select(row => new RoadTile(row.X, row.Y, row.Level)));
+                ToActiveResearch(city, rows.ResearchNeeds),
+                rows.Roads.Select(row => new RoadTile(row.X, row.Y, row.Level)),
+                rows.Trips.Select(row => new Trip(
+                    row.TripId, row.SourceId, row.TargetId, new ItemId(row.ItemId), row.Quantity, row.DepartedAt, row.ArrivesAt)),
+                city.NextTripId);
             IEnumerable<KeyValuePair<ResearchId, long>> completedAt =
                 rows.Research.Select(row => new KeyValuePair<ResearchId, long>(new ResearchId(row.ResearchId), row.CompletedAt));
 
@@ -111,9 +145,10 @@ public static class CityMapping
 
     /// <summary>
     /// The building's row. Its nullable columns are null exactly when the phase doesn't use them, where the engine keeps 0: Constructing
-    /// uses the start and the end; Upgrading the start, the end and the target level; Idle none; Producing the start, the cycle labor, the
-    /// labor remaining and the segment start, and the end unless the cycle is frozen (no workers). A cycle can start at clock 0, so 0 is a
-    /// real value, never a stand-in for null.
+    /// uses the start and the end, except a construction site (no timer yet, CR-0008), which uses neither; Upgrading the start, the end and the
+    /// target level; Idle none; Producing the start, the cycle labor, the labor remaining and the segment start, and the end unless the cycle
+    /// is frozen (no workers). A cycle can start at clock 0, so 0 is a real value, never a stand-in for null. Its store and needs are rows of
+    /// their own.
     /// </summary>
     /// <param name="cityId">The city's id.</param>
     /// <param name="building">The building.</param>
@@ -132,7 +167,7 @@ public static class CityMapping
             Level = checked((short)building.Level),
             AssignedWorkers = checked((short)building.AssignedWorkers),
             Phase = PhaseText(phase),
-            PhaseStartedAt = phase == BuildingPhase.Idle ? null : building.PhaseStartedAt,
+            PhaseStartedAt = phase == BuildingPhase.Idle || building.IsConstructionSite ? null : building.PhaseStartedAt,
             PhaseEndsAt = building.PhaseEndsAt,
             TargetLevel = phase == BuildingPhase.Upgrading ? checked((short)building.TargetLevel) : null,
             CycleLabor = producing ? building.CycleLabor : null,
@@ -142,19 +177,23 @@ public static class CityMapping
     }
 
     /// <summary>
-    /// The building of a row, after checking that each nullable column is null exactly when the phase doesn't use it
-    /// (<see cref="ToBuildingRow"/>); the engine's constructor checks the rest.
+    /// The building of a row with its store and need rows, after checking that each nullable column is null exactly when the phase doesn't
+    /// use it (<see cref="ToBuildingRow"/>; a building constructing without a start is a site, which the engine requires to have needs); the
+    /// engine's constructor checks the rest.
     /// </summary>
     /// <param name="row">The row.</param>
+    /// <param name="store">The building's <c>city_stores</c> rows; a row at 0 is no stock.</param>
+    /// <param name="needs">The building's <c>city_project_needs</c> rows.</param>
     /// <returns>The building.</returns>
     /// <exception cref="ArgumentException">The row breaks a rule; the message names the building.</exception>
-    private static Building ToBuilding(CityBuildingRow row)
+    private static Building ToBuilding(CityBuildingRow row, IEnumerable<CityStoreRow> store, IEnumerable<CityProjectNeedRow> needs)
     {
         BuildingPhase phase = ParsePhase(row);
         bool producing = phase == BuildingPhase.Producing;
-        bool endRequired = phase is BuildingPhase.Constructing or BuildingPhase.Upgrading;
+        bool site = phase == BuildingPhase.Constructing && !row.PhaseStartedAt.HasValue && !row.PhaseEndsAt.HasValue;
+        bool endRequired = (phase is BuildingPhase.Constructing or BuildingPhase.Upgrading) && !site;
         bool columnsMatchPhase =
-            row.PhaseStartedAt.HasValue == (phase != BuildingPhase.Idle)
+            row.PhaseStartedAt.HasValue == (phase != BuildingPhase.Idle && !site)
             && (row.PhaseEndsAt.HasValue || !endRequired)
             && (!row.PhaseEndsAt.HasValue || phase != BuildingPhase.Idle)
             && row.TargetLevel.HasValue == (phase == BuildingPhase.Upgrading)
@@ -179,26 +218,38 @@ public static class CityMapping
             row.TargetLevel ?? 0,
             row.CycleLabor ?? 0,
             row.LaborRemaining ?? 0,
-            row.SegmentStartedAt ?? 0);
+            row.SegmentStartedAt ?? 0,
+            store.Where(stock => stock.Quantity > 0).Select(stock => new KeyValuePair<ItemId, long>(new ItemId(stock.ItemId), stock.Quantity)),
+            needs.Select(need => new KeyValuePair<ItemId, long>(new ItemId(need.ItemId), need.Quantity)));
     }
 
-    /// <summary>The running research of the <c>cities</c> row: its three columns are all set or all null.</summary>
+    /// <summary>
+    /// The running research of the <c>cities</c> row and its need rows: no id, times or needs (the slot is free); an id with a start and an
+    /// end and no needs (its timer runs); or an id without times and with needs (it waits for goods at the science building, CR-0008).
+    /// </summary>
     /// <param name="city">The row.</param>
+    /// <param name="needs">The <c>city_research_needs</c> rows.</param>
     /// <returns>The running research, or <see langword="null"/> when the research slot is free.</returns>
-    /// <exception cref="ArgumentException">Only some of the three columns are set, or the engine rejects the values.</exception>
-    private static ActiveResearch? ToActiveResearch(CityRow city)
+    /// <exception cref="ArgumentException">The columns and rows fit none of the three, or the engine rejects the values.</exception>
+    private static ActiveResearch? ToActiveResearch(CityRow city, IReadOnlyList<CityResearchNeedRow> needs)
     {
-        if (city.ResearchId is null && city.ResearchStartedAt is null && city.ResearchEndsAt is null)
+        if (city.ResearchId is null && city.ResearchStartedAt is null && city.ResearchEndsAt is null && needs.Count == 0)
         {
             return null;
         }
 
-        if (city.ResearchId is null || city.ResearchStartedAt is null || city.ResearchEndsAt is null)
+        bool timed = city.ResearchStartedAt is not null && city.ResearchEndsAt is not null && needs.Count == 0;
+        bool waiting = city.ResearchStartedAt is null && city.ResearchEndsAt is null && needs.Count > 0;
+        if (city.ResearchId is null || !(timed || waiting))
         {
-            throw new ArgumentException("The running research needs its id, start and end together.");
+            throw new ArgumentException("The running research needs its id with a start and an end, or with need rows and no times.");
         }
 
-        return new ActiveResearch(new ResearchId(city.ResearchId), city.ResearchStartedAt.Value, city.ResearchEndsAt.Value);
+        return new ActiveResearch(
+            new ResearchId(city.ResearchId),
+            city.ResearchStartedAt,
+            city.ResearchEndsAt,
+            needs.Select(need => new KeyValuePair<ItemId, long>(new ItemId(need.ItemId), need.Quantity)));
     }
 
     /// <summary>The <c>phase</c> text of a phase.</summary>
@@ -238,16 +289,35 @@ public static class CityMapping
             : throw new InvalidOperationException(
                 $"City {city.CityId}: research {id} completed without a completion clock; advance a city only through CityAggregate.Advance.");
 
+    /// <summary>Checks that every store and need row belongs to a building of the city (the foreign key's rule, checked again on load).</summary>
+    /// <param name="rows">The city's rows.</param>
+    /// <exception cref="ArgumentException">A store or need row names a building the city doesn't have.</exception>
+    private static void RequireKnownBuildings(CityRows rows)
+    {
+        var ids = rows.Buildings.Select(row => row.BuildingId).ToHashSet();
+        int? unknown = rows.Stores.Select(row => row.BuildingId).Concat(rows.ProjectNeeds.Select(row => row.BuildingId))
+            .Where(id => !ids.Contains(id))
+            .Select(id => (int?)id)
+            .FirstOrDefault();
+        if (unknown is not null)
+        {
+            throw new ArgumentException($"A store or need row names building {unknown}, which the city doesn't have.");
+        }
+    }
+
     /// <summary>Checks that every child row belongs to the city row.</summary>
     /// <param name="rows">The city's rows.</param>
     /// <exception cref="InvalidOperationException">A child row names another city.</exception>
     private static void RequireOwnRows(CityRows rows)
     {
         Guid cityId = rows.City.Id;
-        bool allOwn = rows.Inventory.All(row => row.CityId == cityId)
-            && rows.Buildings.All(row => row.CityId == cityId)
+        bool allOwn = rows.Buildings.All(row => row.CityId == cityId)
+            && rows.Stores.All(row => row.CityId == cityId)
+            && rows.ProjectNeeds.All(row => row.CityId == cityId)
             && rows.Research.All(row => row.CityId == cityId)
-            && rows.Roads.All(row => row.CityId == cityId);
+            && rows.ResearchNeeds.All(row => row.CityId == cityId)
+            && rows.Roads.All(row => row.CityId == cityId)
+            && rows.Trips.All(row => row.CityId == cityId);
         if (!allOwn)
         {
             throw new InvalidOperationException($"The rows of city {cityId} include a row of another city.");

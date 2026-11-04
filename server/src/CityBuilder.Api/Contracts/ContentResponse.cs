@@ -13,6 +13,7 @@ namespace CityBuilder.Api.Contracts;
 /// <param name="Buildings">The building types, JSON <c>buildings</c>, by id.</param>
 /// <param name="Research">The research nodes, JSON <c>research</c>, by id.</param>
 /// <param name="Roads">The road levels, JSON <c>roads</c>, by ascending level.</param>
+/// <param name="AmountPresets">The amount presets a trip or a route may always use, JSON <c>amountPresets</c>, by id (CR-0008).</param>
 public sealed record ContentResponse(
     string ContentVersion,
     ContentRules Rules,
@@ -21,4 +22,5 @@ public sealed record ContentResponse(
     IReadOnlyList<ContentItem> Items,
     IReadOnlyList<ContentBuilding> Buildings,
     IReadOnlyList<ContentResearch> Research,
-    IReadOnlyList<ContentRoadLevel> Roads);
+    IReadOnlyList<ContentRoadLevel> Roads,
+    IReadOnlyList<ContentAmountPreset> AmountPresets);

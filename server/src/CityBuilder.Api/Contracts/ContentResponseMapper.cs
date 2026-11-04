@@ -24,12 +24,13 @@ public static class ContentResponseMapper
         return new ContentResponse(
             content.ContentVersion,
             ToRules(content.Rules, timeScale),
-            new ContentStartingCity(content.StartingCity.Era, ToAmounts(content.StartingCity.Inventory)),
+            new ContentStartingCity(content.StartingCity.Era, content.StartingCity.Purse),
             content.Eras.Select(era => new ContentEra(era.Number, era.Id.Value, era.Name)).ToArray(),
-            content.Items.Select(item => new ContentItem(item.Id.Value, item.Name, item.Era, item.IsCapped, item.IsTradable)).ToArray(),
+            content.Items.Select(item => new ContentItem(item.Id.Value, item.Name, item.Era, item.IsCurrency, item.IsTradable)).ToArray(),
             content.Buildings.Select(ToBuilding).ToArray(),
             content.Research.Select(ToResearch).ToArray(),
-            content.RoadLevels.Select(level => new ContentRoadLevel(level.Level, level.Name, level.TileMillis, ToAmounts(level.Cost))).ToArray());
+            content.RoadLevels.Select(level => new ContentRoadLevel(level.Level, level.Name, level.TileMillis, ToAmounts(level.Cost))).ToArray(),
+            content.AmountPresets.Select(preset => new ContentAmountPreset(preset.Id.Value, preset.Name, preset.Percent)).ToArray());
     }
 
     /// <summary>Maps the rules, adding the server's time scale.</summary>
@@ -41,7 +42,6 @@ public static class ContentResponseMapper
         rules.GridHeight,
         rules.BuilderSlots,
         rules.ResearchSlots,
-        ToAmounts(rules.BaseStorageCaps),
         rules.MaxOfflineProductionSeconds,
         rules.MinCycleSeconds,
         rules.MaxLaborReductionPermille,
@@ -49,6 +49,9 @@ public static class ContentResponseMapper
         rules.CrossingSpeedPermille,
         rules.MinWalkSeconds,
         rules.MaxWalkBonusPermille,
+        rules.TripCarryLimit,
+        rules.MaxRouteStops,
+        rules.MaxStopActions,
         timeScale);
 
     /// <summary>Maps a building type with its levels.</summary>
@@ -61,16 +64,23 @@ public static class ContentResponseMapper
         {
             BuildingKind.House => "House",
             BuildingKind.Producer => "Producer",
+            BuildingKind.Warehouse => "Warehouse",
+            BuildingKind.CourierStation => "CourierStation",
+            BuildingKind.Science => "Science",
             _ => throw new InvalidOperationException($"Building kind {building.Kind} has no wire name; add it to the contract."),
         },
         building.Era,
         building.IsAvailableAtStart,
         building.UnlockedByResearch?.Value,
+        building.MaxPerCity,
         ToAmounts(building.Cost),
         building.BuildSeconds,
         building.Levels.Select(ToLevel).ToArray());
 
-    /// <summary>Maps one level; level 1 has no upgrade, so its upgrade cost and time are null rather than an empty cost and 0 seconds.</summary>
+    /// <summary>
+    /// Maps one level; level 1 has no upgrade, so its upgrade cost and time are null rather than an empty cost and 0 seconds. A level without a
+    /// store has a null <c>storage</c>, and only a courier station's level has a carry limit and stamina (the content's 0 elsewhere).
+    /// </summary>
     /// <param name="level">The level.</param>
     /// <returns>Its response object.</returns>
     private static ContentBuildingLevel ToLevel(BuildingLevelDefinition level) => new(
@@ -80,6 +90,9 @@ public static class ContentResponseMapper
         level.Recipe is null
             ? null
             : new ContentRecipe(ToAmounts(level.Recipe.Inputs), ToAmounts(level.Recipe.Outputs), level.Recipe.Labor),
+        level.Storage.Count == 0 ? null : ToAmounts(level.Storage),
+        level.CarryLimit == 0 ? null : level.CarryLimit,
+        level.StaminaSeconds == 0 ? null : level.StaminaSeconds,
         level.Level == 1 ? null : ToAmounts(level.UpgradeCost),
         level.Level == 1 ? null : level.UpgradeSeconds);
 
@@ -100,10 +113,23 @@ public static class ContentResponseMapper
     /// <returns>Its response object.</returns>
     private static ContentResearchEffect ToEffect(ResearchEffect effect) => effect switch
     {
-        UnlockBuildingEffect unlock => new ContentResearchEffect("unlockBuilding", unlock.Building.Value, null, null, null),
-        LaborReductionEffect labor => new ContentResearchEffect("laborReduction", labor.Building.Value, null, labor.Permille, null),
-        StorageCapBonusEffect bonus => new ContentResearchEffect("storageCapBonus", null, bonus.Item.Value, null, bonus.Amount),
+        UnlockBuildingEffect unlock => new ContentResearchEffect("unlockBuilding", unlock.Building.Value, null, null, null, null),
+        LaborReductionEffect labor => new ContentResearchEffect("laborReduction", labor.Building.Value, null, labor.Permille, null, null),
+        StorageCapBonusEffect bonus => new ContentResearchEffect("storageCapBonus", null, bonus.Item.Value, null, bonus.Amount, null),
+        UnlockAmountModeEffect mode => new ContentResearchEffect("unlockAmountMode", null, null, null, null, ModeText(mode.Mode)),
+        WalkSpeedBonusEffect walk => new ContentResearchEffect("walkSpeedBonus", null, null, walk.Permille, null, null),
         _ => throw new InvalidOperationException($"Effect type {effect.GetType().Name} has no wire shape; add it to the contract."),
+    };
+
+    /// <summary>The wire name of an amount mode, as the content file and the API spell it (<c>05</c> → Amounts).</summary>
+    /// <param name="mode">The mode.</param>
+    /// <returns><c>percent</c> or <c>exact</c>.</returns>
+    /// <exception cref="InvalidOperationException">The mode has no wire name (an engine change that forgot the contract).</exception>
+    private static string ModeText(AmountMode mode) => mode switch
+    {
+        AmountMode.Percent => "percent",
+        AmountMode.Exact => "exact",
+        _ => throw new InvalidOperationException($"Amount mode {mode} has no wire name; add it to the contract."),
     };
 
     /// <summary>Maps an item map to a JSON object: item id to quantity, in ordinal id order whatever the order of the lines.</summary>

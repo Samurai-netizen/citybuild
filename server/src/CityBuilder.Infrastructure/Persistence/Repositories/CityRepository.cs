@@ -40,12 +40,15 @@ public sealed class CityRepository(CityBuilderDbContext db, TimeProvider timePro
         }
 
         CityRow city = await LockAsync(playerId, cancellationToken) ?? throw new CityNotFoundException($"Player {playerId} has no city.");
-        List<CityInventoryRow> inventory = await _db.CityInventory.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
         List<CityBuildingRow> buildings = await _db.CityBuildings.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
+        List<CityStoreRow> stores = await _db.CityStores.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
+        List<CityProjectNeedRow> projectNeeds = await _db.CityProjectNeeds.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
         List<CityResearchRow> research = await _db.CityResearch.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
+        List<CityResearchNeedRow> researchNeeds = await _db.CityResearchNeeds.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
         List<CityRoadRow> roads = await _db.CityRoads.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
+        List<CityTripRow> trips = await _db.CityTrips.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
 
-        return CityMapping.ToAggregate(new CityRows(city, inventory, buildings, research, roads));
+        return CityMapping.ToAggregate(new CityRows(city, buildings, stores, projectNeeds, research, researchNeeds, roads, trips));
     }
 
     /// <summary>
@@ -75,9 +78,9 @@ public sealed class CityRepository(CityBuilderDbContext db, TimeProvider timePro
 
     /// <inheritdoc />
     /// <remarks>
-    /// A loaded city's rows are updated in place: changed values are written, new buildings, items, completed research and roads inserted, an
-    /// item the city no longer holds set to 0 (never deleted), a building, research or road the state no longer has deleted (a removed road). A city this
-    /// context doesn't track is inserted with all its rows. Wall times come from one reading of the clock.
+    /// A loaded city's rows are updated in place: changed values are written, new rows inserted, a good a store no longer holds set to 0
+    /// (never deleted), and a building, need, research, road or trip the state no longer has deleted (a delivered need, a removed road, an
+    /// arrived trip). A city this context doesn't track is inserted with all its rows. Wall times come from one reading of the clock.
     /// </remarks>
     public void Save(CityAggregate city, IReadOnlyList<LedgerEntry> ledger, CommandReceipt? receipt)
     {
@@ -94,19 +97,25 @@ public sealed class CityRepository(CityBuilderDbContext db, TimeProvider timePro
         {
             rows.City.CreatedAt = now;
             _db.Cities.Add(rows.City);
-            _db.CityInventory.AddRange(rows.Inventory);
             _db.CityBuildings.AddRange(rows.Buildings);
+            _db.CityStores.AddRange(rows.Stores);
+            _db.CityProjectNeeds.AddRange(rows.ProjectNeeds);
             _db.CityResearch.AddRange(rows.Research);
+            _db.CityResearchNeeds.AddRange(rows.ResearchNeeds);
             _db.CityRoads.AddRange(rows.Roads);
+            _db.CityTrips.AddRange(rows.Trips);
         }
         else
         {
             rows.City.CreatedAt = tracked.CreatedAt;
             _db.Entry(tracked).CurrentValues.SetValues(rows.City);
-            MergeInventory(city.CityId, rows.Inventory);
             Merge(_db.CityBuildings, city.CityId, rows.Buildings, row => row.CityId, row => row.BuildingId);
+            MergeStores(city.CityId, rows.Stores);
+            Merge(_db.CityProjectNeeds, city.CityId, rows.ProjectNeeds, row => row.CityId, row => (row.BuildingId, row.ItemId));
             Merge(_db.CityResearch, city.CityId, rows.Research, row => row.CityId, row => row.ResearchId);
+            Merge(_db.CityResearchNeeds, city.CityId, rows.ResearchNeeds, row => row.CityId, row => row.ItemId);
             Merge(_db.CityRoads, city.CityId, rows.Roads, row => row.CityId, row => (row.X, row.Y));
+            Merge(_db.CityTrips, city.CityId, rows.Trips, row => row.CityId, row => row.TripId);
         }
 
         _db.LedgerEntries.AddRange(ledger.Select(entry => LedgerMapping.ToRow(city.CityId, entry, now)));
@@ -130,20 +139,20 @@ public sealed class CityRepository(CityBuilderDbContext db, TimeProvider timePro
     }
 
     /// <summary>
-    /// Merges the city's inventory rows into the tracked ones: changed quantities are written, new items inserted, and a tracked item missing
-    /// from <paramref name="rows"/> (the engine dropped it at 0) is set to 0.
+    /// Merges the city's store rows into the tracked ones: changed quantities are written, new goods inserted, and a tracked good missing
+    /// from <paramref name="rows"/> (the engine dropped it at 0) is set to 0, never deleted (<c>06</c>, <c>city_stores</c>).
     /// </summary>
     /// <param name="cityId">The city.</param>
-    /// <param name="rows">The inventory rows of the city as it is now.</param>
-    private void MergeInventory(Guid cityId, IReadOnlyList<CityInventoryRow> rows)
+    /// <param name="rows">The store rows of the city as it is now.</param>
+    private void MergeStores(Guid cityId, IReadOnlyList<CityStoreRow> rows)
     {
-        var held = rows.Select(row => row.ItemId).ToHashSet(StringComparer.Ordinal);
-        List<CityInventoryRow> usedUp = _db.CityInventory.Local
-            .Where(row => row.CityId == cityId && !held.Contains(row.ItemId))
-            .Select(row => new CityInventoryRow { CityId = cityId, ItemId = row.ItemId, Quantity = 0 })
+        var held = rows.Select(row => (row.BuildingId, row.ItemId)).ToHashSet();
+        List<CityStoreRow> emptied = _db.CityStores.Local
+            .Where(row => row.CityId == cityId && !held.Contains((row.BuildingId, row.ItemId)))
+            .Select(row => new CityStoreRow { CityId = cityId, BuildingId = row.BuildingId, ItemId = row.ItemId, Quantity = 0 })
             .ToList();
 
-        Merge(_db.CityInventory, cityId, [.. rows, .. usedUp], row => row.CityId, row => row.ItemId);
+        Merge(_db.CityStores, cityId, [.. rows, .. emptied], row => row.CityId, row => (row.BuildingId, row.ItemId));
     }
 
     /// <summary>

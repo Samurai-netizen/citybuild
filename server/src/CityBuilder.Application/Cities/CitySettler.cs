@@ -1,3 +1,4 @@
+using System.Globalization;
 using CityBuilder.Domain.Ledger;
 using CityBuilder.Simulation;
 using CityBuilder.Simulation.Content;
@@ -29,10 +30,10 @@ internal sealed class CitySettler
     private readonly long _settledBefore;
     /// <summary>The content version before the settlement.</summary>
     private readonly string _contentBefore;
-    /// <summary>The stock before the settlement.</summary>
+    /// <summary>The city's total of each item before the settlement: stores, loads and, for the currency, the purse (<c>04</c> section 16).</summary>
     private readonly Dictionary<ItemId, long> _quantitiesBefore;
-    /// <summary>The buildings before the settlement.</summary>
-    private readonly BuildingSnapshot[] _buildingsBefore;
+    /// <summary>Everything an advance can change in the city's state, before the settlement (<see cref="StateFingerprint"/>).</summary>
+    private readonly string _stateBefore;
     /// <summary>The server seconds the settlement covers.</summary>
     private readonly SettlementWindow _window;
     /// <summary>The report of the advance by the window's elapsed seconds.</summary>
@@ -56,8 +57,8 @@ internal sealed class CitySettler
         _now = now;
         _settledBefore = city.LastSettledUnixSec;
         _contentBefore = city.ContentVersion;
-        _quantitiesBefore = new Dictionary<ItemId, long>(city.State.Inventory);
-        _buildingsBefore = BuildingSnapshot.Of(city.State);
+        _quantitiesBefore = Totals(city.State, content);
+        _stateBefore = StateFingerprint(city.State);
 
         // ToUnixTimeSeconds rounds down (it divides ticks since year 1, which are never negative): 29.7 s is second 29. Each window starts at
         // the second the last one ended, so the dropped fractions are never lost, only counted by a later settlement.
@@ -67,8 +68,9 @@ internal sealed class CitySettler
     }
 
     /// <summary>
-    /// Whether the settlement changed the city: the clock or the content version moved, something was produced, consumed or completed, a
-    /// building changed (a cycle without inputs starts unreported), or a command was recorded. Known once <see cref="Close"/> has run.
+    /// Whether the settlement changed the city: the clock or the content version moved, the report is not empty, the state changed in a way the
+    /// report doesn't show (a cycle without inputs starting, a trip bringing its whole load back, a research timer starting), or a command was
+    /// recorded. Known once <see cref="Close"/> has run.
     /// </summary>
     /// <exception cref="InvalidOperationException"><see cref="Close"/> hasn't run.</exception>
     public bool Changed
@@ -77,7 +79,7 @@ internal sealed class CitySettler
         {
             Settlement settlement = ClosedSettlement();
             return _command is not null || _city.LastSettledUnixSec != _settledBefore || _city.ContentVersion != _contentBefore
-                || !settlement.IsEmpty || !_buildingsBefore.SequenceEqual(BuildingSnapshot.Of(_city.State));
+                || !settlement.IsEmpty || _stateBefore != StateFingerprint(_city.State);
         }
     }
 
@@ -163,13 +165,13 @@ internal sealed class CitySettler
 
         string settlementRef = settlement.Id.ToString();
         var writer = new LedgerWriter(_quantitiesBefore);
-        writer.AddProduction(settlement.Advance.Produced, settlement.Advance.Consumed, Settlement.LedgerRefType, settlementRef);
+        writer.AddSettlement(SettlementTotals.Of(settlement.Advance), Settlement.LedgerRefType, settlementRef);
         foreach ((ItemId item, long delta, LedgerReason reason) in command.Lines)
         {
             writer.Add(item, delta, reason, CommandLedgerRefType, command.RefId);
         }
 
-        writer.AddProduction(settlement.Closing.Produced, settlement.Closing.Consumed, Settlement.LedgerRefType, settlementRef);
+        writer.AddSettlement(SettlementTotals.Of(settlement.Closing), Settlement.LedgerRefType, settlementRef);
         return writer.Entries;
     }
 
@@ -201,32 +203,42 @@ internal sealed class CitySettler
     }
 
     /// <summary>
-    /// Checks that the settlement and the command account for every change of the city's stock (<c>04</c> section 10, conservation): for
-    /// every item, the quantity before plus what was produced and given back, minus what was consumed and paid, is the quantity now. The
-    /// ledger rows are built from the same numbers, so their sums then equal the stock's deltas and each item's last balance is its stock.
+    /// Checks that the settlement and the command account for every change of the city's totals (<c>04</c> section 10, conservation): for
+    /// every item, the total before plus what was produced and refunded, minus what was consumed and delivered, plus the command's lines, is
+    /// the total now (stores, loads, the purse). The ledger rows are built from the same numbers, so their sums then equal the totals' deltas
+    /// and each item's last balance is its total.
     /// </summary>
     /// <param name="settlement">The closed settlement.</param>
-    /// <exception cref="InvalidOperationException">An item's quantity doesn't follow from the settlement and the command.</exception>
+    /// <exception cref="InvalidOperationException">An item's total doesn't follow from the settlement and the command.</exception>
     private void CheckStockAddsUp(Settlement settlement)
     {
         var expected = new Dictionary<ItemId, long>(_quantitiesBefore);
         foreach ((ItemId item, long delta) in settlement.Produced
+            .Concat(settlement.Refunded)
             .Concat(settlement.Consumed.Select(line => KeyValuePair.Create(line.Key, -line.Value)))
+            .Concat(settlement.Delivered.Select(line => KeyValuePair.Create(line.Key, -line.Value)))
             .Concat((_command?.Lines ?? []).Select(line => KeyValuePair.Create(line.Item, line.Delta))))
         {
             expected[item] = checked(expected.GetValueOrDefault(item) + delta);
         }
 
-        CityState state = _city.State;
-        foreach (ItemId item in expected.Keys.Concat(state.Inventory.Keys).Distinct().Order())
+        Dictionary<ItemId, long> now = Totals(_city.State, _content);
+        foreach (ItemId item in expected.Keys.Concat(now.Keys).Distinct().Order())
         {
-            if (expected.GetValueOrDefault(item) != state.GetQuantity(item))
+            if (expected.GetValueOrDefault(item) != now.GetValueOrDefault(item))
             {
                 throw new InvalidOperationException(
-                    $"The settlement leaves {item} at {expected.GetValueOrDefault(item)}, but the city holds {state.GetQuantity(item)}.");
+                    $"The settlement leaves {item} at {expected.GetValueOrDefault(item)}, but the city holds {now.GetValueOrDefault(item)}.");
             }
         }
     }
+
+    /// <summary>The city's total of every item of the content (<see cref="CityQueries.Totals"/>), by item.</summary>
+    /// <param name="state">The city.</param>
+    /// <param name="content">The game content.</param>
+    /// <returns>Each item's total, 0 included.</returns>
+    private static Dictionary<ItemId, long> Totals(CityState state, GameContent content) =>
+        CityQueries.Totals(state, content).ToDictionary(total => total.Item, total => total.Quantity);
 
     /// <summary>The settlement, once closed.</summary>
     /// <returns>The settlement.</returns>
@@ -235,39 +247,52 @@ internal sealed class CitySettler
         _settlement ?? throw new InvalidOperationException("The settlement isn't closed yet: run the closing advance first.");
 
     /// <summary>
-    /// What an advance can change in a building, to tell whether the closing zero-length advance changed anything that its report doesn't
-    /// show (a cycle without inputs starting).
+    /// Everything an advance can change in a city as one text, to tell whether the settlement changed something its report doesn't show (a
+    /// cycle without inputs starting, a trip whose whole load went back, a research timer started by a delivery): every building's phase
+    /// fields, workers, store and needs, the purse, the research with its times and needs, and the trips under way. The clock is left out (the
+    /// window says whether it moved).
     /// </summary>
-    /// <param name="Id">The building's id.</param>
-    /// <param name="Level">Its level.</param>
-    /// <param name="AssignedWorkers">Its workers.</param>
-    /// <param name="Phase">Its phase.</param>
-    /// <param name="PhaseStartedAt">When its phase started.</param>
-    /// <param name="PhaseEndsAt">When its phase ends, or <see langword="null"/>.</param>
-    /// <param name="TargetLevel">The level an upgrade leads to.</param>
-    /// <param name="CycleLabor">Its cycle's labor.</param>
-    /// <param name="LaborRemaining">Its cycle's labor still to do.</param>
-    /// <param name="SegmentStartedAt">When its cycle's current labor segment started.</param>
-    private readonly record struct BuildingSnapshot(
-        int Id,
-        int Level,
-        int AssignedWorkers,
-        BuildingPhase Phase,
-        long PhaseStartedAt,
-        long? PhaseEndsAt,
-        int TargetLevel,
-        long CycleLabor,
-        long LaborRemaining,
-        long SegmentStartedAt)
+    /// <param name="city">The city.</param>
+    /// <returns>The text; equal for two states an advance can't tell apart.</returns>
+    private static string StateFingerprint(CityState city)
     {
-        /// <summary>The snapshots of a city's buildings, in the city's order (ascending id).</summary>
-        /// <param name="city">The city.</param>
-        /// <returns>One snapshot per building.</returns>
-        public static BuildingSnapshot[] Of(CityState city) =>
-            city.Buildings
-                .Select(building => new BuildingSnapshot(
-                    building.Id, building.Level, building.AssignedWorkers, building.Phase, building.PhaseStartedAt, building.PhaseEndsAt,
-                    building.TargetLevel, building.CycleLabor, building.LaborRemaining, building.SegmentStartedAt))
-                .ToArray();
+        var text = new System.Text.StringBuilder();
+        text.Append(CultureInfo.InvariantCulture, $"purse {city.Purse}\n");
+        foreach (Building building in city.Buildings)
+        {
+            text.Append(CultureInfo.InvariantCulture,
+                $"b {building.Id} L{building.Level} w{building.AssignedWorkers} {building.Phase} {building.PhaseStartedAt}..{building.PhaseEndsAt} ");
+            text.Append(CultureInfo.InvariantCulture, $"t{building.TargetLevel} {building.CycleLabor}/{building.LaborRemaining}@{building.SegmentStartedAt}");
+            AppendAmounts(text, " s", building.Store);
+            AppendAmounts(text, " n", building.Needs);
+            text.Append('\n');
+        }
+
+        if (city.ActiveResearch is { } research)
+        {
+            text.Append(CultureInfo.InvariantCulture, $"r {research.Id} {research.StartedAt}..{research.EndsAt}");
+            AppendAmounts(text, " n", research.Needs);
+            text.Append('\n');
+        }
+
+        foreach (Trip trip in city.Trips)
+        {
+            text.Append(CultureInfo.InvariantCulture, $"trip {trip.Id}\n");
+        }
+
+        return text.ToString();
+    }
+
+    /// <summary>Appends quantities as <c> prefix item=quantity</c> pairs in their (ordinal item) order.</summary>
+    /// <param name="text">The text so far.</param>
+    /// <param name="prefix">What marks the list.</param>
+    /// <param name="amounts">The quantities.</param>
+    private static void AppendAmounts(System.Text.StringBuilder text, string prefix, IReadOnlyDictionary<ItemId, long> amounts)
+    {
+        text.Append(prefix);
+        foreach (KeyValuePair<ItemId, long> amount in amounts)
+        {
+            text.Append(CultureInfo.InvariantCulture, $" {amount.Key}={amount.Value}");
+        }
     }
 }

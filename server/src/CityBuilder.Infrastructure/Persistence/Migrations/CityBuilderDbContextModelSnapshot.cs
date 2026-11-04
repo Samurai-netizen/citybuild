@@ -103,7 +103,34 @@ namespace CityBuilder.Infrastructure.Persistence.Migrations
                         });
                 });
 
-            modelBuilder.Entity("CityBuilder.Infrastructure.Persistence.Rows.CityInventoryRow", b =>
+            modelBuilder.Entity("CityBuilder.Infrastructure.Persistence.Rows.CityProjectNeedRow", b =>
+                {
+                    b.Property<Guid>("CityId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("city_id");
+
+                    b.Property<int>("BuildingId")
+                        .HasColumnType("integer")
+                        .HasColumnName("building_id");
+
+                    b.Property<string>("ItemId")
+                        .HasColumnType("text")
+                        .HasColumnName("item_id");
+
+                    b.Property<long>("Quantity")
+                        .HasColumnType("bigint")
+                        .HasColumnName("quantity");
+
+                    b.HasKey("CityId", "BuildingId", "ItemId")
+                        .HasName("pk_city_project_needs");
+
+                    b.ToTable("city_project_needs", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_city_project_needs_quantity", "quantity > 0");
+                        });
+                });
+
+            modelBuilder.Entity("CityBuilder.Infrastructure.Persistence.Rows.CityResearchNeedRow", b =>
                 {
                     b.Property<Guid>("CityId")
                         .HasColumnType("uuid")
@@ -118,11 +145,11 @@ namespace CityBuilder.Infrastructure.Persistence.Migrations
                         .HasColumnName("quantity");
 
                     b.HasKey("CityId", "ItemId")
-                        .HasName("pk_city_inventory");
+                        .HasName("pk_city_research_needs");
 
-                    b.ToTable("city_inventory", null, t =>
+                    b.ToTable("city_research_needs", null, t =>
                         {
-                            t.HasCheckConstraint("ck_city_inventory_quantity", "quantity >= 0");
+                            t.HasCheckConstraint("ck_city_research_needs_quantity", "quantity > 0");
                         });
                 });
 
@@ -208,9 +235,17 @@ namespace CityBuilder.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("next_building_id");
 
+                    b.Property<int>("NextTripId")
+                        .HasColumnType("integer")
+                        .HasColumnName("next_trip_id");
+
                     b.Property<Guid>("PlayerId")
                         .HasColumnType("uuid")
                         .HasColumnName("player_id");
+
+                    b.Property<long>("Purse")
+                        .HasColumnType("bigint")
+                        .HasColumnName("purse");
 
                     b.Property<long?>("ResearchEndsAt")
                         .HasColumnType("bigint")
@@ -243,6 +278,83 @@ namespace CityBuilder.Infrastructure.Persistence.Migrations
                     b.ToTable("cities", null, t =>
                         {
                             t.HasCheckConstraint("ck_cities_era", "era >= 1");
+
+                            t.HasCheckConstraint("ck_cities_next_trip_id", "next_trip_id >= 1");
+
+                            t.HasCheckConstraint("ck_cities_purse", "purse >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("CityBuilder.Infrastructure.Persistence.Rows.CityStoreRow", b =>
+                {
+                    b.Property<Guid>("CityId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("city_id");
+
+                    b.Property<int>("BuildingId")
+                        .HasColumnType("integer")
+                        .HasColumnName("building_id");
+
+                    b.Property<string>("ItemId")
+                        .HasColumnType("text")
+                        .HasColumnName("item_id");
+
+                    b.Property<long>("Quantity")
+                        .HasColumnType("bigint")
+                        .HasColumnName("quantity");
+
+                    b.HasKey("CityId", "BuildingId", "ItemId")
+                        .HasName("pk_city_stores");
+
+                    b.ToTable("city_stores", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_city_stores_quantity", "quantity >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("CityBuilder.Infrastructure.Persistence.Rows.CityTripRow", b =>
+                {
+                    b.Property<Guid>("CityId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("city_id");
+
+                    b.Property<int>("TripId")
+                        .HasColumnType("integer")
+                        .HasColumnName("trip_id");
+
+                    b.Property<long>("ArrivesAt")
+                        .HasColumnType("bigint")
+                        .HasColumnName("arrives_at");
+
+                    b.Property<long>("DepartedAt")
+                        .HasColumnType("bigint")
+                        .HasColumnName("departed_at");
+
+                    b.Property<string>("ItemId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("item_id");
+
+                    b.Property<long>("Quantity")
+                        .HasColumnType("bigint")
+                        .HasColumnName("quantity");
+
+                    b.Property<int>("SourceId")
+                        .HasColumnType("integer")
+                        .HasColumnName("source_id");
+
+                    b.Property<int>("TargetId")
+                        .HasColumnType("integer")
+                        .HasColumnName("target_id");
+
+                    b.HasKey("CityId", "TripId")
+                        .HasName("pk_city_trips");
+
+                    b.ToTable("city_trips", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_city_trips_arrives_at", "arrives_at > departed_at");
+
+                            t.HasCheckConstraint("ck_city_trips_quantity", "quantity > 0");
                         });
                 });
 
@@ -368,14 +480,24 @@ namespace CityBuilder.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_city_buildings_cities_city_id");
                 });
 
-            modelBuilder.Entity("CityBuilder.Infrastructure.Persistence.Rows.CityInventoryRow", b =>
+            modelBuilder.Entity("CityBuilder.Infrastructure.Persistence.Rows.CityProjectNeedRow", b =>
+                {
+                    b.HasOne("CityBuilder.Infrastructure.Persistence.Rows.CityBuildingRow", null)
+                        .WithMany()
+                        .HasForeignKey("CityId", "BuildingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_city_project_needs_city_buildings_building_id");
+                });
+
+            modelBuilder.Entity("CityBuilder.Infrastructure.Persistence.Rows.CityResearchNeedRow", b =>
                 {
                     b.HasOne("CityBuilder.Infrastructure.Persistence.Rows.CityRow", null)
                         .WithMany()
                         .HasForeignKey("CityId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_city_inventory_cities_city_id");
+                        .HasConstraintName("fk_city_research_needs_cities_city_id");
                 });
 
             modelBuilder.Entity("CityBuilder.Infrastructure.Persistence.Rows.CityResearchRow", b =>
@@ -406,6 +528,26 @@ namespace CityBuilder.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_cities_players_player_id");
+                });
+
+            modelBuilder.Entity("CityBuilder.Infrastructure.Persistence.Rows.CityStoreRow", b =>
+                {
+                    b.HasOne("CityBuilder.Infrastructure.Persistence.Rows.CityBuildingRow", null)
+                        .WithMany()
+                        .HasForeignKey("CityId", "BuildingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_city_stores_city_buildings_building_id");
+                });
+
+            modelBuilder.Entity("CityBuilder.Infrastructure.Persistence.Rows.CityTripRow", b =>
+                {
+                    b.HasOne("CityBuilder.Infrastructure.Persistence.Rows.CityRow", null)
+                        .WithMany()
+                        .HasForeignKey("CityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_city_trips_cities_city_id");
                 });
 
             modelBuilder.Entity("CityBuilder.Infrastructure.Persistence.Rows.CommandReceiptRow", b =>

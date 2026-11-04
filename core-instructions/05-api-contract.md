@@ -214,7 +214,7 @@ There is no "claim" command, because production and research complete on their o
 | Code | HTTP | When |
 |---|---|---|
 | `AUTHENTICATION_REQUIRED` | 401 | Missing, invalid or expired token, or a token whose player has no city: log in again |
-| `INVALID_ARGUMENT` | 400 | Malformed JSON, unknown or missing field, bad GUID, body too large, a value no city could make valid (OD-13: a building id below 1, a negative coordinate, a negative worker count, a type or research id that can't be a content id), workers on a building without a recipe |
+| `INVALID_ARGUMENT` | 400 | Malformed JSON, unknown or missing field, bad GUID, body too large, a value no city could make valid (OD-13: a building id below 1, a negative coordinate, a negative worker count, a type, research or item id that can't be a content id, an amount of none of the three forms), workers on a building that takes none (a house, a warehouse, the science building), a trip to its own source or with the currency, an unknown amount preset (CR-0008) |
 | `UNKNOWN_BUILDING_TYPE` | 422 | Type id not in content |
 | `BUILDING_LOCKED` | 422 | Type of a later era than the city's, or not unlocked by research yet |
 | `OUT_OF_BOUNDS` | 422 | Coordinates past the grid's width or height (negative ones are `INVALID_ARGUMENT`) |
@@ -231,6 +231,12 @@ There is no "claim" command, because production and research complete on their o
 | `RESEARCH_IN_PROGRESS` | 409 | The research slot is busy |
 | `RESEARCH_COMPLETED` | 409 | Already researched |
 | `ROAD_NOT_FOUND` | 404 | A tile of the list has no road (CR-0008) |
+| `BUILDING_LIMIT` | 422 | The city already has the most buildings of the type, `maxPerCity`: the science building (CR-0008) |
+| `NO_SCIENCE_BUILDING` | 422 | Research needs a completed science building (CR-0008) |
+| `UNKNOWN_ITEM` | 422 | Item id not in content (CR-0008) |
+| `AMOUNT_MODE_LOCKED` | 422 | A percentage or exact amount before the research that unlocks it (CR-0008) |
+| `ITEM_NOT_ACCEPTED` | 422 | The trip's target neither needs the item for a project nor stores it (CR-0008) |
+| `NOTHING_TO_CARRY` | 422 | The trip's amount gives nothing: the source holds none of the item (CR-0008) |
 | `IDEMPOTENCY_CONFLICT` | 409 | Same `requestId`, different payload |
 | `RATE_LIMITED` | 429 | Too many requests |
 | `CONCURRENCY_CONFLICT` | 409 | Lock timeout or version mismatch; safe to retry |
@@ -240,13 +246,8 @@ There is no "claim" command, because production and research complete on their o
 | `UNSUPPORTED_MEDIA_TYPE` | 415 | A body that isn't `application/json`, or has no `Content-Type` |
 | `UNSUPPORTED_CLIENT_VERSION` | 426 | The `X-Client-Version` build is no longer supported; update the game. *Reserved (M0-58): the server refuses no build yet.* The client treats it as `IncompatibleVersion` |
 
-**Planned codes (CR-0008).** Each joins the table above (and the catalogue, the client's `ApiErrorCodes` and `FeedbackMessages`) in the
-part of CR-0008-T1 that first returns it: `BUILDING_LIMIT` 422 (the city
-already has the most buildings of the type, `maxPerCity`: the science building) · `NO_SCIENCE_BUILDING` 422 (research needs a completed
-science building) · `UNKNOWN_ITEM` 422 (item id not in content) · `AMOUNT_MODE_LOCKED` 422 (a percentage or exact amount before the
-research that unlocks it) · `ITEM_NOT_ACCEPTED` 422 (the trip's target neither needs the item for a project nor stores it) ·
-`NOTHING_TO_CARRY` 422 (the trip's amount gives nothing: the source holds none of the item; all part E) · `INVALID_ROUTE` 422 (a route's
-slot, stop count, action count or consecutive stops break the content's route rules; part G).
+**Planned code (CR-0008).** It joins the table above (and the catalogue, the client's `ApiErrorCodes` and `FeedbackMessages`) in part G of
+CR-0008-T1: `INVALID_ROUTE` 422 (a route's slot, stop count, action count or consecutive stops break the content's route rules).
 
 `code` is for program logic. `title` and `detail` are for humans and may change. `traceId` names the HTTP request (W3C trace context, always
 the server's own: a `traceparent` the client sends is ignored, M0-60; its second part is the `TraceId` of every log line of the request),

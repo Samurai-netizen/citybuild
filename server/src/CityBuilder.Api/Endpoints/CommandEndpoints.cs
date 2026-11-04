@@ -8,6 +8,7 @@ using CityBuilder.Application.Commands.AssignWorkers;
 using CityBuilder.Application.Commands.PlaceBuilding;
 using CityBuilder.Application.Commands.Roads;
 using CityBuilder.Application.Commands.StartResearch;
+using CityBuilder.Application.Commands.StartTrip;
 using CityBuilder.Application.Commands.UpgradeBuilding;
 using CityBuilder.Application.Content;
 using CityBuilder.Application.Persistence;
@@ -41,6 +42,7 @@ public static class CommandEndpoints
         commands.MapPost("/place-roads", PlaceRoadsAsync).Produces<CitySnapshot>(StatusCodes.Status200OK, "application/json");
         commands.MapPost("/upgrade-roads", UpgradeRoadsAsync).Produces<CitySnapshot>(StatusCodes.Status200OK, "application/json");
         commands.MapPost("/remove-roads", RemoveRoadsAsync).Produces<CitySnapshot>(StatusCodes.Status200OK, "application/json");
+        commands.MapPost("/start-trip", StartTripAsync).Produces<CitySnapshot>(StatusCodes.Status200OK, "application/json");
         return commands;
     }
 
@@ -162,6 +164,38 @@ public static class CommandEndpoints
         }
 
         var command = new StartResearchCommand(request.RequestId, request.ResearchId ?? string.Empty);
+        return await ExecuteAsync(command, player, pipeline, content, json, loggers, cancellationToken);
+    }
+
+    /// <summary>
+    /// Sends a free worker with goods from one building's store to another in the acting player's city (<see cref="StartTripCommand"/>,
+    /// CR-0008). The body names only the two buildings, the good and the amount; a body with an unknown property, a missing field or a value of
+    /// the wrong type is refused by the binding (400) before anything runs.
+    /// </summary>
+    /// <param name="request">The body, or <see langword="null"/> when there is none.</param>
+    /// <param name="player">The acting player, from the access token.</param>
+    /// <param name="pipeline">Runs the command.</param>
+    /// <param name="content">The server's content, for the snapshot.</param>
+    /// <param name="json">The HTTP JSON settings, so the snapshot reads as <c>GET /city</c>'s.</param>
+    /// <param name="loggers">Gives the logger of the command lines.</param>
+    /// <param name="cancellationToken">The request's cancellation; nothing is committed then.</param>
+    /// <returns>200 with the snapshot, or Problem Details.</returns>
+    private static async Task<Results<ContentHttpResult, ProblemHttpResult>> StartTripAsync(
+        StartTripRequest? request,
+        ICurrentPlayer player,
+        CommandPipeline pipeline,
+        IContentProvider content,
+        IOptions<HttpJsonOptions> json,
+        ILoggerFactory loggers,
+        CancellationToken cancellationToken)
+    {
+        if (request is null)
+        {
+            return ApiProblem.Of(ErrorCatalogue.InvalidArgument.WithDetail("The body must be a JSON object."));
+        }
+
+        var command = new StartTripCommand(
+            request.RequestId, request.SourceId, request.TargetId, request.ItemId ?? string.Empty, request.Amount ?? string.Empty);
         return await ExecuteAsync(command, player, pipeline, content, json, loggers, cancellationToken);
     }
 

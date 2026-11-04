@@ -88,6 +88,33 @@ public static class ErrorCatalogue
     public static readonly ApiError RoadNotFound = new(
         "ROAD_NOT_FOUND", StatusCodes.Status404NotFound, "Road not found", "A tile of the list has no road.");
 
+    /// <summary>The city already has the most buildings of the type its <c>maxPerCity</c> allows (CR-0008: the science building).</summary>
+    public static readonly ApiError BuildingLimit = new(
+        "BUILDING_LIMIT", StatusCodes.Status422UnprocessableEntity, "Building limit", "Your city already has the most buildings of this type.");
+
+    /// <summary>Research needs a completed science building, and the city has none (CR-0008).</summary>
+    public static readonly ApiError NoScienceBuilding = new(
+        "NO_SCIENCE_BUILDING", StatusCodes.Status422UnprocessableEntity, "No science building",
+        "Research happens at the science building; build one and let it complete first.");
+
+    /// <summary>An item id the content doesn't have (CR-0008).</summary>
+    public static readonly ApiError UnknownItem = new(
+        "UNKNOWN_ITEM", StatusCodes.Status422UnprocessableEntity, "Unknown item", "The item is not in the content.");
+
+    /// <summary>A percentage or exact amount before the research that unlocks its mode (CR-0008).</summary>
+    public static readonly ApiError AmountModeLocked = new(
+        "AMOUNT_MODE_LOCKED", StatusCodes.Status422UnprocessableEntity, "Amount mode locked",
+        "This kind of amount needs a research first; use a preset such as \"all\" or \"half\".");
+
+    /// <summary>The trip's target neither needs the item for a project nor stores it (CR-0008).</summary>
+    public static readonly ApiError ItemNotAccepted = new(
+        "ITEM_NOT_ACCEPTED", StatusCodes.Status422UnprocessableEntity, "Item not accepted",
+        "The target building neither needs this item for a project nor stores it.");
+
+    /// <summary>The trip's amount gives nothing: the source holds none of the item (CR-0008).</summary>
+    public static readonly ApiError NothingToCarry = new(
+        "NOTHING_TO_CARRY", StatusCodes.Status422UnprocessableEntity, "Nothing to carry", "The source building has none of this item.");
+
     /// <summary>A request id that was used before with another command or payload.</summary>
     public static readonly ApiError IdempotencyConflict = new(
         "IDEMPOTENCY_CONFLICT", StatusCodes.Status409Conflict, "Request id already used",
@@ -135,8 +162,9 @@ public static class ErrorCatalogue
     [
         AuthenticationRequired, InvalidArgument, UnknownBuildingType, BuildingLocked, OutOfBounds, TileOccupied, InsufficientResource,
         InsufficientWorkers, WorkerLimit, NoFreeBuilder, BuildingNotFound, BuildingBusy, MaxLevel, UnknownResearch, ResearchLocked,
-        ResearchInProgress, ResearchCompleted, RoadNotFound, IdempotencyConflict, RateLimited, ConcurrencyConflict, InternalError, NotFound, MethodNotAllowed,
-        UnsupportedMediaType, UnsupportedClientVersion,
+        ResearchInProgress, ResearchCompleted, RoadNotFound, BuildingLimit, NoScienceBuilding, UnknownItem, AmountModeLocked, ItemNotAccepted,
+        NothingToCarry, IdempotencyConflict, RateLimited, ConcurrencyConflict, InternalError, NotFound, MethodNotAllowed, UnsupportedMediaType,
+        UnsupportedClientVersion,
     ];
 
     /// <summary>The API error of an engine rejection: its code and status in <c>05</c>.</summary>
@@ -145,7 +173,8 @@ public static class ErrorCatalogue
     /// <exception cref="InvalidOperationException">A code this mapping doesn't know (an engine change forgot the contract).</exception>
     public static ApiError Of(MutationErrorCode code) => code switch
     {
-        MutationErrorCode.InvalidArgument => InvalidArgument.WithDetail("The building takes no workers."),
+        MutationErrorCode.InvalidArgument => InvalidArgument.WithDetail(
+            "A value the rule refuses: workers on a building that takes none, a trip to its own source or with the currency, an unknown amount preset."),
         MutationErrorCode.UnknownBuildingType => UnknownBuildingType,
         MutationErrorCode.BuildingLocked => BuildingLocked,
         MutationErrorCode.OutOfBounds => OutOfBounds,
@@ -162,6 +191,12 @@ public static class ErrorCatalogue
         MutationErrorCode.ResearchInProgress => ResearchInProgress,
         MutationErrorCode.ResearchCompleted => ResearchCompleted,
         MutationErrorCode.RoadNotFound => RoadNotFound,
+        MutationErrorCode.BuildingLimit => BuildingLimit,
+        MutationErrorCode.NoScienceBuilding => NoScienceBuilding,
+        MutationErrorCode.UnknownItem => UnknownItem,
+        MutationErrorCode.AmountModeLocked => AmountModeLocked,
+        MutationErrorCode.ItemNotAccepted => ItemNotAccepted,
+        MutationErrorCode.NothingToCarry => NothingToCarry,
         _ => throw new InvalidOperationException($"No API error for the engine code {code}."),
     };
 }

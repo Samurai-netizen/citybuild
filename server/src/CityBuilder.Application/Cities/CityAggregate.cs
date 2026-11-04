@@ -114,13 +114,14 @@ public sealed class CityAggregate
         SettlementReport report = Simulator.Advance(State, content, elapsedSeconds);
         foreach (ResearchId completed in report.CompletedResearch)
         {
-            // One research slot, and only commands start research, so at most the one running at the start completes.
-            if (running is null || completed != running.Id)
+            // One research slot, and only commands start research, so at most the one running at the start completes; it completes at its
+            // timer's end, which a delivery may have set during the advance (04 section 5).
+            if (running is null || completed != running.Id || running.EndsAt is not long endsAt)
             {
                 throw new InvalidOperationException($"Research {completed} completed, but it was not the one running.");
             }
 
-            _researchCompletedAt.Add(completed, running.EndsAt);
+            _researchCompletedAt.Add(completed, endsAt);
         }
 
         return report;

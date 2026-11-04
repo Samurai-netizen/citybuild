@@ -9,14 +9,15 @@
   build log `docs/build-log/2026/2026-11-02-07-CR-0008-T1.md` (its Session 1 plan lists every part and step)
 - **Part / step:** A, B, C, D done (design docs, spec, engine roads and paths, server roads end to end; draft PR #86); Session 2 reviewed
   A–C. Part E (the switch): its plan with checkpoints and steps E1.1 … E4 is in the build log (Session 2, decisions 31–36). E1.1–E1.4 done;
-  E2.1 (engine trips, amounts, deliveries, the generator's trips, their tests) done, engine suite green (decisions 37–40). Next: E1.5 +
-  E2.2 (server), then E1.6 + E2.3 (client) → CP1. Between checkpoints the steps are `wip`
+  E2.1 (engine trips, amounts, deliveries, the generator's trips, their tests) done, engine suite green (decisions 37–40). E1.5 + E2.2:
+  the server's code builds (tables, migration with the D10 reset, mapping, ledger, snapshot, content, `start-trip`, codes); next its
+  tests, the goods panel, then E1.6 + E2.3 (client) → CP1. Between checkpoints the steps are `wip`
   saves that may not build (see Known broken). Then F … I, then `/finish-task`.
 - **Last completed:** M0-60 · Client ↔ server boundary review (PR #85, merged)
 - **Next task:** CR-0008-T2 · client and art (`[S]`), after T1 merges; then CR-0008-T3, then M0-61.
 - **Open questions for the owner:** CR-0008-T1: 8 Dependabot alerts on `main` (build log Follow-ups). M0-58: the [MANUAL] content-change check (`client/README.md`; no automated test covers the `GameRoot` rebuild). CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-54: the dev database still runs the fast clock until the owner does step 7 of the waiting-loop run (`LOCAL-E2E.md`). M0-55: the [MANUAL] look at the connection states (`client/README.md`). CR-0007-T1: the [MANUAL] look at the new UI (`client/README.md`); the status label may be removed (build log follow-ups).
-- **Known broken / do not touch:** WIP of part E (decision 31): the server and the client don't build until CP1; the engine
-  (`CityBuilder.Simulation`) and its tests build and pass. (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
+- **Known broken / do not touch:** WIP of part E (decision 31): the server's tests and the client don't build until CP1; the engine
+  and its tests and the server's `src` build. (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
 - **Verify with:** `bash scripts/dev/check-docs.sh --base origin/main` (as CI) · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 

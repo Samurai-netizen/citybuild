@@ -10,7 +10,12 @@ public sealed class CityConfiguration : IEntityTypeConfiguration<CityRow>
     /// <inheritdoc />
     public void Configure(EntityTypeBuilder<CityRow> builder)
     {
-        builder.ToTable("cities", table => table.HasCheckConstraint("ck_cities_era", "era >= 1"));
+        builder.ToTable("cities", table =>
+        {
+            table.HasCheckConstraint("ck_cities_era", "era >= 1");
+            table.HasCheckConstraint("ck_cities_purse", "purse >= 0");
+            table.HasCheckConstraint("ck_cities_next_trip_id", "next_trip_id >= 1");
+        });
 
         builder.HasKey(c => c.Id).HasName("pk_cities");
         builder.Property(c => c.Id).HasColumnName("id").ValueGeneratedNever();
@@ -19,6 +24,8 @@ public sealed class CityConfiguration : IEntityTypeConfiguration<CityRow>
         builder.Property(c => c.ClockSeconds).HasColumnName("clock_seconds");
         builder.Property(c => c.LastSettledUnix).HasColumnName("last_settled_unix");
         builder.Property(c => c.NextBuildingId).HasColumnName("next_building_id");
+        builder.Property(c => c.Purse).HasColumnName("purse");
+        builder.Property(c => c.NextTripId).HasColumnName("next_trip_id");
         builder.Property(c => c.ResearchId).HasColumnName("research_id");
         builder.Property(c => c.ResearchStartedAt).HasColumnName("research_started_at");
         builder.Property(c => c.ResearchEndsAt).HasColumnName("research_ends_at");
