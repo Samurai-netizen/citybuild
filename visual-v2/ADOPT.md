@@ -1,22 +1,60 @@
-# Adopting visual v2 after CR-0008: instructions for the AI coder
+# Adopting visual v2: instructions for the AI coder
 
-This page is for the AI that brings this package into the game. Follow it from top to bottom. The owner asked for it on 2026-11-04:
-"make a clear instruction for AI on how to implement these new graphics, after the finish on CR-0008".
+This page is for the AI that brings this package into the game. The owner asked for it on 2026-11-04: "make a clear instruction for AI
+on how to implement these new graphics, after the finish on CR-0008", then, to save AI usage, to adopt it while CR-0008 is still being
+built instead of making more temporary art. So there are two routes: **A**, inside CR-0008-T2 (use it if T2 has not started), and **B**,
+a separate task after CR-0008 is Done (only if T2 was built without the package).
 
 **What the package is.** It has more detailed models for every Era I building, prop and ground tile, plus the CR-0008 buildings, roads
 and courier. It also has moving parts and smoke while a building works, store fill models, a reworked UI and client code with tests
 (`README.md`). It was made against `main` at `3c0dcac` (M0-60). Call that **the base** below. Nothing in the game reads this folder yet.
 
-**The problem you solve.** CR-0008 (T1 to T3) was built after the base and changed the same areas:
-- it changed the engine (goods in building stores), the client (new screens, roads, walkers) and `art/blender/`;
-- it added its own simpler courier station, scriptorium, warehouse, roads and icons, with the **same file names** as this package.
+**The rule on both routes:** CR-0008's behaviour, names and element lookups win; the package's looks win.
 
-So you **merge** the package. A plain copy would undo CR-0008's client work. The rule throughout: **CR-0008's behaviour, names and
-element lookups win; the package's looks win.**
+## Route A (recommended, cheaper): inside CR-0008-T2
+Checked on 2026-11-04 against `task/CR-0008-T1-logistics-engine-server` (T1 at part H; its parts H and I touch no art or client view):
+`adopt.sh` copies cleanly, `unity-wiring.patch` applies (`git apply --check`), every UI rule passes against T1's views, and the package's
+C# compiles against T1's engine except two lines of `BuildingDecor.Show`. Adopting at the start of T2 therefore costs a few steps,
+and it saves: T2 part F's modelling (every model, road and icon it asks for exists here), building T2's screens twice (placeholder look,
+then restyle), the road and walker placeholders, and the whole separate task of Route B (merge, second tests, second docs, second
+[MANUAL] session). The owner's instruction at `/start-task CR-0008-T2` decides it; the T2 session records it as a decision and edits
+T2's part F in the CR in its own PR.
+
+**Owner's prompt for T2:** "Adopt visual v2 in this task, Route A of `visual-v2/ADOPT.md` (folder on branch
+`claude/compassionate-meitner-sd7nr0`). Part F makes no new models: it only fills gaps."
+
+Steps for the T2 session (after T1 is merged):
+1. `git checkout origin/claude/compassionate-meitner-sd7nr0 -- visual-v2` (the folder only, not the branch).
+2. Before part A, as its own checkpointed step:
+   - `bash visual-v2/adopt.sh`. It replaces T1's placeholder models (`courier_station_l1/l2`, `scriptorium_l1`, `warehouse_l1/l2`) and
+     icons (`bld_*` of those three, `res_tally_sticks`, `res_sturdy_boots`) on purpose. `git apply visual-v2/unity-wiring.patch`. If a
+     file changed since 2026-11-04 and the patch fails, redo that edit by hand (§3.3 below).
+   - `BuildingDecor.Show`: replace the two lines that read `city.Inventory` and `CityQueries.TryGetEffectiveCap` with the building's
+     own store: `building.Store.TryGetValue(item, out long amount)` and
+     `CityQueries.TryGetEffectiveLimit(city, content, building, item, out long limit)` (0 when the store doesn't hold it: no fill).
+     Update its comment and add a test.
+   - `BuildingDecor.IsWorking`: the rules of §3.4 below for the Scriptorium, the Courier Station and the Warehouse, with tests.
+   - Move `visual-v2/blender/` into `art/blender/` (§2 below). The package's `courier_station`, `scriptorium`, `warehouse` and the two
+     research icons replace T1's versions of the same names; port only what T1 added that the package lacks.
+   - Unity import, commit the new `.meta` files, `test-unity.sh` green, `check-ui-rules.py` passes.
+3. Parts A to E: build every new screen in the new look from the start (`Common.uss` tokens and classes, §3.2). Part B draws roads with
+   `RoadArms` and the road models (§3.4), with no placeholder. Part D's walkers are the `courier` and `worker` models with `MotionRig`
+   and their loads at `Anchor_Load` (§3.4).
+4. Part F: no new modelling. Check that every building type, level and road level in `server/content/mvp-content.json` has its model
+   and icon (on 2026-11-04 they all do), merge the lookup tests with `ArtModelsV2Tests`, and run the Blender build only if a model
+   changes.
+5. Docs once (§5), then delete `visual-v2/` before `/finish-task` (§6). T3's playtest includes the looks of §7.
+
+Route B below is the fallback when T2 has already been done without the package.
+
+## Route B: after CR-0008 is Done
+CR-0008 changed the engine (goods in building stores), the client (new screens, roads, walkers) and `art/blender/` after the base, and
+added simpler models and icons with the **same file names** as this package. So you **merge** the package: a plain copy would undo
+CR-0008's client work. Sections 0 to 7 are this route; Route A uses some of them by number.
 
 ## 0. Before you start
-1. **CR-0008 must be Done.** Check that its `- **Status:**` line in `docs/changes/CR-0008-logistics-rework.md` says Done and that T3 is
-   merged into `main`. If it is not Done, stop and tell the owner.
+1. **Route B only: CR-0008 must be Done.** Check that its `- **Status:**` line in `docs/changes/CR-0008-logistics-rework.md` says
+   Done and that T3 is merged into `main`. If T2 has not started, use Route A instead.
 2. **Machine:** Unity 6000.3.25f1, Blender 5.2, the .NET 10 SDK, Docker, Python 3, ImageMagick, and Node.js with Playwright (only for the
    UI preview). Normally this is the owner's laptop. A cloud session can't run Unity, so it can't finish this task.
 3. **A change request.** This work needs an approved CR (`02` rule 17).

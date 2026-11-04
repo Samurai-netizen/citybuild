@@ -80,8 +80,8 @@ python3 visual-v2/ui-preview/check-ui-rules.py
 ImageMagick; `preview.js` and `render-glyphs.js` need Node.js and Playwright.
 
 ## Adopting it
-After CR-0008 is Done, as its own CR and task: **`ADOPT.md`** is the step-by-step instruction for the AI coder (the CR text to approve,
-how to merge with what CR-0008 built, the wiring, the tests, the docs and the [MANUAL] looks). Take the folder, not this branch (it also
+**`ADOPT.md`** is the step-by-step instruction for the AI coder. Recommended: Route A, at the start of CR-0008-T2 (T2 then makes no new
+models and builds its screens in the new look once); Route B, a separate CR after CR-0008, is the fallback. Take the folder, not this branch (it also
 carries `368f525`, an older copy of the CR-0008 revision that the T1 branch has as `f67ee62`).
 
 ## Status

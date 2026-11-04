@@ -123,6 +123,13 @@
   the art merge into `art/blender/`, the UI merge, the wiring, the hooks into CR-0008 (building stores, when the new kinds work, roads,
   walkers, icons), tests, docs, removing this folder and the [MANUAL] looks. `README.md` "Adopting it" now points there.
 
+- **Owner input** (in chat, the same day): "Check if i can save the AI usage. I'm working on CR-0008-T1 now, and T2, T3 are not started
+  yet. Can we save some tokens and not, for example, generate more temporary 3d models for the game".
+- **Done:** `ADOPT.md` Route A, adoption at the start of CR-0008-T2. Tried on a throwaway worktree of the T1 branch (at H1, `6029f17`):
+  `adopt.sh` copies, `unity-wiring.patch` applies, the UI rules pass against T1's views, and the package's C# compiles against T1's
+  engine except `BuildingDecor.Show`'s two lines on the city's stock (T1 moved goods into `Building.Store` with
+  `CityQueries.TryGetEffectiveLimit`); Route A names the fix. The package itself still targets `main` (the fit branch), so it is unchanged.
+
 ## Follow-ups
 - [MANUAL] The Unity steps of `FIT-TEST.md`: compile, `test-unity.sh`, a play session for the motion and the fill, the UI in the Device
   Simulator (fonts: if UI Toolkit draws the TTF files in its default font, make Font Assets of them).
