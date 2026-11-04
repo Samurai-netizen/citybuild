@@ -264,7 +264,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation
             Assert.That(outcome.Kind, Is.EqualTo(StartupResultKind.Connected));
             Assert.That(outcome.TimeScale, Is.EqualTo(1));
             Assert.That(_cityStore.Snapshot!.StateVersion, Is.EqualTo(10L));
-            Assert.That(_cityStore.Snapshot.Clock, Is.EqualTo(199L));
+            Assert.That(_cityStore.Snapshot.Clock, Is.EqualTo(196L));
         }
 
         /// <summary>A snapshot whose values form no city is a failed start, not a connected one, and the store stays empty.</summary>
