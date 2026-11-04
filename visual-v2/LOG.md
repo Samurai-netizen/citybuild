@@ -36,6 +36,21 @@
   13 buildings, 9 store fill models, 9 item props) built by `blender/build_all.py`, every check passing (tile bounds with every moving
   part along its cycle and the full store, floor, triangle budgets, one material, anchors, poses, fill steps, road arms).
 
+- Step 7 done: `previews/` (lineups, a CR-0008 town, eight GIFs of moving parts with the store filling, a sheet of their frames),
+  25 icons (the 15 of v1 drawn again from the new models, 10 new for CR-0008), 8 UI glyphs (`ui-preview/render-glyphs.js`).
+- Step 8 done: the client code in `unity/Presentation/City/` and its EditMode tests; `MOTIONS.md` is the contract between the art and
+  the client.
+
+## Verification so far
+- `blender -b --factory-startup --python visual-v2/blender/build_all.py -- --no-render`: all 49 models pass every check (Blender 5.2.3,
+  Linux, software OpenGL for the renders).
+- The new C# (code and tests) compiles against the real engine sources (`shared/Simulation/Runtime`) and thin stubs of the Unity and
+  client members it uses, with warnings as errors and XML documentation checked (.NET 10 SDK, C# 9). The 66 tests that need no Unity
+  objects pass under NUnit there (motion formula, motion table, store steps, ground variants). That run found and fixed an overflow in
+  `StorageFill.StepFor` for limits near `long.MaxValue`.
+- Not run here: the tests that build GameObjects (`MotionRigTests`, `FillViewTests`, `BuildingAnimatorTests`, `RoadArmsTests`,
+  `ArtModelsV2Tests`) need the Unity Editor.
+
 ## Decisions
 | # | Decision | Why / alternative |
 |---|---|---|
@@ -49,4 +64,7 @@
 | 8 | Ground variety: four grass tiles (`tile_grass`, `tile_grass_b`, `tile_grass_c`, `tile_grass_d`), picked per tile by a fixed hash of its coordinates | Same picture on every device and every run |
 | 9 | Triangle budgets: buildings 6,000 (was 4,500), store fill and props 1,500, tiles 700 (was 200), road tiles 1,000, the smoke puff 300 | One more step of detail took the level 2 buildings to 4,900-5,600. A full 8 x 8 town (64 tiles, about 20 buildings) stays under 200,000 triangles with one material and a handful of draw calls; every phone from the iPhone XR on (OD-18) draws that easily |
 | 10 | New palette colours go only into free slots (from 20); no slot moves | The art README's rule |
+| 12 | Fonts of the showcase: Fredoka (titles, buttons, numbers) and Nunito (labels, text), SIL OFL 1.1, as static instances (Fredoka 600, Nunito 700 and 800) made with fontTools from Google Fonts' variable files; the licences sit beside them | Unity's text engine draws one weight per font file. OFL allows this, and neither font has a reserved name |
+| 13 | UI glyphs (close, plus, minus, lock, time, done, makes, alert) are white PNGs with the shape in alpha only, tinted in USS | One file per glyph in any colour; white transparent pixels keep a dark fringe out when Unity filters them |
+| 14 | Previews are kept as JPEG and optimised GIFs (1.7 MB in all); the one-picture-per-model renders are git-ignored | Git keeps every version of a picture; the renders rebuild in minutes |
 | 11 | The package's change id is `CR-0009`; its CR file is written at adoption | Commits need an id (`.githooks/commit-msg`); a CR file now would edit `docs/changes/README.md`, a shared file. If the main session takes CR-0009 first, the adoption renumbers |

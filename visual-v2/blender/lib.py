@@ -354,12 +354,20 @@ def descendants(root):
 
 
 def moving_parts(root):
-    """(part, pose empty, MOTIONS row) for every moving part under `root`."""
-    by_name = {o.name: o for o in descendants(root)}
+    """(part, pose empty, MOTIONS row) for every moving part under `root`. A part and its pose are siblings; Blender's ".001"
+    suffixes on copies are ignored, so a scene may hold several instances of one model."""
     out = []
     for obj in descendants(root):
-        if obj.type == "MESH" and obj.name + POSE_SUFFIX in by_name:
-            out.append((obj, by_name[obj.name + POSE_SUFFIX], motion_of(obj.name)))
+        if obj.type != "MESH" or obj.parent is None:
+            continue
+        base = obj.name.split(".")[0]
+        row = motion_of(base)
+        if row is None:
+            continue
+        for sib in obj.parent.children:
+            if sib.type == "EMPTY" and sib.name.split(".")[0] == base + POSE_SUFFIX:
+                out.append((obj, sib, row))
+                break
     return out
 
 

@@ -50,9 +50,10 @@ def grass_tile(name, seed, patches, tufts, flowers=0, pebbles=0, clover=0):
         slab(m)
         for k in range(patches):
             x, y = _spot(rng)
-            color = ("grass_dark", "grass_light")[k % 2]
-            m.decal(blob(rng, rng.uniform(0.1, 0.17), n=10, stretch=(1.0, rng.uniform(0.6, 0.9)), turn=rng.uniform(0, 180)),
-                    color, z=0.0015 + 0.0005 * k, at=(x, y))
+            dark = k % 3 == 1
+            r = rng.uniform(0.06, 0.1) if dark else rng.uniform(0.09, 0.15)
+            m.decal(blob(rng, r, n=10, stretch=(1.0, rng.uniform(0.6, 0.9)), turn=rng.uniform(0, 180)),
+                    "grass_dark" if dark else "grass_light", z=0.0015 + 0.0005 * k, at=(x, y))
         for _ in range(tufts):
             x, y = _spot(rng, keep_out=0.24)
             m.tuft((x, y, 0), h=rng.uniform(0.05, 0.066), spin=rng.uniform(0, 360))
@@ -109,8 +110,8 @@ def road_l1():
     rng = random.Random(11)
     m = Model()
     slab(m)
-    m.prism(blob(rng, 0.215, n=12, wobble=0.06), 0.008, (0, 0, 0.004), "dirt", axis="Z", cap="dirt")
-    m.decal(blob(rng, 0.11, n=8, wobble=0.25), "dirt_light", z=0.0085)
+    m.prism(blob(rng, 0.2, n=12, wobble=0.05), 0.008, (0, 0, 0.004), "dirt", axis="Z", cap="dirt")
+    pebble(m, (0.07, -0.05), 0.014, "stone_light")
     root = m.to_object("road_l1")
     for name, (dx, dy) in ARMS.items():
         a = Model()
