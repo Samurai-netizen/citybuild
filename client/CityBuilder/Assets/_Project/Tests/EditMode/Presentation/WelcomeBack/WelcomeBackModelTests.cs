@@ -229,7 +229,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.WelcomeBack
                 {
                     "Sharpened Axes — Woodcutter's Hut: −20% labor",
                     "Trade Charter — Unlocks Trading Post",
-                    "Storehouses — +250 Logs storage, +250 Planks storage",
+                    "Storehouses — +40 Logs storage, +40 Planks storage",
                 }));
         }
 
@@ -283,7 +283,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.WelcomeBack
             Assert.That(WelcomeBackModel.NothingHappenedText, Is.Not.Empty);
         }
 
-        /// <summary>The report of a real answer (429 s, a research completed, items made and used) reads as the server's numbers.</summary>
+        /// <summary>The report of a real answer (620 s, a research completed, logs made) reads as the server's numbers.</summary>
         [Test]
         public void RealAnswer_ReadsAsTheServerSaid()
         {
@@ -291,9 +291,9 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.WelcomeBack
 
             WelcomeBackModel model = WelcomeBackModel.Create(_content, snapshot, 1)!;
 
-            Assert.That(model.Title, Is.EqualTo("While you were away (7 m)"));
-            Assert.That(Lines(model, "Produced"), Is.EqualTo(new[] { "14 Logs", "7 Planks" }));
-            Assert.That(Lines(model, "Used"), Is.EqualTo(new[] { "14 Logs" }));
+            Assert.That(model.Title, Is.EqualTo("While you were away (10 m)"));
+            Assert.That(Lines(model, "Produced"), Is.EqualTo(new[] { "21 Logs" }));
+            Assert.That(model.Sections.Select(section => section.Heading), Does.Not.Contain("Used"), "nothing was used");
             Assert.That(Lines(model, "Research"), Is.EqualTo(new[] { "Trade Charter — Unlocks Trading Post" }));
             Assert.That(model.HasCapNote, Is.False);
         }

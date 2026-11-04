@@ -132,11 +132,11 @@ namespace CityBuilder.Client.Tests.PlayMode
 
             Assert.That(_panel.IsOpen, Is.True);
             Assert.That(ScrimShown(), Is.True);
-            Assert.That(Label(WelcomeBackPanel.TitleName).text, Is.EqualTo("While you were away (7 m)"));
-            Assert.That(Texts(WelcomeBackPanel.HeadingClass), Is.EqualTo(new[] { "Produced", "Used", "Research" }));
+            Assert.That(Label(WelcomeBackPanel.TitleName).text, Is.EqualTo("While you were away (10 m)"));
+            Assert.That(Texts(WelcomeBackPanel.HeadingClass), Is.EqualTo(new[] { "Produced", "Research" }));
             Assert.That(
                 Texts(WelcomeBackPanel.LineClass),
-                Is.EqualTo(new[] { "14 Logs", "7 Planks", "14 Logs", "Trade Charter — Unlocks Trading Post" }));
+                Is.EqualTo(new[] { "21 Logs", "Trade Charter — Unlocks Trading Post" }));
             Assert.That(Label(WelcomeBackPanel.CapNoteName).style.display.value, Is.EqualTo(DisplayStyle.None));
             Assert.That(Label(WelcomeBackPanel.EmptyName).style.display.value, Is.EqualTo(DisplayStyle.None));
         }

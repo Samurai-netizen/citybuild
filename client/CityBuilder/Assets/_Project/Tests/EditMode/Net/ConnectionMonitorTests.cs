@@ -96,7 +96,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             await _monitor.PollAsync(CancellationToken.None);
 
             Assert.That(_monitor.State, Is.EqualTo(ConnectionState.Connected));
-            Assert.That(_store.Snapshot!.StateVersion, Is.EqualTo(25L));
+            Assert.That(_store.Snapshot!.StateVersion, Is.EqualTo(10L));
             Assert.That(_transport.Requests, Has.Count.EqualTo(1));
             Assert.That(_transport.Requests[0].Method + " " + _transport.Requests[0].Url, Is.EqualTo("GET http://localhost:8080/api/v1/city"));
             Assert.That(_transport.Requests[0].AccessToken, Is.EqualTo("kept-token"));
@@ -113,7 +113,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             await _monitor.PollAsync(CancellationToken.None);
 
             Assert.That(_monitor.State, Is.EqualTo(ConnectionState.Connected));
-            Assert.That(_store.Snapshot!.StateVersion, Is.EqualTo(25L));
+            Assert.That(_store.Snapshot!.StateVersion, Is.EqualTo(10L));
         }
 
         /// <summary>No connection and no answer in time are both offline, with the client's code; the next usable answer is connected again.</summary>
@@ -264,7 +264,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             await _monitor.PollAsync(CancellationToken.None);
 
             Assert.That(_monitor.State, Is.EqualTo(ConnectionState.Connected));
-            Assert.That(_store.Snapshot!.StateVersion, Is.EqualTo(25L));
+            Assert.That(_store.Snapshot!.StateVersion, Is.EqualTo(10L));
             Assert.That(_transport.Requests, Has.Count.EqualTo(3));
             Assert.That(_transport.Requests[0].Url, Does.EndWith("/city"));
             Assert.That(_transport.Requests[0].AccessToken, Is.EqualTo("kept-token"));
@@ -303,7 +303,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
 
             await _monitor.PollAsync(CancellationToken.None);
 
-            Assert.That(_store.Snapshot!.StateVersion, Is.EqualTo(25L));
+            Assert.That(_store.Snapshot!.StateVersion, Is.EqualTo(10L));
         }
 
         /// <summary>

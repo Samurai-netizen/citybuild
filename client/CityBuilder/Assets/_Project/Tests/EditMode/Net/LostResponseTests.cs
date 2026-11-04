@@ -25,8 +25,8 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         private static string PolledCity()
         {
             return Fixtures.Read("snapshot-command-place-building.json")
-                .Replace("\"stateVersion\":7", "\"stateVersion\":8")
-                .Replace("\"clock\":9", "\"clock\":69");
+                .Replace("\"stateVersion\":3,", "\"stateVersion\":4,")
+                .Replace("\"clock\":3,", "\"clock\":63,");
         }
 
         /// <summary>A sender over <paramref name="server"/> on a store that holds the city with no building; <paramref name="delay"/> stands for its waits.</summary>
@@ -63,7 +63,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(server.Commands[1], Is.EqualTo(server.Commands[0]), "The retry is the same body, so the same request id.");
             Assert.That((server.TimesApplied, server.Replays), Is.EqualTo((1, 1)));
             Assert.That(BuildingsIn(store), Has.Count.EqualTo(1));
-            Assert.That(store.Snapshot!.StateVersion, Is.EqualTo(7));
+            Assert.That(store.Snapshot!.StateVersion, Is.EqualTo(3));
             Assert.That(sender.Pending, Is.Empty);
         }
 
@@ -99,7 +99,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
 
             Assert.That(outcome.IsSuccess, Is.True);
             Assert.That((server.TimesApplied, server.Replays), Is.EqualTo((1, 1)));
-            Assert.That((store.Snapshot!.StateVersion, store.Snapshot.Clock), Is.EqualTo((8L, 69L)));
+            Assert.That((store.Snapshot!.StateVersion, store.Snapshot.Clock), Is.EqualTo((4L, 63L)));
             Assert.That(BuildingsIn(store), Has.Count.EqualTo(1));
         }
 

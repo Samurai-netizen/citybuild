@@ -116,7 +116,10 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(house.Phase, Is.EqualTo(BuildingPhaseDto.Idle));
             Assert.That(house.StallReason, Is.EqualTo("NoRecipe"));
             Assert.That(house.PhaseEndsAt, Is.Null);
-            Assert.That((house.Store, house.StoreLimits, house.Needs, house.Project), Is.EqualTo((new Dictionary<string, long>(), new Dictionary<string, long>(), new Dictionary<string, long>(), (string)null)));
+            Assert.That(house.Store, Is.Empty);
+            Assert.That(house.StoreLimits, Is.Empty);
+            Assert.That(house.Needs, Is.Empty);
+            Assert.That(house.Project, Is.Null);
             Assert.That(woodcutter.TypeId, Is.EqualTo("woodcutter"));
             Assert.That(woodcutter.Phase, Is.EqualTo(BuildingPhaseDto.Producing));
             Assert.That(woodcutter.StallReason, Is.Null);
@@ -157,7 +160,8 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(research.City.Research.ActiveId, Is.Null);
             Assert.That(research.Settlement.Produced["logs"], Is.GreaterThan(0L));
             Assert.That(research.Settlement.Delivered["logs"], Is.EqualTo(4L), "the trip arrived at the site in the same span");
-            Assert.That((research.Settlement.Moved, research.Settlement.Refunded), Is.EqualTo((new Dictionary<string, long>(), new Dictionary<string, long>())));
+            Assert.That(research.Settlement.Moved, Is.Empty);
+            Assert.That(research.Settlement.Refunded, Is.Empty);
             Assert.That(research.Settlement.EraChanged, Is.False);
         }
 

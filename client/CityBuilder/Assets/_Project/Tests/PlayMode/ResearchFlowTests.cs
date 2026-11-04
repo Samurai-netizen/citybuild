@@ -105,7 +105,7 @@ namespace CityBuilder.Client.Tests.PlayMode
             return _screen.Root!.Q<T>(name);
         }
 
-        /// <summary>The node elements in the order of the model: sharp_axes, trade_charter, frame_saw, storehouses.</summary>
+        /// <summary>The node elements in the order of the model: sharp_axes, sturdy_boots, trade_charter, frame_saw, storehouses, tally_sticks.</summary>
         private List<VisualElement> Nodes()
         {
             return _screen.Root!.Query<VisualElement>(ResearchScreen.NodeName).ToList();
@@ -148,25 +148,27 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(Q<Button>(ResearchScreen.ToggleName).text, Is.EqualTo("Research"));
         }
 
-        /// <summary>The header, the greyed-out rule and four nodes in one row of cards, each with its words.</summary>
+        /// <summary>The header, the greyed-out rule and six nodes in one row of cards, each with its words.</summary>
         [Test]
         public void ShowsTheEraHeaderTheRuleAndTheNodesInOneRow()
         {
-            Assert.That(Q<Label>(ResearchScreen.EraName).text, Is.EqualTo("Early Middle Ages — 0 / 4 researched"));
+            Assert.That(Q<Label>(ResearchScreen.EraName).text, Is.EqualTo("Early Middle Ages — 0 / 6 researched"));
             Assert.That(Q<Label>(ResearchScreen.RuleName).text, Is.EqualTo("Complete all to advance"));
             Assert.That(Q<Label>(ResearchScreen.RuleName).ClassListContains("research-rule--off"), Is.True);
             Assert.That(_screen.Root!.Query<VisualElement>(className: "research-row").ToList().Count, Is.EqualTo(1));
             List<VisualElement> nodes = Nodes();
-            Assert.That(nodes.Count, Is.EqualTo(4));
+            Assert.That(nodes.Count, Is.EqualTo(6));
             Assert.That(In(nodes[0], ResearchScreen.NodeNameName).text, Is.EqualTo("Sharpened Axes"));
             Assert.That(In(nodes[0], ResearchScreen.NodeCostName).text, Is.EqualTo("Cost: 250 Coins"));
             Assert.That(In(nodes[0], ResearchScreen.NodeTimeName).text, Is.EqualTo("Takes 30m"));
             Assert.That(In(nodes[0], ResearchScreen.NodeEffectName).text, Is.EqualTo("Woodcutter's Hut: −20% labor"));
             Assert.That(In(nodes[0], ResearchScreen.NodeStatusName).text, Is.EqualTo("Ready to research"));
-            Assert.That(nodes[1].parent, Is.SameAs(nodes[0].parent), "the MVP's tree is one row: every node is in the same row");
-            Assert.That(nodes[2].parent, Is.SameAs(nodes[0].parent));
-            Assert.That(nodes[3].parent, Is.SameAs(nodes[0].parent));
-            Assert.That(In(nodes[2].parent, ResearchScreen.NodeNameName).text, Is.EqualTo("Sharpened Axes"), "the row starts with the node that has no prerequisite");
+            for (int index = 1; index < nodes.Count; index++)
+            {
+                Assert.That(nodes[index].parent, Is.SameAs(nodes[0].parent), "the MVP's tree is one row: every node is in the same row");
+            }
+
+            Assert.That(In(nodes[3].parent, ResearchScreen.NodeNameName).text, Is.EqualTo("Sharpened Axes"), "the row starts with the node that has no prerequisite");
         }
 
         /// <summary>An available node can be financed; a locked one is off and names what it requires.</summary>
@@ -177,9 +179,9 @@ namespace CityBuilder.Client.Tests.PlayMode
 
             Assert.That(_screen.FinanceButton("trade_charter")!.enabledSelf, Is.True);
             Assert.That(_screen.FinanceButton("frame_saw")!.enabledSelf, Is.False);
-            Assert.That(In(nodes[2], ResearchScreen.NodeStatusName).text, Is.EqualTo("Requires: Sharpened Axes"));
-            Assert.That(In(nodes[2], ResearchScreen.NodeNoteName).text, Is.EqualTo("Requires: Sharpened Axes"));
-            Assert.That(nodes[2].ClassListContains("research-node--locked"), Is.True);
+            Assert.That(In(nodes[3], ResearchScreen.NodeStatusName).text, Is.EqualTo("Requires: Sharpened Axes"));
+            Assert.That(In(nodes[3], ResearchScreen.NodeNoteName).text, Is.EqualTo("Requires: Sharpened Axes"));
+            Assert.That(nodes[3].ClassListContains("research-node--locked"), Is.True);
         }
 
         /// <summary>A press on a button that is off sends nothing.</summary>
@@ -206,7 +208,7 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(_sender.Pending[0].Intent.ContentId, Is.EqualTo("trade_charter"));
             List<VisualElement> nodes = Nodes();
             Assert.That(_screen.FinanceButton("trade_charter")!.enabledSelf, Is.False);
-            Assert.That(In(nodes[1], ResearchScreen.NodeNoteName).text, Is.EqualTo("Starting research…"));
+            Assert.That(In(nodes[2], ResearchScreen.NodeNoteName).text, Is.EqualTo("Starting research…"));
             Assert.That(In(nodes[0], ResearchScreen.NodeNoteName).text, Is.EqualTo("Another research is running"));
             yield return WaitUntil(() => _transport.OpenCount == 1);
             Assert.That(_transport.Requests.Count, Is.EqualTo(1));
@@ -216,8 +218,8 @@ namespace CityBuilder.Client.Tests.PlayMode
             yield return WaitUntil(() => _sender.Pending.Count == 0);
 
             nodes = Nodes();
-            Assert.That(In(nodes[1], ResearchScreen.NodeStatusName).text, Does.StartWith("In progress"));
-            Assert.That(nodes[1].ClassListContains("research-node--running"), Is.True);
+            Assert.That(In(nodes[2], ResearchScreen.NodeStatusName).text, Does.StartWith("In progress"));
+            Assert.That(nodes[2].ClassListContains("research-node--running"), Is.True);
             Assert.That(_screen.FinanceButton("trade_charter")!.resolvedStyle.display, Is.EqualTo(DisplayStyle.None));
             Assert.That(_screen.FinanceButton("sharp_axes")!.enabledSelf, Is.False);
             Assert.That(In(nodes[0], ResearchScreen.NodeNoteName).text, Is.EqualTo("Another research is running"));

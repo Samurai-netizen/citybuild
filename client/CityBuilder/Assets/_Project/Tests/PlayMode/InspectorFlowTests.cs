@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using CityBuilder.Client.Core;
@@ -25,12 +26,12 @@ namespace CityBuilder.Client.Tests.PlayMode
     /// transport that answers when the test says: tap a building and see its words, press − and + and see the target pending, then sent once
     /// after the debounce, press Upgrade twice and see one request, see the disabled reasons, and see the placement flow keep the ground to itself.
     /// With the build menu joined to the inspector in one <see cref="MenuGroup"/>, as <c>GameRoot</c> does (owner directive OD-16), opening either closes the other.
-    /// The fixture city has two cottages (tiles 0 and 1), a sawmill with 3 of 3 workers at tile 2 and a woodcutter with 2 of 2 at tile 4, with
-    /// 220 coins, 10 logs and 10 planks and 3 free workers.
+    /// The test city (<see cref="InspectorCity"/>) has two cottages (tiles 0 and 1), a sawmill with 3 of 3 workers at tile 2 and a woodcutter
+    /// with 2 of 2 at tile 4, with 220 coins, 10 logs and 10 planks in the sawmill's store and 3 free workers.
     /// </summary>
     public sealed class InspectorFlowTests
     {
-        /// <summary>The sawmill's building id in the fixture.</summary>
+        /// <summary>The sawmill's building id in the test city.</summary>
         private const int SawmillId = 3;
 
         /// <summary>The object everything is made under.</summary>
@@ -66,11 +67,49 @@ namespace CityBuilder.Client.Tests.PlayMode
         /// <summary>Cancels commands still open at the end of a test.</summary>
         private CancellationTokenSource _cancel = null!;
 
-        /// <summary>Before each test: a client with the producing city, an 8 by 8 grid and a flow over it; waits a frame for the screen's tree.</summary>
+        /// <summary>Before each test: a client with the inspector's city, an 8 by 8 grid and a flow over it; waits a frame for the screen's tree.</summary>
         [UnitySetUp]
         public IEnumerator CreateFlow()
         {
-            yield return CreateFlowFor(Fixture("snapshot-city-producing.json"));
+            yield return CreateFlowFor(InspectorCity(220, 3, 243, 10));
+        }
+
+        /// <summary>
+        /// The city the tests inspect, as an answer's JSON: the real producing answer (its clock 196, era, content) with the buildings these tests
+        /// need, which no captured answer has since CR-0008 changed the start: cottages 1 and 2 on (0, 0) and (1, 0), the sawmill 3 on (2, 0)
+        /// producing with <paramref name="sawmillWorkers"/> workers from second 183 to <paramref name="sawmillEnds"/> (180 labor) with logs
+        /// and planks in its store, and a woodcutter 4 on (4, 0) with 2 of 2 workers. <paramref name="purse"/> coins; no goods elsewhere.
+        /// </summary>
+        private static string InspectorCity(long purse, int sawmillWorkers, long sawmillEnds, long stateVersion)
+        {
+            var json = new ApiJson();
+            CitySnapshotDto real = json.Deserialize<CitySnapshotDto>(Fixture("snapshot-city-producing.json"))!;
+            SnapshotCityDto city = real.City;
+            var none = new Dictionary<string, long>();
+            var buildings = new List<SnapshotBuildingDto>
+            {
+                new SnapshotBuildingDto(1, "house", 0, 0, 1, 0, 0, BuildingPhaseDto.Idle, 0, null, 0, 0, 0, "NoRecipe", none, none, none, null),
+                new SnapshotBuildingDto(2, "house", 1, 0, 1, 0, 0, BuildingPhaseDto.Idle, 0, null, 0, 0, 0, "NoRecipe", none, none, none, null),
+                new SnapshotBuildingDto(
+                    3, "sawmill", 2, 0, 1, sawmillWorkers, 3, BuildingPhaseDto.Producing, 183, sawmillEnds, 180, 180, 183, null,
+                    new Dictionary<string, long> { ["logs"] = 10, ["planks"] = 10 }, new Dictionary<string, long> { ["logs"] = 40, ["planks"] = 20 }, none, null),
+                new SnapshotBuildingDto(
+                    4, "woodcutter", 4, 0, 1, 2, 2, BuildingPhaseDto.Producing, 183, 213, 60, 60, 183, null, none,
+                    new Dictionary<string, long> { ["logs"] = 40 }, none, null),
+            };
+            long assigned = sawmillWorkers + 2;
+            var cityDto = new SnapshotCityDto(
+                city.Clock,
+                city.Era,
+                purse,
+                new Dictionary<string, long> { ["coins"] = purse, ["logs"] = 10, ["planks"] = 10 },
+                new SnapshotWorkersDto(8, assigned, 0, 8 - assigned),
+                new SnapshotBuildersDto(city.Builders.Slots, 0),
+                new SnapshotResearchDto(null, null, null, none, new List<string>()),
+                buildings,
+                new List<SnapshotRoadDto>(),
+                new List<SnapshotTripDto>());
+            return json.Serialize(new CitySnapshotDto(real.RequestId, stateVersion, real.ServerTimeUtc, real.ContentVersion, cityDto, real.Settlement));
         }
 
         /// <summary>After each test: ends open commands and destroys everything.</summary>
@@ -253,11 +292,8 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(_transport.Requests[0].JsonBody, Does.Contain("\"workers\":1"));
             Assert.That(_transport.Requests[0].JsonBody, Does.Contain("\"buildingId\":" + SawmillId));
 
-            string answer = Fixture("snapshot-city-producing.json")
-                .Replace("\"stateVersion\":25", "\"stateVersion\":26")
-                // One worker finishes the 138 labor left at second 197 after 138 s, so the cycle ends at 335: the engine refuses a city whose end is another.
-                .Replace("\"assignedWorkers\":3,\"maxWorkers\":3,\"phase\":\"Producing\",\"phaseStartedAt\":183,\"phaseEndsAt\":243",
-                    "\"assignedWorkers\":1,\"maxWorkers\":3,\"phase\":\"Producing\",\"phaseStartedAt\":183,\"phaseEndsAt\":335");
+            // One worker does the 180 labor left at second 183 in 180 s, so the cycle ends at 363: the engine refuses a city whose end is another.
+            string answer = InspectorCity(220, 1, 363, 11);
             _transport.Respond(200, answer);
             yield return WaitUntil(() => _sender.Pending.Count == 0);
 
@@ -294,7 +330,7 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(LabelOf(BuildingInspector.WorkersName).text, Is.EqualTo("2 / 3"));
         }
 
-        /// <summary>The fixture city cannot pay the sawmill's upgrade: the section says what is missing, and pressing the button sends nothing.</summary>
+        /// <summary>The test city cannot pay the sawmill's upgrade coins: the section says what is missing, and pressing the button sends nothing.</summary>
         [Test]
         public void Upgrade_WhenUnaffordable_IsOffWithItsReason()
         {
@@ -304,7 +340,7 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(LabelOf(BuildingInspector.UpgradeCostName).text, Is.EqualTo("Cost: 250 Coins, 30 Planks"));
             Assert.That(LabelOf(BuildingInspector.UpgradeTimeName).text, Is.EqualTo("Takes 3m"));
             Assert.That(LabelOf(BuildingInspector.UpgradeGainName).text, Is.EqualTo("Max workers 3 → 6"));
-            Assert.That(LabelOf(BuildingInspector.UpgradeNoteName).text, Is.EqualTo("Not enough Coins, Planks"));
+            Assert.That(LabelOf(BuildingInspector.UpgradeNoteName).text, Is.EqualTo("Not enough Coins"), "only the coins are paid at once (CR-0008)");
             Assert.That(ButtonOf(BuildingInspector.UpgradeName).enabledSelf, Is.False);
 
             _inspector.PressUpgrade();
@@ -313,7 +349,7 @@ namespace CityBuilder.Client.Tests.PlayMode
         }
 
         /// <summary>
-        /// With the items in the stock Upgrade sends one request however many times it is pressed, shows that it is requested, and works again
+        /// With the coins in the purse Upgrade sends one request however many times it is pressed, shows that it is requested, and works again
         /// when the server refuses it.
         /// </summary>
         [UnityTest]
@@ -322,9 +358,7 @@ namespace CityBuilder.Client.Tests.PlayMode
             _flow.Dispose();
             _cancel.Cancel();
             Object.DestroyImmediate(_host);
-            string rich = Fixture("snapshot-city-producing.json").Replace(
-                "\"inventory\":{\"coins\":220,\"logs\":10,\"planks\":10}", "\"inventory\":{\"coins\":700,\"logs\":10,\"planks\":30}");
-            yield return CreateFlowFor(rich);
+            yield return CreateFlowFor(InspectorCity(700, 3, 243, 10));
             TapTile(2, 0);
             Assert.That(ButtonOf(BuildingInspector.UpgradeName).enabledSelf, Is.True);
 

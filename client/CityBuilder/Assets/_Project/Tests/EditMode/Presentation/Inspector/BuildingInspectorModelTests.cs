@@ -45,11 +45,44 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Inspector
             string[]? research = null,
             CommandAvailability availability = default)
         {
-            CityState city = HudTestData.City(clock, coins, logs, planks, buildings, research);
+            // Since CR-0008 a producer works from its own store: the goods go there when building 1's level holds them, else to a warehouse.
+            var placed = new Building[buildings.Length];
+            for (int index = 0; index < buildings.Length; index++)
+            {
+                placed[index] = buildings[index].Id == 1 ? Stocked(buildings[index], ref logs, ref planks) : buildings[index];
+            }
+
+            CityState city = HudTestData.City(clock, coins, logs, planks, placed, research);
             Assert.That(city.TryGetBuilding(1, out Building? building), Is.True);
             BuildingInspectorModel? model = BuildingInspectorModel.Create(_content, city, building!, pending, availability);
             Assert.That(model, Is.Not.Null);
             return model!;
+        }
+
+        /// <summary>
+        /// A copy of <paramref name="building"/> whose own store holds the logs and planks its level stores; what it took is set to 0, so the
+        /// caller puts only the rest elsewhere.
+        /// </summary>
+        private Building Stocked(Building building, ref long logs, ref long planks)
+        {
+            Assert.That(_content.TryGetBuilding(building.TypeId, out BuildingDefinition? definition), Is.True);
+            BuildingLevelDefinition level = definition!.GetLevel(building.Level);
+            var store = new List<KeyValuePair<ItemId, long>>();
+            if (logs > 0 && level.TryGetStorageLimit(new ItemId("logs"), out _))
+            {
+                store.Add(new KeyValuePair<ItemId, long>(new ItemId("logs"), logs));
+                logs = 0;
+            }
+
+            if (planks > 0 && level.TryGetStorageLimit(new ItemId("planks"), out _))
+            {
+                store.Add(new KeyValuePair<ItemId, long>(new ItemId("planks"), planks));
+                planks = 0;
+            }
+
+            return new Building(
+                building.Id, building.TypeId, building.X, building.Y, building.Level, building.AssignedWorkers, building.Phase, building.PhaseStartedAt,
+                building.PhaseEndsAt, building.TargetLevel, building.CycleLabor, building.LaborRemaining, building.SegmentStartedAt, store);
         }
 
         /// <summary>An idle building of <paramref name="typeId"/> with id 1 at <paramref name="level"/> with <paramref name="workers"/> workers.</summary>
@@ -329,14 +362,15 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Inspector
             Assert.That(Model(new[] { BusySawmill(), Cottage() }, planks: 30).CanUpgrade, Is.True);
         }
 
-        /// <summary>An upgrade the stock cannot pay says what is missing, every item.</summary>
+        /// <summary>An upgrade the purse cannot pay says the coins are missing; goods never stop it, they are delivered later (CR-0008).</summary>
         [Test]
         public void Upgrade_WithoutTheItems_NamesWhatIsMissing()
         {
-            Assert.That(Model(new[] { BusySawmill(), Cottage() }, planks: 10).UpgradeNote, Is.EqualTo("Not enough Planks"));
-            BuildingInspectorModel both = Model(new[] { BusySawmill(), Cottage() }, coins: 100, planks: 0);
-            Assert.That(both.UpgradeNote, Is.EqualTo("Not enough Coins, Planks"));
-            Assert.That(both.CanUpgrade, Is.False);
+            // The upgrade costs 250 coins and 30 planks; since CR-0008 only the coins are paid at once and the planks are delivered later.
+            Assert.That(Model(new[] { BusySawmill(), Cottage() }, planks: 0).UpgradeNote, Is.Empty, "goods are delivered later");
+            BuildingInspectorModel poor = Model(new[] { BusySawmill(), Cottage() }, coins: 100, planks: 0);
+            Assert.That(poor.UpgradeNote, Is.EqualTo("Not enough Coins"));
+            Assert.That(poor.CanUpgrade, Is.False);
         }
 
         /// <summary>No free builder comes before missing items, as the server checks.</summary>

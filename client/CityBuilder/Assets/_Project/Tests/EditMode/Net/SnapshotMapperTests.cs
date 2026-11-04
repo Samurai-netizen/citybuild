@@ -206,7 +206,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
 
             Assert.That(city.TryGetBuilding(1, out Building? house), Is.True);
             Assert.That((house!.Phase, house.Level, house.TargetLevel), Is.EqualTo((BuildingPhase.Upgrading, 1, 2)));
-            CityBuilder.Simulation.Settlement.Simulator.Advance(city, content, 11);
+            CityBuilder.Simulation.Settlement.Simulator.Advance(city, content, 14);
             Assert.That((house.Phase, house.Level, house.TargetLevel), Is.EqualTo((BuildingPhase.Idle, 2, 0)));
         }
 

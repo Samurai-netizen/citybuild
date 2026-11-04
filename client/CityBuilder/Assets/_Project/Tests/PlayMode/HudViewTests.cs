@@ -78,8 +78,8 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(chips.Count, Is.EqualTo(3));
             Assert.That(chips[0].Q<Label>(HudView.ChipStockName).text, Is.EqualTo("700"));
             Assert.That(chips[0].Q<Label>(HudView.ChipCapName).style.display.value, Is.EqualTo(DisplayStyle.None));
-            Assert.That(chips[1].Q<Label>(HudView.ChipStockName).text, Is.EqualTo("40"));
-            Assert.That(chips[1].Q<Label>(HudView.ChipCapName).text, Is.EqualTo("/ 500"));
+            Assert.That(chips[1].Q<Label>(HudView.ChipStockName).text, Is.EqualTo("0"), "a new city has no goods (CR-0008 D2)");
+            Assert.That(chips[1].Q<Label>(HudView.ChipCapName).style.display.value, Is.EqualTo(DisplayStyle.None), "no city-wide cap (CR-0008)");
             Assert.That(chips[1].Q<Label>(HudView.ChipRateName).text, Is.EqualTo("0/h"));
         }
 

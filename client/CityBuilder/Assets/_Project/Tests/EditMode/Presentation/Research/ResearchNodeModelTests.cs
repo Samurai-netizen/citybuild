@@ -66,7 +66,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Research
         {
             ResearchNodeModel node = Node("storehouses", City(500, 100, 0, new[] { "trade_charter" }));
 
-            Assert.That(node.EffectText, Is.EqualTo("+250 Logs storage, +250 Planks storage"));
+            Assert.That(node.EffectText, Is.EqualTo("+40 Logs storage, +40 Planks storage"));
             Assert.That(node.CostText, Is.EqualTo("Cost: 300 Coins, 50 Logs"));
         }
 
@@ -110,14 +110,16 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Research
         [Test]
         public void Available_WithShortStock_NamesWhatIsMissing()
         {
+            // Frame saw costs 400 coins and 30 planks; since CR-0008 only the coins are paid at once, the planks are delivered later.
             ResearchNodeModel coinsOnly = Node("sharp_axes", City(249));
-            ResearchNodeModel both = Node("frame_saw", City(399, 0, 29, new[] { "sharp_axes" }));
-            ResearchNodeModel planksOnly = Node("frame_saw", City(400, 0, 29, new[] { "sharp_axes" }));
+            ResearchNodeModel coinsShort = Node("frame_saw", City(399, 0, 0, new[] { "sharp_axes" }));
+            ResearchNodeModel noPlanks = Node("frame_saw", City(400, 0, 0, new[] { "sharp_axes" }));
 
             Assert.That(coinsOnly.ButtonEnabled, Is.False);
             Assert.That(coinsOnly.ButtonNote, Is.EqualTo("Not enough Coins"));
-            Assert.That(both.ButtonNote, Is.EqualTo("Not enough Coins, Planks"));
-            Assert.That(planksOnly.ButtonNote, Is.EqualTo("Not enough Planks"));
+            Assert.That(coinsShort.ButtonNote, Is.EqualTo("Not enough Coins"));
+            Assert.That(noPlanks.ButtonNote, Is.Empty, "goods are delivered to the science building later");
+            Assert.That(noPlanks.ButtonEnabled, Is.True);
         }
 
         /// <summary>While another research runs the button is off with the busy note, before the cost or a prerequisite is judged (the server's order).</summary>
