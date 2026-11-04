@@ -1,0 +1,1 @@
+{"type":"urn:citybuilder:error:amount-mode-locked","title":"Amount mode locked","status":422,"detail":"This kind of amount needs a research first; use a preset such as \"all\" or \"half\".","code":"AMOUNT_MODE_LOCKED","requestId":"55f77e03-c6e8-4cd1-971a-b27d1c58e8ae","traceId":"00-8a74f8677069e51dfdc36fd2ce6c5dd9-ef98fda68ade8ecb-00"}
