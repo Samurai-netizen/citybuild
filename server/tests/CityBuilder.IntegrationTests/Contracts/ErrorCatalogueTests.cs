@@ -42,6 +42,7 @@ public sealed class ErrorCatalogueTests(ApiFactory factory) : IClassFixture<ApiF
         { "AMOUNT_MODE_LOCKED", 422 },
         { "ITEM_NOT_ACCEPTED", 422 },
         { "NOTHING_TO_CARRY", 422 },
+        { "INVALID_ROUTE", 422 },
         { "IDEMPOTENCY_CONFLICT", 409 },
         { "RATE_LIMITED", 429 },
         { "CONCURRENCY_CONFLICT", 409 },

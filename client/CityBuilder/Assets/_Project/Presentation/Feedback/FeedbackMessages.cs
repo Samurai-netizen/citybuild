@@ -121,6 +121,9 @@ namespace CityBuilder.Client.Presentation.Feedback
                 case ApiErrorCodes.NothingToCarry:
                     message = "There is nothing of that to carry";
                     return true;
+                case ApiErrorCodes.InvalidRoute:
+                    message = "That route doesn't work. Check its stops";
+                    return true;
                 case ApiErrorCodes.IdempotencyConflict:
                     message = "That command was already used. Try again";
                     return true;

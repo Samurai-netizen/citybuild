@@ -157,7 +157,7 @@ namespace CityBuilder.Simulation.State
 
         /// <summary>
         /// The city's total of an item (<c>04</c> section 16): for the currency the purse; for a good the sum of every building's store and of
-        /// every walker's load (trips; couriers from part F).
+        /// every walker's load (trips and couriers).
         /// </summary>
         /// <param name="city">The city.</param>
         /// <param name="content">The game content.</param>
@@ -184,6 +184,12 @@ namespace CityBuilder.Simulation.State
                 {
                     total = checked(total + trips[index].Quantity);
                 }
+            }
+
+            IReadOnlyList<Courier> couriers = city.Couriers;
+            for (int index = 0; index < couriers.Count; index++)
+            {
+                total = checked(total + couriers[index].CarriedOf(item));
             }
 
             return total;

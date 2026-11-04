@@ -13,7 +13,8 @@ internal static class CityDump
     /// <summary>
     /// The city as text: a line with clock, era, next id and the purse, one per building (every stored field, its store and its needs), the
     /// completed research, the active research (with its needs), one per road and, once the city had a trip, the next trip id and one line per
-    /// trip under way (a city that never had one has next trip id 1). Two cities with the same text have the same stored values.
+    /// trip under way (a city that never had one has next trip id 1), then one line per route and per courier (CR-0008-T1 part F). Two cities
+    /// with the same text have the same stored values.
     /// </summary>
     public static string Describe(CityState city)
     {
@@ -47,7 +48,31 @@ internal static class CityDump
             text.Append(CultureInfo.InvariantCulture, $"\ntrip {trip.Id} {trip.SourceId}->{trip.TargetId} {trip.Item}={trip.Quantity} {trip.DepartedAt}..{trip.ArrivesAt}");
         }
 
+        foreach (Route route in city.Routes)
+        {
+            text.Append(CultureInfo.InvariantCulture, $"\nroute {route.StationId}/{route.Slot}:");
+            text.Append(string.Concat(route.Stops.Select(stop => " " + stop.BuildingId.ToString(CultureInfo.InvariantCulture)
+                + "[" + string.Join("; ", stop.Actions.Select(action => $"{action.Kind} {action.Item} {action.Amount}")) + "]")));
+        }
+
+        foreach (Courier courier in city.Couriers)
+        {
+            text.Append(CourierLine(courier));
+        }
+
         return text.ToString();
+    }
+
+    /// <summary>
+    /// One courier as <see cref="Describe"/> writes it: <c>courier 4/1 Walking to=2 1000..1012 stamina=600 load: wood@2=3</c> (the stop only
+    /// while walking, times only on a walk, load parts by good, then origin).
+    /// </summary>
+    public static string CourierLine(Courier courier)
+    {
+        string walk = courier.State == CourierState.Walking ? string.Create(CultureInfo.InvariantCulture, $" to={courier.ToStop}") : string.Empty;
+        string times = courier.DepartedAt.HasValue ? $" {Time(courier.DepartedAt)}..{Time(courier.ArrivesAt)}" : string.Empty;
+        string loads = string.Concat(courier.Loads.Select(part => string.Create(CultureInfo.InvariantCulture, $" {part.Item}@{part.FromId}={part.Quantity}")));
+        return string.Create(CultureInfo.InvariantCulture, $"\ncourier {courier.StationId}/{courier.Slot} {courier.State}{walk}{times} stamina={courier.Stamina} load:{loads}");
     }
 
     /// <summary>Quantities as <c> logs=3 planks=1</c> in their (ordinal item) order; empty for none.</summary>

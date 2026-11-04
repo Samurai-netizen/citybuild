@@ -79,6 +79,9 @@ namespace CityBuilder.Client.Net
         /// <summary>422: the trip's amount gives nothing: the source holds none of the item (CR-0008).</summary>
         public const string NothingToCarry = "NOTHING_TO_CARRY";
 
+        /// <summary>422: a route's slot, stops or actions break the route rules (CR-0008).</summary>
+        public const string InvalidRoute = "INVALID_ROUTE";
+
         /// <summary>409: the same request id was sent with a different command.</summary>
         public const string IdempotencyConflict = "IDEMPOTENCY_CONFLICT";
 

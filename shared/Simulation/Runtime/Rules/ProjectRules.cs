@@ -14,9 +14,10 @@ namespace CityBuilder.Simulation.Rules
         /// <summary>
         /// Starts a building's upgrade at <paramref name="time"/> (<c>04</c> section 8, starting an upgrade): a running cycle (frozen or not)
         /// ends without output and its inputs go back into the building's own store, even above its limit; then the building is upgrading to
-        /// the next level for that level's upgrade seconds. Returns the refunded inputs, or null when no cycle ran.
+        /// the next level for that level's upgrade seconds; a courier station's couriers stop (their loads go back). Returns the refunded inputs,
+        /// or null when no cycle ran.
         /// </summary>
-        public static IReadOnlyList<ItemQuantity>? StartUpgrade(GameContent content, Building building, long time)
+        public static IReadOnlyList<ItemQuantity>? StartUpgrade(CityState city, GameContent content, Building building, long time)
         {
             IReadOnlyList<ItemQuantity>? refunded = null;
             if (building.Phase == BuildingPhase.Producing)
@@ -28,6 +29,11 @@ namespace CityBuilder.Simulation.Rules
 
             BuildingLevelDefinition next = CityQueries.DefinitionOf(content, building.TypeId).GetLevel(building.Level + 1);
             building.StartUpgrade(time, checked(time + next.UpgradeSeconds));
+            if (CityQueries.DefinitionOf(content, building.TypeId).Kind == BuildingKind.CourierStation)
+            {
+                CourierRules.StopCouriersOf(city, building.Id);
+            }
+
             return refunded;
         }
     }

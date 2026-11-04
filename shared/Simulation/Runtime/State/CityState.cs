@@ -8,7 +8,7 @@ namespace CityBuilder.Simulation.State
 {
     /// <summary>
     /// Everything that is stored about one city (<c>core-instructions/04-simulation-model.md</c>, sections 3 to 5, 16 and 17): its clock, era,
-    /// purse, buildings (with their stores and projects), research, roads and trips (section 18). Values derived from it and the content (workers, builders,
+    /// purse, buildings (with their stores and projects), research, roads, trips (section 18), couriers and routes (section 19). Values derived from it and the content (workers, builders,
     /// reservations, limits, labor, unlocks, city totals) are never stored;
     /// <see cref="CityQueries"/> computes them. Only the engine changes a city, through <see cref="Rules.CityRules"/> and
     /// <see cref="Settlement.Simulator"/>. Every list is sorted, so iterating it is deterministic.
@@ -23,6 +23,10 @@ namespace CityBuilder.Simulation.State
         private readonly List<RoadTile> _roads;
         /// <summary>The trips under way, sorted by id; each between two buildings of the city.</summary>
         private readonly List<Trip> _trips;
+        /// <summary>The couriers, sorted by (station, slot), each pair once; each of a building of the city.</summary>
+        private readonly List<Courier> _couriers;
+        /// <summary>The routes, sorted by (station, slot), each pair once; every stop at a building of the city.</summary>
+        private readonly List<Route> _routes;
 
         /// <summary>
         /// Restores a city with every value, for example from the database. The city takes the building objects over: the caller must not keep
@@ -38,6 +42,12 @@ namespace CityBuilder.Simulation.State
         /// <param name="roads">The roads, in any order: one per tile, none on a building's tile; null for none.</param>
         /// <param name="trips">The trips under way, in any order: unique ids below <paramref name="nextTripId"/>, between buildings of the city; null for none.</param>
         /// <param name="nextTripId">The id the next trip gets, above every trip's id, at least 1.</param>
+        /// <param name="couriers">
+        /// The couriers, in any order: each (station, slot) once, of a building of the city; a walking one's route exists and has its stop; every
+        /// load part from a building of the city; null for none. That a station is a courier station with one courier per worker needs the
+        /// content (invariant 9, the property tests).
+        /// </param>
+        /// <param name="routes">The routes, in any order: each (station, slot) once, every stop at a building of the city; null for none.</param>
         /// <exception cref="ArgumentNullException">A list or a building is null.</exception>
         /// <exception cref="ArgumentException">The values don't form a valid city; the message says which rule they break.</exception>
         public CityState(
@@ -50,7 +60,9 @@ namespace CityBuilder.Simulation.State
             ActiveResearch? activeResearch,
             IEnumerable<RoadTile>? roads = null,
             IEnumerable<Trip>? trips = null,
-            int nextTripId = 1)
+            int nextTripId = 1,
+            IEnumerable<Courier>? couriers = null,
+            IEnumerable<Route>? routes = null)
         {
             if (clock < 0 || era < 1 || nextBuildingId < 1 || purse < 0 || nextTripId < 1)
             {
@@ -76,10 +88,39 @@ namespace CityBuilder.Simulation.State
                 }
             }
 
+            _routes = SortedByStationAndSlot(routes ?? Array.Empty<Route>(), route => (route.StationId, route.Slot), nameof(routes));
+            foreach (Route route in _routes)
+            {
+                RequireBuilding(route.StationId, nameof(routes));
+                foreach (RouteStop stop in route.Stops)
+                {
+                    RequireBuilding(stop.BuildingId, nameof(routes));
+                }
+            }
+
+            _couriers = SortedByStationAndSlot(couriers ?? Array.Empty<Courier>(), courier => (courier.StationId, courier.Slot), nameof(couriers));
+            foreach (Courier courier in _couriers)
+            {
+                RequireBuilding(courier.StationId, nameof(couriers));
+                foreach (CourierLoad load in courier.Loads)
+                {
+                    RequireBuilding(load.FromId, nameof(couriers));
+                }
+
+                if (courier.State == CourierState.Walking
+                    && !(TryGetRoute(courier.StationId, courier.Slot, out Route? route) && courier.ToStop <= route.Stops.Count))
+                {
+                    throw new ArgumentException(
+                        FormattableString.Invariant($"Courier {courier.StationId}/{courier.Slot} walks to stop {courier.ToStop}, which its slot's route doesn't have."), nameof(couriers));
+                }
+            }
+
             Buildings = _buildings.AsReadOnly();
             CompletedResearch = _completedResearch.AsReadOnly();
             Roads = _roads.AsReadOnly();
             Trips = _trips.AsReadOnly();
+            Couriers = _couriers.AsReadOnly();
+            Routes = _routes.AsReadOnly();
         }
 
         /// <summary>The city clock in seconds: how much game time the city has lived. It never decreases.</summary>
@@ -114,6 +155,66 @@ namespace CityBuilder.Simulation.State
 
         /// <summary>The id the next trip gets. Ids are never reused.</summary>
         public int NextTripId { get; private set; }
+
+        /// <summary>The couriers, by station id, then slot (<c>04</c> section 19); the order at one second.</summary>
+        public IReadOnlyList<Courier> Couriers { get; }
+
+        /// <summary>The routes, by station id, then slot (<c>04</c> section 19).</summary>
+        public IReadOnlyList<Route> Routes { get; }
+
+        /// <summary>Looks up the route of a station's slot.</summary>
+        /// <param name="stationId">The courier station's building id.</param>
+        /// <param name="slot">The slot.</param>
+        /// <param name="route">The route, when the slot has one.</param>
+        /// <returns>True when the slot has a route.</returns>
+        public bool TryGetRoute(int stationId, int slot, [NotNullWhen(true)] out Route? route)
+        {
+            int index = FindByStationAndSlot(_routes, stationId, slot, r => (r.StationId, r.Slot));
+            route = index >= 0 ? _routes[index] : null;
+            return route is not null;
+        }
+
+        /// <summary>The index in <see cref="Couriers"/> of the courier of a station's slot, or the bitwise complement of where it would go.</summary>
+        internal int FindCourier(int stationId, int slot) => FindByStationAndSlot(_couriers, stationId, slot, c => (c.StationId, c.Slot));
+
+        /// <summary>Adds a courier; the caller checks that its slot has none.</summary>
+        internal void AddCourier(Courier courier)
+        {
+            int index = FindCourier(courier.StationId, courier.Slot);
+            if (index >= 0)
+            {
+                throw new InvalidOperationException(FormattableString.Invariant($"Station {courier.StationId} already has a courier in slot {courier.Slot}."));
+            }
+
+            _couriers.Insert(~index, courier);
+        }
+
+        /// <summary>Removes the courier at <paramref name="index"/> in <see cref="Couriers"/>; the caller has given its load back.</summary>
+        internal void RemoveCourierAt(int index) => _couriers.RemoveAt(index);
+
+        /// <summary>Sets a slot's route: replaces the one it has, or adds it.</summary>
+        internal void SetRoute(Route route)
+        {
+            int index = FindByStationAndSlot(_routes, route.StationId, route.Slot, r => (r.StationId, r.Slot));
+            if (index >= 0)
+            {
+                _routes[index] = route;
+            }
+            else
+            {
+                _routes.Insert(~index, route);
+            }
+        }
+
+        /// <summary>Clears a slot's route, if it has one.</summary>
+        internal void ClearRoute(int stationId, int slot)
+        {
+            int index = FindByStationAndSlot(_routes, stationId, slot, r => (r.StationId, r.Slot));
+            if (index >= 0)
+            {
+                _routes.RemoveAt(index);
+            }
+        }
 
         /// <summary>Whether the city has completed a research node.</summary>
         /// <param name="id">The research node.</param>
@@ -406,6 +507,65 @@ namespace CityBuilder.Simulation.State
             }
 
             return sorted;
+        }
+
+        /// <summary>Throws when the city has no building with the id (a restored courier or route names one).</summary>
+        private void RequireBuilding(int id, string parameter)
+        {
+            if (IndexOfBuilding(id) < 0)
+            {
+                throw new ArgumentException(FormattableString.Invariant($"A courier or route names building {id}, which the city doesn't have."), parameter);
+            }
+        }
+
+        /// <summary>The restoring constructor's couriers or routes, checked and sorted by (station, slot): none null, each pair once.</summary>
+        private static List<T> SortedByStationAndSlot<T>(IEnumerable<T> values, Func<T, (int Station, int Slot)> key, string parameter)
+            where T : class
+        {
+            var sorted = new List<T>();
+            foreach (T value in values)
+            {
+                sorted.Add(value ?? throw new ArgumentNullException(parameter, "An entry of the list is null."));
+            }
+
+            sorted.Sort((left, right) => key(left).CompareTo(key(right)));
+            for (int index = 1; index < sorted.Count; index++)
+            {
+                if (key(sorted[index]) == key(sorted[index - 1]))
+                {
+                    throw new ArgumentException(FormattableString.Invariant($"Station {key(sorted[index]).Station}, slot {key(sorted[index]).Slot} is listed twice."), parameter);
+                }
+            }
+
+            return sorted;
+        }
+
+        /// <summary>The index of a station's slot in a list sorted by (station, slot), or the bitwise complement of where it would go.</summary>
+        private static int FindByStationAndSlot<T>(List<T> list, int stationId, int slot, Func<T, (int Station, int Slot)> key)
+        {
+            int low = 0;
+            int high = list.Count - 1;
+            while (low <= high)
+            {
+                // Overflow-free midpoint; the list is sorted by (station, slot).
+                int middle = low + ((high - low) / 2);
+                int order = key(list[middle]).CompareTo((stationId, slot));
+                if (order == 0)
+                {
+                    return middle;
+                }
+
+                if (order < 0)
+                {
+                    low = middle + 1;
+                }
+                else
+                {
+                    high = middle - 1;
+                }
+            }
+
+            return ~low;
         }
 
         /// <summary>The restoring constructor's trips, checked and sorted by id: none null, every id unique and below the next trip id.</summary>

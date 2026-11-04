@@ -35,7 +35,7 @@ namespace CityBuilder.Simulation.Settlement
                 left = checked(left - taken);
                 if (building.Needs.Count == 0)
                 {
-                    StartBuildingProject(content, building, buildingIndex, time, report, timers);
+                    StartBuildingProject(city, content, building, buildingIndex, time, report, timers);
                 }
             }
 
@@ -68,7 +68,7 @@ namespace CityBuilder.Simulation.Settlement
         /// (<c>04</c> section 8, starting an upgrade), and puts its timer into the advance's queue in place of a running cycle's.
         /// </summary>
         private static void StartBuildingProject(
-            GameContent content, Building building, int buildingIndex, long time, SettlementReportBuilder report, BuildingTimerQueue timers)
+            CityState city, GameContent content, Building building, int buildingIndex, long time, SettlementReportBuilder report, BuildingTimerQueue timers)
         {
             if (building.Phase == BuildingPhase.Constructing)
             {
@@ -76,7 +76,7 @@ namespace CityBuilder.Simulation.Settlement
             }
             else
             {
-                IReadOnlyList<ItemQuantity>? refunded = ProjectRules.StartUpgrade(content, building, time);
+                IReadOnlyList<ItemQuantity>? refunded = ProjectRules.StartUpgrade(city, content, building, time);
                 if (refunded is not null)
                 {
                     report.AddRefunded(refunded);

@@ -139,7 +139,7 @@ namespace CityBuilder.Simulation.Rules
             IReadOnlyList<ItemQuantity>? refunded = null;
             if (goods.Count == 0)
             {
-                refunded = ProjectRules.StartUpgrade(content, building, city.Clock);
+                refunded = ProjectRules.StartUpgrade(city, content, building, city.Clock);
             }
             else
             {
@@ -153,7 +153,8 @@ namespace CityBuilder.Simulation.Rules
         /// Sets the number of workers on a producer or a courier station (an absolute count; 0 pauses it). On a running cycle the progress so far is kept: the labor
         /// done with the old count is taken off, a new labor segment starts at the clock, and the cycle ends after
         /// <c>CeilDiv(laborRemaining, workers)</c> seconds, or is frozen (no end) with 0 workers (<c>04</c> section 3). On an idle or upgrading
-        /// building, and on a courier station, only the count changes (its couriers arrive with CR-0008-T1 part F, decision 33).
+        /// building only the count changes. On a courier station each new worker is a courier at the station and each removed one the highest
+        /// slot's courier, whose load goes back (<c>04</c> section 19, <see cref="CourierRules"/>).
         /// </summary>
         /// <param name="city">The city, settled to now.</param>
         /// <param name="content">The game content.</param>
@@ -197,7 +198,13 @@ namespace CityBuilder.Simulation.Rules
                 return MutationResult.Rejected(MutationErrorCode.InsufficientWorkers);
             }
 
+            int before = building.AssignedWorkers;
             building.AssignWorkers(workers, city.Clock);
+            if (definition.Kind == BuildingKind.CourierStation)
+            {
+                CourierRules.StaffStation(city, level, building, before);
+            }
+
             return MutationResult.Ok;
         }
 

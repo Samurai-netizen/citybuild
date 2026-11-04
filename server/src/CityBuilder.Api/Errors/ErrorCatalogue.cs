@@ -115,6 +115,11 @@ public static class ErrorCatalogue
     public static readonly ApiError NothingToCarry = new(
         "NOTHING_TO_CARRY", StatusCodes.Status422UnprocessableEntity, "Nothing to carry", "The source building has none of this item.");
 
+    /// <summary>A route breaks the content's route rules: its slot, its number of stops or of actions, or two consecutive stops at one building (CR-0008).</summary>
+    public static readonly ApiError InvalidRoute = new(
+        "INVALID_ROUTE", StatusCodes.Status422UnprocessableEntity, "Invalid route",
+        "The route's slot, stops or actions break the station's or the content's route rules.");
+
     /// <summary>A request id that was used before with another command or payload.</summary>
     public static readonly ApiError IdempotencyConflict = new(
         "IDEMPOTENCY_CONFLICT", StatusCodes.Status409Conflict, "Request id already used",
@@ -163,7 +168,7 @@ public static class ErrorCatalogue
         AuthenticationRequired, InvalidArgument, UnknownBuildingType, BuildingLocked, OutOfBounds, TileOccupied, InsufficientResource,
         InsufficientWorkers, WorkerLimit, NoFreeBuilder, BuildingNotFound, BuildingBusy, MaxLevel, UnknownResearch, ResearchLocked,
         ResearchInProgress, ResearchCompleted, RoadNotFound, BuildingLimit, NoScienceBuilding, UnknownItem, AmountModeLocked, ItemNotAccepted,
-        NothingToCarry, IdempotencyConflict, RateLimited, ConcurrencyConflict, InternalError, NotFound, MethodNotAllowed, UnsupportedMediaType,
+        NothingToCarry, InvalidRoute, IdempotencyConflict, RateLimited, ConcurrencyConflict, InternalError, NotFound, MethodNotAllowed, UnsupportedMediaType,
         UnsupportedClientVersion,
     ];
 
@@ -197,6 +202,7 @@ public static class ErrorCatalogue
         MutationErrorCode.AmountModeLocked => AmountModeLocked,
         MutationErrorCode.ItemNotAccepted => ItemNotAccepted,
         MutationErrorCode.NothingToCarry => NothingToCarry,
+        MutationErrorCode.InvalidRoute => InvalidRoute,
         _ => throw new InvalidOperationException($"No API error for the engine code {code}."),
     };
 }

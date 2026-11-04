@@ -37,6 +37,7 @@ public sealed class CommandErrorMappingTests
         { MutationErrorCode.AmountModeLocked, "AMOUNT_MODE_LOCKED", 422 },
         { MutationErrorCode.ItemNotAccepted, "ITEM_NOT_ACCEPTED", 422 },
         { MutationErrorCode.NothingToCarry, "NOTHING_TO_CARRY", 422 },
+        { MutationErrorCode.InvalidRoute, "INVALID_ROUTE", 422 },
     };
 
     /// <summary>Each engine code answers with the API code and status of the contract's table, and the type made from the code.</summary>

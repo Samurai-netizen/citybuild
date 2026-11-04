@@ -61,8 +61,8 @@ internal static class CityFixture
 
     /// <summary>
     /// A city at <paramref name="clock"/> (default 1000) in era 1. The next building id defaults to one above the highest id, the next trip id
-    /// to one above the highest trip's; the purse to 0; the roads and trips to nothing. Goods live in the buildings' stores (the building
-    /// helpers' <c>store</c>) and on trips.
+    /// to one above the highest trip's; the purse to 0; the roads, trips, couriers and routes to nothing. Goods live in the buildings' stores
+    /// (the building helpers' <c>store</c>), on trips and with couriers.
     /// </summary>
     public static CityState City(
         long clock = 1000,
@@ -74,7 +74,9 @@ internal static class CityFixture
         int? nextBuildingId = null,
         RoadTile[]? roads = null,
         Trip[]? trips = null,
-        int? nextTripId = null)
+        int? nextTripId = null,
+        Courier[]? couriers = null,
+        Route[]? routes = null)
     {
         buildings ??= [];
         trips ??= [];
@@ -89,8 +91,34 @@ internal static class CityFixture
             activeResearch,
             roads,
             trips,
-            nextTripId ?? (trips.Length == 0 ? 1 : trips.Max(trip => trip.Id) + 1));
+            nextTripId ?? (trips.Length == 0 ? 1 : trips.Max(trip => trip.Id) + 1),
+            couriers,
+            routes);
     }
+
+    /// <summary>A courier at its station with <paramref name="stamina"/> and the given load parts (good, the building it came from, quantity).</summary>
+    public static Courier AtStation(int stationId, int slot, long stamina = 600, params (string Item, int FromId, long Quantity)[] load) =>
+        new(stationId, slot, CourierState.AtStation, 0, null, null, stamina, Load(load));
+
+    /// <summary>A courier walking to stop <paramref name="toStop"/> of its route from <paramref name="departedAt"/> to <paramref name="arrivesAt"/>.</summary>
+    public static Courier Walking(
+        int stationId, int slot, int toStop, long departedAt, long arrivesAt, long stamina = 600, params (string Item, int FromId, long Quantity)[] load) =>
+        new(stationId, slot, CourierState.Walking, toStop, departedAt, arrivesAt, stamina, Load(load));
+
+    /// <summary>A route of a station's slot over stops written as (building, actions), each action as (take?, good, amount text).</summary>
+    public static Route RouteOf(int stationId, int slot, params (int BuildingId, (bool Take, string Item, string Amount)[] Actions)[] stops) =>
+        new(stationId, slot, Stops(stops));
+
+    /// <summary>Stops written as (building, actions), each action as (take?, good, amount text), for a route or for <c>SetRoute</c>.</summary>
+    public static RouteStop[] Stops(params (int BuildingId, (bool Take, string Item, string Amount)[] Actions)[] stops) =>
+        stops.Select(stop => new RouteStop(stop.BuildingId, stop.Actions.Select(action => new RouteAction(
+            action.Take ? RouteActionKind.Take : RouteActionKind.Put,
+            new ItemId(action.Item),
+            Amount.TryParse(action.Amount, out Amount? amount) ? amount : throw new ArgumentException("Not an amount: " + action.Amount))))).ToArray();
+
+    /// <summary>Load parts written as (good, the building it came from, quantity).</summary>
+    private static CourierLoad[] Load((string Item, int FromId, long Quantity)[] load) =>
+        load.Select(part => new CourierLoad(new ItemId(part.Item), part.FromId, part.Quantity)).ToArray();
 
     /// <summary>A trip under way: <paramref name="quantity"/> of <paramref name="item"/> from building <paramref name="sourceId"/> to <paramref name="targetId"/>.</summary>
     public static Trip Trip(int id, int sourceId, int targetId, string item, long quantity, long departedAt, long arrivesAt) =>

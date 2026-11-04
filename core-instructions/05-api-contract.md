@@ -244,6 +244,7 @@ There is no "claim" command, because production and research complete on their o
 | `AMOUNT_MODE_LOCKED` | 422 | A percentage or exact amount before the research that unlocks it (CR-0008) |
 | `ITEM_NOT_ACCEPTED` | 422 | The trip's target neither needs the item for a project nor stores it (CR-0008) |
 | `NOTHING_TO_CARRY` | 422 | The trip's amount gives nothing: the source holds none of the item (CR-0008) |
+| `INVALID_ROUTE` | 422 | A route's slot, stop count, action count or consecutive stops break the station's or the content's route rules (CR-0008) |
 | `IDEMPOTENCY_CONFLICT` | 409 | Same `requestId`, different payload |
 | `RATE_LIMITED` | 429 | Too many requests |
 | `CONCURRENCY_CONFLICT` | 409 | Lock timeout or version mismatch; safe to retry |
@@ -252,9 +253,6 @@ There is no "claim" command, because production and research complete on their o
 | `METHOD_NOT_ALLOWED` | 405 | A method the endpoint doesn't take |
 | `UNSUPPORTED_MEDIA_TYPE` | 415 | A body that isn't `application/json`, or has no `Content-Type` |
 | `UNSUPPORTED_CLIENT_VERSION` | 426 | The `X-Client-Version` build is no longer supported; update the game. *Reserved (M0-58): the server refuses no build yet.* The client treats it as `IncompatibleVersion` |
-
-**Planned code (CR-0008).** It joins the table above (and the catalogue, the client's `ApiErrorCodes` and `FeedbackMessages`) in part G of
-CR-0008-T1: `INVALID_ROUTE` 422 (a route's slot, stop count, action count or consecutive stops break the content's route rules).
 
 `code` is for program logic. `title` and `detail` are for humans and may change. `traceId` names the HTTP request (W3C trace context, always
 the server's own: a `traceparent` the client sends is ignored, M0-60; its second part is the `TraceId` of every log line of the request),

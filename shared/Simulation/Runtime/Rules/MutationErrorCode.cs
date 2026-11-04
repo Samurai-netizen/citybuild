@@ -83,5 +83,11 @@ namespace CityBuilder.Simulation.Rules
 
         /// <summary><c>NOTHING_TO_CARRY</c>: the trip's amount gives nothing, because the source's store has none of the item (<c>04</c> section 18).</summary>
         NothingToCarry,
+
+        /// <summary>
+        /// <c>INVALID_ROUTE</c>: a route's slot above the station level's couriers, one stop or more than the content's most, a stop with more
+        /// than the most actions, or two consecutive stops (the last and the first included) at one building (<c>04</c> section 8).
+        /// </summary>
+        InvalidRoute,
     }
 }
