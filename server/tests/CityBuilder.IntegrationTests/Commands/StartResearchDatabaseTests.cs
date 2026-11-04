@@ -17,7 +17,8 @@ namespace CityBuilder.IntegrationTests.Commands;
 /// <summary>
 /// <c>POST /api/v1/commands/start-research</c> end to end on PostgreSQL over HTTP: the server's real content (Trade Charter: 150 coins,
 /// 600 s, unlocks the trading post; Sharpened Axes: 250 coins, 1800 s, the woodcutter's labor −200 ‰; Frame Saw: needs Sharpened Axes;
-/// Storehouses: 300 coins and 50 logs, 2700 s, needs Trade Charter, +250 logs and planks of storage; a woodcutter makes a log per 60 labor),
+/// Storehouses: 300 coins and 50 logs, 2700 s, needs Trade Charter, +40 logs and planks in every store; a woodcutter makes a log per 60 labor;
+/// research happens at the scriptorium, which every city here has, and a node's goods are delivered there, CR-0008),
 /// endpoint, pipeline and repositories, the server clock a <c>FakeTimeProvider</c> at <see cref="PostgresApiFactory.Start"/>. Each test
 /// stores a city built by hand at clock 0 with no research (<see cref="HandBuiltCities.StoreCityAsync"/>) and checks what was stored, not
 /// only the status: the city row's research slot, the completed research rows, the stock, the ledger and the receipts. A research completes
@@ -41,7 +42,7 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
     [Fact]
     public async Task Post_SharpAxes_PaysTheCostAndRunsTheResearch()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1), Scriptorium(2));
         long versionBefore = (await LoadAsync(Factory, player)).StateVersion;
 
         ApiResponse response = await StartAsync(player, _requestId, "sharp_axes");
@@ -49,12 +50,12 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
         Assert.Equal(HttpStatusCode.OK, response.Status);
         JsonNode snapshot = response.Json();
         Assert.Equal(versionBefore + 1, (long)snapshot["stateVersion"]!);
-        Assert.Equal("""{"activeId":"sharp_axes","startedAt":0,"endsAt":1800,"completed":[]}""", snapshot["city"]!["research"]!.ToJsonString());
-        Assert.Equal("""{"coins":750,"logs":100,"planks":50}""", snapshot["city"]!["inventory"]!.ToJsonString());
+        Assert.Equal("""{"activeId":"sharp_axes","startedAt":0,"endsAt":1800,"needs":{},"completed":[]}""", snapshot["city"]!["research"]!.ToJsonString());
+        Assert.Equal(750, (long)snapshot["city"]!["purse"]!);
         Assert.Equal("sharp_axes 0-1800, completed: ", await ResearchAsync(city));
         LedgerEntryRow cost = Assert.Single(await LedgerAsync(Database, city));
         Assert.Equal($"coins -250 750 COST_RESEARCH command {_requestId}", Line(cost));
-        Assert.Equal("coins 750, logs 100, planks 50", await StockAsync(Database, city));
+        Assert.Equal("coins 750", await StockAsync(Database, city));
         CommandReceiptRow receipt = Assert.Single(await ReceiptsAsync(Database, player));
         Assert.Equal((_requestId, StartResearchCommand.Type, response.Body), (receipt.RequestId, receipt.CommandType, receipt.ResponseJson));
         Assert.Equal(CommandPayload.Hash(new StartResearchCommand(_requestId, "sharp_axes")), receipt.PayloadHash);
@@ -64,12 +65,12 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
     /// Trade Charter, started at 0, ends at 600, and its effect applies in the settle of the first request at that second. At 599 the
     /// trading post is still <c>BUILDING_LOCKED</c> (422); at 600 the place request's settle completes the research before the mutation
     /// (its settlement block names it, the slot is free, the completion is stored at 600) and the trading post is placed, constructing from
-    /// 600 to 780, paid with 200 coins and 20 planks.
+    /// 600 as a construction site waiting for its 10 planks (CR-0008), paid with 200 coins.
     /// </summary>
     [Fact]
     public async Task Post_TradeCharter_MakesTheTradingPostPlaceableWhenItCompletes()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1), Scriptorium(2));
         Assert.Equal(HttpStatusCode.OK, (await StartAsync(player, _requestId, "trade_charter")).Status);
 
         Factory.Clock.Advance(TimeSpan.FromSeconds(599));
@@ -81,23 +82,24 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
         Assert.Equal(HttpStatusCode.OK, placed.Status);
         JsonNode snapshot = placed.Json();
         Assert.Equal("""["trade_charter"]""", snapshot["settlement"]!["completedResearch"]!.ToJsonString());
-        Assert.Equal("""{"activeId":null,"startedAt":null,"endsAt":null,"completed":["trade_charter"]}""", snapshot["city"]!["research"]!.ToJsonString());
+        Assert.Equal("""{"activeId":null,"startedAt":null,"endsAt":null,"needs":{},"completed":["trade_charter"]}""", snapshot["city"]!["research"]!.ToJsonString());
         Assert.Equal("none, completed: trade_charter 600", await ResearchAsync(city));
-        Assert.Equal("2 trading_post L1 Constructing 600-780 target 0 workers 0", await BuildingAsync(Database, city, 2));
-        Assert.Equal("coins 650, logs 100, planks 30", await StockAsync(Database, city));
+        Assert.Equal("3 trading_post L1 Constructing - target 0 workers 0", await BuildingAsync(Database, city, 3));
+        Assert.Equal("""{"planks":10}""", snapshot["city"]!["buildings"]![2]!["needs"]!.ToJsonString());
+        Assert.Equal("coins 650", await StockAsync(Database, city));
     }
 
     /// <summary>
     /// Sharpened Axes shortens the woodcutter's cycles that start once it is completed; the running one keeps its labor (<c>04</c> section
-    /// 5). A woodcutter produces with 2 workers from 0: 60 labor, a cycle every 30 s. Started at 10, the research ends at 1810. At 1810 the
-    /// cycle that began at 1800 still runs on 60 labor (to 1830); the cycle from 1830 needs ceil(60 × 800 / 1000) = 48 labor, so it ends at
-    /// 1830 + 48 / 2 = 1854. By 1830, 61 cycles have ended: 161 logs.
+    /// 5). A level-2 woodcutter (its store holds 80 logs, so it doesn't fill first) produces with 2 workers from 0: 60 labor, a cycle every
+    /// 30 s. Started at 10, the research ends at 1810. At 1810 the cycle that began at 1800 still runs on 60 labor (to 1830); the cycle from
+    /// 1830 needs ceil(60 × 800 / 1000) = 48 labor, so it ends at 1830 + 48 / 2 = 1854. By 1830, 61 cycles have ended: 61 logs in its store.
     /// </summary>
     [Fact]
     public async Task Post_SharpAxes_ShortensTheNextWoodcutterCycleWhenItCompletes()
     {
         (Guid player, Guid city) = await StoreCityAsync(
-            Factory, "researcher", 1000, House(1), Woodcutter(2, BuildingPhase.Producing, workers: 2));
+            Factory, "researcher", 1000, House(1), Woodcutter(2, BuildingPhase.Producing, workers: 2, level: 2), Scriptorium(3));
         Factory.Clock.Advance(TimeSpan.FromSeconds(10));
         Assert.Equal(HttpStatusCode.OK, (await StartAsync(player, _requestId, "sharp_axes")).Status);
 
@@ -110,44 +112,67 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
         Assert.Equal("Producing 1800-1830 labor 60/60", Cycle(completed, 2));
         Assert.Equal("Producing 1830-1854 labor 48/48", Cycle(next, 2));
         Assert.Equal("none, completed: sharp_axes 1810", await ResearchAsync(city));
-        Assert.Equal("coins 750, logs 161, planks 50", await StockAsync(Database, city));
+        Assert.Equal("coins 750, logs 61", await StockAsync(Database, city));
     }
 
     /// <summary>
-    /// Once a prerequisite is completed its follower can start, and every item of its cost is paid: Storehouses after Trade Charter (600 s)
-    /// pays 300 coins and 50 logs as two <c>COST_RESEARCH</c> rows with the request id as reference. When it completes at 600 + 2700 = 3300,
-    /// the storage caps of logs and planks rise from 500 to 750.
+    /// Once a prerequisite is completed its follower can start: Storehouses after Trade Charter (600 s) pays its 300 coins as one
+    /// <c>COST_RESEARCH</c> row with the request id as reference and waits at the scriptorium for its 50 logs (no start or end yet). Five trips
+    /// bring them from the warehouse next door (10 each, 5 s), the last arriving at 610, so the research runs from 610 to 3310 (CR-0008); when it
+    /// completes the warehouse's limits of logs and planks rise from 100 to 140.
     /// </summary>
     [Fact]
-    public async Task Post_AfterItsPrerequisite_PaysEveryItemAndRaisesTheCapsWhenItCompletes()
+    public async Task Post_AfterItsPrerequisite_WaitsForItsGoodsAndRaisesTheLimitsWhenItCompletes()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1), Scriptorium(2), Warehouse(3, logs: 50, planks: 0));
         await StartAsync(player, Guid.CreateVersion7(), "trade_charter");
         Factory.Clock.Advance(TimeSpan.FromSeconds(600));
 
         ApiResponse response = await StartAsync(player, _requestId, "storehouses");
+        for (int trip = 0; trip < 4; trip++)
+        {
+            await TripAsync(player, 3, 2, "logs");
+        }
+
+        Factory.Clock.Advance(TimeSpan.FromSeconds(5));
+        await TripAsync(player, 3, 2, "logs");
+        Factory.Clock.Advance(TimeSpan.FromSeconds(5));
+        JsonNode running = (await ApiClient.GetAsync(Factory, "/api/v1/city", player)).Json();
 
         Assert.Equal(HttpStatusCode.OK, response.Status);
         Assert.Equal(
-            """{"activeId":"storehouses","startedAt":600,"endsAt":3300,"completed":["trade_charter"]}""",
+            """{"activeId":"storehouses","startedAt":null,"endsAt":null,"needs":{"logs":50},"completed":["trade_charter"]}""",
             response.Json()["city"]!["research"]!.ToJsonString());
-        Assert.Equal("""{"logs":500,"planks":500}""", response.Json()["city"]!["storageCaps"]!.ToJsonString());
         Assert.Equal(
-            ["coins -300 550 COST_RESEARCH command " + _requestId, "logs -50 50 COST_RESEARCH command " + _requestId],
-            (await LedgerAsync(Database, city)).Where(row => row.RefId == _requestId.ToString()).Select(Line).Order(StringComparer.Ordinal));
-        Assert.Equal("coins 550, logs 50, planks 50", await StockAsync(Database, city));
+            """{"activeId":"storehouses","startedAt":610,"endsAt":3310,"needs":{},"completed":["trade_charter"]}""",
+            running["city"]!["research"]!.ToJsonString());
+        Assert.Equal(
+            ["coins -300 550 COST_RESEARCH command " + _requestId],
+            (await LedgerAsync(Database, city)).Where(row => row.RefId == _requestId.ToString()).Select(Line));
+        Assert.Equal(50, (await LedgerAsync(Database, city)).Where(row => row.Reason == "SETTLEMENT_DELIVERED").Sum(row => -row.Delta));
+        Assert.Equal("coins 550", await StockAsync(Database, city));
+        Assert.Equal("""{"logs":100,"planks":100}""", running["city"]!["buildings"]![2]!["storeLimits"]!.ToJsonString());
 
         Factory.Clock.Advance(TimeSpan.FromSeconds(2700));
         JsonNode completed = (await ApiClient.GetAsync(Factory, "/api/v1/city", player)).Json();
-        Assert.Equal("""{"logs":750,"planks":750}""", completed["city"]!["storageCaps"]!.ToJsonString());
-        Assert.Equal("none, completed: storehouses 3300, trade_charter 600", await ResearchAsync(city));
+        Assert.Equal("""{"logs":140,"planks":140}""", completed["city"]!["buildings"]![2]!["storeLimits"]!.ToJsonString());
+        Assert.Equal("none, completed: storehouses 3310, trade_charter 600", await ResearchAsync(city));
+    }
+
+    /// <summary>Without a completed science building research can't start: <c>NO_SCIENCE_BUILDING</c> (422), and nothing is stored (CR-0008 D11).</summary>
+    [Fact]
+    public async Task Post_NoScienceBuilding_Is422NoScienceBuilding()
+    {
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1));
+
+        await AssertRefusedAsync(player, city, "sharp_axes", (HttpStatusCode)422, "NO_SCIENCE_BUILDING");
     }
 
     /// <summary>A well-formed id the content doesn't have is <c>UNKNOWN_RESEARCH</c> (422) with the request id, and nothing is stored.</summary>
     [Fact]
     public async Task Post_UnknownNode_Is422UnknownResearch()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1), Scriptorium(2));
 
         await AssertRefusedAsync(player, city, "no_such_research", (HttpStatusCode)422, "UNKNOWN_RESEARCH");
     }
@@ -162,7 +187,7 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
     [InlineData("storehouses")]
     public async Task Post_PrerequisiteMissing_Is422ResearchLocked(string researchId)
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1), Scriptorium(2));
 
         await AssertRefusedAsync(player, city, researchId, (HttpStatusCode)422, "RESEARCH_LOCKED");
     }
@@ -174,7 +199,7 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
     [Fact]
     public async Task Post_WhileAResearchRuns_Is409ResearchInProgress()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1), Scriptorium(2));
         await StartAsync(player, Guid.CreateVersion7(), "sharp_axes");
 
         await AssertRefusedAsync(player, city, "trade_charter", HttpStatusCode.Conflict, "RESEARCH_IN_PROGRESS");
@@ -189,30 +214,29 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
     [Fact]
     public async Task Post_CompletedNode_Is409ResearchCompleted()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1), Scriptorium(2));
         await StartAsync(player, Guid.CreateVersion7(), "trade_charter");
         Factory.Clock.Advance(TimeSpan.FromSeconds(600));
         await ApiClient.GetAsync(Factory, "/api/v1/city", player);
 
         await AssertRefusedAsync(player, city, "trade_charter", HttpStatusCode.Conflict, "RESEARCH_COMPLETED");
 
-        Assert.Equal("coins 850, logs 100, planks 50", await StockAsync(Database, city));
+        Assert.Equal("coins 850", await StockAsync(Database, city));
     }
 
     /// <summary>
-    /// A cost the stock doesn't cover is <c>INSUFFICIENT_RESOURCE</c> (422) and nothing is stored: 249 coins for Sharpened Axes' 250, and
-    /// Storehouses' 50 logs with 49 in stock (its other item, 300 coins, covered; Trade Charter completed first).
+    /// Coins the purse doesn't cover are <c>INSUFFICIENT_RESOURCE</c> (422) and nothing is stored: 249 coins for Sharpened Axes' 250, and 299
+    /// left after Trade Charter for Storehouses' 300 (its logs don't count: goods are delivered later, CR-0008).
     /// </summary>
-    /// <param name="coins">The coins in stock.</param>
-    /// <param name="logs">The logs in stock.</param>
+    /// <param name="coins">The coins in the purse.</param>
     /// <param name="researchId">The node sent.</param>
     /// <param name="afterTradeCharter">Whether Trade Charter is researched first (150 coins, 600 s; the request then comes at 600).</param>
     [Theory]
-    [InlineData(249, 100, "sharp_axes", false)]
-    [InlineData(1000, 49, "storehouses", true)]
-    public async Task Post_CostNotCovered_Is422InsufficientResource(long coins, long logs, string researchId, bool afterTradeCharter)
+    [InlineData(249, "sharp_axes", false)]
+    [InlineData(449, "storehouses", true)]
+    public async Task Post_CostNotCovered_Is422InsufficientResource(long coins, string researchId, bool afterTradeCharter)
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", coins, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", coins, House(1), Scriptorium(2));
         if (afterTradeCharter)
         {
             await StartAsync(player, Guid.CreateVersion7(), "trade_charter");
@@ -234,7 +258,7 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
     [InlineData("sharp_axes'; DROP TABLE cities; --")]
     public async Task Security_ResearchIdThatCantBeAContentId_Is400AndStoresNothing(string researchId)
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "attacker", 1000, House(1), Woodcutter(2, BuildingPhase.Producing, workers: 2));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "attacker", 1000, House(1), Woodcutter(2, BuildingPhase.Producing, workers: 2), Scriptorium(3));
         Factory.Clock.Advance(TimeSpan.FromMinutes(5));
         string stored = await StoredAsync(Factory, Database, player, city);
 
@@ -251,7 +275,7 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
     [Fact]
     public async Task Security_PostWithADurationField_Is400AndStoresNothing()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "attacker", 1000, House(1), Woodcutter(2, BuildingPhase.Producing, workers: 2));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "attacker", 1000, House(1), Woodcutter(2, BuildingPhase.Producing, workers: 2), Scriptorium(3));
         Factory.Clock.Advance(TimeSpan.FromMinutes(5));
         string stored = await StoredAsync(Factory, Database, player, city);
 
@@ -266,7 +290,7 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
     [Fact]
     public async Task Post_SameRequestAgain_ReturnsTheSameBytesAndWritesNothing()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1), Scriptorium(2));
         ApiResponse first = await StartAsync(player, _requestId, "sharp_axes");
         string stored = await StoredAsync(Factory, Database, player, city);
         Factory.Clock.Advance(TimeSpan.FromMinutes(1));
@@ -282,7 +306,7 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
     [Fact]
     public async Task Post_SameRequestIdWithAnotherNode_Is409AndWritesNothing()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1), Scriptorium(2));
         await StartAsync(player, _requestId, "sharp_axes");
         string stored = await StoredAsync(Factory, Database, player, city);
 
@@ -300,7 +324,7 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
     [Fact]
     public async Task Security_TwoStartsAtOnce_StartExactlyOneResearch()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1), Scriptorium(2));
         (string Node, Guid RequestId, long Cost, long Seconds)[] starts =
             [("sharp_axes", Guid.CreateVersion7(), 250, 1800), ("trade_charter", Guid.CreateVersion7(), 150, 600)];
 
@@ -312,8 +336,24 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
         (string node, Guid requestId, long cost, long seconds) = starts[Array.FindIndex(responses, response => response.Status == HttpStatusCode.OK)];
         Assert.Equal($"{node} 0-{seconds}, completed: ", await ResearchAsync(city));
         Assert.Equal($"coins {-cost} {1000 - cost} COST_RESEARCH command {requestId}", Line(Assert.Single(await LedgerAsync(Database, city))));
-        Assert.Equal($"coins {1000 - cost}, logs 100, planks 50", await StockAsync(Database, city));
+        Assert.Equal($"coins {1000 - cost}", await StockAsync(Database, city));
         Assert.Equal(requestId, Assert.Single(await ReceiptsAsync(Database, player)).RequestId);
+    }
+
+    /// <summary>Sends a trip of all of a good from one building's store to another over HTTP; it must succeed.</summary>
+    /// <param name="player">The acting player.</param>
+    /// <param name="source">The building the goods come from.</param>
+    /// <param name="target">The building they go to.</param>
+    /// <param name="item">The good.</param>
+    /// <returns>A task that completes when the trip has started.</returns>
+    private async Task TripAsync(Guid player, int source, int target, string item)
+    {
+        ApiResponse response = await ApiClient.PostAsync(
+            Factory,
+            "/api/v1/commands/start-trip",
+            player,
+            $$"""{"requestId":"{{Guid.CreateVersion7()}}","sourceId":{{source}},"targetId":{{target}},"itemId":"{{item}}","amount":"all"}""");
+        Assert.Equal(HttpStatusCode.OK, response.Status);
     }
 
     /// <summary>
