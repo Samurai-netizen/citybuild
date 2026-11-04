@@ -8,7 +8,7 @@ namespace CityBuilder.Client.Presentation.City
 {
     /// <summary>
     /// The ground of the city: one flat tile per grid cell, an instance of the art's grass tile (CR-0005), varied by the grass variants of visual v2
-    /// (<see cref="GroundVariants"/>); if the tile model is missing, a cube primitive in two greens like a chessboard instead. Plus a hover marker and a selection marker that follow a <see cref="TileSelection"/>.
+    /// and their quarter turns (<see cref="GroundVariants"/>); if the tile model is missing, a cube primitive in two greens like a chessboard instead. Plus a hover marker and a selection marker that follow a <see cref="TileSelection"/>.
     /// The tiles have no colliders: the pointer's tile is found with maths (<see cref="CityGrid"/>), not physics. <see cref="Destroy"/> removes
     /// everything it made.
     /// </summary>
@@ -94,7 +94,8 @@ namespace CityBuilder.Client.Presentation.City
 
         /// <summary>
         /// Builds the tiles and the markers: each tile from its grass variant in <paramref name="variants"/> when there is one, else from
-        /// <paramref name="tileModel"/>, else from a cube.
+        /// <paramref name="tileModel"/>, else from a cube. With variants, every model tile is turned by its quarter turns
+        /// (<see cref="GroundVariants.RotationFor"/>).
         /// </summary>
         /// <param name="grid">The grid to cover.</param>
         /// <param name="selection">The state the markers show; this object listens to it until <see cref="Destroy"/>.</param>
@@ -144,6 +145,11 @@ namespace CityBuilder.Client.Presentation.City
                         GameObject instance = Object.Instantiate(model, Root.transform, false);
                         instance.name = "Tile " + tile;
                         instance.transform.localPosition = grid.ToWorldCenter(tile);
+                        if (variants != null)
+                        {
+                            instance.transform.localRotation = Quaternion.Euler(0f, 90f * GroundVariants.RotationFor(x, y), 0f) * instance.transform.localRotation;
+                        }
+
                         _tileRenderers[index] = instance.GetComponentInChildren<Renderer>();
                     }
                     else
