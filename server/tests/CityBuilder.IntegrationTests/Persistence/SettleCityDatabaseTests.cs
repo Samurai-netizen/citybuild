@@ -4,8 +4,8 @@ using CityBuilder.Infrastructure.Persistence;
 using CityBuilder.Infrastructure.Persistence.Rows;
 using CityBuilder.IntegrationTests.Postgres;
 using CityBuilder.Simulation;
-using CityBuilder.Simulation.State;
 using CityBuilder.Simulation.Content;
+using CityBuilder.Simulation.State;
 using Microsoft.EntityFrameworkCore;
 using static CityBuilder.IntegrationTests.Persistence.DatabaseCities;
 

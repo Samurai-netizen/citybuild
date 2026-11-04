@@ -8,7 +8,6 @@ using CityBuilder.Infrastructure.Persistence.Rows;
 using CityBuilder.IntegrationTests.Postgres;
 using CityBuilder.Simulation;
 using CityBuilder.Simulation.Content;
-using CityBuilder.Simulation.Rules;
 using CityBuilder.Simulation.Settlement;
 using CityBuilder.Simulation.State;
 using Microsoft.AspNetCore.Mvc.Testing;

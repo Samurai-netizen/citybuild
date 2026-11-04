@@ -345,7 +345,7 @@ public sealed class RoadCommandsContractTests(ApiFactory factory) : IClassFixtur
     }
 
     /// <summary>
-    /// The city of the tests at clock 0: 20 coins, 40 logs, 10 planks; house 1 at (0,0) and woodcutter 2 at (2,0), both completed and idle
+    /// The city of the tests at clock 0: 20 coins; house 1 at (0,0) and woodcutter 2 at (2,0), both completed and idle
     /// without workers; roads at (1,1) and (3,1) at level 1 and at (2,1) at level 2, the content's last.
     /// </summary>
     /// <param name="content">The server's content.</param>

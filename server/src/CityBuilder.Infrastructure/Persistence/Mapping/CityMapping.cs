@@ -64,13 +64,19 @@ public static class CityMapping
         var stores = state.Buildings
             .SelectMany(building => building.Store.Select(stock => new CityStoreRow
             {
-                CityId = city.CityId, BuildingId = building.Id, ItemId = stock.Key.Value, Quantity = stock.Value,
+                CityId = city.CityId,
+                BuildingId = building.Id,
+                ItemId = stock.Key.Value,
+                Quantity = stock.Value,
             }))
             .ToList();
         var projectNeeds = state.Buildings
             .SelectMany(building => building.Needs.Select(need => new CityProjectNeedRow
             {
-                CityId = city.CityId, BuildingId = building.Id, ItemId = need.Key.Value, Quantity = need.Value,
+                CityId = city.CityId,
+                BuildingId = building.Id,
+                ItemId = need.Key.Value,
+                Quantity = need.Value,
             }))
             .ToList();
         var researchNeeds = (active?.Needs ?? new Dictionary<ItemId, long>())
