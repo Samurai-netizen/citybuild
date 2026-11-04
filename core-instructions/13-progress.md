@@ -15,12 +15,12 @@
   routes): plan F1 → CP-F1, F2 → CP-F2, F3 → CP-F3 in the build log (decisions 45–51). F1 (state, `SetRoute`, staffing, the upgrade
   stop, `INVALID_ROUTE`) done, **CP-F1**. F2 (couriers in the advance; decision 50) done, **CP-F2**. F3 (property harness, docs;
   decision 51) done, **CP-F3**: **part F done**. Part G (server: couriers and routes): plan G1 → CP-G1,
-  G2 → CP-G2, G3 → CP-G3 in the build log; G1 (persistence) done, **CP-G1**; next G2 (snapshot, `set-route`). Then H, I, `/finish-task`.
+  G2 → CP-G2, G3 → CP-G3 in the build log; G1 (persistence) done, **CP-G1**; G2 (snapshot, `set-route`) done, **CP-G2**; next G3 (client, docs). Then H, I, `/finish-task`.
 - **Last completed:** M0-60 · Client ↔ server boundary review (PR #85, merged)
 - **Next task:** CR-0008-T2 · client and art (`[S]`), after T1 merges; then CR-0008-T3, then M0-61.
 - **Open questions for the owner:** CR-0008-T1: 8 Dependabot alerts on `main` (build log Follow-ups). M0-58: the [MANUAL] content-change check (`client/README.md`; no automated test covers the `GameRoot` rebuild). CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-54: the dev database still runs the fast clock until the owner does step 7 of the waiting-loop run (`LOCAL-E2E.md`). M0-55: the [MANUAL] look at the connection states (`client/README.md`). CR-0007-T1: the [MANUAL] look at the new UI (`client/README.md`); the status label may be removed (build log follow-ups).
-- **Known broken / do not touch:** nothing at CP-G1. The server stores couriers and routes but no endpoint sets routes and the snapshot
-  doesn't show them yet (G2). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
+- **Known broken / do not touch:** nothing at CP-G2. `set-route` and the snapshot's `couriers` / `routes` are built on the server; the
+  client doesn't read them yet and `05` still marks them planned (G3). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
 - **Verify with:** `bash scripts/dev/check-docs.sh --base origin/main` (as CI) · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 

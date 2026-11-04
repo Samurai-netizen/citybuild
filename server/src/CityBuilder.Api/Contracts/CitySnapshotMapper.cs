@@ -58,7 +58,9 @@ public static class CitySnapshotMapper
                 state.Trips.OrderBy(trip => trip.Id)
                     .Select(trip => new SnapshotTrip(
                         trip.Id, trip.SourceId, trip.TargetId, trip.Item.Value, trip.Quantity, trip.DepartedAt, trip.ArrivesAt))
-                    .ToArray()),
+                    .ToArray(),
+                state.Couriers.OrderBy(courier => courier.StationId).ThenBy(courier => courier.Slot).Select(ToCourier).ToArray(),
+                state.Routes.OrderBy(route => route.StationId).ThenBy(route => route.Slot).Select(ToRoute).ToArray()),
             new SnapshotSettlement(
                 settlement.ElapsedSeconds,
                 settlement.ProductionSeconds,
@@ -71,6 +73,33 @@ public static class CitySnapshotMapper
                 settlement.CompletedResearch.Select(id => id.Value).Order(StringComparer.Ordinal).ToArray(),
                 settlement.EraChanged));
     }
+
+    /// <summary>A courier as the snapshot shows it: its state by name, its load by item id (ordinal), then origin.</summary>
+    /// <param name="courier">The courier.</param>
+    /// <returns>The snapshot's courier.</returns>
+    private static SnapshotCourier ToCourier(Courier courier) =>
+        new(
+            courier.StationId,
+            courier.Slot,
+            courier.State.ToString(),
+            courier.ToStop,
+            courier.DepartedAt,
+            courier.ArrivesAt,
+            courier.Stamina,
+            courier.Loads.OrderBy(part => part.Item.Value, StringComparer.Ordinal).ThenBy(part => part.FromId)
+                .Select(part => new SnapshotCourierLoad(part.Item.Value, part.FromId, part.Quantity)).ToArray());
+
+    /// <summary>A route as <c>set-route</c> sends it: the stops in order, each action's kind as <c>take</c> or <c>put</c> and its amount's text.</summary>
+    /// <param name="route">The route.</param>
+    /// <returns>The snapshot's route.</returns>
+    private static SnapshotRoute ToRoute(Simulation.State.Route route) =>
+        new(
+            route.StationId,
+            route.Slot,
+            route.Stops.Select(stop => new SnapshotRouteStop(
+                stop.BuildingId,
+                stop.Actions.Select(action => new SnapshotRouteAction(
+                    action.Kind == RouteActionKind.Take ? "take" : "put", action.Item.Value, action.Amount.ToString())).ToArray())).ToArray());
 
     /// <summary>Maps the research slot and the completed research.</summary>
     /// <param name="state">The city.</param>

@@ -7,6 +7,7 @@ using CityBuilder.Application.Commands;
 using CityBuilder.Application.Commands.AssignWorkers;
 using CityBuilder.Application.Commands.PlaceBuilding;
 using CityBuilder.Application.Commands.Roads;
+using CityBuilder.Application.Commands.SetRoute;
 using CityBuilder.Application.Commands.StartResearch;
 using CityBuilder.Application.Commands.StartTrip;
 using CityBuilder.Application.Commands.UpgradeBuilding;
@@ -43,6 +44,7 @@ public static class CommandEndpoints
         commands.MapPost("/upgrade-roads", UpgradeRoadsAsync).Produces<CitySnapshot>(StatusCodes.Status200OK, "application/json");
         commands.MapPost("/remove-roads", RemoveRoadsAsync).Produces<CitySnapshot>(StatusCodes.Status200OK, "application/json");
         commands.MapPost("/start-trip", StartTripAsync).Produces<CitySnapshot>(StatusCodes.Status200OK, "application/json");
+        commands.MapPost("/set-route", SetRouteAsync).Produces<CitySnapshot>(StatusCodes.Status200OK, "application/json");
         return commands;
     }
 
@@ -200,6 +202,37 @@ public static class CommandEndpoints
     }
 
     /// <summary>
+    /// Sets or clears the route of a courier station's slot in the acting player's city (<see cref="SetRouteCommand"/>, CR-0008). The body
+    /// names only the station, the slot and the stops; a body with an unknown property, a missing field or a value of the wrong type is
+    /// refused by the binding (400) before anything runs.
+    /// </summary>
+    /// <param name="request">The body, or <see langword="null"/> when there is none.</param>
+    /// <param name="player">The acting player, from the access token.</param>
+    /// <param name="pipeline">Runs the command.</param>
+    /// <param name="content">The server's content, for the snapshot.</param>
+    /// <param name="json">The HTTP JSON settings, so the snapshot reads as <c>GET /city</c>'s.</param>
+    /// <param name="loggers">Gives the logger of the command lines.</param>
+    /// <param name="cancellationToken">The request's cancellation; nothing is committed then.</param>
+    /// <returns>200 with the snapshot, or Problem Details.</returns>
+    private static async Task<Results<ContentHttpResult, ProblemHttpResult>> SetRouteAsync(
+        SetRouteRequest? request,
+        ICurrentPlayer player,
+        CommandPipeline pipeline,
+        IContentProvider content,
+        IOptions<HttpJsonOptions> json,
+        ILoggerFactory loggers,
+        CancellationToken cancellationToken)
+    {
+        if (request is null)
+        {
+            return ApiProblem.Of(ErrorCatalogue.InvalidArgument.WithDetail("The body must be a JSON object."));
+        }
+
+        var command = new SetRouteCommand(request.RequestId, request.StationId, request.Slot, ToCommandStops(request.Stops));
+        return await ExecuteAsync(command, player, pipeline, content, json, loggers, cancellationToken);
+    }
+
+    /// <summary>
     /// Builds level-1 roads on tiles of the acting player's city (<see cref="PlaceRoadsCommand"/>, CR-0008). The body names only the tiles; a
     /// body with an unknown property, a missing field or a value of the wrong type is refused by the binding (400) before anything runs.
     /// </summary>
@@ -297,6 +330,25 @@ public static class CommandEndpoints
     /// <returns>The command's tiles.</returns>
     private static CommandTile?[] ToCommandTiles(IReadOnlyList<TileRequest?>? tiles) =>
         tiles is null ? [] : [.. tiles.Select(tile => tile is null ? null : new CommandTile(tile.X, tile.Y))];
+
+    /// <summary>
+    /// The body's stops as the command's, keeping a missing list, stop or action as null so the command's shape check names it (a missing
+    /// list is not an empty one: only <c>[]</c> clears a route).
+    /// </summary>
+    /// <param name="stops">The body's <c>stops</c>.</param>
+    /// <returns>The command's stops, or null.</returns>
+    private static CommandRouteStop?[]? ToCommandStops(IReadOnlyList<RouteStopRequest?>? stops) =>
+        stops is null
+            ? null
+            : [.. stops.Select(stop => stop is null
+                ? null
+                : new CommandRouteStop(
+                    stop.BuildingId,
+                    stop.Actions is null
+                        ? null
+                        : [.. stop.Actions.Select(action => action is null
+                            ? null
+                            : new CommandRouteAction(action.Kind ?? string.Empty, action.ItemId ?? string.Empty, action.Amount ?? string.Empty))]))];
 
     /// <summary>
     /// Runs a command through the pipeline for the token's player, with the snapshot as its response, and answers with what the pipeline did.

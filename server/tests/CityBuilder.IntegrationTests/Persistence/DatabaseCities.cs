@@ -105,7 +105,7 @@ internal static class DatabaseCities
 
     /// <summary>
     /// The stored totals of a city by item id, read by a context of the test's own (CR-0008): its <c>city_stores</c> rows summed per good, the
-    /// loads of its <c>city_trips</c>, and its purse for the currency, <paramref name="currency"/>.
+    /// loads of its <c>city_trips</c> and of its <c>city_courier_loads</c> (part G), and its purse for the currency, <paramref name="currency"/>.
     /// </summary>
     /// <param name="database">The test's database.</param>
     /// <param name="cityId">The city.</param>
@@ -125,6 +125,11 @@ internal static class DatabaseCities
         }
 
         foreach (CityTripRow row in await db.CityTrips.AsNoTracking().Where(row => row.CityId == cityId).ToListAsync(cancellationToken))
+        {
+            totals[row.ItemId] = totals.GetValueOrDefault(row.ItemId) + row.Quantity;
+        }
+
+        foreach (CityCourierLoadRow row in await db.CityCourierLoads.AsNoTracking().Where(row => row.CityId == cityId).ToListAsync(cancellationToken))
         {
             totals[row.ItemId] = totals.GetValueOrDefault(row.ItemId) + row.Quantity;
         }

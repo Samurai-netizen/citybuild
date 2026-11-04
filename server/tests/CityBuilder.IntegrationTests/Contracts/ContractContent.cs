@@ -22,6 +22,9 @@ internal static class ContractContent
     /// <summary>The building type <c>study</c>: the science building (one per city), where research happens.</summary>
     public static readonly BuildingTypeId Study = new("study");
 
+    /// <summary>The building type <c>post</c>: a courier station for 2 couriers carrying 6 goods with 900 s of stamina.</summary>
+    public static readonly BuildingTypeId Post = new("post");
+
     /// <summary>The building type <c>depot</c>: a warehouse holding 100 logs and 100 planks.</summary>
     public static readonly BuildingTypeId Depot = new("depot");
 

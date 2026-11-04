@@ -126,6 +126,13 @@ internal static class HandBuiltCities
     public static Building Warehouse(int id, long logs, long planks, int x = 1) =>
         new(id, new BuildingTypeId("warehouse"), x, 3, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, Goods(("logs", logs), ("planks", planks)));
 
+    /// <summary>A completed courier station on row 3 without workers (2 couriers carrying 10 at level 1; CR-0008-T1 part G).</summary>
+    /// <param name="id">Its id.</param>
+    /// <param name="x">Its column.</param>
+    /// <returns>The building.</returns>
+    public static Building CourierStation(int id, int x = 3) =>
+        new(id, new BuildingTypeId("courier_station"), x, 3, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
+
     /// <summary>Goods as the engine's pairs, leaving out those at 0 (a store or a project's needs).</summary>
     /// <param name="goods">The goods and quantities.</param>
     /// <returns>The pairs above 0.</returns>

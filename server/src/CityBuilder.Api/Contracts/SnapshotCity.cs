@@ -13,6 +13,8 @@ namespace CityBuilder.Api.Contracts;
 /// <param name="Buildings">The placed buildings, JSON <c>buildings</c>, by ascending id.</param>
 /// <param name="Roads">The road tiles, JSON <c>roads</c>, by column, then row (CR-0008).</param>
 /// <param name="Trips">The manual trips under way, JSON <c>trips</c>, by id (CR-0008).</param>
+/// <param name="Couriers">The couriers, JSON <c>couriers</c>, by station id, then slot (CR-0008).</param>
+/// <param name="Routes">The courier stations' routes, JSON <c>routes</c>, by station id, then slot (CR-0008).</param>
 public sealed record SnapshotCity(
     long Clock,
     int Era,
@@ -23,4 +25,6 @@ public sealed record SnapshotCity(
     SnapshotResearch Research,
     IReadOnlyList<SnapshotBuilding> Buildings,
     IReadOnlyList<SnapshotRoad> Roads,
-    IReadOnlyList<SnapshotTrip> Trips);
+    IReadOnlyList<SnapshotTrip> Trips,
+    IReadOnlyList<SnapshotCourier> Couriers,
+    IReadOnlyList<SnapshotRoute> Routes);

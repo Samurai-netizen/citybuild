@@ -176,7 +176,7 @@ internal static class SettleFixture
     /// <summary>
     /// The fixture's content: a 4 × 4 grid, three builder slots, two houses (cottage and manor), the woodcutter (a store of 1 000 logs), the
     /// sawmill (2 logs into 1 plank; stores of 1 000 each; a level 2 for 10 coins and 60 s, for the upgrade tests), the study (the science
-    /// building, one per city), coins as the currency (100 to start), the preset <c>all</c>, trips of up to 1 000, and the research
+    /// building, one per city), the courier station (2 couriers carrying 10 with 14 400 s of stamina; CR-0008-T1 part G), coins as the currency (100 to start), the preset <c>all</c>, trips of up to 1 000, and the research
     /// <c>forestry</c> (−100 ‰ on the woodcutter's labor). Invalid content fails the test with every error.
     /// </summary>
     private static GameContent CreateContent()
@@ -252,6 +252,12 @@ internal static class SettleFixture
                 {
                     Id = "study", Name = "Study", Kind = "science", Era = 1, AvailableAtStart = true, MaxPerCity = 1,
                     Cost = new() { ["coins"] = 10 }, BuildSeconds = StartClock, Levels = [new BuildingLevelData { Level = 1 }],
+                },
+                new BuildingData
+                {
+                    Id = "courier_station", Name = "Courier Station", Kind = "courierStation", Era = 1, AvailableAtStart = true,
+                    Cost = new() { ["coins"] = 10 }, BuildSeconds = StartClock,
+                    Levels = [new BuildingLevelData { Level = 1, MaxWorkers = 2, CarryLimit = 10, StaminaSeconds = 14_400 }],
                 },
             ],
             Research =

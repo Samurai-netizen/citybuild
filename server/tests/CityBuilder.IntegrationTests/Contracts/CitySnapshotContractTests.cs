@@ -3,6 +3,7 @@ using System.Text.Json.Nodes;
 using CityBuilder.Application.Cities;
 using CityBuilder.Infrastructure.Content;
 using CityBuilder.IntegrationTests.Content;
+using CityBuilder.Simulation;
 using CityBuilder.Simulation.State;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Time.Testing;
@@ -67,13 +68,14 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
         JsonNode city = snapshot["city"]!;
         JsonShape.AssertObject(
             city,
-            "clock:int era:int purse:int totals:object workers:object builders:object research:object buildings:array roads:array trips:array",
+            "clock:int era:int purse:int totals:object workers:object builders:object research:object buildings:array roads:array trips:array " +
+            "couriers:array routes:array",
             "$.city");
         JsonShape.AssertObject(city["workers"], "provided:int assigned:int onTrips:int free:int", "$.city.workers");
         JsonShape.AssertObject(city["builders"], "slots:int busy:int", "$.city.builders");
         JsonShape.AssertObject(city["research"], "activeId:string? startedAt:int? endsAt:int? needs:object completed:array", "$.city.research");
         JsonArray buildings = city["buildings"]!.AsArray();
-        Assert.Equal(9, buildings.Count);
+        Assert.Equal(10, buildings.Count);
         for (int index = 0; index < buildings.Count; index++)
         {
             JsonShape.AssertObject(
@@ -86,6 +88,26 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
         JsonArray trips = city["trips"]!.AsArray();
         Assert.Single(trips);
         JsonShape.AssertObject(trips[0], "id:int sourceId:int targetId:int itemId:string quantity:int departedAt:int arrivesAt:int", "$.city.trips[0]");
+
+        JsonArray couriers = city["couriers"]!.AsArray();
+        Assert.Equal(2, couriers.Count);
+        for (int index = 0; index < couriers.Count; index++)
+        {
+            JsonShape.AssertObject(
+                couriers[index],
+                "stationId:int slot:int state:string toStop:int departedAt:int? arrivesAt:int? stamina:int load:array",
+                $"$.city.couriers[{index}]");
+            JsonShape.AssertObject(couriers[index]!["load"]![0], "itemId:string fromId:int quantity:int", $"$.city.couriers[{index}].load[0]");
+        }
+
+        JsonArray routes = city["routes"]!.AsArray();
+        Assert.Equal(2, routes.Count);
+        for (int index = 0; index < routes.Count; index++)
+        {
+            JsonShape.AssertObject(routes[index], "stationId:int slot:int stops:array", $"$.city.routes[{index}]");
+            JsonShape.AssertObject(routes[index]!["stops"]![0], "buildingId:int actions:array", $"$.city.routes[{index}].stops[0]");
+            JsonShape.AssertObject(routes[index]!["stops"]![0]!["actions"]![0], "kind:string itemId:string amount:string", $"$.city.routes[{index}].stops[0].actions[0]");
+        }
 
         JsonArray roads = city["roads"]!.AsArray();
         Assert.Equal(3, roads.Count);
@@ -204,7 +226,7 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
         JsonNode asked = (await ApiClient.GetAsync(server, $"/api/v1/city?playerId={_otherPlayerId}", _playerId)).Json();
         JsonNode other = (await ApiClient.GetAsync(server, "/api/v1/city", _otherPlayerId)).Json();
 
-        Assert.Equal((9, 9, 2), (own["city"]!["buildings"]!.AsArray().Count, asked["city"]!["buildings"]!.AsArray().Count, other["city"]!["buildings"]!.AsArray().Count));
+        Assert.Equal((10, 10, 2), (own["city"]!["buildings"]!.AsArray().Count, asked["city"]!["buildings"]!.AsArray().Count, other["city"]!["buildings"]!.AsArray().Count));
         Assert.Equal(own.ToJsonString(), asked.ToJsonString());
     }
 
@@ -253,7 +275,9 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
     /// phase and every stall reason, goods in its stores (CR-0008): a house (level 2); a woodcutter producing with 2 workers (12 logs); a level
     /// 2 woodcutter whose cycle is frozen (no workers, 5 logs); a trading post waiting for planks (1 plank, 3 logs); a woodcutter whose store
     /// is full (140 logs: 40 and the storehouses' 100); a woodcutter's construction site waiting for 10 logs; a house being upgraded; the
-    /// study; a depot with 4 planks, from which trip 1 carries 2 more planks to the trading post. 150 coins. The research
+    /// study; a depot with 4 planks, from which trip 1 carries 2 more planks to the trading post; a post with 2 couriers: 10/1 walks to the
+    /// trading post (its route's stop 2) with a plank from the depot, 10/2 rests with 2 logs from woodcutter 2, and both slots have routes
+    /// (CR-0008-T1 part G). 150 coins. The research
     /// <c>trade_charter</c> and <c>storehouses</c> are done, <c>sharp_axes</c> is running. Roads at (2, 1) and (2, 2) at level 1 and at
     /// (1, 1) at level 2, given out of order.
     /// </summary>
@@ -265,7 +289,7 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
         var state = new CityState(
             clock: 1000,
             era: 1,
-            nextBuildingId: 10,
+            nextBuildingId: 11,
             purse: 150,
             buildings:
             [
@@ -278,12 +302,23 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
                 new Building(7, House, 1, 2, 1, 0, BuildingPhase.Upgrading, 995, 1040, 2, 0, 0, 0),
                 new Building(8, Study, 3, 2, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
                 new Building(9, Depot, 4, 2, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, [new(Planks, 4)]),
+                new Building(10, Post, 0, 4, 1, 2, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
             ],
             completedResearch: [TradeCharter, Storehouses],
             activeResearch: new ActiveResearch(SharpAxes, 990, 1110),
             roads: [new RoadTile(2, 1, 1), new RoadTile(1, 1, 2), new RoadTile(2, 2, 1)],
             trips: [new Trip(1, 9, 4, Planks, 2, 995, 1012)],
-            nextTripId: 2);
+            nextTripId: 2,
+            couriers:
+            [
+                new Courier(10, 1, CourierState.Walking, 2, 995, 1020, 900, [new CourierLoad(Planks, 9, 1)]),
+                new Courier(10, 2, CourierState.Resting, 0, null, null, 0, [new CourierLoad(Logs, 2, 2)]),
+            ],
+            routes:
+            [
+                new Route(10, 1, [Stop(9, RouteActionKind.Take, Planks, "half"), Stop(4, RouteActionKind.Put, Planks, "all")]),
+                new Route(10, 2, [Stop(2, RouteActionKind.Take, Logs, "6"), Stop(6, RouteActionKind.Put, Logs, "all")]),
+            ]);
         return new CityAggregate(
             Guid.NewGuid(),
             playerId,
@@ -294,14 +329,23 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
             "contract-2");
     }
 
+    /// <summary>A route stop with one action.</summary>
+    /// <param name="buildingId">The building.</param>
+    /// <param name="kind">Take or put.</param>
+    /// <param name="item">The good.</param>
+    /// <param name="amount">The amount's text.</param>
+    /// <returns>The stop.</returns>
+    private static RouteStop Stop(int buildingId, RouteActionKind kind, ItemId item, string amount) =>
+        new(buildingId, [new RouteAction(kind, item, Amount.TryParse(amount, out Amount? parsed) ? parsed : throw new ArgumentException(amount))]);
+
     /// <summary>The contract's text for <see cref="EveryPhaseCity"/>: every value checked by hand against the rules of the engine.</summary>
     private const string _everyPhaseResponse = """
         {
           "requestId": null, "stateVersion": 7, "serverTimeUtc": "2026-10-26T12:00:00Z", "contentVersion": "contract-2",
           "city": {
             "clock": 1000, "era": 1, "purse": 150,
-            "totals": {"coins": 150, "logs": 160, "planks": 7},
-            "workers": {"provided": 8, "assigned": 4, "onTrips": 1, "free": 3},
+            "totals": {"coins": 150, "logs": 162, "planks": 8},
+            "workers": {"provided": 8, "assigned": 6, "onTrips": 1, "free": 1},
             "builders": {"slots": 2, "busy": 2},
             "research": {"activeId": "sharp_axes", "startedAt": 990, "endsAt": 1110, "needs": {}, "completed": ["storehouses", "trade_charter"]},
             "buildings": [
@@ -313,10 +357,19 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
               {"id": 6, "typeId": "woodcutter", "x": 0, "y": 2, "level": 1, "assignedWorkers": 0, "maxWorkers": 2, "phase": "Constructing", "phaseStartedAt": 0, "phaseEndsAt": null, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": null, "store": {}, "storeLimits": {"logs": 140}, "needs": {"logs": 10}, "project": "Construction"},
               {"id": 7, "typeId": "house", "x": 1, "y": 2, "level": 1, "assignedWorkers": 0, "maxWorkers": 0, "phase": "Upgrading", "phaseStartedAt": 995, "phaseEndsAt": 1040, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": null, "store": {}, "storeLimits": {}, "needs": {}, "project": null},
               {"id": 8, "typeId": "study", "x": 3, "y": 2, "level": 1, "assignedWorkers": 0, "maxWorkers": 0, "phase": "Idle", "phaseStartedAt": 0, "phaseEndsAt": null, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": "NoRecipe", "store": {}, "storeLimits": {}, "needs": {}, "project": null},
-              {"id": 9, "typeId": "depot", "x": 4, "y": 2, "level": 1, "assignedWorkers": 0, "maxWorkers": 0, "phase": "Idle", "phaseStartedAt": 0, "phaseEndsAt": null, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": "NoRecipe", "store": {"planks": 4}, "storeLimits": {"logs": 200, "planks": 150}, "needs": {}, "project": null}
+              {"id": 9, "typeId": "depot", "x": 4, "y": 2, "level": 1, "assignedWorkers": 0, "maxWorkers": 0, "phase": "Idle", "phaseStartedAt": 0, "phaseEndsAt": null, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": "NoRecipe", "store": {"planks": 4}, "storeLimits": {"logs": 200, "planks": 150}, "needs": {}, "project": null},
+              {"id": 10, "typeId": "post", "x": 0, "y": 4, "level": 1, "assignedWorkers": 2, "maxWorkers": 2, "phase": "Idle", "phaseStartedAt": 0, "phaseEndsAt": null, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": null, "store": {}, "storeLimits": {}, "needs": {}, "project": null}
             ],
             "roads": [{"x": 1, "y": 1, "level": 2}, {"x": 2, "y": 1, "level": 1}, {"x": 2, "y": 2, "level": 1}],
-            "trips": [{"id": 1, "sourceId": 9, "targetId": 4, "itemId": "planks", "quantity": 2, "departedAt": 995, "arrivesAt": 1012}]
+            "trips": [{"id": 1, "sourceId": 9, "targetId": 4, "itemId": "planks", "quantity": 2, "departedAt": 995, "arrivesAt": 1012}],
+            "couriers": [
+              {"stationId": 10, "slot": 1, "state": "Walking", "toStop": 2, "departedAt": 995, "arrivesAt": 1020, "stamina": 900, "load": [{"itemId": "planks", "fromId": 9, "quantity": 1}]},
+              {"stationId": 10, "slot": 2, "state": "Resting", "toStop": 0, "departedAt": null, "arrivesAt": null, "stamina": 0, "load": [{"itemId": "logs", "fromId": 2, "quantity": 2}]}
+            ],
+            "routes": [
+              {"stationId": 10, "slot": 1, "stops": [{"buildingId": 9, "actions": [{"kind": "take", "itemId": "planks", "amount": "half"}]}, {"buildingId": 4, "actions": [{"kind": "put", "itemId": "planks", "amount": "all"}]}]},
+              {"stationId": 10, "slot": 2, "stops": [{"buildingId": 2, "actions": [{"kind": "take", "itemId": "logs", "amount": "6"}]}, {"buildingId": 6, "actions": [{"kind": "put", "itemId": "logs", "amount": "all"}]}]}
+            ]
           },
           "settlement": {"elapsedSeconds": 0, "productionSeconds": 0, "produced": {}, "consumed": {}, "delivered": {}, "moved": {}, "refunded": {}, "completedBuildings": [], "completedResearch": [], "eraChanged": false}
         }
