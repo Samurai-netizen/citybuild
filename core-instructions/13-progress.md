@@ -12,13 +12,12 @@
   E2.1 (engine trips, amounts, deliveries) done (decisions 37–40); E1.5 + E2.2 (server, goods panel) done, server suites green;
   E1.6 + E2.3 (client, fixtures re-captured, decision 42; the new art, decision 44) done, **CP1 verified**. E3 (golden #1 on v2,
   engine and HTTP; v1 deleted) done, **CP3 verified**. E4 (docs, self-review) done: **part E done**. Part F (engine: couriers and
-  routes): plan F1 → CP-F1, F2 → CP-F2, F3 → CP-F3 in the build log (decisions 45–48). F1 in progress (wip): state, `SetRoute`,
-  staffing, upgrade stop and `INVALID_ROUTE` written; next: fix `SetRouteTests`, the staffing/upgrade/state tests, CP-F1. Then G, H, I.
+  routes): plan F1 → CP-F1, F2 → CP-F2, F3 → CP-F3 in the build log (decisions 45–49). F1 (state, `SetRoute`, staffing, the upgrade
+  stop, `INVALID_ROUTE`) done, **CP-F1 verified**. Next: F2 (couriers in the advance: arrivals, leaving, a stop's actions). Then G, H, I.
 - **Last completed:** M0-60 · Client ↔ server boundary review (PR #85, merged)
 - **Next task:** CR-0008-T2 · client and art (`[S]`), after T1 merges; then CR-0008-T3, then M0-61.
 - **Open questions for the owner:** CR-0008-T1: 8 Dependabot alerts on `main` (build log Follow-ups). M0-58: the [MANUAL] content-change check (`client/README.md`; no automated test covers the `GameRoot` rebuild). CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-54: the dev database still runs the fast clock until the owner does step 7 of the waiting-loop run (`LOCAL-E2E.md`). M0-55: the [MANUAL] look at the connection states (`client/README.md`). CR-0007-T1: the [MANUAL] look at the new UI (`client/README.md`); the status label may be removed (build log follow-ups).
-- **Known broken / do not touch:** F1 wip: `CityBuilder.Simulation.Tests` doesn't compile (`SetRouteTests` lacks `using
-  CityBuilder.Simulation.Tests.State`); the engine, server and the other suites build and pass. (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
+- **Known broken / do not touch:** nothing at CP-F1. Until part G the server doesn't store couriers or routes (no endpoint sets them yet). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
 - **Verify with:** `bash scripts/dev/check-docs.sh --base origin/main` (as CI) · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 

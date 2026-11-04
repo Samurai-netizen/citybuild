@@ -1,5 +1,6 @@
 using CityBuilder.Simulation.Rules;
 using CityBuilder.Simulation.State;
+using CityBuilder.Simulation.Tests.State;
 using static CityBuilder.Simulation.Tests.State.CityFixture;
 
 namespace CityBuilder.Simulation.Tests.Rules;
@@ -95,7 +96,8 @@ public sealed class SetRouteTests
     public void SetRoute_ShapeTheContentForbids_IsInvalidRoute()
     {
         (bool, string, string)[] take = [(true, "wood", "all")];
-        (int, (bool, string, string)[])[] seven = Enumerable.Range(0, 7).Select(index => (index % 2 == 0 ? 3 : 4, take)).ToArray();
+        // Seven stops whose neighbours all differ (the last, the hut, is not the first, the camp): only the count is wrong.
+        (int, (bool, string, string)[])[] seven = [(3, take), (4, take), (3, take), (4, take), (3, take), (4, take), (1, take)];
         (int, (bool, string, string)[])[][] shapes =
         [
             [(3, take)],
