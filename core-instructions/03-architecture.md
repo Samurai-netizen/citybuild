@@ -17,7 +17,7 @@ and every 2 minutes in the foreground. Every command response carries the full a
 ## Request lifecycle (every city request)
 1. Authenticate → `PlayerId` from the token.
 2. Validate the request shape (before touching the database).
-3. `BEGIN` → `SELECT … FOR UPDATE` on the player's own city row → load buildings, inventory and research
+3. `BEGIN` → `SELECT … FOR UPDATE` on the player's own city row → load buildings, stores, needs, research, roads and trips (CR-0008)
    (`ICityTransactionRunner`, the only way a use case reaches a city; `06` → write transaction pattern).
 4. Commands only: look up `(PlayerId, requestId)`. If found with the same payload hash, return the stored
    response and roll back. If found with a different hash → `IDEMPOTENCY_CONFLICT`. Steps 2 and 4 to 8 of a command are
@@ -28,7 +28,7 @@ and every 2 minutes in the foreground. Every command response carries the full a
 6. Commands only: apply the mutation via engine rules. On a rule failure, return the error code;
    the settlement from step 5 is still committed, because time passing is never undone.
 7. Zero-length advance → canonical state.
-8. Write the city, buildings, inventory, research, ledger entries and command receipt; increment `StateVersion`.
+8. Write the city (with its purse), buildings, stores, needs, research, roads, trips, ledger entries and command receipt; increment `StateVersion`.
 9. `COMMIT` → map to DTO → respond with the snapshot (+ settlement report).
 
 ## Projects and dependency direction
