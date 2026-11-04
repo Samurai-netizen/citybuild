@@ -35,30 +35,34 @@ public sealed class ContentContractTests(ApiFactory factory) : IClassFixture<Api
         JsonNode content = (await ApiClient.GetAsync(factory, "/api/v1/content", _playerId)).Json();
 
         JsonShape.AssertObject(
-            content, "contentVersion:string rules:object startingCity:object eras:array items:array buildings:array research:array roads:array", "$");
+            content,
+            "contentVersion:string rules:object startingCity:object eras:array items:array buildings:array research:array roads:array amountPresets:array",
+            "$");
         JsonShape.AssertObject(
             content["rules"],
-            "gridWidth:int gridHeight:int builderSlots:int researchSlots:int baseStorageCaps:object maxOfflineProductionSeconds:int " +
+            "gridWidth:int gridHeight:int builderSlots:int researchSlots:int maxOfflineProductionSeconds:int " +
             "minCycleSeconds:int maxLaborReductionPermille:int groundTileMillis:int crossingSpeedPermille:int minWalkSeconds:int " +
-            "maxWalkBonusPermille:int timeScale:int",
+            "maxWalkBonusPermille:int tripCarryLimit:int maxRouteStops:int maxStopActions:int timeScale:int",
             "$.rules");
-        JsonShape.AssertObject(content["startingCity"], "era:int inventory:object", "$.startingCity");
+        JsonShape.AssertObject(content["startingCity"], "era:int purse:int", "$.startingCity");
         AssertEach(content["eras"], "number:int id:string name:string", "$.eras");
-        AssertEach(content["items"], "id:string name:string era:int capped:bool tradable:bool", "$.items");
+        AssertEach(content["items"], "id:string name:string era:int currency:bool tradable:bool", "$.items");
         AssertEach(
             content["buildings"],
-            "id:string name:string kind:string era:int availableAtStart:bool unlockedBy:string? cost:object buildSeconds:int levels:array",
+            "id:string name:string kind:string era:int availableAtStart:bool unlockedBy:string? maxPerCity:int? cost:object buildSeconds:int levels:array",
             "$.buildings");
         AssertEach(
             content["research"],
             "id:string name:string era:int cost:object durationSeconds:int prerequisites:array effects:array",
             "$.research");
         AssertEach(content["roads"], "level:int name:string tileMillis:int cost:object", "$.roads");
+        AssertEach(content["amountPresets"], "id:string name:string percent:int", "$.amountPresets");
         foreach ((JsonNode building, int b) in content["buildings"]!.AsArray().Select((node, index) => (node!, index)))
         {
             AssertEach(
                 building["levels"],
-                "level:int maxWorkers:int workersProvided:int recipe:object? upgradeCost:object? upgradeSeconds:int?",
+                "level:int maxWorkers:int workersProvided:int recipe:object? storage:object? carryLimit:int? staminaSeconds:int? " +
+                "upgradeCost:object? upgradeSeconds:int?",
                 $"$.buildings[{b}].levels");
             foreach ((JsonNode level, int l) in building["levels"]!.AsArray().Select((node, index) => (node!, index)))
             {
@@ -71,11 +75,15 @@ public sealed class ContentContractTests(ApiFactory factory) : IClassFixture<Api
 
         foreach ((JsonNode research, int r) in content["research"]!.AsArray().Select((node, index) => (node!, index)))
         {
-            AssertEach(research["effects"], "type:string building:string? item:string? permille:int? amount:int?", $"$.research[{r}].effects");
+            AssertEach(
+                research["effects"], "type:string building:string? item:string? permille:int? amount:int? mode:string?", $"$.research[{r}].effects");
         }
     }
 
-    /// <summary>The contract writes its nulls: a house has no recipe, level 1 has no upgrade, and an effect leaves the fields of other types null.</summary>
+    /// <summary>
+    /// The contract writes its nulls: only a producer has a recipe, only a producer or a warehouse a store, only a courier station a carry limit
+    /// and stamina, level 1 has no upgrade, and an effect leaves the fields of other types null (CR-0008: the five kinds, two new effects).
+    /// </summary>
     [Fact]
     public async Task Get_NotApplicableFields_AreNullNotMissing()
     {
@@ -84,11 +92,14 @@ public sealed class ContentContractTests(ApiFactory factory) : IClassFixture<Api
         foreach (JsonNode building in content["buildings"]!.AsArray().Select(node => node!))
         {
             string kind = (string)building["kind"]!;
-            Assert.True(kind is "House" or "Producer", $"Unknown building kind {kind}.");
+            Assert.True(kind is "House" or "Producer" or "Warehouse" or "CourierStation" or "Science", $"Unknown building kind {kind}.");
             foreach (JsonNode level in building["levels"]!.AsArray().Select(node => node!))
             {
-                // A house has no recipe; a producer always has one.
+                // Only a producer has a recipe; a producer and a warehouse have a store; only a courier station carries and tires.
                 Assert.Equal(kind == "Producer", level["recipe"] is not null);
+                Assert.Equal(kind is "Producer" or "Warehouse", level["storage"] is not null);
+                Assert.Equal(kind == "CourierStation", level["carryLimit"] is not null);
+                Assert.Equal(kind == "CourierStation", level["staminaSeconds"] is not null);
                 // Level 1 is built, not upgraded to: no cost and no time, not an empty cost and 0 seconds.
                 bool isFirst = (int)level["level"]! == 1;
                 Assert.Equal(!isFirst, level["upgradeCost"] is not null);
@@ -101,17 +112,20 @@ public sealed class ContentContractTests(ApiFactory factory) : IClassFixture<Api
 
         foreach (JsonNode effect in content["research"]!.AsArray().SelectMany(research => research!["effects"]!.AsArray()).Select(node => node!))
         {
-            (bool building, bool item, bool permille, bool amount) = ((string)effect["type"]!) switch
+            (bool building, bool item, bool permille, bool amount, bool mode) = ((string)effect["type"]!) switch
             {
-                "unlockBuilding" => (true, false, false, false),
-                "laborReduction" => (true, false, true, false),
-                "storageCapBonus" => (false, true, false, true),
+                "unlockBuilding" => (true, false, false, false, false),
+                "laborReduction" => (true, false, true, false, false),
+                "storageCapBonus" => (false, true, false, true, false),
+                "unlockAmountMode" => (false, false, false, false, true),
+                "walkSpeedBonus" => (false, false, true, false, false),
                 var other => throw new InvalidOperationException($"Unknown effect type {other}."),
             };
             Assert.Equal(building, effect["building"] is not null);
             Assert.Equal(item, effect["item"] is not null);
             Assert.Equal(permille, effect["permille"] is not null);
             Assert.Equal(amount, effect["amount"] is not null);
+            Assert.Equal(mode, effect["mode"] is not null);
         }
     }
 
@@ -125,8 +139,7 @@ public sealed class ContentContractTests(ApiFactory factory) : IClassFixture<Api
         AssertIdsAreOrdinal(content["items"]!);
         AssertIdsAreOrdinal(content["buildings"]!);
         AssertIdsAreOrdinal(content["research"]!);
-        AssertKeysAreOrdinal(content["rules"]!["baseStorageCaps"]!);
-        AssertKeysAreOrdinal(content["startingCity"]!["inventory"]!);
+        AssertIdsAreOrdinal(content["amountPresets"]!);
         Assert.Equal(Enumerable.Range(1, content["roads"]!.AsArray().Count), content["roads"]!.AsArray().Select(level => (int)level!["level"]!));
         foreach (JsonNode building in content["buildings"]!.AsArray().Select(node => node!))
         {
@@ -137,6 +150,11 @@ public sealed class ContentContractTests(ApiFactory factory) : IClassFixture<Api
                 if (level["upgradeCost"] is { } upgradeCost)
                 {
                     AssertKeysAreOrdinal(upgradeCost);
+                }
+
+                if (level["storage"] is { } storage)
+                {
+                    AssertKeysAreOrdinal(storage);
                 }
 
                 if (level["recipe"] is { } recipe)

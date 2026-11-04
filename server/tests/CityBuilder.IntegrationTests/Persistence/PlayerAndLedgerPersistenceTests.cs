@@ -30,6 +30,8 @@ public sealed class PlayerAndLedgerPersistenceTests
     [InlineData(LedgerReason.RefundUpgrade, "REFUND_UPGRADE")]
     [InlineData(LedgerReason.CostResearch, "COST_RESEARCH")]
     [InlineData(LedgerReason.CostRoad, "COST_ROAD")]
+    [InlineData(LedgerReason.SettlementDelivered, "SETTLEMENT_DELIVERED")]
+    [InlineData(LedgerReason.SettlementRefunded, "SETTLEMENT_REFUNDED")]
     public void ReasonText_EachReason_IsTheTextOfTheDataModel(LedgerReason reason, string text)
     {
         Assert.Equal(text, LedgerMapping.ReasonText(reason));
@@ -39,7 +41,7 @@ public sealed class PlayerAndLedgerPersistenceTests
     [Fact]
     public void ReasonText_TheTestedReasons_AreAllTheReasons()
     {
-        Assert.Equal(8, Enum.GetValues<LedgerReason>().Length);
+        Assert.Equal(10, Enum.GetValues<LedgerReason>().Length);
     }
 
     /// <summary>A receipt mapped to its row and back is the same receipt: request id, command type, hash and response text.</summary>

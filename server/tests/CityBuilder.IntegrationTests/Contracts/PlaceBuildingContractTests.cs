@@ -51,17 +51,19 @@ public sealed class PlaceBuildingContractTests(ApiFactory factory) : IClassFixtu
         JsonNode snapshot = response.Json();
         JsonShape.AssertObject(snapshot, "requestId:string stateVersion:int serverTimeUtc:string contentVersion:string city:object settlement:object", "$");
         Assert.Equal((_requestId, 1L), ((string)snapshot["requestId"]!, (long)snapshot["stateVersion"]!));
-        Assert.Equal("""{"coins":620,"logs":40,"planks":10}""", snapshot["city"]!["inventory"]!.ToJsonString());
+        Assert.Equal(720, (long)snapshot["city"]!["purse"]!);
+        Assert.Equal("""{"coins":720,"logs":0,"planks":0}""", snapshot["city"]!["totals"]!.ToJsonString());
         Assert.Equal("""{"slots":2,"busy":1}""", snapshot["city"]!["builders"]!.ToJsonString());
         Assert.Equal(
             """[{"id":1,"typeId":"woodcutter","x":2,"y":3,"level":1,"assignedWorkers":0,"maxWorkers":2,"phase":"Constructing",""" +
-            """ "phaseStartedAt":0,"phaseEndsAt":60,"cycleLabor":0,"laborRemaining":0,"segmentStartedAt":0,"stallReason":null}]""".TrimStart(),
+            """ "phaseStartedAt":0,"phaseEndsAt":60,"cycleLabor":0,"laborRemaining":0,"segmentStartedAt":0,"stallReason":null,""".TrimStart() +
+            """ "store":{},"storeLimits":{"logs":40},"needs":{},"project":null}]""".TrimStart(),
             snapshot["city"]!["buildings"]!.ToJsonString());
 
         Assert.Equal(1, store.SaveCount);
         Assert.Equal(1, store.Stored(_playerId).StateVersion);
         LedgerEntry cost = Assert.Single(store.Ledger);
-        Assert.Equal(("coins", -80L, 620L, LedgerReason.CostPlace, _requestId), (cost.Item.Value, cost.Delta, cost.BalanceAfter, cost.Reason, cost.RefId));
+        Assert.Equal(("coins", -80L, 720L, LedgerReason.CostPlace, _requestId), (cost.Item.Value, cost.Delta, cost.BalanceAfter, cost.Reason, cost.RefId));
 
         JsonNode city = (await ApiClient.GetAsync(server, "/api/v1/city", _playerId)).Json();
         Assert.Equal(city["city"]!.ToJsonString(), snapshot["city"]!.ToJsonString());

@@ -37,7 +37,7 @@ public sealed class StartResearchContractTests(ApiFactory factory) : IClassFixtu
     private static readonly Guid _playerId = Guid.Parse("0199a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a6e");
 
     /// <summary>
-    /// Starting answers 200 with the snapshot of the city as it is saved: the request id, the next version, the cost paid (700 − 250 coins),
+    /// Starting answers 200 with the snapshot of the city as it is saved: the request id, the next version, the coins paid (280 − 250),
     /// and the research block with the node running from clock 0 to its 1800 seconds next to the completed trade charter. It is the same
     /// snapshot <c>GET /city</c> shows of that city, and the saved ledger holds the one <c>COST_RESEARCH</c> row.
     /// </summary>
@@ -54,14 +54,14 @@ public sealed class StartResearchContractTests(ApiFactory factory) : IClassFixtu
         JsonNode snapshot = response.Json();
         JsonShape.AssertObject(snapshot, "requestId:string stateVersion:int serverTimeUtc:string contentVersion:string city:object settlement:object", "$");
         Assert.Equal((_requestId, 1L), ((string)snapshot["requestId"]!, (long)snapshot["stateVersion"]!));
-        Assert.Equal("""{"coins":450,"logs":40,"planks":10}""", snapshot["city"]!["inventory"]!.ToJsonString());
+        Assert.Equal(30, (long)snapshot["city"]!["purse"]!);
         Assert.Equal(
-            """{"activeId":"sharp_axes","startedAt":0,"endsAt":1800,"completed":["trade_charter"]}""",
+            """{"activeId":"sharp_axes","startedAt":0,"endsAt":1800,"needs":{},"completed":["trade_charter"]}""",
             snapshot["city"]!["research"]!.ToJsonString());
 
         Assert.Equal(1, store.SaveCount);
         LedgerEntry cost = Assert.Single(store.Ledger);
-        Assert.Equal((LedgerReason.CostResearch, "coins", -250L, 450L, _requestId), (cost.Reason, cost.Item.Value, cost.Delta, cost.BalanceAfter, cost.RefId));
+        Assert.Equal((LedgerReason.CostResearch, "coins", -250L, 30L, _requestId), (cost.Reason, cost.Item.Value, cost.Delta, cost.BalanceAfter, cost.RefId));
 
         JsonNode city = (await ApiClient.GetAsync(server, "/api/v1/city", _playerId)).Json();
         Assert.Equal(city["city"]!.ToJsonString(), snapshot["city"]!.ToJsonString());
@@ -292,7 +292,7 @@ public sealed class StartResearchContractTests(ApiFactory factory) : IClassFixtu
     }
 
     /// <summary>
-    /// The city of the tests at clock 0, with 700 coins, the completed scriptorium (research needs the science building, CR-0008 D11) and
+    /// The city of the tests at clock 0, with 280 coins (too few for <c>storehouses</c>' 300), the completed scriptorium (research needs the science building, CR-0008 D11) and
     /// nothing else, the trade charter completed (at clock 0) and the research slot free.
     /// </summary>
     /// <param name="content">The server's content.</param>
@@ -304,7 +304,7 @@ public sealed class StartResearchContractTests(ApiFactory factory) : IClassFixtu
             0,
             era: 1,
             nextBuildingId: 2,
-            purse: 700,
+            purse: 280,
             [new Building(1, new BuildingTypeId("scriptorium"), 0, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0)],
             [tradeCharter],
             activeResearch: null);
@@ -322,6 +322,6 @@ public sealed class StartResearchContractTests(ApiFactory factory) : IClassFixtu
         CityAggregate city = store.Stored(_playerId);
         Assert.Equal(0, city.StateVersion);
         Assert.Null(city.State.ActiveResearch);
-        Assert.Equal(700, city.State.Purse);
+        Assert.Equal(280, city.State.Purse);
     }
 }

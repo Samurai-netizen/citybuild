@@ -88,7 +88,7 @@ public sealed class RoadCommandsContractTests(ApiFactory factory) : IClassFixtur
         Assert.Equal(
             """[{"x":0,"y":2,"level":1},{"x":1,"y":1,"level":1},{"x":2,"y":1,"level":2},{"x":3,"y":1,"level":1},{"x":3,"y":2,"level":1}]""",
             snapshot["city"]!["roads"]!.ToJsonString());
-        Assert.Equal("""{"coins":10,"logs":40,"planks":10}""", snapshot["city"]!["inventory"]!.ToJsonString());
+        Assert.Equal(10L, (long)snapshot["city"]!["purse"]!);
         Assert.Equal("""{"slots":2,"busy":0}""", snapshot["city"]!["builders"]!.ToJsonString());
         Assert.Equal(1, store.SaveCount);
         LedgerEntry cost = Assert.Single(store.Ledger);
@@ -110,7 +110,7 @@ public sealed class RoadCommandsContractTests(ApiFactory factory) : IClassFixtur
         Assert.Equal(HttpStatusCode.OK, response.Status);
         JsonNode city = response.Json()["city"]!;
         Assert.Equal("""[{"x":1,"y":1,"level":2},{"x":2,"y":1,"level":2},{"x":3,"y":1,"level":1}]""", city["roads"]!.ToJsonString());
-        Assert.Equal(5L, (long)city["inventory"]!["coins"]!);
+        Assert.Equal(5L, (long)city["purse"]!);
         LedgerEntry cost = Assert.Single(store.Ledger);
         Assert.Equal((LedgerReason.CostRoad, "coins", -15L, 5L), (cost.Reason, cost.Item.Value, cost.Delta, cost.BalanceAfter));
     }
@@ -127,7 +127,7 @@ public sealed class RoadCommandsContractTests(ApiFactory factory) : IClassFixtur
         Assert.Equal(HttpStatusCode.OK, response.Status);
         JsonNode city = response.Json()["city"]!;
         Assert.Equal("""[{"x":3,"y":1,"level":1}]""", city["roads"]!.ToJsonString());
-        Assert.Equal(20L, (long)city["inventory"]!["coins"]!);
+        Assert.Equal(20L, (long)city["purse"]!);
         Assert.Equal(1, store.SaveCount);
         Assert.Empty(store.Ledger);
     }
