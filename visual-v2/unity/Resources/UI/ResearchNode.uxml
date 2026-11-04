@@ -1,0 +1,24 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+  <!-- One research node of the research screen (M0-52; visual v2, CR-0009): ResearchScreen clones it once per node and writes the texts of
+       ResearchNodeModel into the labels by name. A card, from the top: the name, the big picture (the node's picture from UiIcons; the ring
+       is painted over its corner while it runs) with the cost and the time as two chips over its foot, then the effect, the status and the
+       note. Its colours follow its state (done green, running gold, ready to fund green-edged, locked grey). research-node-finance is the
+       Fund button laid over the whole card, so the card is the thing to tap (CR-0007). Its style is in Research.uss and Common.uss. -->
+  <ui:VisualElement name="research-node" class="research-node">
+    <ui:Label name="research-node-name" class="research-node-name t-heading" picking-mode="Ignore" />
+    <ui:VisualElement class="research-node-art" picking-mode="Ignore">
+      <ui:VisualElement name="research-node-icon" class="research-node-icon" picking-mode="Ignore" />
+      <ui:VisualElement name="research-node-ring" class="research-node-ring" picking-mode="Ignore" />
+      <ui:VisualElement class="research-node-numbers" picking-mode="Ignore">
+        <ui:Label name="research-node-cost" class="research-node-chip" picking-mode="Ignore" />
+        <ui:Label name="research-node-time" class="research-node-chip research-node-chip--time glyph-time" picking-mode="Ignore" />
+      </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:VisualElement class="research-node-lines" picking-mode="Ignore">
+      <ui:Label name="research-node-effect" class="research-node-effect" picking-mode="Ignore" />
+      <ui:Label name="research-node-status" class="research-node-status" picking-mode="Ignore" />
+      <ui:Label name="research-node-note" class="research-node-note" picking-mode="Ignore" />
+    </ui:VisualElement>
+    <ui:Button name="research-node-finance" class="research-node-finance btn" text="Fund" />
+  </ui:VisualElement>
+</ui:UXML>

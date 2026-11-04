@@ -1,0 +1,41 @@
+/* The toasts (M0-47; visual v2, CR-0009): dark rounded notes over the map, with a thin green or red edge, stacking up from above the dock
+   at the bottom left, like the showcase's toast. Colours and sizes come from Common.uss; --toast-lift is how high they start. */
+.toast-root {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  padding: var(--sp-2); /* replaced by the safe area in code */
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+}
+
+.toast-list {
+  margin-bottom: var(--toast-lift); /* above the dock; higher in portrait (Common.uss) */
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.toast {
+  max-width: 320px; /* never wider than a phone in portrait */
+  margin-bottom: var(--sp-1);
+  padding: var(--sp-2) var(--sp-4);
+  border-width: 2px;
+  border-radius: var(--radius-md);
+  border-color: transparent;
+  color: var(--c-hud-text);
+  background-color: var(--c-hud-strong);
+  font-size: var(--font-md);
+  white-space: normal;
+  -unity-text-align: middle-left;
+}
+
+.toast--success {
+  border-color: var(--c-go);
+}
+
+.toast--error {
+  border-color: var(--c-stop);
+}

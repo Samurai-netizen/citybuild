@@ -1,0 +1,22 @@
+/* The connection status label (visual v2, CR-0009): a small dark pill at the bottom left, above the dock. Colours and sizes come from
+   Common.uss. */
+.connection-status-root {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  padding: var(--sp-2); /* replaced by the safe area in code */
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+}
+
+.connection-status {
+  margin: 0 0 var(--dock-lift) 0; /* above the Build and Research buttons */
+  padding: 2px var(--sp-2);
+  border-radius: 10px;
+  background-color: var(--c-hud);
+  color: var(--c-hud-caption);
+  font-size: var(--font-xs);
+}

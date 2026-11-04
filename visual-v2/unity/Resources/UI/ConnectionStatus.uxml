@@ -1,0 +1,9 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+  <!-- The connection status label that GameRoot shows (docs/modules/CityBuilder.Client.Presentation.md); its style is Common.uss and ConnectionStatus.uss.
+       The root covers the screen, takes no pointer and is padded by the safe area in code (M0-59), so the label keeps clear of a notch. -->
+  <Style src="Common.uss" />
+  <Style src="ConnectionStatus.uss" />
+  <ui:VisualElement name="connection-status-root" class="connection-status-root" picking-mode="Ignore">
+    <ui:Label name="connection-status" class="connection-status" text="Not connected" />
+  </ui:VisualElement>
+</ui:UXML>

@@ -1,0 +1,50 @@
+/* The placement bar (M0-46; visual v2, CR-0009): a parchment panel framed in wood at the bottom right, its buttons sharing the width;
+   above the dock in portrait. Colours and sizes come from Common.uss. */
+.placement-root {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  padding: var(--sp-2); /* replaced by the safe area in code */
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-end;
+}
+
+.placement-panel {
+  width: 320px;
+  max-width: 100%;
+}
+
+.portrait .placement-panel {
+  margin-bottom: var(--dock-lift);
+}
+
+.placement-panel--hidden {
+  display: none;
+}
+
+.placement-hint {
+  margin-top: var(--sp-1);
+}
+
+.placement-error {
+  -unity-font-definition: url("Fonts/Nunito-ExtraBold.ttf");
+  margin-top: var(--sp-1);
+  color: var(--c-stop-ink);
+  font-size: var(--font-sm);
+  white-space: normal;
+}
+
+/* The row is pulled left by one gap and each button pushed right by one, so the gaps sit only between the buttons. */
+.placement-buttons {
+  margin: var(--sp-3) 0 0 -8px;
+  flex-direction: row;
+}
+
+.placement-button {
+  flex-grow: 1;
+  flex-basis: 0;
+  margin: 0 0 0 var(--sp-2);
+}

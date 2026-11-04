@@ -41,6 +41,11 @@
 - Step 8 done: the client code in `unity/Presentation/City/` and its EditMode tests; `MOTIONS.md` is the contract between the art and
   the client.
 
+- Step 9 done: every UI file reworked after the showcase (`unity/Resources/UI/`: `Common.uss` is the design system; each screen keeps
+  every element name, type, hidden class and pointer rule the views use). `ui-preview/preview.js` renders them in a browser over the
+  town for portrait and landscape phones (`previews/ui_portrait.jpg`, `previews/ui_landscape.jpg`); `ui-preview/check-ui-rules.py`
+  runs the rules the client's UI tests read from the files.
+
 ## Verification so far
 - `blender -b --factory-startup --python visual-v2/blender/build_all.py -- --no-render`: all 49 models pass every check (Blender 5.2.3,
   Linux, software OpenGL for the renders).
@@ -48,6 +53,10 @@
   client members it uses, with warnings as errors and XML documentation checked (.NET 10 SDK, C# 9). The 66 tests that need no Unity
   objects pass under NUnit there (motion formula, motion table, store steps, ground variants). That run found and fixed an overflow in
   `StorageFill.StepFor` for limits near `long.MaxValue`.
+- `python3 visual-v2/ui-preview/check-ui-rules.py`: every rule of SharedLookTests, MobileLayoutTests and the layout tests passes for the
+  new UI files (and for today's, as a check of the script); all 101 element names the views look up exist with their types.
+- The browser preview found two layout bugs that Unity's layout engine has too, both fixed: in portrait the inspector's boxes kept the
+  `flex-basis: 0` of the side-by-side layout and collapsed in a column; in landscape the build sheet covered the HUD.
 - Not run here: the tests that build GameObjects (`MotionRigTests`, `FillViewTests`, `BuildingAnimatorTests`, `RoadArmsTests`,
   `ArtModelsV2Tests`) need the Unity Editor.
 
@@ -67,4 +76,7 @@
 | 12 | Fonts of the showcase: Fredoka (titles, buttons, numbers) and Nunito (labels, text), SIL OFL 1.1, as static instances (Fredoka 600, Nunito 700 and 800) made with fontTools from Google Fonts' variable files; the licences sit beside them | Unity's text engine draws one weight per font file. OFL allows this, and neither font has a reserved name |
 | 13 | UI glyphs (close, plus, minus, lock, time, done, makes, alert) are white PNGs with the shape in alpha only, tinted in USS | One file per glyph in any colour; white transparent pixels keep a dark fringe out when Unity filters them |
 | 14 | Previews are kept as JPEG and optimised GIFs (1.7 MB in all); the one-picture-per-model renders are git-ignored | Git keeps every version of a picture; the renders rebuild in minutes |
+| 15 | The UI is reworked in USS and UXML only: every name, type, hidden class and pointer rule the C# views use stays, so the views need no change. Close, minus and plus become tinted glyphs (their texts are static); the Build and Research buttons carry their pictures as backgrounds; the HUD drops its wood bar for dark chips; a portrait inspector is a sheet above the dock | The showcase's look without touching the views that CR-0008-T2 is about to change |
+| 16 | `--touch` grows from 48 to 52 and the dock buttons with it (`--dock-lift` 60); the HUD is 40 high in landscape and three rows in portrait (`--hud-height` 52 and 122) | Chunkier buttons like the showcase's; the tests' relations (dock lift = touch + gap, HUD height + 12) still hold |
+| 17 | UI Toolkit has no `:first-child`, `:last-child` or `gap`: spacing uses margins on every item and a negative margin on the row | The rule check rejects those selectors |
 | 11 | The package's change id is `CR-0009`; its CR file is written at adoption | Commits need an id (`.githooks/commit-msg`); a CR file now would edit `docs/changes/README.md`, a shared file. If the main session takes CR-0009 first, the adoption renumbers |

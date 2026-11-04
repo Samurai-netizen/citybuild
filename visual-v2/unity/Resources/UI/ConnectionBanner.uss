@@ -1,0 +1,80 @@
+/* The connection banner and the blocking screen (M0-55; visual v2, CR-0009): a parchment strip under the HUD with a red edge that says why
+   the city may be out of date, when it was last synced and offers one action; and, for a game that does not match the server, a card on a
+   dark scrim. Colours and sizes come from Common.uss. */
+.connection-root {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  padding: var(--sp-2); /* replaced by the safe area in code */
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+
+.connection-banner {
+  width: 340px;
+  max-width: 100%;
+  margin-top: var(--hud-height);
+  flex-direction: column;
+  border-left-width: 8px;
+  border-left-color: var(--c-stop);
+}
+
+.connection-banner--hidden {
+  display: none;
+}
+
+.connection-message {
+  -unity-font-definition: url("Fonts/Fredoka-SemiBold.ttf");
+  color: var(--c-ink);
+  font-size: var(--font-md);
+  white-space: normal;
+}
+
+.connection-banner-row {
+  margin-top: var(--sp-2);
+  flex-direction: row;
+  align-items: center;
+}
+
+.connection-synced {
+  flex-grow: 1;
+  flex-shrink: 1;
+}
+
+.connection-button {
+  min-width: 112px;
+  margin-left: var(--sp-2);
+}
+
+.connection-blocker {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  padding: var(--sp-2) var(--sp-4); /* replaced by the safe area in code */
+  justify-content: center;
+  align-items: center;
+}
+
+.connection-blocker--hidden {
+  display: none;
+}
+
+.connection-card {
+  width: 360px;
+  max-width: 100%;
+  border-width: 4px;
+  border-bottom-width: 7px;
+}
+
+.connection-blocker-message {
+  margin-top: var(--sp-2);
+}
+
+.connection-blocker-button {
+  margin-top: var(--sp-3);
+}

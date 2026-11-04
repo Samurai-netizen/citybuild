@@ -1,0 +1,25 @@
+/* The fatal error screen (visual v2, CR-0009): the whole screen in deep wood with the reason in cream, under a red title. Colours and
+   sizes come from Common.uss. */
+.fatal-error {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  padding: var(--sp-4); /* replaced by the safe area in code */
+  justify-content: center;
+  background-color: var(--c-wood-shadow);
+}
+
+.fatal-error-title {
+  -unity-font-definition: url("Fonts/Fredoka-SemiBold.ttf");
+  margin-bottom: var(--sp-3);
+  color: var(--c-hud-down);
+  font-size: var(--font-xxl);
+}
+
+.fatal-error-details {
+  color: var(--c-hud-text);
+  font-size: var(--font-md);
+  white-space: normal;
+}

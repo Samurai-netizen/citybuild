@@ -1,0 +1,254 @@
+/* The research screen (M0-52; visual v2, CR-0009): the gold Research button right of Build, and a parchment sheet under the HUD with a
+   sideways row of node cards coloured by their state, like the showcase's research tree: done on green, running on gold with a glow, ready
+   to fund with a green edge, locked greyed. Colours and sizes come from Common.uss. */
+.research-root {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  padding: var(--sp-2); /* replaced by the safe area in code */
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+}
+
+.research-panel {
+  align-self: stretch;
+  flex-grow: 1;
+  margin-top: var(--hud-height);
+  margin-bottom: var(--sp-2);
+}
+
+.research-panel--hidden {
+  display: none;
+}
+
+/* Portrait: a sheet as tall as its cards, above the dock; landscape keeps the whole height and ResearchScreen scales the row to fit it. */
+.portrait .research-panel {
+  flex-grow: 0;
+}
+
+.portrait .research-scroll {
+  flex-grow: 0;
+  min-height: 252px;
+}
+
+.research-header {
+  flex-direction: row;
+  align-items: center;
+}
+
+.research-titles {
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-direction: column;
+}
+
+.research-rule {
+  margin: 2px 0 0 0;
+}
+
+.research-rule--off {
+  opacity: 0.7;
+}
+
+.research-close {
+  display: none; /* the gold Research button closes the screen (it reads "Close" while it is open) */
+}
+
+.research-scroll {
+  flex-grow: 1;
+  margin-top: var(--sp-2);
+}
+
+.research-scroll .unity-scroll-view__horizontal-scroller {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin-top: 0;
+}
+
+.research-columns {
+  flex-direction: row;
+}
+
+.research-row {
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.research-node {
+  width: 188px;
+  height: 236px;
+  flex-shrink: 0;
+  margin: 0 var(--sp-2) var(--sp-2) 0;
+  padding: var(--sp-2);
+  flex-direction: column;
+  border-width: 3px;
+  border-bottom-width: 6px;
+  border-radius: 18px;
+  border-color: var(--c-wood);
+  background-color: var(--c-cream);
+}
+
+.research-node--locked {
+  border-color: var(--c-off-edge);
+  background-color: var(--c-locked);
+}
+
+.research-node--locked .research-node-icon {
+  opacity: 0.5;
+}
+
+.research-node--available {
+  border-color: var(--c-wood);
+}
+
+.research-node--running {
+  border-color: var(--c-gold-line);
+  background-color: var(--c-gold-soft);
+}
+
+.research-node--done {
+  border-color: var(--c-go);
+  background-color: var(--c-go-soft);
+}
+
+.research-node--ready {
+  border-color: var(--c-go);
+  background-color: var(--c-cream);
+}
+
+.research-node-name {
+  flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  -unity-text-align: middle-center;
+}
+
+.research-node-art {
+  height: 120px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.research-node-icon {
+  width: 110px;
+  height: 110px;
+  -unity-background-scale-mode: scale-to-fit;
+}
+
+.research-node-ring {
+  position: absolute;
+  right: 2px;
+  top: 2px;
+  width: 34px;
+  height: 34px;
+}
+
+.research-node-numbers {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.research-node-chip {
+  -unity-font-definition: url("Fonts/Fredoka-SemiBold.ttf");
+  max-width: 62%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 1px var(--sp-2);
+  border-radius: 10px;
+  background-color: var(--c-card);
+  color: var(--c-ink);
+  font-size: var(--font-sm);
+  white-space: nowrap;
+}
+
+.research-node-chip--time {
+  padding-left: 20px;
+  background-size: 13px 13px;
+  background-repeat: no-repeat no-repeat;
+  background-position-x: left 5px;
+  background-position-y: center;
+  -unity-background-image-tint-color: var(--c-ink-soft);
+}
+
+.research-node-lines {
+  flex-grow: 1;
+  flex-shrink: 1;
+  overflow: hidden;
+  flex-direction: column;
+  margin-top: var(--sp-1);
+}
+
+.research-node-effect {
+  -unity-font-definition: url("Fonts/Nunito-ExtraBold.ttf");
+  flex-shrink: 0;
+  color: var(--c-ink);
+  font-size: var(--font-sm);
+  white-space: normal;
+}
+
+.research-node-status {
+  -unity-font-definition: url("Fonts/Fredoka-SemiBold.ttf");
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--c-ink);
+  font-size: var(--font-md);
+  white-space: normal;
+}
+
+.research-node--done .research-node-status {
+  color: var(--c-go-ink);
+}
+
+.research-node--running .research-node-status {
+  color: var(--c-warn-ink);
+}
+
+.research-node-note {
+  flex-shrink: 0;
+  color: var(--c-ink-soft);
+  font-size: var(--font-xs);
+  white-space: normal;
+  overflow: hidden;
+}
+
+.research-toggle {
+  width: var(--dock-width);
+  margin-left: var(--dock-next);
+  background-image: url("Icons/research.png");
+}
+
+/* The Fund button covers the card: see-through, so the card is the target; it darkens a little while pressed. */
+.research-node-finance,
+.research-node-finance:hover,
+.research-node-finance:active {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border-width: 0;
+  border-radius: 16px;
+  background-color: transparent;
+  color: transparent;
+}
+
+.research-node-finance:active {
+  background-color: var(--c-shade);
+}

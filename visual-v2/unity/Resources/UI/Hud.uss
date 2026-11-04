@@ -1,0 +1,254 @@
+/* The top HUD, visual v2 (CR-0009): no bar, just dark see-through chips over the map like the UI showcase. Colours and sizes come from
+   Common.uss. In landscape the era, the chips and the state sit in one row, 40 high; with the 12 unit gap under it that is --hud-height
+   (52). In portrait they are three rows: the era's ribbon (22), the chips (40) and the state (40) with gaps of 4: 110 high, --hud-height
+   122 under .portrait. The HUD takes no pointer. */
+.hud-root {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  padding: var(--sp-2); /* replaced by the safe area in code */
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.hud-panel {
+  height: 40px;
+  flex-direction: row;
+  align-items: center;
+}
+
+.hud-chips {
+  flex-shrink: 0;
+  flex-direction: row;
+  align-items: center;
+}
+
+/* The counters, the research and the era: the research chip takes what is left and cuts its text, the rest keeps its size. */
+.hud-state {
+  flex-grow: 1;
+  flex-shrink: 1;
+  min-width: 0;
+  flex-direction: row;
+  align-items: center;
+}
+
+/* An item chip: its picture overlaps the chip's left edge, like the showcase's coins and logs. */
+.hud-chip {
+  flex-shrink: 0;
+  min-width: 112px;
+  margin: 0 var(--sp-2) 0 0;
+  padding: 0 var(--sp-3) 0 0;
+  border-width: 2px;
+  border-color: transparent;
+}
+
+.hud-chip--full {
+  border-color: var(--c-gold);
+}
+
+.hud-chip-icon {
+  width: 44px;
+  height: 44px;
+  margin: 0 0 0 -6px;
+  border-radius: 22px;
+  background-color: var(--c-wood);
+  color: var(--c-hud-text);
+  font-size: var(--font-lg);
+  -unity-text-align: middle-center;
+}
+
+/* An item with a picture: the picture replaces the circle and the letter. */
+.hud-chip-icon--picture {
+  border-radius: 0;
+  background-color: transparent;
+  -unity-background-scale-mode: scale-to-fit;
+}
+
+.hud-chip-text {
+  flex-direction: column;
+  justify-content: center;
+}
+
+.hud-chip-amount {
+  flex-direction: row;
+  align-items: flex-end;
+}
+
+.hud-value {
+  -unity-font-definition: url("Fonts/Fredoka-SemiBold.ttf");
+  margin: 0;
+  padding: 0;
+  color: var(--c-hud-text);
+  font-size: var(--font-lg);
+}
+
+.hud-caption {
+  margin: 0 0 1px var(--sp-1);
+  padding: 0;
+  color: var(--c-hud-caption);
+  font-size: var(--font-xs);
+}
+
+.hud-rate {
+  -unity-font-definition: url("Fonts/Nunito-ExtraBold.ttf");
+  margin: -2px 0 0 0;
+  padding: 0;
+  font-size: var(--font-xs);
+  color: var(--c-hud-flat);
+}
+
+.hud-rate--rising {
+  color: var(--c-hud-up);
+}
+
+.hud-rate--falling {
+  color: var(--c-hud-down);
+}
+
+.hud-stat {
+  flex-shrink: 0;
+  margin: 0 var(--sp-2) 0 0;
+  padding: 0 var(--sp-3) 0 2px;
+}
+
+.hud-stat-icon {
+  width: 36px;
+  height: 36px;
+  margin: 0 2px 0 0;
+  -unity-background-scale-mode: scale-to-fit;
+}
+
+.hud-research {
+  flex-grow: 1;
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  margin: 0 var(--sp-2) 0 0;
+  padding: 0 var(--sp-3) 0 4px;
+}
+
+/* The ring is painted by HudView in gold over a pale track; the hole in its middle holds the research's picture. */
+.hud-ring {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  margin: 0 var(--sp-2) 0 0;
+}
+
+.hud-ring-hole {
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 12px;
+  background-color: var(--c-hud-inner);
+  align-items: center;
+  justify-content: center;
+}
+
+.hud-ring-icon {
+  width: 22px;
+  height: 22px;
+  -unity-background-scale-mode: scale-to-fit;
+}
+
+.hud-research-text {
+  flex-direction: column;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.hud-research-name {
+  -unity-font-definition: url("Fonts/Fredoka-SemiBold.ttf");
+  color: var(--c-hud-text);
+  font-size: var(--font-md);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hud-research-time {
+  -unity-font-definition: url("Fonts/Nunito-ExtraBold.ttf");
+  color: var(--c-gold);
+  font-size: var(--font-xs);
+  white-space: nowrap;
+}
+
+.hud-meta {
+  flex-direction: column;
+  align-items: flex-start;
+  flex-shrink: 0;
+  margin: 0 var(--sp-2) 0 0;
+}
+
+.hud-era {
+  font-size: var(--font-xs);
+}
+
+.hud-connection {
+  flex-direction: row;
+  align-items: center;
+  margin-top: 3px;
+  padding: 1px var(--sp-2);
+  border-radius: 8px;
+  background-color: var(--c-hud);
+}
+
+.hud-connection .hud-caption {
+  margin: 0 0 0 var(--sp-1);
+}
+
+.hud-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 4px;
+  background-color: var(--c-hud-caption);
+}
+
+.hud-dot--ok {
+  background-color: var(--c-hud-up);
+}
+
+.hud-dot--pending {
+  background-color: var(--c-gold);
+}
+
+.hud-dot--problem {
+  background-color: var(--c-hud-down);
+}
+
+/* Portrait (M0-59): the screen is 400 units wide, too narrow for one row, so the HUD is three rows: the era's ribbon with the connection
+   dot, the chips sharing the width, then the counters and the research. 110 high; --hud-height grows with it under .portrait in Common.uss
+   (110 and the 12 gap). */
+.portrait .hud-meta {
+  height: 22px;
+  margin: 0;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
+.portrait .hud-connection {
+  margin: 0 0 0 var(--sp-2);
+}
+
+.portrait .hud-panel {
+  height: 110px;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: stretch;
+}
+
+.portrait .hud-chips {
+  margin: 0 -4px;
+}
+
+.portrait .hud-chip {
+  flex-grow: 1;
+  flex-basis: 0;
+  min-width: 0;
+  margin: 0 4px;
+}
