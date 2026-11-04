@@ -1,0 +1,4 @@
+# Visual v2: renders that rebuild in seconds (one picture per model) and Python caches stay out of git.
+previews/models/
+blender/__pycache__/
+ui-preview/node_modules/

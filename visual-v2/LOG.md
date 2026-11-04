@@ -31,6 +31,11 @@
     that runs without Unity; the Unity steps listed as [MANUAL].
 11. Close-out: status, verification, adoption steps, follow-ups.
 
+## Progress
+- Steps 1-6 done: 49 models (5 grass and dirt tiles, 2 road tiles, 6 nature models, the worker, the courier, 2 loads, the smoke puff,
+  13 buildings, 9 store fill models, 9 item props) built by `blender/build_all.py`, every check passing (tile bounds with every moving
+  part along its cycle and the full store, floor, triangle budgets, one material, anchors, poses, fill steps, road arms).
+
 ## Decisions
 | # | Decision | Why / alternative |
 |---|---|---|
@@ -42,6 +47,6 @@
 | 6 | Smoke is a separate model, `fx_smoke_puff`, that the client loops at `Anchor_Smoke`: puffs rise, grow and shrink to nothing; opaque | Keeps the one shared material; a fading puff would need a transparent one |
 | 7 | A road tile is one model per level: a grass tile with a centre patch and four arms `Road_N`, `Road_E`, `Road_S`, `Road_W`; the client shows the arms that point at neighbouring roads | One model per level instead of six shapes in four turns |
 | 8 | Ground variety: four grass tiles (`tile_grass`, `tile_grass_b`, `tile_grass_c`, `tile_grass_d`), picked per tile by a fixed hash of its coordinates | Same picture on every device and every run |
-| 9 | Triangle budgets: buildings 4,500 (unchanged), props 1,500 (unchanged), tiles 600 (was 200) | Tufts, flowers and stones on 64 tiles stay under 40,000 triangles |
+| 9 | Triangle budgets: buildings 6,000 (was 4,500), store fill and props 1,500, tiles 700 (was 200), road tiles 1,000, the smoke puff 300 | One more step of detail took the level 2 buildings to 4,900-5,600. A full 8 x 8 town (64 tiles, about 20 buildings) stays under 200,000 triangles with one material and a handful of draw calls; every phone from the iPhone XR on (OD-18) draws that easily |
 | 10 | New palette colours go only into free slots (from 20); no slot moves | The art README's rule |
 | 11 | The package's change id is `CR-0009`; its CR file is written at adoption | Commits need an id (`.githooks/commit-msg`); a CR file now would edit `docs/changes/README.md`, a shared file. If the main session takes CR-0009 first, the adoption renumbers |
