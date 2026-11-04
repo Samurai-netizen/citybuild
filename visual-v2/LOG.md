@@ -103,7 +103,9 @@
   with their tests; `GroundTiles` turns each grass tile (`unity-wiring.patch`). 57 models now.
 - **Verification:** all 57 models pass `build_all.py`'s checks; the C# compiles against the engine with the Unity stubs and the 82 tests
   without Unity objects pass (new vectors for the variants, the turns and the road variants, computed by the previews' Python); the
-  previews, the GIFs and the road icons were rendered again.
+  previews, the GIFs and the road icons were rendered again. The fit branch took the second pass (`adopt.sh`, `GroundTiles` turning each
+  model tile on top of its own rotation): `check-docs.sh`, the UI rules and `CityBuilder.Repository.Tests` (22) pass there, and
+  `unity-wiring.patch` is its diff again (`git apply --check` on `main` passes).
 
 | # | Decision | Why / alternative |
 |---|---|---|

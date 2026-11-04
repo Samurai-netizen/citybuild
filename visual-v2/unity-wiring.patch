@@ -120,7 +120,7 @@ index cf927f8..6a9d9f1 100644
              if (statusView == null)
              {
 diff --git a/client/CityBuilder/Assets/_Project/Presentation/City/GroundTiles.cs b/client/CityBuilder/Assets/_Project/Presentation/City/GroundTiles.cs
-index 182ddeb..0653d64 100644
+index 182ddeb..d30b09c 100644
 --- a/client/CityBuilder/Assets/_Project/Presentation/City/GroundTiles.cs
 +++ b/client/CityBuilder/Assets/_Project/Presentation/City/GroundTiles.cs
 @@ -7,8 +7,8 @@ using Object = UnityEngine.Object;
@@ -130,7 +130,7 @@ index 182ddeb..0653d64 100644
 -    /// The ground of the city: one flat tile per grid cell, an instance of the art's grass tile (CR-0005); if the tile model is missing, a cube
 -    /// primitive in two greens like a chessboard instead. Plus a hover marker and a selection marker that follow a <see cref="TileSelection"/>.
 +    /// The ground of the city: one flat tile per grid cell, an instance of the art's grass tile (CR-0005), varied by the grass variants of visual v2
-+    /// (<see cref="GroundVariants"/>); if the tile model is missing, a cube primitive in two greens like a chessboard instead. Plus a hover marker and a selection marker that follow a <see cref="TileSelection"/>.
++    /// and their quarter turns (<see cref="GroundVariants"/>); if the tile model is missing, a cube primitive in two greens like a chessboard instead. Plus a hover marker and a selection marker that follow a <see cref="TileSelection"/>.
      /// The tiles have no colliders: the pointer's tile is found with maths (<see cref="CityGrid"/>), not physics. <see cref="Destroy"/> removes
      /// everything it made.
      /// </summary>
@@ -153,7 +153,7 @@ index 182ddeb..0653d64 100644
          {
          }
  
-@@ -85,6 +88,21 @@ namespace CityBuilder.Client.Presentation.City
+@@ -85,6 +88,22 @@ namespace CityBuilder.Client.Presentation.City
          /// <param name="tileModel">The model of one tile, whose top is the ground plane, or null for cube blocks.</param>
          /// <exception cref="ArgumentNullException">An argument other than <paramref name="tileModel"/> is null.</exception>
          public GroundTiles(CityGrid grid, TileSelection selection, Transform parent, GameObject? tileModel)
@@ -163,7 +163,8 @@ index 182ddeb..0653d64 100644
 +
 +        /// <summary>
 +        /// Builds the tiles and the markers: each tile from its grass variant in <paramref name="variants"/> when there is one, else from
-+        /// <paramref name="tileModel"/>, else from a cube.
++        /// <paramref name="tileModel"/>, else from a cube. With variants, every model tile is turned by its quarter turns
++        /// (<see cref="GroundVariants.RotationFor"/>).
 +        /// </summary>
 +        /// <param name="grid">The grid to cover.</param>
 +        /// <param name="selection">The state the markers show; this object listens to it until <see cref="Destroy"/>.</param>
@@ -175,7 +176,7 @@ index 182ddeb..0653d64 100644
          {
              _grid = grid ?? throw new ArgumentNullException(nameof(grid));
              _selection = selection ?? throw new ArgumentNullException(nameof(selection));
-@@ -111,9 +129,19 @@ namespace CityBuilder.Client.Presentation.City
+@@ -111,11 +130,26 @@ namespace CityBuilder.Client.Presentation.City
                  {
                      var tile = new GridCoordinate(x, y);
                      int index = y * grid.Width + x;
@@ -196,8 +197,15 @@ index 182ddeb..0653d64 100644
 +                        GameObject instance = Object.Instantiate(model, Root.transform, false);
                          instance.name = "Tile " + tile;
                          instance.transform.localPosition = grid.ToWorldCenter(tile);
++                        if (variants != null)
++                        {
++                            instance.transform.localRotation = Quaternion.Euler(0f, 90f * GroundVariants.RotationFor(x, y), 0f) * instance.transform.localRotation;
++                        }
++
                          _tileRenderers[index] = instance.GetComponentInChildren<Renderer>();
-@@ -189,6 +217,19 @@ namespace CityBuilder.Client.Presentation.City
+                     }
+                     else
+@@ -189,6 +223,19 @@ namespace CityBuilder.Client.Presentation.City
              return _grid.Contains(tile) ? _shownHints[tile.Y * _grid.Width + tile.X] : null;
          }
  
