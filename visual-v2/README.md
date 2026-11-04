@@ -53,9 +53,11 @@ client, and `FIT-TEST.md` says what was checked there.
 | `blender/` | Blender 5.2 sources: `build_all.py` (models and checks), `render_previews.py`, `render_ui.py` (icons), and the models in `assets_*.py` |
 | `unity/` | A drop-in overlay of `client/CityBuilder/Assets/_Project/` |
 | `unity-wiring.patch` | The five small edits of today's client that wire the new code in (the same as on the fit branch) |
-| `adopt.sh` | Copies `unity/` into the Unity project |
+| `adopt.sh` | Copies `unity/` into the Unity project; never overwrites a text file changed after the base `3c0dcac` (lists it, exit 3); replaces same-named art on purpose |
+| `after-cr0008.patch` | `BuildingDecor` on CR-0008's engine: building stores and when the new kinds work (`ADOPT.md` Route A) |
 | `ui-preview/` | `preview.js` (the UI in a browser), `check-ui-rules.py` (the rules the client's UI tests read), `render-glyphs.js` |
 | `previews/` | Pictures; `previews/models/` (one per model) is git-ignored |
+| `ADOPT.md` | How to bring this package into the game after CR-0008 (instructions for the AI coder) |
 | `MOTIONS.md`, `FIT-TEST.md`, `LOG.md` | The art-code contract, the fit test, this package's build log |
 
 ## Rebuild
@@ -79,15 +81,9 @@ python3 visual-v2/ui-preview/check-ui-rules.py
 ImageMagick; `preview.js` and `render-glyphs.js` need Node.js and Playwright.
 
 ## Adopting it
-Best after CR-0008-T2, whose part F asks for this art and whose client parts change the same views; take the folder, not this
-branch (it also carries `368f525`, an older copy of the CR-0008 revision that the T1 branch has as `f67ee62`).
-1. Write the CR (this package reserved `CR-0009`) and start a task as usual (build log, resume point).
-2. `bash visual-v2/adopt.sh`, then `git apply visual-v2/unity-wiring.patch` (or redo its five edits on the views as they are then).
-3. Move `blender/` into `art/blender/` (its default output becomes the Unity project) and update `art/README.md` from `MOTIONS.md`.
-4. With CR-0008: `BuildingDecor.Show` reads the building's own store instead of the city's stock, `BuildingDecor.IsWorking` learns
-   the Scriptorium, Courier Station and Warehouse, the ground draws roads with `RoadArms`, walkers use `MotionRig` for their limbs.
-5. The Unity steps of `FIT-TEST.md`; docs: `docs/modules/CityBuilder.Client.Presentation.md`, `core-instructions/09-unity-client.md`
-   (art and UX rules), `client/README.md` ([MANUAL] looks), `docs/how-to/add-ui-screen.md` (the new tokens and classes).
+**`ADOPT.md`** is the step-by-step instruction for the AI coder. Recommended: Route A, at the start of CR-0008-T2 (T2 then makes no new
+models and builds its screens in the new look once); Route B, a separate CR after CR-0008, is the fallback. Take the folder, not this branch (it also
+carries `368f525`, an older copy of the CR-0008 revision that the T1 branch has as `f67ee62`).
 
 ## Status
 Done in this session, with the fit test. Checked here: every model check, the C# compiled with the real engine and 66 tests run, every

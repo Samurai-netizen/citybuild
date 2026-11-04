@@ -116,6 +116,48 @@
 | 23 | Flat patches are clipped to the tile's flat top (0.465 from the centre) | Patches that reached past the edge painted over the grid line between tiles (also in the first pass) |
 | 24 | A grass or dirt tile is two meshes: the flat ground (top at y = 0) and a child `Details` with everything that rises above it; `build_all.py` and `ArtModelsV2Tests` check it | `GroundTilesTests.Tiles_StandOnTheirTiles_WithTheirTopAtTheGround` reads the tile's first renderer and wants its top at 0; with tufts in the same mesh it would fail (it would have with the first pass too). The split keeps that test as it is, and placement hints now tint only the ground, not the flowers. Cost: two renderers per tile, one material |
 
+## Adoption instructions (2026-11-04)
+- **Owner input** (in chat): "make a clear instruction for AI on how to implement these new graphics, after the finish on CR-0008".
+- **Done:** `ADOPT.md`: the preconditions, the CR text to approve, a script that sorts every overlay file into new, take, merge and
+  same-name-on-both-sides (tried against the CR-0008-T1 branch: its five placeholder models and five icons come out as the last group),
+  the art merge into `art/blender/`, the UI merge, the wiring, the hooks into CR-0008 (building stores, when the new kinds work, roads,
+  walkers, icons), tests, docs, removing this folder and the [MANUAL] looks. `README.md` "Adopting it" now points there.
+
+- **Owner input** (in chat, the same day): "Check if i can save the AI usage. I'm working on CR-0008-T1 now, and T2, T3 are not started
+  yet. Can we save some tokens and not, for example, generate more temporary 3d models for the game".
+- **Done:** `ADOPT.md` Route A, adoption at the start of CR-0008-T2. Tried on a throwaway worktree of the T1 branch (at H1, `6029f17`):
+  `adopt.sh` copies, `unity-wiring.patch` applies, the UI rules pass against T1's views, and the package's C# compiles against T1's
+  engine except `BuildingDecor.Show`'s two lines on the city's stock (T1 moved goods into `Building.Store` with
+  `CityQueries.TryGetEffectiveLimit`); Route A names the fix. The package itself still targets `main` (the fit branch), so it is unchanged.
+
+- **Owner input** (in chat, the same day): "Check everything again to make sure that this change in plans will go smooth. Note that T1
+  task is currently stopped because of token limits, so it will automatically continue with old context upon resuming. You need to check
+  every edge case and make sure that nothing breaks upon merging new graphics and doing altered T1, T2, T3 CRs".
+- **Checked** on throwaway copies of `main` and of the T1 branch at `6029f17`:
+  - the FBX root transforms against `main`'s known-good models (identical: no rotation or scale on any root, fill models' roots are
+    empties);
+  - `ArtImportTests`' house values (lowest point -0.0006 within 0.001, status anchor above the top, door toward -Z);
+  - every content id of T1 against the models and icons;
+  - the store limits against the fill models;
+  - the UI rules against T1's views;
+  - `check-docs.sh` and `CityBuilder.Repository.Tests` (22) on the adopted T1 copy;
+  - the handbook's page list (it doesn't read `visual-v2/`);
+  - open PRs (only T1's draft and a dependabot PR).
+- **Fixed:**
+  - `adopt.sh` overwrote any file, so a later T1 edit of a layout would have been lost. It now copies only new or unchanged files,
+    replaces same-named art on purpose, and holds back the palette and changed text files (exit 3). Tried on `main`, on T1, and with a
+    simulated later edit of a stylesheet and the palette. It is bash 3.2-safe (no arrays) for a Mac.
+  - `after-cr0008.patch`: the package's `BuildingDecor` didn't compile against T1's engine (the city's stock is gone). The patch reads
+    the building's store and gives `IsWorking` the city and the three new kinds. It compiles against T1 with the Unity stubs, and the
+    same 82 tests pass.
+  - `ADOPT.md`:
+    - the owner's prompt as `/start-task` arguments, so T2's first plan is already Route A;
+    - a fallback branch for the folder, and never merging either branch;
+    - the id rename limited to the step's own files;
+    - the test cases for the patched rules;
+    - the art move's details: `AGENTS.md`'s command stays valid, the palette copy in `art/textures`, `.gitignore`'s `art/previews/*`,
+      the README picture, the phone view the package lacks, and `art/MOTIONS.md` as a handbook page.
+
 ## Follow-ups
 - [MANUAL] The Unity steps of `FIT-TEST.md`: compile, `test-unity.sh`, a play session for the motion and the fill, the UI in the Device
   Simulator (fonts: if UI Toolkit draws the TTF files in its default font, make Font Assets of them).
