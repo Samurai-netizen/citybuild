@@ -13,13 +13,18 @@ namespace CityBuilder.Simulation.Settlement
     /// (after the last, the first); at home it stands at its station, or rests without stamina. Their departures are the last part of step 5
     /// (<see cref="StartWalks"/>): a courier at its station with a route and stamina, whose station is neither constructing nor upgrading,
     /// leaves for the first stop. Until CR-0008-T1 part H a courier that arrives after the production cap stops working instead (decision 45),
-    /// and none leaves then (the start pass doesn't run). The arrivals are an indexed heap by courier index; a courier stopped inside the
-    /// advance (its station's upgrade started) leaves a stale entry, which is dropped when it comes up.
+    /// and none leaves then (the start pass doesn't run). The arrivals are an indexed heap keyed by station and slot (the station's building
+    /// index times the content's most courier slots, plus the slot), which stays valid while auto-staffing adds couriers during the advance
+    /// and orders arrivals at one second by (station, slot); a courier stopped inside the advance (its station's upgrade started) leaves a
+    /// stale entry, which is dropped when it comes up.
     /// </summary>
     internal sealed class CourierArrivalSource : IEventSource
     {
-        /// <summary>The couriers' arrivals, by their index in <see cref="CityState.Couriers"/>, which doesn't change during an advance.</summary>
+        /// <summary>The couriers' arrivals, by <see cref="Key"/>.</summary>
         private readonly TimerHeap _arrivals;
+
+        /// <summary>The most slots a courier station level of the content has (at least 1): the stride of <see cref="Key"/>.</summary>
+        private readonly int _slots;
 
         /// <summary>The advance's building timers, which a put that starts a project updates.</summary>
         private readonly BuildingTimerQueue _timers;
@@ -34,19 +39,20 @@ namespace CityBuilder.Simulation.Settlement
         private readonly List<CourierLoad> _putParts = new List<CourierLoad>();
 
         /// <summary>Creates the source for one advance of the city.</summary>
-        public CourierArrivalSource(CityState city, BuildingTimerQueue timers, WalkTimes walks, long productionUntil)
+        public CourierArrivalSource(CityState city, GameContent content, BuildingTimerQueue timers, WalkTimes walks, long productionUntil)
         {
             _timers = timers;
             _walks = walks;
             _productionUntil = productionUntil;
+            _slots = MostSlots(content);
             IReadOnlyList<Courier> couriers = city.Couriers;
-            _arrivals = new TimerHeap(couriers.Count);
+            _arrivals = new TimerHeap(checked(city.Buildings.Count * _slots));
             for (int index = 0; index < couriers.Count; index++)
             {
                 long? arrivesAt = couriers[index].ArrivesAt;
                 if (arrivesAt.HasValue)
                 {
-                    _arrivals.Add(index, arrivesAt.Value);
+                    _arrivals.Add(Key(city, couriers[index]), arrivesAt.Value);
                 }
             }
         }
@@ -55,7 +61,7 @@ namespace CityBuilder.Simulation.Settlement
         public long? NextDueAt(CityState city)
         {
             // Drop the entries of couriers that stopped walking since they were set (their station's upgrade started).
-            while (_arrivals.Count > 0 && city.Couriers[_arrivals.PeekIndex()].ArrivesAt != _arrivals.PeekEndsAt())
+            while (_arrivals.Count > 0 && CourierAt(city, _arrivals.PeekIndex())?.ArrivesAt != _arrivals.PeekEndsAt())
             {
                 _arrivals.Pop();
             }
@@ -69,8 +75,9 @@ namespace CityBuilder.Simulation.Settlement
             // A courier's next walk ends at least 1 s later, so this loop ends; arrivals at one second come in ascending courier index.
             while (NextDueAt(city) == time)
             {
-                int index = _arrivals.Pop();
-                Arrive(city, content, index, time, report);
+                int key = _arrivals.Pop();
+                // NextDueAt dropped every stale entry in front, so the courier of this key exists and arrives now.
+                Arrive(city, content, CourierAt(city, key)!, time, report);
             }
         }
 
@@ -97,14 +104,13 @@ namespace CityBuilder.Simulation.Settlement
                     continue;
                 }
 
-                WalkOn(city, index, courier, station, route, 1, time);
+                WalkOn(city, courier, station, route, 1, time);
             }
         }
 
         /// <summary>What a courier does when it arrives at <paramref name="time"/>: at home it stands or rests; at a stop it acts and walks on.</summary>
-        private void Arrive(CityState city, GameContent content, int index, long time, SettlementReportBuilder report)
+        private void Arrive(CityState city, GameContent content, Courier courier, long time, SettlementReportBuilder report)
         {
-            Courier courier = city.Couriers[index];
             if (courier.State == CourierState.Returning)
             {
                 if (courier.Stamina < 1)
@@ -129,17 +135,49 @@ namespace CityBuilder.Simulation.Settlement
             int building = city.IndexOfBuilding(stop.BuildingId);
             if (RunActions(city, content, courier, stop, building, time, report))
             {
-                WalkOn(city, index, courier, building, route, (courier.ToStop % route.Stops.Count) + 1, time);
+                WalkOn(city, courier, building, route, (courier.ToStop % route.Stops.Count) + 1, time);
             }
         }
 
         /// <summary>Sends a courier from the building at <paramref name="fromIndex"/> to stop <paramref name="toStop"/> of its route, from now.</summary>
-        private void WalkOn(CityState city, int index, Courier courier, int fromIndex, Route route, int toStop, long time)
+        private void WalkOn(CityState city, Courier courier, int fromIndex, Route route, int toStop, long time)
         {
             int target = city.IndexOfBuilding(route.Stops[toStop - 1].BuildingId);
             long arrivesAt = checked(time + _walks.Seconds(fromIndex, target));
             courier.WalkTo(toStop, time, arrivesAt);
-            _arrivals.Set(index, arrivesAt);
+            _arrivals.Set(Key(city, courier), arrivesAt);
+        }
+
+        /// <summary>A courier's key in the heap: its station's building index times <see cref="_slots"/>, plus its slot − 1.</summary>
+        private int Key(CityState city, Courier courier) => (city.IndexOfBuilding(courier.StationId) * _slots) + courier.Slot - 1;
+
+        /// <summary>The courier of a key, or null when its station's slot has none (any more).</summary>
+        private Courier? CourierAt(CityState city, int key)
+        {
+            int index = city.FindCourier(city.Buildings[key / _slots].Id, (key % _slots) + 1);
+            return index >= 0 ? city.Couriers[index] : null;
+        }
+
+        /// <summary>The most workers any courier station level of the content takes, at least 1 (content rule 3 gives every such level 1 or more).</summary>
+        private static int MostSlots(GameContent content)
+        {
+            int most = 1;
+            IReadOnlyList<BuildingDefinition> buildings = content.Buildings;
+            for (int index = 0; index < buildings.Count; index++)
+            {
+                if (buildings[index].Kind != BuildingKind.CourierStation)
+                {
+                    continue;
+                }
+
+                IReadOnlyList<BuildingLevelDefinition> levels = buildings[index].Levels;
+                for (int level = 0; level < levels.Count; level++)
+                {
+                    most = Math.Max(most, levels[level].MaxWorkers);
+                }
+            }
+
+            return most;
         }
 
         /// <summary>

@@ -98,6 +98,22 @@ public sealed class CourierStaffingTests
         Assert.Equal("\ncourier 2/1 Walking to=1 990..1010 stamina=600 load: wood@3=4", CityDump.CourierLine(city.Couriers[0]));
     }
 
+    /// <summary>
+    /// A station whose construction completes in an advance is auto-staffed (<c>04</c> section 3) with couriers: here 2 of the hut's 3 free
+    /// workers, couriers 2/1 and 2/2 at the station with 600 s of stamina.
+    /// </summary>
+    [Fact]
+    public void Advance_StationConstructionCompletes_ItsWorkersAreCouriers()
+    {
+        CityState city = City(buildings: [Idle(1, "hut", 0, 4), Constructing(2, "post", 2, 2, 990, 1005)]);
+
+        CityBuilder.Simulation.Settlement.Simulator.Advance(city, TestContent, 5);
+
+        Assert.Equal(
+            ["\ncourier 2/1 AtStation stamina=600 load:", "\ncourier 2/2 AtStation stamina=600 load:"],
+            city.Couriers.Select(CityDump.CourierLine));
+    }
+
     /// <summary>A courier's load counts in the city's total of its good, beside the stores (<c>04</c> section 16).</summary>
     [Fact]
     public void Total_CourierLoads_Count()

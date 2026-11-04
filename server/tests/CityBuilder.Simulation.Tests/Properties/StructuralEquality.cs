@@ -7,7 +7,7 @@ namespace CityBuilder.Simulation.Tests.Properties;
 /// <summary>
 /// Compares two cities, or two report totals, field by field and names the first field that differs, so a failing property says what went
 /// wrong instead of "not equal". A city's fields come in a fixed order: clock, era, next building id, the purse, every field of every
-/// building by id (its store and needs included), the completed research, the active research with its needs, the roads, the next trip id and every trip. It reads only public members, the way the server will.
+/// building by id (its store and needs included), the completed research, the active research with its needs, the roads, the next trip id, every trip, every route and every courier. It reads only public members, the way the server will.
 /// </summary>
 internal static class StructuralEquality
 {
@@ -80,6 +80,13 @@ internal static class StructuralEquality
         fields.AddRange(city.Trips.Select(trip => (
             $"trip {Text(trip.Id)}",
             $"{Text(trip.SourceId)}->{Text(trip.TargetId)} {trip.Item}={Text(trip.Quantity)} {Text(trip.DepartedAt)}..{Text(trip.ArrivesAt)}")));
+        fields.AddRange(city.Routes.Select(route => (
+            $"route {Text(route.StationId)}/{Text(route.Slot)}",
+            string.Join(" ", route.Stops.Select(stop => Text(stop.BuildingId) + "[" + string.Join(";", stop.Actions.Select(action => $"{action.Kind} {action.Item} {action.Amount}")) + "]")))));
+        fields.AddRange(city.Couriers.Select(courier => (
+            $"courier {Text(courier.StationId)}/{Text(courier.Slot)}",
+            $"{courier.State} to={Text(courier.ToStop)} {Optional(courier.DepartedAt)}..{Optional(courier.ArrivesAt)} stamina={Text(courier.Stamina)} load="
+                + string.Join(",", courier.Loads.Select(part => $"{part.Item}@{Text(part.FromId)}={Text(part.Quantity)}")))));
         return fields;
     }
 

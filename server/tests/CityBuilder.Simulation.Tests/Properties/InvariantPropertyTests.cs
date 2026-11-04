@@ -99,6 +99,11 @@ public sealed class InvariantPropertyTests(ITestOutputHelper output)
         observation.AssertAtLeast("steps with workers on trips", 1000);
         observation.AssertAtLeast("steps that delivered to a project", 100);
         observation.AssertAtLeast("steps that moved goods into a store", 100);
+        observation.AssertAtLeast("routes set", 200);
+        observation.AssertAtLeast("steps with a staffed courier station", 10_000);
+        observation.AssertAtLeast("steps with a courier arriving", 10_000);
+        observation.AssertAtLeast("steps with a courier carrying", 10_000);
+        observation.AssertAtLeast("couriers at their carry limit", 1000);
         if (contentName == "golden-v2")
         {
             // golden-v2 can't reach these cases in its seeds (BL-20261102-07 decision 38): its 8 h cap is longer than every timer and walk, so
@@ -116,6 +121,7 @@ public sealed class InvariantPropertyTests(ITestOutputHelper output)
         observation.AssertAtLeast("dormant tails with a completion", 10);
         observation.AssertAtLeast("placements of a type locked at the start", 20);
         observation.AssertAtLeast("trips with a percentage or exact amount", 5);
+        observation.AssertAtLeast("route actions with a percentage or exact amount", 5);
     }
 
     /// <summary>Fails with the first failure of the invariant on the content, if any seed had one.</summary>

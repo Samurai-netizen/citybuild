@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using CityBuilder.Simulation.Content;
+using CityBuilder.Simulation.Rules;
 using CityBuilder.Simulation.State;
 
 namespace CityBuilder.Simulation.Settlement
@@ -53,9 +54,16 @@ namespace CityBuilder.Simulation.Settlement
             switch (building.Phase)
             {
                 case BuildingPhase.Constructing:
-                    // Auto-staffing: min(free, MaxWorkers). A house's level takes no workers (content rule 3), so it gets 0.
-                    int maxWorkers = CityQueries.DefinitionOf(content, building.TypeId).GetLevel(building.Level).MaxWorkers;
-                    building.CompleteConstruction((int)Math.Min(CityQueries.FreeWorkers(city, content), maxWorkers));
+                    // Auto-staffing: min(free, MaxWorkers). A house's level takes no workers (content rule 3), so it gets 0; a courier
+                    // station's workers are couriers at the station (04 sections 3 and 19).
+                    BuildingDefinition definition = CityQueries.DefinitionOf(content, building.TypeId);
+                    BuildingLevelDefinition level = definition.GetLevel(building.Level);
+                    building.CompleteConstruction((int)Math.Min(CityQueries.FreeWorkers(city, content), level.MaxWorkers));
+                    if (definition.Kind == BuildingKind.CourierStation)
+                    {
+                        CourierRules.StaffStation(city, level, building, 0);
+                    }
+
                     report.AddCompletedBuilding(building.Id);
                     break;
                 case BuildingPhase.Upgrading:

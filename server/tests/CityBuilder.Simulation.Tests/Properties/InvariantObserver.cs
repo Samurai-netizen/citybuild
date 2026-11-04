@@ -249,12 +249,20 @@ internal sealed class InvariantObserver
         };
 
     /// <summary>
-    /// The earliest event of the city, read from its public state: the end of a research, a construction, an upgrade or a running cycle, or a
-    /// trip's arrival. Null when nothing is due.
+    /// The earliest event of the city, read from its public state: the end of a research, a construction, an upgrade or a running cycle, a
+    /// trip's or a courier's arrival. Null when nothing is due.
     /// </summary>
     private static long? NextDueAt(CityState city)
     {
         long? next = city.ActiveResearch?.EndsAt;
+        foreach (Courier courier in city.Couriers)
+        {
+            if (courier.ArrivesAt < (next ?? long.MaxValue))
+            {
+                next = courier.ArrivesAt;
+            }
+        }
+
         foreach (Trip trip in city.Trips)
         {
             if (trip.ArrivesAt < (next ?? long.MaxValue))

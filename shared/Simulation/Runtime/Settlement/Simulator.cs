@@ -54,7 +54,7 @@ namespace CityBuilder.Simulation.Settlement
             // building completions by id, then trip arrivals by trip id, then courier arrivals by (station, slot); the mailbox deliveries of 04
             // section 13 will go before the buildings.
             BuildingTimerQueue timers = BuildingTimerQueue.Of(city);
-            var couriers = new CourierArrivalSource(city, timers, new WalkTimes(city, content), productionUntil);
+            var couriers = new CourierArrivalSource(city, content, timers, new WalkTimes(city, content), productionUntil);
             IEventSource[] sources = { new ResearchTimerSource(), new BuildingTimerSource(timers), new TripArrivalSource(city, timers), couriers };
             long? firstDueAt = NextDueAt(sources, city);
             if (firstDueAt < start)

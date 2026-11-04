@@ -10,7 +10,8 @@ internal static class CityCopy
 {
     /// <summary>
     /// A copy of the city: every stored value (the purse, each building's store and needs, the research's needs, the trips and the next trip
-    /// id), with new building and research objects. Trips and roads never change, so the copy shares them.
+    /// id, the couriers and routes), with new building, research and courier objects. Trips, roads and routes never change, so the copy
+    /// shares them.
     /// </summary>
     public static CityState Of(CityState city) => new(
         city.Clock,
@@ -24,7 +25,20 @@ internal static class CityCopy
             : new ActiveResearch(city.ActiveResearch.Id, city.ActiveResearch.StartedAt, city.ActiveResearch.EndsAt, city.ActiveResearch.Needs.ToArray()),
         city.Roads,
         city.Trips,
-        city.NextTripId);
+        city.NextTripId,
+        city.Couriers.Select(Of),
+        city.Routes);
+
+    /// <summary>A copy of the courier: every stored value (its load parts are values and are shared).</summary>
+    public static Courier Of(Courier courier) => new(
+        courier.StationId,
+        courier.Slot,
+        courier.State,
+        courier.ToStop,
+        courier.DepartedAt,
+        courier.ArrivesAt,
+        courier.Stamina,
+        courier.Loads);
 
     /// <summary>A copy of the building: every stored value.</summary>
     public static Building Of(Building building) => new(

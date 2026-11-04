@@ -37,10 +37,11 @@ public sealed class CityGeneratorTests
             Count(counts, "seeds ending with a frozen cycle", history.City.Buildings.Any(IsFrozen));
             Count(counts, "seeds with a delivery to a project", history.Reports.Any(report => report.Delivered.Count > 0));
             Count(counts, "seeds with goods moved into a store", history.Reports.Any(report => report.Moved.Count > 0));
+            Count(counts, "seeds with a courier walking at the end", history.City.Couriers.Any(courier => courier.State == CourierState.Walking));
         }
 
         string observed = string.Join(", ", counts.Select(count => $"{count.Key} {count.Value}"));
-        foreach (string kind in (string[])["PlaceBuilding", "UpgradeBuilding", "AssignWorkers", "StartResearch", "StartTrip", "Advance"])
+        foreach (string kind in (string[])["PlaceBuilding", "UpgradeBuilding", "AssignWorkers", "StartResearch", "StartTrip", "SetRoute", "Advance"])
         {
             Assert.True(counts.GetValueOrDefault(kind) >= 20, $"Too few accepted {kind} operations. Observed: {observed}");
         }
@@ -53,6 +54,7 @@ public sealed class CityGeneratorTests
         AssertAtLeast(counts, "seeds ending with a frozen cycle", 5, observed);
         AssertAtLeast(counts, "seeds with a delivery to a project", 25, observed);
         AssertAtLeast(counts, "seeds with goods moved into a store", 25, observed);
+        AssertAtLeast(counts, "seeds with a courier walking at the end", 25, observed);
     }
 
     /// <summary>Rejected commands are left out of the history but counted: a replay accepts every listed operation, and seed 7 had rejections.</summary>

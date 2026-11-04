@@ -93,6 +93,30 @@ internal abstract record CityOperation
         public override string ToString() => string.Create(CultureInfo.InvariantCulture, $"StartTrip {SourceId}->{TargetId} {Item} {Amount}");
     }
 
+    /// <summary>Sets the route of a courier station's slot (<c>04</c> section 19); no stops clears it.</summary>
+    /// <param name="StationId">The courier station's id.</param>
+    /// <param name="Slot">The slot.</param>
+    /// <param name="Stops">The stops in order.</param>
+    public sealed record SetRoute(int StationId, int Slot, IReadOnlyList<RouteStop> Stops) : Command
+    {
+        /// <inheritdoc/>
+        public override MutationResult Mutate(CityState city, GameContent content) => CourierRules.SetRoute(city, content, StationId, Slot, Stops);
+
+        /// <summary>
+        /// Equal when the text is: the station, the slot and every stop with its actions (a record would compare the stop list by reference,
+        /// so two generations of one seed would differ).
+        /// </summary>
+        public bool Equals(SetRoute? other) => other is not null && ToString() == other.ToString();
+
+        /// <summary>The hash of the text, in step with <see cref="Equals(SetRoute)"/>.</summary>
+        public override int GetHashCode() => ToString().GetHashCode(StringComparison.Ordinal);
+
+        /// <summary>The text a failing property prints, for example <c>SetRoute 4/1 3[Take logs all] 5[Put logs half]</c>.</summary>
+        public override string ToString() => string.Create(CultureInfo.InvariantCulture, $"SetRoute {StationId}/{Slot}")
+            + string.Concat(Stops.Select(stop => string.Create(CultureInfo.InvariantCulture, $" {stop.BuildingId}[")
+                + string.Join("; ", stop.Actions.Select(action => $"{action.Kind} {action.Item} {action.Amount}")) + "]"));
+    }
+
     /// <summary>Lets <paramref name="Seconds"/> pass: one settlement over that window.</summary>
     /// <param name="Seconds">The seconds to pass; the engine counts a negative value as 0 (<c>04</c> section 1).</param>
     public sealed record Advance(long Seconds) : CityOperation

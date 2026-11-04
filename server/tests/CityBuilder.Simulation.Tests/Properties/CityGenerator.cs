@@ -64,17 +64,20 @@ internal static class CityGenerator
         <= 30 => AssignWorkers(random, city, content),
         <= 40 => UpgradeBuilding(random, city),
         <= 50 => StartResearch(random, city, content),
+        <= 58 => (CityOperation.Command?)SetRoute(random, city, content) ?? StartTrip(random, city, content),
         _ => StartTrip(random, city, content),
     };
 
     /// <summary>
-    /// The next operation to try: time passes in 30 of 100 attempts; the rest are commands, trips (which bring every project and producer its
-    /// goods) the most, then placing and assigning workers, then upgrading and research. A trip with nothing to carry gives way to a placement
-    /// or time passing, so young cities grow and fill their stores. Null when the chosen command has nothing to act on.
+    /// The next operation to try: time passes in 26 of 100 attempts and a route is set in 4 (time passes instead in a city without a courier
+    /// station); the rest are commands, trips (which bring every project and producer its goods) the most, then placing and assigning workers,
+    /// then upgrading and research. A trip with nothing to carry gives way to a placement or time passing, so young cities grow and fill their stores. Null
+    /// when the chosen command has nothing to act on.
     /// </summary>
     private static CityOperation? Next(SeededRandom random, CityState city, GameContent content) => random.Between(1, 100) switch
     {
-        <= 30 => new CityOperation.Advance(Gap(random, content)),
+        <= 26 => new CityOperation.Advance(Gap(random, content)),
+        <= 30 => (CityOperation?)SetRoute(random, city, content) ?? new CityOperation.Advance(Gap(random, content)),
         <= 42 => PlaceBuilding(random, city, content),
         <= 54 => AssignWorkers(random, city, content),
         <= 64 => UpgradeBuilding(random, city),
@@ -104,22 +107,7 @@ internal static class CityGenerator
             return new CityOperation.AssignWorkers(busy.Id, busy.AssignedWorkers - 1);
         }
 
-        var pairs = new List<(Building Target, ItemId Item, bool ForProject, bool ForInput)>();
-        foreach (Building target in city.Buildings)
-        {
-            RecipeDefinition? recipe = content.TryGetBuilding(target.TypeId, out BuildingDefinition? type) ? type.GetLevel(target.Level).Recipe : null;
-            foreach (ItemDefinition item in content.Items.Where(item => !item.IsCurrency))
-            {
-                bool forProject = target.GetNeed(item.Id) > 0 || CityQueries.ResearchNeedAt(city, content, target, item.Id) > 0;
-                bool forInput = recipe is not null && recipe.Inputs.Any(input => input.Item == item.Id);
-                bool supplied = city.Buildings.Any(source => source.Id != target.Id && source.GetStock(item.Id) > 0);
-                if (supplied && CityQueries.Accepts(city, content, target, item.Id))
-                {
-                    pairs.Add((target, item.Id, forProject, forInput));
-                }
-            }
-        }
-
+        List<(Building Target, ItemId Item, bool ForProject, bool ForInput)> pairs = CarryPairs(city, content);
         Amount amount = RandomAmount(random, city, content);
         if (pairs.Count == 0)
         {
@@ -140,6 +128,86 @@ internal static class CityGenerator
             : forInputs.Count > 0 && random.Chance(50) ? random.Pick(forInputs) : random.Pick(pairs);
         Building chosenSource = random.Pick(city.Buildings.Where(source => source.Id != chosenTarget.Id && source.GetStock(chosenItem) > 0).ToList());
         return new CityOperation.StartTrip(chosenSource.Id, chosenTarget.Id, chosenItem.ToString(), amount);
+    }
+
+    /// <summary>
+    /// Every (target, good) that goods could go to now: the target accepts the good (a need of its project or of the research there, or its
+    /// store) and another building has some of it in its store; with whether it is for a project and whether it is a producer's input.
+    /// </summary>
+    private static List<(Building Target, ItemId Item, bool ForProject, bool ForInput)> CarryPairs(CityState city, GameContent content)
+    {
+        var pairs = new List<(Building Target, ItemId Item, bool ForProject, bool ForInput)>();
+        foreach (Building target in city.Buildings)
+        {
+            RecipeDefinition? recipe = content.TryGetBuilding(target.TypeId, out BuildingDefinition? type) ? type.GetLevel(target.Level).Recipe : null;
+            foreach (ItemDefinition item in content.Items.Where(item => !item.IsCurrency))
+            {
+                bool forProject = target.GetNeed(item.Id) > 0 || CityQueries.ResearchNeedAt(city, content, target, item.Id) > 0;
+                bool forInput = recipe is not null && recipe.Inputs.Any(input => input.Item == item.Id);
+                bool supplied = city.Buildings.Any(source => source.Id != target.Id && source.GetStock(item.Id) > 0);
+                if (supplied && CityQueries.Accepts(city, content, target, item.Id))
+                {
+                    pairs.Add((target, item.Id, forProject, forInput));
+                }
+            }
+        }
+
+        return pairs;
+    }
+
+    /// <summary>
+    /// A route for a courier station's slot, aimed like a trip (<c>04</c> section 19): four times in five, when goods could go somewhere, a
+    /// building that has a good (take it) and one that accepts it (put it), sometimes with a third stop that puts the rest elsewhere; else two
+    /// random buildings with random takes and puts. The slot is mostly one that has a courier; one time in 20 the route is cleared. Amounts as
+    /// <see cref="RandomAmount"/>. Null without a courier station or with fewer than two buildings.
+    /// </summary>
+    private static CityOperation.SetRoute? SetRoute(SeededRandom random, CityState city, GameContent content)
+    {
+        var stations = city.Buildings
+            .Where(building => content.TryGetBuilding(building.TypeId, out BuildingDefinition? type) && type.Kind == BuildingKind.CourierStation)
+            .ToList();
+        if (stations.Count == 0 || city.Buildings.Count < 2)
+        {
+            return null;
+        }
+
+        Building station = random.Pick(stations);
+        int levelSlots = content.TryGetBuilding(station.TypeId, out BuildingDefinition? stationType) ? stationType.GetLevel(station.Level).MaxWorkers : 1;
+        int slot = station.AssignedWorkers > 0 && random.Chance(80)
+            ? (int)random.Between(1, station.AssignedWorkers)
+            : (int)random.Between(1, Math.Max(1, levelSlots));
+        if (random.Chance(5))
+        {
+            return new CityOperation.SetRoute(station.Id, slot, []);
+        }
+
+        List<(Building Target, ItemId Item, bool ForProject, bool ForInput)> pairs = CarryPairs(city, content);
+        var stops = new List<RouteStop>();
+        if (pairs.Count > 0 && random.Chance(80))
+        {
+            (Building target, ItemId item, _, _) = random.Pick(pairs);
+            Building source = random.Pick(city.Buildings.Where(building => building.Id != target.Id && building.GetStock(item) > 0).ToList());
+            stops.Add(new RouteStop(source.Id, [new RouteAction(RouteActionKind.Take, item, RandomAmount(random, city, content))]));
+            stops.Add(new RouteStop(target.Id, [new RouteAction(RouteActionKind.Put, item, RandomAmount(random, city, content))]));
+            List<Building> others = [.. city.Buildings.Where(building => building.Id != source.Id && building.Id != target.Id)];
+            if (others.Count > 0 && random.Chance(25))
+            {
+                stops.Add(new RouteStop(random.Pick(others).Id, [new RouteAction(RouteActionKind.Put, item, RandomAmount(random, city, content))]));
+            }
+        }
+        else
+        {
+            Building first = random.Pick(city.Buildings);
+            Building second = random.Pick(city.Buildings.Where(building => building.Id != first.Id).ToList());
+            foreach (Building stop in new[] { first, second })
+            {
+                ItemId item = random.Pick(content.Items.Where(candidate => !candidate.IsCurrency).ToList()).Id;
+                RouteActionKind kind = random.Chance(50) ? RouteActionKind.Take : RouteActionKind.Put;
+                stops.Add(new RouteStop(stop.Id, [new RouteAction(kind, item, RandomAmount(random, city, content))]));
+            }
+        }
+
+        return new CityOperation.SetRoute(station.Id, slot, stops);
     }
 
     /// <summary>

@@ -8,7 +8,9 @@ namespace CityBuilder.Simulation.Tests.Properties;
 /// the city at the last second of the window, every timer that ends up to the target completes in time order (research before buildings at
 /// the same second, buildings by id, <c>04</c> section 6): a cycle delivers its outputs (goods into its own store, the currency into the
 /// purse), a construction completes and auto-staffs with
-/// <c>min(free, MaxWorkers)</c>, an upgrade raises the level, research joins the completed list. Nothing starts. The model is independent of
+/// <c>min(free, MaxWorkers)</c> (a courier station's workers are couriers at the station with full stamina), an upgrade raises the level,
+/// research joins the completed list. Nothing starts. A courier that arrives in the tail stops working (CR-0008-T1 decision 45): its load
+/// goes back to where each part came from and it stands at its station; one walking home stands or rests there. The model is independent of
 /// the engine's code: it only reads public state and content, and builds the expected city through the restore constructors.
 /// </summary>
 internal sealed class DormantTail
@@ -99,7 +101,52 @@ internal sealed class DormantTail
             throw new InvalidOperationException("A trip arrives in the dormant tail; the model doesn't cover deliveries.");
         }
 
-        var city = new CityState(target, atCap.Era, atCap.NextBuildingId, purse, buildings, completedResearch, active, atCap.Roads, atCap.Trips, atCap.NextTripId);
+        var couriers = new List<Courier>();
+        var returned = new Dictionary<int, SortedDictionary<ItemId, long>>();
+        foreach (Courier courier in atCap.Couriers)
+        {
+            if (!(courier.ArrivesAt <= target))
+            {
+                couriers.Add(CityCopy.Of(courier));
+            }
+            else if (courier.State == CourierState.Walking)
+            {
+                foreach (CourierLoad part in courier.Loads)
+                {
+                    SortedDictionary<ItemId, long> back = returned.TryGetValue(part.FromId, out var held) ? held : returned[part.FromId] = [];
+                    back[part.Item] = back.GetValueOrDefault(part.Item) + part.Quantity;
+                }
+
+                couriers.Add(new Courier(courier.StationId, courier.Slot, CourierState.AtStation, 0, null, null, courier.Stamina));
+            }
+            else
+            {
+                CourierState home = courier.Stamina < 1 ? CourierState.Resting : CourierState.AtStation;
+                couriers.Add(new Courier(courier.StationId, courier.Slot, home, 0, null, null, courier.Stamina, courier.Loads));
+            }
+        }
+
+        foreach (int id in completedBuildings)
+        {
+            Building built = buildings.Single(building => building.Id == id);
+            BuildingDefinition type = Definition(content, built.TypeId);
+            if (type.Kind == BuildingKind.CourierStation && !atCap.Buildings.Single(building => building.Id == id).Phase.Equals(BuildingPhase.Upgrading))
+            {
+                long stamina = type.GetLevel(built.Level).StaminaSeconds;
+                couriers.AddRange(Enumerable.Range(1, built.AssignedWorkers).Select(slot => new Courier(id, slot, CourierState.AtStation, 0, null, null, stamina)));
+            }
+        }
+
+        for (int index = 0; index < buildings.Count; index++)
+        {
+            if (returned.TryGetValue(buildings[index].Id, out SortedDictionary<ItemId, long>? back))
+            {
+                buildings[index] = WithStore(buildings[index], back);
+            }
+        }
+
+        var city = new CityState(
+            target, atCap.Era, atCap.NextBuildingId, purse, buildings, completedResearch, active, atCap.Roads, atCap.Trips, atCap.NextTripId, couriers, atCap.Routes);
         return new DormantTail(city, produced, completedBuildings, tailResearch);
     }
 
@@ -118,4 +165,18 @@ internal sealed class DormantTail
     /// </summary>
     private static Building Idle(Building building, int level, int workers, IEnumerable<KeyValuePair<ItemId, long>> store) =>
         new(building.Id, building.TypeId, building.X, building.Y, level, workers, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, store, building.Needs);
+
+    /// <summary>The building with <paramref name="extra"/> added to its store (returned courier loads), every other value as it is.</summary>
+    private static Building WithStore(Building building, IReadOnlyDictionary<ItemId, long> extra)
+    {
+        var store = new SortedDictionary<ItemId, long>(building.Store.ToDictionary(stock => stock.Key, stock => stock.Value));
+        foreach (KeyValuePair<ItemId, long> line in extra)
+        {
+            store[line.Key] = store.GetValueOrDefault(line.Key) + line.Value;
+        }
+
+        return new(
+            building.Id, building.TypeId, building.X, building.Y, building.Level, building.AssignedWorkers, building.Phase, building.PhaseStartedAt,
+            building.PhaseEndsAt, building.TargetLevel, building.CycleLabor, building.LaborRemaining, building.SegmentStartedAt, store, building.Needs);
+    }
 }
