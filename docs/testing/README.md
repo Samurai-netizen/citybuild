@@ -77,9 +77,10 @@ flowchart LR
   the second request, wait until PostgreSQL shows it waiting on the unique index, then commit (`PostDevLogin_SameNameCommittedFirstByAnotherRequest_ReturnsThatPlayer`).
 - A command over HTTP: `ApiClient.PostAsync` sends a raw body with a token the server issued (`PlaceBuildingContractTests` on a
   `FakeCityStore`, which also keeps receipts; `Commands/PlaceBuildingDatabaseTests` on PostgreSQL, checked against the stored rows).
-  A state the HTTP commands can't reach yet (a producing trading post, a stock at its cap) is a city built by hand with `Building` and
-  `CityState`, advanced by zero seconds and stored (`Commands/HandBuiltCities`: `StoreCityAsync`, the `House`, `Woodcutter`, `Sawmill` and
-  `TradingPost` builders, and text views of the stored rows; M0-31, shared since M0-32): the advance makes it canonical, so a refusal with no
+  A state the HTTP commands can't reach quickly (a producing trading post, a store at its limit, goods in a warehouse) is a city built by
+  hand with `Building` and `CityState`, advanced by zero seconds and stored (`Commands/HandBuiltCities`: `StoreCityAsync` with the coins of
+  the purse, the `House`, `Woodcutter`, `Sawmill`, `TradingPost`, `Scriptorium` and `Warehouse` builders, which take the goods of their
+  store, and text views of the stored rows; M0-31, shared since M0-32, stores since CR-0008): the advance makes it canonical, so a refusal with no
   time elapsed stores nothing. Contract tests check Problem Details with `Contracts/ProblemAssert`.
   `PostAsync` with an `HttpContent` and headers sends another content type or a header that claims a player.
 - An attack on the API (`Security/`, M0-30): `ApiAttackContractTests` in memory (`FakeCityStore.LockCount` shows whether the request got as
@@ -99,12 +100,13 @@ flowchart LR
 - Many requests at once: queue them behind a lock the test holds and wait until PostgreSQL shows them all waiting, so they really contend.
   A free race of `Task.Run` calls may never overlap and then proves nothing (M0-24, decision 1). To show that requests don't wait for
   each other, run them on a server with a lock timeout of a few hundred milliseconds: a wait then fails the test.
-- A whole session over HTTP (`Golden/`, M0-36): golden scenario #1 played the way the client will play it. `GoldenHttpPlayer` logs in with
+- A whole session over HTTP (`Golden/`, M0-36; on v2 since CR-0008-T1): golden scenario #1 played the way the client will play it. `GoldenHttpPlayer` logs in with
   the dev login and sends every request with that token and every command with a new request id (anything but 200 fails with the body);
-  `GoldenScenario1Http` serves the engine test's frozen `content-golden-v1.json` (linked by the project file, never copied) through
-  `Content:FilePath`, sends the script's commands, and replays the same script on the engine alone. `GoldenScenario1HttpTests` walks the
+  `GoldenScenario1Http` serves the engine test's frozen `content-golden-v2.json` (linked by the project file, never edited; until
+  CR-0008-T1 part H a temporary copy with the offline cap added, as the engine test adds it) through `Content:FilePath`, sends the
+  script's commands (placements, the research, the manual trips), and replays the same script on the engine alone. `GoldenScenario1HttpTests` walks the
   clock through the actions and the table's rows and checks each row's snapshot (as one line of text, so a failure names the row), the
-  stored city against the replay (`SampleCities.Describe`), and the ledger against the stock. If a row fails there but the engine's golden
+  stored city against the replay (`SampleCities.Describe`), and the ledger against the city's totals. If a row fails there but the engine's golden
   test passes, the difference is in the server. The same requests by hand: `docs/api/smoke.http`.
 - A lost response (`Commands/LostResponseDatabaseTests`, M0-56): the command, a poll that moves the city past it, then the same body again; the client hanging up while its request waits for the city's lock (`DatabaseLocks`). The client's side: `Tests/EditMode/Net/LostResponseTests`, with a wire of its own that keeps receipts, so a retry with a new id would count as a second application.
 - Examples: `Persistence/CityRepositoryDatabaseTests` (repositories through the server), `Persistence/CityTransactionDatabaseTests`

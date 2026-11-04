@@ -114,7 +114,13 @@ SQL
 ```
 The next dev login as `devtest` creates the player and a starter city again.
 
-To give or take goods instead of starting over (it works on the player the Unity client logs in as, `dev1`; `PLAYER=devtest` for this one): `bash server-panel/panel.sh goods add planks 50` (also `remove`, `set` and `show`; menu option 6; `server-panel/README.md`).
+To give or take coins or goods instead of starting over (it works on the player the Unity client logs in as, `dev1`; `PLAYER=devtest` for this one): `bash server-panel/panel.sh goods add planks 50 <building id>` (a good goes into that building's store; coins into the purse without an id; also `remove`, `set` and `show`; menu option 6; `server-panel/README.md`).
+
+**The CR-0008 reset (D10).** The migration `LogisticsStoresTripsAndReset` (CR-0008-T1) moves the city-wide stock into building stores and
+the purse, and it first deletes every player, city, receipt and ledger row of the database it runs on: the owner's decision D10 in
+`docs/changes/CR-0008-logistics-rework.md`. The first `dotnet run` of the API after it (Development applies pending migrations) leaves
+an empty dev database; the next dev login creates the player and a starter city of the new model (800 coins, no goods). Tasks that need a
+city of the old model can't get one back.
 From M0-61 this section links to the generated reference.
 
 ## Troubleshooting
