@@ -121,8 +121,15 @@ namespace CityBuilder.Client.Presentation.Research
                     break;
                 case ResearchStatus.InProgress:
                     ActiveResearch running = city.ActiveResearch!;
+                    if (running.EndsAt == null)
+                    {
+                        // It waits at the science building for goods (CR-0008); its timer has not started.
+                        model.StatusText = "Waiting for goods: " + ItemText.Needs(content, running.Needs, ", ");
+                        break;
+                    }
+
                     model.ProgressPermille = ProgressDisplay.ResearchProgressPermille(city, city.Clock);
-                    model.StatusText = "In progress · " + DurationText.Format(Math.Max(0, running.EndsAt - city.Clock)) + " left";
+                    model.StatusText = "In progress · " + DurationText.Format(Math.Max(0, running.EndsAt.Value - city.Clock)) + " left";
                     break;
                 case ResearchStatus.Locked:
                     model.StatusText = "Requires: " + missing;

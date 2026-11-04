@@ -1,5 +1,6 @@
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
@@ -34,6 +35,30 @@ namespace CityBuilder.Client.Presentation.Ui
                     .Append(lines[index].Quantity.ToString(CultureInfo.InvariantCulture))
                     .Append(' ')
                     .Append(ItemName(content, lines[index].Item));
+            }
+
+            return text.ToString();
+        }
+
+        /// <summary>
+        /// <c>40 Planks, 10 Logs</c> of a project's or a research's needs (CR-0008): each amount and its item's name, goods in ordinal id order,
+        /// so the text does not depend on the dictionary's order.
+        /// </summary>
+        public static string Needs(GameContent content, IReadOnlyDictionary<ItemId, long> needs, string separator)
+        {
+            var sorted = new SortedDictionary<string, long>(StringComparer.Ordinal);
+            foreach (KeyValuePair<ItemId, long> need in needs)
+            {
+                sorted.Add(need.Key.Value, need.Value);
+            }
+
+            var text = new StringBuilder();
+            foreach (KeyValuePair<string, long> need in sorted)
+            {
+                text.Append(text.Length == 0 ? string.Empty : separator)
+                    .Append(need.Value.ToString(CultureInfo.InvariantCulture))
+                    .Append(' ')
+                    .Append(ItemName(content, new ItemId(need.Key)));
             }
 
             return text.ToString();

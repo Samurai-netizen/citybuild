@@ -1,5 +1,6 @@
 #nullable enable
 
+using System.Collections.Generic;
 using Newtonsoft.Json;
 
 namespace CityBuilder.Client.Net
