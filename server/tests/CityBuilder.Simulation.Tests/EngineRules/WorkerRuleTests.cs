@@ -25,36 +25,41 @@ public sealed class WorkerRuleTests
     public void Reassigning_MidCycle_KeepsTheProgress()
     {
         // The spec's example: 180 labor with 3 workers; after 20 s, 120 labor is left, and 4 workers do it in 30 s.
-        CityState city = City(clock: 1000, inventory: [("wood", 2)], completedResearch: ["carpentry"], buildings:
-            [Idle(1, "hut", 0, 0), Idle(2, "hut", 1, 0), Idle(3, "workshop", 2, 0, level: 2, workers: 3)]);
+        CityState city = City(clock: 1000, completedResearch: ["carpentry"], buildings:
+            [Idle(1, "hut", 0, 0), Idle(2, "hut", 1, 0), Idle(3, "workshop", 2, 0, level: 2, workers: 3, store: [("wood", 2)])]);
         Simulator.Advance(city, TestContent, 20);
 
         Commands.AssignWorkers(city, 3, 4);
 
         Assert.Equal("building 3 workshop (2,0) L2 w=4 Producing 1000..1050 target=0 labor=180/120@1020", CityDump.BuildingLine(city, 3));
         Simulator.Advance(city, TestContent, 29);
-        Assert.Equal(0, city.GetQuantity(_boards));
+        Assert.Equal(0, city.Buildings[2].GetStock(_boards));
         Simulator.Advance(city, TestContent, 1);
-        Assert.Equal(1, city.GetQuantity(_boards));
+        Assert.Equal(1, city.Buildings[2].GetStock(_boards));
     }
 
-    /// <summary>Removing all workers freezes the cycle with its progress, and its reserved output still counts against the cap.</summary>
+    /// <summary>
+    /// Removing all workers freezes the cycle with its progress, and its reserved output still counts against its own store's limit; another
+    /// building's store is not held back (CR-0008: a building reserves in its own store only).
+    /// </summary>
     [Fact]
     public void ZeroWorkers_MidCycle_FreezeItAndKeepItsReservedOutput()
     {
-        // 99 wood: camp 2 starts (99 + 0 + 1 = 100). At 1010 its workers move to camp 3, which may not start: 99 + 1 reserved + 1 > 100.
-        CityState city = City(clock: 1000, inventory: [("wood", 99)], buildings:
-            [Idle(1, "hut", 0, 0), Idle(2, "lumber_camp", 1, 0, workers: 2), Idle(3, "lumber_camp", 2, 0)]);
+        // 99 wood in camp 2's store: it starts (99 + 0 + 1 = 100). At 1010 its workers move to camp 3, whose own store is empty.
+        CityState city = City(clock: 1000, buildings:
+            [Idle(1, "hut", 0, 0), Idle(2, "lumber_camp", 1, 0, workers: 2, store: [("wood", 99)]), Idle(3, "lumber_camp", 2, 0)]);
         Simulator.Advance(city, TestContent, 10);
 
         Commands.AssignWorkers(city, 2, 0);
         Commands.AssignWorkers(city, 3, 2);
         Simulator.Advance(city, TestContent, 10_000);
 
-        // No end and no progress: 20 of its 40 labor are still to do, and its reserved wood still holds camp 3 back.
+        // No end and no progress: 20 of its 40 labor are still to do, and its reserved wood fills its store (99 + 1 = 100: no room).
+        // Camp 3 filled its own store to its limit in the meantime (a cycle every 20 s).
         Assert.Equal("building 2 lumber_camp (1,0) L1 w=0 Producing 1000..null target=0 labor=40/20@1010", CityDump.BuildingLine(city, 2));
-        Assert.Equal(1, CityQueries.Reserved(city, TestContent, _wood));
-        Assert.Equal((99L, "StorageFull:wood"), (city.GetQuantity(_wood), StallReason.Of(city, TestContent, city.Buildings[2])?.ToString()));
+        Assert.Equal((1L, 0L, 99L), (CityQueries.Reserved(TestContent, city.Buildings[1], _wood), CityQueries.Room(city, TestContent, city.Buildings[1], _wood),
+            city.Buildings[1].GetStock(_wood)));
+        Assert.Equal((100L, "StorageFull:wood"), (city.Buildings[2].GetStock(_wood), StallReason.Of(city, TestContent, city.Buildings[2])?.ToString()));
     }
 
     /// <summary>Workers added to a frozen cycle resume it with the labor it had left, however long it stood still.</summary>
@@ -72,7 +77,7 @@ public sealed class WorkerRuleTests
         // The 20 labor that were left are still left: 1 worker does them in 20 s.
         Assert.Equal("building 2 lumber_camp (1,0) L1 w=1 Producing 1000..1530 target=0 labor=40/20@1510", CityDump.BuildingLine(city, 2));
         Simulator.Advance(city, TestContent, 20);
-        Assert.Equal(1, city.GetQuantity(_wood));
+        Assert.Equal(1, city.Buildings[1].GetStock(_wood));
     }
 
     /// <summary>Only a completed construction staffs itself, with <c>min(free, MaxWorkers)</c> in id order; upgrades and new houses staff nobody.</summary>
@@ -80,7 +85,7 @@ public sealed class WorkerRuleTests
     public void AutoStaffing_SeveralCompletions_OnlyConstructionsGetMinOfFreeAndMax()
     {
         // Camp 2 has no workers while hut 3 is built and camp 4 (1 worker) is upgraded to level 2 (up to 4); both are done at 1005.
-        CityState city = City(clock: 1000, inventory: [("gold", 40)], buildings:
+        CityState city = City(clock: 1000, purse: 40, buildings:
         [
             Idle(1, "hut", 0, 0),
             Idle(2, "lumber_camp", 1, 0),

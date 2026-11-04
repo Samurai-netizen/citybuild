@@ -121,7 +121,12 @@ public sealed class ContentWalkRuleTests
         ContentAssert.SingleError(data, ContentErrorCode.ValueTooLarge, path);
     }
 
-    /// <summary>The limits themselves are allowed: crossings at the ground speed, a walk bonus limit of 900 ‰ and of 0 ‰.</summary>
+    /// <summary>
+    /// The limits themselves are allowed: crossings at the ground speed, a walk bonus limit of 900 ‰ and of 0 ‰ (with 0 the fixture's boots,
+    /// a walk bonus of 100 ‰, go: a limit below the bonuses is <see cref="ContentErrorCode.WalkBonusTooHigh"/>).
+    /// </summary>
+    /// <param name="crossing">The crossing speed.</param>
+    /// <param name="maxBonus">The walk bonus limit.</param>
     [Theory]
     [InlineData(1000, 900)]
     [InlineData(1, 0)]
@@ -130,6 +135,10 @@ public sealed class ContentWalkRuleTests
         GameContentData data = Valid();
         RulesOf(data).CrossingSpeedPermille = crossing;
         RulesOf(data).MaxWalkBonusPermille = maxBonus;
+        if (maxBonus == 0)
+        {
+            Research(data, "boots").Effects = [];
+        }
 
         ContentAssert.Valid(data);
     }
@@ -154,8 +163,42 @@ public sealed class ContentWalkRuleTests
     }
 
     /// <summary>
-    /// The shortest walk, one step between adjacent buildings (both ground: 4 000 + 4 000 double milliseconds, 4 s), must take at least
-    /// <c>minWalkSeconds</c>: 4 is allowed, 5 is not.
+    /// Walk bonuses adding up to more than <c>maxWalkBonusPermille</c> (300) are <see cref="ContentErrorCode.WalkBonusTooHigh"/> (content rule 12);
+    /// exactly the limit is allowed.
+    /// </summary>
+    [Fact]
+    public void Create_WalkBonusesAboveTheLimit_ReportsWalkBonusTooHigh()
+    {
+        ContentAssert.SingleError(
+            ValidWith(data => Research(data, "boots").Effects![0]!.Permille = 301), ContentErrorCode.WalkBonusTooHigh, "research");
+        ContentAssert.Valid(ValidWith(data => Research(data, "boots").Effects![0]!.Permille = 300));
+    }
+
+    /// <summary>
+    /// The shortest walk counts every walk bonus: with boots at 300 ‰ one step takes CeilDiv(8 000 × 0.7, 2 000) = 3 s, so a
+    /// <c>minWalkSeconds</c> of 4 is <see cref="ContentErrorCode.WalkTooShort"/> and 3 is allowed (content rule 12).
+    /// </summary>
+    [Fact]
+    public void Create_ShortestWalkWithEveryBonus_IsCheckedAgainstMinWalkSeconds()
+    {
+        ContentAssert.SingleError(
+            ValidWith(data =>
+            {
+                Research(data, "boots").Effects![0]!.Permille = 300;
+                RulesOf(data).MinWalkSeconds = 4;
+            }),
+            ContentErrorCode.WalkTooShort,
+            "rules.groundTileMillis");
+        ContentAssert.Valid(ValidWith(data =>
+        {
+            Research(data, "boots").Effects![0]!.Permille = 300;
+            RulesOf(data).MinWalkSeconds = 3;
+        }));
+    }
+
+    /// <summary>
+    /// The shortest walk, one step between adjacent buildings (both ground: 4 000 + 4 000 double milliseconds; with the fixture's boots at
+    /// 100 ‰, 7 200: 4 s), must take at least <c>minWalkSeconds</c>: 4 is allowed, 5 is not.
     /// </summary>
     [Theory]
     [InlineData(4, true)]

@@ -7,7 +7,7 @@ namespace CityBuilder.Simulation.Tests.Display;
 /// <summary>
 /// <c>ProductionDisplay.NetPerHour</c>: the net rate of an item from the buildings that are able to run. Fixture numbers as in
 /// <see cref="PerHourTests"/>: with one worker a lumber camp makes 90 wood an hour, a workshop uses 80 wood and makes 40 boards an hour;
-/// the wood cap is 100. Rates are thousandths of an item per hour.
+/// a camp's store holds 100 wood. Each building runs on its own store (CR-0008). Rates are thousandths of an item per hour.
 /// </summary>
 public sealed class NetPerHourTests
 {
@@ -87,17 +87,17 @@ public sealed class NetPerHourTests
     [Fact]
     public void NetPerHour_IdleProducerMissingAnInput_ContributesZero()
     {
-        CityState city = City(inventory: [("wood", 1)], buildings: [Idle(1, "workshop", 0, 0, workers: 1)]);
+        CityState city = City(buildings: [Idle(1, "workshop", 0, 0, workers: 1, store: [("wood", 1)])]);
 
         Assert.Equal(0L, ProductionDisplay.NetPerHour(city, TestContent, _boards));
         Assert.Equal(0L, ProductionDisplay.NetPerHour(city, TestContent, _wood));
     }
 
-    /// <summary>An idle producer that can't start because its output is at the cap makes nothing.</summary>
+    /// <summary>An idle producer that can't start because its output is at its store's limit makes nothing.</summary>
     [Fact]
-    public void NetPerHour_IdleProducerWhoseOutputIsAtTheCap_ContributesZero()
+    public void NetPerHour_IdleProducerWhoseOutputIsAtTheLimit_ContributesZero()
     {
-        CityState city = City(inventory: [("wood", 100)], buildings: [Idle(1, "lumber_camp", 0, 0, workers: 1)]);
+        CityState city = City(buildings: [Idle(1, "lumber_camp", 0, 0, workers: 1, store: [("wood", 100)])]);
 
         Assert.Equal(0L, ProductionDisplay.NetPerHour(city, TestContent, _wood));
     }
@@ -106,7 +106,7 @@ public sealed class NetPerHourTests
     [Fact]
     public void NetPerHour_ProducerWithInputs_SubtractsWhatItUses()
     {
-        CityState city = City(inventory: [("wood", 2)], buildings: [Idle(1, "workshop", 0, 0, workers: 1)]);
+        CityState city = City(buildings: [Idle(1, "workshop", 0, 0, workers: 1, store: [("wood", 2)])]);
 
         Assert.Equal(-80_000L, ProductionDisplay.NetPerHour(city, TestContent, _wood));
         Assert.Equal(40_000L, ProductionDisplay.NetPerHour(city, TestContent, _boards));
@@ -125,7 +125,7 @@ public sealed class NetPerHourTests
     [Fact]
     public void NetPerHour_ProducerAndConsumerOfOneItem_GivesTheDifference()
     {
-        CityState city = City(inventory: [("wood", 2)], buildings: [Idle(1, "lumber_camp", 0, 0, workers: 1), Idle(2, "workshop", 1, 0, workers: 1)]);
+        CityState city = City(buildings: [Idle(1, "lumber_camp", 0, 0, workers: 1), Idle(2, "workshop", 1, 0, workers: 1, store: [("wood", 2)])]);
 
         Assert.Equal(10_000L, ProductionDisplay.NetPerHour(city, TestContent, _wood));
     }

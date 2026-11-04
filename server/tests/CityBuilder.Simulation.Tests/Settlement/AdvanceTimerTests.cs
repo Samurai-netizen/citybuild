@@ -165,19 +165,20 @@ public sealed class AdvanceTimerTests
         Assert.Equal([1, 2], report.CompletedBuildings);
     }
 
-    /// <summary>A cycle ending mid-advance moves its outputs from reserved to stock and reports them as produced.</summary>
+    /// <summary>A cycle ending mid-advance moves its outputs from reserved into its store and reports them as produced.</summary>
     [Fact]
-    public void Advance_CycleEndsMidAdvance_MovesTheOutputsToStockAndReportsThem()
+    public void Advance_CycleEndsMidAdvance_MovesTheOutputsToItsStoreAndReportsThem()
     {
-        CityState city = City(clock: 1000, inventory: [("wood", 5)], buildings:
+        CityState city = City(clock: 1000, buildings:
         [
             Idle(1, "hut", 0, 0),
-            Producing(2, "lumber_camp", 1, 0, 1, workers: 2, cycleStartedAt: 990, cycleLabor: 40, laborRemaining: 40, segmentStartedAt: 990, endsAt: 1010),
+            Producing(2, "lumber_camp", 1, 0, 1, workers: 2, cycleStartedAt: 990, cycleLabor: 40, laborRemaining: 40, segmentStartedAt: 990, endsAt: 1010,
+                store: [("wood", 5)]),
         ]);
 
         SettlementReport report = Simulator.Advance(city, TestContent, 15);
 
-        Assert.Equal(6, city.GetQuantity(new ItemId("wood")));
+        Assert.Equal(6, city.Buildings[1].GetStock(new ItemId("wood")));
         Assert.Equal(new Dictionary<ItemId, long> { [new ItemId("wood")] = 1 }, report.Produced);
         Assert.Empty(report.CompletedBuildings);
     }
@@ -186,16 +187,17 @@ public sealed class AdvanceTimerTests
     [Fact]
     public void Advance_FrozenCycle_NeverCompletes()
     {
-        CityState city = City(clock: 1000, inventory: [("wood", 5)], buildings:
+        CityState city = City(clock: 1000, buildings:
         [
             Idle(1, "hut", 0, 0),
-            Producing(2, "lumber_camp", 1, 0, 1, workers: 0, cycleStartedAt: 980, cycleLabor: 40, laborRemaining: 20, segmentStartedAt: 990, endsAt: null),
+            Producing(2, "lumber_camp", 1, 0, 1, workers: 0, cycleStartedAt: 980, cycleLabor: 40, laborRemaining: 20, segmentStartedAt: 990, endsAt: null,
+                store: [("wood", 5)]),
         ]);
 
         SettlementReport report = Simulator.Advance(city, TestContent, 10_000);
 
         Assert.Equal("building 2 lumber_camp (1,0) L1 w=0 Producing 980..null target=0 labor=40/20@990", CityDump.BuildingLine(city, 2));
-        Assert.Equal(5, city.GetQuantity(new ItemId("wood")));
+        Assert.Equal(5, city.Buildings[1].GetStock(new ItemId("wood")));
         Assert.Empty(report.Produced);
     }
 }

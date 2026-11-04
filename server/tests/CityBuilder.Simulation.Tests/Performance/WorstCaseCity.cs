@@ -9,8 +9,9 @@ namespace CityBuilder.Simulation.Tests.Performance;
 
 /// <summary>
 /// The worst case of the performance budget (<c>04</c> section 12): 64 producers with 10-second cycles at full staffing that never stall,
-/// over <c>Fixtures/content-performance.json</c>. Half are mines (no inputs, 2 ore a cycle, ore under a cap no one reaches), half are
-/// smelters (1 ore in, 1 uncapped ingot out), so the mines always outproduce the smelters. The city is built through
+/// over <c>Fixtures/content-performance.json</c>. Half are mines (no inputs, 2 ore a cycle into a store whose limit no one reaches), half
+/// are smelters (1 ore in, 1 ingot out, each with 6 000 ore in its own store: enough for every cycle of the tests, as no courier brings ore
+/// before CR-0008-T1 part F; part I sets the courier worst case of <c>04</c> section 12). The city is built through
 /// <see cref="CityRules"/> as a player would build it, one producer a second, so the 64 cycles end on all ten seconds of every ten
 /// (28,800 event times in 8 hours) instead of on one (2,880): that is the most work a 10-second cycle can cause. A 2-day research runs,
 /// so a long advance also has a timer to complete in its dormant tail.
@@ -41,6 +42,15 @@ internal static class WorstCaseCity
     /// <summary>The smelters' uncapped output.</summary>
     public static readonly ItemId Ingots = new("ingots");
 
+    /// <summary>The science building, where the research happens (CR-0008 D11).</summary>
+    public static readonly BuildingTypeId Lab = new("lab");
+
+    /// <summary>
+    /// The ore each smelter starts with in its own store: more than the 5,762 cycles it starts in the build, an 8-hour advance and a 7-day
+    /// advance after it (1 + 2,880 + 2,881).
+    /// </summary>
+    public const long SmelterOre = 6000;
+
     /// <summary>The 2-day research the city starts last, so a long advance has a timer in its dormant tail.</summary>
     public static readonly ResearchId DeepVaults = new("deep_vaults");
 
@@ -48,9 +58,9 @@ internal static class WorstCaseCity
     public static GameContent WorstCaseContent { get; } = ContentFile.Load("content-performance.json");
 
     /// <summary>
-    /// A new worst-case city: the houses first; then a mine or a smelter (alternating, a mine first) placed every second, each staffed
-    /// automatically when its construction completes; then the research. It returns when every producer runs a cycle, each ending within
-    /// the next <see cref="CycleSeconds"/>.
+    /// A new worst-case city: the houses and the lab first; then a mine or a smelter (alternating, a mine first) placed every second, a
+    /// smelter with <see cref="SmelterOre"/> in its store, each staffed automatically when its construction completes; then the research. It
+    /// returns when every producer runs a cycle, each ending within the next <see cref="CycleSeconds"/>.
     /// </summary>
     public static CityState Build()
     {
@@ -61,12 +71,18 @@ internal static class WorstCaseCity
             Run(city, CityRules.PlaceBuilding(city, WorstCaseContent, House, index % width, index / width));
         }
 
+        Run(city, CityRules.PlaceBuilding(city, WorstCaseContent, Lab, Houses % width, Houses / width));
         Simulator.Advance(city, WorstCaseContent, BuildSeconds(House));
         for (int index = 0; index < Producers; index++)
         {
-            int tile = Houses + index;
+            int tile = Houses + 1 + index;
             BuildingTypeId type = index % 2 == 0 ? Mine : Smelter;
             Run(city, CityRules.PlaceBuilding(city, WorstCaseContent, type, tile % width, tile / width));
+            if (type == Smelter)
+            {
+                city = WithOre(city, city.NextBuildingId - 1);
+            }
+
             Simulator.Advance(city, WorstCaseContent, 1);
         }
 
@@ -74,6 +90,35 @@ internal static class WorstCaseCity
         Run(city, CityRules.StartResearch(city, WorstCaseContent, DeepVaults));
         return city;
     }
+
+    /// <summary>
+    /// The city restored with <see cref="SmelterOre"/> ore in the store of one building (a smelter just placed), the way the database would hold
+    /// it; everything else is copied as it is.
+    /// </summary>
+    private static CityState WithOre(CityState city, int buildingId) => new(
+        city.Clock,
+        city.Era,
+        city.NextBuildingId,
+        city.Purse,
+        city.Buildings.Select(building => new Building(
+            building.Id,
+            building.TypeId,
+            building.X,
+            building.Y,
+            building.Level,
+            building.AssignedWorkers,
+            building.Phase,
+            building.PhaseStartedAt,
+            building.PhaseEndsAt,
+            building.TargetLevel,
+            building.CycleLabor,
+            building.LaborRemaining,
+            building.SegmentStartedAt,
+            building.Id == buildingId ? [new KeyValuePair<ItemId, long>(Ore, SmelterOre)] : building.Store.ToArray(),
+            building.Needs.ToArray())),
+        city.CompletedResearch,
+        city.ActiveResearch,
+        city.Roads);
 
     /// <summary>The construction time of a building type of the performance content.</summary>
     private static long BuildSeconds(BuildingTypeId type) =>

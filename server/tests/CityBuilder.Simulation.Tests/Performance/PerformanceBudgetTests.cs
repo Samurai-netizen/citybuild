@@ -34,7 +34,7 @@ public sealed class PerformanceBudgetTests(ITestOutputHelper output)
     {
         CityState city = Build();
 
-        Building[] producers = city.Buildings.Where(building => building.TypeId != House).ToArray();
+        Building[] producers = city.Buildings.Where(building => building.TypeId == Mine || building.TypeId == Smelter).ToArray();
         Assert.Equal(Producers, producers.Length);
         Assert.Equal(Producers / 2, producers.Count(building => building.TypeId == Mine));
         Assert.All(producers, building =>

@@ -78,12 +78,13 @@ public sealed class TimerInvariancePropertyTests
         List<(string Name, long EndsAt)> timers =
         [
             .. city.Buildings
-                .Where(building => building.Phase is BuildingPhase.Constructing or BuildingPhase.Upgrading)
+                .Where(building => building.Phase is BuildingPhase.Constructing or BuildingPhase.Upgrading && !building.IsConstructionSite)
                 .Select(building => ($"building {building.Id}", building.PhaseEndsAt ?? throw new InvalidOperationException("A timer without an end."))),
         ];
-        if (city.ActiveResearch is { } research)
+        // A research waiting for goods has no timer yet (04 section 5); a construction site has none either and is left out above by its end.
+        if (city.ActiveResearch is { EndsAt: long researchEnd } research)
         {
-            timers.Add(($"research {research.Id}", research.EndsAt));
+            timers.Add(($"research {research.Id}", researchEnd));
         }
 
         return timers;

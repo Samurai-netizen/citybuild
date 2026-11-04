@@ -115,8 +115,8 @@ public sealed class GameContentFactoryTests
         GameContent content = ContentAssert.Valid(data);
 
         Assert.Equal(["boards", "gold", "wood"], content.Items.Select(item => item.Id.Value));
-        Assert.Equal(["hut", "lumber_camp", "workshop"], content.Buildings.Select(building => building.Id.Value));
-        Assert.Equal(["better_saws", "carpentry", "warehouses"], content.Research.Select(node => node.Id.Value));
+        Assert.Equal(["depot", "hut", "lumber_camp", "post", "school", "workshop"], content.Buildings.Select(building => building.Id.Value));
+        Assert.Equal(["better_saws", "boots", "carpentry", "tallying", "warehouses"], content.Research.Select(node => node.Id.Value));
     }
 
     /// <summary>Eras are sorted by number whatever order the file lists them in.</summary>

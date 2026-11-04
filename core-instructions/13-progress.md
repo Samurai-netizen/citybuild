@@ -9,8 +9,8 @@
   build log `docs/build-log/2026/2026-11-02-07-CR-0008-T1.md` (its Session 1 plan lists every part and step)
 - **Part / step:** A, B, C, D done (design docs, spec, engine roads and paths, server roads end to end; draft PR #86); Session 2 reviewed
   A–C. Part E (the switch): its plan with checkpoints CP1–CP3 and the steps E1.1 … E4 is in the build log (Session 2, decisions 31–35).
-  E1.1–E1.3 written (the engine compiles); E1.4 in progress: the ten engine test files still to rewrite are listed in the build log
-  (Session 2, "Still to compile"). Then E1.5 server, E1.6 client → CP1. Between checkpoints the steps are `wip` saves that may not build (see
+  E1.1–E1.4 done but 5 property coverage floors, which need deliveries (decision 36). Next: E2.1 (engine trips and deliveries) and trips
+  in the property generator; then E1.5 + E2.2 (server), E1.6 + E2.3 (client) → CP1 (CP1 and CP2 merged). Between checkpoints the steps are `wip` saves that may not build (see
   Known broken). Then F … I, then `/finish-task`.
 - **Last completed:** M0-60 · Client ↔ server boundary review (PR #85, merged)
 - **Next task:** CR-0008-T2 · client and art (`[S]`), after T1 merges; then CR-0008-T3, then M0-61.
