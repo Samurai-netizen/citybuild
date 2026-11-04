@@ -29,6 +29,10 @@ internal static class Commands
     public static void StartResearch(CityState city, string researchId) =>
         Run(city, target => CityRules.StartResearch(target, TestContent, new ResearchId(researchId)));
 
+    /// <summary>Sets the route of a station's slot, asserting success, then runs the zero-length advance (its courier leaves in it).</summary>
+    public static void SetRoute(CityState city, int stationId, int slot, RouteStop[] stops) =>
+        Run(city, target => CourierRules.SetRoute(target, TestContent, stationId, slot, stops));
+
     /// <summary>Applies a mutation, asserts it was applied, and ends with the zero-length advance every city request ends with (<c>04</c> section 7).</summary>
     private static void Run(CityState city, Func<CityState, MutationResult> mutation)
     {

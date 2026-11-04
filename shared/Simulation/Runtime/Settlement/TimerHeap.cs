@@ -9,7 +9,7 @@ namespace CityBuilder.Simulation.Settlement
     /// <c>core-instructions/04-simulation-model.md</c>, section 6, when the indexes follow ids), so the next due time and what is due then are
     /// found without a scan (the worst case of <c>04</c> section 12 has about a million event times). Each index (a building's in
     /// <see cref="CityState.Buildings"/>, a courier's in <see cref="CityState.Couriers"/>; neither list changes during an advance)
-    /// has at most one timer; <see cref="Set"/> adds or moves it, <see cref="Remove"/> drops it, in O(log n). Made new for each advance.
+    /// has at most one timer; <see cref="Set"/> adds or moves it and <see cref="Pop"/> takes the earliest, in O(log n). Made new for each advance.
     /// </summary>
     internal class TimerHeap
     {
@@ -75,35 +75,6 @@ namespace CityBuilder.Simulation.Settlement
 
         /// <summary>The index whose timer ends first (the lowest index among the earliest ends). The heap must not be empty.</summary>
         public int PeekIndex() => _count > 0 ? _indexes[0] : throw new InvalidOperationException("The timer queue is empty.");
-
-        /// <summary>Removes the timer of <paramref name="index"/>, if it has one (a courier stopped inside an advance).</summary>
-        public void Remove(int index)
-        {
-            int slot = _slotOf[index];
-            if (slot < 0)
-            {
-                return;
-            }
-
-            _slotOf[index] = -1;
-            _count--;
-            if (slot == _count)
-            {
-                return;
-            }
-
-            // The last timer fills the hole and moves up or down to where it belongs.
-            long endsAt = _endsAt[_count];
-            int last = _indexes[_count];
-            if (slot > 0 && IsEarlier(endsAt, last, _endsAt[(slot - 1) / 2], _indexes[(slot - 1) / 2]))
-            {
-                SiftUp(slot, endsAt, last);
-            }
-            else
-            {
-                SiftDown(slot, endsAt, last);
-            }
-        }
 
         /// <summary>Removes the earliest timer (the lowest index among the earliest ends) and returns its index.</summary>
         public int Pop()
