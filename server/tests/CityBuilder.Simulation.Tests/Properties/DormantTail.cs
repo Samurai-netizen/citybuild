@@ -93,7 +93,13 @@ internal sealed class DormantTail
         }
 
         completedBuildings.Sort();
-        var city = new CityState(target, atCap.Era, atCap.NextBuildingId, purse, buildings, completedResearch, active, atCap.Roads);
+        // A trip arrives within minutes of its start, long before a window's last second; a tail with an arrival is a case this model lacks.
+        if (atCap.Trips.Any(trip => trip.ArrivesAt <= target))
+        {
+            throw new InvalidOperationException("A trip arrives in the dormant tail; the model doesn't cover deliveries.");
+        }
+
+        var city = new CityState(target, atCap.Era, atCap.NextBuildingId, purse, buildings, completedResearch, active, atCap.Roads, atCap.Trips, atCap.NextTripId);
         return new DormantTail(city, produced, completedBuildings, tailResearch);
     }
 

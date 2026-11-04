@@ -62,6 +62,11 @@ public sealed class InvariantPropertyTests(ITestOutputHelper output)
     public void Observe_EveryStep_NeverPlacesALockedBuildingOrSkipsAPrerequisite(string contentName) =>
         Holds(contentName, Invariant.UnlockAndPrerequisites);
 
+    /// <summary>Invariant 14, the carry half: no trip carries more than the trip carry limit, or more than its source's store had.</summary>
+    [Theory]
+    [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
+    public void Observe_EveryStep_KeepsEveryLoadWithinItsCarryLimit(string contentName) => Holds(contentName, Invariant.Loads);
+
     /// <summary>
     /// The seeds exercise every check: each counted case happened at least a floor number of times, so a check that never fires can't pass
     /// for one that holds. The counts are printed.
@@ -74,25 +79,43 @@ public sealed class InvariantPropertyTests(ITestOutputHelper output)
         output.WriteLine($"{contentName}: {observation.CountsText()}");
 
         observation.AssertAtLeast("steps that spent", 1000);
-        observation.AssertAtLeast("steps that refunded", 100);
         observation.AssertAtLeast("steps asked to go back in time", PropertyContent.Seeds);
-        observation.AssertAtLeast("steps ending with an item exactly at its cap", 1000);
-        observation.AssertAtLeast("steps ending with an item above its cap", 20);
+        observation.AssertAtLeast("stores ending with a good exactly at its limit", 1000);
+        observation.AssertAtLeast("stores ending with a good above its limit", 20);
         observation.AssertAtLeast("cycles completed", 10_000);
         observation.AssertAtLeast("cycles started when a construction or upgrade completed", 100);
-        observation.AssertAtLeast("steps with every worker assigned", 1000);
+        observation.AssertAtLeast("steps with every worker assigned or on a trip", 1000);
         observation.AssertAtLeast("buildings at their worker limit", 1000);
         observation.AssertAtLeast("steps with every builder busy", 50);
         observation.AssertAtLeast("research starts", 100);
         observation.AssertAtLeast("cycles completed after a worker change", 100);
-        observation.AssertAtLeast("cycles ended by an upgrade", 50);
         observation.AssertAtLeast("frozen cycles carried", 1000);
         observation.AssertAtLeast("cycles started with a labor reduction", 100);
-        observation.AssertAtLeast("cycles started at the last second of a window", 5);
         observation.AssertAtLeast("dormant tails", 500);
+        observation.AssertAtLeast("research starts with prerequisites", 20);
+        observation.AssertAtLeast("trips started", 1000);
+        observation.AssertAtLeast("trips at the carry limit", 100);
+        observation.AssertAtLeast("steps with a trip arriving", 1000);
+        observation.AssertAtLeast("steps with workers on trips", 1000);
+        observation.AssertAtLeast("steps that delivered to a project", 100);
+        observation.AssertAtLeast("steps that moved goods into a store", 100);
+        if (contentName == "golden-v2")
+        {
+            // golden-v2 can't reach these cases in its seeds (BL-20261102-07 decision 38): its 8 h cap is longer than every timer and walk, so
+            // no timer ends in a dormant tail and a cycle rarely starts on a window's last second; its producers with inputs (sawmill, trading
+            // post) upgrade only with planks, so a refund needs planks carried from another store to a producing one; and coins come only from
+            // the trading post, so few cities afford the building their research unlocked or the tally sticks (percentages, after the trade
+            // charter). The fixture covers them; part H removes the cap.
+            observation.AssertAtLeast("placements of a type locked at the start", 5);
+            return;
+        }
+
+        observation.AssertAtLeast("steps that refunded", 10);
+        observation.AssertAtLeast("cycles ended by an upgrade", 10);
+        observation.AssertAtLeast("cycles started at the last second of a window", 5);
         observation.AssertAtLeast("dormant tails with a completion", 10);
         observation.AssertAtLeast("placements of a type locked at the start", 20);
-        observation.AssertAtLeast("research starts with prerequisites", 20);
+        observation.AssertAtLeast("trips with a percentage or exact amount", 5);
     }
 
     /// <summary>Fails with the first failure of the invariant on the content, if any seed had one.</summary>

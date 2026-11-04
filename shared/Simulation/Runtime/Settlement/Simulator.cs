@@ -15,8 +15,8 @@ namespace CityBuilder.Simulation.Settlement
     {
         /// <summary>
         /// Advances the city by <paramref name="elapsedSeconds"/> (<c>04</c> section 7). At the clock and at every event time up to the target,
-        /// in this order: the research that is due completes, then the buildings that are due complete in ascending id order, then idle
-        /// producers start cycles in ascending id order, each on its own store, but only while the time is within
+        /// in this order: the research that is due completes, then the buildings that are due complete in ascending id order, then the trips
+        /// that arrive deliver their goods in ascending trip id order (<c>04</c> sections 16 and 18), then idle producers start cycles in ascending id order, each on its own store, but only while the time is within
         /// <see cref="GameRules.MaxOfflineProductionSeconds"/> of the start (the dormant tail). Timers run for the whole window, and the clock always moves by the full elapsed time. A zero-length
         /// advance only starts the cycles that can start at the clock; the caller ends every city request with one, after its mutation if any.
         /// </summary>
@@ -26,8 +26,8 @@ namespace CityBuilder.Simulation.Settlement
         /// <returns>What happened during the window.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="city"/> or <paramref name="content"/> is null.</exception>
         /// <exception cref="InvalidOperationException">
-        /// A timer of the city is due before its clock, or the city names a building type the content doesn't know. Nothing has changed when
-        /// a timer is due before the clock.
+        /// A timer or a trip of the city is due before its clock, or the city names a building type the content doesn't know. Nothing has
+        /// changed when something is due before the clock.
         /// </exception>
         public static SettlementReport Advance(CityState city, GameContent content, long elapsedSeconds)
         {
@@ -48,9 +48,9 @@ namespace CityBuilder.Simulation.Settlement
 
             // What this advance keeps up to date instead of scanning every building at every event time (04 section 12). Making it changes
             // nothing in the city. The order of the sources is the order at the same second (04 section 6): research completion, then
-            // building completions by id; the mailbox deliveries of 04 section 13 will go between the two.
+            // building completions by id, then trip arrivals by trip id; the mailbox deliveries of 04 section 13 will go before the buildings.
             BuildingTimerQueue timers = BuildingTimerQueue.Of(city);
-            IEventSource[] sources = { new ResearchTimerSource(), new BuildingTimerSource(timers) };
+            IEventSource[] sources = { new ResearchTimerSource(), new BuildingTimerSource(timers), new TripArrivalSource(city, timers) };
             long? firstDueAt = NextDueAt(sources, city);
             if (firstDueAt < start)
             {

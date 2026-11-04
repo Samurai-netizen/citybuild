@@ -17,6 +17,12 @@ internal sealed class ReportTotals
     private readonly SortedDictionary<ItemId, long> _produced = [];
     /// <summary>The quantity consumed per item, over all reports.</summary>
     private readonly SortedDictionary<ItemId, long> _consumed = [];
+    /// <summary>The quantity delivered to projects per item, over all reports.</summary>
+    private readonly SortedDictionary<ItemId, long> _delivered = [];
+    /// <summary>The quantity moved into stores per item, over all reports.</summary>
+    private readonly SortedDictionary<ItemId, long> _moved = [];
+    /// <summary>The quantity refunded by delivered upgrades per item, over all reports.</summary>
+    private readonly SortedDictionary<ItemId, long> _refunded = [];
     /// <summary>The ids of the buildings that completed in any report, sorted.</summary>
     private readonly List<int> _completedBuildings = [];
     /// <summary>The research that completed in any report, sorted.</summary>
@@ -33,6 +39,9 @@ internal sealed class ReportTotals
             _productionSeconds = checked(_productionSeconds + report.ProductionSeconds);
             Add(_produced, report.Produced);
             Add(_consumed, report.Consumed);
+            Add(_delivered, report.Delivered);
+            Add(_moved, report.Moved);
+            Add(_refunded, report.Refunded);
             _completedBuildings.AddRange(report.CompletedBuildings);
             _completedResearch.AddRange(report.CompletedResearch);
             _eraChanged |= report.EraChanged;
@@ -45,7 +54,7 @@ internal sealed class ReportTotals
     /// <summary>The totals of the reports, in any number (none gives zeros and empty lists).</summary>
     public static ReportTotals Sum(params IEnumerable<SettlementReport> reports) => new(reports);
 
-    /// <summary>Every value, as a path and a value: seconds, the quantities per item, the completions, the era flag.</summary>
+    /// <summary>Every value, as a path and a value: seconds, the quantities per item (produced, consumed, delivered, moved, refunded), the completions, the era flag.</summary>
     public IReadOnlyList<(string Path, string Value)> Fields()
     {
         var fields = new List<(string Path, string Value)>
@@ -55,6 +64,9 @@ internal sealed class ReportTotals
         };
         fields.AddRange(_produced.Select(item => ($"produced[{item.Key}]", StructuralEquality.Text(item.Value))));
         fields.AddRange(_consumed.Select(item => ($"consumed[{item.Key}]", StructuralEquality.Text(item.Value))));
+        fields.AddRange(_delivered.Select(item => ($"delivered[{item.Key}]", StructuralEquality.Text(item.Value))));
+        fields.AddRange(_moved.Select(item => ($"moved[{item.Key}]", StructuralEquality.Text(item.Value))));
+        fields.AddRange(_refunded.Select(item => ($"refunded[{item.Key}]", StructuralEquality.Text(item.Value))));
         fields.Add(("completedBuildings", string.Join(",", _completedBuildings)));
         fields.Add(("completedResearch", string.Join(",", _completedResearch)));
         fields.Add(("eraChanged", _eraChanged ? "true" : "false"));

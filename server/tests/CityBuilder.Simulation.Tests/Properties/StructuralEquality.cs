@@ -7,7 +7,7 @@ namespace CityBuilder.Simulation.Tests.Properties;
 /// <summary>
 /// Compares two cities, or two report totals, field by field and names the first field that differs, so a failing property says what went
 /// wrong instead of "not equal". A city's fields come in a fixed order: clock, era, next building id, the purse, every field of every
-/// building by id (its store and needs included), the completed research, the active research with its needs, and the roads. It reads only public members, the way the server will.
+/// building by id (its store and needs included), the completed research, the active research with its needs, the roads, the next trip id and every trip. It reads only public members, the way the server will.
 /// </summary>
 internal static class StructuralEquality
 {
@@ -76,6 +76,10 @@ internal static class StructuralEquality
             fields.AddRange(active.Needs.Select(need => ($"activeResearch needs[{need.Key}]", Text(need.Value))));
         }
         fields.AddRange(city.Roads.Select(road => ($"road ({Text(road.X)},{Text(road.Y)})", Text(road.Level))));
+        fields.Add(("nextTripId", Text(city.NextTripId)));
+        fields.AddRange(city.Trips.Select(trip => (
+            $"trip {Text(trip.Id)}",
+            $"{Text(trip.SourceId)}->{Text(trip.TargetId)} {trip.Item}={Text(trip.Quantity)} {Text(trip.DepartedAt)}..{Text(trip.ArrivesAt)}")));
         return fields;
     }
 

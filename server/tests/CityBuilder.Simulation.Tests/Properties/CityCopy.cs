@@ -8,7 +8,10 @@ namespace CityBuilder.Simulation.Tests.Properties;
 /// </summary>
 internal static class CityCopy
 {
-    /// <summary>A copy of the city: every stored value (the purse, each building's store and needs, the research's needs), with new building and research objects.</summary>
+    /// <summary>
+    /// A copy of the city: every stored value (the purse, each building's store and needs, the research's needs, the trips and the next trip
+    /// id), with new building and research objects. Trips and roads never change, so the copy shares them.
+    /// </summary>
     public static CityState Of(CityState city) => new(
         city.Clock,
         city.Era,
@@ -19,7 +22,9 @@ internal static class CityCopy
         city.ActiveResearch is null
             ? null
             : new ActiveResearch(city.ActiveResearch.Id, city.ActiveResearch.StartedAt, city.ActiveResearch.EndsAt, city.ActiveResearch.Needs.ToArray()),
-        city.Roads);
+        city.Roads,
+        city.Trips,
+        city.NextTripId);
 
     /// <summary>A copy of the building: every stored value.</summary>
     public static Building Of(Building building) => new(

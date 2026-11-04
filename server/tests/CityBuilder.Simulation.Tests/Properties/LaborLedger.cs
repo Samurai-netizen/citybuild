@@ -117,6 +117,14 @@ internal sealed class LaborLedger
             return null;
         }
 
+        // An upgrade whose last good a walker delivered at the step's end ends the cycle there, before its labor is done (04 section 16).
+        if (step.Mutation is null && work < cycle.Labor && step.After.TryGetBuilding(id, out Building? after)
+            && after.Phase == BuildingPhase.Upgrading && after.PhaseStartedAt == step.After.Clock)
+        {
+            count("cycles ended by a delivered upgrade");
+            return null;
+        }
+
         count(cycle.Reassigned ? "cycles completed after a worker change" : "cycles completed with their first workers");
         if (work < cycle.Labor)
         {

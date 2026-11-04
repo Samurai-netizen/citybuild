@@ -60,8 +60,9 @@ internal static class CityFixture
     }));
 
     /// <summary>
-    /// A city at <paramref name="clock"/> (default 1000) in era 1. The next building id defaults to one above the highest id; the purse to 0;
-    /// the roads to nothing. Goods live in the buildings' stores (the building helpers' <c>store</c>).
+    /// A city at <paramref name="clock"/> (default 1000) in era 1. The next building id defaults to one above the highest id, the next trip id
+    /// to one above the highest trip's; the purse to 0; the roads and trips to nothing. Goods live in the buildings' stores (the building
+    /// helpers' <c>store</c>) and on trips.
     /// </summary>
     public static CityState City(
         long clock = 1000,
@@ -71,9 +72,12 @@ internal static class CityFixture
         string[]? completedResearch = null,
         ActiveResearch? activeResearch = null,
         int? nextBuildingId = null,
-        RoadTile[]? roads = null)
+        RoadTile[]? roads = null,
+        Trip[]? trips = null,
+        int? nextTripId = null)
     {
         buildings ??= [];
+        trips ??= [];
         int nextId = nextBuildingId ?? (buildings.Length == 0 ? 1 : buildings.Max(building => building.Id) + 1);
         return new CityState(
             clock,
@@ -83,8 +87,14 @@ internal static class CityFixture
             buildings,
             (completedResearch ?? []).Select(id => new ResearchId(id)),
             activeResearch,
-            roads);
+            roads,
+            trips,
+            nextTripId ?? (trips.Length == 0 ? 1 : trips.Max(trip => trip.Id) + 1));
     }
+
+    /// <summary>A trip under way: <paramref name="quantity"/> of <paramref name="item"/> from building <paramref name="sourceId"/> to <paramref name="targetId"/>.</summary>
+    public static Trip Trip(int id, int sourceId, int targetId, string item, long quantity, long departedAt, long arrivesAt) =>
+        new(id, sourceId, targetId, new ItemId(item), quantity, departedAt, arrivesAt);
 
     /// <summary>
     /// An idle building in canonical form: phase start 0, and no end, target level or cycle; with <paramref name="needs"/> its upgrade waits for

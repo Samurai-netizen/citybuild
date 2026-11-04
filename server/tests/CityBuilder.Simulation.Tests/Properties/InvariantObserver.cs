@@ -11,8 +11,8 @@ namespace CityBuilder.Simulation.Tests.Properties;
 /// any two events, not only between the generated operations:
 /// <list type="bullet">
 /// <item>a command is one step: the mutation and its zero-length advance;</item>
-/// <item>an advance within the production cap is a zero-length step, then one step to each next due time (a timer's end), so every start
-/// and completion falls on a step's end. Split invariance (property 2) makes this the same city as one advance;</item>
+/// <item>an advance within the production cap is a zero-length step, then one step to each next due time (a timer's end, a trip's
+/// arrival), so every start, completion and delivery falls on a step's end. Split invariance (property 2) makes this the same city as one advance;</item>
 /// <item>an advance beyond the cap runs whole on the city. A copy is stepped like above to the end of the window, and the rest, the dormant
 /// tail, is one step from the copy to the city, with what <see cref="DormantTail"/> says it must do;</item>
 /// <item>after some steps a <b>branch</b> leaves the history: on a copy, a random command (mostly an upgrade or a worker change on a running
@@ -155,7 +155,8 @@ internal sealed class InvariantObserver
 
     /// <summary>
     /// The branch's command: mostly a worker change (a new labor segment) or an upgrade on a producing building, an upgrade preferably where
-    /// the cycle took inputs (it refunds them); else any command, or null when <see cref="CityGenerator.RandomCommand"/> gives none.
+    /// the cycle took inputs (it refunds them); when such a building's upgrade waits for goods another store has, often the trip that brings
+    /// them (its arrival starts the upgrade, which refunds); else any command, or null when <see cref="CityGenerator.RandomCommand"/> gives none.
     /// </summary>
     private CityOperation.Command? AimedCommand(CityState city)
     {
@@ -163,6 +164,18 @@ internal sealed class InvariantObserver
         if (producing.Count == 0 || _random.Chance(20))
         {
             return CityGenerator.RandomCommand(_random, city, _content);
+        }
+
+        var deliveries = (
+            from target in producing
+            where target.HasUpgradeWaiting && Level(target).Recipe!.Inputs.Count > 0
+            from need in target.Needs
+            from source in city.Buildings
+            where source.Id != target.Id && source.GetStock(need.Key) > 0
+            select new CityOperation.StartTrip(source.Id, target.Id, need.Key.ToString(), Amount.Preset(_content.AmountPresets.MaxBy(preset => preset.Percent)!.Id))).ToList();
+        if (deliveries.Count > 0 && _random.Chance(60))
+        {
+            return _random.Pick(deliveries);
         }
 
         if (_random.Chance(50))
@@ -199,6 +212,9 @@ internal sealed class InvariantObserver
             ReportedElapsed = whole.ElapsedSeconds - prefix.Sum(report => report.ElapsedSeconds),
             Produced = Minus(whole.Produced, prefix.Select(report => report.Produced)),
             Consumed = Minus(whole.Consumed, prefix.Select(report => report.Consumed)),
+            Delivered = Minus(whole.Delivered, prefix.Select(report => report.Delivered)),
+            Moved = Minus(whole.Moved, prefix.Select(report => report.Moved)),
+            Refunded = Minus(whole.Refunded, prefix.Select(report => report.Refunded)),
             EventAligned = false,
             ProductionUntil = windowStart + _cap,
             ExpectedTail = DormantTail.Model(_content, window, city.Clock),
@@ -223,6 +239,9 @@ internal sealed class InvariantObserver
             ReportedElapsed = report.ElapsedSeconds,
             Produced = report.Produced,
             Consumed = report.Consumed,
+            Delivered = report.Delivered,
+            Moved = report.Moved,
+            Refunded = report.Refunded,
             EventAligned = true,
             ProductionUntil = windowStart + _cap,
             CompletedBuildings = report.CompletedBuildings,
@@ -230,12 +249,20 @@ internal sealed class InvariantObserver
         };
 
     /// <summary>
-    /// The earliest timer end of the city, read from its public state: research, constructions, upgrades and running cycles. Null when no
-    /// timer runs.
+    /// The earliest event of the city, read from its public state: the end of a research, a construction, an upgrade or a running cycle, or a
+    /// trip's arrival. Null when nothing is due.
     /// </summary>
     private static long? NextDueAt(CityState city)
     {
         long? next = city.ActiveResearch?.EndsAt;
+        foreach (Trip trip in city.Trips)
+        {
+            if (trip.ArrivesAt < (next ?? long.MaxValue))
+            {
+                next = trip.ArrivesAt;
+            }
+        }
+
         foreach (Building building in city.Buildings)
         {
             if (building.PhaseEndsAt < (next ?? long.MaxValue))

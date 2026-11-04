@@ -15,6 +15,9 @@ namespace CityBuilder.Simulation.Settlement
             long productionSeconds,
             IReadOnlyDictionary<ItemId, long> produced,
             IReadOnlyDictionary<ItemId, long> consumed,
+            IReadOnlyDictionary<ItemId, long> delivered,
+            IReadOnlyDictionary<ItemId, long> moved,
+            IReadOnlyDictionary<ItemId, long> refunded,
             IReadOnlyList<int> completedBuildings,
             IReadOnlyList<ResearchId> completedResearch,
             bool eraChanged)
@@ -23,6 +26,9 @@ namespace CityBuilder.Simulation.Settlement
             ProductionSeconds = productionSeconds;
             Produced = produced;
             Consumed = consumed;
+            Delivered = delivered;
+            Moved = moved;
+            Refunded = refunded;
             CompletedBuildings = completedBuildings;
             CompletedResearch = completedResearch;
             EraChanged = eraChanged;
@@ -42,6 +48,18 @@ namespace CityBuilder.Simulation.Settlement
 
         /// <summary>The inputs of the cycles that started, per item in ordinal order; only items above 0.</summary>
         public IReadOnlyDictionary<ItemId, long> Consumed { get; }
+
+        /// <summary>The goods walkers handed to projects, used up there (<c>04</c> section 16), per item in ordinal order; only items above 0.</summary>
+        public IReadOnlyDictionary<ItemId, long> Delivered { get; }
+
+        /// <summary>The goods walkers put into stores, per item in ordinal order; only items above 0. A returned load is not counted: it only goes back.</summary>
+        public IReadOnlyDictionary<ItemId, long> Moved { get; }
+
+        /// <summary>
+        /// The inputs of the cycles that an upgrade ended when its last good arrived during the advance (<c>04</c> section 8), per item in ordinal
+        /// order; only items above 0. An upgrade started by a mutation names its refund in the mutation's result instead.
+        /// </summary>
+        public IReadOnlyDictionary<ItemId, long> Refunded { get; }
 
         /// <summary>The buildings whose construction or upgrade completed, by ascending id, each once.</summary>
         public IReadOnlyList<int> CompletedBuildings { get; }

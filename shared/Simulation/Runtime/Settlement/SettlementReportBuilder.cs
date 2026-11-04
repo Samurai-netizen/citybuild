@@ -15,6 +15,12 @@ namespace CityBuilder.Simulation.Settlement
         private readonly ItemTotals _produced = new ItemTotals();
         /// <summary>The inputs of every cycle started during the advance, per item.</summary>
         private readonly ItemTotals _consumed = new ItemTotals();
+        /// <summary>The goods walkers handed to projects (used up there), per item.</summary>
+        private readonly ItemTotals _delivered = new ItemTotals();
+        /// <summary>The goods walkers put into stores, per item.</summary>
+        private readonly ItemTotals _moved = new ItemTotals();
+        /// <summary>The inputs of the cycles an upgrade ended when its last good arrived during the advance, per item.</summary>
+        private readonly ItemTotals _refunded = new ItemTotals();
         /// <summary>The ids of the buildings whose construction or upgrade completed, in time order until <see cref="Build"/> sorts them.</summary>
         private readonly List<int> _completedBuildings = new List<int>();
         /// <summary>The research nodes that completed, in time order until <see cref="Build"/> sorts them.</summary>
@@ -26,6 +32,15 @@ namespace CityBuilder.Simulation.Settlement
         /// <summary>Counts the inputs of a started cycle.</summary>
         public void AddConsumed(IReadOnlyList<ItemQuantity> inputs) => Add(_consumed, inputs);
 
+        /// <summary>Counts goods a walker handed to a project.</summary>
+        public void AddDelivered(ItemId item, long quantity) => _delivered.Set(item, checked(_delivered.Get(item) + quantity));
+
+        /// <summary>Counts goods a walker put into a store.</summary>
+        public void AddMoved(ItemId item, long quantity) => _moved.Set(item, checked(_moved.Get(item) + quantity));
+
+        /// <summary>Counts the inputs of a cycle that an upgrade started by a delivery ended.</summary>
+        public void AddRefunded(IReadOnlyList<ItemQuantity> inputs) => Add(_refunded, inputs);
+
         /// <summary>Records a completed construction or upgrade.</summary>
         public void AddCompletedBuilding(int buildingId) => _completedBuildings.Add(buildingId);
 
@@ -34,7 +49,7 @@ namespace CityBuilder.Simulation.Settlement
 
         /// <summary>
         /// Makes the report. Completions are recorded in time order; the report lists them sorted. A building completes at most one
-        /// construction or upgrade per advance, because only a mutation starts one, so each id appears once.
+        /// construction or upgrade per advance, because only a mutation orders one (a delivery only starts what was ordered), so each id appears once.
         /// </summary>
         public SettlementReport Build(long elapsedSeconds, long productionSeconds)
         {
@@ -45,6 +60,9 @@ namespace CityBuilder.Simulation.Settlement
                 productionSeconds,
                 _produced,
                 _consumed,
+                _delivered,
+                _moved,
+                _refunded,
                 _completedBuildings.AsReadOnly(),
                 _completedResearch.AsReadOnly(),
                 eraChanged: false);

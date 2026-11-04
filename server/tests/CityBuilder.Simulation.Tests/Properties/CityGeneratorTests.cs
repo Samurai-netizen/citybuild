@@ -13,7 +13,7 @@ public sealed class CityGeneratorTests
 {
     /// <summary>
     /// Over the property seeds the generator makes each kind of operation at least 20 times, and reaches each situation (a gap beyond the cap,
-    /// an upgrade, research, a locked building, a cycle with inputs, a frozen cycle) in at least its floor of seeds.
+    /// an upgrade, research, a locked building, a cycle with inputs, a frozen cycle, deliveries to projects and stores) in at least its floor of seeds.
     /// </summary>
     [Theory]
     [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
@@ -35,10 +35,12 @@ public sealed class CityGeneratorTests
             Count(counts, "seeds with a locked building placed", history.City.Buildings.Any(building => IsLockedAtStart(content, building)));
             Count(counts, "seeds with a cycle that used inputs", history.Reports.Any(report => report.Consumed.Count > 0));
             Count(counts, "seeds ending with a frozen cycle", history.City.Buildings.Any(IsFrozen));
+            Count(counts, "seeds with a delivery to a project", history.Reports.Any(report => report.Delivered.Count > 0));
+            Count(counts, "seeds with goods moved into a store", history.Reports.Any(report => report.Moved.Count > 0));
         }
 
         string observed = string.Join(", ", counts.Select(count => $"{count.Key} {count.Value}"));
-        foreach (string kind in (string[])["PlaceBuilding", "UpgradeBuilding", "AssignWorkers", "StartResearch", "Advance"])
+        foreach (string kind in (string[])["PlaceBuilding", "UpgradeBuilding", "AssignWorkers", "StartResearch", "StartTrip", "Advance"])
         {
             Assert.True(counts.GetValueOrDefault(kind) >= 20, $"Too few accepted {kind} operations. Observed: {observed}");
         }
@@ -49,6 +51,8 @@ public sealed class CityGeneratorTests
         AssertAtLeast(counts, "seeds with a locked building placed", 5, observed);
         AssertAtLeast(counts, "seeds with a cycle that used inputs", 5, observed);
         AssertAtLeast(counts, "seeds ending with a frozen cycle", 5, observed);
+        AssertAtLeast(counts, "seeds with a delivery to a project", 25, observed);
+        AssertAtLeast(counts, "seeds with goods moved into a store", 25, observed);
     }
 
     /// <summary>Rejected commands are left out of the history but counted: a replay accepts every listed operation, and seed 7 had rejections.</summary>

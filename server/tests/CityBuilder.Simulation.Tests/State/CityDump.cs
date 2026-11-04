@@ -12,7 +12,8 @@ internal static class CityDump
 {
     /// <summary>
     /// The city as text: a line with clock, era, next id and the purse, one per building (every stored field, its store and its needs), the
-    /// completed research, the active research (with its needs) and one per road. Two cities with the same text have the same stored values.
+    /// completed research, the active research (with its needs), one per road and, once the city had a trip, the next trip id and one line per
+    /// trip under way (a city that never had one has next trip id 1). Two cities with the same text have the same stored values.
     /// </summary>
     public static string Describe(CityState city)
     {
@@ -34,6 +35,16 @@ internal static class CityDump
         foreach (RoadTile road in city.Roads)
         {
             text.Append(CultureInfo.InvariantCulture, $"\nroad ({road.X},{road.Y}) L{road.Level}");
+        }
+
+        if (city.NextTripId > 1)
+        {
+            text.Append(CultureInfo.InvariantCulture, $"\nnext trip={city.NextTripId}");
+        }
+
+        foreach (Trip trip in city.Trips)
+        {
+            text.Append(CultureInfo.InvariantCulture, $"\ntrip {trip.Id} {trip.SourceId}->{trip.TargetId} {trip.Item}={trip.Quantity} {trip.DepartedAt}..{trip.ArrivesAt}");
         }
 
         return text.ToString();

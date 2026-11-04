@@ -6,11 +6,12 @@ using CityBuilder.Simulation.State;
 namespace CityBuilder.Simulation.Settlement
 {
     /// <summary>
-    /// The building timers of one advance in a binary min-heap, earliest end first and ascending id within a second (the order of <c>04</c>
-    /// section 6), so the next due time and the buildings due then are found without a scan of every building (the worst case of <c>04</c>
-    /// section 12 has 28,800 event times in 8 hours). It holds every building with a <see cref="Building.PhaseEndsAt"/> by its index in
-    /// <see cref="CityState.Buildings"/>, which is in id order and doesn't change during an advance. Inside an advance a timer ends only when
-    /// it completes, and a new one begins only when a cycle starts; mutations run between advances, and the queue is made new for each one.
+    /// The building timers of one advance in an indexed binary min-heap, earliest end first and ascending id within a second (the order of
+    /// <c>04</c> section 6), so the next due time and the buildings due then are found without a scan of every building (the worst case of
+    /// <c>04</c> section 12 has thousands of event times). It holds every building with a <see cref="Building.PhaseEndsAt"/> by its index in
+    /// <see cref="CityState.Buildings"/>, which is in id order and doesn't change during an advance, at most once each. Inside an advance a
+    /// timer ends when it completes, a cycle's start adds one, and a delivery that starts a project sets one, which replaces a running cycle's
+    /// (<c>04</c> section 16); mutations run between advances, and the queue is made new for each one.
     /// </summary>
     internal sealed class BuildingTimerQueue
     {
@@ -18,6 +19,8 @@ namespace CityBuilder.Simulation.Settlement
         private readonly long[] _endsAt;
         /// <summary>The heap's building indexes in <see cref="CityState.Buildings"/>, slot by slot beside <see cref="_endsAt"/>.</summary>
         private readonly int[] _indexes;
+        /// <summary>Each building's slot in the heap by its index in <see cref="CityState.Buildings"/>, or -1 when it has no timer in the queue.</summary>
+        private readonly int[] _slotOf;
         /// <summary>How many slots are in use; slots from here on are free.</summary>
         private int _count;
 
@@ -26,6 +29,11 @@ namespace CityBuilder.Simulation.Settlement
         {
             _endsAt = new long[capacity];
             _indexes = new int[capacity];
+            _slotOf = new int[capacity];
+            for (int index = 0; index < capacity; index++)
+            {
+                _slotOf[index] = -1;
+            }
         }
 
         /// <summary>The number of timers in the queue.</summary>
@@ -51,32 +59,37 @@ namespace CityBuilder.Simulation.Settlement
         /// <summary>The earliest end in the queue. The queue must not be empty.</summary>
         public long PeekEndsAt() => _count > 0 ? _endsAt[0] : throw new InvalidOperationException("The timer queue is empty.");
 
-        /// <summary>Adds the timer of the building at <paramref name="index"/>, which ends at <paramref name="endsAt"/>.</summary>
+        /// <summary>Adds the timer of the building at <paramref name="index"/>, which ends at <paramref name="endsAt"/>; it has none in the queue yet.</summary>
         public void Add(int index, long endsAt)
         {
-            if (_count == _indexes.Length)
+            if (_slotOf[index] >= 0)
             {
-                throw new InvalidOperationException("Every building already has a timer in the queue.");
+                throw new InvalidOperationException(FormattableString.Invariant($"The building at index {index} already has a timer in the queue."));
             }
 
-            // Sift up: the new timer takes the last slot, and every parent that comes later (a later end, or a higher index at the same end) moves down
-            // one level until the new timer's place is found. A heap of n timers needs at most log2(n) moves.
             int slot = _count++;
-            while (slot > 0)
+            SiftUp(slot, endsAt, index);
+        }
+
+        /// <summary>
+        /// Sets the timer of the building at <paramref name="index"/> to <paramref name="endsAt"/>: adds it, or moves the one it has (an upgrade a
+        /// delivery started replaces the running cycle's end).
+        /// </summary>
+        public void Set(int index, long endsAt)
+        {
+            int slot = _slotOf[index];
+            if (slot < 0)
             {
-                int parent = (slot - 1) / 2;
-                if (!IsEarlier(endsAt, index, _endsAt[parent], _indexes[parent]))
-                {
-                    break;
-                }
-
-                _endsAt[slot] = _endsAt[parent];
-                _indexes[slot] = _indexes[parent];
-                slot = parent;
+                Add(index, endsAt);
             }
-
-            _endsAt[slot] = endsAt;
-            _indexes[slot] = index;
+            else if (endsAt < _endsAt[slot])
+            {
+                SiftUp(slot, endsAt, index);
+            }
+            else
+            {
+                SiftDown(slot, endsAt, index);
+            }
         }
 
         /// <summary>Removes the earliest timer (the lowest index among the earliest ends) and returns its building index.</summary>
@@ -88,12 +101,44 @@ namespace CityBuilder.Simulation.Settlement
             }
 
             int first = _indexes[0];
+            _slotOf[first] = -1;
             _count--;
-            long lastEndsAt = _endsAt[_count];
-            int lastIndex = _indexes[_count];
-            // Sift down: the last timer refills the root's place, and the earlier of the two children moves up one level until the last timer fits,
-            // which keeps every parent earlier than its children.
-            int slot = 0;
+            if (_count > 0)
+            {
+                // The last timer refills the root's place and sinks to where it belongs.
+                SiftDown(0, _endsAt[_count], _indexes[_count]);
+            }
+
+            return first;
+        }
+
+        /// <summary>
+        /// Puts a timer into <paramref name="slot"/> or above it: every parent that comes later (a later end, or a higher index at the same end)
+        /// moves down one level until the timer's place is found. A heap of n timers needs at most log2(n) moves.
+        /// </summary>
+        private void SiftUp(int slot, long endsAt, int index)
+        {
+            while (slot > 0)
+            {
+                int parent = (slot - 1) / 2;
+                if (!IsEarlier(endsAt, index, _endsAt[parent], _indexes[parent]))
+                {
+                    break;
+                }
+
+                Move(parent, slot);
+                slot = parent;
+            }
+
+            Place(slot, endsAt, index);
+        }
+
+        /// <summary>
+        /// Puts a timer into <paramref name="slot"/> or below it: the earlier of the two children moves up one level until the timer fits, which
+        /// keeps every parent earlier than its children.
+        /// </summary>
+        private void SiftDown(int slot, long endsAt, int index)
+        {
             while (true)
             {
                 int child = (2 * slot) + 1;
@@ -107,19 +152,30 @@ namespace CityBuilder.Simulation.Settlement
                     child++;
                 }
 
-                if (!IsEarlier(_endsAt[child], _indexes[child], lastEndsAt, lastIndex))
+                if (!IsEarlier(_endsAt[child], _indexes[child], endsAt, index))
                 {
                     break;
                 }
 
-                _endsAt[slot] = _endsAt[child];
-                _indexes[slot] = _indexes[child];
+                Move(child, slot);
                 slot = child;
             }
 
-            _endsAt[slot] = lastEndsAt;
-            _indexes[slot] = lastIndex;
-            return first;
+            Place(slot, endsAt, index);
+        }
+
+        /// <summary>Moves the timer in slot <paramref name="from"/> to slot <paramref name="to"/>, keeping its building's slot in step.</summary>
+        private void Move(int from, int to)
+        {
+            Place(to, _endsAt[from], _indexes[from]);
+        }
+
+        /// <summary>Writes a timer into a slot and records the slot for its building.</summary>
+        private void Place(int slot, long endsAt, int index)
+        {
+            _endsAt[slot] = endsAt;
+            _indexes[slot] = index;
+            _slotOf[index] = slot;
         }
 
         /// <summary>The heap's order: an earlier end first, and at the same end the lower building index (which is the lower id) first.</summary>

@@ -8,7 +8,7 @@ namespace CityBuilder.Simulation.State
 {
     /// <summary>
     /// Everything that is stored about one city (<c>core-instructions/04-simulation-model.md</c>, sections 3 to 5, 16 and 17): its clock, era,
-    /// purse, buildings (with their stores and projects), research and roads. Values derived from it and the content (workers, builders,
+    /// purse, buildings (with their stores and projects), research, roads and trips (section 18). Values derived from it and the content (workers, builders,
     /// reservations, limits, labor, unlocks, city totals) are never stored;
     /// <see cref="CityQueries"/> computes them. Only the engine changes a city, through <see cref="Rules.CityRules"/> and
     /// <see cref="Settlement.Simulator"/>. Every list is sorted, so iterating it is deterministic.
@@ -21,6 +21,8 @@ namespace CityBuilder.Simulation.State
         private readonly List<ResearchId> _completedResearch;
         /// <summary>The roads, sorted by tile (column, then row), one per tile, never on a building's tile.</summary>
         private readonly List<RoadTile> _roads;
+        /// <summary>The trips under way, sorted by id; each between two buildings of the city.</summary>
+        private readonly List<Trip> _trips;
 
         /// <summary>
         /// Restores a city with every value, for example from the database. The city takes the building objects over: the caller must not keep
@@ -34,6 +36,8 @@ namespace CityBuilder.Simulation.State
         /// <param name="completedResearch">The completed research nodes, in any order, each at most once.</param>
         /// <param name="activeResearch">The running research, or null; never a completed node.</param>
         /// <param name="roads">The roads, in any order: one per tile, none on a building's tile; null for none.</param>
+        /// <param name="trips">The trips under way, in any order: unique ids below <paramref name="nextTripId"/>, between buildings of the city; null for none.</param>
+        /// <param name="nextTripId">The id the next trip gets, above every trip's id, at least 1.</param>
         /// <exception cref="ArgumentNullException">A list or a building is null.</exception>
         /// <exception cref="ArgumentException">The values don't form a valid city; the message says which rule they break.</exception>
         public CityState(
@@ -44,11 +48,13 @@ namespace CityBuilder.Simulation.State
             IEnumerable<Building> buildings,
             IEnumerable<ResearchId> completedResearch,
             ActiveResearch? activeResearch,
-            IEnumerable<RoadTile>? roads = null)
+            IEnumerable<RoadTile>? roads = null,
+            IEnumerable<Trip>? trips = null,
+            int nextTripId = 1)
         {
-            if (clock < 0 || era < 1 || nextBuildingId < 1 || purse < 0)
+            if (clock < 0 || era < 1 || nextBuildingId < 1 || purse < 0 || nextTripId < 1)
             {
-                throw new ArgumentException("The clock and the purse must not be negative, and the era and the next building id must be at least 1.");
+                throw new ArgumentException("The clock and the purse must not be negative, and the era and the next building and trip ids must be at least 1.");
             }
 
             Clock = clock;
@@ -60,9 +66,20 @@ namespace CityBuilder.Simulation.State
             _buildings = SortedBuildings(buildings, nextBuildingId);
             _completedResearch = SortedResearch(completedResearch, activeResearch);
             _roads = SortedRoads(roads ?? Array.Empty<RoadTile>(), _buildings);
+            NextTripId = nextTripId;
+            _trips = SortedTrips(trips ?? Array.Empty<Trip>(), nextTripId);
+            foreach (Trip trip in _trips)
+            {
+                if (IndexOfBuilding(trip.SourceId) < 0 || IndexOfBuilding(trip.TargetId) < 0)
+                {
+                    throw new ArgumentException(FormattableString.Invariant($"Trip {trip.Id} names a building the city doesn't have."), nameof(trips));
+                }
+            }
+
             Buildings = _buildings.AsReadOnly();
             CompletedResearch = _completedResearch.AsReadOnly();
             Roads = _roads.AsReadOnly();
+            Trips = _trips.AsReadOnly();
         }
 
         /// <summary>The city clock in seconds: how much game time the city has lived. It never decreases.</summary>
@@ -92,6 +109,12 @@ namespace CityBuilder.Simulation.State
         /// <summary>The roads, by tile: column, then row (<c>04</c> section 17).</summary>
         public IReadOnlyList<RoadTile> Roads { get; }
 
+        /// <summary>The trips under way, by id (<c>04</c> section 18); each keeps a worker busy until it arrives.</summary>
+        public IReadOnlyList<Trip> Trips { get; }
+
+        /// <summary>The id the next trip gets. Ids are never reused.</summary>
+        public int NextTripId { get; private set; }
+
         /// <summary>Whether the city has completed a research node.</summary>
         /// <param name="id">The research node.</param>
         /// <returns>True when the node is in <see cref="CompletedResearch"/>.</returns>
@@ -103,6 +126,14 @@ namespace CityBuilder.Simulation.State
         /// <returns>True when the city has the building.</returns>
         public bool TryGetBuilding(int id, [NotNullWhen(true)] out Building? building)
         {
+            int index = IndexOfBuilding(id);
+            building = index >= 0 ? _buildings[index] : null;
+            return building is not null;
+        }
+
+        /// <summary>The index in <see cref="Buildings"/> of the building with the id, or -1 when the city has none: a binary search, the list being sorted by id.</summary>
+        internal int IndexOfBuilding(int id)
+        {
             int low = 0;
             int high = _buildings.Count - 1;
             while (low <= high)
@@ -112,8 +143,7 @@ namespace CityBuilder.Simulation.State
                 int middleId = _buildings[middle].Id;
                 if (middleId == id)
                 {
-                    building = _buildings[middle];
-                    return true;
+                    return middle;
                 }
 
                 if (middleId < id)
@@ -126,8 +156,7 @@ namespace CityBuilder.Simulation.State
                 }
             }
 
-            building = null;
-            return false;
+            return -1;
         }
 
         /// <summary>Looks up the road on a tile.</summary>
@@ -191,6 +220,18 @@ namespace CityBuilder.Simulation.State
         /// <summary>Places a construction site with the next id: constructing without a timer until <paramref name="needs"/> are delivered.</summary>
         internal Building AddConstructionSite(BuildingTypeId typeId, int x, int y, IReadOnlyList<ItemQuantity> needs) =>
             Append(Building.StartConstructionSite(NextBuildingId, typeId, x, y, needs));
+
+        /// <summary>Starts a trip with the next trip id; ids only grow, so appending keeps the list sorted.</summary>
+        internal Trip AddTrip(int sourceId, int targetId, ItemId item, long quantity, long arrivesAt)
+        {
+            var trip = new Trip(NextTripId, sourceId, targetId, item, quantity, Clock, arrivesAt);
+            NextTripId = checked(NextTripId + 1);
+            _trips.Add(trip);
+            return trip;
+        }
+
+        /// <summary>Ends the trip at <paramref name="index"/> in <see cref="Trips"/>: it arrived, and the caller has delivered its goods.</summary>
+        internal void RemoveTripAt(int index) => _trips.RemoveAt(index);
 
         /// <summary>Puts a level-1 road on an empty tile. The caller checks that the tile has neither a road nor a building.</summary>
         internal void PlaceRoad(int x, int y)
@@ -361,6 +402,27 @@ namespace CityBuilder.Simulation.State
                 {
                     throw new ArgumentException(
                         FormattableString.Invariant($"The road at ({road.X}, {road.Y}) shares its tile with another road or a building."), nameof(roads));
+                }
+            }
+
+            return sorted;
+        }
+
+        /// <summary>The restoring constructor's trips, checked and sorted by id: none null, every id unique and below the next trip id.</summary>
+        private static List<Trip> SortedTrips(IEnumerable<Trip> trips, int nextTripId)
+        {
+            var sorted = new List<Trip>();
+            foreach (Trip trip in trips)
+            {
+                sorted.Add(trip ?? throw new ArgumentNullException(nameof(trips), "A trip in the list is null."));
+            }
+
+            sorted.Sort((left, right) => left.Id.CompareTo(right.Id));
+            for (int index = 0; index < sorted.Count; index++)
+            {
+                if (sorted[index].Id >= nextTripId || (index > 0 && sorted[index].Id == sorted[index - 1].Id))
+                {
+                    throw new ArgumentException(FormattableString.Invariant($"Trip {sorted[index].Id}: listed twice or not below the next trip id {nextTripId}."), nameof(trips));
                 }
             }
 

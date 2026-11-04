@@ -59,15 +59,15 @@ public sealed class TimerInvariancePropertyTests
     }
 
     /// <summary>
-    /// The number of operations to replay: up to a random command that started a timer (a placement, an upgrade or a research start), or the
-    /// whole history when there is none.
+    /// The number of operations to replay: up to a random command that may have started a timer (a placement, an upgrade or a research start;
+    /// with goods in its cost it waits for them instead, and a later trip's delivery starts it), or the whole history when there is none.
     /// </summary>
     private static int AfterATimerStarted(CityHistory history, SeededRandom random)
     {
         int[] candidates =
         [
             .. Enumerable.Range(1, history.Operations.Count)
-                .Where(count => history.Operations[count - 1] is not (CityOperation.Advance or CityOperation.AssignWorkers)),
+                .Where(count => history.Operations[count - 1] is not (CityOperation.Advance or CityOperation.AssignWorkers or CityOperation.StartTrip)),
         ];
         return candidates.Length == 0 ? history.Operations.Count : random.Pick(candidates);
     }

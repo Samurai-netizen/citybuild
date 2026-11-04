@@ -78,6 +78,21 @@ internal abstract record CityOperation
         public override string ToString() => $"StartResearch {ResearchId}";
     }
 
+    /// <summary>Sends a free worker with goods from one building's store to another building (<c>04</c> section 18).</summary>
+    /// <param name="SourceId">The id of the building whose store the goods come from.</param>
+    /// <param name="TargetId">The id of the building they go to.</param>
+    /// <param name="Item">The good's id.</param>
+    /// <param name="Amount">How much of the source's stock.</param>
+    public sealed record StartTrip(int SourceId, int TargetId, string Item, Amount Amount) : Command
+    {
+        /// <inheritdoc/>
+        public override MutationResult Mutate(CityState city, GameContent content) =>
+            TripRules.StartTrip(city, content, SourceId, TargetId, new ItemId(Item), Amount);
+
+        /// <summary>The text a failing property prints, for example <c>StartTrip 3->5 logs half</c>.</summary>
+        public override string ToString() => string.Create(CultureInfo.InvariantCulture, $"StartTrip {SourceId}->{TargetId} {Item} {Amount}");
+    }
+
     /// <summary>Lets <paramref name="Seconds"/> pass: one settlement over that window.</summary>
     /// <param name="Seconds">The seconds to pass; the engine counts a negative value as 0 (<c>04</c> section 1).</param>
     public sealed record Advance(long Seconds) : CityOperation

@@ -51,11 +51,15 @@ namespace CityBuilder.Simulation.State
             return assigned;
         }
 
-        /// <summary>The workers the player can still assign: provided minus assigned. Never below 0 in a valid city (<c>04</c> invariant 9).</summary>
+        /// <summary>
+        /// The workers the player can still assign or send on a trip: provided minus assigned minus one per trip under way (<c>04</c> section 3).
+        /// Never below 0 in a valid city (<c>04</c> invariant 9).
+        /// </summary>
         /// <param name="city">The city.</param>
         /// <param name="content">The game content.</param>
         /// <returns>The free workers.</returns>
-        public static long FreeWorkers(CityState city, GameContent content) => checked(WorkersProvided(city, content) - WorkersAssigned(city));
+        public static long FreeWorkers(CityState city, GameContent content) =>
+            checked(WorkersProvided(city, content) - WorkersAssigned(city) - city.Trips.Count);
 
         /// <summary>The builder slots in use: one per building that is constructing (a construction site too) or upgrading, or whose upgrade waits for goods (<c>04</c> section 8).</summary>
         /// <param name="city">The city.</param>
@@ -152,8 +156,8 @@ namespace CityBuilder.Simulation.State
                 : 0;
 
         /// <summary>
-        /// The city's total of an item (<c>04</c> section 16): for the currency the purse; for a good the sum of every building's store (from
-        /// CR-0008-T1 part E2 also the loads of walkers).
+        /// The city's total of an item (<c>04</c> section 16): for the currency the purse; for a good the sum of every building's store and of
+        /// every walker's load (trips; couriers from part F).
         /// </summary>
         /// <param name="city">The city.</param>
         /// <param name="content">The game content.</param>
@@ -171,6 +175,15 @@ namespace CityBuilder.Simulation.State
             for (int index = 0; index < buildings.Count; index++)
             {
                 total = checked(total + buildings[index].GetStock(item));
+            }
+
+            IReadOnlyList<Trip> trips = city.Trips;
+            for (int index = 0; index < trips.Count; index++)
+            {
+                if (trips[index].Item == item)
+                {
+                    total = checked(total + trips[index].Quantity);
+                }
             }
 
             return total;
@@ -231,6 +244,64 @@ namespace CityBuilder.Simulation.State
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Whether a building takes a good that walkers bring (<c>04</c> section 8, <c>ITEM_NOT_ACCEPTED</c>): its waiting project needs it (a
+        /// construction site, an upgrade waiting for goods, or, at the science building, the research waiting there), or its store holds it.
+        /// </summary>
+        /// <param name="city">The city.</param>
+        /// <param name="content">The game content.</param>
+        /// <param name="building">The building the goods go to.</param>
+        /// <param name="item">The good.</param>
+        /// <returns>True when a trip may carry the good there.</returns>
+        public static bool Accepts(CityState city, GameContent content, Building building, ItemId item) =>
+            building.GetNeed(item) > 0 || ResearchNeedAt(city, content, building, item) > 0 || TryGetEffectiveLimit(city, content, building, item, out _);
+
+        /// <summary>
+        /// How much of a good the research waiting at this building still needs: the research's need when the building is the completed science
+        /// building and the research waits for goods (<c>04</c> section 5), else 0.
+        /// </summary>
+        /// <param name="city">The city.</param>
+        /// <param name="content">The game content.</param>
+        /// <param name="building">The building.</param>
+        /// <param name="item">The good.</param>
+        /// <returns>The research's need there, 0 or more.</returns>
+        public static long ResearchNeedAt(CityState city, GameContent content, Building building, ItemId item)
+        {
+            ActiveResearch? research = city.ActiveResearch;
+            return research is not null
+                && research.IsWaiting
+                && building.Phase != BuildingPhase.Constructing
+                && DefinitionOf(content, building.TypeId).Kind == BuildingKind.Science
+                ? research.Needs.TryGetValue(item, out long need) ? need : 0
+                : 0;
+        }
+
+        /// <summary>
+        /// Whether the city may use an amount mode (<c>04</c> section 19): a completed research has an <see cref="UnlockAmountModeEffect"/> for it.
+        /// Presets need none.
+        /// </summary>
+        /// <param name="city">The city.</param>
+        /// <param name="content">The game content.</param>
+        /// <param name="mode">The mode.</param>
+        /// <returns>True when the mode is unlocked.</returns>
+        public static bool IsAmountModeUnlocked(CityState city, GameContent content, AmountMode mode)
+        {
+            IReadOnlyList<ResearchId> completed = city.CompletedResearch;
+            for (int index = 0; index < completed.Count; index++)
+            {
+                IReadOnlyList<ResearchEffect> effects = ResearchOf(content, completed[index]).Effects;
+                for (int effectIndex = 0; effectIndex < effects.Count; effectIndex++)
+                {
+                    if (effects[effectIndex] is UnlockAmountModeEffect unlock && unlock.Mode == mode)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         /// <summary>

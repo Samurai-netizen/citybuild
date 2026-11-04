@@ -176,7 +176,13 @@ public sealed class ContentReferenceRuleTests
     {
         GameContentData data = ValidWith(data => data.Buildings!.Add(new BuildingData
         {
-            Id = "mint", Name = "Mint", Kind = "producer", Era = 1, AvailableAtStart = true, Cost = new() { ["gold"] = 1 }, BuildSeconds = 1,
+            Id = "mint",
+            Name = "Mint",
+            Kind = "producer",
+            Era = 1,
+            AvailableAtStart = true,
+            Cost = new() { ["gold"] = 1 },
+            BuildSeconds = 1,
             Levels = [new BuildingLevelData { Level = 1, MaxWorkers = 1, Recipe = new RecipeData { Outputs = new() { ["gold"] = 1 }, Labor = 10 } }],
         }));
 
