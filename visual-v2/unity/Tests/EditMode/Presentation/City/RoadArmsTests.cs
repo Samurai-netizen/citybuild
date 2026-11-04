@@ -48,11 +48,25 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.City
             Assert.That(road.Find(RoadArms.XPlus).gameObject.activeSelf, Is.False);
         }
 
-        /// <summary>The road models are found by level under <c>Models/common</c>.</summary>
+        /// <summary>The road models are found by level and variant under <c>Models/common</c>.</summary>
         [Test]
         public void PathOf_FollowsTheArtsNames()
         {
             Assert.That(RoadArms.PathOf(2), Is.EqualTo("Models/common/road_l2"));
+            Assert.That(RoadArms.PathOf(1, 1), Is.EqualTo("Models/common/road_l1_b"));
+            Assert.That(RoadArms.PathOf(2, 2), Is.EqualTo("Models/common/road_l2_c"));
+            Assert.Throws<System.ArgumentOutOfRangeException>(() => RoadArms.PathOf(1, RoadArms.Variants));
+        }
+
+        /// <summary>The road variants the art's previews use for the same tiles (<c>road_variant</c>).</summary>
+        [TestCase(0, 0, 0)]
+        [TestCase(1, 0, 1)]
+        [TestCase(0, 1, 1)]
+        [TestCase(5, 2, 2)]
+        [TestCase(1, 7, 1)]
+        public void VariantFor_MatchesTheArtPreviews(int x, int y, int expected)
+        {
+            Assert.That(RoadArms.VariantFor(x, y), Is.EqualTo(expected));
         }
     }
 }

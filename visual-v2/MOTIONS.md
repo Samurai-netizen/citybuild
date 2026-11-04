@@ -53,11 +53,20 @@ of `Models/common/fx_smoke_puff` while the building works: each rises 0.34, drif
 2.4 s. Opaque, so the city keeps one material.
 
 ## Roads
-`Models/common/road_l1` (dirt path) and `road_l2` (log road) are full tiles: grass with a centre patch, and four arms that reach the tile's
-edges, named by the grid direction they point to: `Road_XPlus` (grid x + 1, Unity +X), `Road_XMinus`, `Road_YPlus` (grid y + 1, Unity
-+Z), `Road_YMinus`. `RoadArms.Show` keeps the arms that point at neighbouring roads; a road alone is a patch.
+Each road level has three models, `Models/common/road_l<level>`, `road_l<level>_b` and `road_l<level>_c` (`RoadArms.PathOf(level,
+variant)`), picked per tile by `RoadArms.VariantFor` from the top bits of the ground hash. Each is a full tile: grass with a centre (a
+packed dirt patch, or a plank deck with nails) and four arms that reach the tile's edges, named by the grid direction they point to:
+`Road_XPlus` (grid x + 1, Unity +X), `Road_XMinus`, `Road_YPlus` (grid y + 1, Unity +Z), `Road_YMinus`. `RoadArms.Show` keeps the arms
+that point at neighbouring roads; a road alone is a patch. The sides of an arm wobble, but every variant has the same width at the tile
+edge (the dirt path 0.34, the log road's bed 0.38, its ruts at the same places), so any two variants join. The dirt path's variants add
+a puddle and hoof prints (b) or grass between the ruts and stones in the track (c); the log road's add a missing log with a puddle (b)
+or moss on the logs and a loose plank (c). Roads are not turned: their arms have a direction.
 
 ## Ground
-Four grass tiles, `tile_grass` (plain), `tile_grass_b` (flowers), `tile_grass_c` (pebbles), `tile_grass_d` (clover), picked per tile by a
-fixed hash of its coordinates (`GroundVariants.For`, `ground_variant` in `blender/render_previews.py`): 4 in 10 plain, 2 in 10 each other.
-Details keep away from the tile's middle, so a building's foundation covers them.
+Eight grass tiles, all with soft mottling in colours a step warmer and cooler than the grass, tufts in mixed greens and short speckles:
+`tile_grass` (lush), `_b` (daisies and poppies), `_c` (mossy stone clusters and pebbles), `_d` (clover), `_e` (a dry patch with dandelions),
+`_f` (a ring of mushrooms and ferns), `_g` (a molehill) and `_h` (bluebells). `GroundVariants.For` picks one per tile by a fixed hash of
+its coordinates, of every 20 tiles: plain 5, clover 3, every other 2; `GroundVariants.RotationFor` turns it by 0 to 3 quarter turns from
+other bits of the same hash (the tiles are square and their details have no direction), so a town shows 32 different grass tiles.
+`ground_variant`, `ground_turns` and `road_variant` in `blender/render_previews.py` are the same rules. Flat patches stay inside the
+tile's top (they never cover the grid line); details taller than 0.02 keep out of the middle, which a foundation covers.

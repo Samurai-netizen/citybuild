@@ -9,8 +9,8 @@ namespace CityBuilder.Client.Tests.EditMode.Art
 {
     /// <summary>
     /// The models of visual v2 (CR-0009) as the client finds them, by name from <c>Resources</c>: every building model has its anchors and only
-    /// moving parts with poses that the motion table knows; the fill models have steps 1 to n of known items; the grass variants, the road
-    /// tiles with their arms, and the smoke puff exist. CR-0008's buildings are named here because today's content does not have them yet.
+    /// moving parts with poses that the motion table knows; the fill models have steps 1 to n of known items; the eight grass variants, every
+    /// variant of the road tiles with their arms, and the smoke puff exist. CR-0008's buildings are named here because today's content does not have them yet.
     /// </summary>
     public sealed class ArtModelsV2Tests
     {
@@ -100,7 +100,7 @@ namespace CityBuilder.Client.Tests.EditMode.Art
             }
         }
 
-        /// <summary>The ground: four grass variants, the dirt tile, the two road tiles with their four arms, and the smoke puff.</summary>
+        /// <summary>The ground: the eight grass variants, the dirt tile, every variant of both road levels with its four arms, and the smoke puff.</summary>
         [Test]
         public void TheGround_TheRoads_AndTheSmoke_Exist()
         {
@@ -112,11 +112,15 @@ namespace CityBuilder.Client.Tests.EditMode.Art
             Assert.That(Resources.Load<GameObject>(BuildingLooks.DirtTilePath), Is.Not.Null);
             for (int level = 1; level <= 2; level++)
             {
-                GameObject road = Resources.Load<GameObject>(RoadArms.PathOf(level));
-                Assert.That(road, Is.Not.Null, RoadArms.PathOf(level));
-                foreach (string arm in new[] { RoadArms.XPlus, RoadArms.XMinus, RoadArms.YPlus, RoadArms.YMinus })
+                for (int variant = 0; variant < RoadArms.Variants; variant++)
                 {
-                    Assert.That(BuildingViewFactory.FindByName(road.transform, arm), Is.Not.Null, arm);
+                    string path = RoadArms.PathOf(level, variant);
+                    GameObject road = Resources.Load<GameObject>(path);
+                    Assert.That(road, Is.Not.Null, path);
+                    foreach (string arm in new[] { RoadArms.XPlus, RoadArms.XMinus, RoadArms.YPlus, RoadArms.YMinus })
+                    {
+                        Assert.That(BuildingViewFactory.FindByName(road.transform, arm), Is.Not.Null, path + ": " + arm);
+                    }
                 }
             }
 

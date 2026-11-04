@@ -24,7 +24,7 @@ PACKAGE = os.path.dirname(HERE)
 PREVIEWS = os.path.join(PACKAGE, "previews")
 # kind -> (max |x|, |y| from the pivot or None, triangle budget, lowest z: rocks and bushes sit slightly in the ground)
 LIMITS = {"building": (0.475, 6000, -0.006), "fill": (0.475, 1500, -0.006), "prop": (None, 1500, -0.03),
-          "tile": (None, 700, -0.1), "road": (None, 1000, -0.1), "fx": (None, 300, -1.0)}
+          "tile": (None, 1000, -0.1), "road": (None, 2000, -0.1), "fx": (None, 300, -1.0)}
 REQUIRED_ANCHORS = ("Anchor_Status", "Anchor_Door")
 ITEMS = ("logs", "planks", "coins")
 

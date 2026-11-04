@@ -16,13 +16,15 @@ client, and `FIT-TEST.md` says what was checked there.
 > for every building.
 
 ## What is in it
-- **49 models** (`unity/Art/Resources/Models/`, one material, one palette with 11 new colours in free slots):
+- **57 models** (`unity/Art/Resources/Models/`, one material, one palette with 14 new colours in free slots):
   - today's buildings one step more detailed: stone plinths with courses, shuttered windows and flower boxes, plank doors with iron,
     thatch in layers, rows of shingles, chimneys of stone courses, gardens, benches, barrels, tool racks (Cottage, Woodcutter's Hut,
     Sawmill, Trading Post at levels 1 and 2, and the construction site);
   - CR-0008's buildings: the Scriptorium (a tower with a turning armillary sphere), the Courier Station (levels 1 and 2), the Warehouse
-    (levels 1 and 2), road tiles for the dirt path and the log road that join their neighbours, a courier with a basket and two loads;
-  - four grass tiles (plain, flowers, pebbles, clover), the dirt tile, pine, round tree, bush, rock, stump, flowers, the worker;
+    (levels 1 and 2), road tiles for the dirt path and the log road (three variants each, with uneven edges, ruts, puddles, varied
+    logs and moss) that join their neighbours, a courier with a basket and two loads;
+  - eight grass tiles (lush, daisies and poppies, stones, clover, dry grass, mushrooms, a molehill, bluebells) that the client also turns
+    by quarter turns, the dirt tile, pine, round tree, bush, rock, stump, flowers, the worker;
   - logs, planks and coins in three sizes, and a smoke puff.
 - **Moving parts** that work while a building produces: the Woodcutter's chopper swings his axe, the Sawmill's wheel turns and its
   frame saw strokes, the Trading Post's coin sign spins and its flags wave, the builder hammers, the Scriptorium's sphere turns, the
@@ -39,7 +41,7 @@ client, and `FIT-TEST.md` says what was checked there.
 | Picture | What |
 |---|---|
 | [`previews/lineup_buildings.jpg`](previews/lineup_buildings.jpg) | Every building, levels 1 and 2, with a full store |
-| [`previews/lineup_ground.jpg`](previews/lineup_ground.jpg) | The tiles and both road levels alone, straight, as a corner, a T and a cross |
+| [`previews/lineup_ground.jpg`](previews/lineup_ground.jpg) | The nine ground tiles, and both road levels in their three variants alone, straight, as a corner, a T and a cross |
 | [`previews/lineup_props.jpg`](previews/lineup_props.jpg) | Nature, people, loads, items, smoke |
 | [`previews/town.jpg`](previews/town.jpg), [`previews/town_closeup.jpg`](previews/town_closeup.jpg) | A CR-0008 town on the 8 x 8 grid |
 | [`previews/motion_sheet.jpg`](previews/motion_sheet.jpg) and `previews/motion/*.gif` | Every moving part over one cycle while the store fills step by step |
