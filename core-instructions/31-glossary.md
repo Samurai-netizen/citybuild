@@ -16,19 +16,19 @@ Use these names in code, docs and UI text. Consistent words keep Claude and the 
 | Project | A construction, an upgrade or a research whose coins are paid and which waits for its goods; its timer starts when nothing is missing | `Building.Needs`, `ActiveResearch.Needs`; `project` |
 | Construction site | A placed building that is a project: it waits for its goods, then constructs | `Building.IsConstructionSite` |
 | Delivery | Goods a walker puts into a building: they fill the building's waiting project first (used up at once), then its store | `Deliveries` (internal), `SettlementReport.Delivered`, `Moved` |
-| Walker | Anyone who carries goods on the map: a courier or a worker on a trip | `Trip` (couriers *(planned, CR-0008-T1 part F)*) |
+| Walker | Anyone who carries goods on the map: a courier or a worker on a trip | `Trip`, `Courier` |
 | Walk | One walker's way from one building to the next, with its path, start and arrival second | `WalkCost`, `WalkTime`; a trip's `DepartedAt`, `ArrivesAt` |
 | Path rule | A walk steps tile centre to tile centre in four directions; it crosses as few other buildings as possible (none when a way around exists), then takes the least time; a fixed rule breaks ties (`04`) | `PathFinder` (`Measure`, `Route`) |
 | Crossing | A step through another building's tile: allowed only when every way crosses one, at 20 % of the base speed | `WalkCost.Crossings`, `GameRules.CrossingSpeedPermille` |
 | Road | A tile with a road on it, built for coins; each road level shortens the time to walk across it | `RoadTile`, `CityState.Roads`, `RoadLevelDefinition`, `RoadRules`; `city_roads`, `PlaceRoadsCommand`, `UpgradeRoadsCommand`, `RemoveRoadsCommand`, `COST_ROAD` |
 | Trip | A free worker's one-time walk with goods from one building to another or to a project; the worker is busy until it arrives | `Trip`, `TripRules.StartTrip`; `start-trip` |
-| Courier Station | A building whose assigned workers are its couriers; its level sets their number, carry limit and stamina | *(planned, CR-0008-T1)* |
-| Courier | A worker of a Courier Station who walks its route in a loop | *(planned, CR-0008-T1)* |
-| Load | The goods a walker carries, each remembering the building it came from (for returns) | `Trip.Quantity` (a courier's *(planned, part F)*) |
+| Courier Station | A building whose assigned workers are its couriers; its level sets their number, carry limit and stamina | `BuildingKind.CourierStation`, `CourierRules.StaffStation` |
+| Courier | A worker of a Courier Station who walks its route in a loop | `Courier`, `CourierState`; `CourierArrivalSource` (internal) |
+| Load | The goods a walker carries, each remembering the building it came from (for returns) | `Trip.Quantity`, `CourierLoad` |
 | Carry limit | Max goods (all items together) one courier or trip carries | `GameRules.TripCarryLimit`, `BuildingLevelDefinition.CarryLimit` |
-| Route | A courier's ordered list of 2 or more stops, walked in a loop | *(planned, CR-0008-T1)* |
-| Stop | One building on a route and the actions done there, in order | *(planned, CR-0008-T1)* |
-| Action | At a stop: take or put, an item and an amount | *(planned, CR-0008-T1)* |
+| Route | A courier's ordered list of 2 or more stops, walked in a loop | `Route`, `CourierRules.SetRoute` |
+| Stop | One building on a route and the actions done there, in order | `RouteStop` |
+| Action | At a stop: take or put, an item and an amount | `RouteAction`, `RouteActionKind` |
 | Amount mode | How an amount is given: a preset (All, Half, Quarter; Era I), a percentage (by Era I research) or an exact number (by Era II research) | `Amount`, `AmountMode`, `AmountPresetDefinition`, `UnlockAmountModeEffect` |
 | Stamina | How long a courier keeps working while the player is away; spent only then | *(planned, CR-0008-T1)* |
 | Presence | The server's view of whether the player is there: absent from the presence grace after their last request until their next one | *(planned, CR-0008-T1)* |

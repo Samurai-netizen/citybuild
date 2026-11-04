@@ -7,9 +7,10 @@ runs authoritatively on the server, and runs on the client for display only.
 > **CR-0008 (logistics) is specified here and built in CR-0008-T1, part by part.** Built so far: the walking rules and road levels in
 > content (§14 rules 11, 12), roads in the city state, the path rule (§17) and the road mutations (§8) (part C); stores, the purse and
 > projects (§16), the delivery rule (§6), amounts and presets (§19 without routes), trips (§18) with `StartTrip` (§8), the report's
-> `delivered`, `moved` and `refunded` (§11), and the start rule per store (part E). Until part F there are no couriers or routes (a
-> courier station's workers are only a count); until part H the engine keeps the 8 h offline production cap of the old §2. Each part
-> updates this line. Sections 16 to 19 are new; sections 1 to 15 keep their numbers (other files refer to them).
+> `delivered`, `moved` and `refunded` (§11), and the start rule per store (part E); couriers and routes (§19: `SetRoute`, staffing a
+> station, an upgrade stopping its couriers, arrivals and departures in the order of §6, a stop's takes and puts) without stamina (part F).
+> Until part H the engine keeps the 8 h offline production cap of the old §2, and a courier that arrives after it stops working
+> (CR-0008-T1 decision 45). Each part updates this line. Sections 16 to 19 are new; sections 1 to 15 keep their numbers (other files refer to them).
 
 ## 1. Time
 - Simulation time is **integer seconds** (`long`) on a per-city **city clock**.
