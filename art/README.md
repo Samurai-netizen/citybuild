@@ -11,12 +11,12 @@ which also brings the art into the Unity client, task by task.
 | Path | What |
 |---|---|
 | `art/blender/` | The source. `build_all.py` builds everything; `assets_era1.py` buildings and stockpiles; `assets_common.py` tiles, nature, worker; `lib.py` geometry, export, rendering; `palette.py` the colours; `render_ui.py` the 2D assets |
-| `client/CityBuilder/Assets/_Project/Art/Resources/Models/era1/` | Unity-ready FBX, the **only copy**: the four M0 buildings at level 1 and 2, the construction site, stockpile props |
+| `client/CityBuilder/Assets/_Project/Art/Resources/Models/era1/` | Unity-ready FBX, the **only copy**: the M0 buildings at every level of the content (the four producers and the cottage at levels 1 and 2; since CR-0008 also the courier station at 1 and 2, the scriptorium at 1, the warehouse at 1 and 2), the construction site, stockpile props |
 | `client/CityBuilder/Assets/_Project/Art/Resources/Models/common/` | Era-independent FBX: grass and dirt tiles, pine, round tree, bush, rock, worker |
 | `art/textures/palette_era1.png` | The one texture every model uses (128 × 128). The build also copies it to `…/Art/Textures/` |
 | `art/previews/` | Renders of every model, `lineup_era1.png`, `city_golden_scenario.png` and `city_closeup.png` (the golden scenario #1 village on the 8 × 8 grid). Git tracks only the two city pictures; the build rewrites the rest |
 | `art/ui/` | 2D assets from the same models: `city_phone.jpg` (the village in a phone's portrait frame) and `hotspots.json` (where each building lands on a 390 × 844 screen) |
-| `client/CityBuilder/Assets/_Project/Resources/UI/Icons/` | The 15 transparent 256 px UI icons (items, workers, builders, research, buildings, research nodes), the **only copy**: `render_ui.py` writes them there, and the client loads them by name (`UiIcons`) |
+| `client/CityBuilder/Assets/_Project/Resources/UI/Icons/` | The 20 transparent 256 px UI icons (items, workers, builders, research, buildings, research nodes; CR-0008 added `bld_courier_station`, `bld_scriptorium`, `bld_warehouse`, `res_tally_sticks`, `res_sturdy_boots`), the **only copy**: `render_ui.py` writes them there, and the client loads them by name (`UiIcons`) |
 | `art/ui/showcase/` | Source of the UI showcase canvas (interactive phone mockups and the UI kit): a design reference for the screen tasks (M0-51 to M0-53); no code reads it |
 
 ## Rebuild
@@ -34,7 +34,8 @@ uses another material. Options after `--`: `--only house_l1 sawmill_l2`
 
 The icons and the phone picture come from `blender -b --factory-startup --python art/blender/render_ui.py` (it writes the icons into the Unity project (`Resources/UI/Icons/`) and
 `art/ui/city_phone.png`, which git ignores; `city_phone.jpg` is a `sips` copy of it). A render is not byte-identical from run to run,
-so run it only when an icon should change.
+so run it only when an icon should change, and for new icons only those: `-- --only bld_warehouse res_tally_sticks` renders just the
+named icons and skips the phone picture.
 
 ## Git
 
@@ -56,6 +57,9 @@ reference game (Tap Tap Builder) gives the cheerful, readable feel. The designs 
 | Woodcutter's Hut | `woodcutter` | Log cabin, chopping block with an axe, log stockpile at the front right | A taller cabin, a thatched lean-to over the stockpile, firewood along the side wall |
 | Sawmill | `sawmill` | Plank shed with a shingle roof, a water wheel in a mill race, a log on a trestle with a saw | Taller walls, a loft hatch with a hoist and crate, a chimney, a bigger wheel |
 | Trading Post | `trading_post` | Shop with a red-and-white striped awning, a counter with coins and planks, a gold coin sign, a flag | A wider shop, longer awning, second flag, a hand cart of planks |
+| Courier Station | `courier_station` | Timber relay house with a blue roof ridge and a blue banner with a gold boot, a rack of packs under a lean-to, a signpost with arrows | Wider and taller, a second rack, a hand cart with a crate |
+| Scriptorium | `scriptorium` | Stone study with a steep red roof, tall windows, a small tower with a blue spire, an open book over the door, a bench with books | — (one level in M0) |
+| Warehouse | `warehouse` | Long plank barn on a stone base with a big braced double door, crates, a sack and a log pile outside | Taller, a loft door with a hoist and a crate, a plank stack with a crate |
 | Construction site | any | Foundation, timber frame, scaffold, ladder, planks, red marker flag | — (used for building and upgrading) |
 
 **Palette.** One 128 × 128 texture of 16 px swatches on an 8 × 8 grid. A face takes a colour by putting its UVs on the centre of
@@ -84,7 +88,7 @@ a swatch. Slots never move: a new colour goes into a free slot (grey).
   Details that matter go on those two sides.
 - A worker is about 0.17 tall and a door about 0.2: toy proportions, not real ones.
 
-**Budget.** Buildings ≤ 4,500 triangles (today 850–2,430), props ≤ 1,500, tiles ≤ 200. One mesh plus parts that move, and one
+**Budget.** Buildings ≤ 4,500 triangles (today 850–2,430; the CR-0008 buildings 1,000–1,720), props ≤ 1,500, tiles ≤ 200. One mesh plus parts that move, and one
 material: a whole city is a handful of draw calls, and washing out a stalled building is a property block on its renderers, not a second material (M0-50: the base colour times 0.65 and a grey emission; the shared material has `_EMISSION` on with an emission of 0.002, which URP needs to keep the keyword).
 
 **Names.** `Models/<set>/<contentId>_l<level>.fbx`, matching the client's lookup by `(typeId, era)` (`09` → UX rules) plus the
@@ -125,6 +129,10 @@ The client draws these models since T3 (`core-instructions/09-unity-client.md` r
   showed the six checked models with the right colours and sharp swatches.
 - The city view draws the models (CR-0005-T3, 2026-11-01): Unity tests of the model for every reachable level of every building type of the content, the anchors, the construction site, the ground, the ghost (a picture of it is between the bare tile and the finished building) and one shared material for the whole city, EditMode 708 / 708 and PlayMode 90 / 90 with a graphics device.
 - The status above the buildings (M0-50, 2026-11-01): one rendered frame of eight buildings showed the ring (yellow on a construction site, blue on an upgrade, green on producers), the red, amber and blue bubbles with the workers or the item, one to six pips and the washed-out look of two stalled buildings (the same roof colour went from saturation 0.64 to 0.49); the sizes were set by that picture.
+- The CR-0008 buildings (CR-0008-T1, 2026-11-04, decision 44 of its build log): `build_all.py --only` passes every check for the five new
+  models, `render_ui.py --only` rendered their three icons and the two research icons, and Unity imported them with the same settings as
+  the others (the `.meta` files differ only in their guids); `ArtModelsTests`, `UiIconsTests` and the build menu's picture test pass.
+  CR-0008-T2 part F adds the courier figure, the road tiles and the roads, trips and re-energize icons, and may rework these models.
 - **Not checked:** the look in the Editor by a person (the [MANUAL] steps in `client/README.md`); a device build (it should contain the models, because they are in `Resources`).
 
 ## Owner decisions and open questions
