@@ -15,7 +15,8 @@ namespace CityBuilder.Client.Presentation.City
     /// the display city, so a call where nothing changed walks the buildings and allocates nothing. It decides nothing, shows a building under
     /// construction or upgrade as the construction site (nothing finished appears before the server says so, <c>09</c> "UX rules") and never calls the server.
     /// Given the content, it also shows each building's status (M0-50): a ring, a bubble and worker pips (<see cref="BuildingStatusView"/>), drawn only
-    /// when they differ from the last call, and a stalled building looks slightly washed out (<see cref="StalledTint"/>). <see cref="Destroy"/> removes everything it made.
+    /// when they differ from the last call, and a stalled building looks slightly washed out (<see cref="StalledTint"/>). With visual v2 (CR-0009) it also says
+    /// whether each building works, which moves its parts and smoke, and how full its store looks (<see cref="BuildingDecor.Show"/>). <see cref="Destroy"/> removes everything it made.
     /// </summary>
     public sealed class CityView
     {
@@ -166,11 +167,12 @@ namespace CityBuilder.Client.Presentation.City
             _statusArt?.Destroy();
         }
 
-        /// <summary>Draws the status of one building on its view (its washed-out look when stalled, its ring, bubble and pips), making the status object and the shared pictures the first time.</summary>
+        /// <summary>Draws the status of one building on its view (its washed-out look when stalled, its motion and store fill, its ring, bubble and pips), making the status object and the shared pictures the first time.</summary>
         private void ShowStatus(BuildingView view, CityState city, GameContent content, Building building)
         {
             BuildingStatus status = BuildingStatusModel.Describe(city, content, building);
             _tint.Apply(view, status.Stalled);
+            BuildingDecor.Show(view, city, content, building, status);
             BuildingStatusView? statusView = view.Status;
             if (statusView == null)
             {

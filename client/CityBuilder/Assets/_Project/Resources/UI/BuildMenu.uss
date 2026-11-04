@@ -1,5 +1,6 @@
-/* The build menu (docs/how-to/add-ui-screen.md): a button at the bottom left and, above it, a wooden tray of parchment cards. M0-45, restyled in CR-0007.
-   Colours and sizes come from Common.uss. */
+/* The build menu (M0-45; visual v2, CR-0009): the green Build button at the bottom left, with the builders' picture, and above it a
+   parchment sheet with a title and a sideways row of cream cards framed in wood, like the showcase's build sheet. Colours and sizes come
+   from Common.uss. */
 .build-root {
   position: absolute;
   left: 0;
@@ -13,7 +14,8 @@
 }
 
 .build-toggle {
-  min-width: var(--dock-width);
+  width: var(--dock-width);
+  background-image: url("Icons/builders.png");
 }
 
 .build-panel {
@@ -25,66 +27,143 @@
   display: none;
 }
 
+.build-header {
+  flex-direction: row;
+  align-items: flex-end;
+  margin: 0 0 var(--sp-1) var(--sp-1);
+}
+
+.build-header-note {
+  margin: 0 0 3px var(--sp-3);
+}
+
+.build-header .t-title {
+  font-size: var(--font-lg);
+}
+
 .build-cards {
-  min-height: 150px;
+  min-height: 172px;
 }
 
 .build-card {
-  width: 184px;
-  margin: 0 var(--sp-2) 0 0;
-  padding: var(--sp-2);
-  border-width: 2px;
-  border-radius: var(--radius-md);
-  border-color: var(--c-parchment-3);
-  background-color: var(--c-parchment);
+  width: 204px;
+  flex-shrink: 0;
+  margin: 0 var(--sp-2) var(--sp-1) 0;
+  padding: var(--sp-1) var(--sp-3) var(--sp-3);
+  border-width: 3px;
+  border-bottom-width: 6px;
+  border-radius: 18px;
+  border-color: var(--c-wood);
+  background-color: var(--c-cream);
 }
 
 .build-card--selected {
-  border-color: var(--c-gold);
-  border-width: 3px;
+  border-color: var(--c-gold-line);
+  background-color: var(--c-gold-soft);
 }
 
 .build-card--locked {
-  opacity: 0.55;
+  border-color: var(--c-off-edge);
+  background-color: var(--c-locked);
 }
 
-.card-header {
-  flex-direction: row;
-  align-items: center;
-  margin-bottom: var(--sp-1);
+.build-card:disabled {
+  opacity: 0.85;
 }
 
 .card-icon {
-  width: 36px;
-  height: 36px;
-  margin-right: var(--sp-2);
+  width: 64px;
+  height: 64px;
+  align-self: center;
+  margin: -2px 0 -4px 0;
   flex-shrink: 0;
   -unity-background-scale-mode: scale-to-fit;
 }
 
+.build-card--locked .card-icon {
+  opacity: 0.55;
+}
+
 .card-name {
+  flex-shrink: 0;
+  font-size: var(--font-lg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-costs {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 2px;
+}
+
+.card-cost {
+  -unity-font-definition: url("Fonts/Fredoka-SemiBold.ttf");
   flex-shrink: 1;
-  font-size: var(--font-md);
+  margin: 0 var(--sp-2) 2px 0;
+  white-space: normal;
+  padding: 1px var(--sp-2);
+  border-radius: 10px;
+  background-color: var(--c-card);
+  color: var(--c-ink);
+  font-size: var(--font-sm);
+}
+
+.card-time {
+  padding-left: 16px;
+  color: var(--c-ink-soft);
+  font-size: var(--font-sm);
+  background-size: 13px 13px;
+  background-repeat: no-repeat no-repeat;
+  background-position-x: left 0px;
+  background-position-y: center;
+  -unity-background-image-tint-color: var(--c-ink-soft);
 }
 
 .card-line {
+  margin-top: 2px;
   font-size: var(--font-sm);
 }
 
 .card-recipe {
-  margin-top: var(--sp-1);
-  color: var(--c-go);
-  font-size: var(--font-sm);
+  -unity-font-definition: url("Fonts/Nunito-ExtraBold.ttf");
+  color: var(--c-go-ink);
   white-space: normal;
 }
 
 .card-lock {
-  color: var(--c-stop);
+  margin-top: var(--sp-1);
+  padding-left: 18px;
+  color: var(--c-stop-ink);
   font-size: var(--font-sm);
-  -unity-font-style: bold;
   white-space: normal;
+  background-size: 14px 14px;
+  background-repeat: no-repeat no-repeat;
+  background-position-x: left 0px;
+  background-position-y: center;
+  -unity-background-image-tint-color: var(--c-stop-ink);
+}
+
+/* Portrait: the screen is tall, so the cards get the showcase's big pictures; landscape keeps them compact under the HUD. */
+.portrait .build-cards {
+  min-height: 202px;
+}
+
+.portrait .build-card {
+  width: 168px;
+}
+
+.portrait .card-icon {
+  width: 92px;
+  height: 92px;
 }
 
 .card-hint {
+  -unity-font-definition: url("Fonts/Nunito-ExtraBold.ttf");
   margin-top: 2px;
+  color: var(--c-stop-ink);
+  font-size: var(--font-sm);
+  white-space: normal;
 }

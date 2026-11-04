@@ -1,5 +1,6 @@
-/* The connection banner and the blocking screen (M0-55, docs/how-to/add-ui-screen.md), restyled in CR-0007: parchment on wood, colours and sizes from
-   Common.uss. The banner sits under the HUD at the left and ends before the inspector (which sits at the right). */
+/* The connection banner and the blocking screen (M0-55; visual v2, CR-0009): a parchment strip under the HUD with a red edge that says why
+   the city may be out of date, when it was last synced and offers one action; and, for a game that does not match the server, a card on a
+   dark scrim. Colours and sizes come from Common.uss. */
 .connection-root {
   position: absolute;
   left: 0;
@@ -13,12 +14,12 @@
 }
 
 .connection-banner {
-  width: 290px;
+  width: 340px;
   max-width: 100%;
   margin-top: var(--hud-height);
   flex-direction: column;
-  border-left-width: 6px;
-  border-left-color: var(--c-warn);
+  border-left-width: 8px;
+  border-left-color: var(--c-stop);
 }
 
 .connection-banner--hidden {
@@ -26,14 +27,14 @@
 }
 
 .connection-message {
+  -unity-font-definition: url("Fonts/Fredoka-SemiBold.ttf");
   color: var(--c-ink);
   font-size: var(--font-md);
-  -unity-font-style: bold;
   white-space: normal;
 }
 
 .connection-banner-row {
-  margin-top: var(--sp-1);
+  margin-top: var(--sp-2);
   flex-direction: row;
   align-items: center;
 }
@@ -44,7 +45,7 @@
 }
 
 .connection-button {
-  min-width: 96px;
+  min-width: 112px;
   margin-left: var(--sp-2);
 }
 
@@ -54,7 +55,7 @@
   top: 0;
   right: 0;
   bottom: 0;
-  padding: var(--sp-2); /* replaced by the safe area in code */
+  padding: var(--sp-2) var(--sp-4); /* replaced by the safe area in code */
   justify-content: center;
   align-items: center;
 }
@@ -64,8 +65,10 @@
 }
 
 .connection-card {
-  width: 340px;
+  width: 360px;
   max-width: 100%;
+  border-width: 4px;
+  border-bottom-width: 7px;
 }
 
 .connection-blocker-message {
@@ -74,5 +77,4 @@
 
 .connection-blocker-button {
   margin-top: var(--sp-3);
-  align-self: flex-end;
 }

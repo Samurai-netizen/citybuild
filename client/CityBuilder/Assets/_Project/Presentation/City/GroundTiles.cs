@@ -7,8 +7,8 @@ using Object = UnityEngine.Object;
 namespace CityBuilder.Client.Presentation.City
 {
     /// <summary>
-    /// The ground of the city: one flat tile per grid cell, an instance of the art's grass tile (CR-0005); if the tile model is missing, a cube
-    /// primitive in two greens like a chessboard instead. Plus a hover marker and a selection marker that follow a <see cref="TileSelection"/>.
+    /// The ground of the city: one flat tile per grid cell, an instance of the art's grass tile (CR-0005), varied by the grass variants of visual v2
+    /// (<see cref="GroundVariants"/>); if the tile model is missing, a cube primitive in two greens like a chessboard instead. Plus a hover marker and a selection marker that follow a <see cref="TileSelection"/>.
     /// The tiles have no colliders: the pointer's tile is found with maths (<see cref="CityGrid"/>), not physics. <see cref="Destroy"/> removes
     /// everything it made.
     /// </summary>
@@ -65,13 +65,16 @@ namespace CityBuilder.Client.Presentation.City
         /// <summary>Whether <see cref="Destroy"/> has run.</summary>
         private bool _destroyed;
 
-        /// <summary>Builds the tiles and the markers under a new object called <c>Ground</c> that is a child of <paramref name="parent"/>.</summary>
+        /// <summary>
+        /// Builds the tiles and the markers under a new object called <c>Ground</c> that is a child of <paramref name="parent"/>. Each tile is
+        /// one of the grass variants of visual v2 (<see cref="GroundVariants"/>), and the plain grass tile where a variant is missing.
+        /// </summary>
         /// <param name="grid">The grid to cover.</param>
         /// <param name="selection">The state the markers show; this object listens to it until <see cref="Destroy"/>.</param>
         /// <param name="parent">The transform the ground hangs under.</param>
         /// <exception cref="ArgumentNullException">An argument is null.</exception>
         public GroundTiles(CityGrid grid, TileSelection selection, Transform parent)
-            : this(grid, selection, parent, Resources.Load<GameObject>(BuildingLooks.GrassTilePath))
+            : this(grid, selection, parent, Resources.Load<GameObject>(BuildingLooks.GrassTilePath), LoadVariants())
         {
         }
 
@@ -85,6 +88,21 @@ namespace CityBuilder.Client.Presentation.City
         /// <param name="tileModel">The model of one tile, whose top is the ground plane, or null for cube blocks.</param>
         /// <exception cref="ArgumentNullException">An argument other than <paramref name="tileModel"/> is null.</exception>
         public GroundTiles(CityGrid grid, TileSelection selection, Transform parent, GameObject? tileModel)
+            : this(grid, selection, parent, tileModel, null)
+        {
+        }
+
+        /// <summary>
+        /// Builds the tiles and the markers: each tile from its grass variant in <paramref name="variants"/> when there is one, else from
+        /// <paramref name="tileModel"/>, else from a cube.
+        /// </summary>
+        /// <param name="grid">The grid to cover.</param>
+        /// <param name="selection">The state the markers show; this object listens to it until <see cref="Destroy"/>.</param>
+        /// <param name="parent">The transform the ground hangs under.</param>
+        /// <param name="tileModel">The model of one tile, whose top is the ground plane, or null for cube blocks.</param>
+        /// <param name="variants">The grass variants by <see cref="GroundVariants.For"/>, any of them null, or null for none.</param>
+        /// <exception cref="ArgumentNullException">An argument other than the models is null.</exception>
+        private GroundTiles(CityGrid grid, TileSelection selection, Transform parent, GameObject? tileModel, GameObject?[]? variants)
         {
             _grid = grid ?? throw new ArgumentNullException(nameof(grid));
             _selection = selection ?? throw new ArgumentNullException(nameof(selection));
@@ -111,9 +129,19 @@ namespace CityBuilder.Client.Presentation.City
                 {
                     var tile = new GridCoordinate(x, y);
                     int index = y * grid.Width + x;
-                    if (tileModel != null)
+                    GameObject? model = tileModel;
+                    if (variants != null)
                     {
-                        GameObject instance = Object.Instantiate(tileModel, Root.transform, false);
+                        GameObject? variant = variants[GroundVariants.For(x, y)];
+                        if (variant != null)
+                        {
+                            model = variant;
+                        }
+                    }
+
+                    if (model != null)
+                    {
+                        GameObject instance = Object.Instantiate(model, Root.transform, false);
                         instance.name = "Tile " + tile;
                         instance.transform.localPosition = grid.ToWorldCenter(tile);
                         _tileRenderers[index] = instance.GetComponentInChildren<Renderer>();
@@ -187,6 +215,19 @@ namespace CityBuilder.Client.Presentation.City
         public TileHint? ShownHintAt(GridCoordinate tile)
         {
             return _grid.Contains(tile) ? _shownHints[tile.Y * _grid.Width + tile.X] : null;
+        }
+
+        /// <summary>The grass variants of visual v2 by <see cref="GroundVariants.For"/>, each loaded from <c>Resources</c>; a missing one is null.</summary>
+        /// <returns>One entry per variant.</returns>
+        private static GameObject?[] LoadVariants()
+        {
+            var variants = new GameObject?[GroundVariants.Count];
+            for (int i = 0; i < variants.Length; i++)
+            {
+                variants[i] = Resources.Load<GameObject>(GroundVariants.PathOf(i));
+            }
+
+            return variants;
         }
 
         /// <summary>Stops listening to the selection and destroys every object and material this created. Safe to call twice.</summary>

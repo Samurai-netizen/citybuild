@@ -1,5 +1,5 @@
-/* The toasts (docs/how-to/add-ui-screen.md): short messages stacked at the bottom left, above the status label and the buttons (the top has the HUD, the banner and the inspector). M0-47, restyled in CR-0007. A toast is a dark wood pill
-   with cream text and a coloured edge: green for a success, red for an error. */
+/* The toasts (M0-47; visual v2, CR-0009): dark rounded notes over the map, with a thin green or red edge, stacking up from above the dock
+   at the bottom left, like the showcase's toast. Colours and sizes come from Common.uss; --toast-lift is how high they start. */
 .toast-root {
   position: absolute;
   left: 0;
@@ -13,28 +13,29 @@
 }
 
 .toast-list {
-  margin-bottom: var(--toast-lift); /* higher in portrait (Common.uss), above the build tray and the placement bar */
+  margin-bottom: var(--toast-lift); /* above the dock; higher in portrait (Common.uss) */
   flex-direction: column;
   align-items: flex-start;
 }
 
 .toast {
-  max-width: 280px; /* ends before the inspector in landscape: on an 866 unit wide iPhone with 60 units of notch each side it starts at 408, the toasts end at 348 */
+  max-width: 320px; /* never wider than a phone in portrait */
   margin-bottom: var(--sp-1);
-  padding: var(--sp-1) var(--sp-3);
-  border-left-width: 4px;
-  border-radius: var(--radius-sm);
-  color: var(--c-cream);
-  background-color: var(--c-panel-wood);
+  padding: var(--sp-2) var(--sp-4);
+  border-width: 2px;
+  border-radius: var(--radius-md);
+  border-color: transparent;
+  color: var(--c-hud-text);
+  background-color: var(--c-hud-strong);
   font-size: var(--font-md);
   white-space: normal;
   -unity-text-align: middle-left;
 }
 
 .toast--success {
-  border-left-color: var(--c-go-light);
+  border-color: var(--c-go);
 }
 
 .toast--error {
-  border-left-color: var(--c-stop-light);
+  border-color: var(--c-stop);
 }

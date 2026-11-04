@@ -27,8 +27,8 @@ namespace CityBuilder.Client.Presentation.City
         /// <summary>The name of the empty object where a stockpile prop would stand (the Woodcutter and the Sawmill have one).</summary>
         public const string StockpileAnchorName = "Anchor_Stockpile";
 
-        /// <summary>The name of the Sawmill's water wheel, a mesh that turns around its local X axis (a later task animates it).</summary>
-        public const string WheelName = "Wheel";
+        /// <summary>The name of the Sawmill's water wheel, a moving part that turns while the Sawmill works (visual v2: <see cref="BuildingAnimator"/>).</summary>
+        public const string WheelName = PartMotions.Wheel;
 
         /// <summary>The building's id in its city.</summary>
         public int BuildingId { get; internal set; }
@@ -72,8 +72,20 @@ namespace CityBuilder.Client.Presentation.City
         /// <summary>Where a stockpile prop would stand (<see cref="StockpileAnchorName"/>), or null.</summary>
         public Transform? StockpileAnchor { get; internal set; }
 
-        /// <summary>The Sawmill's water wheel (<see cref="WheelName"/>), or null. Nothing turns it yet.</summary>
+        /// <summary>The Sawmill's water wheel (<see cref="WheelName"/>), or null. <see cref="Animator"/> turns it with the other moving parts.</summary>
         public Transform? Wheel { get; internal set; }
+
+        /// <summary>
+        /// What moves the body's parts and its chimney smoke while the building works (visual v2, CR-0009; <see cref="BuildingDecor"/>), or null
+        /// while no body of this view had anything that moves.
+        /// </summary>
+        public BuildingAnimator? Animator { get; internal set; }
+
+        /// <summary>
+        /// The store fill of the current body (visual v2, CR-0009; <see cref="BuildingDecor"/>), or null when the building keeps no goods or the
+        /// construction site is shown.
+        /// </summary>
+        public FillView? Fill { get; internal set; }
 
         /// <summary>The ring, bubble and pips above the building (M0-50), or null until <see cref="CityView"/> shows a status for it.</summary>
         public BuildingStatusView? Status { get; internal set; }
