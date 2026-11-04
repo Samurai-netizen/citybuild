@@ -15,8 +15,8 @@
   routes): plan F1 → CP-F1, F2 → CP-F2, F3 → CP-F3 in the build log (decisions 45–51). F1 (state, `SetRoute`, staffing, the upgrade
   stop, `INVALID_ROUTE`) done, **CP-F1**. F2 (couriers in the advance; decision 50) done, **CP-F2**. F3 (property harness, docs;
   decision 51) done, **CP-F3**: **part F done**. Part G (server: couriers and routes): plan G1 → CP-G1,
-  G2 → CP-G2, G3 → CP-G3 in the build log; G1 (persistence) done, **CP-G1**; G2 (snapshot, `set-route`) done, **CP-G2**; G3 (client, docs) done, **CP-G3**: **part G done**. Next: part H
-  (stamina and presence; first its plan with checkpoints in the build log). Then I, `/finish-task`.
+  G2 → CP-G2, G3 → CP-G3 in the build log; G1 (persistence) done, **CP-G1**; G2 (snapshot, `set-route`) done, **CP-G2**; G3 (client, docs) done, **CP-G3**: **part G done**. Part H plan:
+  H1 (engine) → CP-H1, H2 (server) → CP-H2, H3 (client, docs) → CP-H3 in the build log (decision 57); next H1. Then I, `/finish-task`.
 - **Last completed:** M0-60 · Client ↔ server boundary review (PR #85, merged)
 - **Next task:** CR-0008-T2 · client and art (`[S]`), after T1 merges; then CR-0008-T3, then M0-61.
 - **Open questions for the owner:** CR-0008-T1: 8 Dependabot alerts on `main` (build log Follow-ups). M0-58: the [MANUAL] content-change check (`client/README.md`; no automated test covers the `GameRoot` rebuild). CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-54: the dev database still runs the fast clock until the owner does step 7 of the waiting-loop run (`LOCAL-E2E.md`). M0-55: the [MANUAL] look at the connection states (`client/README.md`). CR-0007-T1: the [MANUAL] look at the new UI (`client/README.md`); the status label may be removed (build log follow-ups).
