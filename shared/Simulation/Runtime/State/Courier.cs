@@ -138,6 +138,15 @@ namespace CityBuilder.Simulation.State
             ArrivesAt = null;
         }
 
+        /// <summary>Ends its walk home without stamina: it rests at its station with its load until re-energized (<c>04</c> section 2, part H).</summary>
+        internal void Rest()
+        {
+            State = CourierState.Resting;
+            ToStop = 0;
+            DepartedAt = null;
+            ArrivesAt = null;
+        }
+
         /// <summary>Adds goods taken from building <paramref name="fromId"/> to its load; the caller keeps the carry limit.</summary>
         internal void Load(ItemId item, int fromId, long quantity)
         {
@@ -159,10 +168,10 @@ namespace CityBuilder.Simulation.State
         }
 
         /// <summary>
-        /// Takes <paramref name="quantity"/> of the good off its load, from the parts in ascending building id (CR-0008-T1 decision 47); what
-        /// stays keeps its origin. The caller checks that it carries that much.
+        /// Takes <paramref name="quantity"/> of the good off its load, from the parts in ascending building id (CR-0008-T1 decision 47), and
+        /// adds what it took to <paramref name="taken"/> in that order; what stays keeps its origin. The caller checks that it carries that much.
         /// </summary>
-        internal void Unload(ItemId item, long quantity)
+        internal void Unload(ItemId item, long quantity, List<CourierLoad> taken)
         {
             long left = quantity;
             int index = 0;
@@ -175,15 +184,16 @@ namespace CityBuilder.Simulation.State
                     continue;
                 }
 
-                long taken = Math.Min(left, part.Quantity);
-                left -= taken;
-                if (taken == part.Quantity)
+                long share = Math.Min(left, part.Quantity);
+                left -= share;
+                taken.Add(share == part.Quantity ? part : new CourierLoad(item, part.FromId, share));
+                if (share == part.Quantity)
                 {
                     _loads.RemoveAt(index);
                 }
                 else
                 {
-                    _loads[index] = new CourierLoad(item, part.FromId, part.Quantity - taken);
+                    _loads[index] = new CourierLoad(item, part.FromId, part.Quantity - share);
                     index++;
                 }
             }
