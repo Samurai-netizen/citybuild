@@ -13,8 +13,16 @@ namespace CityBuilder.Client.Net
         [EnumMember(Value = "laborReduction")]
         LaborReduction,
 
-        /// <summary>The storage cap of an item rises by an amount (<c>item</c> and <c>amount</c> are set).</summary>
+        /// <summary>The limit of a good in every store that holds it rises by an amount (<c>item</c> and <c>amount</c> are set).</summary>
         [EnumMember(Value = "storageCapBonus")]
         StorageCapBonus,
+
+        /// <summary>An amount mode becomes usable (<c>mode</c> is set; CR-0008).</summary>
+        [EnumMember(Value = "unlockAmountMode")]
+        UnlockAmountMode,
+
+        /// <summary>Every walk gets shorter by a share in permille (<c>permille</c> is set; CR-0008).</summary>
+        [EnumMember(Value = "walkSpeedBonus")]
+        WalkSpeedBonus,
     }
 }

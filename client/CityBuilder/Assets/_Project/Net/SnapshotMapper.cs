@@ -10,9 +10,10 @@ namespace CityBuilder.Client.Net
 {
     /// <summary>
     /// Turns a snapshot answer into the engine's terms and hands it to the <see cref="ClientCityStore"/>. Two stored fields are not in the
-    /// answer, and both follow from what is: an upgrade's target level is the level plus 1, and the next building id only matters when placing
-    /// a building, which only the server does, so the id above the highest building serves. Everything else the answer holds beyond the stored city (workers, builders, caps, stall reasons) is derived
-    /// and <c>CityQueries</c> computes it again.
+    /// answer, and both follow from what is: an upgrade's target level is the level plus 1, and the next building and trip ids only matter
+    /// when placing a building or starting a trip, which only the server does, so the ids above the highest serve. Everything else the answer
+    /// holds beyond the stored city (workers, builders, totals, store limits, projects, stall reasons) is derived and <c>CityQueries</c>
+    /// computes it again.
     /// </summary>
     public static class SnapshotMapper
     {
@@ -127,12 +128,6 @@ namespace CityBuilder.Client.Net
         /// <exception cref="ArgumentException">The values don't form a valid city.</exception>
         private static CityState ToCity(SnapshotCityDto city)
         {
-            var inventory = new List<KeyValuePair<ItemId, long>>(city.Inventory.Count);
-            foreach (KeyValuePair<string, long> stock in city.Inventory)
-            {
-                inventory.Add(new KeyValuePair<ItemId, long>(new ItemId(stock.Key), stock.Value));
-            }
-
             int highestId = 0;
             var buildings = new List<Building>(city.Buildings.Count);
             foreach (SnapshotBuildingDto building in city.Buildings)
@@ -147,15 +142,25 @@ namespace CityBuilder.Client.Net
                 roads.Add(new RoadTile(road.X, road.Y, road.Level));
             }
 
+            int highestTripId = 0;
+            var trips = new List<Trip>(city.Trips.Count);
+            foreach (SnapshotTripDto trip in city.Trips)
+            {
+                highestTripId = Math.Max(highestTripId, trip.Id);
+                trips.Add(new Trip(trip.Id, trip.SourceId, trip.TargetId, new ItemId(trip.ItemId), trip.Quantity, trip.DepartedAt, trip.ArrivesAt));
+            }
+
             return new CityState(
                 city.Clock,
                 city.Era,
                 highestId + 1,
-                inventory,
+                city.Purse,
                 buildings,
                 city.Research.Completed.ConvertAll(id => new ResearchId(id)),
                 ToActiveResearch(city.Research),
-                roads);
+                roads,
+                trips,
+                highestTripId + 1);
         }
 
         /// <summary>One building; the phase names match the engine's one to one.</summary>
@@ -176,7 +181,9 @@ namespace CityBuilder.Client.Net
                 phase == BuildingPhase.Upgrading ? building.Level + 1 : 0,
                 building.CycleLabor,
                 building.LaborRemaining,
-                building.SegmentStartedAt);
+                building.SegmentStartedAt,
+                ToQuantities(building.Store),
+                ToQuantities(building.Needs));
         }
 
         /// <summary>The engine's phase of an answer's phase.</summary>
@@ -198,8 +205,8 @@ namespace CityBuilder.Client.Net
             }
         }
 
-        /// <summary>The running research, or null when the slot is free.</summary>
-        /// <exception cref="ArgumentException">A running research lacks its times.</exception>
+        /// <summary>The running research with its needs (a research waiting for goods has no times; CR-0008), or null when the slot is free.</summary>
+        /// <exception cref="ArgumentException">The times and needs don't form a research the engine takes.</exception>
         private static ActiveResearch? ToActiveResearch(SnapshotResearchDto research)
         {
             if (research.ActiveId == null)
@@ -207,12 +214,7 @@ namespace CityBuilder.Client.Net
                 return null;
             }
 
-            if (research.StartedAt == null || research.EndsAt == null)
-            {
-                throw new ArgumentException("Research " + research.ActiveId + " is running but has no start or end.");
-            }
-
-            return new ActiveResearch(new ResearchId(research.ActiveId), research.StartedAt.Value, research.EndsAt.Value);
+            return new ActiveResearch(new ResearchId(research.ActiveId), research.StartedAt, research.EndsAt, ToQuantities(research.Needs));
         }
     }
 }

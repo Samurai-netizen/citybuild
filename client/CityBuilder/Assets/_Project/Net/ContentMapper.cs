@@ -10,17 +10,11 @@ namespace CityBuilder.Client.Net
     /// Turns the <c>GET /content</c> answer into the engine's <see cref="GameContentData"/>, the input of the validating
     /// <c>GameContentFactory</c> (<c>05</c> Content: "Complete for the client"). It copies; it checks nothing, because the factory is the one
     /// place that decides whether content is valid, on the server and here alike. The one change of spelling is the building kind: the
-    /// response says <c>House</c> and <c>Producer</c>, the content file <c>house</c> and <c>producer</c>. The response's extra members
-    /// (<c>unlockedBy</c>, <c>timeScale</c>) have no place in the data and are left out.
+    /// response says <c>House</c> or <c>CourierStation</c>, the content file <c>house</c> or <c>courierStation</c>. The response's extra
+    /// members (<c>unlockedBy</c>, <c>timeScale</c>) have no place in the data and are left out.
     /// </summary>
     public static class ContentMapper
     {
-        /// <summary>The kind spelling of a house in the content file.</summary>
-        private const string HouseKind = "house";
-
-        /// <summary>The kind spelling of a producer in the content file.</summary>
-        private const string ProducerKind = "producer";
-
         /// <summary>Maps the whole answer.</summary>
         /// <param name="response">The decoded answer; its members are all set (the DTOs require them).</param>
         /// <returns>The data for <c>GameContentFactory.Create</c>.</returns>
@@ -35,7 +29,7 @@ namespace CityBuilder.Client.Net
             {
                 ContentVersion = response.ContentVersion,
                 Rules = ToData(response.Rules),
-                StartingCity = new StartingCityData { Era = response.StartingCity.Era, Inventory = Quantities(response.StartingCity.Inventory) },
+                StartingCity = new StartingCityData { Era = response.StartingCity.Era, Purse = response.StartingCity.Purse },
                 Eras = response.Eras.ConvertAll(era => (EraData?)new EraData { Number = era.Number, Id = era.Id, Name = era.Name }),
                 Items = response.Items.ConvertAll(item => (ItemData?)ToData(item)),
                 Buildings = response.Buildings.ConvertAll(building => (BuildingData?)ToData(building)),
@@ -46,6 +40,12 @@ namespace CityBuilder.Client.Net
                     Name = level.Name,
                     TileMillis = level.TileMillis,
                     Cost = Quantities(level.Cost),
+                }),
+                AmountPresets = response.AmountPresets.ConvertAll(preset => (AmountPresetData?)new AmountPresetData
+                {
+                    Id = preset.Id,
+                    Name = preset.Name,
+                    Percent = preset.Percent,
                 }),
             };
         }
@@ -59,7 +59,6 @@ namespace CityBuilder.Client.Net
                 GridHeight = rules.GridHeight,
                 BuilderSlots = rules.BuilderSlots,
                 ResearchSlots = rules.ResearchSlots,
-                BaseStorageCaps = Quantities(rules.BaseStorageCaps),
                 MaxOfflineProductionSeconds = rules.MaxOfflineProductionSeconds,
                 MinCycleSeconds = rules.MinCycleSeconds,
                 MaxLaborReductionPermille = rules.MaxLaborReductionPermille,
@@ -67,13 +66,16 @@ namespace CityBuilder.Client.Net
                 CrossingSpeedPermille = rules.CrossingSpeedPermille,
                 MinWalkSeconds = rules.MinWalkSeconds,
                 MaxWalkBonusPermille = rules.MaxWalkBonusPermille,
+                TripCarryLimit = rules.TripCarryLimit,
+                MaxRouteStops = rules.MaxRouteStops,
+                MaxStopActions = rules.MaxStopActions,
             };
         }
 
         /// <summary>One item.</summary>
         private static ItemData ToData(ContentItemDto item)
         {
-            return new ItemData { Id = item.Id, Name = item.Name, Era = item.Era, Capped = item.Capped, Tradable = item.Tradable };
+            return new ItemData { Id = item.Id, Name = item.Name, Era = item.Era, Currency = item.Currency, Tradable = item.Tradable };
         }
 
         /// <summary>One building type with its levels.</summary>
@@ -86,13 +88,16 @@ namespace CityBuilder.Client.Net
                 Kind = KindText(building.Kind),
                 Era = building.Era,
                 AvailableAtStart = building.AvailableAtStart,
+                MaxPerCity = building.MaxPerCity,
                 Cost = Quantities(building.Cost),
                 BuildSeconds = building.BuildSeconds,
                 Levels = building.Levels.ConvertAll(level => (BuildingLevelData?)ToData(level)),
             };
         }
 
-        /// <summary>One building level; a house has no recipe and level 1 has no upgrade cost, so those stay null.</summary>
+        /// <summary>
+        /// One building level; a level without a recipe, a store, a carry limit or stamina, and level 1 without an upgrade cost, keep those null.
+        /// </summary>
         private static BuildingLevelData ToData(ContentBuildingLevelDto level)
         {
             return new BuildingLevelData
@@ -103,6 +108,9 @@ namespace CityBuilder.Client.Net
                 Recipe = level.Recipe == null
                     ? null
                     : new RecipeData { Inputs = Quantities(level.Recipe.Inputs), Outputs = Quantities(level.Recipe.Outputs), Labor = level.Recipe.Labor },
+                Storage = level.Storage == null ? null : Quantities(level.Storage),
+                CarryLimit = level.CarryLimit,
+                StaminaSeconds = level.StaminaSeconds,
                 UpgradeCost = level.UpgradeCost == null ? null : Quantities(level.UpgradeCost),
                 UpgradeSeconds = level.UpgradeSeconds,
             };
@@ -133,6 +141,7 @@ namespace CityBuilder.Client.Net
                 Item = effect.Item,
                 Permille = effect.Permille,
                 Amount = effect.Amount,
+                Mode = effect.Mode,
             };
         }
 
@@ -154,9 +163,15 @@ namespace CityBuilder.Client.Net
             switch (kind)
             {
                 case BuildingKindDto.House:
-                    return HouseKind;
+                    return "house";
                 case BuildingKindDto.Producer:
-                    return ProducerKind;
+                    return "producer";
+                case BuildingKindDto.Warehouse:
+                    return "warehouse";
+                case BuildingKindDto.CourierStation:
+                    return "courierStation";
+                case BuildingKindDto.Science:
+                    return "science";
                 default:
                     throw new ArgumentOutOfRangeException(nameof(kind), kind, "A building kind the client does not know.");
             }
@@ -173,6 +188,10 @@ namespace CityBuilder.Client.Net
                     return "laborReduction";
                 case ResearchEffectTypeDto.StorageCapBonus:
                     return "storageCapBonus";
+                case ResearchEffectTypeDto.UnlockAmountMode:
+                    return "unlockAmountMode";
+                case ResearchEffectTypeDto.WalkSpeedBonus:
+                    return "walkSpeedBonus";
                 default:
                     throw new ArgumentOutOfRangeException(nameof(type), type, "An effect type the client does not know.");
             }

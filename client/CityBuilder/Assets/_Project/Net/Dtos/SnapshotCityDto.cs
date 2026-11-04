@@ -11,17 +11,18 @@ namespace CityBuilder.Client.Net
     {
         /// <summary>Creates the DTO. Newtonsoft calls this constructor with the JSON members of the same names, so the object is never half filled.</summary>
         [JsonConstructor]
-        public SnapshotCityDto(long clock, int era, Dictionary<string, long> inventory, Dictionary<string, long> storageCaps, SnapshotWorkersDto workers, SnapshotBuildersDto builders, SnapshotResearchDto research, List<SnapshotBuildingDto> buildings, List<SnapshotRoadDto> roads)
+        public SnapshotCityDto(long clock, int era, long purse, Dictionary<string, long> totals, SnapshotWorkersDto workers, SnapshotBuildersDto builders, SnapshotResearchDto research, List<SnapshotBuildingDto> buildings, List<SnapshotRoadDto> roads, List<SnapshotTripDto> trips)
         {
             Clock = clock;
             Era = era;
-            Inventory = inventory;
-            StorageCaps = storageCaps;
+            Purse = purse;
+            Totals = totals;
             Workers = workers;
             Builders = builders;
             Research = research;
             Buildings = buildings;
             Roads = roads;
+            Trips = trips;
         }
 
         /// <summary>The city clock in seconds; display prediction starts from it.</summary>
@@ -30,11 +31,11 @@ namespace CityBuilder.Client.Net
         /// <summary>The city's era number.</summary>
         public int Era { get; }
 
-        /// <summary>Item id to quantity; an item the city has none of is absent.</summary>
-        public Dictionary<string, long> Inventory { get; }
+        /// <summary>The coins: the currency, in no building (CR-0008).</summary>
+        public long Purse { get; }
 
-        /// <summary>Item id to its cap now (base plus research), for every capped item.</summary>
-        public Dictionary<string, long> StorageCaps { get; }
+        /// <summary>Item id to the city's total, every item of the content (stores, loads, the purse; CR-0008).</summary>
+        public Dictionary<string, long> Totals { get; }
 
         /// <summary>Provided, assigned and free workers.</summary>
         public SnapshotWorkersDto Workers { get; }
@@ -50,5 +51,8 @@ namespace CityBuilder.Client.Net
 
         /// <summary>The road tiles, sorted by column, then row (CR-0008).</summary>
         public List<SnapshotRoadDto> Roads { get; }
+
+        /// <summary>The manual trips under way, sorted by id (CR-0008).</summary>
+        public List<SnapshotTripDto> Trips { get; }
     }
 }

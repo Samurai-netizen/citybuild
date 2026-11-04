@@ -103,6 +103,24 @@ namespace CityBuilder.Client.Presentation.Feedback
                 case ApiErrorCodes.RoadNotFound:
                     message = "There is no road there any more";
                     return true;
+                case ApiErrorCodes.BuildingLimit:
+                    message = "Your city already has the most of these";
+                    return true;
+                case ApiErrorCodes.NoScienceBuilding:
+                    message = "Build the science building first";
+                    return true;
+                case ApiErrorCodes.UnknownItem:
+                    message = "That item does not exist";
+                    return true;
+                case ApiErrorCodes.AmountModeLocked:
+                    message = "Research needed for that amount";
+                    return true;
+                case ApiErrorCodes.ItemNotAccepted:
+                    message = "That building does not take this item";
+                    return true;
+                case ApiErrorCodes.NothingToCarry:
+                    message = "There is nothing of that to carry";
+                    return true;
                 case ApiErrorCodes.IdempotencyConflict:
                     message = "That command was already used. Try again";
                     return true;

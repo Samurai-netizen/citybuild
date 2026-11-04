@@ -11,12 +11,15 @@ namespace CityBuilder.Client.Net
     {
         /// <summary>Creates the DTO. Newtonsoft calls this constructor with the JSON members of the same names, so the object is never half filled.</summary>
         [JsonConstructor]
-        public SnapshotSettlementDto(long elapsedSeconds, long productionSeconds, Dictionary<string, long> produced, Dictionary<string, long> consumed, List<int> completedBuildings, List<string> completedResearch, bool eraChanged)
+        public SnapshotSettlementDto(long elapsedSeconds, long productionSeconds, Dictionary<string, long> produced, Dictionary<string, long> consumed, Dictionary<string, long> delivered, Dictionary<string, long> moved, Dictionary<string, long> refunded, List<int> completedBuildings, List<string> completedResearch, bool eraChanged)
         {
             ElapsedSeconds = elapsedSeconds;
             ProductionSeconds = productionSeconds;
             Produced = produced;
             Consumed = consumed;
+            Delivered = delivered;
+            Moved = moved;
+            Refunded = refunded;
             CompletedBuildings = completedBuildings;
             CompletedResearch = completedResearch;
             EraChanged = eraChanged;
@@ -33,6 +36,15 @@ namespace CityBuilder.Client.Net
 
         /// <summary>Item id to the quantity consumed.</summary>
         public Dictionary<string, long> Consumed { get; }
+
+        /// <summary>Item id to what walkers handed to projects, used up there (CR-0008).</summary>
+        public Dictionary<string, long> Delivered { get; }
+
+        /// <summary>Item id to what walkers put into stores (CR-0008).</summary>
+        public Dictionary<string, long> Moved { get; }
+
+        /// <summary>Item id to the inputs given back when an upgrade started at its last delivery (CR-0008).</summary>
+        public Dictionary<string, long> Refunded { get; }
 
         /// <summary>Ids of the buildings that completed.</summary>
         public List<int> CompletedBuildings { get; }

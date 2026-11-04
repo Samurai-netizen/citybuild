@@ -10,7 +10,7 @@ namespace CityBuilder.Client.Net
     {
         /// <summary>Creates the DTO. Newtonsoft calls this constructor with the JSON members of the same names, so the object is never half filled.</summary>
         [JsonConstructor]
-        public SnapshotBuildingDto(int id, string typeId, int x, int y, int level, int assignedWorkers, int maxWorkers, BuildingPhaseDto phase, long phaseStartedAt, long? phaseEndsAt, long cycleLabor, long laborRemaining, long segmentStartedAt, string? stallReason)
+        public SnapshotBuildingDto(int id, string typeId, int x, int y, int level, int assignedWorkers, int maxWorkers, BuildingPhaseDto phase, long phaseStartedAt, long? phaseEndsAt, long cycleLabor, long laborRemaining, long segmentStartedAt, string? stallReason, Dictionary<string, long> store, Dictionary<string, long> storeLimits, Dictionary<string, long> needs, string? project)
         {
             Id = id;
             TypeId = typeId;
@@ -26,6 +26,10 @@ namespace CityBuilder.Client.Net
             LaborRemaining = laborRemaining;
             SegmentStartedAt = segmentStartedAt;
             StallReason = stallReason;
+            Store = store;
+            StoreLimits = storeLimits;
+            Needs = needs;
+            Project = project;
         }
 
         /// <summary>The building's id, counted from 1 in this city.</summary>
@@ -55,7 +59,7 @@ namespace CityBuilder.Client.Net
         /// <summary>When the phase began; 0 when the phase has no timer.</summary>
         public long PhaseStartedAt { get; }
 
-        /// <summary>When the phase ends, or <c>null</c> for a frozen production cycle.</summary>
+        /// <summary>When the phase ends, or <c>null</c> when idle, for a frozen production cycle and for a construction site.</summary>
         [JsonProperty(Required = Required.AllowNull)]
         public long? PhaseEndsAt { get; }
 
@@ -71,5 +75,18 @@ namespace CityBuilder.Client.Net
         /// <summary>Why the cycle is not running: <c>NoRecipe</c>, <c>NoWorkers</c>, <c>MissingInput:&lt;item&gt;</c> or <c>StorageFull:&lt;item&gt;</c>; <c>null</c> when it is not stalled.</summary>
         [JsonProperty(Required = Required.AllowNull)]
         public string? StallReason { get; }
+
+        /// <summary>Item id to the quantity in its store; only goods it holds (CR-0008).</summary>
+        public Dictionary<string, long> Store { get; }
+
+        /// <summary>Item id to the effective limit of every good its level's store holds; empty without a store (CR-0008).</summary>
+        public Dictionary<string, long> StoreLimits { get; }
+
+        /// <summary>Item id to what its waiting project still needs; empty without one (CR-0008).</summary>
+        public Dictionary<string, long> Needs { get; }
+
+        /// <summary>The project waiting for goods: <c>Construction</c>, <c>Upgrade</c> or <c>null</c> (CR-0008).</summary>
+        [JsonProperty(Required = Required.AllowNull)]
+        public string? Project { get; }
     }
 }

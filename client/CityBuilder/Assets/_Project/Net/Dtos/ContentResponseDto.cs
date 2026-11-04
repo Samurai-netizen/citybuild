@@ -11,7 +11,7 @@ namespace CityBuilder.Client.Net
     {
         /// <summary>Creates the DTO. Newtonsoft calls this constructor with the JSON members of the same names, so the object is never half filled.</summary>
         [JsonConstructor]
-        public ContentResponseDto(string contentVersion, ContentRulesDto rules, ContentStartingCityDto startingCity, List<ContentEraDto> eras, List<ContentItemDto> items, List<ContentBuildingDto> buildings, List<ContentResearchDto> research, List<ContentRoadLevelDto> roads)
+        public ContentResponseDto(string contentVersion, ContentRulesDto rules, ContentStartingCityDto startingCity, List<ContentEraDto> eras, List<ContentItemDto> items, List<ContentBuildingDto> buildings, List<ContentResearchDto> research, List<ContentRoadLevelDto> roads, List<ContentAmountPresetDto> amountPresets)
         {
             ContentVersion = contentVersion;
             Rules = rules;
@@ -21,6 +21,7 @@ namespace CityBuilder.Client.Net
             Buildings = buildings;
             Research = research;
             Roads = roads;
+            AmountPresets = amountPresets;
         }
 
         /// <summary>The version of the numbers.</summary>
@@ -46,5 +47,8 @@ namespace CityBuilder.Client.Net
 
         /// <summary>The road levels, by level.</summary>
         public List<ContentRoadLevelDto> Roads { get; }
+
+        /// <summary>The amount presets, by id (CR-0008).</summary>
+        public List<ContentAmountPresetDto> AmountPresets { get; }
     }
 }
