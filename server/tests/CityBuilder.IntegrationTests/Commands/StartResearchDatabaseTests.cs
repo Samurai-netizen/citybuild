@@ -41,7 +41,7 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
     [Fact]
     public async Task Post_SharpAxes_PaysTheCostAndRunsTheResearch()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1));
         long versionBefore = (await LoadAsync(Factory, player)).StateVersion;
 
         ApiResponse response = await StartAsync(player, _requestId, "sharp_axes");
@@ -69,7 +69,7 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
     [Fact]
     public async Task Post_TradeCharter_MakesTheTradingPostPlaceableWhenItCompletes()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1));
         Assert.Equal(HttpStatusCode.OK, (await StartAsync(player, _requestId, "trade_charter")).Status);
 
         Factory.Clock.Advance(TimeSpan.FromSeconds(599));
@@ -97,7 +97,7 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
     public async Task Post_SharpAxes_ShortensTheNextWoodcutterCycleWhenItCompletes()
     {
         (Guid player, Guid city) = await StoreCityAsync(
-            Factory, "researcher", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Producing, workers: 2));
+            Factory, "researcher", 1000, House(1), Woodcutter(2, BuildingPhase.Producing, workers: 2));
         Factory.Clock.Advance(TimeSpan.FromSeconds(10));
         Assert.Equal(HttpStatusCode.OK, (await StartAsync(player, _requestId, "sharp_axes")).Status);
 
@@ -121,7 +121,7 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
     [Fact]
     public async Task Post_AfterItsPrerequisite_PaysEveryItemAndRaisesTheCapsWhenItCompletes()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1));
         await StartAsync(player, Guid.CreateVersion7(), "trade_charter");
         Factory.Clock.Advance(TimeSpan.FromSeconds(600));
 
@@ -147,7 +147,7 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
     [Fact]
     public async Task Post_UnknownNode_Is422UnknownResearch()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1));
 
         await AssertRefusedAsync(player, city, "no_such_research", (HttpStatusCode)422, "UNKNOWN_RESEARCH");
     }
@@ -162,7 +162,7 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
     [InlineData("storehouses")]
     public async Task Post_PrerequisiteMissing_Is422ResearchLocked(string researchId)
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1));
 
         await AssertRefusedAsync(player, city, researchId, (HttpStatusCode)422, "RESEARCH_LOCKED");
     }
@@ -174,7 +174,7 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
     [Fact]
     public async Task Post_WhileAResearchRuns_Is409ResearchInProgress()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1));
         await StartAsync(player, Guid.CreateVersion7(), "sharp_axes");
 
         await AssertRefusedAsync(player, city, "trade_charter", HttpStatusCode.Conflict, "RESEARCH_IN_PROGRESS");
@@ -189,7 +189,7 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
     [Fact]
     public async Task Post_CompletedNode_Is409ResearchCompleted()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1));
         await StartAsync(player, Guid.CreateVersion7(), "trade_charter");
         Factory.Clock.Advance(TimeSpan.FromSeconds(600));
         await ApiClient.GetAsync(Factory, "/api/v1/city", player);
@@ -212,7 +212,7 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
     [InlineData(1000, 49, "storehouses", true)]
     public async Task Post_CostNotCovered_Is422InsufficientResource(long coins, long logs, string researchId, bool afterTradeCharter)
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", coins, logs, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", coins, House(1));
         if (afterTradeCharter)
         {
             await StartAsync(player, Guid.CreateVersion7(), "trade_charter");
@@ -234,7 +234,7 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
     [InlineData("sharp_axes'; DROP TABLE cities; --")]
     public async Task Security_ResearchIdThatCantBeAContentId_Is400AndStoresNothing(string researchId)
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "attacker", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Producing, workers: 2));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "attacker", 1000, House(1), Woodcutter(2, BuildingPhase.Producing, workers: 2));
         Factory.Clock.Advance(TimeSpan.FromMinutes(5));
         string stored = await StoredAsync(Factory, Database, player, city);
 
@@ -251,7 +251,7 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
     [Fact]
     public async Task Security_PostWithADurationField_Is400AndStoresNothing()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "attacker", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Producing, workers: 2));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "attacker", 1000, House(1), Woodcutter(2, BuildingPhase.Producing, workers: 2));
         Factory.Clock.Advance(TimeSpan.FromMinutes(5));
         string stored = await StoredAsync(Factory, Database, player, city);
 
@@ -266,7 +266,7 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
     [Fact]
     public async Task Post_SameRequestAgain_ReturnsTheSameBytesAndWritesNothing()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1));
         ApiResponse first = await StartAsync(player, _requestId, "sharp_axes");
         string stored = await StoredAsync(Factory, Database, player, city);
         Factory.Clock.Advance(TimeSpan.FromMinutes(1));
@@ -282,7 +282,7 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
     [Fact]
     public async Task Post_SameRequestIdWithAnotherNode_Is409AndWritesNothing()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1));
         await StartAsync(player, _requestId, "sharp_axes");
         string stored = await StoredAsync(Factory, Database, player, city);
 
@@ -300,7 +300,7 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
     [Fact]
     public async Task Security_TwoStartsAtOnce_StartExactlyOneResearch()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1));
         (string Node, Guid RequestId, long Cost, long Seconds)[] starts =
             [("sharp_axes", Guid.CreateVersion7(), 250, 1800), ("trade_charter", Guid.CreateVersion7(), 150, 600)];
 

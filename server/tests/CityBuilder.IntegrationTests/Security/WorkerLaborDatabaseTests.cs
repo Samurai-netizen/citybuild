@@ -54,8 +54,6 @@ public sealed class WorkerLaborDatabaseTests(PostgresServer server) : PostgresTe
             Factory,
             "mover",
             1000,
-            0,
-            0,
             House(1),
             Woodcutter(2, BuildingPhase.Idle, workers: 0, level: 2),
             Woodcutter(3, BuildingPhase.Idle, workers: 0, x: 2, level: 2));

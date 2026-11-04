@@ -80,9 +80,10 @@ internal static class DatabaseCities
         new(cityId, playerId, CityFactory.CreateStarterCity(content), [], lastSettledUnixSec, 0, content.ContentVersion);
 
     /// <summary>
-    /// A working city at clock 0 on the server's content: a cottage (4 workers) with its workers on a woodcutter (2) and a sawmill (2), all
-    /// completed; <c>sharp_axes</c> done (−200 ‰ woodcutter labor); 1000 coins, 100 logs, 50 planks. The player starts the 1-hour research
-    /// <c>frame_saw</c> (400 coins, 30 planks; −200 ‰ sawmill labor) and the zero-length advance starts both producers, as a command would.
+    /// A working city at clock 0 on the server's content, restored as stored: a house (4 workers) with its workers on a woodcutter (2) and a
+    /// sawmill (2, its store full: 40 logs), and the scriptorium, all completed; <c>sharp_axes</c> done (−200 ‰ woodcutter labor); the 1-hour
+    /// research <c>frame_saw</c> (−200 ‰ sawmill labor) running from clock 0, its 400 coins paid (600 left) and its 30 planks delivered. The
+    /// zero-length advance starts both producers, as a command would. Without walkers the sawmill uses its own logs only (CR-0008).
     /// </summary>
     /// <param name="content">The server's content.</param>
     /// <param name="cityId">The city's id.</param>
@@ -95,20 +96,41 @@ internal static class DatabaseCities
         [
             new(1, new BuildingTypeId("house"), 0, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
             new(2, new BuildingTypeId("woodcutter"), 1, 0, 1, 2, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
-            new(3, new BuildingTypeId("sawmill"), 2, 0, 1, 2, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
+            new(3, new BuildingTypeId("sawmill"), 2, 0, 1, 2, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, [new(new ItemId("logs"), 40)]),
+            new(4, new BuildingTypeId("scriptorium"), 3, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
         ];
-        var state = new CityState(
-            0,
-            era: 1,
-            nextBuildingId: 4,
-            [new(new ItemId("coins"), 1000), new(new ItemId("logs"), 100), new(new ItemId("planks"), 50)],
-            buildings,
-            [SharpAxes],
-            activeResearch: null);
-        MutationResult started = CityRules.StartResearch(state, content, FrameSaw);
-        Assert.True(started.IsOk, started.ToString());
+        var state = new CityState(0, era: 1, nextBuildingId: 5, purse: 600, buildings, [SharpAxes], new ActiveResearch(FrameSaw, 0, 3600));
         Simulator.Advance(state, content, 0);
         return new CityAggregate(cityId, playerId, state, [new(SharpAxes, 0)], lastSettledUnixSec, 0, content.ContentVersion);
+    }
+
+    /// <summary>
+    /// The stored totals of a city by item id, read by a context of the test's own (CR-0008): its <c>city_stores</c> rows summed per good, the
+    /// loads of its <c>city_trips</c>, and its purse for the currency, <paramref name="currency"/>.
+    /// </summary>
+    /// <param name="database">The test's database.</param>
+    /// <param name="cityId">The city.</param>
+    /// <param name="currency">The content's currency.</param>
+    /// <returns>Each item's stored total; an item it has none of is missing or 0.</returns>
+    public static async Task<Dictionary<string, long>> StoredTotalsAsync(TestDatabase database, Guid cityId, ItemId currency)
+    {
+        await using CityBuilderDbContext db = database.CreateContext();
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        var totals = new Dictionary<string, long>(StringComparer.Ordinal)
+        {
+            [currency.Value] = (await db.Cities.AsNoTracking().SingleAsync(row => row.Id == cityId, cancellationToken)).Purse,
+        };
+        foreach (CityStoreRow row in await db.CityStores.AsNoTracking().Where(row => row.CityId == cityId).ToListAsync(cancellationToken))
+        {
+            totals[row.ItemId] = totals.GetValueOrDefault(row.ItemId) + row.Quantity;
+        }
+
+        foreach (CityTripRow row in await db.CityTrips.AsNoTracking().Where(row => row.CityId == cityId).ToListAsync(cancellationToken))
+        {
+            totals[row.ItemId] = totals.GetValueOrDefault(row.ItemId) + row.Quantity;
+        }
+
+        return totals;
     }
 
     /// <summary>The stored ledger rows of a city, in the order they were written, read by a context of the test's own.</summary>

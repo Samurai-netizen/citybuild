@@ -40,7 +40,7 @@ public sealed class AssignWorkersDatabaseTests(PostgresServer server) : Postgres
     [Fact]
     public async Task Post_IdleWoodcutter_StartsProducingInTheSameResponse()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "assigner", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "assigner", 1000, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
         long versionBefore = (await LoadAsync(Factory, player)).StateVersion;
 
         ApiResponse response = await AssignAsync(player, _requestId, 2, 2);
@@ -70,7 +70,7 @@ public sealed class AssignWorkersDatabaseTests(PostgresServer server) : Postgres
     public async Task Post_ReassignMidCycle_KeepsTheProgress()
     {
         (Guid player, Guid city) = await StoreCityAsync(
-            Factory, "assigner", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Producing, workers: 1, level: 2));
+            Factory, "assigner", 1000, House(1), Woodcutter(2, BuildingPhase.Producing, workers: 1, level: 2));
 
         Factory.Clock.Advance(TimeSpan.FromSeconds(20));
         JsonNode twoWorkers = (await AssignAsync(player, Guid.CreateVersion7(), 2, 2)).Json();
@@ -94,7 +94,7 @@ public sealed class AssignWorkersDatabaseTests(PostgresServer server) : Postgres
     [Fact]
     public async Task Post_ZeroWorkers_FreezesAndAssigningAgainResumes()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "assigner", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Producing, workers: 2));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "assigner", 1000, House(1), Woodcutter(2, BuildingPhase.Producing, workers: 2));
 
         Factory.Clock.Advance(TimeSpan.FromSeconds(10));
         JsonNode frozen = (await AssignAsync(player, Guid.CreateVersion7(), 2, 0)).Json();
@@ -126,8 +126,6 @@ public sealed class AssignWorkersDatabaseTests(PostgresServer server) : Postgres
             Factory,
             "assigner",
             1000,
-            100,
-            50,
             House(1),
             Woodcutter(2, BuildingPhase.Producing, workers: 2, level: 2),
             Woodcutter(3, BuildingPhase.Producing, workers: 1, x: 2, level: 2));
@@ -152,7 +150,7 @@ public sealed class AssignWorkersDatabaseTests(PostgresServer server) : Postgres
     public async Task Post_AboveTheLevelsMax_Is422WorkerLimit(int level, int workers)
     {
         (Guid player, Guid city) = await StoreCityAsync(
-            Factory, "assigner", 1000, 100, 50, House(1), House(2, x: 1), Woodcutter(3, BuildingPhase.Idle, workers: 0, x: 2, level: level));
+            Factory, "assigner", 1000, House(1), House(2, x: 1), Woodcutter(3, BuildingPhase.Idle, workers: 0, x: 2, level: level));
 
         await AssertRefusedAsync(player, city, 3, workers, (HttpStatusCode)422, "WORKER_LIMIT");
     }
@@ -161,7 +159,7 @@ public sealed class AssignWorkersDatabaseTests(PostgresServer server) : Postgres
     [Fact]
     public async Task Post_House_Is400InvalidArgument()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "assigner", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "assigner", 1000, House(1));
 
         await AssertRefusedAsync(player, city, 1, 1, HttpStatusCode.BadRequest, "INVALID_ARGUMENT");
     }
@@ -174,7 +172,7 @@ public sealed class AssignWorkersDatabaseTests(PostgresServer server) : Postgres
     [Fact]
     public async Task Post_Constructing_Is409BuildingBusyUntilTheSettleCompletesIt()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "assigner", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Constructing, workers: 0));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "assigner", 1000, House(1), Woodcutter(2, BuildingPhase.Constructing, workers: 0));
 
         await AssertRefusedAsync(player, city, 2, 1, HttpStatusCode.Conflict, "BUILDING_BUSY");
         Factory.Clock.Advance(TimeSpan.FromSeconds(60));
@@ -193,7 +191,7 @@ public sealed class AssignWorkersDatabaseTests(PostgresServer server) : Postgres
     [Fact]
     public async Task Post_Upgrading_IsAllowedUpToTheCurrentLevelsMax()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "assigner", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Upgrading, workers: 2));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "assigner", 1000, House(1), Woodcutter(2, BuildingPhase.Upgrading, workers: 2));
 
         Factory.Clock.Advance(TimeSpan.FromSeconds(10));
         ApiResponse one = await AssignAsync(player, Guid.CreateVersion7(), 2, 1);
@@ -218,8 +216,8 @@ public sealed class AssignWorkersDatabaseTests(PostgresServer server) : Postgres
     public async Task Security_AnotherPlayersBuildingId_Is404AndTouchesNeitherCity()
     {
         (Guid owner, Guid ownerCity) = await StoreCityAsync(
-            Factory, "owner", 1000, 100, 50, House(1), House(2, x: 1), Woodcutter(3, BuildingPhase.Idle, workers: 0, x: 2));
-        (Guid attacker, Guid attackerCity) = await StoreCityAsync(Factory, "attacker", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
+            Factory, "owner", 1000, House(1), House(2, x: 1), Woodcutter(3, BuildingPhase.Idle, workers: 0, x: 2));
+        (Guid attacker, Guid attackerCity) = await StoreCityAsync(Factory, "attacker", 1000, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
         string ownerStored = await StoredAsync(Factory, Database, owner, ownerCity);
 
         await AssertRefusedAsync(attacker, attackerCity, 3, 1, HttpStatusCode.NotFound, "BUILDING_NOT_FOUND");
@@ -241,7 +239,7 @@ public sealed class AssignWorkersDatabaseTests(PostgresServer server) : Postgres
     [InlineData(2, int.MinValue)]
     public async Task Security_IdBelowOneOrNegativeWorkers_Is400AndStoresNothing(int buildingId, int workers)
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "attacker", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Producing, workers: 2));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "attacker", 1000, House(1), Woodcutter(2, BuildingPhase.Producing, workers: 2));
         Factory.Clock.Advance(TimeSpan.FromMinutes(5));
         string stored = await StoredAsync(Factory, Database, player, city);
 
@@ -258,7 +256,7 @@ public sealed class AssignWorkersDatabaseTests(PostgresServer server) : Postgres
     [Fact]
     public async Task Security_PostWithAFreeWorkersField_Is400AndStoresNothing()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "attacker", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "attacker", 1000, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
         Factory.Clock.Advance(TimeSpan.FromMinutes(5));
         string stored = await StoredAsync(Factory, Database, player, city);
 
@@ -273,7 +271,7 @@ public sealed class AssignWorkersDatabaseTests(PostgresServer server) : Postgres
     [Fact]
     public async Task Post_SameRequestAgain_ReturnsTheSameBytesAndWritesNothing()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "assigner", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "assigner", 1000, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
         ApiResponse first = await AssignAsync(player, _requestId, 2, 2);
         string stored = await StoredAsync(Factory, Database, player, city);
         Factory.Clock.Advance(TimeSpan.FromMinutes(1));
@@ -289,7 +287,7 @@ public sealed class AssignWorkersDatabaseTests(PostgresServer server) : Postgres
     [Fact]
     public async Task Post_SameRequestIdWithAnotherCount_Is409AndWritesNothing()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "assigner", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "assigner", 1000, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
         await AssignAsync(player, _requestId, 2, 2);
         string stored = await StoredAsync(Factory, Database, player, city);
 
@@ -308,7 +306,7 @@ public sealed class AssignWorkersDatabaseTests(PostgresServer server) : Postgres
     [Fact]
     public async Task Post_SameCountTwice_SucceedsAndMovesNothingAPlayerSees()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "assigner", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "assigner", 1000, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
         JsonNode first = (await AssignAsync(player, Guid.CreateVersion7(), 2, 2)).Json();
         Factory.Clock.Advance(TimeSpan.FromSeconds(10));
 
@@ -342,8 +340,6 @@ public sealed class AssignWorkersDatabaseTests(PostgresServer server) : Postgres
             Factory,
             "assigner",
             1000,
-            100,
-            50,
             House(1),
             Woodcutter(2, BuildingPhase.Idle, workers: 0, level: 2),
             Woodcutter(3, BuildingPhase.Idle, workers: 0, x: 2, level: 2));

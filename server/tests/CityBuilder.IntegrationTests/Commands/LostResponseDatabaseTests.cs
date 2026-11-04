@@ -40,7 +40,7 @@ public sealed class LostResponseDatabaseTests(PostgresServer server) : PostgresT
     [Fact]
     public async Task PlaceBuilding_ResponseLost_TheRetryGetsTheSameBytesAndOneBuilding()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "builder", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "builder", 1000, House(1));
 
         await LoseTheResponseAndRetryAsync(player, city, _placePath, PlaceSawmill);
 
@@ -54,7 +54,7 @@ public sealed class LostResponseDatabaseTests(PostgresServer server) : PostgresT
     [Fact]
     public async Task StartResearch_ResponseLost_TheRetryGetsTheSameBytesAndOneCost()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1));
 
         await LoseTheResponseAndRetryAsync(player, city, "/api/v1/commands/start-research", $$"""{"requestId":"{{_requestId}}","researchId":"sharp_axes"}""");
 
@@ -68,7 +68,7 @@ public sealed class LostResponseDatabaseTests(PostgresServer server) : PostgresT
     [Fact]
     public async Task AssignWorkers_ResponseLost_TheRetryGetsTheSameBytesAndOneAssignment()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "assigner", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "assigner", 1000, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
 
         await LoseTheResponseAndRetryAsync(player, city, "/api/v1/commands/assign-workers", $$"""{"requestId":"{{_requestId}}","buildingId":2,"workers":2}""");
 
@@ -86,7 +86,7 @@ public sealed class LostResponseDatabaseTests(PostgresServer server) : PostgresT
     [Fact]
     public async Task PlaceBuilding_ClientHangsUpBeforeTheAnswer_TheRetryEndsWithOneBuilding()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "builder", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "builder", 1000, House(1));
         var locked = new TaskCompletionSource();
         var release = new TaskCompletionSource();
         await using WebApplicationFactory<Program> patient = WithLockTimeout(Factory, 30_000);

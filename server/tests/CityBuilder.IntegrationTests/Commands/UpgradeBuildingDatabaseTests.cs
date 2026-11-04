@@ -41,7 +41,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     [Fact]
     public async Task Post_IdleWoodcutter_PaysStartsTheUpgradeAndStoresTheReceipt()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
         long versionBefore = (await LoadAsync(Factory, player)).StateVersion;
 
         ApiResponse response = await UpgradeAsync(player, _requestId, 2);
@@ -73,7 +73,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     [Fact]
     public async Task Post_ProducingSawmill_RefundsItsInputsAboveTheCapThenPays()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, 500, 50, House(1), Sawmill(2));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, House(1), Sawmill(2));
 
         ApiResponse response = await UpgradeAsync(player, _requestId, 2);
 
@@ -101,7 +101,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     [Fact]
     public async Task Post_StaffedWoodcutter_KeepsItsWorkersAndHasTheHigherMaxAfter()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Producing, workers: 2));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, House(1), Woodcutter(2, BuildingPhase.Producing, workers: 2));
         Factory.Clock.Advance(TimeSpan.FromSeconds(10));
         Assert.Equal(HttpStatusCode.OK, (await UpgradeAsync(player, _requestId, 2)).Status);
         Factory.Clock.Advance(TimeSpan.FromSeconds(50));
@@ -132,7 +132,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     [Fact]
     public async Task Post_House_RaisesTheWorkersProvidedWhenTheUpgradeCompletes()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, House(1));
 
         JsonNode started = (await UpgradeAsync(player, _requestId, 1)).Json();
         Factory.Clock.Advance(TimeSpan.FromSeconds(89));
@@ -154,7 +154,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     [InlineData(int.MaxValue)]
     public async Task Post_IdNotInTheCity_Is404AndStoresNothing(int buildingId)
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
 
         await AssertRefusedAsync(player, city, buildingId, HttpStatusCode.NotFound, "BUILDING_NOT_FOUND");
     }
@@ -170,7 +170,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     [InlineData(int.MinValue)]
     public async Task Security_BuildingIdBelowOne_Is400AndStoresNothing(int buildingId)
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "attacker", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "attacker", 1000, House(1));
         Factory.Clock.Advance(TimeSpan.FromMinutes(5));
         string stored = await StoredAsync(Factory, Database, player, city);
 
@@ -188,8 +188,8 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     [Fact]
     public async Task Security_AnotherPlayersBuildingId_Is404AndTouchesNeitherCity()
     {
-        (Guid owner, Guid ownerCity) = await StoreCityAsync(Factory, "owner", 1000, 100, 50, House(1), House(2, x: 1), Woodcutter(3, BuildingPhase.Idle, workers: 0));
-        (Guid attacker, Guid attackerCity) = await StoreCityAsync(Factory, "attacker", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
+        (Guid owner, Guid ownerCity) = await StoreCityAsync(Factory, "owner", 1000, House(1), House(2, x: 1), Woodcutter(3, BuildingPhase.Idle, workers: 0));
+        (Guid attacker, Guid attackerCity) = await StoreCityAsync(Factory, "attacker", 1000, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
         string ownerStored = await StoredAsync(Factory, Database, owner, ownerCity);
 
         await AssertRefusedAsync(attacker, attackerCity, 3, HttpStatusCode.NotFound, "BUILDING_NOT_FOUND");
@@ -206,7 +206,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     [Fact]
     public async Task Post_WhileConstructing_IsBusyUntilTheSettleCompletesTheConstruction()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Constructing, workers: 0));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, House(1), Woodcutter(2, BuildingPhase.Constructing, workers: 0));
         Factory.Clock.Advance(TimeSpan.FromSeconds(59));
 
         ApiResponse tooEarly = await UpgradeAsync(player, Guid.CreateVersion7(), 2);
@@ -225,7 +225,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     [Fact]
     public async Task Post_WhileUpgrading_Is409BuildingBusyAndStoresNothing()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, House(1));
         Assert.Equal(HttpStatusCode.OK, (await UpgradeAsync(player, Guid.CreateVersion7(), 1)).Status);
 
         await AssertRefusedAsync(player, city, 1, HttpStatusCode.Conflict, "BUILDING_BUSY");
@@ -235,7 +235,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     [Fact]
     public async Task Post_AtMaxLevel_Is422MaxLevelAndStoresNothing()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, 100, 50, House(1, level: 2));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, House(1, level: 2));
 
         await AssertRefusedAsync(player, city, 1, HttpStatusCode.UnprocessableEntity, "MAX_LEVEL");
     }
@@ -245,7 +245,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     public async Task Post_EveryBuilderBusy_Is409NoFreeBuilderAndStoresNothing()
     {
         (Guid player, Guid city) = await StoreCityAsync(
-            Factory, "upgrader", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Constructing, workers: 0), Woodcutter(3, BuildingPhase.Constructing, workers: 0, x: 2));
+            Factory, "upgrader", 1000, House(1), Woodcutter(2, BuildingPhase.Constructing, workers: 0), Woodcutter(3, BuildingPhase.Constructing, workers: 0, x: 2));
 
         await AssertRefusedAsync(player, city, 1, HttpStatusCode.Conflict, "NO_FREE_BUILDER");
     }
@@ -258,7 +258,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     [Fact]
     public async Task Post_CostCoveredOnlyWithTheRefund_Is422InsufficientResourceAndStoresNothing()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, 100, 38, House(1), TradingPost(2));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, House(1), TradingPost(2));
 
         await AssertRefusedAsync(player, city, 2, HttpStatusCode.UnprocessableEntity, "INSUFFICIENT_RESOURCE");
         Assert.Equal("2 trading_post L1 Producing 0-60 target 0 workers 2", await BuildingAsync(Database, city, 2));
@@ -271,7 +271,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     [Fact]
     public async Task Post_CostCoveredByTheStock_RefundsThenPays()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, 100, 40, House(1), TradingPost(2));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, House(1), TradingPost(2));
 
         ApiResponse response = await UpgradeAsync(player, _requestId, 2);
 
@@ -293,7 +293,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     [Fact]
     public async Task Post_SameRequestAgain_ReturnsTheSameBytesAndWritesNothing()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, House(1));
         ApiResponse first = await UpgradeAsync(player, _requestId, 1);
         string stored = await StoredAsync(Factory, Database, player, city);
         Factory.Clock.Advance(TimeSpan.FromMinutes(1));
@@ -309,7 +309,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     [Fact]
     public async Task Post_SameRequestIdOnAnotherBuilding_Is409AndWritesNothing()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
         await UpgradeAsync(player, _requestId, 1);
         string stored = await StoredAsync(Factory, Database, player, city);
 
@@ -326,7 +326,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     [Fact]
     public async Task Post_TenIdenticalRequestsAtOnce_UpgradeOnce()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, House(1));
 
         ApiResponse[] responses = await Task.WhenAll(Enumerable.Range(0, 10).Select(_ => UpgradeAsync(player, _requestId, 1)));
 
@@ -345,7 +345,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     public async Task Post_TwoUpgradesAtOnceWithOneFreeBuilder_ExactlyOneStarts()
     {
         (Guid player, Guid city) = await StoreCityAsync(
-            Factory, "upgrader", 1000, 100, 50, House(1), House(2, x: 1), Woodcutter(3, BuildingPhase.Constructing, workers: 0, x: 2));
+            Factory, "upgrader", 1000, House(1), House(2, x: 1), Woodcutter(3, BuildingPhase.Constructing, workers: 0, x: 2));
 
         ApiResponse[] responses = await Task.WhenAll(UpgradeAsync(player, Guid.CreateVersion7(), 1), UpgradeAsync(player, Guid.CreateVersion7(), 2));
 
@@ -364,7 +364,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     [Fact]
     public async Task Security_PostWithALevelField_Is400AndStoresNothing()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, House(1));
         Factory.Clock.Advance(TimeSpan.FromMinutes(5));
         string stored = await StoredAsync(Factory, Database, player, city);
 

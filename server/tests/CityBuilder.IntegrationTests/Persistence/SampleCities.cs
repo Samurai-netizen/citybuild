@@ -37,40 +37,48 @@ internal static class SampleCities
     /// <summary>The id of the producing building whose cycle started at clock 0 in <see cref="Full"/>.</summary>
     public const int StartedAtZeroId = 6;
 
+    /// <summary>The id of the construction site (constructing without a timer, waiting for goods; CR-0008) in <see cref="Full"/>.</summary>
+    public const int SiteId = 8;
+
     /// <summary>
-    /// A city in era 2 with something in every field: stock of two items, a building in each phase (constructing, upgrading, idle, producing,
-    /// a frozen cycle with a null end, a cycle started at clock 0), the research <c>masonry</c> completed at clock 120 and <c>forestry</c>
-    /// running, roads at (2, 1) level 1, (3, 1) level 2 and (4, 0) level 1 (given out of order), the next building id above the highest one,
-    /// state version 7.
+    /// A city in era 2 with something in every field: 250 coins in the purse, goods in three stores, a building in each phase (constructing,
+    /// upgrading, idle with an upgrade waiting for planks, producing, a frozen cycle with a null end, a cycle started at clock 0, a construction
+    /// site waiting for logs), the research <c>masonry</c> completed at clock 120 and <c>forestry</c> running, roads at (2, 1) level 1, (3, 1)
+    /// level 2 and (4, 0) level 1 (given out of order), trip 1 carrying 2 logs (the next trip id 3: trip 2 has arrived), the next building id
+    /// above the highest one, state version 7.
     /// </summary>
     public static CityAggregate Full()
     {
         Building[] buildings =
         [
             new(ConstructingId, new BuildingTypeId("cottage"), 0, 0, 1, 0, BuildingPhase.Constructing, 400, 700, 0, 0, 0, 0),
-            new(UpgradingId, new BuildingTypeId("woodcutter"), 1, 0, 1, 1, BuildingPhase.Upgrading, 200, 500, 2, 0, 0, 0),
-            new(IdleId, new BuildingTypeId("sawmill"), 2, 0, 2, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
-            new(ProducingId, new BuildingTypeId("woodcutter"), 3, 0, 1, 2, BuildingPhase.Producing, 300, 440, 0, 120, 80, 400),
+            new(UpgradingId, new BuildingTypeId("woodcutter"), 1, 0, 1, 1, BuildingPhase.Upgrading, 200, 500, 2, 0, 0, 0, Goods(("logs", 3))),
+            new(IdleId, new BuildingTypeId("sawmill"), 2, 0, 2, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, Goods(("logs", 2)), Goods(("planks", 5))),
+            new(ProducingId, new BuildingTypeId("woodcutter"), 3, 0, 1, 2, BuildingPhase.Producing, 300, 440, 0, 120, 80, 400, Goods(("logs", 7))),
             new(FrozenId, new BuildingTypeId("quarry"), 0, 1, 1, 0, BuildingPhase.Producing, 350, null, 0, 60, 60, 350),
             new(StartedAtZeroId, new BuildingTypeId("farm"), 1, 1, 1, 1, BuildingPhase.Producing, 0, 600, 0, 600, 600, 0),
+            new(SiteId, new BuildingTypeId("sawmill"), 2, 2, 1, 0, BuildingPhase.Constructing, 0, null, 0, 0, 0, 0, null, Goods(("logs", 10))),
         ];
         var state = new CityState(
             Clock,
             era: 2,
             nextBuildingId: 9,
-            [new(new ItemId("coins"), 250), new(new ItemId("logs"), 7)],
+            purse: 250,
             buildings,
             [new ResearchId("masonry")],
             new ActiveResearch(new ResearchId("forestry"), 300, 86_700),
-            [new RoadTile(4, 0, 1), new RoadTile(2, 1, 1), new RoadTile(3, 1, 2)]);
+            [new RoadTile(4, 0, 1), new RoadTile(2, 1, 1), new RoadTile(3, 1, 2)],
+            [new Trip(1, ProducingId, IdleId, new ItemId("logs"), 2, 410, 430)],
+            nextTripId: 3);
 
         return new CityAggregate(CityId, PlayerId, state, [new(new ResearchId("masonry"), 120)], 1_790_000_000, 7, "content-1");
     }
 
     /// <summary>
-    /// <see cref="Full"/> later, at clock 90 000: coins spent, logs used up, planks new; the producing building finished its cycle, the idle one
-    /// is gone and a new one (id 7) is under construction on the tile of the road at (2, 1), which was removed; the road at (3, 1) is gone, the
-    /// one at (4, 0) is at level 2, and a new one lies at (5, 5); <c>forestry</c> completed at its end. Ids as in <see cref="Full"/>.
+    /// <see cref="Full"/> later, at clock 90 000: 240 coins; the producing building finished its cycle and its logs went (its store row stays,
+    /// at 0), the idle one is gone and a new one (id 7) is under construction on the tile of the road at (2, 1), which was removed; the site got
+    /// 6 of its logs and holds a plank; trip 1 has arrived; the road at (3, 1) is gone, the one at (4, 0) is at level 2, and a new one lies at
+    /// (5, 5); <c>forestry</c> completed at its end and <c>carpentry</c> waits for 4 planks. Ids as in <see cref="Full"/>.
     /// </summary>
     /// <param name="stateVersion">The version the city was loaded with; <see cref="Full"/>'s 7 by default.</param>
     public static CityAggregate Later(long stateVersion = 7)
@@ -78,19 +86,21 @@ internal static class SampleCities
         CityAggregate full = Full();
         Building[] buildings =
         [
-            .. full.State.Buildings.Where(building => building.Id is not (IdleId or ProducingId)),
+            .. full.State.Buildings.Where(building => building.Id is not (IdleId or ProducingId or SiteId)).Select(CityCopy),
             new(ProducingId, new BuildingTypeId("woodcutter"), 3, 0, 1, 2, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
             new(7, new BuildingTypeId("cottage"), 2, 1, 1, 0, BuildingPhase.Constructing, 89_000, 89_900, 0, 0, 0, 0),
+            new(SiteId, new BuildingTypeId("sawmill"), 2, 2, 1, 0, BuildingPhase.Constructing, 0, null, 0, 0, 0, 0, Goods(("planks", 1)), Goods(("logs", 4))),
         ];
         var state = new CityState(
             90_000,
             full.State.Era,
             full.State.NextBuildingId,
-            [new(new ItemId("coins"), 240), new(new ItemId("planks"), 3)],
+            purse: 240,
             buildings,
             [new ResearchId("masonry"), new ResearchId("forestry")],
-            activeResearch: null,
-            [new RoadTile(4, 0, 2), new RoadTile(5, 5, 1)]);
+            new ActiveResearch(new ResearchId("carpentry"), null, null, Goods(("planks", 4))),
+            [new RoadTile(4, 0, 2), new RoadTile(5, 5, 1)],
+            nextTripId: 3);
         KeyValuePair<ResearchId, long>[] completedAt = [new(new ResearchId("masonry"), 120), new(new ResearchId("forestry"), 86_700)];
 
         return new CityAggregate(full.CityId, full.PlayerId, state, completedAt, full.LastSettledUnixSec, stateVersion, full.ContentVersion);
@@ -99,8 +109,8 @@ internal static class SampleCities
     /// <summary>
     /// A city whose times, labor and quantities are all beyond 32 bits (above <see cref="int.MaxValue"/>), so only <c>bigint</c> columns keep
     /// them: city clock 5 000 000 420, a constructing building, a producing one with a cycle of 5 000 000 000 worker-seconds, a frozen one,
-    /// 9 000 000 000 coins, <c>masonry</c> completed at 4 999 999 000 and <c>forestry</c> running, last settled at 3 000 000 000 (a server
-    /// second in 2065). Ids as in <see cref="Full"/>.
+    /// 9 000 000 000 coins, 2 200 000 000 logs in the producer's store, <c>masonry</c> completed at 4 999 999 000 and <c>forestry</c> running,
+    /// last settled at 3 000 000 000 (a server second in 2065). Ids as in <see cref="Full"/>.
     /// </summary>
     public static CityAggregate BeyondThirtyTwoBits()
     {
@@ -109,7 +119,7 @@ internal static class SampleCities
         [
             new(ConstructingId, new BuildingTypeId("cottage"), 0, 0, 1, 0, BuildingPhase.Constructing, clock - 20, clock + 3_000_000_000, 0, 0, 0, 0),
             new(ProducingId, new BuildingTypeId("woodcutter"), 3, 0, 1, 2, BuildingPhase.Producing, clock - 100, clock - 20 + 2_000_000_000, 0,
-                5_000_000_000, 4_000_000_000, clock - 20),
+                5_000_000_000, 4_000_000_000, clock - 20, Goods(("logs", 2_200_000_000))),
             new(FrozenId, new BuildingTypeId("quarry"), 0, 1, 1, 0, BuildingPhase.Producing, clock - 50, null, 0, 4_500_000_000, 4_400_000_000,
                 clock - 50),
         ];
@@ -117,7 +127,7 @@ internal static class SampleCities
             clock,
             era: 2,
             nextBuildingId: 9,
-            [new(new ItemId("coins"), 9_000_000_000), new(new ItemId("logs"), 2_200_000_000)],
+            purse: 9_000_000_000,
             buildings,
             [new ResearchId("masonry")],
             new ActiveResearch(new ResearchId("forestry"), clock - 300, clock + 2_500_000_000));
@@ -131,10 +141,10 @@ internal static class SampleCities
     public static CityAggregate Saved(CityAggregate city) =>
         new(city.CityId, city.PlayerId, city.State, city.ResearchCompletedAt, city.LastSettledUnixSec, city.StateVersion + 1, city.ContentVersion);
 
-    /// <summary>A new city: clock 0, era 1, no stock, buildings or research, state version 0.</summary>
+    /// <summary>A new city: clock 0, era 1, no coins, buildings or research, state version 0.</summary>
     public static CityAggregate Empty()
     {
-        var state = new CityState(0, 1, 1, [], [], [], activeResearch: null);
+        var state = new CityState(0, 1, 1, 0, [], [], activeResearch: null);
         return new CityAggregate(CityId, PlayerId, state, [], 1_790_000_000, 0, "content-1");
     }
 
@@ -147,19 +157,40 @@ internal static class SampleCities
         IEnumerable<string> lines =
         [
             $"city {city.CityId} player {city.PlayerId} settled {city.LastSettledUnixSec} version {city.StateVersion} content {city.ContentVersion}",
-            $"clock {state.Clock}, era {state.Era}, next id {state.NextBuildingId}",
-            "stock " + string.Join(", ", state.Inventory.Select(stock => $"{stock.Key}={stock.Value}")),
+            $"clock {state.Clock}, era {state.Era}, next id {state.NextBuildingId}, purse {state.Purse}, next trip {state.NextTripId}",
             "research done " + string.Join(", ", city.ResearchCompletedAt.Select(done => $"{done.Key}@{done.Value}")),
             "research done (state) " + string.Join(", ", state.CompletedResearch),
             state.ActiveResearch is null
                 ? "no active research"
-                : $"research {state.ActiveResearch.Id} {state.ActiveResearch.StartedAt}..{state.ActiveResearch.EndsAt}",
+                : $"research {state.ActiveResearch.Id} {state.ActiveResearch.StartedAt}..{state.ActiveResearch.EndsAt} needs {Text(state.ActiveResearch.Needs)}",
             .. state.Buildings.Select(building =>
                 $"#{building.Id} {building.TypeId} ({building.X},{building.Y}) L{building.Level} w{building.AssignedWorkers} {building.Phase} " +
                 $"{building.PhaseStartedAt}..{building.PhaseEndsAt?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "frozen"} " +
-                $"target {building.TargetLevel} labor {building.CycleLabor}/{building.LaborRemaining} segment {building.SegmentStartedAt}"),
+                $"target {building.TargetLevel} labor {building.CycleLabor}/{building.LaborRemaining} segment {building.SegmentStartedAt} " +
+                $"store {Text(building.Store)} needs {Text(building.Needs)}"),
             "roads " + string.Join(", ", state.Roads.Select(road => $"({road.X},{road.Y}) L{road.Level}")),
+            "trips " + string.Join(", ", state.Trips.Select(trip =>
+                $"{trip.Id} {trip.SourceId}->{trip.TargetId} {trip.Item}={trip.Quantity} {trip.DepartedAt}..{trip.ArrivesAt}")),
         ];
         return string.Join("\n", lines);
     }
+
+    /// <summary>Goods and quantities as the engine's pairs, for a store or a project's needs.</summary>
+    /// <param name="goods">The goods.</param>
+    /// <returns>The pairs.</returns>
+    public static KeyValuePair<ItemId, long>[] Goods(params (string Item, long Quantity)[] goods) =>
+        [.. goods.Select(good => new KeyValuePair<ItemId, long>(new ItemId(good.Item), good.Quantity))];
+
+    /// <summary>Quantities as <c>item=quantity</c> joined by spaces, in their (ordinal) order.</summary>
+    /// <param name="amounts">The quantities.</param>
+    /// <returns>The text; empty for none.</returns>
+    private static string Text(IReadOnlyDictionary<ItemId, long> amounts) => string.Join(" ", amounts.Select(amount => $"{amount.Key}={amount.Value}"));
+
+    /// <summary>A new building object with the same values, so two cities never share one (the engine changes buildings in place).</summary>
+    /// <param name="building">The building.</param>
+    /// <returns>The copy.</returns>
+    private static Building CityCopy(Building building) => new(
+        building.Id, building.TypeId, building.X, building.Y, building.Level, building.AssignedWorkers, building.Phase, building.PhaseStartedAt,
+        building.PhaseEndsAt, building.TargetLevel, building.CycleLabor, building.LaborRemaining, building.SegmentStartedAt, building.Store.ToArray(),
+        building.Needs.ToArray());
 }

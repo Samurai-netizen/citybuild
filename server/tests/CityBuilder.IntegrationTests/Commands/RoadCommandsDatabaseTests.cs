@@ -47,7 +47,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
     [Fact]
     public async Task Post_PlaceThreeRoads_StoresTheRowsTheLedgerAndTheReceipt()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "builder", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "builder", 1000, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
 
         ApiResponse response = await PostAsync(_place, player, _requestId, """[{"x":4,"y":2},{"x":2,"y":2},{"x":3,"y":2}]""");
 
@@ -71,7 +71,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
     public async Task Post_UpgradeTwoRoads_RaisesTheStoredLevelsAndPays()
     {
         (Guid player, Guid city) = await StoreCityWithRoadsAsync(
-            Factory, "builder", 1000, 100, 50, [new RoadTile(2, 2, 1), new RoadTile(3, 2, 1), new RoadTile(4, 2, 2)], House(1));
+            Factory, "builder", 1000, [new RoadTile(2, 2, 1), new RoadTile(3, 2, 1), new RoadTile(4, 2, 2)], House(1));
 
         ApiResponse response = await PostAsync(_upgrade, player, _requestId, """[{"x":3,"y":2},{"x":2,"y":2}]""");
 
@@ -88,7 +88,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
     [Fact]
     public async Task Post_RemoveARoad_DeletesItsRowAndFreesTheTile()
     {
-        (Guid player, Guid city) = await StoreCityWithRoadsAsync(Factory, "builder", 1000, 100, 50, _twoRoads, House(1));
+        (Guid player, Guid city) = await StoreCityWithRoadsAsync(Factory, "builder", 1000, _twoRoads, House(1));
 
         ApiResponse response = await PostAsync(_remove, player, _requestId, """[{"x":4,"y":2}]""");
 
@@ -110,7 +110,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
     [Fact]
     public async Task Post_PlaceBuildingOnARoad_Is409TileOccupiedAndStoresNothing()
     {
-        (Guid player, Guid city) = await StoreCityWithRoadsAsync(Factory, "builder", 1000, 100, 50, _twoRoads, House(1));
+        (Guid player, Guid city) = await StoreCityWithRoadsAsync(Factory, "builder", 1000, _twoRoads, House(1));
         string stored = await StoredAsync(Factory, Database, player, city);
 
         ApiResponse response = await ApiClient.PostAsync(
@@ -143,7 +143,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
     public async Task Post_RuleRefuses_IsProblemAndStoresNothing(string path, string tiles, long coins, HttpStatusCode status, string code)
     {
         (Guid player, Guid city) = await StoreCityWithRoadsAsync(
-            Factory, "builder", coins, 100, 50, _twoRoads, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
+            Factory, "builder", coins, _twoRoads, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
         string stored = await StoredAsync(Factory, Database, player, city);
 
         ApiResponse response = await PostAsync(path, player, _requestId, tiles);
@@ -173,7 +173,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
     public async Task Security_TileListNoCityCouldTake_Is400AndStoresNothing(string path, string tiles)
     {
         (Guid player, Guid city) = await StoreCityWithRoadsAsync(
-            Factory, "attacker", 1000, 100, 50, _twoRoads, House(1), Woodcutter(2, BuildingPhase.Producing, workers: 2));
+            Factory, "attacker", 1000, _twoRoads, House(1), Woodcutter(2, BuildingPhase.Producing, workers: 2));
         Factory.Clock.Advance(TimeSpan.FromMinutes(5));
         string stored = await StoredAsync(Factory, Database, player, city);
 
@@ -190,7 +190,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
     [Fact]
     public async Task Security_UpgradeWithALevelField_Is400AndStoresNothing()
     {
-        (Guid player, Guid city) = await StoreCityWithRoadsAsync(Factory, "attacker", 1000, 100, 50, _twoRoads, House(1));
+        (Guid player, Guid city) = await StoreCityWithRoadsAsync(Factory, "attacker", 1000, _twoRoads, House(1));
         Factory.Clock.Advance(TimeSpan.FromMinutes(5));
         string stored = await StoredAsync(Factory, Database, player, city);
 
@@ -204,7 +204,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
     [Fact]
     public async Task Post_SameRequestAgain_ReturnsTheSameBytesAndWritesNothing()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "builder", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "builder", 1000, House(1));
         ApiResponse first = await PostAsync(_place, player, _requestId, """[{"x":5,"y":5}]""");
         string stored = await StoredAsync(Factory, Database, player, city);
         Factory.Clock.Advance(TimeSpan.FromMinutes(1));
@@ -220,7 +220,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
     [Fact]
     public async Task Post_SameRequestIdWithOtherTiles_Is409AndWritesNothing()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "builder", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "builder", 1000, House(1));
         await PostAsync(_place, player, _requestId, """[{"x":5,"y":5}]""");
         string stored = await StoredAsync(Factory, Database, player, city);
 
@@ -237,7 +237,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
     [Fact]
     public async Task Post_TwoIdenticalRequestsAtOnce_PayOnce()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "builder", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "builder", 1000, House(1));
 
         ApiResponse[] responses = await Task.WhenAll(
             PostAsync(_place, player, _requestId, """[{"x":5,"y":5}]"""), PostAsync(_place, player, _requestId, """[{"x":5,"y":5}]"""));
@@ -256,7 +256,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
     [Fact]
     public async Task Security_TwoRequestsForOneTileAtOnce_PlaceItOnce()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "builder", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "builder", 1000, House(1));
 
         ApiResponse[] responses = await Task.WhenAll(
             PostAsync(_place, player, Guid.CreateVersion7(), """[{"x":5,"y":5}]"""), PostAsync(_place, player, Guid.CreateVersion7(), """[{"x":5,"y":5}]"""));
@@ -276,8 +276,8 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
     [Fact]
     public async Task Security_AnotherPlayersRequestId_RunsForTheCallerOnly()
     {
-        (Guid owner, Guid ownerCity) = await StoreCityAsync(Factory, "owner", 1000, 100, 50, House(1));
-        (Guid other, Guid otherCity) = await StoreCityAsync(Factory, "other", 1000, 100, 50, House(1));
+        (Guid owner, Guid ownerCity) = await StoreCityAsync(Factory, "owner", 1000, House(1));
+        (Guid other, Guid otherCity) = await StoreCityAsync(Factory, "other", 1000, House(1));
         await PostAsync(_place, owner, _requestId, """[{"x":5,"y":5}]""");
         string ownerStored = await StoredAsync(Factory, Database, owner, ownerCity);
 
@@ -296,7 +296,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
     [Fact]
     public async Task Post_AfterTimePassed_SettlesBeforeThePlacement()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "builder", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Producing, workers: 2));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "builder", 1000, House(1), Woodcutter(2, BuildingPhase.Producing, workers: 2));
         Factory.Clock.Advance(TimeSpan.FromSeconds(30));
 
         ApiResponse response = await PostAsync(_place, player, _requestId, """[{"x":5,"y":5}]""");

@@ -4,6 +4,7 @@ using CityBuilder.Infrastructure.Persistence;
 using CityBuilder.Infrastructure.Persistence.Rows;
 using CityBuilder.IntegrationTests.Postgres;
 using CityBuilder.Simulation;
+using CityBuilder.Simulation.State;
 using CityBuilder.Simulation.Content;
 using Microsoft.EntityFrameworkCore;
 using static CityBuilder.IntegrationTests.Persistence.DatabaseCities;
@@ -12,7 +13,7 @@ namespace CityBuilder.IntegrationTests.Persistence;
 
 /// <summary>
 /// The settle use case end to end on PostgreSQL (<see cref="SettleCity"/> through the server's registrations, the server clock a
-/// <c>FakeTimeProvider</c>): what a settle stores in <c>cities</c>, <c>city_inventory</c>, <c>city_research</c> and <c>ledger_entries</c>.
+/// <c>FakeTimeProvider</c>): what a settle stores in <c>cities</c>, <c>city_stores</c>, <c>city_research</c> and <c>ledger_entries</c>.
 /// The cities are on the server's content and were last settled at <see cref="PostgresApiFactory.Start"/>, where the clock starts.
 /// </summary>
 /// <param name="server">The run's PostgreSQL server.</param>
@@ -63,7 +64,7 @@ public sealed class SettleCityDatabaseTests(PostgresServer server) : PostgresTes
         Assert.Equal((seconds, before.LastSettledUnix + seconds), (after.ClockSeconds, after.LastSettledUnix));
         Assert.Equal(saved, after.UpdatedAt != before.UpdatedAt);
         Assert.Empty(await LedgerAsync(Database, _cityId));
-        Assert.Equal(Describe(starter.State.Inventory), Describe(await InventoryAsync(_cityId)));
+        Assert.Equal(Describe(TotalsOf(starter.State)), Describe(await InventoryAsync(_cityId)));
     }
 
     /// <summary>
@@ -93,7 +94,7 @@ public sealed class SettleCityDatabaseTests(PostgresServer server) : PostgresTes
         Assert.Equal((30 * 3600L, null, null, null), (city.ClockSeconds, city.ResearchId, city.ResearchStartedAt, city.ResearchEndsAt));
         Assert.NotEmpty(away.Settlement.Produced);
         Assert.Equal(Totals(await LedgerAsync(Database, _otherCityId)), Totals(await LedgerAsync(Database, _cityId)));
-        Assert.Equal(Describe(afterCap.City.State.Inventory), Describe(away.City.State.Inventory));
+        Assert.Equal(Describe(TotalsOf(afterCap.City.State)), Describe(TotalsOf(away.City.State)));
     }
 
     /// <summary>
@@ -106,7 +107,7 @@ public sealed class SettleCityDatabaseTests(PostgresServer server) : PostgresTes
     {
         GameContent content = ContentOf(Factory);
         CityAggregate city = WithFrameSawRunning(content, _cityId, _playerId, PostgresApiFactory.Start.ToUnixTimeSeconds());
-        var start = city.State.Inventory.ToDictionary(stock => stock.Key.Value, stock => stock.Value);
+        var start = TotalsOf(city.State).ToDictionary(total => total.Key.Value, total => total.Value);
         await StoreAsync(Factory, new Player(_playerId, "settler"), city);
         var settlements = new List<Guid>();
 
@@ -117,7 +118,7 @@ public sealed class SettleCityDatabaseTests(PostgresServer server) : PostgresTes
         }
 
         List<LedgerEntryRow> ledger = await LedgerAsync(Database, _cityId);
-        var stored = (await InventoryAsync(_cityId)).ToDictionary(row => row.ItemId, row => row.Quantity);
+        Dictionary<string, long> stored = await InventoryAsync(_cityId);
         Assert.NotEmpty(ledger);
         foreach (IGrouping<string, LedgerEntryRow> item in ledger.GroupBy(row => row.ItemId))
         {
@@ -210,16 +211,10 @@ public sealed class SettleCityDatabaseTests(PostgresServer server) : PostgresTes
         return await db.Cities.AsNoTracking().SingleAsync(row => row.Id == cityId, TestContext.Current.CancellationToken);
     }
 
-    /// <summary>The stored stock of a city, by item id.</summary>
+    /// <summary>The stored totals of a city by item id (<see cref="StoredTotalsAsync"/>).</summary>
     /// <param name="cityId">The city.</param>
-    /// <returns>Its <c>city_inventory</c> rows in ordinal item order.</returns>
-    private async Task<List<CityInventoryRow>> InventoryAsync(Guid cityId)
-    {
-        await using CityBuilderDbContext db = Database.CreateContext();
-        List<CityInventoryRow> rows = await db.CityInventory.AsNoTracking().Where(row => row.CityId == cityId)
-            .ToListAsync(TestContext.Current.CancellationToken);
-        return [.. rows.OrderBy(row => row.ItemId, StringComparer.Ordinal)];
-    }
+    /// <returns>Each item's stored total.</returns>
+    private Task<Dictionary<string, long>> InventoryAsync(Guid cityId) => StoredTotalsAsync(Database, cityId, ContentOf(Factory).Currency);
 
     /// <summary>A stock as text, one item per line, with 0 for an item stored at 0 or left out.</summary>
     /// <param name="stock">The quantities by item.</param>
@@ -227,9 +222,15 @@ public sealed class SettleCityDatabaseTests(PostgresServer server) : PostgresTes
     private static string Describe(IEnumerable<KeyValuePair<ItemId, long>> stock) =>
         string.Join(", ", stock.Where(line => line.Value > 0).OrderBy(line => line.Key).Select(line => $"{line.Key}={line.Value}"));
 
-    /// <summary>Stored stock rows as text, in the form of <see cref="Describe(IEnumerable{KeyValuePair{ItemId, long}})"/>.</summary>
-    /// <param name="rows">The <c>city_inventory</c> rows.</param>
+    /// <summary>Stored totals as text, in the form of <see cref="Describe(IEnumerable{KeyValuePair{ItemId, long}})"/>.</summary>
+    /// <param name="totals">The stored totals by item id.</param>
     /// <returns>The items above 0 in ordinal order with their quantities.</returns>
-    private static string Describe(IEnumerable<CityInventoryRow> rows) =>
-        Describe(rows.Select(row => new KeyValuePair<ItemId, long>(new ItemId(row.ItemId), row.Quantity)));
+    private static string Describe(Dictionary<string, long> totals) =>
+        Describe(totals.Select(total => new KeyValuePair<ItemId, long>(new ItemId(total.Key), total.Value)));
+
+    /// <summary>A city's totals (<see cref="CityQueries.Totals"/>) as engine pairs, for <see cref="Describe(IEnumerable{KeyValuePair{ItemId, long}})"/>.</summary>
+    /// <param name="city">The city.</param>
+    /// <returns>Each item's total.</returns>
+    private IEnumerable<KeyValuePair<ItemId, long>> TotalsOf(CityState city) =>
+        CityQueries.Totals(city, ContentOf(Factory)).Select(total => new KeyValuePair<ItemId, long>(total.Item, total.Quantity));
 }

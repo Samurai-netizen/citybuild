@@ -3,8 +3,6 @@ using CityBuilder.Application.Cities;
 using CityBuilder.Application.Commands;
 using CityBuilder.Application.Tests.Cities;
 using CityBuilder.Simulation;
-using CityBuilder.Simulation.Rules;
-using CityBuilder.Simulation.Settlement;
 using CityBuilder.Simulation.State;
 using static CityBuilder.Application.Tests.Cities.SettleFixture;
 
