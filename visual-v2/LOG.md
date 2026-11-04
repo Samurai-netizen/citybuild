@@ -1,6 +1,6 @@
 # Visual v2: build log
 
-- **Status:** In progress
+- **Status:** Done (the package and its fit test; adoption is a later task)
 - **Started:** 2026-11-04 · **Tool:** Claude Code (cloud session) · **Branch:** `claude/compassionate-meitner-sd7nr0` (this folder) and
   `claude/visual-v2-fit-test` (the fit test)
 - **Change id:** `CR-0009`, reserved by this package for its commits (the commit hook needs an id). The CR file itself is written when
@@ -46,7 +46,10 @@
   town for portrait and landscape phones (`previews/ui_portrait.jpg`, `previews/ui_landscape.jpg`); `ui-preview/check-ui-rules.py`
   runs the rules the client's UI tests read from the files.
 
-## Verification so far
+- Step 10 done: the fit test on `claude/visual-v2-fit-test` (`FIT-TEST.md`); the wiring of today's client is `unity-wiring.patch`.
+- Step 11 done: `README.md` (contents, pictures, rebuild, adoption), this log.
+
+## Verification
 - `blender -b --factory-startup --python visual-v2/blender/build_all.py -- --no-render`: all 49 models pass every check (Blender 5.2.3,
   Linux, software OpenGL for the renders).
 - The new C# (code and tests) compiles against the real engine sources (`shared/Simulation/Runtime`) and thin stubs of the Unity and
@@ -57,6 +60,10 @@
   new UI files (and for today's, as a check of the script); all 101 element names the views look up exist with their types.
 - The browser preview found two layout bugs that Unity's layout engine has too, both fixed: in portrait the inspector's boxes kept the
   `flex-basis: 0` of the side-by-side layout and collapsed in a column; in landscape the build sheet covered the HUD.
+- On the fit branch: `check-docs.sh` OK; the UI rules pass on the client's folder; `dotnet test server/tests/CityBuilder.Repository.Tests`
+  22 / 22 (the code-documentation rules over every C# file of the Unity project, the new and the edited ones included);
+  `build_all.py -- --out client/CityBuilder/Assets/_Project` passes and writes the same models (only the FBX header's time and path
+  differ); `git apply --check visual-v2/unity-wiring.patch` applies to `main`'s client.
 - Not run here: the tests that build GameObjects (`MotionRigTests`, `FillViewTests`, `BuildingAnimatorTests`, `RoadArmsTests`,
   `ArtModelsV2Tests`) need the Unity Editor.
 
@@ -80,3 +87,12 @@
 | 16 | `--touch` grows from 48 to 52 and the dock buttons with it (`--dock-lift` 60); the HUD is 40 high in landscape and three rows in portrait (`--hud-height` 52 and 122) | Chunkier buttons like the showcase's; the tests' relations (dock lift = touch + gap, HUD height + 12) still hold |
 | 17 | UI Toolkit has no `:first-child`, `:last-child` or `gap`: spacing uses margins on every item and a negative margin on the row | The rule check rejects those selectors |
 | 11 | The package's change id is `CR-0009`; its CR file is written at adoption | Commits need an id (`.githooks/commit-msg`); a CR file now would edit `docs/changes/README.md`, a shared file. If the main session takes CR-0009 first, the adoption renumbers |
+
+## Follow-ups
+- [MANUAL] The Unity steps of `FIT-TEST.md`: compile, `test-unity.sh`, a play session for the motion and the fill, the UI in the Device
+  Simulator (fonts: if UI Toolkit draws the TTF files in its default font, make Font Assets of them).
+- With CR-0008-T2: read the building's own store in `BuildingDecor.Show`; decide when the Scriptorium, Courier Station and Warehouse
+  work (`BuildingDecor.IsWorking`); draw roads with `RoadArms` and walkers with `MotionRig`; new screens (routes, trips) use the tokens
+  and classes of `Common.uss`.
+- The showcase's Market button (locked until Era II) and its welcome-back shortcut were left out: both need view code, not only layout.
+- Owner: whether `CR-0009` stays this package's number, and whether `--touch` 52 (the chunkier buttons) is wanted everywhere.
