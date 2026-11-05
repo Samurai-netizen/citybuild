@@ -268,6 +268,11 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
   Measured on an Apple A18 Pro (Mac17,5), .NET SDK 10.0.401, per advance (8 h / 7 d, median of 5), Release alone: **47 / 54 ms** (CR-0008-T1
   part H; M0-16's 37 / 37 ms had a 7-day run that only finished its last cycles); Debug 158 / 172 ms. Part I adds the courier worst case
   of `04` §12 and sets the final number. Before M0-16: Release 144 ms, Debug 605 ms (build log `docs/build-log/2026/2026-10-19-06-M0-16.md`).
+  `CourierWorstCase` (CR-0008-T1 part I) is the courier worst case of `04` §12 over the game's content: the 64 tiles filled with 38 courier
+  stations and 26 houses at level 2, 152 couriers each looping between its station and the neighbouring building (one 4 s step, Sturdy
+  Boots done), restored at clock 1000. `CourierBudgetTests` settles it once after 30 000 s with the player away from 300 s: every courier
+  tires at 30 100 and rests, the report names all 152 and 28 800 courier seconds (1,105,952 arrivals), and the median of 5 timed runs
+  stays within 2 s in Release (6 s in Debug). Measured: **Release 308 ms** (291–348), Debug 1.8 s (decision 67).
   `Content/ContentFile` reads a fixture file as the server does, for the golden and the performance contents.
 - `SimulationDependencyTests`: the compiled assembly references exactly `netstandard` and is built for `netstandard2.1`.
 - `SimulationPackageTests`: the files only Unity sees. The asmdef (`noEngineReferences`, no references, no platform or define

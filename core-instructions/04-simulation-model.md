@@ -179,8 +179,9 @@ ledger rows (`Settlement`, M0-23).
 Worst case (CR-0008): an 8×8 city of 26 houses at level 2 (156 workers) and 38 courier stations at level 2 (152 couriers, 8 h stamina),
 every route between two adjacent buildings, Sturdy Boots done (4 s walks): one settlement after a long absence covers the grace and the
 stamina, about 7,300 arrivals per courier, ≈ 1.1 M events. Producers add less per tile than couriers (a 10 s cycle at best). Target:
-< 500 ms on a dev machine in Release (CI uses a generous limit); CR-0008-T1 part I measures it and sets the final number (above it: the 005
-fallback in `12`). The test and the measured numbers: `docs/modules/CityBuilder.Simulation.md` → Tests → `Performance/`.
+< 500 ms on a dev machine in Release (CI uses a generous limit: 2 s in Release). Measured in CR-0008-T1 part I: 1,105,952 arrivals in one
+settlement, **308 ms** median in Release (Apple A18 Pro); the producer case (64 producers, 8 h) 47 ms. Above the target: the 005 fallback
+in `12`. The test and the measured numbers: `docs/modules/CityBuilder.Simulation.md` → Tests → `Performance/`.
 
 ## 13. Planned extension — external deliveries (not in M0)
 Market fills, expired-order returns and other cross-player transfers will arrive through a **mailbox**
