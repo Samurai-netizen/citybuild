@@ -100,13 +100,13 @@ public sealed class ContentFileLoaderTests : IDisposable
     /// <summary>A key repeated in one object, a field or a map key, gives one JSON error.</summary>
     [Theory]
     [InlineData("field", "\"contentVersion\":\"repeated\"")] // the root already has contentVersion
-    [InlineData("map key", "\"twice\":1,\"twice\":1")] // a key of the starting inventory
+    [InlineData("map key", "\"twice\":1,\"twice\":1")] // a key of the first building's cost
     public void Load_RepeatedKey_ThrowsOneJsonError(string where, string repeated)
     {
         // System.Text.Json writes no repeated key, so the test writes a marker and replaces it in the text. A repeated field must be a
         // known one: an unknown name would already fail as an unknown field.
         JsonNode content = ContentFiles.ReadRealMvpContent();
-        JsonObject target = where == "field" ? content.AsObject() : content["startingCity"]!["inventory"]!.AsObject();
+        JsonObject target = where == "field" ? content.AsObject() : content["buildings"]![0]!["cost"]!.AsObject();
         target["repeated_key_marker"] = 0;
         string text = content.ToJsonString().Replace("\"repeated_key_marker\":0", repeated, StringComparison.Ordinal);
         string path = _files.Write(text);

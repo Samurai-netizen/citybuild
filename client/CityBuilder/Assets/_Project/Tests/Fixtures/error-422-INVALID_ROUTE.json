@@ -1,0 +1,1 @@
+{"type":"urn:citybuilder:error:invalid-route","title":"Invalid route","status":422,"detail":"The route's slot, stops or actions break the station's or the content's route rules.","code":"INVALID_ROUTE","requestId":"a26c31b5-eb7d-46ec-b57a-3116daf732d3","traceId":"00-7aad1be20603eb92898fc5495be0039b-fa2d4f33130e7720-00"}

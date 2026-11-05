@@ -1,4 +1,5 @@
 #nullable enable
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -6,8 +7,8 @@ using System.Linq;
 namespace CityBuilder.Simulation.Content
 {
     /// <summary>
-    /// The rule phase's checks across definitions: unique ids, eras numbered 1..n, references to eras and items that exist, base caps that
-    /// match the capped items, and effects whose target exists and fits. A duplicate definition is reported once and then left out of the
+    /// The rule phase's checks across definitions: unique ids, eras numbered 1..n, references to eras and items that exist, one currency used
+    /// only where goods aren't needed, one science building, and effects whose target exists and fits. A duplicate definition is reported once and then left out of the
     /// cross-checks, which use the first definition of each id.
     /// </summary>
     internal static class ReferenceRules
@@ -19,7 +20,8 @@ namespace CityBuilder.Simulation.Content
             CheckEraNumbers(draft, errors);
             CheckEraReferences(draft, errors);
             CheckItemReferences(draft, errors);
-            CheckBaseStorageCaps(draft, errors);
+            CheckCurrency(draft, errors);
+            CheckScienceBuilding(draft, errors);
             CheckEffectTargets(draft, errors);
             CheckPrerequisiteReferences(draft, errors);
         }
@@ -70,6 +72,12 @@ namespace CityBuilder.Simulation.Content
                     Duplicate(ContentPaths.Prerequisite(node, prerequisite), "prerequisite " + prerequisite.Value, errors);
                 }
             }
+
+            var presetIds = new HashSet<AmountPresetId>();
+            foreach (AmountPresetDefinition preset in draft.AmountPresets.Where(preset => !presetIds.Add(preset.Id)))
+            {
+                Duplicate(ContentPaths.AmountPreset(preset), "amount preset id " + preset.Id.Value, errors);
+            }
         }
 
         /// <summary>The eras are numbered 1, 2, … without gaps, at least era 1 (<see cref="ContentErrorCode.ErasNotContiguous"/>).</summary>
@@ -116,8 +124,6 @@ namespace CityBuilder.Simulation.Content
         /// <summary>Every item named in base caps, the starting stock, costs, upgrade costs, recipes and research costs exists.</summary>
         private static void CheckItemReferences(ContentDraft draft, ContentErrorList errors)
         {
-            ItemsExist(draft, draft.Rules.BaseStorageCaps, "rules.baseStorageCaps", errors);
-            ItemsExist(draft, draft.StartingCity.Inventory, "startingCity.inventory", errors);
             foreach (BuildingDefinition building in draft.Buildings.Where(draft.IsFirst))
             {
                 ItemsExist(draft, building.Cost, ContentPaths.Building(building) + ".cost", errors);
@@ -125,6 +131,7 @@ namespace CityBuilder.Simulation.Content
                 {
                     string levelPath = ContentPaths.Level(building, level);
                     ItemsExist(draft, level.UpgradeCost, levelPath + ".upgradeCost", errors);
+                    ItemsExist(draft, level.Storage, levelPath + ".storage", errors);
                     if (level.Recipe is not null)
                     {
                         ItemsExist(draft, level.Recipe.Inputs, levelPath + ".recipe.inputs", errors);
@@ -137,26 +144,78 @@ namespace CityBuilder.Simulation.Content
             {
                 ItemsExist(draft, node.Cost, ContentPaths.Research(node) + ".cost", errors);
             }
+
+            foreach (RoadLevelDefinition level in draft.RoadLevels)
+            {
+                ItemsExist(draft, level.Cost, ContentPaths.RoadLevel(level) + ".cost", errors);
+            }
         }
 
-        /// <summary>A capped item has a base storage cap and an uncapped item has none (<see cref="ContentErrorCode.StorageCapMismatch"/>).</summary>
-        private static void CheckBaseStorageCaps(ContentDraft draft, ContentErrorList errors)
+        /// <summary>
+        /// Rule 4: exactly one item is the currency, and it is never a recipe input (a cycle takes its inputs from its own store, which never
+        /// holds the currency; the storage rules report a store that does). Rule 11: a road level costs the currency only (CR-0008 D6: roads
+        /// build at once, so no good could be delivered to them).
+        /// </summary>
+        private static void CheckCurrency(ContentDraft draft, ContentErrorList errors)
         {
-            // A base cap for an item that doesn't exist is an unknown reference (above); here every defined item is checked.
-            foreach (ItemDefinition item in draft.Items.Where(draft.IsFirst))
+            int currencies = draft.Items.Where(draft.IsFirst).Count(item => item.IsCurrency);
+            if (currencies != 1)
             {
-                bool hasCap = draft.Rules.TryGetBaseStorageCap(item.Id, out _);
-                string path = "rules.baseStorageCaps." + item.Id.Value;
-                if (item.IsCapped && !hasCap)
+                errors.Add(
+                    ContentErrorCode.CurrencyCount,
+                    "items",
+                    FormattableString.Invariant($"Exactly one item is the currency (currency: true), but {currencies} are."));
+            }
+
+            foreach (BuildingDefinition building in draft.Buildings.Where(draft.IsFirst))
+            {
+                foreach (BuildingLevelDefinition level in building.Levels.Where(level => level.Recipe is not null))
                 {
-                    errors.Add(ContentErrorCode.StorageCapMismatch, path, item.Id.Value + " is capped, so it needs a base storage cap.");
+                    foreach (ItemQuantity input in level.Recipe!.Inputs.Where(input => IsCurrency(draft, input.Item)))
+                    {
+                        errors.Add(
+                            ContentErrorCode.InvalidCurrencyUse,
+                            ContentPaths.Level(building, level) + ".recipe.inputs." + input.Item.Value,
+                            input.Item.Value + " is the currency; a cycle takes its inputs from its own store, which holds goods only.");
+                    }
                 }
-                else if (!item.IsCapped && hasCap)
+            }
+
+            foreach (RoadLevelDefinition level in draft.RoadLevels)
+            {
+                foreach (ItemQuantity good in level.Cost.Where(amount => draft.ItemsById.ContainsKey(amount.Item) && !IsCurrency(draft, amount.Item)))
                 {
-                    errors.Add(ContentErrorCode.StorageCapMismatch, path, item.Id.Value + " is not capped, so it has no base storage cap.");
+                    errors.Add(
+                        ContentErrorCode.InvalidCurrencyUse,
+                        ContentPaths.RoadLevel(level) + ".cost." + good.Item.Value,
+                        good.Item.Value + " is a good; a road costs the currency only, as it is built at once.");
                 }
             }
         }
+
+        /// <summary>Rule 10: exactly one building type is the science building (kind <c>science</c>), with <c>maxPerCity</c> 1.</summary>
+        private static void CheckScienceBuilding(ContentDraft draft, ContentErrorList errors)
+        {
+            BuildingDefinition[] science = draft.Buildings.Where(draft.IsFirst).Where(building => building.Kind == BuildingKind.Science).ToArray();
+            if (science.Length != 1)
+            {
+                errors.Add(
+                    ContentErrorCode.ScienceBuildingMismatch,
+                    "buildings",
+                    FormattableString.Invariant($"Exactly one building type is the science building (kind science), but {science.Length} are."));
+            }
+
+            foreach (BuildingDefinition building in science.Where(building => building.MaxPerCity != 1))
+            {
+                errors.Add(
+                    ContentErrorCode.ScienceBuildingMismatch,
+                    ContentPaths.Building(building) + ".maxPerCity",
+                    "Research happens at the one science building of a city, so its maxPerCity is 1.");
+            }
+        }
+
+        /// <summary>Whether the content defines the item and it is the currency.</summary>
+        private static bool IsCurrency(ContentDraft draft, ItemId item) => draft.ItemsById.TryGetValue(item, out ItemDefinition? definition) && definition.IsCurrency;
 
         /// <summary>Every effect's target exists and fits its type: an unlock names a building type, a labor reduction a producer, a storage bonus a capped item.</summary>
         private static void CheckEffectTargets(ContentDraft draft, ContentErrorList errors)
@@ -182,21 +241,21 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
-        /// <summary>A labor reduction names an existing producer: a house has no labor (<see cref="ContentErrorCode.InvalidEffectTarget"/>).</summary>
+        /// <summary>A labor reduction names an existing producer: no other kind has labor (<see cref="ContentErrorCode.InvalidEffectTarget"/>).</summary>
         private static void CheckLaborReductionTarget(ContentDraft draft, LaborReductionEffect reduction, string path, ContentErrorList errors)
         {
             if (BuildingExists(draft, reduction.Building, path, errors) && draft.BuildingsById[reduction.Building].Kind != BuildingKind.Producer)
             {
-                errors.Add(ContentErrorCode.InvalidEffectTarget, path, reduction.Building.Value + " is a house; only producers have labor to reduce.");
+                errors.Add(ContentErrorCode.InvalidEffectTarget, path, reduction.Building.Value + " is not a producer; only producers have labor to reduce.");
             }
         }
 
-        /// <summary>A storage bonus names an existing capped item: on an uncapped one it would do nothing (<see cref="ContentErrorCode.InvalidEffectTarget"/>).</summary>
+        /// <summary>A storage bonus names an existing good: on the currency, which no store holds, it would do nothing (<see cref="ContentErrorCode.InvalidEffectTarget"/>).</summary>
         private static void CheckStorageBonusTarget(ContentDraft draft, StorageCapBonusEffect bonus, string path, ContentErrorList errors)
         {
-            if (ItemExists(draft, bonus.Item, path, errors) && !draft.ItemsById[bonus.Item].IsCapped)
+            if (ItemExists(draft, bonus.Item, path, errors) && draft.ItemsById[bonus.Item].IsCurrency)
             {
-                errors.Add(ContentErrorCode.InvalidEffectTarget, path, bonus.Item.Value + " is not capped, so a storage bonus does nothing.");
+                errors.Add(ContentErrorCode.InvalidEffectTarget, path, bonus.Item.Value + " is the currency, which no store holds, so a storage bonus does nothing.");
             }
         }
 

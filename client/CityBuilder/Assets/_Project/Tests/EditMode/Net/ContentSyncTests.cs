@@ -22,10 +22,10 @@ namespace CityBuilder.Client.Tests.EditMode.Net
     public sealed class ContentSyncTests
     {
         /// <summary>The content version of <c>content.json</c> and of the fixture snapshots.</summary>
-        private const string HeldVersion = "mvp-1";
+        private const string HeldVersion = "mvp-2";
 
         /// <summary>The version the server moves to in these tests.</summary>
-        private const string NewVersion = "mvp-2";
+        private const string NewVersion = "mvp-3";
 
         /// <summary>A 426 answer, which no fixture holds.</summary>
         private const string UnsupportedBody = "{\"type\":\"urn:citybuilder:error:unsupported-client-version\",\"title\":\"Client version unsupported\","
@@ -133,7 +133,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             ApiError? failure = await ApplyNextCityAsync();
 
             Assert.That(failure, Is.Null);
-            Assert.That(_events, Is.EqualTo(new[] { "request /city (store empty)", "store takes mvp-1" }));
+            Assert.That(_events, Is.EqualTo(new[] { "request /city (store empty)", "store takes mvp-2" }));
         }
 
         /// <summary>
@@ -155,8 +155,8 @@ namespace CityBuilder.Client.Tests.EditMode.Net
                     "request /city (store empty)",
                     "request /content (store empty)",
                     "replacing",
-                    "store takes mvp-2",
-                    "replaced mvp-2 x1",
+                    "store takes mvp-3",
+                    "replaced mvp-3 x1",
                 }));
             Assert.That(_sync.LoadedVersion, Is.EqualTo(NewVersion));
         }
@@ -172,7 +172,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             ApiError? failure = await ApplyNextCityAsync();
 
             Assert.That(failure, Is.Null);
-            Assert.That(_events, Is.EqualTo(new[] { "request /city (store has mvp-2)" }), "no /content request, no replacing, and the store ignored the same state version");
+            Assert.That(_events, Is.EqualTo(new[] { "request /city (store has mvp-3)" }), "no /content request, no replacing, and the store ignored the same state version");
         }
 
         /// <summary>Content that cannot be fetched applies nothing: no teardown, no snapshot, the version stays, the error is the incompatible-answer one.</summary>
@@ -195,12 +195,12 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         [Test]
         public async Task Apply_WhenTheContentIsNotTheSnapshotsVersion_AppliesNothing()
         {
-            _wire.Answer(200, CityOf(NewVersion)).Answer(200, ContentOf("mvp-3"));
+            _wire.Answer(200, CityOf(NewVersion)).Answer(200, ContentOf("mvp-4"));
 
             ApiError? failure = await ApplyNextCityAsync();
 
             Assert.That(failure!.Code, Is.EqualTo(ApiErrorCodes.ClientInvalidResponse));
-            Assert.That(failure.Detail, Does.Contain("mvp-3").And.Contain(NewVersion));
+            Assert.That(failure.Detail, Does.Contain("mvp-4").And.Contain(NewVersion));
             Assert.That(_events, Is.EqualTo(new[] { "request /city (store empty)", "request /content (store empty)" }));
             Assert.That(_sync.LoadedVersion, Is.EqualTo(HeldVersion));
         }
@@ -249,7 +249,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
 
             Assert.That(failure, Is.Null);
             Assert.That(_store.Snapshot!.ContentVersion, Is.EqualTo(NewVersion));
-            Assert.That(_events, Does.Contain("replaced mvp-2 x1"));
+            Assert.That(_events, Does.Contain("replaced mvp-3 x1"));
         }
 
         /// <summary>The monitor with a sync: a poll that finds other content fetches it first, then applies the snapshot, and ends Connected.</summary>
@@ -264,8 +264,8 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(monitor.State, Is.EqualTo(ConnectionState.Connected));
             Assert.That(monitor.LastError, Is.Null);
             Assert.That(_store.Snapshot!.ContentVersion, Is.EqualTo(NewVersion));
-            Assert.That(_events.IndexOf("request /content (store empty)"), Is.LessThan(_events.IndexOf("store takes mvp-2")));
-            Assert.That(_events.IndexOf("store takes mvp-2"), Is.LessThan(_events.FindIndex(e => e.StartsWith("replaced", StringComparison.Ordinal))));
+            Assert.That(_events.IndexOf("request /content (store empty)"), Is.LessThan(_events.IndexOf("store takes mvp-3")));
+            Assert.That(_events.IndexOf("store takes mvp-3"), Is.LessThan(_events.FindIndex(e => e.StartsWith("replaced", StringComparison.Ordinal))));
         }
 
         /// <summary>A poll that finds other content it cannot fetch is incompatible with the store untouched, and a later poll that can fetch it recovers.</summary>
@@ -324,7 +324,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             CommandOutcome outcome = await sender.SendAsync(CommandIntent.UpgradeBuilding(3), CancellationToken.None);
 
             Assert.That(outcome.Kind, Is.EqualTo(CommandOutcomeKind.Succeeded));
-            Assert.That(_events.IndexOf("request /content (store empty)"), Is.LessThan(_events.IndexOf("store takes mvp-2")));
+            Assert.That(_events.IndexOf("request /content (store empty)"), Is.LessThan(_events.IndexOf("store takes mvp-3")));
             Assert.That(_sync.LoadedVersion, Is.EqualTo(NewVersion));
         }
 

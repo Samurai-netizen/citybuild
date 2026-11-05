@@ -9,22 +9,23 @@ using Microsoft.AspNetCore.Mvc.Testing;
 namespace CityBuilder.IntegrationTests.Golden;
 
 /// <summary>
-/// Golden scenario #1 (<c>core-instructions/23-mvp-content.md</c>) for the tests over HTTP: the frozen content it was checked against, the
-/// script as HTTP commands, and the same script on the engine alone, to compare the stored city with. The script is the engine test's
-/// (<c>CityBuilder.Simulation.Tests/Golden/GoldenScenario1</c>): at t=0 StartResearch <c>trade_charter</c> and two Cottages (ids 1 and 2), at
-/// t=30 a Woodcutter's Hut (3) and a Sawmill (4), at t=750 a Trading Post (5), standing in a row from tile (0, 0). A change to the script
-/// there changes both copies here.
+/// Golden scenario #1 (<c>core-instructions/23-mvp-content.md</c>, CR-0008) for the tests over HTTP: the frozen content it was checked against,
+/// the script as HTTP commands, and the same script on the engine alone, to compare the stored city with. The script is the engine test's
+/// (<c>CityBuilder.Simulation.Tests/Golden/GoldenScenario1</c>): at t=0 a Cottage (1) on (0, 2) and a Woodcutter's Hut (2) on (0, 0); at t=30
+/// the Scriptorium (3) on (4, 0); at t=60 StartResearch <c>trade_charter</c>, a Sawmill (4) on (2, 0) and a Cottage (5) on (1, 2); at t=360
+/// and t=490 a trip of all the Woodcutter's logs to the Sawmill; at t=660 a Trading Post (6) on (2, 2), a trip of all the Sawmill's planks to
+/// it and a trip of half the Woodcutter's logs to the Sawmill. A change to the script there changes both copies here.
 /// </summary>
 internal static class GoldenScenario1Http
 {
     /// <summary>The city-clock seconds at which the script acts, in order.</summary>
-    public static readonly long[] ActionTimes = [0, 30, 750];
+    public static readonly long[] ActionTimes = [0, 30, 60, 360, 490, 660];
 
     /// <summary>
-    /// The engine test's frozen content file, <c>content-golden-v1.json</c>, which the project file links into this project's output
-    /// (it is a protected file: never copied, never edited; <c>15</c>).
+    /// The frozen content file <c>content-golden-v2.json</c>, linked into this project's output (protected, never edited, <c>15</c>). Since
+    /// CR-0008-T1 part H the engine has no offline cap, so the file is read as it was frozen.
     /// </summary>
-    public static string ContentPath { get; } = Path.Combine(AppContext.BaseDirectory, "Fixtures", "content-golden-v1.json");
+    public static string ContentPath { get; } = Path.Combine(AppContext.BaseDirectory, "Fixtures", "content-golden-v2.json");
 
     /// <summary>The test's server with the frozen content in place of the real one; it shares the factory's clock and database.</summary>
     /// <param name="factory">The test's server on its database.</param>
@@ -41,16 +42,25 @@ internal static class GoldenScenario1Http
         switch (time)
         {
             case 0:
-                await player.StartResearchAsync("trade_charter");
-                await player.PlaceAsync("house", 0, 0);
-                await player.PlaceAsync("house", 1, 0);
+                await player.PlaceAsync("house", 0, 2);
+                await player.PlaceAsync("woodcutter", 0, 0);
                 break;
             case 30:
-                await player.PlaceAsync("woodcutter", 2, 0);
-                await player.PlaceAsync("sawmill", 3, 0);
+                await player.PlaceAsync("scriptorium", 4, 0);
                 break;
-            case 750:
-                await player.PlaceAsync("trading_post", 4, 0);
+            case 60:
+                await player.StartResearchAsync("trade_charter");
+                await player.PlaceAsync("sawmill", 2, 0);
+                await player.PlaceAsync("house", 1, 2);
+                break;
+            case 360:
+            case 490:
+                await player.StartTripAsync(2, 4, "logs", "all");
+                break;
+            case 660:
+                await player.PlaceAsync("trading_post", 2, 2);
+                await player.StartTripAsync(4, 6, "planks", "all");
+                await player.StartTripAsync(2, 4, "logs", "half");
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(time), time, "The script does nothing at this time.");
@@ -73,16 +83,25 @@ internal static class GoldenScenario1Http
             switch (actionTime)
             {
                 case 0:
-                    Apply(city, content, CityRules.StartResearch(city, content, new ResearchId("trade_charter")));
-                    Apply(city, content, CityRules.PlaceBuilding(city, content, new BuildingTypeId("house"), 0, 0));
-                    Apply(city, content, CityRules.PlaceBuilding(city, content, new BuildingTypeId("house"), 1, 0));
+                    Apply(city, content, Place(city, content, "house", 0, 2));
+                    Apply(city, content, Place(city, content, "woodcutter", 0, 0));
                     break;
                 case 30:
-                    Apply(city, content, CityRules.PlaceBuilding(city, content, new BuildingTypeId("woodcutter"), 2, 0));
-                    Apply(city, content, CityRules.PlaceBuilding(city, content, new BuildingTypeId("sawmill"), 3, 0));
+                    Apply(city, content, Place(city, content, "scriptorium", 4, 0));
+                    break;
+                case 60:
+                    Apply(city, content, CityRules.StartResearch(city, content, new ResearchId("trade_charter")));
+                    Apply(city, content, Place(city, content, "sawmill", 2, 0));
+                    Apply(city, content, Place(city, content, "house", 1, 2));
+                    break;
+                case 360:
+                case 490:
+                    Apply(city, content, Trip(city, content, 2, 4, "logs", "all"));
                     break;
                 default:
-                    Apply(city, content, CityRules.PlaceBuilding(city, content, new BuildingTypeId("trading_post"), 4, 0));
+                    Apply(city, content, Place(city, content, "trading_post", 2, 2));
+                    Apply(city, content, Trip(city, content, 4, 6, "planks", "all"));
+                    Apply(city, content, Trip(city, content, 2, 4, "logs", "half"));
                     break;
             }
         }
@@ -90,6 +109,27 @@ internal static class GoldenScenario1Http
         Simulator.Advance(city, content, time - city.Clock);
         return city;
     }
+
+    /// <summary>Places a building of the type on tile (x, y).</summary>
+    /// <param name="city">The city.</param>
+    /// <param name="content">The frozen content.</param>
+    /// <param name="type">The building type id.</param>
+    /// <param name="x">The tile's column.</param>
+    /// <param name="y">The tile's row.</param>
+    /// <returns>The mutation's result.</returns>
+    private static MutationResult Place(CityState city, GameContent content, string type, int x, int y) =>
+        CityRules.PlaceBuilding(city, content, new BuildingTypeId(type), x, y);
+
+    /// <summary>Starts a manual trip with a preset amount.</summary>
+    /// <param name="city">The city.</param>
+    /// <param name="content">The frozen content.</param>
+    /// <param name="sourceId">The building the goods come from.</param>
+    /// <param name="targetId">The building they go to.</param>
+    /// <param name="item">The good.</param>
+    /// <param name="preset">The amount preset's id.</param>
+    /// <returns>The mutation's result.</returns>
+    private static MutationResult Trip(CityState city, GameContent content, int sourceId, int targetId, string item, string preset) =>
+        TripRules.StartTrip(city, content, sourceId, targetId, new ItemId(item), Amount.Preset(new AmountPresetId(preset)));
 
     /// <summary>Checks that a mutation succeeded and follows it with the zero-length advance of a command.</summary>
     /// <param name="city">The city the mutation changed.</param>

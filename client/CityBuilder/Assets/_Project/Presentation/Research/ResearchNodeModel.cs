@@ -121,8 +121,15 @@ namespace CityBuilder.Client.Presentation.Research
                     break;
                 case ResearchStatus.InProgress:
                     ActiveResearch running = city.ActiveResearch!;
+                    if (running.EndsAt == null)
+                    {
+                        // It waits at the science building for goods (CR-0008); its timer has not started.
+                        model.StatusText = "Waiting for goods: " + ItemText.Needs(content, running.Needs, ", ");
+                        break;
+                    }
+
                     model.ProgressPermille = ProgressDisplay.ResearchProgressPermille(city, city.Clock);
-                    model.StatusText = "In progress · " + DurationText.Format(Math.Max(0, running.EndsAt - city.Clock)) + " left";
+                    model.StatusText = "In progress · " + DurationText.Format(Math.Max(0, running.EndsAt.Value - city.Clock)) + " left";
                     break;
                 case ResearchStatus.Locked:
                     model.StatusText = "Requires: " + missing;
@@ -223,7 +230,8 @@ namespace CityBuilder.Client.Presentation.Research
             var lacking = new StringBuilder();
             for (int index = 0; index < node.Cost.Count; index++)
             {
-                if (city.GetQuantity(node.Cost[index].Item) < node.Cost[index].Quantity)
+                // Only the coins are paid at once; the goods are delivered to the science building later (CR-0008).
+                if (node.Cost[index].Item == content.Currency && city.Purse < node.Cost[index].Quantity)
                 {
                     lacking.Append(lacking.Length == 0 ? "Not enough " : ", ").Append(ItemText.ItemName(content, node.Cost[index].Item));
                 }

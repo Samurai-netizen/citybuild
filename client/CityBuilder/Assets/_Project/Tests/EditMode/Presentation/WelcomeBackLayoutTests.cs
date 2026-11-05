@@ -13,7 +13,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation
     /// </summary>
     public sealed class WelcomeBackLayoutTests
     {
-        /// <summary>The layout has the root, the scrim, the card, the sections, the three labels and the Continue button, and the scrim starts hidden.</summary>
+        /// <summary>The layout has the root, the scrim, the card, the sections, the two labels and the Continue button, and the scrim starts hidden.</summary>
         [Test]
         public void Layout_HasEveryElementTheComponentLooksUp_AndStartsHidden()
         {
@@ -24,7 +24,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation
                 Assert.That(root.Q<VisualElement>(name), Is.Not.Null, name);
             }
 
-            foreach (string name in new[] { WelcomeBackPanel.TitleName, WelcomeBackPanel.EmptyName, WelcomeBackPanel.CapNoteName })
+            foreach (string name in new[] { WelcomeBackPanel.TitleName, WelcomeBackPanel.EmptyName })
             {
                 Assert.That(root.Q<Label>(name), Is.Not.Null, name);
             }

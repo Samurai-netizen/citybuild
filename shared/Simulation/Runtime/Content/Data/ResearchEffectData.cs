@@ -8,7 +8,11 @@ namespace CityBuilder.Simulation.Content.Data
     /// </summary>
     public sealed class ResearchEffectData
     {
-        /// <summary>Required: <c>unlockBuilding</c> (needs <see cref="Building"/>), <c>laborReduction</c> (<see cref="Building"/>, <see cref="Permille"/>) or <c>storageCapBonus</c> (<see cref="Item"/>, <see cref="Amount"/>).</summary>
+        /// <summary>
+        /// Required: <c>unlockBuilding</c> (needs <see cref="Building"/>), <c>laborReduction</c> (<see cref="Building"/>, <see cref="Permille"/>),
+        /// <c>storageCapBonus</c> (<see cref="Item"/>, <see cref="Amount"/>), <c>unlockAmountMode</c> (<see cref="Mode"/>) or
+        /// <c>walkSpeedBonus</c> (<see cref="Permille"/>).
+        /// </summary>
         public string? Type { get; set; }
 
         /// <summary>The building type the effect is about.</summary>
@@ -22,5 +26,8 @@ namespace CityBuilder.Simulation.Content.Data
 
         /// <summary>The storage cap bonus, in items.</summary>
         public long? Amount { get; set; }
+
+        /// <summary>The amount mode a research unlocks, <c>percent</c> or <c>exact</c> (<c>unlockAmountMode</c> only).</summary>
+        public string? Mode { get; set; }
     }
 }

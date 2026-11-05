@@ -17,7 +17,7 @@ public sealed class CommandPipelineIdempotencyTests
 {
     /// <summary>
     /// The same request an hour later returns the stored text and runs nothing: no response is written, nothing is saved, and the city isn't
-    /// even settled (its last settled second stays).
+    /// even settled (its last settled second stays), nor is the replay presence (its last-seen second stays, <c>04</c> section 2).
     /// </summary>
     [Fact]
     public async Task ExecuteAsync_SameRequestAgain_ReturnsTheStoredResponse()
@@ -37,6 +37,7 @@ public sealed class CommandPipelineIdempotencyTests
         Assert.Equal(["begin", $"load {PlayerId}", "find receipt", "commit"], repository.Events);
         Assert.Equal(1, repository.SaveCount);
         Assert.Equal(LastSettled.ToUnixTimeSeconds(), repository.Stored(PlayerId).LastSettledUnixSec);
+        Assert.Equal(LastSettled.ToUnixTimeSeconds(), repository.Stored(PlayerId).LastSeenUnixSec);
     }
 
     /// <summary>The same request id with another tile is <c>IDEMPOTENCY_CONFLICT</c>: nothing runs, nothing is saved.</summary>
@@ -52,7 +53,7 @@ public sealed class CommandPipelineIdempotencyTests
 
         Assert.Equal(CommandOutcome.IdempotencyConflict, conflict.Outcome);
         Assert.Equal(1, repository.SaveCount);
-        Assert.Equal(4, repository.Stored(PlayerId).State.Buildings.Count);
+        Assert.Equal(5, repository.Stored(PlayerId).State.Buildings.Count);
     }
 
     /// <summary>The same request id on another command is a conflict too: the command type is part of the hash.</summary>

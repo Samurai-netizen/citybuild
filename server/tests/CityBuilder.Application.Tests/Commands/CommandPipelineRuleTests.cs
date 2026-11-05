@@ -92,8 +92,8 @@ public sealed class CommandPipelineRuleTests
     }
 
     /// <summary>
-    /// The settle runs before the mutation: with both builders busy (the manor and a new cottage) a placement is <c>NO_FREE_BUILDER</c>, but a
-    /// minute later the cottage's construction completes in the settle and frees its builder for the command.
+    /// The settle runs before the mutation: with all three builders busy (the manor and two new cottages) a placement is
+    /// <c>NO_FREE_BUILDER</c>, but a minute later the cottages' constructions complete in the settle and free their builders for the command.
     /// </summary>
     [Fact]
     public async Task ExecuteAsync_ConstructionCompletedWhileAway_FreesItsBuilderForTheCommand()
@@ -101,6 +101,8 @@ public sealed class CommandPipelineRuleTests
         InMemoryCityRepository repository = Repository();
         FakeTimeProvider clock = ClockAtLastSettled();
         await Pipeline(repository, clock).ExecuteAsync(PlayerId, PlaceCottage(), Writer(repository), TestContext.Current.CancellationToken);
+        await Pipeline(repository, clock)
+            .ExecuteAsync(PlayerId, new PlaceTestCommand(Guid.CreateVersion7(), "cottage", 0, 2), Writer(repository), TestContext.Current.CancellationToken);
         PlaceTestCommand next = new(Guid.CreateVersion7(), "cottage", 2, 1);
         CommandResult busy = await Pipeline(repository, clock).ExecuteAsync(PlayerId, next, Writer(repository), TestContext.Current.CancellationToken);
         Assert.Equal(MutationErrorCode.NoFreeBuilder, busy.ErrorCode);
@@ -112,29 +114,32 @@ public sealed class CommandPipelineRuleTests
     }
 
     /// <summary>
-    /// Upgrading the producing sawmill 3 of <see cref="PipelineFixture.TwoSawmillsRepository"/> gives its 2 logs back (0 → 2), pays 10 coins
-    /// (50 → 40), and the closing advance starts sawmill 5 with the 2 logs (2 → 0). The rows follow that order, so no balance drops below 0;
-    /// with the settlement's rows first, logs would read −2.
+    /// A minute after <see cref="PipelineFixture.TwoSawmillsRepository"/> was settled, upgrading the producing sawmill 3 ledgers in the order
+    /// things happened, each balance the city's total: the settlement's log (0 → 1, the woodcutter's cycle at 240), then the command's refund
+    /// of the cycle's 2 logs into sawmill 3's own store (1 → 3) and its 10 coins (50 → 40). The closing advance starts nothing: sawmill 3 is
+    /// upgrading, and sawmill 5's store has no logs (a refund never reaches another store, CR-0008).
     /// </summary>
     [Fact]
-    public async Task ExecuteAsync_RefundConsumedByTheClosingAdvance_LedgersInTheOrderItHappened()
+    public async Task ExecuteAsync_RefundAfterTheSettlement_LedgersInTheOrderItHappened()
     {
         InMemoryCityRepository repository = TwoSawmillsRepository();
         CityState before = repository.Stored(PlayerId).State;
-        Assert.Equal((BuildingPhase.Producing, 0L), (before.Buildings.Single(b => b.Id == 3).Phase, before.GetQuantity(Logs)));
-        Assert.NotEqual(BuildingPhase.Producing, before.Buildings.Single(b => b.Id == 5).Phase);
+        Assert.Equal((BuildingPhase.Producing, 0L), (before.Buildings.Single(b => b.Id == 3).Phase, Total(before, Logs)));
+        FakeTimeProvider clock = ClockAtLastSettled();
+        clock.Advance(TimeSpan.FromSeconds(CycleSeconds));
 
-        CommandResult result = await Pipeline(repository, ClockAtLastSettled())
+        CommandResult result = await Pipeline(repository, clock)
             .ExecuteAsync(PlayerId, new UpgradeTestCommand(RequestId, BuildingId: 3), Writer(repository), TestContext.Current.CancellationToken);
 
         Assert.Equal(CommandOutcome.Succeeded, result.Outcome);
         Assert.Equal(
             [
-                (Logs.Value, 2L, 2L, "RefundUpgrade", "command"),
+                (Logs.Value, 1L, 1L, "SettlementProduced", "settlement"),
+                (Logs.Value, 2L, 3L, "RefundUpgrade", "command"),
                 ("coins", -10L, 40L, "CostUpgrade", "command"),
-                (Logs.Value, -2L, 0L, "SettlementConsumed", "settlement"),
             ],
             repository.LastLedger!.Select(entry => (entry.Item.Value, entry.Delta, entry.BalanceAfter, entry.Reason.ToString(), entry.RefType)));
-        Assert.Equal(BuildingPhase.Producing, repository.Stored(PlayerId).State.Buildings.Single(b => b.Id == 5).Phase);
+        CityState after = repository.Stored(PlayerId).State;
+        Assert.Equal((2L, BuildingPhase.Idle), (after.Buildings.Single(b => b.Id == 3).GetStock(Logs), after.Buildings.Single(b => b.Id == 5).Phase));
     }
 }

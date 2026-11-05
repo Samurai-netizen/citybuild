@@ -80,6 +80,7 @@ Any key can be overridden with an environment variable (`:` becomes `__`) or a c
 | `RateLimits:Content:Limit`, `:WindowSeconds` | `30`, `60` | `GET /content` per player, a budget apart from the city's |
 | `RateLimits:DevLogin:Limit`, `:WindowSeconds` | `10`, `60` | The dev login per remote address |
 | `Simulation:DevTimeScale` | `1`; `1` in `appsettings.Development.json` | Development only: how many seconds of server time pass per real second (60 = one hour per minute), for playing a long scenario by hand; `GET /content` reports it as `rules.timeScale` and the start logs a warning. 1 to 1000; anything but 1 outside Development stops the start (`core-instructions/04-simulation-model.md` §1). The clock is the same after a restart with the same scale, but **reset the dev database after changing the scale** (`docker compose down -v`, then start again): a higher scale jumps every city years ahead, a lower one leaves them all behind the clock, frozen. Access tokens age at the same speed (12 hours last 12 minutes at 60), so the client logs in more often |
+| `Simulation:PresenceGraceSeconds` | `300` | How long, in real seconds, the player still counts as present after a request: couriers spend stamina only after it (`core-instructions/04-simulation-model.md` §2). 0 to 86 400; the server multiplies it by `DevTimeScale` |
 | `Logging:LogLevel:*`, `AllowedHosts` | as in `appsettings.json` | ASP.NET Core's own keys |
 
 Secrets come from user-secrets or the environment, never a committed file: the connection string and the signing key.
@@ -114,7 +115,13 @@ SQL
 ```
 The next dev login as `devtest` creates the player and a starter city again.
 
-To give or take goods instead of starting over (it works on the player the Unity client logs in as, `dev1`; `PLAYER=devtest` for this one): `bash server-panel/panel.sh goods add planks 50` (also `remove`, `set` and `show`; menu option 6; `server-panel/README.md`).
+To give or take coins or goods instead of starting over (it works on the player the Unity client logs in as, `dev1`; `PLAYER=devtest` for this one): `bash server-panel/panel.sh goods add planks 50 <building id>` (a good goes into that building's store; coins into the purse without an id; also `remove`, `set` and `show`; menu option 6; `server-panel/README.md`).
+
+**The CR-0008 reset (D10).** The migration `LogisticsStoresTripsAndReset` (CR-0008-T1) moves the city-wide stock into building stores and
+the purse, and it first deletes every player, city, receipt and ledger row of the database it runs on: the owner's decision D10 in
+`docs/changes/CR-0008-logistics-rework.md`. The first `dotnet run` of the API after it (Development applies pending migrations) leaves
+an empty dev database; the next dev login creates the player and a starter city of the new model (800 coins, no goods). Tasks that need a
+city of the old model can't get one back.
 From M0-61 this section links to the generated reference.
 
 ## Troubleshooting

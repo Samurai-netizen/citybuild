@@ -10,9 +10,10 @@ using CityBuilder.Simulation.State;
 namespace CityBuilder.Client.Presentation.Hud
 {
     /// <summary>
-    /// One item chip of the HUD as plain text and flags: the item's name, its stock, its cap when it has one and its net rate per hour. Every
-    /// number comes from the displayed city and the engine's helpers (<c>CityQueries.TryGetEffectiveCap</c>, <c>ProductionDisplay.NetPerHour</c>);
-    /// none is written here. It is immutable, and two chips that say the same compare equal, so the view redraws only what changed.
+    /// One item chip of the HUD as plain text and flags: the item's name, the city's total of it (every store, every load, the purse for coins;
+    /// CR-0008) and its net rate per hour. Every number comes from the displayed city and the engine's helpers (<c>CityQueries.Total</c>,
+    /// <c>ProductionDisplay.NetPerHour</c>); none is written here. Limits are per store now, so a city-wide cap is no more: the cap text stays
+    /// empty and the chip is never full (CR-0008-T2 shows the stores). It is immutable, and two chips that say the same compare equal, so the view redraws only what changed.
     /// </summary>
     public sealed class ItemChipModel : IEquatable<ItemChipModel>
     {
@@ -34,13 +35,13 @@ namespace CityBuilder.Client.Presentation.Hud
         /// <summary>The item's name from the content, such as <c>Logs</c>; it stands in for an icon until there is art.</summary>
         public string Name { get; }
 
-        /// <summary>The stock in the displayed city, such as <c>40</c>.</summary>
+        /// <summary>The city's total in the displayed city, such as <c>40</c>.</summary>
         public string StockText { get; }
 
-        /// <summary>The storage cap, such as <c>500</c>; empty for an item without one (coins).</summary>
+        /// <summary>A city-wide cap; always empty since CR-0008 (limits are per store), kept for the view until CR-0008-T2.</summary>
         public string CapText { get; }
 
-        /// <summary>Whether a capped item's stock has reached its cap, so the view can warn that production stops.</summary>
+        /// <summary>Whether a city-wide cap is reached; always false since CR-0008 (limits are per store), kept for the view until CR-0008-T2.</summary>
         public bool IsFull { get; }
 
         /// <summary>The net rate per hour, such as <c>+60/h</c>, <c>−30/h</c> or <c>0/h</c> (<see cref="PerHourText"/>).</summary>
@@ -55,14 +56,9 @@ namespace CityBuilder.Client.Presentation.Hud
         /// <param name="definition">The item.</param>
         public static ItemChipModel Create(GameContent content, CityState city, ItemDefinition definition)
         {
-            long stock = city.GetQuantity(definition.Id);
+            long stock = CityQueries.Total(city, content, definition.Id);
             string capText = string.Empty;
             bool isFull = false;
-            if (CityQueries.TryGetEffectiveCap(city, content, definition.Id, out long cap))
-            {
-                capText = cap.ToString(CultureInfo.InvariantCulture);
-                isFull = stock >= cap;
-            }
 
             long net = ProductionDisplay.NetPerHour(city, content, definition.Id);
             return new ItemChipModel(

@@ -58,6 +58,30 @@ namespace CityBuilder.Client.Net
         /// <summary>409: the research is already completed.</summary>
         public const string ResearchCompleted = "RESEARCH_COMPLETED";
 
+        /// <summary>404: a tile of a road command has no road (CR-0008).</summary>
+        public const string RoadNotFound = "ROAD_NOT_FOUND";
+
+        /// <summary>422: the city already has the most buildings of the type (CR-0008: the science building).</summary>
+        public const string BuildingLimit = "BUILDING_LIMIT";
+
+        /// <summary>422: research needs a completed science building (CR-0008).</summary>
+        public const string NoScienceBuilding = "NO_SCIENCE_BUILDING";
+
+        /// <summary>422: the item is not in the content (CR-0008).</summary>
+        public const string UnknownItem = "UNKNOWN_ITEM";
+
+        /// <summary>422: a percentage or exact amount before the research that unlocks it (CR-0008).</summary>
+        public const string AmountModeLocked = "AMOUNT_MODE_LOCKED";
+
+        /// <summary>422: the trip's target neither needs the item for a project nor stores it (CR-0008).</summary>
+        public const string ItemNotAccepted = "ITEM_NOT_ACCEPTED";
+
+        /// <summary>422: the trip's amount gives nothing: the source holds none of the item (CR-0008).</summary>
+        public const string NothingToCarry = "NOTHING_TO_CARRY";
+
+        /// <summary>422: a route's slot, stops or actions break the route rules (CR-0008).</summary>
+        public const string InvalidRoute = "INVALID_ROUTE";
+
         /// <summary>409: the same request id was sent with a different command.</summary>
         public const string IdempotencyConflict = "IDEMPOTENCY_CONFLICT";
 

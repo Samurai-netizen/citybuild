@@ -30,15 +30,15 @@ public sealed class StructuralEqualityTests
     [Fact]
     public void FirstDifference_StockDiffers_NamesTheItem()
     {
-        Assert.Equal("inventory[wood]: expected 5, actual 6", StructuralEquality.FirstDifference(SampleCity(), SampleCity(wood: 6)));
+        Assert.Equal("building 2 store[wood]: expected 5, actual 6", StructuralEquality.FirstDifference(SampleCity(), SampleCity(wood: 6)));
     }
 
     /// <summary>An item held on one side only shows as <c>absent</c> on the other, either way round.</summary>
     [Fact]
     public void FirstDifference_ItemOnlyOnOneSide_NamesItAsAbsent()
     {
-        Assert.Equal("inventory[wood]: expected 5, actual absent", StructuralEquality.FirstDifference(SampleCity(), SampleCity(wood: 0)));
-        Assert.Equal("inventory[wood]: expected absent, actual 5", StructuralEquality.FirstDifference(SampleCity(wood: 0), SampleCity()));
+        Assert.Equal("building 2 store[wood]: expected 5, actual absent", StructuralEquality.FirstDifference(SampleCity(), SampleCity(wood: 0)));
+        Assert.Equal("building 2 store[wood]: expected absent, actual 5", StructuralEquality.FirstDifference(SampleCity(wood: 0), SampleCity()));
     }
 
     /// <summary>A building difference names the building's id and the first differing field in the field order.</summary>
@@ -65,10 +65,11 @@ public sealed class StructuralEqualityTests
     [Fact]
     public void FirstDifference_ExtraBuilding_NamesItsFirstField()
     {
-        CityState actual = City(inventory: [("gold", 100), ("wood", 5)], buildings:
+        CityState actual = City(purse: 100, buildings:
         [
             Idle(1, "hut", 0, 0),
-            Producing(2, "lumber_camp", 1, 0, level: 1, workers: 2, cycleStartedAt: 990, cycleLabor: 40, laborRemaining: 20, segmentStartedAt: 1000, endsAt: 1010),
+            Producing(2, "lumber_camp", 1, 0, level: 1, workers: 2, cycleStartedAt: 990, cycleLabor: 40, laborRemaining: 20, segmentStartedAt: 1000, endsAt: 1010,
+                store: [("wood", 5)]),
             Idle(3, "hut", 2, 0),
         ], activeResearch: new ActiveResearch(new ResearchId("carpentry"), 950, 1050));
 
@@ -79,10 +80,11 @@ public sealed class StructuralEqualityTests
     [Fact]
     public void FirstDifference_ActiveResearchDiffers_NamesBothTimers()
     {
-        CityState actual = City(inventory: [("gold", 100), ("wood", 5)], buildings:
+        CityState actual = City(purse: 100, buildings:
         [
             Idle(1, "hut", 0, 0),
-            Producing(2, "lumber_camp", 1, 0, level: 1, workers: 2, cycleStartedAt: 990, cycleLabor: 40, laborRemaining: 20, segmentStartedAt: 1000, endsAt: 1010),
+            Producing(2, "lumber_camp", 1, 0, level: 1, workers: 2, cycleStartedAt: 990, cycleLabor: 40, laborRemaining: 20, segmentStartedAt: 1000, endsAt: 1010,
+                store: [("wood", 5)]),
         ]);
 
         Assert.Equal("activeResearch: expected carpentry 950..1050, actual none", StructuralEquality.FirstDifference(SampleCity(), actual));
@@ -123,24 +125,25 @@ public sealed class StructuralEqualityTests
         Assert.Equal("elapsedSeconds: expected 0, actual 60", StructuralEquality.FirstDifference(expected, actual));
     }
 
-    /// <summary>The totals of no reports are zero seconds, no quantities, no completions and no era change.</summary>
+    /// <summary>The totals of no reports are zero seconds, no quantities, no completions, no tired couriers and no era change.</summary>
     [Fact]
     public void Sum_NoReports_IsZeroAndEmpty()
     {
         Assert.Equal(
-            [("elapsedSeconds", "0"), ("productionSeconds", "0"), ("completedBuildings", ""), ("completedResearch", ""), ("eraChanged", "false")],
+            [("elapsedSeconds", "0"), ("completedBuildings", ""), ("completedResearch", ""), ("tiredCouriers", ""), ("eraChanged", "false")],
             ReportTotals.Sum().Fields());
     }
 
     /// <summary>
     /// A hut, a lumber camp halfway through a 40-labor cycle with 2 workers (ends at 1010) and carpentry researching until 1050; each
-    /// parameter changes one value, a stock of 0 wood leaves wood out.
+    /// parameter changes one value, 0 wood leaves wood out of the camp's store. The purse holds 100 gold.
     /// </summary>
     private static CityState SampleCity(
         long clock = 1000, long wood = 5, int workers = 2, long laborRemaining = 20, long? endsAt = 1010, int? nextBuildingId = null) =>
-        City(clock: clock, inventory: wood == 0 ? [("gold", 100)] : [("gold", 100), ("wood", wood)], buildings:
+        City(clock: clock, purse: 100, buildings:
         [
             Idle(1, "hut", 0, 0),
-            Producing(2, "lumber_camp", 1, 0, level: 1, workers: workers, cycleStartedAt: 990, cycleLabor: 40, laborRemaining: laborRemaining, segmentStartedAt: 1000, endsAt: endsAt),
+            Producing(2, "lumber_camp", 1, 0, level: 1, workers: workers, cycleStartedAt: 990, cycleLabor: 40, laborRemaining: laborRemaining, segmentStartedAt: 1000, endsAt: endsAt,
+                store: wood == 0 ? null : [("wood", wood)]),
         ], activeResearch: new ActiveResearch(new ResearchId("carpentry"), 950, 1050), nextBuildingId: nextBuildingId);
 }

@@ -4,6 +4,7 @@ using CityBuilder.Application.Tests.Cities;
 using CityBuilder.Domain.Commands;
 using CityBuilder.Domain.Ledger;
 using CityBuilder.Simulation;
+using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.Rules;
 using CityBuilder.Simulation.State;
 using static CityBuilder.Application.Tests.Cities.SettleFixture;
@@ -96,7 +97,7 @@ public sealed class StartResearchCommandTests
     }
 
     /// <summary>
-    /// Apply does exactly what the engine's rule does on a copy of the same city: starting <c>forestry</c> in the starter city, and refusals
+    /// Apply does exactly what the engine's rule does on a copy of the same city: starting <c>forestry</c> in the starter city with a study, and refusals
     /// (a node the content doesn't have; <c>forestry</c> again in the city of <see cref="SettleFixture.Repository"/>, where it is running).
     /// </summary>
     /// <param name="researchId">The node to start.</param>
@@ -107,14 +108,14 @@ public sealed class StartResearchCommandTests
     [InlineData("forestry", true)]
     public void Apply_DoesWhatTheEngineRuleDoes(string researchId, bool running)
     {
-        CityState byCommand = running ? SettleFixture.Repository().Stored(PlayerId).State : CityFactory.CreateStarterCity(SettleFixture.Content);
-        CityState byRule = running ? SettleFixture.Repository().Stored(PlayerId).State : CityFactory.CreateStarterCity(SettleFixture.Content);
+        CityState byCommand = running ? SettleFixture.Repository().Stored(PlayerId).State : StarterCityWithStudy();
+        CityState byRule = running ? SettleFixture.Repository().Stored(PlayerId).State : StarterCityWithStudy();
 
         MutationResult commandResult = new StartResearchCommand(_requestId, researchId).Apply(byCommand, SettleFixture.Content);
         MutationResult ruleResult = CityRules.StartResearch(byRule, SettleFixture.Content, new ResearchId(researchId));
 
         Assert.Equal(ruleResult.ToString(), commandResult.ToString());
-        Assert.Equal(ruleResult.Spent, commandResult.Spent);
+        Assert.Equal(Lines(ruleResult.Spent), Lines(commandResult.Spent));
         Assert.Equal(Describe(byRule), Describe(byCommand));
     }
 
@@ -125,7 +126,7 @@ public sealed class StartResearchCommandTests
     [Fact]
     public async Task ExecuteAsync_StartForestry_SavesTheResearchTheCostAndTheReceipt()
     {
-        InMemoryCityRepository repository = RepositoryWith(CityFactory.CreateStarterCity(SettleFixture.Content));
+        InMemoryCityRepository repository = RepositoryWith(StarterCityWithStudy());
         var command = new StartResearchCommand(_requestId, "forestry");
 
         CommandResult result = await PipelineFixture.Pipeline(repository, ClockAtLastSettled())
@@ -133,11 +134,14 @@ public sealed class StartResearchCommandTests
 
         Assert.Equal(CommandOutcome.Succeeded, result.Outcome);
         CityState stored = repository.Stored(PlayerId).State;
-        Assert.Equal((Forestry, stored.Clock, stored.Clock + ResearchEndsAt),
+        Assert.Equal((Forestry, (long?)stored.Clock, (long?)(stored.Clock + ResearchSeconds)),
             (stored.ActiveResearch!.Id, stored.ActiveResearch.StartedAt, stored.ActiveResearch.EndsAt));
         LedgerEntry cost = Assert.Single(repository.LastLedger!);
         Assert.Equal((LedgerReason.CostResearch, _requestId.ToString(), "coins", -10L), (cost.Reason, cost.RefId, cost.Item.Value, cost.Delta));
         CommandReceipt receipt = repository.StoredReceipt(PlayerId, _requestId)!;
         Assert.Equal((StartResearchCommand.Type, result.ResponseJson), (receipt.CommandType, receipt.ResponseJson));
     }
+
+    /// <summary>A mutation's item lines as values, so two results compare by what they name (the engine builds a new list per call).</summary>
+    private static (ItemId Item, long Quantity)[] Lines(IReadOnlyList<ItemQuantity> lines) => [.. lines.Select(line => (line.Item, line.Quantity))];
 }

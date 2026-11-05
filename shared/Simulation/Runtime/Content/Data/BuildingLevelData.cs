@@ -18,6 +18,18 @@ namespace CityBuilder.Simulation.Content.Data
         /// <summary>Optional: none when left out. What a producer makes at this level.</summary>
         public RecipeData? Recipe { get; set; }
 
+        /// <summary>
+        /// The goods the level's store holds, each with its limit, keyed by item id (<c>04</c> section 16): required for producers (their
+        /// recipe's goods) and warehouses; absent for the other kinds.
+        /// </summary>
+        public Dictionary<string, long?>? Storage { get; set; }
+
+        /// <summary>Courier stations only, required there: how much each courier carries, all goods together (<c>04</c> section 19).</summary>
+        public long? CarryLimit { get; set; }
+
+        /// <summary>Courier stations only, required there: each courier's stamina in seconds of walking while the player is away (<c>04</c> section 2).</summary>
+        public long? StaminaSeconds { get; set; }
+
         /// <summary>Required from level 2 (may be empty), not allowed on level 1. What upgrading to this level costs, keyed by item id.</summary>
         public Dictionary<string, long?>? UpgradeCost { get; set; }
 

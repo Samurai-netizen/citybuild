@@ -9,11 +9,15 @@ only currency. The market unlocks when a city enters **Era II (High Middle Ages)
 days simple, and it also makes throwaway alt accounts expensive to farm.
 
 ## What M0 must already respect (binding)
-1. Every inventory change goes through the ledger with a reason. The market will add `MARKET_*` reasons.
+1. Every change to the city's goods and coins goes through the ledger with a reason: payments, refunds, production, deliveries to
+   projects (CR-0008). A move between two of the city's own stores (a courier or a trip) changes no total and writes no row. The market will
+   add `MARKET_*` reasons.
 2. A transaction locks and writes **only the acting player's city**. Effects on other players go to a
    **mailbox** that their own next settle applies (`04` §13). Never lock two cities in one transaction.
 3. Items carry `era` and `tradable` in content. Coins are the currency, not a tradable item.
-4. Storage caps limit production only. Refunds and deliveries may exceed caps.
+4. Goods live in building stores, each with a limit per item (CR-0008). The limits bound production and what walkers put into a store;
+   refunds and returned loads may exceed them. A delivery from another player (the mailbox) needs a destination store: which one is
+   decided with the market (M2), and it may exceed the limit like a refund.
 5. Prices, fees and quantities are integers (`long` coins per unit). There is no fractional money anywhere.
 6. Player identity is separate from the city (`players` ≠ `cities`). Market orders will belong to players.
 
@@ -21,10 +25,11 @@ days simple, and it also makes throwaway alt accounts expensive to farm.
 - Per item: **sell orders** (asks) and **buy orders** (bids), matched by price, then time.
 - "Buy now" fills against the cheapest asks. "Sell now" fills against the highest bids.
 - Partial fills are allowed. An order lasts 7 days; on expiry, the remaining escrow returns through the mailbox.
-- Delivery is instant and global (one market per server). Shipping and logistics could come in a later era.
+- Delivery between players is instant and global (one market per server). Inside the city, goods still live in buildings: a fill lands in
+  a destination store (decided in M2), and couriers carry it on from there.
 
 ## Escrow and settlement
-- Placing a sell order moves the goods from the city's inventory into escrow. Placing a buy order moves `price × qty` coins into escrow.
+- Placing a sell order moves the goods from a building's store (which one: decided in M2) into escrow. Placing a buy order moves `price × qty` coins into escrow.
 - On a match, the acting player's side is settled in their own transaction. The counterparty's goods or coins
   go to their mailbox, timestamped with the trade time.
 - At the counterparty's next settle, mailbox rows enter `Advance` as timed deliveries, so items arrive "when they were traded".

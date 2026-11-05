@@ -270,6 +270,12 @@ public sealed class RateLimitTests(ApiFactory factory, DefaultRateLimitsApiFacto
             ["/api/v1/commands/upgrade-building"] = RateLimitClass.Commands,
             ["/api/v1/commands/assign-workers"] = RateLimitClass.Commands,
             ["/api/v1/commands/start-research"] = RateLimitClass.Commands,
+            ["/api/v1/commands/place-roads"] = RateLimitClass.Commands,
+            ["/api/v1/commands/upgrade-roads"] = RateLimitClass.Commands,
+            ["/api/v1/commands/remove-roads"] = RateLimitClass.Commands,
+            ["/api/v1/commands/start-trip"] = RateLimitClass.Commands,
+            ["/api/v1/commands/set-route"] = RateLimitClass.Commands,
+            ["/api/v1/commands/reenergize-couriers"] = RateLimitClass.Commands,
         };
         using WebApplicationFactory<Program> server = factory.WithWebHostBuilder(_ => { });
 

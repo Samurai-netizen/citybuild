@@ -85,7 +85,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                 case ConnectionState.Connected:
                     CityState? city = snapshot?.CopyCity();
                     int era = city == null ? 0 : city.Era;
-                    long coins = city == null ? 0 : city.GetQuantity(new ItemId(CoinsItemId));
+                    long coins = city == null ? 0 : city.Purse;
                     return new ConnectionStatusModel(ConnectedText(content, era, coins), new string[0], false);
                 case ConnectionState.Offline:
                     string reason = error != null && error.Code == ApiErrorCodes.ClientTimeout ? "the server did not answer in time" : "cannot reach the server";
@@ -102,8 +102,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         /// <summary><c>Connected - Early Middle Ages - Coins: 700</c> from the first answer's DTO.</summary>
         private static string ConnectedText(GameContent content, CitySnapshotDto city)
         {
-            city.City.Inventory.TryGetValue(CoinsItemId, out long amount);
-            return ConnectedText(content, city.City.Era, amount);
+            return ConnectedText(content, city.City.Era, city.City.Purse);
         }
 
         /// <summary><c>Connected - Early Middle Ages - Coins: 700</c>; the era and item names are the content's, a missing one falls back to the id or number.</summary>

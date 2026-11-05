@@ -31,5 +31,11 @@ namespace CityBuilder.Simulation.Content.Data
 
         /// <summary>Required. The research nodes of every era.</summary>
         public List<ResearchData?>? Research { get; set; }
+
+        /// <summary>Required, at least one. The road levels, numbered 1, 2, … in any order (<c>04</c> section 17).</summary>
+        public List<RoadLevelData?>? Roads { get; set; }
+
+        /// <summary>Required. The amount presets every city may use for trips and routes, 1 to 8 (<c>04</c> section 19).</summary>
+        public List<AmountPresetData?>? AmountPresets { get; set; }
     }
 }

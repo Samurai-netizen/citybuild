@@ -113,20 +113,17 @@ namespace CityBuilder.Simulation.Display
         }
 
         /// <summary>
-        /// Seconds until the stock of a capped item reaches its cap at the net rate of <see cref="NetPerHour"/>, rounded up. It is a rough
-        /// estimate: it ignores inputs running out and research finishing, and production stops a little before the stock is exactly at
-        /// the cap, because a cycle starts only while its whole output fits.
+        /// The seconds until a good fills a building's store at the building's own net rate (<c>04</c> section 15): its outputs minus its inputs
+        /// of that good per hour while it can run, against the room left (effective limit − stock − its own running cycle's output). Goods walkers
+        /// bring or take are not counted: they come in steps, not as a rate.
         /// </summary>
         /// <param name="city">The city.</param>
         /// <param name="content">The game content.</param>
-        /// <param name="item">The item.</param>
-        /// <returns>
-        /// The seconds, 0 when the stock is at the cap already (refunds may put it above) while something still makes the item; null when the
-        /// item is uncapped or its net rate is not above 0.
-        /// </returns>
+        /// <param name="building">The building whose store fills.</param>
+        /// <param name="item">The good.</param>
+        /// <returns>The seconds, rounded up (0 when it is full); null when the store doesn't hold the good or its own rate isn't above 0.</returns>
         /// <exception cref="ArgumentNullException">An argument is null.</exception>
-        /// <exception cref="InvalidOperationException">The content doesn't know a building's type or research.</exception>
-        public static long? SecondsUntilFull(CityState city, GameContent content, ItemId item)
+        public static long? SecondsUntilFull(CityState city, GameContent content, Building building, ItemId item)
         {
             if (city is null)
             {
@@ -138,19 +135,26 @@ namespace CityBuilder.Simulation.Display
                 throw new ArgumentNullException(nameof(content));
             }
 
-            if (!CityQueries.TryGetEffectiveCap(city, content, item, out long cap))
+            if (building is null)
+            {
+                throw new ArgumentNullException(nameof(building));
+            }
+
+            if (!CityQueries.TryGetEffectiveLimit(city, content, building, item, out long limit) || !IsAbleToRun(city, content, building))
             {
                 return null;
             }
 
-            long net = NetPerHour(city, content, item);
+            RecipeDefinition recipe = CityQueries.RecipeOf(content, building.TypeId, building.Level);
+            long cycleSeconds = IntegerMath.CeilDiv(CityQueries.EffectiveLabor(city, content, building.TypeId, building.Level), building.AssignedWorkers);
+            long net = checked(SumOf(recipe.Outputs, item, cycleSeconds) - SumOf(recipe.Inputs, item, cycleSeconds));
             if (net <= 0)
             {
                 return null;
             }
 
-            long missing = cap - city.GetQuantity(item);
-            // Items × 3600 s × 1000 over thousandths of an item per hour gives seconds; rounding up never shows the cap sooner than it comes.
+            long missing = checked(limit - building.GetStock(item) - CityQueries.Reserved(content, building, item));
+            // Items × 3600 s × 1000 over thousandths of an item per hour gives seconds; rounding up never shows the limit sooner than it comes.
             return missing <= 0 ? 0 : IntegerMath.CeilDiv(checked(missing * _secondsPerHour * _milliScale), net);
         }
 

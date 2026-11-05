@@ -152,16 +152,10 @@ namespace CityBuilder.Client.Tests.PlayMode
             return view!;
         }
 
-        /// <summary>Shows a city with 40 logs and the given buildings, with the content.</summary>
+        /// <summary>Shows a city with 700 coins and the given buildings, with the content.</summary>
         private void Show(params Building[] buildings)
         {
-            var stock = new List<KeyValuePair<ItemId, long>>
-            {
-                new KeyValuePair<ItemId, long>(new ItemId("coins"), 700),
-                new KeyValuePair<ItemId, long>(new ItemId("logs"), 40),
-                new KeyValuePair<ItemId, long>(new ItemId("planks"), 10),
-            };
-            _world.ShowCity(new CityState(0, 1, 100, stock, new List<Building>(buildings), new List<ResearchId>(), null), _content);
+            _world.ShowCity(new CityState(0, 1, 100, 700, new List<Building>(buildings), new List<ResearchId>(), null), _content);
         }
 
         /// <summary>The woodcutter, building 1 on tile (1, 1), in <paramref name="phase"/> with <paramref name="workers"/> workers (idle only).</summary>

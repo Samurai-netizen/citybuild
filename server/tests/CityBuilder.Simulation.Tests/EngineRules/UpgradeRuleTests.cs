@@ -9,10 +9,10 @@ namespace CityBuilder.Simulation.Tests.EngineRules;
 
 /// <summary>
 /// Upgrading a producer (<c>04</c> sections 3 and 8): the running cycle is refunded, nothing is produced while the upgrade runs, the workers
-/// stay assigned, and the next level's worker limit counts from the upgrade's end; a refund may exceed a cap, which then blocks new cycles.
-/// Fixture numbers: a hut provides 3 workers; a workshop makes 1 boards from 2 wood, with 90 labor and up to 2 workers at level 1 and 180
-/// labor and up to 6 workers at level 2, whose upgrade costs 30 gold and 1 wood and takes 15 s; a lumber camp makes 1 wood from 40 labor
-/// with up to 2 workers; the wood cap is 100.
+/// stay assigned, and the next level's worker limit counts from the upgrade's end; a refund goes into the building's own store and may exceed
+/// its limit. Fixture numbers: a hut provides 3 workers; a workshop makes 1 boards from 2 wood, with 90 labor, up to 2 workers and a store of
+/// 20 wood at level 1 and 180 labor, up to 6 workers and 40 wood at level 2, whose upgrade costs 30 gold (coins only, so it starts at once)
+/// and takes 15 s.
 /// </summary>
 public sealed class UpgradeRuleTests
 {
@@ -25,9 +25,9 @@ public sealed class UpgradeRuleTests
     {
         CityState city = WorkshopUpgradedMidCycle();
 
-        // The cycle's 2 wood came back before the upgrade took 1 (2 + 2 − 1), its board is no longer reserved, and both workers stay.
+        // The cycle's 2 wood came back into its store (2 + 2), its board is no longer reserved, and both workers stay.
         Assert.Equal("building 3 workshop (2,0) L1 w=2 Upgrading 1020..1035 target=2 labor=0/0@0", CityDump.BuildingLine(city, 3));
-        Assert.Equal((3L, 0L), (city.GetQuantity(_wood), CityQueries.Reserved(city, TestContent, new ItemId("boards"))));
+        Assert.Equal((4L, 0L), (city.Buildings[2].GetStock(_wood), CityQueries.Reserved(TestContent, city.Buildings[2], new ItemId("boards"))));
     }
 
     /// <summary>During the upgrade nothing is produced and the old level's worker limit holds.</summary>
@@ -40,7 +40,7 @@ public sealed class UpgradeRuleTests
         RulesAssert.Rejected(MutationErrorCode.WorkerLimit, city, target => CityRules.AssignWorkers(target, TestContent, 3, 3));
         SettlementReport report = Simulator.Advance(city, TestContent, 14);
 
-        Assert.Equal((BuildingPhase.Upgrading, 3L), (city.Buildings[2].Phase, city.GetQuantity(_wood)));
+        Assert.Equal((BuildingPhase.Upgrading, 4L), (city.Buildings[2].Phase, city.Buildings[2].GetStock(_wood)));
         Assert.Empty(report.Consumed);
     }
 
@@ -58,37 +58,40 @@ public sealed class UpgradeRuleTests
         Assert.Equal(6, city.Buildings[2].AssignedWorkers);
     }
 
-    /// <summary>A refund may push the stock above the cap; it is kept, and it blocks new cycles until the stock is back under the cap.</summary>
+    /// <summary>
+    /// A refund may push the building's store above its limit; it is kept in full (limits stop production only), and the upgraded building
+    /// uses it. (Under the city-wide stock the refund also blocked another producer of the same item; with stores a refund goes back into the
+    /// building's own store only, CR-0008.)
+    /// </summary>
     [Fact]
-    public void Refund_AboveTheCap_IsKeptButBlocksNewCycles()
+    public void Refund_AboveTheLimit_IsKeptAndUsedAfterTheUpgrade()
     {
-        // Wood is at its cap of 100 and camp 4 waits. The upgrade refunds the workshop's 2 wood and takes 1: 101, above the cap.
-        CityState city = City(clock: 1000, inventory: [("gold", 30), ("wood", 100)], completedResearch: ["carpentry"], buildings:
+        // The workshop's store is at its limit of 20 wood; the upgrade refunds the running cycle's 2 wood: 22, above the limit.
+        CityState city = City(clock: 1000, purse: 30, completedResearch: ["carpentry"], buildings:
         [
             Idle(1, "hut", 0, 0),
-            Idle(2, "hut", 1, 0),
-            Producing(3, "workshop", 2, 0, 1, workers: 2, cycleStartedAt: 990, cycleLabor: 90, laborRemaining: 90, segmentStartedAt: 990, endsAt: 1035),
-            Idle(4, "lumber_camp", 3, 0, workers: 2),
+            Producing(2, "workshop", 1, 0, 1, workers: 2, cycleStartedAt: 990, cycleLabor: 90, laborRemaining: 90, segmentStartedAt: 990, endsAt: 1035,
+                store: [("wood", 20)]),
         ]);
 
-        Commands.UpgradeBuilding(city, 3);
+        Commands.UpgradeBuilding(city, 2);
 
-        Assert.Equal((101L, "StorageFull:wood"), (city.GetQuantity(_wood), StallReason.Of(city, TestContent, city.Buildings[3])?.ToString()));
+        Assert.Equal((22L, 0L), (city.Buildings[1].GetStock(_wood), CityQueries.Room(city, TestContent, city.Buildings[1], _wood)));
 
-        // At 1015 the upgraded workshop (the lower id) takes 2 wood; then 99 + 1 fits, and camp 4 starts in the same second.
+        // At 1015 the workshop reaches level 2 (40 wood) and its 2 workers start a cycle with 2 of the 22 wood in that second.
         Simulator.Advance(city, TestContent, 15);
-        Assert.Equal(99, city.GetQuantity(_wood));
-        Assert.Equal("building 4 lumber_camp (3,0) L1 w=2 Producing 1015..1035 target=0 labor=40/40@1015", CityDump.BuildingLine(city, 4));
+        Assert.Equal("building 2 workshop (1,0) L2 w=2 Producing 1015..1105 target=0 labor=180/180@1015", CityDump.BuildingLine(city, 2));
+        Assert.Equal(20, city.Buildings[1].GetStock(_wood));
     }
 
     /// <summary>
-    /// Two huts (6 workers) and a level-1 workshop with 2 workers that starts a 45 s cycle at 1000 with 4 wood in stock; at 1020 the player
-    /// upgrades it (30 gold and 1 wood, until 1035).
+    /// Two huts (6 workers) and a level-1 workshop with 2 workers that starts a 45 s cycle at 1000 with 4 wood in its store; at 1020 the player
+    /// upgrades it (30 gold, until 1035).
     /// </summary>
     private static CityState WorkshopUpgradedMidCycle()
     {
-        CityState city = City(clock: 1000, inventory: [("gold", 30), ("wood", 4)], completedResearch: ["carpentry"],
-            buildings: [Idle(1, "hut", 0, 0), Idle(2, "hut", 1, 0), Idle(3, "workshop", 2, 0, workers: 2)]);
+        CityState city = City(clock: 1000, purse: 30, completedResearch: ["carpentry"],
+            buildings: [Idle(1, "hut", 0, 0), Idle(2, "hut", 1, 0), Idle(3, "workshop", 2, 0, workers: 2, store: [("wood", 4)])]);
         Simulator.Advance(city, TestContent, 20);
         Commands.UpgradeBuilding(city, 3);
         return city;

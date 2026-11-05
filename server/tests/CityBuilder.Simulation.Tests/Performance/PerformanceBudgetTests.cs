@@ -7,19 +7,20 @@ using static CityBuilder.Simulation.Tests.Performance.WorstCaseCity;
 namespace CityBuilder.Simulation.Tests.Performance;
 
 /// <summary>
-/// The performance budget of <c>04</c> section 12: the worst-case city (<see cref="WorstCaseCity"/>) advanced by the full 8-hour production
-/// cap, then by 7 days (8 hours of production and a dormant tail with only timers). The exact counts prove that every cycle ran, so a run
-/// can't be fast by stalling early. The timing asserts a generous limit for CI and prints what it measured; the target on a dev machine
+/// The performance budget of <c>04</c> section 12 for producers: the worst-case city (<see cref="WorstCaseCity"/>) advanced by 8 hours, then
+/// by 7 days, both with production for every second (no offline cap since CR-0008-T1 part H): a long absence ends when the stores are full
+/// (the mines' 12,000 ore, the smelters' ore used up), as in the game, so it costs about what 8 hours do. Part I adds the courier worst
+/// case and sets the final number. The exact counts prove that every cycle ran, so a run can't be fast by stalling early. The timing asserts a generous limit for CI and prints what it measured; the target on a dev machine
 /// is 50 ms. They run in the collection <see cref="RunsAlone"/>.
 /// </summary>
 /// <param name="output">Where the timing test prints the times it measured, in every run, pass or fail.</param>
 [Collection(nameof(RunsAlone))]
 public sealed class PerformanceBudgetTests(ITestOutputHelper output)
 {
-    /// <summary>The production cap of the worst-case content, 8 hours in seconds.</summary>
+    /// <summary>The first advance, 8 hours in seconds.</summary>
     private const long _eightHours = 8 * 3600;
 
-    /// <summary>A long absence, 7 days in seconds: 8 hours of production and a long dormant tail.</summary>
+    /// <summary>A long absence, 7 days in seconds, all of them with production.</summary>
     private const long _sevenDays = 7 * 24 * 3600;
 
     /// <summary>How many timed runs the median is taken over, after one warm-up run.</summary>
@@ -34,7 +35,7 @@ public sealed class PerformanceBudgetTests(ITestOutputHelper output)
     {
         CityState city = Build();
 
-        Building[] producers = city.Buildings.Where(building => building.TypeId != House).ToArray();
+        Building[] producers = city.Buildings.Where(building => building.TypeId == Mine || building.TypeId == Smelter).ToArray();
         Assert.Equal(Producers, producers.Length);
         Assert.Equal(Producers / 2, producers.Count(building => building.TypeId == Mine));
         Assert.All(producers, building =>
@@ -45,26 +46,26 @@ public sealed class PerformanceBudgetTests(ITestOutputHelper output)
             Assert.InRange(building.PhaseEndsAt!.Value, city.Clock + 1, city.Clock + CycleSeconds);
         });
         Assert.Equal(CycleSeconds, producers.Select(building => building.PhaseEndsAt!.Value).Distinct().Count());
-        Assert.Equal(_eightHours, WorstCaseContent.Rules.MaxOfflineProductionSeconds);
     }
 
-    /// <summary>An 8-hour advance completes and starts every cycle the cap allows (exact counts, so a fast run can't be a stalled one).</summary>
+    /// <summary>An 8-hour advance completes and starts every cycle of the 8 hours (exact counts, so a fast run can't be a stalled one).</summary>
     [Fact]
-    public void Advance_EightHours_CompletesAndStartsEveryCycleOfTheCap()
+    public void Advance_EightHours_CompletesAndStartsEveryCycle()
     {
         CityState city = Build();
 
         AssertEightHours(Simulator.Advance(city, WorstCaseContent, _eightHours));
     }
 
-    /// <summary>A 7-day advance after it runs the cap's cycles, then lets the last cycles and the research complete in the tail, starting nothing there.</summary>
+    /// <summary>A 7-day advance after it runs the mines until their stores are full and the smelters until their ore runs out, and the research completes.</summary>
     [Fact]
-    public void Advance_SevenDaysAfterEightHours_RunsTheCapThenFinishesTheCyclesAndTheResearchInTheTail()
+    public void Advance_SevenDaysAfterEightHours_RunsTheProducersUntilTheirStoresStopThem()
     {
         CityState city = Build();
         Simulator.Advance(city, WorstCaseContent, _eightHours);
+        (long mineOre, long smelterOre) = OreOf(city);
 
-        AssertSevenDays(city, Simulator.Advance(city, WorstCaseContent, _sevenDays));
+        AssertSevenDays(city, Simulator.Advance(city, WorstCaseContent, _sevenDays), mineOre, smelterOre);
     }
 
     /// <summary>The median of five timed runs of both advances, after a warm-up, stays within the CI limit; the times are printed.</summary>
@@ -92,22 +93,23 @@ public sealed class PerformanceBudgetTests(ITestOutputHelper output)
         var watch = Stopwatch.StartNew();
         SettlementReport eightHours = Simulator.Advance(city, WorstCaseContent, _eightHours);
         long eightHoursTicks = watch.ElapsedTicks;
+        (long mineOre, long smelterOre) = OreOf(city);
         watch.Restart();
         SettlementReport sevenDays = Simulator.Advance(city, WorstCaseContent, _sevenDays);
         long sevenDaysTicks = watch.ElapsedTicks;
 
         AssertEightHours(eightHours);
-        AssertSevenDays(city, sevenDays);
+        AssertSevenDays(city, sevenDays, mineOre, smelterOre);
         return (Microseconds(eightHoursTicks), Microseconds(sevenDaysTicks));
     }
 
     /// <summary>
     /// The exact report of the 8-hour advance. Every producer's next cycle ends within 10 s of the start, so 8 hours hold 2,880 completions
-    /// each, and each starts the next cycle (the last one at the cap's last second at the latest): 64 × 2,880 = 184,320 completions.
+    /// each, and each starts the next cycle: 64 × 2,880 = 184,320 completions.
     /// </summary>
     private static void AssertEightHours(SettlementReport report)
     {
-        Assert.Equal(_eightHours, report.ProductionSeconds);
+        Assert.Equal(_eightHours, report.ElapsedSeconds);
         Assert.Equal(2, report.Produced.Count);
         Assert.Equal(32 * 2880 * 2, report.Produced[Ore]);
         Assert.Equal(32 * 2880, report.Produced[Ingots]);
@@ -118,21 +120,32 @@ public sealed class PerformanceBudgetTests(ITestOutputHelper output)
     }
 
     /// <summary>
-    /// The exact report of the 7-day advance: the same 2,880 completions and starts in the production window, then each producer's last cycle
-    /// completes in the dormant tail (2,881 completions), nothing starts there, and the 2-day research completes: the tail adds only timer events.
+    /// The exact report of the 7-day advance: each mine runs on until its store holds <see cref="MineOreLimit"/> (2 ore a cycle, the limit
+    /// even, so it fills exactly), each smelter finishes its running cycle and then starts one per ore left in its store (about 3,100 each);
+    /// then every producer stands idle, about 9 hours in, and the 2-day research completes. About 200,000 completions, like 8 hours.
     /// </summary>
-    private static void AssertSevenDays(CityState city, SettlementReport report)
+    /// <param name="city">The city after the 7-day advance.</param>
+    /// <param name="report">The 7-day advance's report.</param>
+    /// <param name="mineOre">The ore in the mines' stores before the 7-day advance, over all of them (<see cref="OreOf"/>).</param>
+    /// <param name="smelterOre">The ore in the smelters' stores before the 7-day advance, over all of them.</param>
+    private static void AssertSevenDays(CityState city, SettlementReport report, long mineOre, long smelterOre)
     {
-        Assert.Equal(_eightHours, report.ProductionSeconds);
+        Assert.InRange(smelterOre, 32 * 3000L, 32 * 3119L);
+        Assert.Equal(_sevenDays, report.ElapsedSeconds);
         Assert.Equal(2, report.Produced.Count);
-        Assert.Equal(32 * 2881 * 2, report.Produced[Ore]);
-        Assert.Equal(32 * 2881, report.Produced[Ingots]);
+        Assert.Equal((32 * MineOreLimit) - mineOre, report.Produced[Ore]);
+        Assert.Equal(smelterOre + 32, report.Produced[Ingots]);
         Assert.Single(report.Consumed);
-        Assert.Equal(32 * 2880, report.Consumed[Ore]);
+        Assert.Equal(smelterOre, report.Consumed[Ore]);
         Assert.Empty(report.CompletedBuildings);
         Assert.Equal([DeepVaults], report.CompletedResearch);
         Assert.All(city.Buildings, building => Assert.Equal(BuildingPhase.Idle, building.Phase));
     }
+
+    /// <summary>The ore in the mines' stores and in the smelters' stores, each over all of them: what decides how long each runs on.</summary>
+    private static (long Mines, long Smelters) OreOf(CityState city) => (
+        city.Buildings.Where(building => building.TypeId == Mine).Sum(building => building.GetStock(Ore)),
+        city.Buildings.Where(building => building.TypeId == Smelter).Sum(building => building.GetStock(Ore)));
 
     /// <summary>Stopwatch ticks in microseconds.</summary>
     private static long Microseconds(long ticks) => ticks * 1_000_000 / Stopwatch.Frequency;

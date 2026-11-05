@@ -39,6 +39,9 @@ namespace CityBuilder.Client.Presentation.Hud
         /// <summary>The time left, such as <c>12m 30s</c> (<see cref="DurationText"/>); <c>0s</c> once the end has passed and the next snapshot has not arrived; empty when none runs.</summary>
         public string TimeLeftText { get; }
 
+        /// <summary>The time text of a research that waits for goods at the science building (CR-0008).</summary>
+        public const string WaitingText = "Waiting for goods";
+
         /// <summary>Makes the ring for <paramref name="city"/>, the city the client displays now; its clock is the clock shown.</summary>
         /// <param name="content">The game content the node's name comes from.</param>
         /// <param name="city">The displayed city.</param>
@@ -51,7 +54,13 @@ namespace CityBuilder.Client.Presentation.Hud
             }
 
             string name = content.TryGetResearch(research.Id, out ResearchDefinition? definition) ? definition.Name : research.Id.Value;
-            long secondsLeft = Math.Max(0, research.EndsAt - city.Clock);
+            if (research.EndsAt == null)
+            {
+                // It waits at the science building for goods (CR-0008); its timer has not started.
+                return new ResearchRingModel(true, 0, name, WaitingText);
+            }
+
+            long secondsLeft = Math.Max(0, research.EndsAt.Value - city.Clock);
             return new ResearchRingModel(
                 true,
                 ProgressDisplay.ResearchProgressPermille(city, city.Clock),

@@ -21,16 +21,28 @@ Mark integration tests with `[Trait("Category", "Integration")]` so the fast sui
 ## Simulation test kinds (the most important ones)
 - **Rule tests:** one rule per test. Start rule, completion rule, ordering (research → completions → starts),
   storage cap, labor ÷ workers with ceiling, worker change mid-cycle, frozen cycle, auto-staffing, research effects
-  (unlock, labor reduction, storage bonus), upgrade refund, dormant tail after the production cap.
+  (unlock, labor reduction, storage bonus), upgrade refund, production for the whole window until a store is full (the offline cap and
+  its dormant tail went in CR-0008-T1 part H). CR-0008 adds a rule test per logistics rule: built for the path rule (with a brute-force
+  check on small maps) and roads (CR-0008-T1 part C), stores and limits, the purse, projects and what a delivery fills first, trips,
+  amounts and rounding (part E), couriers and routes (part F), and stamina, the absence start and re-energizing (part H).
 - **Golden scenarios:** scripted cities with exact expected values at exact clock times. Golden scenario #1 is
   the first-session table in `23-mvp-content.md`. Golden tests use a **frozen** content file. Golden scenario #1 also runs
   end to end through the HTTP API on PostgreSQL (Integration layer, M0-36): every row via `GET /city`, the stored city equal
-  to the engine's, and the ledger reconciled with the stock.
+  to the engine's, and the ledger reconciled with the stock. CR-0008 rewrote #1 (a first session with the science building, manual trips
+  and deliveries to a construction site; built in CR-0008-T1 part E, in the engine and over HTTP, on `content-golden-v2.json`, and
+  `content-golden-v1.json` is gone) and adds #2 (a courier route, a road, an absence, tired couriers, re-energize), in `23`, in the engine
+  and over HTTP (part H; over HTTP only the script's own requests are sent, as every request is presence).
 - **Property tests:** seeded random cities and random elapsed splits (fixed seeds, ≥ 500 cases each), covering
   determinism, split invariance, timer invariance, conservation, non-negativity, caps, worker limits, labor accounting,
-  builder/research slots, and no starts after the cap. Print the seed and the operation list on failure.
+  builder/research slots. Print the seed and the operation list on failure. CR-0008: conservation over stores, loads, deliveries and
+  the purse, store limits (only refunds and returned loads exceed them), workers on trips counted and loads within the carry limit, with
+  manual trips in the generated histories (built, CR-0008-T1 part E); couriers and routes (part F); generated absences, split and timer
+  invariance for one absence start and any lengths, and stamina spent exactly after the absence start (invariant 14, part H). The path
+  rule (invariant 12) is checked against a brute force on small maps (part C).
   From a failing seed to a rule test: `docs/how-to/debug-determinism-failure.md`.
-- **Performance budget:** the worst-case city over the full production cap stays within budget, with the event count asserted.
+- **Performance budget:** the worst-case city stays within budget, with the event count asserted: 64 producers over 8 hours and over 7
+  days after them, until their stores stop them (part H); from CR-0008 part I the worst case of `04` §12 (couriers on the shortest walks
+  for their whole stamina).
 
 ## Time
 Server code takes `TimeProvider`. Tests use `FakeTimeProvider` and advance it explicitly.

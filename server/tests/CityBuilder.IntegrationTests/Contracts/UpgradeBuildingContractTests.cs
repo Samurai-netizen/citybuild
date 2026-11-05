@@ -37,9 +37,10 @@ public sealed class UpgradeBuildingContractTests(ApiFactory factory) : IClassFix
     private static readonly Guid _playerId = Guid.Parse("0199a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a6b");
 
     /// <summary>
-    /// An upgrade answers 200 with the snapshot of the city as it is saved: the request id, the next version, the cost paid, the house
-    /// upgrading for its 90 seconds at level 1 (still providing its 4 workers) and both builders busy. It is the same snapshot
-    /// <c>GET /city</c> shows of that city, and the saved ledger holds the cost under <c>COST_UPGRADE</c> with the request id as reference.
+    /// An upgrade answers 200 with the snapshot of the city as it is saved: the request id, the next version, the coins paid (120), the
+    /// house's upgrade waiting for its 30 logs (CR-0008: goods are delivered, the house keeps working and its 4 workers) and both builders busy.
+    /// It is the same snapshot <c>GET /city</c> shows of that city, and the saved ledger holds the coins under <c>COST_UPGRADE</c> with the
+    /// request id as reference.
     /// </summary>
     [Fact]
     public async Task Post_IdleHouse_ReturnsTheSnapshotOfTheSavedCity()
@@ -54,17 +55,18 @@ public sealed class UpgradeBuildingContractTests(ApiFactory factory) : IClassFix
         JsonNode snapshot = response.Json();
         JsonShape.AssertObject(snapshot, "requestId:string stateVersion:int serverTimeUtc:string contentVersion:string city:object settlement:object", "$");
         Assert.Equal((_requestId, 1L), ((string)snapshot["requestId"]!, (long)snapshot["stateVersion"]!));
-        Assert.Equal("""{"coins":580,"logs":10,"planks":10}""", snapshot["city"]!["inventory"]!.ToJsonString());
+        Assert.Equal(580, (long)snapshot["city"]!["purse"]!);
         Assert.Equal("""{"slots":2,"busy":2}""", snapshot["city"]!["builders"]!.ToJsonString());
-        Assert.Equal("""{"provided":4,"assigned":0,"free":4}""", snapshot["city"]!["workers"]!.ToJsonString());
+        Assert.Equal("""{"provided":4,"assigned":0,"onTrips":0,"free":4}""", snapshot["city"]!["workers"]!.ToJsonString());
         Assert.Equal(
-            """{"id":1,"typeId":"house","x":0,"y":0,"level":1,"assignedWorkers":0,"maxWorkers":0,"phase":"Upgrading",""" +
-            """ "phaseStartedAt":0,"phaseEndsAt":90,"cycleLabor":0,"laborRemaining":0,"segmentStartedAt":0,"stallReason":null}""".TrimStart(),
+            """{"id":1,"typeId":"house","x":0,"y":0,"level":1,"assignedWorkers":0,"maxWorkers":0,"phase":"Idle",""" +
+            """ "phaseStartedAt":0,"phaseEndsAt":null,"cycleLabor":0,"laborRemaining":0,"segmentStartedAt":0,"stallReason":"NoRecipe",""".TrimStart() +
+            """ "store":{},"storeLimits":{},"needs":{"logs":30},"project":"Upgrade"}""".TrimStart(),
             snapshot["city"]!["buildings"]![0]!.ToJsonString());
 
         Assert.Equal(1, store.SaveCount);
         Assert.Equal(
-            [("coins", -120L, 580L, LedgerReason.CostUpgrade, _requestId), ("logs", -30L, 10L, LedgerReason.CostUpgrade, _requestId)],
+            [("coins", -120L, 580L, LedgerReason.CostUpgrade, _requestId)],
             store.Ledger.Select(entry => (entry.Item.Value, entry.Delta, entry.BalanceAfter, entry.Reason, entry.RefId)));
 
         JsonNode city = (await ApiClient.GetAsync(server, "/api/v1/city", _playerId)).Json();
@@ -90,7 +92,7 @@ public sealed class UpgradeBuildingContractTests(ApiFactory factory) : IClassFix
         Assert.Equal((HttpStatusCode.OK, "application/json; charset=utf-8"), (retry.Status, retry.ContentType));
         Assert.Equal(first.Body, retry.Body);
         Assert.Equal(1, store.SaveCount);
-        Assert.Equal(2, store.Ledger.Count);
+        Assert.Single(store.Ledger);
     }
 
     /// <summary>
@@ -276,7 +278,7 @@ public sealed class UpgradeBuildingContractTests(ApiFactory factory) : IClassFix
             0,
             era: 1,
             nextBuildingId: 3,
-            [new(new ItemId("coins"), 700), new(new ItemId("logs"), 40), new(new ItemId("planks"), 10)],
+            purse: 700,
             buildings,
             [],
             activeResearch: null);

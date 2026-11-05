@@ -1,41 +1,39 @@
 #nullable enable
-using System;
-using System.Collections.Generic;
 
 namespace CityBuilder.Simulation.Content
 {
     /// <summary>The global rules of the game content (<c>core-instructions/23-mvp-content.md</c>, global rules).</summary>
     public sealed class GameRules
     {
-        /// <summary>The base cap of each capped item, for <see cref="TryGetBaseStorageCap"/>; only looked up, never iterated.</summary>
-        private readonly Dictionary<ItemId, long> _baseStorageCapByItem;
-
         /// <summary>Creates the rules from values the shape phase has read (<see cref="ContentReader"/>); each is described on its property.</summary>
         internal GameRules(
             int gridWidth,
             int gridHeight,
             int builderSlots,
             int researchSlots,
-            IReadOnlyList<ItemQuantity> baseStorageCaps,
-            long maxOfflineProductionSeconds,
             long minCycleSeconds,
-            int maxLaborReductionPermille)
+            int maxLaborReductionPermille,
+            long groundTileMillis,
+            int crossingSpeedPermille,
+            long minWalkSeconds,
+            int maxWalkBonusPermille,
+            long tripCarryLimit,
+            int maxRouteStops,
+            int maxStopActions)
         {
             GridWidth = gridWidth;
             GridHeight = gridHeight;
             BuilderSlots = builderSlots;
             ResearchSlots = researchSlots;
-            BaseStorageCaps = baseStorageCaps ?? throw new ArgumentNullException(nameof(baseStorageCaps));
-            MaxOfflineProductionSeconds = maxOfflineProductionSeconds;
             MinCycleSeconds = minCycleSeconds;
             MaxLaborReductionPermille = maxLaborReductionPermille;
-
-            _baseStorageCapByItem = new Dictionary<ItemId, long>();
-            foreach (ItemQuantity cap in baseStorageCaps)
-            {
-                // The first entry wins; content validation reports a second one before this content can exist.
-                _baseStorageCapByItem.TryAdd(cap.Item, cap.Quantity);
-            }
+            GroundTileMillis = groundTileMillis;
+            CrossingSpeedPermille = crossingSpeedPermille;
+            MinWalkSeconds = minWalkSeconds;
+            MaxWalkBonusPermille = maxWalkBonusPermille;
+            TripCarryLimit = tripCarryLimit;
+            MaxRouteStops = maxRouteStops;
+            MaxStopActions = maxStopActions;
         }
 
         /// <summary>The grid's width in tiles: x runs from 0 to <c>GridWidth − 1</c>.</summary>
@@ -50,25 +48,37 @@ namespace CityBuilder.Simulation.Content
         /// <summary>How many research nodes may run at once: exactly 1 in M0.</summary>
         public int ResearchSlots { get; }
 
-        /// <summary>The base storage cap of every capped item (and of no other item), sorted by item id. Research bonuses add to it.</summary>
-        public IReadOnlyList<ItemQuantity> BaseStorageCaps { get; }
-
-        /// <summary>
-        /// How many seconds of one settlement may start production cycles; after that the city is dormant and only timers run
-        /// (<c>core-instructions/04-simulation-model.md</c>, section 2).
-        /// </summary>
-        public long MaxOfflineProductionSeconds { get; }
-
         /// <summary>The shortest cycle content may allow, in seconds: with every labor reduction and all max workers, no cycle is shorter.</summary>
         public long MinCycleSeconds { get; }
 
         /// <summary>The largest total labor reduction of one building type, in permille (500 = half the labor).</summary>
         public int MaxLaborReductionPermille { get; }
 
-        /// <summary>Looks up the base storage cap of an item.</summary>
-        /// <param name="item">The item.</param>
-        /// <param name="cap">The base cap, when the item is capped; otherwise 0.</param>
-        /// <returns>True when the item is capped and so has a base cap.</returns>
-        public bool TryGetBaseStorageCap(ItemId item, out long cap) => _baseStorageCapByItem.TryGetValue(item, out cap);
+        /// <summary>
+        /// How long a walker takes to cross one tile of open ground, in milliseconds (5000 in M0). A walk's own start and end buildings count
+        /// as ground too (<c>core-instructions/04-simulation-model.md</c>, section 17).
+        /// </summary>
+        public long GroundTileMillis { get; }
+
+        /// <summary>
+        /// How fast a walker crosses another building's tile, in permille of the ground speed (200 = a fifth: 25 s instead of 5 s). A walk
+        /// crosses a building only when every way does (the path rule, <c>04</c> section 17).
+        /// </summary>
+        public int CrossingSpeedPermille { get; }
+
+        /// <summary>The shortest walk content may allow, in seconds: one step between two adjacent buildings with every walk bonus applied.</summary>
+        public long MinWalkSeconds { get; }
+
+        /// <summary>The largest total walk bonus of all research together, in permille (500 = walks take half the time).</summary>
+        public int MaxWalkBonusPermille { get; }
+
+        /// <summary>The most goods one manual trip carries, all goods together, at least 1 (<c>04</c> section 18).</summary>
+        public long TripCarryLimit { get; }
+
+        /// <summary>The most stops a courier's route may have, 2 to 16 (<c>04</c> section 19).</summary>
+        public int MaxRouteStops { get; }
+
+        /// <summary>The most actions one stop of a route may have, 1 to 8 (<c>04</c> section 19).</summary>
+        public int MaxStopActions { get; }
     }
 }

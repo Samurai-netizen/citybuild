@@ -12,7 +12,7 @@ namespace CityBuilder.Simulation.Content.Data
         /// <summary>Required. The display name.</summary>
         public string? Name { get; set; }
 
-        /// <summary>Required. <c>house</c> or <c>producer</c>.</summary>
+        /// <summary>Required. <c>house</c>, <c>producer</c>, <c>warehouse</c>, <c>courierStation</c> or <c>science</c>.</summary>
         public string? Kind { get; set; }
 
         /// <summary>Required. The number of the era the building type belongs to.</summary>
@@ -23,6 +23,9 @@ namespace CityBuilder.Simulation.Content.Data
         /// <c>unlockBuilding</c> effect; the unlock itself is stated only there.
         /// </summary>
         public bool? AvailableAtStart { get; set; }
+
+        /// <summary>Optional. The most buildings of the type one city may have, at least 1; absent: no limit (the science building has 1).</summary>
+        public int? MaxPerCity { get; set; }
 
         /// <summary>Required (may be empty). What placing the building costs, keyed by item id.</summary>
         public Dictionary<string, long?>? Cost { get; set; }

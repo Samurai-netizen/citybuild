@@ -130,47 +130,90 @@ namespace CityBuilder.Client.Tests.EditMode.Core
             Assert.That(_store.WholeSecondsSinceReceived, Is.EqualTo(expected));
         }
 
-        /// <summary>A copy holds every value of the city it was made from, for a building in each phase, with the research running and completed, in new objects.</summary>
+        /// <summary>
+        /// A copy holds every value of the city it was made from, for a building in each phase, with the research running and completed, a trip,
+        /// a walking courier with a load and a route, in new objects (the courier too: it changes in an advance).
+        /// </summary>
         [Test]
         public void CopyCity_HoldsEveryValueInNewObjects()
         {
             var constructing = new Building(1, new BuildingTypeId("sawmill"), 0, 0, 1, 0, BuildingPhase.Constructing, 5, 15, 0, 0, 0, 0);
             var upgrading = new Building(2, new BuildingTypeId("house"), 1, 2, 3, 0, BuildingPhase.Upgrading, 6, 16, 4, 0, 0, 0);
             var idle = new Building(4, new BuildingTypeId("house"), 3, 4, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
-            var producing = new Building(7, new BuildingTypeId("woodcutter"), 5, 6, 2, 2, BuildingPhase.Producing, 8, 30, 0, 100, 40, 10);
+            var producing = new Building(
+                7, new BuildingTypeId("woodcutter"), 5, 6, 2, 2, BuildingPhase.Producing, 8, 30, 0, 100, 40, 10, new[] { Amount("logs", 37) });
             var frozen = new Building(8, new BuildingTypeId("woodcutter"), 7, 7, 1, 0, BuildingPhase.Producing, 8, null, 0, 90, 33, 12);
-            var stock = new[] { new KeyValuePair<ItemId, long>(new ItemId("coins"), 640), new KeyValuePair<ItemId, long>(new ItemId("logs"), 37) };
+            var site = new Building(
+                9, new BuildingTypeId("sawmill"), 0, 7, 1, 0, BuildingPhase.Constructing, 0, null, 0, 0, 0, 0, null, new[] { Amount("logs", 6) });
+            var trip = new Trip(3, 7, 9, new ItemId("logs"), 4, 12, 26);
+            var station = new Building(10, new BuildingTypeId("courier_station"), 2, 7, 1, 1, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
+            var courier = new Courier(10, 1, CourierState.Walking, 2, 14, 24, 900, new[] { new CourierLoad(new ItemId("logs"), 7, 3) });
+            var route = new Route(10, 1, new[]
+            {
+                new RouteStop(7, new[] { new RouteAction(RouteActionKind.Take, new ItemId("logs"), Simulation.State.Amount.Preset(new AmountPresetId("all"))) }),
+                new RouteStop(9, new[] { new RouteAction(RouteActionKind.Put, new ItemId("logs"), Simulation.State.Amount.Preset(new AmountPresetId("all"))) }),
+            });
             var city = new CityState(
                 20,
                 2,
                 11,
-                stock,
-                new[] { constructing, upgrading, idle, producing, frozen },
+                640,
+                new[] { constructing, upgrading, idle, producing, frozen, site, station },
                 new[] { new ResearchId("sharp_axes") },
-                new ActiveResearch(new ResearchId("trade_charter"), 4, 604));
+                new ActiveResearch(new ResearchId("frame_saw"), null, null, new[] { Amount("planks", 30) }),
+                null,
+                new[] { trip },
+                4,
+                new[] { courier },
+                new[] { route });
             string expected = CityTestData.Describe(city);
 
-            CityState copy = new CitySnapshot(1, "mvp-1", city).CopyCity();
+            CityState copy = new CitySnapshot(1, "mvp-2", city).CopyCity();
 
             Assert.That(CityTestData.Describe(copy), Is.EqualTo(expected));
             Assert.That(copy, Is.Not.SameAs(city));
             Assert.That(copy.Buildings.Zip(city.Buildings, (a, b) => ReferenceEquals(a, b)), Has.None.True);
+            Assert.That(copy.Couriers.Single(), Is.Not.SameAs(courier));
         }
 
-        /// <summary>Running the engine on a copy, buildings and stock included, leaves the snapshot as it was: the state the store holds is immutable.</summary>
+        /// <summary>
+        /// Running the engine on a copy, stores, needs, the research and the trip included, leaves the snapshot as it was: the state the store
+        /// holds is immutable.
+        /// </summary>
         [Test]
         public void CopyCity_AdvancingACopy_LeavesTheSnapshotAlone()
         {
             GameContent content = CityTestData.Content();
-            CitySnapshot snapshot = CityTestData.Snapshot("snapshot-city-producing.json");
+            CitySnapshot snapshot = CityTestData.Snapshot("snapshot-command-start-research.json");
             string before = CityTestData.Describe(snapshot.CopyCity());
 
             CityState copy = snapshot.CopyCity();
             SettlementReport report = Simulator.Advance(copy, content, 1000);
 
             Assert.That(report.CompletedResearch, Is.Not.Empty, "The advance must have changed the copy for this test to mean anything.");
-            Assert.That(copy.GetQuantity(new ItemId("planks")), Is.Not.EqualTo(10L));
+            Assert.That(report.Delivered, Is.Not.Empty, "The trip must have delivered to the site for this test to mean anything.");
             Assert.That(CityTestData.Describe(snapshot.CopyCity()), Is.EqualTo(before));
+        }
+
+        /// <summary>Running the engine on a copy moves its couriers and leaves the snapshot's couriers as they were (CR-0008-T1 part G).</summary>
+        [Test]
+        public void CopyCity_AdvancingACopyWithCouriers_LeavesTheSnapshotsCouriersAlone()
+        {
+            GameContent content = CityTestData.Content();
+            CitySnapshot snapshot = CityTestData.Snapshot("snapshot-command-set-route.json");
+            string before = CityTestData.Describe(snapshot.CopyCity());
+
+            CityState copy = snapshot.CopyCity();
+            Simulator.Advance(copy, content, 10);
+
+            Assert.That(copy.Couriers[0].ToStop, Is.EqualTo(2), "The courier must have reached stop 1 and left for stop 2 for this test to mean anything.");
+            Assert.That(CityTestData.Describe(snapshot.CopyCity()), Is.EqualTo(before));
+        }
+
+        /// <summary>One good and its quantity, for a store or needs.</summary>
+        private static KeyValuePair<ItemId, long> Amount(string item, long quantity)
+        {
+            return new KeyValuePair<ItemId, long>(new ItemId(item), quantity);
         }
     }
 }

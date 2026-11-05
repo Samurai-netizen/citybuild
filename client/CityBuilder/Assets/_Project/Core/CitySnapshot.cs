@@ -59,12 +59,6 @@ namespace CityBuilder.Client.Core
         /// <returns>The copy; it shares nothing that can change with the snapshot.</returns>
         public CityState CopyCity()
         {
-            var inventory = new List<KeyValuePair<ItemId, long>>(_city.Inventory.Count);
-            foreach (KeyValuePair<ItemId, long> stock in _city.Inventory)
-            {
-                inventory.Add(stock);
-            }
-
             var buildings = new List<Building>(_city.Buildings.Count);
             foreach (Building building in _city.Buildings)
             {
@@ -81,10 +75,27 @@ namespace CityBuilder.Client.Core
                     building.TargetLevel,
                     building.CycleLabor,
                     building.LaborRemaining,
-                    building.SegmentStartedAt));
+                    building.SegmentStartedAt,
+                    new List<KeyValuePair<ItemId, long>>(building.Store),
+                    new List<KeyValuePair<ItemId, long>>(building.Needs)));
             }
 
-            return new CityState(_city.Clock, _city.Era, _city.NextBuildingId, inventory, buildings, _city.CompletedResearch, _city.ActiveResearch);
+            // The research changes in place when a delivery fills its needs or starts its timer (CR-0008), so it is copied too; trips never change.
+            // Couriers walk, load and unload in place (CR-0008-T1 part G), so each is copied; routes never change in an advance.
+            ActiveResearch? research = _city.ActiveResearch;
+            ActiveResearch? researchCopy = research == null
+                ? null
+                : new ActiveResearch(research.Id, research.StartedAt, research.EndsAt, new List<KeyValuePair<ItemId, long>>(research.Needs));
+            var couriers = new List<Courier>(_city.Couriers.Count);
+            foreach (Courier courier in _city.Couriers)
+            {
+                couriers.Add(new Courier(
+                    courier.StationId, courier.Slot, courier.State, courier.ToStop, courier.DepartedAt, courier.ArrivesAt, courier.Stamina, courier.Loads));
+            }
+
+            return new CityState(
+                _city.Clock, _city.Era, _city.NextBuildingId, _city.Purse, buildings, _city.CompletedResearch, researchCopy, _city.Roads, _city.Trips,
+                _city.NextTripId, couriers, _city.Routes);
         }
     }
 }

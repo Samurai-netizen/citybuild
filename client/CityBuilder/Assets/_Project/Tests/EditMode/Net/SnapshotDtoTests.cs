@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using CityBuilder.Client.Net;
 using NUnit.Framework;
 
@@ -34,21 +36,44 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             return Fixtures.Names("snapshot-");
         }
 
-        /// <summary>A starter city: coins and logs in stock, no buildings, no research, <c>requestId</c> null because <c>GET /city</c> is no command.</summary>
+        /// <summary>
+        /// A starter city: coins in the purse and no goods (CR-0008), no buildings, roads, trips or research, <c>requestId</c> null because
+        /// <c>GET /city</c> is no command.
+        /// </summary>
         [Test]
         public void CityStart_HasTheStarterCityAndNoRequestId()
         {
             CitySnapshotDto snapshot = _json.Deserialize<CitySnapshotDto>(Fixtures.Read("snapshot-city-start.json"));
 
             Assert.That(snapshot.RequestId, Is.Null);
-            Assert.That(snapshot.ContentVersion, Is.EqualTo("mvp-1"));
+            Assert.That(snapshot.ContentVersion, Is.EqualTo("mvp-2"));
             Assert.That(snapshot.City.Era, Is.EqualTo(1));
-            Assert.That(snapshot.City.Inventory["coins"], Is.EqualTo(700L));
-            Assert.That(snapshot.City.StorageCaps["logs"], Is.EqualTo(500L));
+            Assert.That(snapshot.City.Purse, Is.EqualTo(800L));
+            Assert.That(snapshot.City.Totals, Is.EqualTo(new Dictionary<string, long> { ["coins"] = 800, ["logs"] = 0, ["planks"] = 0 }));
             Assert.That(snapshot.City.Buildings, Is.Empty);
+            Assert.That(snapshot.City.Roads, Is.Empty);
+            Assert.That(snapshot.City.Trips, Is.Empty);
+            Assert.That(snapshot.City.Research.Needs, Is.Empty);
             Assert.That(snapshot.City.Research.ActiveId, Is.Null);
             Assert.That(snapshot.City.Research.StartedAt, Is.Null);
             Assert.That(snapshot.City.Research.Completed, Is.Empty);
+        }
+
+        /// <summary>
+        /// The <c>roads</c> list in the server's form (<c>x</c>, <c>y</c>, <c>level</c>, sorted by tile) reads into its DTOs and writes back to the same
+        /// text (CR-0008).
+        /// </summary>
+        [Test]
+        public void Roads_ReadAndWriteBackToTheSameJson()
+        {
+            const string roads = "\"roads\":[{\"x\":1,\"y\":3,\"level\":2},{\"x\":4,\"y\":0,\"level\":1}]";
+            string text = Fixtures.Read("snapshot-city-start.json").Replace("\"roads\":[]", roads);
+            Assert.That(text, Does.Contain(roads), "the fixture changed: update this test");
+
+            CitySnapshotDto snapshot = _json.Deserialize<CitySnapshotDto>(text);
+
+            Assert.That(snapshot.City.Roads.ConvertAll(road => (road.X, road.Y, road.Level)), Is.EqualTo(new[] { (1, 3, 2), (4, 0, 1) }));
+            Assert.That(_json.Serialize(snapshot), Is.EqualTo(text));
         }
 
         /// <summary>A command's snapshot carries the command's request id, and the replay of a command is the same text and so the same snapshot.</summary>
@@ -76,22 +101,73 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(snapshot.City.Research.EndsAt - snapshot.City.Research.StartedAt, Is.EqualTo(600L));
         }
 
-        /// <summary>A city with producers: phases read as enums, a running cycle has an end time and no stall reason, a house says <c>NoRecipe</c>.</summary>
+        /// <summary>
+        /// A city with a producer: phases read as enums, a running cycle has an end time and no stall reason, a house says <c>NoRecipe</c>, the
+        /// producer's store and limits read, and a construction site waits for goods with no end time (CR-0008).
+        /// </summary>
         [Test]
-        public void CityProducing_ReadsPhasesAndStallReasons()
+        public void CityProducing_ReadsPhasesStallReasonsStoresAndTheSite()
         {
             CitySnapshotDto snapshot = _json.Deserialize<CitySnapshotDto>(Fixtures.Read("snapshot-city-producing.json"));
 
             SnapshotBuildingDto house = snapshot.City.Buildings[0];
-            SnapshotBuildingDto sawmill = snapshot.City.Buildings[2];
+            SnapshotBuildingDto woodcutter = snapshot.City.Buildings[1];
+            SnapshotBuildingDto site = snapshot.City.Buildings[3];
             Assert.That(house.Phase, Is.EqualTo(BuildingPhaseDto.Idle));
             Assert.That(house.StallReason, Is.EqualTo("NoRecipe"));
             Assert.That(house.PhaseEndsAt, Is.Null);
-            Assert.That(sawmill.TypeId, Is.EqualTo("sawmill"));
-            Assert.That(sawmill.Phase, Is.EqualTo(BuildingPhaseDto.Producing));
-            Assert.That(sawmill.StallReason, Is.Null);
-            Assert.That(sawmill.PhaseEndsAt, Is.Not.Null);
-            Assert.That(snapshot.City.Workers.Free, Is.EqualTo(snapshot.City.Workers.Provided - snapshot.City.Workers.Assigned));
+            Assert.That(house.Store, Is.Empty);
+            Assert.That(house.StoreLimits, Is.Empty);
+            Assert.That(house.Needs, Is.Empty);
+            Assert.That(house.Project, Is.Null);
+            Assert.That(woodcutter.TypeId, Is.EqualTo("woodcutter"));
+            Assert.That(woodcutter.Phase, Is.EqualTo(BuildingPhaseDto.Producing));
+            Assert.That(woodcutter.StallReason, Is.Null);
+            Assert.That(woodcutter.PhaseEndsAt, Is.Not.Null);
+            Assert.That(woodcutter.Store["logs"], Is.EqualTo(4L));
+            Assert.That(woodcutter.StoreLimits["logs"], Is.EqualTo(40L));
+            Assert.That((site.TypeId, site.Phase, site.PhaseEndsAt, site.Project), Is.EqualTo(("sawmill", BuildingPhaseDto.Constructing, (long?)null, "Construction")));
+            Assert.That(site.Needs["logs"], Is.EqualTo(10L));
+            Assert.That(snapshot.City.Totals["logs"], Is.EqualTo(4L));
+            SnapshotWorkersDto workers = snapshot.City.Workers;
+            Assert.That(workers.Free, Is.EqualTo(workers.Provided - workers.Assigned - workers.OnTrips));
+        }
+
+        /// <summary>A started trip reads with its source, target, good, load and times, and its worker counts as on a trip (CR-0008).</summary>
+        [Test]
+        public void StartTrip_ShowsTheTripAndItsWorker()
+        {
+            CitySnapshotDto snapshot = _json.Deserialize<CitySnapshotDto>(Fixtures.Read("snapshot-command-start-trip.json"));
+
+            SnapshotTripDto trip = snapshot.City.Trips.Single();
+            Assert.That(
+                (trip.Id, trip.SourceId, trip.TargetId, trip.ItemId, trip.Quantity, trip.ArrivesAt - trip.DepartedAt),
+                Is.EqualTo((1, 2, 4, "logs", 4L, 20L)));
+            Assert.That((snapshot.City.Workers.OnTrips, snapshot.City.Workers.Free), Is.EqualTo((1L, 1L)));
+            Assert.That(snapshot.City.Totals["logs"], Is.EqualTo(4L), "the load counts in the city's total");
+        }
+
+        /// <summary>
+        /// A route answer reads with the slot's route as it was sent and the station's couriers (CR-0008-T1 part G): courier 5/1 left at once for
+        /// stop 1, the woodcutter (a 10 s walk), carrying nothing yet; courier 5/2 stands at the station without times.
+        /// </summary>
+        [Test]
+        public void SetRoute_ShowsTheRouteAndTheCouriers()
+        {
+            CitySnapshotDto snapshot = _json.Deserialize<CitySnapshotDto>(Fixtures.Read("snapshot-command-set-route.json"));
+
+            SnapshotRouteDto route = snapshot.City.Routes.Single();
+            Assert.That((route.StationId, route.Slot, route.Stops.Count), Is.EqualTo((5, 1, 2)));
+            SnapshotRouteActionDto take = route.Stops[0].Actions.Single();
+            SnapshotRouteActionDto put = route.Stops[1].Actions.Single();
+            Assert.That((route.Stops[0].BuildingId, take.Kind, take.ItemId, take.Amount), Is.EqualTo((2, RouteActionKindDto.Take, "logs", "all")));
+            Assert.That((route.Stops[1].BuildingId, put.Kind, put.ItemId, put.Amount), Is.EqualTo((4, RouteActionKindDto.Put, "logs", "all")));
+            SnapshotCourierDto walking = snapshot.City.Couriers[0];
+            SnapshotCourierDto waiting = snapshot.City.Couriers[1];
+            Assert.That(
+                (walking.Slot, walking.State, walking.ToStop, walking.ArrivesAt - walking.DepartedAt, walking.Stamina, walking.Load.Count),
+                Is.EqualTo((1, CourierStateDto.Walking, 1, (long?)10, 14400L, 0)));
+            Assert.That((waiting.Slot, waiting.State, waiting.ToStop, waiting.DepartedAt, waiting.ArrivesAt), Is.EqualTo((2, CourierStateDto.AtStation, 0, (long?)null, (long?)null)));
         }
 
         /// <summary>The settlement lists what completed in the request's own time span.</summary>
@@ -105,17 +181,38 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(research.Settlement.CompletedResearch, Is.EqualTo(new[] { "trade_charter" }));
             Assert.That(research.City.Research.Completed, Is.EqualTo(new[] { "trade_charter" }));
             Assert.That(research.City.Research.ActiveId, Is.Null);
-            Assert.That(research.Settlement.Produced["planks"], Is.GreaterThan(0L));
+            Assert.That(research.Settlement.Produced["logs"], Is.GreaterThan(0L));
+            Assert.That(research.Settlement.Delivered["logs"], Is.EqualTo(4L), "the trip arrived at the site in the same span");
+            Assert.That(research.Settlement.Moved, Is.Empty);
+            Assert.That(research.Settlement.Refunded, Is.Empty);
             Assert.That(research.Settlement.EraChanged, Is.False);
+            Assert.That(research.Settlement.CourierSeconds, Is.EqualTo(0L));
+            Assert.That(research.Settlement.TiredCouriers, Is.Empty);
+        }
+
+        /// <summary>A settlement's tired couriers read with their station, slot and second (<c>05</c> Snapshot, CR-0008).</summary>
+        [Test]
+        public void Settlement_TiredCouriers_AreRead()
+        {
+            string text = Fixtures.Read("snapshot-city-research-completed.json")
+                .Replace("\"courierSeconds\":0,\"tiredCouriers\":[]", "\"courierSeconds\":14045,\"tiredCouriers\":[{\"stationId\":3,\"slot\":1,\"at\":15095}]");
+
+            CitySnapshotDto snapshot = _json.Deserialize<CitySnapshotDto>(text);
+
+            Assert.That(snapshot.Settlement.CourierSeconds, Is.EqualTo(14_045L));
+            Assert.That(snapshot.Settlement.TiredCouriers.Count, Is.EqualTo(1));
+            Assert.That(
+                (snapshot.Settlement.TiredCouriers[0].StationId, snapshot.Settlement.TiredCouriers[0].Slot, snapshot.Settlement.TiredCouriers[0].At),
+                Is.EqualTo((3, 1, 15_095L)));
         }
 
         /// <summary>A snapshot without a member the contract requires is refused instead of read with a zero in its place.</summary>
         [Test]
         public void ASnapshotWithoutARequiredMember_IsRefused()
         {
-            string text = Fixtures.Read("snapshot-city-start.json").Replace("\"storageCaps\":{\"logs\":500,\"planks\":500},", string.Empty);
+            string text = Fixtures.Read("snapshot-city-start.json").Replace("\"totals\":{\"coins\":800,\"logs\":0,\"planks\":0},", string.Empty);
 
-            Assert.That(text, Does.Not.Contain("storageCaps"), "the fixture changed: update this test");
+            Assert.That(text, Does.Not.Contain("totals"), "the fixture changed: update this test");
             Assert.That(() => _json.Deserialize<CitySnapshotDto>(text), Throws.Exception);
         }
 

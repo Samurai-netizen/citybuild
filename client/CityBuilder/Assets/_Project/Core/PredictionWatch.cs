@@ -57,8 +57,10 @@ namespace CityBuilder.Client.Core
         }
 
         /// <summary>
-        /// Every stored value of <paramref name="city"/> as one line of JSON, in an order that does not depend on the dictionary or the list: items
-        /// and research by id, buildings by id, items with no stock left out. Two cities that are the same give the same text.
+        /// Every stored value of <paramref name="city"/> as one line of JSON, in an order that does not depend on the dictionary or the list: the
+        /// purse, research by id, buildings by id with their store and needs (goods by id), roads by tile (column, then row, the engine's order),
+        /// trips by id (CR-0008), couriers with their loads and routes with their stops, both by (station, slot) as the engine keeps them
+    /// (CR-0008-T1 part G). Two cities that are the same give the same text.
         /// </summary>
         /// <param name="city">The city.</param>
         /// <returns>The text.</returns>
@@ -68,15 +70,6 @@ namespace CityBuilder.Client.Core
             if (city == null)
             {
                 throw new ArgumentNullException(nameof(city));
-            }
-
-            var stock = new SortedDictionary<string, long>(StringComparer.Ordinal);
-            foreach (KeyValuePair<ItemId, long> item in city.Inventory)
-            {
-                if (item.Value != 0)
-                {
-                    stock.Add(item.Key.Value, item.Value);
-                }
             }
 
             var completed = new List<string>(city.CompletedResearch.Count);
@@ -94,16 +87,9 @@ namespace CityBuilder.Client.Core
             }
 
             var text = new StringBuilder();
-            text.Append(Invariant($"{{\"clock\":{city.Clock},\"era\":{city.Era},\"nextBuildingId\":{city.NextBuildingId},\"inventory\":{{"));
+            text.Append(Invariant($"{{\"clock\":{city.Clock},\"era\":{city.Era},\"nextBuildingId\":{city.NextBuildingId},\"purse\":{city.Purse}"));
+            text.Append(Invariant($",\"nextTripId\":{city.NextTripId},\"completedResearch\":["));
             string separator = string.Empty;
-            foreach (KeyValuePair<string, long> item in stock)
-            {
-                text.Append(separator).Append(Invariant($"\"{item.Key}\":{item.Value}"));
-                separator = ",";
-            }
-
-            text.Append("},\"completedResearch\":[");
-            separator = string.Empty;
             foreach (string id in completed)
             {
                 text.Append(separator).Append('"').Append(id).Append('"');
@@ -114,7 +100,7 @@ namespace CityBuilder.Client.Core
             ActiveResearch? research = city.ActiveResearch;
             text.Append(research == null
                 ? "null"
-                : Invariant($"{{\"id\":\"{research.Id.Value}\",\"startedAt\":{research.StartedAt},\"endsAt\":{research.EndsAt}}}"));
+                : Invariant($"{{\"id\":\"{research.Id.Value}\",\"startedAt\":{Time(research.StartedAt)},\"endsAt\":{Time(research.EndsAt)},\"needs\":{Amounts(research.Needs)}}}"));
             text.Append(",\"buildings\":[");
             separator = string.Empty;
             foreach (Building building in buildings.Values)
@@ -123,7 +109,88 @@ namespace CityBuilder.Client.Core
                 separator = ",";
             }
 
+            text.Append("],\"roads\":[");
+            separator = string.Empty;
+            foreach (RoadTile road in city.Roads)
+            {
+                text.Append(separator).Append(Invariant($"{{\"x\":{road.X},\"y\":{road.Y},\"level\":{road.Level}}}"));
+                separator = ",";
+            }
+
+            text.Append("],\"trips\":[");
+            separator = string.Empty;
+            foreach (Trip trip in city.Trips)
+            {
+                text.Append(separator).Append(Invariant(
+                    $"{{\"id\":{trip.Id},\"sourceId\":{trip.SourceId},\"targetId\":{trip.TargetId},\"itemId\":\"{trip.Item.Value}\",\"quantity\":{trip.Quantity},\"departedAt\":{trip.DepartedAt},\"arrivesAt\":{trip.ArrivesAt}}}"));
+                separator = ",";
+            }
+
+            text.Append("],\"couriers\":[");
+            separator = string.Empty;
+            foreach (Courier courier in city.Couriers)
+            {
+                text.Append(separator).Append(Invariant(
+                    $"{{\"stationId\":{courier.StationId},\"slot\":{courier.Slot},\"state\":\"{courier.State}\",\"toStop\":{courier.ToStop},\"departedAt\":{Time(courier.DepartedAt)},\"arrivesAt\":{Time(courier.ArrivesAt)},\"stamina\":{courier.Stamina},\"load\":["));
+                string partSeparator = string.Empty;
+                foreach (CourierLoad part in courier.Loads)
+                {
+                    text.Append(partSeparator).Append(Invariant($"{{\"itemId\":\"{part.Item.Value}\",\"fromId\":{part.FromId},\"quantity\":{part.Quantity}}}"));
+                    partSeparator = ",";
+                }
+
+                text.Append("]}");
+                separator = ",";
+            }
+
+            text.Append("],\"routes\":[");
+            separator = string.Empty;
+            foreach (Route route in city.Routes)
+            {
+                text.Append(separator).Append(Invariant($"{{\"stationId\":{route.StationId},\"slot\":{route.Slot},\"stops\":["));
+                string stopSeparator = string.Empty;
+                foreach (RouteStop stop in route.Stops)
+                {
+                    text.Append(stopSeparator).Append(Invariant($"{{\"buildingId\":{stop.BuildingId},\"actions\":["));
+                    string actionSeparator = string.Empty;
+                    foreach (RouteAction action in stop.Actions)
+                    {
+                        text.Append(actionSeparator).Append(Invariant($"{{\"kind\":\"{action.Kind}\",\"itemId\":\"{action.Item.Value}\",\"amount\":\"{action.Amount}\"}}"));
+                        actionSeparator = ",";
+                    }
+
+                    text.Append("]}");
+                    stopSeparator = ",";
+                }
+
+                text.Append("]}");
+                separator = ",";
+            }
+
             return text.Append("]}").ToString();
+        }
+
+        /// <summary>A nullable time as JSON: the number, or <c>null</c>.</summary>
+        private static string Time(long? time) => time.HasValue ? Invariant($"{time.Value}") : "null";
+
+        /// <summary>Quantities as a JSON object, goods by id in ordinal order.</summary>
+        private static string Amounts(IReadOnlyDictionary<ItemId, long> amounts)
+        {
+            var sorted = new SortedDictionary<string, long>(StringComparer.Ordinal);
+            foreach (KeyValuePair<ItemId, long> amount in amounts)
+            {
+                sorted.Add(amount.Key.Value, amount.Value);
+            }
+
+            var text = new StringBuilder("{");
+            string separator = string.Empty;
+            foreach (KeyValuePair<string, long> amount in sorted)
+            {
+                text.Append(separator).Append(Invariant($"\"{amount.Key}\":{amount.Value}"));
+                separator = ",";
+            }
+
+            return text.Append('}').ToString();
         }
 
         /// <summary>One building's stored values as JSON.</summary>
@@ -131,7 +198,7 @@ namespace CityBuilder.Client.Core
         {
             string ends = building.PhaseEndsAt.HasValue ? Invariant($"{building.PhaseEndsAt.Value}") : "null";
             return Invariant(
-                $"{{\"id\":{building.Id},\"typeId\":\"{building.TypeId.Value}\",\"x\":{building.X},\"y\":{building.Y},\"level\":{building.Level},\"assignedWorkers\":{building.AssignedWorkers},\"phase\":\"{building.Phase}\",\"phaseStartedAt\":{building.PhaseStartedAt},\"phaseEndsAt\":{ends},\"targetLevel\":{building.TargetLevel},\"cycleLabor\":{building.CycleLabor},\"laborRemaining\":{building.LaborRemaining},\"segmentStartedAt\":{building.SegmentStartedAt}}}");
+                $"{{\"id\":{building.Id},\"typeId\":\"{building.TypeId.Value}\",\"x\":{building.X},\"y\":{building.Y},\"level\":{building.Level},\"assignedWorkers\":{building.AssignedWorkers},\"phase\":\"{building.Phase}\",\"phaseStartedAt\":{building.PhaseStartedAt},\"phaseEndsAt\":{ends},\"targetLevel\":{building.TargetLevel},\"cycleLabor\":{building.CycleLabor},\"laborRemaining\":{building.LaborRemaining},\"segmentStartedAt\":{building.SegmentStartedAt},\"store\":{Amounts(building.Store)},\"needs\":{Amounts(building.Needs)}}}");
         }
 
         /// <summary>A text with plain digits, never in the machine's culture.</summary>
@@ -164,12 +231,13 @@ namespace CityBuilder.Client.Core
             text.Append(Invariant($"PredictionWatch: the clock went back {shown.Clock - snapshot.Clock} s (shown {shown.Clock}, state version {snapshot.StateVersion} at {snapshot.Clock})."));
             if (!commandsPending)
             {
-                foreach (KeyValuePair<ItemId, long> item in shown.Inventory)
+                foreach (ItemDefinition item in _content.Items)
                 {
-                    long now = city.GetQuantity(item.Key);
-                    if (now < item.Value)
+                    long before = CityQueries.Total(shown, _content, item.Id);
+                    long now = CityQueries.Total(city, _content, item.Id);
+                    if (now < before)
                     {
-                        text.Append(Invariant($" {item.Key.Value} {item.Value} -> {now}."));
+                        text.Append(Invariant($" {item.Id.Value} {before} -> {now}."));
                     }
                 }
             }

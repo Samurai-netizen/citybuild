@@ -21,7 +21,7 @@ namespace CityBuilder.IntegrationTests.Commands;
 /// A response that never reaches the client, on PostgreSQL over HTTP (M0-56; <c>05</c>, idempotency rules): the server applied the command, the
 /// client saw nothing, polled the city and sent the same body again. The retry answers with the bytes of the lost response, and the command
 /// counts once: one building or research or assignment, one set of ledger rows, one receipt. The same with the client hanging up before
-/// the server answers. Each city is built by hand (<see cref="HandBuiltCities"/>): 1000 coins, 100 logs, 50 planks.
+/// the server answers. Each city is built by hand (<see cref="HandBuiltCities"/>): 1000 coins in the purse (a scriptorium where research happens).
 /// </summary>
 /// <param name="server">The run's PostgreSQL server.</param>
 [Trait("Category", "Integration")]
@@ -40,13 +40,13 @@ public sealed class LostResponseDatabaseTests(PostgresServer server) : PostgresT
     [Fact]
     public async Task PlaceBuilding_ResponseLost_TheRetryGetsTheSameBytesAndOneBuilding()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "builder", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "builder", 1000, House(1));
 
         await LoseTheResponseAndRetryAsync(player, city, _placePath, PlaceSawmill);
 
         await AssertOneSawmillAsync(city);
         Assert.Equal(
-            [$"coins -150 850 COST_PLACE command {_requestId}", $"logs -30 70 COST_PLACE command {_requestId}"],
+            [$"coins -150 850 COST_PLACE command {_requestId}"],
             await RowsOfTheCommandAsync(city));
     }
 
@@ -54,7 +54,7 @@ public sealed class LostResponseDatabaseTests(PostgresServer server) : PostgresT
     [Fact]
     public async Task StartResearch_ResponseLost_TheRetryGetsTheSameBytesAndOneCost()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "researcher", 1000, House(1), Scriptorium(2));
 
         await LoseTheResponseAndRetryAsync(player, city, "/api/v1/commands/start-research", $$"""{"requestId":"{{_requestId}}","researchId":"sharp_axes"}""");
 
@@ -68,7 +68,7 @@ public sealed class LostResponseDatabaseTests(PostgresServer server) : PostgresT
     [Fact]
     public async Task AssignWorkers_ResponseLost_TheRetryGetsTheSameBytesAndOneAssignment()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "assigner", 1000, 100, 50, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "assigner", 1000, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
 
         await LoseTheResponseAndRetryAsync(player, city, "/api/v1/commands/assign-workers", $$"""{"requestId":"{{_requestId}}","buildingId":2,"workers":2}""");
 
@@ -86,7 +86,7 @@ public sealed class LostResponseDatabaseTests(PostgresServer server) : PostgresT
     [Fact]
     public async Task PlaceBuilding_ClientHangsUpBeforeTheAnswer_TheRetryEndsWithOneBuilding()
     {
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "builder", 1000, 100, 50, House(1));
+        (Guid player, Guid city) = await StoreCityAsync(Factory, "builder", 1000, House(1));
         var locked = new TaskCompletionSource();
         var release = new TaskCompletionSource();
         await using WebApplicationFactory<Program> patient = WithLockTimeout(Factory, 30_000);
@@ -114,7 +114,7 @@ public sealed class LostResponseDatabaseTests(PostgresServer server) : PostgresT
         Assert.Equal(retry.Body, Assert.Single(await ReceiptsAsync(Database, player)).ResponseJson);
         await AssertOneSawmillAsync(city);
         Assert.Equal(
-            [$"coins -150 850 COST_PLACE command {_requestId}", $"logs -30 70 COST_PLACE command {_requestId}"],
+            [$"coins -150 850 COST_PLACE command {_requestId}"],
             await RowsOfTheCommandAsync(city));
     }
 

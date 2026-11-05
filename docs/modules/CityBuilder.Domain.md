@@ -17,7 +17,7 @@ Game rules that the client also runs belong in `CityBuilder.Simulation`, not her
 |---|---|
 | `Players/Player` | A player of the M0 dev login: `Id` (not empty) and `DevName` (not blank). Real accounts come in M1 |
 | `Ledger/LedgerEntry` | One change of one item: `Item`, `Delta` (never 0), `BalanceAfter` (the quantities after and before are never below 0), `Reason`, and an optional reference (`RefType` and `RefId` both set or both null). The city and the wall time are added when it is stored |
-| `Ledger/LedgerReason` | The M0 ledger reasons of `06` (`StartingGrant` … `CostResearch`); Infrastructure stores each as its text (`STARTING_GRANT`) |
+| `Ledger/LedgerReason` | The ledger reasons of `06` (`StartingGrant` … `CostResearch`, `CostRoad` from CR-0008-T1 part D, `SettlementDelivered` and `SettlementRefunded` from part E); Infrastructure stores each as its text (`STARTING_GRANT`, `COST_ROAD`) |
 | `Commands/CommandReceipt` | The stored answer to one successful command: `RequestId` (not empty), `CommandType`, `PayloadHash` (exactly 32 bytes, SHA-256, copied), `ResponseJson`. The player and the wall time are added when it is stored |
 
 ## Rules and invariants
@@ -38,4 +38,4 @@ Run: `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`.
 ## Known limitations
 - No settlement record yet; the settle use case reports through the engine's `SettlementReport` (M0-23 decides).
 
-Last updated: M0-20
+Last updated: CR-0008-T1

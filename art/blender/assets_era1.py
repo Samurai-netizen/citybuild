@@ -360,6 +360,156 @@ def trading_post(level):
     return root
 
 
+def courier_station(level):
+    """Courier Station (CR-0008): a timber relay house with a shingle roof and a blue courier banner, a rack of packs under a
+    lean-to and a signpost with arrows. Level 2 is wider and taller, with a second rack and a hand cart ready to go."""
+    m = Model()
+    W, D, H = (0.44, 0.3, 0.25) if level == 1 else (0.5, 0.3, 0.3)
+    cy = -0.08
+    m.box((0.7, 0.66, 0.035), (0, 0, 0), "stone", bevel=0.01)
+    z = 0.035
+    timber_walls(m, W, D, H, z, cy=cy, brace_side=-0.07)
+    front = cy + D / 2
+    door = 0.1
+    m.box((0.11, 0.038, 0.17), (door, front, z), "wood_dark", bevel=0.008)
+    m.box((0.014, 0.05, 0.014), (door - 0.035, front, z + 0.085), "metal", bevel=0)
+    window(m, (-0.12, front, z + 0.1))
+    window(m, (W / 2, cy, z + 0.1), facing="X")
+    # the courier banner: a blue cloth with a gold boot on the front wall, above the window
+    m.box((0.1, 0.012, 0.075), (-0.12, front + 0.006, z + H - 0.085), "blue", bevel=0)
+    m.box((0.03, 0.006, 0.035), (-0.125, front + 0.014, z + H - 0.07), "gold", bevel=0)
+    m.box((0.024, 0.006, 0.012), (-0.11, front + 0.014, z + H - 0.07), "gold", bevel=0)
+    ridge = roof(m, W + 0.12, D + 0.16, 0.22 if level == 1 else 0.24, (0, cy, z + H - 0.02), "wood_dark", "wood", rows=2,
+                 cap="blue")
+    # a lean-to on the -X side over a rack of packs
+    racks = [(-W / 2 - 0.02,)] if level == 1 else [(-W / 2 - 0.02,), (-W / 2 + 0.12,)]
+    y0, y1 = front + 0.01, front + 0.2
+    slanted(m, (-0.2, y0, z + 0.2), (-0.2, y1, z + 0.15), 0.3, 0.018, "wood", plane="YZ")
+    for sx in (-0.33, -0.07):
+        m.box((0.022, 0.022, 0.15), (sx, y1 - 0.015, z), "wood_dark", bevel=0.004)
+    for k, (rx,) in enumerate(racks):
+        px = -0.27 + k * 0.12
+        m.box((0.1, 0.06, 0.012), (px, front + 0.11, z + 0.05), "wood_dark", bevel=0.003)
+        m.ico(0.035, (px - 0.02, front + 0.11, z + 0.085), "thatch_dark", scale=(1, 0.9, 1.2))
+        m.ico(0.03, (px + 0.025, front + 0.11, z + 0.08), "thatch", scale=(1, 0.9, 1.2))
+    # signpost at the front right with two arrow boards
+    sx, sy = 0.25, front + 0.17
+    m.cyl(0.014, 0.3, (sx, sy, z), "wood_dark", seg=6)
+    m.box((0.11, 0.012, 0.03), (sx + 0.03, sy, z + 0.25), "wood_end", bevel=0.003)
+    m.box((0.12, 0.012, 0.03), (sx - 0.035, sy, z + 0.2), "wood_end", rot=(0, 0, 25), bevel=0.003)
+    m.box((0.03, 0.014, 0.03), (sx + 0.085, sy, z + 0.265), "blue", rot=(0, 45, 0), anchor="center", bevel=0)
+    if level == 2:
+        # hand cart with a crate, front centre-left, ready to leave
+        cx, cyy = 0.02, front + 0.2
+        m.box((0.13, 0.1, 0.035), (cx, cyy, z + 0.055), "wood", bevel=0.006)
+        for s in (-1, 1):
+            m.cyl(0.04, 0.014, (cx + 0.015, cyy + s * 0.058, z + 0.04), "wood_dark", axis="Y", seg=10, cap="wood")
+        m.box((0.09, 0.012, 0.012), (cx - 0.1, cyy, z + 0.08), "wood_dark", rot=(0, -15, 0), anchor="center", bevel=0)
+        crate(m, (cx + 0.01, cyy, z + 0.09), s=0.06, rot=12)
+    root = m.to_object(f"courier_station_l{level}")
+    anchor("Anchor_Status", root, (0, cy, ridge + 0.2))
+    anchor("Anchor_Door", root, (door, front + 0.1, z))
+    return root
+
+
+def scriptorium(level):
+    """Scriptorium, the science building (CR-0008): a stone study with a steep red roof, tall windows, a small tower with a
+    blue slate spire and an open book hanging over the door. One level in M0."""
+    m = Model()
+    W, D, H = 0.46, 0.34, 0.3
+    cx = 0.03
+    m.box((W + 0.07, D + 0.07, 0.05), (cx, 0, 0), "stone_dark", bevel=0.015)
+    z = 0.05
+    m.box((W, D, H), (cx, 0, z), "stone", bevel=0.008)
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            for k in range(3):
+                m.box((0.05, 0.05, 0.06), (cx + sx * (W / 2 - 0.02), sy * (D / 2 - 0.02), z + 0.02 + k * 0.1), "stone_dark",
+                      bevel=0.006)
+    door = cx + 0.1
+    m.box((0.1, 0.038, 0.17), (door, D / 2, z), "wood_dark", bevel=0.008)
+    m.box((0.12, 0.044, 0.025), (door, D / 2, z + 0.17), "stone_dark", bevel=0.005)
+    window(m, (cx - 0.1, D / 2, z + 0.1), h=0.13)
+    window(m, (W / 2 + cx, -0.06, z + 0.1), facing="X", h=0.13)
+    window(m, (W / 2 + cx, 0.08, z + 0.1), facing="X", h=0.13)
+    # the open book over the door: a red cover with two white pages, on an iron arm
+    m.box((0.012, 0.07, 0.012), (door + 0.07, D / 2 + 0.035, z + 0.22), "metal", bevel=0)
+    m.box((0.1, 0.012, 0.07), (door + 0.07, D / 2 + 0.075, z + 0.15), "red", bevel=0.003)
+    m.box((0.04, 0.008, 0.055), (door + 0.048, D / 2 + 0.084, z + 0.157), "plaster", bevel=0)
+    m.box((0.04, 0.008, 0.055), (door + 0.092, D / 2 + 0.084, z + 0.157), "plaster", bevel=0)
+    ridge = roof(m, W + 0.1, D + 0.15, 0.3, (cx, 0, z + H - 0.02), "red", "wood_dark", rows=3, cap="wood_dark")
+    # a small tower at the back left with a blue spire and a gold finial
+    tx, ty, tw = -0.27, -0.1, 0.15
+    m.box((tw, tw, 0.5), (tx, ty, z), "stone", bevel=0.008)
+    for k in range(4):
+        m.box((tw + 0.012, tw + 0.012, 0.02), (tx, ty, z + 0.1 + k * 0.12), "stone_dark", bevel=0.004)
+    window(m, (tx, ty + tw / 2, z + 0.34), w=0.05, h=0.07)
+    top = z + 0.5
+    m.box((tw + 0.03, tw + 0.03, 0.03), (tx, ty, top), "stone_dark", bevel=0.006)
+    m.cyl(0.115, 0.26, (tx, ty, top + 0.03), "blue", seg=4, r2=0.0, rot=(0, 0, 45))
+    m.ico(0.022, (tx, ty, top + 0.31), "gold")
+    # a bench with a stack of books by the wall, front left
+    m.box((0.14, 0.05, 0.05), (cx - 0.13, D / 2 + 0.09, 0), "wood", bevel=0.005)
+    for i, c in enumerate(("blue", "red", "thatch_dark")):
+        m.box((0.06 - i * 0.006, 0.04, 0.016), (cx - 0.15 + i * 0.004, D / 2 + 0.09, 0.05 + i * 0.016), c, rot=(0, 0, i * 9),
+              bevel=0.002)
+    root = m.to_object(f"scriptorium_l{level}")
+    anchor("Anchor_Status", root, (tx, ty, top + 0.45))
+    anchor("Anchor_Door", root, (door, D / 2 + 0.1, 0))
+    return root
+
+
+def warehouse(level):
+    """Warehouse (CR-0008): a long plank barn on a stone base with a big double door, crates, sacks, a log pile and a plank
+    stack outside. Level 2 is taller, with a loft door, a hoist beam lifting a crate and more goods."""
+    m = Model()
+    W, D, H = (0.6, 0.38, 0.27) if level == 1 else (0.62, 0.4, 0.34)
+    cy = -0.1
+    m.box((W + 0.06, D + 0.06, 0.05), (0, cy, 0), "stone", bevel=0.015)
+    z = 0.05
+    m.box((W, D, H), (0, cy, z), "wood", bevel=0.006)
+    for sx in (-1, 0, 1):
+        for sy in (-1, 1):
+            m.box((0.04, 0.04, H + 0.004), (sx * W / 2, cy + sy * D / 2, z), "wood_dark", bevel=0.006)
+    front = cy + D / 2
+    for i in range(1, 6):
+        x = -W / 2 + i * W / 6
+        if abs(x) < 0.12:
+            continue
+        m.box((0.016, 0.022, H - 0.01), (x, front, z), "wood_dark", bevel=0)
+    # the double door with a cross brace on each leaf
+    dw, dh = 0.2, 0.2
+    m.box((dw + 0.04, 0.03, dh + 0.03), (0, front, z), "wood_dark", bevel=0.006)
+    for s in (-1, 1):
+        lx = s * dw / 4
+        m.box((dw / 2 - 0.01, 0.036, dh), (lx, front, z), "wood", bevel=0.004)
+        m.box((0.016, 0.042, dh * 1.2), (lx, front, z + dh / 2), "wood_dark", rot=(0, s * 38, 0), anchor="center", bevel=0)
+    m.box((0.014, 0.05, 0.014), (0, front, z + dh / 2), "metal", bevel=0)
+    ridge = roof(m, W + 0.1, D + 0.16, 0.22 if level == 1 else 0.24, (0, cy, z + H - 0.02), "wood_dark", "wood", rows=3,
+                 cap="wood")
+    # goods outside: crates (level 2: a plank stack with a crate on it) and a sack at the front left, a log pile at the front right
+    if level == 1:
+        crate(m, (-0.27, front + 0.1, 0), s=0.08)
+        crate(m, (-0.18, front + 0.12, 0), s=0.07, rot=15)
+        crate(m, (-0.26, front + 0.1, 0.08), s=0.06, rot=-10)
+    else:
+        plank_stack(m, (-0.23, front + 0.11, 0), 3, length=0.18)
+        crate(m, (-0.24, front + 0.11, 0.071), s=0.06, rot=-10)
+    m.ico(0.035, (-0.11, front + 0.08, 0.042), "thatch_dark", scale=(1, 0.9, 1.15))
+    log_pile(m, (0.24, front + 0.11, 0), (3, 2), r=0.026, length=0.2)
+    if level == 2:
+        # loft door and a hoist beam with a crate on a rope
+        hz = z + H - 0.1
+        m.box((0.1, 0.034, 0.08), (0, front, hz), "wood_dark", bevel=0.006)
+        m.box((0.026, 0.15, 0.026), (0, front + 0.06, hz + 0.075), "wood_dark", bevel=0.004)
+        m.box((0.006, 0.006, 0.06), (0, front + 0.125, hz + 0.02), "thatch_dark", bevel=0)
+        crate(m, (0, front + 0.125, hz - 0.035), s=0.05)
+    root = m.to_object(f"warehouse_l{level}")
+    anchor("Anchor_Status", root, (0, cy, ridge + 0.2))
+    anchor("Anchor_Door", root, (0, front + 0.1, 0))
+    return root
+
+
 def construction_site():
     """Any building while it is being built or upgraded: foundation, timber frame, scaffold, ladder, planks."""
     m = Model()
@@ -429,6 +579,9 @@ BUILDINGS = {name: _scaled(build) for name, build in {
     "woodcutter_l1": lambda: woodcutter(1), "woodcutter_l2": lambda: woodcutter(2),
     "sawmill_l1": lambda: sawmill(1), "sawmill_l2": lambda: sawmill(2),
     "trading_post_l1": lambda: trading_post(1), "trading_post_l2": lambda: trading_post(2),
+    "courier_station_l1": lambda: courier_station(1), "courier_station_l2": lambda: courier_station(2),
+    "scriptorium_l1": lambda: scriptorium(1),
+    "warehouse_l1": lambda: warehouse(1), "warehouse_l2": lambda: warehouse(2),
     "construction_site": construction_site,
 }.items()}
 

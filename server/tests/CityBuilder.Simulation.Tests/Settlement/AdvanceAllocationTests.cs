@@ -1,6 +1,6 @@
 using CityBuilder.Simulation.Settlement;
 using CityBuilder.Simulation.State;
-using CityBuilder.Simulation.Tests.Golden;
+using static CityBuilder.Simulation.Tests.State.CityFixture;
 
 namespace CityBuilder.Simulation.Tests.Settlement;
 
@@ -11,27 +11,52 @@ namespace CityBuilder.Simulation.Tests.Settlement;
 /// </summary>
 public sealed class AdvanceAllocationTests
 {
-    /// <summary>The short advance whose allocations are the baseline: two minutes, about 8 events of the golden city.</summary>
+    /// <summary>The short advance whose allocations are the baseline: two minutes, about 30 events of the test city.</summary>
     private const long _shortAdvanceSeconds = 120;
 
-    /// <summary>The long advance: eight hours, about 1,700 events of the golden city.</summary>
+    /// <summary>
+    /// The long advance: eight hours, about 5 900 events of the test city (each mint ends a cycle every 10 s for all of them, as nothing caps
+    /// production since CR-0008-T1 part H, and the lumber camp every 20 s until its store is full).
+    /// </summary>
     private const long _eightHours = 8 * 3600;
 
-    /// <summary>Eight hours of production allocate no more than two minutes do, so nothing allocates per event (after a warm-up run).</summary>
+    /// <summary>
+    /// Eight hours of production allocate no more than two minutes do, so nothing allocates per event (after a warm-up run; each the least of
+    /// three runs, city building included).
+    /// </summary>
     [Fact]
     public void Advance_EightHoursOfProduction_AllocatesNoMoreThanTwoMinutes()
     {
-        // Golden scenario #1 at t=1170: a woodcutter, a sawmill and a trading post run cycles (with logs, planks and coins in every report)
-        // and trade_charter is completed, so every start reads research effects. Eight hours are about 1,700 events, two minutes about 8.
-        Simulator.Advance(GoldenScenario1.After(1170, GoldenScenario1.OneAdvancePerGap), GoldenContent.V1, _eightHours);
-        CityState shortRun = GoldenScenario1.After(1170, GoldenScenario1.OneAdvancePerGap);
-        CityState longRun = GoldenScenario1.After(1170, GoldenScenario1.OneAdvancePerGap);
-
-        long shortBytes = AllocatedBytes(() => Simulator.Advance(shortRun, GoldenContent.V1, _shortAdvanceSeconds));
-        long longBytes = AllocatedBytes(() => Simulator.Advance(longRun, GoldenContent.V1, _eightHours));
+        // Two mints (the currency goes into the purse, which has no limit) and a lumber camp with a large store run cycles in every second
+        // of the window, and carpentry is completed, so every start reads research effects. (Golden scenario #1 on content v1 served here
+        // until CR-0008: on the new model only a currency producer runs for hours without couriers; BL-20261102-07, decision 32.)
+        // Each advance is measured on a new city three times and the least counts: the runtime allocates now and then on the test's thread
+        // (a tier-up of a method in the middle of a long run, about 5 KB once), and a per-event allocation would show in every run.
+        Simulator.Advance(Running(), TestContent, _eightHours);
+        long shortBytes = LeastOfThree(() => Simulator.Advance(Running(), TestContent, _shortAdvanceSeconds));
+        long longBytes = LeastOfThree(() => Simulator.Advance(Running(), TestContent, _eightHours));
 
         Assert.True(longBytes <= shortBytes, $"Eight hours allocated {longBytes} bytes, two minutes {shortBytes}.");
     }
+
+    /// <summary>A city at clock 1000 whose two huts staff two mints (2 workers each) and a lumber camp (2 workers), all idle and able to start.</summary>
+    private static CityState Running() => City(
+        purse: 50,
+        buildings:
+        [
+            Idle(1, "hut", 0, 0),
+            Idle(2, "hut", 1, 0),
+            Idle(3, "mint", 2, 0, workers: 2),
+            Idle(4, "mint", 3, 0, workers: 2),
+            Idle(5, "lumber_camp", 4, 0, workers: 2),
+        ],
+        completedResearch: ["carpentry"]);
+
+    /// <summary>
+    /// The least bytes the current thread allocated in three runs of the action, each building its own city; the city's own allocations are
+    /// the same in every run, so they count alike for both advances.
+    /// </summary>
+    private static long LeastOfThree(Action action) => Math.Min(AllocatedBytes(action), Math.Min(AllocatedBytes(action), AllocatedBytes(action)));
 
     /// <summary>The bytes the current thread allocated while running the action.</summary>
     private static long AllocatedBytes(Action action)

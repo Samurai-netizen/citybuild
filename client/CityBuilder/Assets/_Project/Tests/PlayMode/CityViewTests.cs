@@ -199,7 +199,7 @@ namespace CityBuilder.Client.Tests.PlayMode
         /// <summary>A city of Era I with the given buildings.</summary>
         private static CityState City(IEnumerable<Building> buildings)
         {
-            return new CityState(0, 1, 10, new List<KeyValuePair<ItemId, long>>(), buildings, new List<ResearchId>(), null);
+            return new CityState(0, 1, 10, 0, buildings, new List<ResearchId>(), null);
         }
 
         /// <summary>An idle building of the given type, tile and level.</summary>

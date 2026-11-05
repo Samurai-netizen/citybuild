@@ -16,7 +16,7 @@ public sealed class CycleRuleTests
     /// <summary>The workshop's output.</summary>
     private static readonly ItemId _boards = new("boards");
 
-    /// <summary>A cycle takes its inputs in the second it starts and nothing more while it runs.</summary>
+    /// <summary>A cycle takes its inputs from its store in the second it starts and nothing more while it runs.</summary>
     [Fact]
     public void Inputs_CycleStarts_LeaveTheStockAtOnce()
     {
@@ -26,12 +26,12 @@ public sealed class CycleRuleTests
 
         // The cycle takes its 2 wood in the second it starts, and nothing more while it runs (until 1045).
         Assert.Equal(new Dictionary<ItemId, long> { [_wood] = 2 }, report.Consumed);
-        Assert.Equal(1, city.GetQuantity(_wood));
+        Assert.Equal(1, city.Buildings[1].GetStock(_wood));
         Simulator.Advance(city, TestContent, 44);
-        Assert.Equal(1, city.GetQuantity(_wood));
+        Assert.Equal(1, city.Buildings[1].GetStock(_wood));
     }
 
-    /// <summary>A cycle's outputs are only reserved until its end, arrive in exactly that second, and count as produced then.</summary>
+    /// <summary>A cycle's outputs are only reserved until its end, arrive in its store in exactly that second, and count as produced then.</summary>
     [Fact]
     public void Outputs_CycleEnds_ArriveInThatSecondAndNotBefore()
     {
@@ -39,11 +39,11 @@ public sealed class CycleRuleTests
 
         // One second before the end the board is only reserved.
         Simulator.Advance(city, TestContent, 44);
-        Assert.Equal((0L, 1L), (city.GetQuantity(_boards), CityQueries.Reserved(city, TestContent, _boards)));
+        Assert.Equal((0L, 1L), (city.Buildings[1].GetStock(_boards), CityQueries.Reserved(TestContent, city.Buildings[1], _boards)));
 
         SettlementReport report = Simulator.Advance(city, TestContent, 1);
 
-        Assert.Equal((1L, 0L), (city.GetQuantity(_boards), CityQueries.Reserved(city, TestContent, _boards)));
+        Assert.Equal((1L, 0L), (city.Buildings[1].GetStock(_boards), CityQueries.Reserved(TestContent, city.Buildings[1], _boards)));
         Assert.Equal(new Dictionary<ItemId, long> { [_boards] = 1 }, report.Produced);
     }
 
@@ -60,8 +60,8 @@ public sealed class CycleRuleTests
         // A level-2 workshop: 180 labor, which divides evenly; with better_saws ceil(180 × 900 / 1000) = 162, and 162 / 4 = 40.5 and
         // 162 / 5 = 32.4 round up.
         string[] research = betterSaws ? ["carpentry", "better_saws"] : ["carpentry"];
-        CityState city = City(clock: 1000, inventory: [("wood", 2)], completedResearch: research, buildings:
-            [Idle(1, "hut", 0, 0), Idle(2, "hut", 1, 0), Idle(3, "workshop", 2, 0, level: 2, workers: workers)]);
+        CityState city = City(clock: 1000, completedResearch: research, buildings:
+            [Idle(1, "hut", 0, 0), Idle(2, "hut", 1, 0), Idle(3, "workshop", 2, 0, level: 2, workers: workers, store: [("wood", 2)])]);
 
         Simulator.Advance(city, TestContent, 0);
 
@@ -69,7 +69,7 @@ public sealed class CycleRuleTests
         Assert.Equal((labor, (long?)(1000 + seconds)), (workshop.CycleLabor, workshop.PhaseEndsAt));
     }
 
-    /// <summary>A hut and an idle level-1 workshop with 2 workers at 1000: 45 s cycles.</summary>
+    /// <summary>A hut and an idle level-1 workshop with 2 workers and <paramref name="wood"/> in its store at 1000: 45 s cycles.</summary>
     private static CityState WorkshopCity(long wood) =>
-        City(clock: 1000, inventory: [("wood", wood)], completedResearch: ["carpentry"], buildings: [Idle(1, "hut", 0, 0), Idle(2, "workshop", 1, 0, workers: 2)]);
+        City(clock: 1000, completedResearch: ["carpentry"], buildings: [Idle(1, "hut", 0, 0), Idle(2, "workshop", 1, 0, workers: 2, store: [("wood", wood)])]);
 }

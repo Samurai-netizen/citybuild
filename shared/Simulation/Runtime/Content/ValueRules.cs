@@ -16,11 +16,27 @@ namespace CityBuilder.Simulation.Content
         /// </summary>
         private const int _supportedResearchSlots = 1;
 
+        /// <summary>A route goes somewhere and back: at least 2 stops (<c>04</c> section 19).</summary>
+        private const int _leastRouteStops = 2;
+
+        /// <summary>The API's limit on a route's stops (<c>05</c>, OD-13): the content's own limit can't be larger.</summary>
+        private const int _apiRouteStops = 16;
+
+        /// <summary>The API's limit on a stop's actions (<c>05</c>, OD-13): the content's own limit can't be larger.</summary>
+        private const int _apiStopActions = 8;
+
+        /// <summary>The most amount presets the content may have (rule 13): the screens show them as one row of buttons.</summary>
+        private const int _mostAmountPresets = 8;
+
+        /// <summary>A share of the whole base: 100 percent.</summary>
+        private const int _wholePercent = 100;
+
         /// <summary>Checks the numbers of the global rules, the starting stock, every building type and every research node, duplicates included.</summary>
         public static void Check(ContentDraft draft, ContentErrorList errors)
         {
             CheckRules(draft.Rules, errors);
-            AtLeastZero(draft.StartingCity.Inventory, "startingCity.inventory", errors);
+            AtLeastZero(draft.StartingCity.Purse, "startingCity.purse", errors);
+            CheckAmountPresets(draft, errors);
             foreach (BuildingDefinition building in draft.Buildings)
             {
                 CheckBuilding(building, errors);
@@ -33,7 +49,7 @@ namespace CityBuilder.Simulation.Content
         }
 
         /// <summary>
-        /// The grid, the slots, the production cap, the minimum cycle and the base caps are greater than zero; exactly one research slot; the labor
+        /// The grid, the slots, the minimum cycle and the base caps are greater than zero; exactly one research slot; the labor
         /// reduction limit is 0 to 1000 permille.
         /// </summary>
         private static void CheckRules(GameRules rules, ContentErrorList errors)
@@ -52,11 +68,36 @@ namespace CityBuilder.Simulation.Content
                     FormattableString.Invariant($"The engine holds one active research in M0, so researchSlots must be {_supportedResearchSlots}, but is {rules.ResearchSlots}."));
             }
 
-            Positive(rules.MaxOfflineProductionSeconds, "rules.maxOfflineProductionSeconds", errors);
             Positive(rules.MinCycleSeconds, "rules.minCycleSeconds", errors);
             AtLeastZero(rules.MaxLaborReductionPermille, "rules.maxLaborReductionPermille", errors);
             AtMostOneThousand(rules.MaxLaborReductionPermille, "rules.maxLaborReductionPermille", errors);
-            Positive(rules.BaseStorageCaps, "rules.baseStorageCaps", errors);
+            Positive(rules.TripCarryLimit, "rules.tripCarryLimit", errors);
+            InRange(rules.MaxRouteStops, _leastRouteStops, _apiRouteStops, "rules.maxRouteStops", errors);
+            InRange(rules.MaxStopActions, 1, _apiStopActions, "rules.maxStopActions", errors);
+        }
+
+        /// <summary>
+        /// Rule 13: 1 to <see cref="_mostAmountPresets"/> presets, each a share of 1 to 100 percent (duplicate ids are the reference rules').
+        /// </summary>
+        private static void CheckAmountPresets(ContentDraft draft, ContentErrorList errors)
+        {
+            if (draft.AmountPresets.Count < 1 || draft.AmountPresets.Count > _mostAmountPresets)
+            {
+                errors.Add(
+                    ContentErrorCode.InvalidAmountPresets,
+                    "amountPresets",
+                    FormattableString.Invariant($"The content has 1 to {_mostAmountPresets} amount presets, but has {draft.AmountPresets.Count}."));
+            }
+
+            foreach (AmountPresetDefinition preset in draft.AmountPresets)
+            {
+                string path = ContentPaths.AmountPreset(preset) + ".percent";
+                Positive(preset.Percent, path, errors);
+                if (preset.Percent > _wholePercent)
+                {
+                    errors.Add(ContentErrorCode.ValueTooLarge, path, FormattableString.Invariant($"A share is at most {_wholePercent} percent, but is {preset.Percent}."));
+                }
+            }
         }
 
         /// <summary>Costs are at least zero; build and upgrade times, recipe amounts and labor are greater than zero.</summary>
@@ -65,11 +106,16 @@ namespace CityBuilder.Simulation.Content
             string path = ContentPaths.Building(building);
             AtLeastZero(building.Cost, path + ".cost", errors);
             Positive(building.BuildSeconds, path + ".buildSeconds", errors);
+            if (building.MaxPerCity.HasValue)
+            {
+                Positive(building.MaxPerCity.Value, path + ".maxPerCity", errors);
+            }
             foreach (BuildingLevelDefinition level in building.Levels)
             {
                 string levelPath = ContentPaths.Level(building, level);
                 AtMostStoredSmallValue(level.MaxWorkers, levelPath + ".maxWorkers", errors);
                 AtMostStoredSmallValue(level.WorkersProvided, levelPath + ".workersProvided", errors);
+                Positive(level.Storage, levelPath + ".storage", errors);
                 if (level.Level > 1)
                 {
                     AtLeastZero(level.UpgradeCost, levelPath + ".upgradeCost", errors);
@@ -102,6 +148,10 @@ namespace CityBuilder.Simulation.Content
                         break;
                     case StorageCapBonusEffect bonus:
                         Positive(bonus.Amount, effectPath + ".amount", errors);
+                        break;
+                    case WalkSpeedBonusEffect walk:
+                        Positive(walk.Permille, effectPath + ".permille", errors);
+                        AtMostOneThousand(walk.Permille, effectPath + ".permille", errors);
                         break;
                 }
             }
@@ -140,6 +190,23 @@ namespace CityBuilder.Simulation.Content
             foreach (ItemQuantity amount in amounts)
             {
                 AtLeastZero(amount.Quantity, path + "." + amount.Item.Value, errors);
+            }
+        }
+
+        /// <summary>Reports a number below <paramref name="least"/> (<see cref="ContentErrorCode.ValueTooSmall"/>, or not positive below 1) or above <paramref name="most"/>.</summary>
+        private static void InRange(int value, int least, int most, string path, ContentErrorList errors)
+        {
+            if (value < 1)
+            {
+                Positive(value, path, errors);
+            }
+            else if (value < least)
+            {
+                errors.Add(ContentErrorCode.ValueTooSmall, path, FormattableString.Invariant($"Must be at least {least}, but is {value}."));
+            }
+            else if (value > most)
+            {
+                errors.Add(ContentErrorCode.ValueTooLarge, path, FormattableString.Invariant($"Must be at most {most}, but is {value}."));
             }
         }
 

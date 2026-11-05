@@ -23,12 +23,22 @@ public sealed partial class PersistenceModelTests
         ["cities"] =
         [
             ("id", "uuid", false), ("player_id", "uuid", false), ("era", "smallint", false), ("clock_seconds", "bigint", false),
-            ("last_settled_unix", "bigint", false), ("next_building_id", "integer", false), ("research_id", "text", true),
+            ("last_settled_unix", "bigint", false), ("last_seen_unix", "bigint", false), ("next_building_id", "integer", false),
+            ("purse", "bigint", false),
+            ("next_trip_id", "integer", false), ("research_id", "text", true),
             ("research_started_at", "bigint", true), ("research_ends_at", "bigint", true), ("state_version", "bigint", false),
             ("content_version", "text", false), ("created_at", "timestamp with time zone", false),
             ("updated_at", "timestamp with time zone", false),
         ],
-        ["city_inventory"] = [("city_id", "uuid", false), ("item_id", "text", false), ("quantity", "bigint", false)],
+        ["city_stores"] = [("city_id", "uuid", false), ("building_id", "integer", false), ("item_id", "text", false), ("quantity", "bigint", false)],
+        ["city_project_needs"] =
+            [("city_id", "uuid", false), ("building_id", "integer", false), ("item_id", "text", false), ("quantity", "bigint", false)],
+        ["city_research_needs"] = [("city_id", "uuid", false), ("item_id", "text", false), ("quantity", "bigint", false)],
+        ["city_trips"] =
+        [
+            ("city_id", "uuid", false), ("trip_id", "integer", false), ("source_id", "integer", false), ("target_id", "integer", false),
+            ("item_id", "text", false), ("quantity", "bigint", false), ("departed_at", "bigint", false), ("arrives_at", "bigint", false),
+        ],
         ["city_buildings"] =
         [
             ("city_id", "uuid", false), ("building_id", "integer", false), ("type_id", "text", false), ("x", "smallint", false),
@@ -37,6 +47,23 @@ public sealed partial class PersistenceModelTests
             ("cycle_labor", "bigint", true), ("labor_remaining", "bigint", true), ("segment_started_at", "bigint", true),
         ],
         ["city_research"] = [("city_id", "uuid", false), ("research_id", "text", false), ("completed_at", "bigint", false)],
+        ["city_couriers"] =
+        [
+            ("city_id", "uuid", false), ("station_id", "integer", false), ("slot", "smallint", false), ("state", "text", false),
+            ("to_stop", "smallint", false), ("departed_at", "bigint", true), ("arrives_at", "bigint", true), ("stamina_seconds", "bigint", false),
+        ],
+        ["city_courier_loads"] =
+        [
+            ("city_id", "uuid", false), ("station_id", "integer", false), ("slot", "smallint", false), ("item_id", "text", false),
+            ("from_building_id", "integer", false), ("quantity", "bigint", false),
+        ],
+        ["city_route_actions"] =
+        [
+            ("city_id", "uuid", false), ("station_id", "integer", false), ("slot", "smallint", false), ("stop_index", "smallint", false),
+            ("action_index", "smallint", false), ("building_id", "integer", false), ("kind", "text", false), ("item_id", "text", false),
+            ("amount", "text", false),
+        ],
+        ["city_roads"] = [("city_id", "uuid", false), ("x", "smallint", false), ("y", "smallint", false), ("level", "smallint", false)],
         ["command_receipts"] =
         [
             ("player_id", "uuid", false), ("request_id", "uuid", false), ("command_type", "text", false), ("payload_hash", "bytea", false),
@@ -53,7 +80,7 @@ public sealed partial class PersistenceModelTests
     /// <summary>The names of the tables in 06, for the theories.</summary>
     public static TheoryData<string> TableNames => [.. _expectedColumns.Keys];
 
-    /// <summary>The model has exactly the seven tables of 06 (EF's own migrations history table is not part of the model).</summary>
+    /// <summary>The model has exactly the eleven tables of 06 (EF's own migrations history table is not part of the model).</summary>
     [Fact]
     public void Tables_Model_AreTheTablesOfTheDataModel()
     {
@@ -99,9 +126,16 @@ public sealed partial class PersistenceModelTests
     [Theory]
     [InlineData("players", "id")]
     [InlineData("cities", "id")]
-    [InlineData("city_inventory", "city_id,item_id")]
+    [InlineData("city_stores", "city_id,building_id,item_id")]
+    [InlineData("city_project_needs", "city_id,building_id,item_id")]
+    [InlineData("city_research_needs", "city_id,item_id")]
+    [InlineData("city_trips", "city_id,trip_id")]
     [InlineData("city_buildings", "city_id,building_id")]
     [InlineData("city_research", "city_id,research_id")]
+    [InlineData("city_roads", "city_id,x,y")]
+    [InlineData("city_couriers", "city_id,station_id,slot")]
+    [InlineData("city_courier_loads", "city_id,station_id,slot,item_id,from_building_id")]
+    [InlineData("city_route_actions", "city_id,station_id,slot,stop_index,action_index")]
     [InlineData("command_receipts", "player_id,request_id")]
     [InlineData("ledger_entries", "id")]
     public void PrimaryKey_EachTable_IsTheKeyOfTheDataModel(string tableName, string keyColumns)
@@ -142,12 +176,30 @@ public sealed partial class PersistenceModelTests
         Assert.Equal(
             [
                 ("cities", "ck_cities_era", "era >= 1"),
+                ("cities", "ck_cities_next_trip_id", "next_trip_id >= 1"),
+                ("cities", "ck_cities_purse", "purse >= 0"),
                 ("city_buildings", "ck_city_buildings_assigned_workers", "assigned_workers >= 0"),
                 ("city_buildings", "ck_city_buildings_labor_remaining", "labor_remaining >= 0"),
                 ("city_buildings", "ck_city_buildings_level", "level >= 1"),
                 ("city_buildings", "ck_city_buildings_x", "x >= 0"),
                 ("city_buildings", "ck_city_buildings_y", "y >= 0"),
-                ("city_inventory", "ck_city_inventory_quantity", "quantity >= 0"),
+                ("city_courier_loads", "ck_city_courier_loads_quantity", "quantity > 0"),
+                ("city_couriers", "ck_city_couriers_slot", "slot >= 1"),
+                ("city_couriers", "ck_city_couriers_stamina_seconds", "stamina_seconds >= 0"),
+                ("city_couriers", "ck_city_couriers_to_stop", "to_stop >= 0"),
+                ("city_couriers", "ck_city_couriers_walk", "(departed_at is null and arrives_at is null) or (departed_at is not null and arrives_at is not null and departed_at >= 0 and arrives_at > departed_at)"),
+                ("city_project_needs", "ck_city_project_needs_quantity", "quantity > 0"),
+                ("city_research_needs", "ck_city_research_needs_quantity", "quantity > 0"),
+                ("city_roads", "ck_city_roads_level", "level >= 1"),
+                ("city_roads", "ck_city_roads_x", "x >= 0"),
+                ("city_roads", "ck_city_roads_y", "y >= 0"),
+                ("city_route_actions", "ck_city_route_actions_action_index", "action_index >= 0"),
+                ("city_route_actions", "ck_city_route_actions_kind", "kind in ('take', 'put')"),
+                ("city_route_actions", "ck_city_route_actions_slot", "slot >= 1"),
+                ("city_route_actions", "ck_city_route_actions_stop_index", "stop_index >= 0"),
+                ("city_stores", "ck_city_stores_quantity", "quantity >= 0"),
+                ("city_trips", "ck_city_trips_arrives_at", "arrives_at > departed_at"),
+                ("city_trips", "ck_city_trips_quantity", "quantity > 0"),
             ],
             Tables().SelectMany(t => t.CheckConstraints.Select(c => (t.Name, c.Name, c.Sql)))
                 .OrderBy(c => c.Item2, StringComparer.Ordinal));
@@ -164,8 +216,15 @@ public sealed partial class PersistenceModelTests
             [
                 ("cities", "fk_cities_players_player_id", "player_id", "players", ReferentialAction.Restrict),
                 ("city_buildings", "fk_city_buildings_cities_city_id", "city_id", "cities", ReferentialAction.Cascade),
-                ("city_inventory", "fk_city_inventory_cities_city_id", "city_id", "cities", ReferentialAction.Cascade),
+                ("city_courier_loads", "fk_city_courier_loads_city_couriers_slot", "city_id,station_id,slot", "city_couriers", ReferentialAction.Cascade),
+                ("city_couriers", "fk_city_couriers_city_buildings_station_id", "city_id,station_id", "city_buildings", ReferentialAction.Cascade),
+                ("city_project_needs", "fk_city_project_needs_city_buildings_building_id", "city_id,building_id", "city_buildings", ReferentialAction.Cascade),
                 ("city_research", "fk_city_research_cities_city_id", "city_id", "cities", ReferentialAction.Cascade),
+                ("city_research_needs", "fk_city_research_needs_cities_city_id", "city_id", "cities", ReferentialAction.Cascade),
+                ("city_roads", "fk_city_roads_cities_city_id", "city_id", "cities", ReferentialAction.Cascade),
+                ("city_route_actions", "fk_city_route_actions_city_buildings_station_id", "city_id,station_id", "city_buildings", ReferentialAction.Cascade),
+                ("city_stores", "fk_city_stores_city_buildings_building_id", "city_id,building_id", "city_buildings", ReferentialAction.Cascade),
+                ("city_trips", "fk_city_trips_cities_city_id", "city_id", "cities", ReferentialAction.Cascade),
                 ("command_receipts", "fk_command_receipts_players_player_id", "player_id", "players", ReferentialAction.Restrict),
                 ("ledger_entries", "fk_ledger_entries_cities_city_id", "city_id", "cities", ReferentialAction.Restrict),
             ],

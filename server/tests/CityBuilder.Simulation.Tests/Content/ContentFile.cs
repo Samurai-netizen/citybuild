@@ -25,11 +25,13 @@ internal static class ContentFile
     };
 
     /// <summary>The content in <c>Fixtures/<paramref name="fileName"/></c>; the test fails with every error if it is not valid.</summary>
-    public static GameContent Load(string fileName)
+    public static GameContent Load(string fileName) => ContentAssert.Valid(Read(fileName));
+
+    /// <summary>The data in <c>Fixtures/<paramref name="fileName"/></c>, read strictly but not checked yet, so a caller can complete it first.</summary>
+    public static GameContentData Read(string fileName)
     {
         string path = Path.Combine(RepositoryPaths.Root, "server", "tests", "CityBuilder.Simulation.Tests", "Fixtures", fileName);
-        GameContentData data = JsonSerializer.Deserialize<GameContentData>(File.ReadAllText(path), _options)
+        return JsonSerializer.Deserialize<GameContentData>(File.ReadAllText(path), _options)
             ?? throw new InvalidOperationException($"{path} holds the JSON value null.");
-        return ContentAssert.Valid(data);
     }
 }

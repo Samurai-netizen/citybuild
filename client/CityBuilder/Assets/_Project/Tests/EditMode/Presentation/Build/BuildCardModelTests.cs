@@ -36,7 +36,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Build
             BuildCardModel card = Card("sawmill", BuildMenuTestData.StartCity());
 
             Assert.That(card.Name, Is.EqualTo("Sawmill"));
-            Assert.That(card.CostText, Is.EqualTo("Cost: 150 Coins, 30 Logs"));
+            Assert.That(card.CostText, Is.EqualTo("Cost: 150 Coins, 10 Logs"));
             Assert.That(card.BuildTimeText, Is.EqualTo("Build time: 2m"));
             Assert.That(card.WorkersText, Is.EqualTo("Max workers: 3"));
             Assert.That(card.RecipeText, Is.EqualTo("2 Logs → 1 Planks · 60/h at 3 workers"));
@@ -115,19 +115,20 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Build
             Assert.That(card.HintText, Is.Empty);
         }
 
-        /// <summary>Not enough of an item: the hint names it, and only the items that are short.</summary>
+        /// <summary>Not enough coins: the hint names them; goods never stop a placement, they are delivered later (CR-0008).</summary>
         [Test]
         public void Unaffordable_NamesTheMissingItems()
         {
-            // The sawmill costs 150 coins and 30 logs.
-            BuildCardModel logsShort = Card("sawmill", BuildMenuTestData.City(700, 29, 10, Array.Empty<string>(), 0));
-            BuildCardModel bothShort = Card("sawmill", BuildMenuTestData.City(149, 29, 10, Array.Empty<string>(), 0));
-            BuildCardModel exact = Card("sawmill", BuildMenuTestData.City(150, 30, 0, Array.Empty<string>(), 0));
+            // The sawmill costs 150 coins and 10 logs. Since CR-0008 only the coins are paid at once; the logs are delivered to the site
+            // later, so a city without logs can place it and only coins can be missing.
+            BuildCardModel noLogs = Card("sawmill", BuildMenuTestData.City(700, 0, 0, Array.Empty<string>(), 0));
+            BuildCardModel coinsShort = Card("sawmill", BuildMenuTestData.City(149, 0, 0, Array.Empty<string>(), 0));
+            BuildCardModel exact = Card("sawmill", BuildMenuTestData.City(150, 0, 0, Array.Empty<string>(), 0));
 
-            Assert.That(logsShort.Hint, Is.EqualTo(BuildHint.CannotAfford));
-            Assert.That(logsShort.HintText, Is.EqualTo("Not enough Logs"));
-            Assert.That(bothShort.HintText, Is.EqualTo("Not enough Coins, Logs"));
-            Assert.That(exact.Hint, Is.EqualTo(BuildHint.None), "exactly the cost is affordable");
+            Assert.That(noLogs.Hint, Is.EqualTo(BuildHint.None), "goods are delivered later");
+            Assert.That(coinsShort.Hint, Is.EqualTo(BuildHint.CannotAfford));
+            Assert.That(coinsShort.HintText, Is.EqualTo("Not enough Coins"));
+            Assert.That(exact.Hint, Is.EqualTo(BuildHint.None), "exactly the coins are affordable");
         }
 
         /// <summary>Every builder busy: the hint says so (two builders in the content), even when the stock would cover the cost.</summary>

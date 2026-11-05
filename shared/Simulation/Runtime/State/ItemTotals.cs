@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using CityBuilder.Simulation.Content;
 
 namespace CityBuilder.Simulation.State
 {
@@ -75,6 +76,18 @@ namespace CityBuilder.Simulation.State
                 _items.RemoveAt(index);
                 _quantities.RemoveAt(index);
             }
+        }
+
+        /// <summary>The totals as a list of amounts in item order (only quantities above 0), for example a cost to pay.</summary>
+        public IReadOnlyList<ItemQuantity> ToQuantities()
+        {
+            var amounts = new ItemQuantity[_items.Count];
+            for (int index = 0; index < _items.Count; index++)
+            {
+                amounts[index] = new ItemQuantity(_items[index], _quantities[index]);
+            }
+
+            return Array.AsReadOnly(amounts);
         }
 
         /// <inheritdoc/>

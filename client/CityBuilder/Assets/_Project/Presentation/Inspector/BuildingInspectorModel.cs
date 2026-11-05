@@ -279,7 +279,7 @@ namespace CityBuilder.Client.Presentation.Inspector
                 return "Upgrade requested…";
             }
 
-            if (building.Phase == BuildingPhase.Constructing || building.Phase == BuildingPhase.Upgrading)
+            if (building.Phase == BuildingPhase.Constructing || building.Phase == BuildingPhase.Upgrading || building.HasUpgradeWaiting)
             {
                 return "Busy until the current job is done";
             }
@@ -293,7 +293,8 @@ namespace CityBuilder.Client.Presentation.Inspector
             for (int index = 0; index < next.UpgradeCost.Count; index++)
             {
                 ItemQuantity line = next.UpgradeCost[index];
-                if (city.GetQuantity(line.Item) < line.Quantity)
+                // Only the coins are paid at once; the goods are delivered to the waiting upgrade later (CR-0008).
+                if (line.Item == content.Currency && city.Purse < line.Quantity)
                 {
                     missing += (missing.Length == 0 ? "Not enough " : ", ") + ItemText.ItemName(content, line.Item);
                 }

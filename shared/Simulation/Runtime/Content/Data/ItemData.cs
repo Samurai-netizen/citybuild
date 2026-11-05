@@ -14,8 +14,8 @@ namespace CityBuilder.Simulation.Content.Data
         /// <summary>Required. The number of the era the item belongs to.</summary>
         public int? Era { get; set; }
 
-        /// <summary>Required. Whether production is limited by a storage cap.</summary>
-        public bool? Capped { get; set; }
+        /// <summary>Required. Whether the item is the currency, which lives in the purse (exactly one item is; <c>04</c> section 16).</summary>
+        public bool? Currency { get; set; }
 
         /// <summary>Required. Whether the item may be traded on the player market (from Era II).</summary>
         public bool? Tradable { get; set; }

@@ -20,7 +20,8 @@ public sealed class MigrationDatabaseTests(PostgresServer server) : PostgresTest
     /// <summary>The tables of the M0 schema (<c>06</c>) and EF's migration history, by name.</summary>
     private static readonly string[] _tables =
     [
-        "__EFMigrationsHistory", "cities", "city_buildings", "city_inventory", "city_research", "command_receipts", "ledger_entries", "players",
+        "__EFMigrationsHistory", "cities", "city_buildings", "city_courier_loads", "city_couriers", "city_project_needs", "city_research", "city_research_needs", "city_roads",
+        "city_route_actions", "city_stores", "city_trips", "command_receipts", "ledger_entries", "players",
     ];
 
     /// <summary>
@@ -65,7 +66,8 @@ public sealed class MigrationDatabaseTests(PostgresServer server) : PostgresTest
             "decode(repeat('07', 32), 'hex'), '{{\"b\": 1,\"a\":[2, 3]}}', now());",
             cancellationToken);
 
-        await migrator.MigrateAsync(cancellationToken: cancellationToken);
+        // Up to ReceiptResponseAsJson only: the later reset migration (CR-0008 D10) deletes every receipt.
+        await migrator.MigrateAsync("20261027092603_ReceiptResponseAsJson", cancellationToken: cancellationToken);
 
         Assert.Equal(
             "json",
@@ -74,6 +76,64 @@ public sealed class MigrationDatabaseTests(PostgresServer server) : PostgresTest
                     "WHERE table_name = 'command_receipts' AND column_name = 'response_json'")
                 .SingleAsync(cancellationToken));
         Assert.Equal("{\"a\": [2, 3], \"b\": 1}", await db.CommandReceipts.Select(row => row.ResponseJson).SingleAsync(cancellationToken));
+    }
+
+    /// <summary>
+    /// <c>AddLastSeen</c> (CR-0008-T1 part H) gives a stored city a last-seen second equal to its last settled one: every settle so far was
+    /// the player's request, so no one counts as away since 1970.
+    /// </summary>
+    [Fact]
+    public async Task Migrate_AddLastSeen_SetsLastSeenToLastSettled()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        await using CityBuilderDbContext db = Database.CreateContext();
+        IMigrator migrator = db.GetService<IMigrator>();
+        await migrator.MigrateAsync("20261104190147_AddCouriersAndRoutes", cancellationToken: cancellationToken);
+        await db.Database.ExecuteSqlRawAsync(
+            "INSERT INTO players (id, dev_name, created_at) VALUES ('91a7e400-0000-4000-8000-000000000002', 'dev2', now()); " +
+            "INSERT INTO cities (id, player_id, era, clock_seconds, last_settled_unix, next_building_id, purse, next_trip_id, state_version, " +
+            "content_version, created_at, updated_at) VALUES ('c17e0000-0000-4000-8000-000000000002', '91a7e400-0000-4000-8000-000000000002', " +
+            "1, 60, 1790000123, 2, 800, 1, 3, 'mvp-2', now(), now());",
+            cancellationToken);
+
+        await migrator.MigrateAsync(cancellationToken: cancellationToken);
+
+        var city = await db.Cities.AsNoTracking().Select(row => new { row.LastSettledUnix, row.LastSeenUnix }).SingleAsync(cancellationToken);
+        Assert.Equal((1_790_000_123L, 1_790_000_123L), (city.LastSettledUnix, city.LastSeenUnix));
+    }
+
+    /// <summary>
+    /// The logistics migration resets the dev database (CR-0008 D10, the owner's OK): a player with a city, a receipt and ledger rows stored
+    /// under <c>AddCityRoads</c> are all gone after <c>LogisticsStoresTripsAndReset</c>, so the dev name logs in to a new starting city.
+    /// </summary>
+    [Fact]
+    public async Task Migrate_LogisticsMigration_DeletesEveryPlayerAndTheirRows()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        await using CityBuilderDbContext db = Database.CreateContext();
+        IMigrator migrator = db.GetService<IMigrator>();
+        await migrator.MigrateAsync("20261103215115_AddCityRoads", cancellationToken: cancellationToken);
+        await db.Database.ExecuteSqlRawAsync(
+            "INSERT INTO players (id, dev_name, created_at) VALUES ('91a7e400-0000-4000-8000-000000000001', 'dev1', now()); " +
+            "INSERT INTO cities (id, player_id, era, clock_seconds, last_settled_unix, next_building_id, state_version, content_version, " +
+            "created_at, updated_at) VALUES ('c17e0000-0000-4000-8000-000000000001', '91a7e400-0000-4000-8000-000000000001', 1, 60, 0, 2, 3, " +
+            "'mvp-1', now(), now()); " +
+            "INSERT INTO city_inventory (city_id, item_id, quantity) VALUES ('c17e0000-0000-4000-8000-000000000001', 'coins', 500); " +
+            "INSERT INTO city_roads (city_id, x, y, level) VALUES ('c17e0000-0000-4000-8000-000000000001', 1, 1, 1); " +
+            "INSERT INTO ledger_entries (city_id, item_id, delta, balance_after, reason, created_at) VALUES " +
+            "('c17e0000-0000-4000-8000-000000000001', 'coins', 500, 500, 'STARTING_GRANT', now()); " +
+            "INSERT INTO command_receipts (player_id, request_id, command_type, payload_hash, response_json, created_at) VALUES " +
+            "('91a7e400-0000-4000-8000-000000000001', '0b7e9c4a-0000-4000-8000-0000000000b1', 'place-building', " +
+            "decode(repeat('07', 32), 'hex'), '{{}}', now());",
+            cancellationToken);
+
+        await migrator.MigrateAsync(cancellationToken: cancellationToken);
+
+        Assert.Equal(0, await db.Players.CountAsync(cancellationToken));
+        Assert.Equal(0, await db.Cities.CountAsync(cancellationToken));
+        Assert.Equal(0, await db.CityRoads.CountAsync(cancellationToken));
+        Assert.Equal(0, await db.LedgerEntries.CountAsync(cancellationToken));
+        Assert.Equal(0, await db.CommandReceipts.CountAsync(cancellationToken));
     }
 
     /// <summary>Migrating a database a second time applies nothing: the migrations run once.</summary>

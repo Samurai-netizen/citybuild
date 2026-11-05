@@ -5,15 +5,15 @@ namespace CityBuilder.Simulation.Tests.Properties;
 
 /// <summary>
 /// The generator is only as good as the cities it reaches: over the property seeds it must reach every command, upgrades, research,
-/// locked buildings, chains, frozen cycles and gaps beyond the production cap. The floors are well below what the seeds reach today (the
+/// locked buildings, chains, frozen cycles, long absences and tired couriers. The floors are well below what the seeds reach today (the
 /// message prints the counts), so a change to the generator that stops reaching a situation fails here instead of silently weakening the
 /// properties.
 /// </summary>
 public sealed class CityGeneratorTests
 {
     /// <summary>
-    /// Over the property seeds the generator makes each kind of operation at least 20 times, and reaches each situation (a gap beyond the cap,
-    /// an upgrade, research, a locked building, a cycle with inputs, a frozen cycle) in at least its floor of seeds.
+    /// Over the property seeds the generator makes each kind of operation at least 20 times, and reaches each situation (a long absence, a
+    /// tired courier, an upgrade, research, a locked building, a cycle with inputs, a frozen cycle, deliveries to projects and stores) in at least its floor of seeds.
     /// </summary>
     [Theory]
     [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
@@ -29,36 +29,45 @@ public sealed class CityGeneratorTests
                 Count(counts, operation.GetType().Name, true);
             }
 
-            Count(counts, "seeds with a gap beyond the cap", history.Reports.Any(report => report.ProductionSeconds < report.ElapsedSeconds));
+            Count(counts, "seeds with a long absence", history.Operations.Any(
+                operation => operation is CityOperation.Advance { AbsentAfter: not null } advance && advance.Seconds > CityGenerator.LongGapOf(content)));
+            Count(counts, "seeds with a tired courier", history.Reports.Any(report => report.TiredCouriers.Count > 0));
             Count(counts, "seeds with an upgrade done", history.City.Buildings.Any(building => building.Level > 1));
             Count(counts, "seeds with research done", history.City.CompletedResearch.Count > 0);
             Count(counts, "seeds with a locked building placed", history.City.Buildings.Any(building => IsLockedAtStart(content, building)));
             Count(counts, "seeds with a cycle that used inputs", history.Reports.Any(report => report.Consumed.Count > 0));
             Count(counts, "seeds ending with a frozen cycle", history.City.Buildings.Any(IsFrozen));
+            Count(counts, "seeds with a delivery to a project", history.Reports.Any(report => report.Delivered.Count > 0));
+            Count(counts, "seeds with goods moved into a store", history.Reports.Any(report => report.Moved.Count > 0));
+            Count(counts, "seeds with a courier walking at the end", history.City.Couriers.Any(courier => courier.State == CourierState.Walking));
         }
 
         string observed = string.Join(", ", counts.Select(count => $"{count.Key} {count.Value}"));
-        foreach (string kind in (string[])["PlaceBuilding", "UpgradeBuilding", "AssignWorkers", "StartResearch", "Advance"])
+        foreach (string kind in (string[])["PlaceBuilding", "UpgradeBuilding", "AssignWorkers", "StartResearch", "StartTrip", "SetRoute", "ReenergizeCouriers", "Advance"])
         {
             Assert.True(counts.GetValueOrDefault(kind) >= 20, $"Too few accepted {kind} operations. Observed: {observed}");
         }
 
-        AssertAtLeast(counts, "seeds with a gap beyond the cap", 100, observed);
+        AssertAtLeast(counts, "seeds with a long absence", 100, observed);
+        AssertAtLeast(counts, "seeds with a tired courier", 20, observed);
         AssertAtLeast(counts, "seeds with an upgrade done", 20, observed);
         AssertAtLeast(counts, "seeds with research done", 100, observed);
         AssertAtLeast(counts, "seeds with a locked building placed", 5, observed);
         AssertAtLeast(counts, "seeds with a cycle that used inputs", 5, observed);
         AssertAtLeast(counts, "seeds ending with a frozen cycle", 5, observed);
+        AssertAtLeast(counts, "seeds with a delivery to a project", 25, observed);
+        AssertAtLeast(counts, "seeds with goods moved into a store", 25, observed);
+        AssertAtLeast(counts, "seeds with a courier walking at the end", 25, observed);
     }
 
     /// <summary>Rejected commands are left out of the history but counted: a replay accepts every listed operation, and seed 7 had rejections.</summary>
     [Fact]
     public void Generate_RejectedCommands_AreLeftOutAndCounted()
     {
-        CityHistory history = CityGenerator.Generate(PropertyContent.Named("golden-v1"), seed: 7);
+        CityHistory history = CityGenerator.Generate(PropertyContent.Named("golden-v2"), seed: 7);
 
         // Every listed operation was accepted (a replay accepts each one again), and the seed tried more commands than it kept.
-        Assert.Equal(history.Operations.Count, CityHistory.Replay(PropertyContent.Named("golden-v1"), 7, history.Operations).Reports.Count);
+        Assert.Equal(history.Operations.Count, CityHistory.Replay(PropertyContent.Named("golden-v2"), 7, history.Operations).Reports.Count);
         Assert.True(history.Rejected > 0, history.Describe());
     }
 
@@ -78,19 +87,37 @@ public sealed class CityGeneratorTests
             history.Describe());
     }
 
-    /// <summary>Gaps stay between 0 and four production caps, and reach both a minute or less and beyond the cap.</summary>
+    /// <summary>Gaps stay between 0 and four long gaps, and reach both a minute or less and beyond one long gap.</summary>
     [Fact]
-    public void Gap_ManyDraws_StayWithinZeroAndFourCapsAndReachBothSidesOfTheCap()
+    public void Gap_ManyDraws_StayWithinZeroAndFourLongGapsAndReachBothEnds()
     {
-        GameContent content = PropertyContent.Named("golden-v1");
-        long cap = content.Rules.MaxOfflineProductionSeconds;
+        long longGap = CityGenerator.LongGapOf(PropertyContent.Named("golden-v2"));
         var random = new SeededRandom(1);
 
-        long[] gaps = [.. Enumerable.Range(0, 1000).Select(_ => CityGenerator.Gap(random, content))];
+        long[] gaps = [.. Enumerable.Range(0, 1000).Select(_ => CityGenerator.Gap(random, longGap))];
 
-        Assert.All(gaps, gap => Assert.InRange(gap, 0, 4 * cap));
+        Assert.All(gaps, gap => Assert.InRange(gap, 0, 4 * longGap));
         Assert.Contains(gaps, gap => gap <= 60);
-        Assert.Contains(gaps, gap => gap > cap);
+        Assert.Contains(gaps, gap => gap > longGap);
+    }
+
+    /// <summary>
+    /// Time passing over more than ten minutes is an absence that starts within the grace or presence, both often; a shorter gap is sometimes
+    /// an absence from inside it and mostly presence.
+    /// </summary>
+    [Fact]
+    public void TimePasses_ManyDraws_MakesLongGapsAbsencesWithinTheGraceOrPresentAndShortOnesMostlyPresent()
+    {
+        var random = new SeededRandom(2);
+
+        CityOperation.Advance[] draws = [.. Enumerable.Range(0, 1000).Select(_ => CityGenerator.TimePasses(random, 3600))];
+
+        Assert.All(draws.Where(draw => draw.Seconds > 600 && draw.AbsentAfter is not null), draw => Assert.InRange(draw.AbsentAfter!.Value, 0, CityGenerator.MaxGraceSeconds));
+        Assert.Contains(draws, draw => draw.Seconds > 600 && draw.AbsentAfter is null);
+        Assert.Contains(draws, draw => draw.Seconds > 600 && draw.AbsentAfter is not null);
+        Assert.All(draws.Where(draw => draw.AbsentAfter is not null), draw => Assert.InRange(draw.AbsentAfter!.Value, 0, Math.Max(draw.Seconds, CityGenerator.MaxGraceSeconds)));
+        Assert.Contains(draws, draw => draw.Seconds <= 600 && draw.AbsentAfter is null);
+        Assert.Contains(draws, draw => draw.Seconds <= 600 && draw.AbsentAfter is not null);
     }
 
     /// <summary>Counts the case when it happened.</summary>

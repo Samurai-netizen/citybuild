@@ -41,7 +41,7 @@ public sealed class AssignWorkersTests
         RulesAssert.Ok(Assign(city, 3, 0));
 
         Assert.Equal("building 3 lumber_camp (2,0) L2 w=0 Producing 1000..null target=0 labor=180/120@1020", CityDump.BuildingLine(city, 3));
-        Assert.Equal(1, CityQueries.Reserved(city, TestContent, new ItemId("wood")));
+        Assert.Equal(1, CityQueries.Reserved(TestContent, city.Buildings[2], new ItemId("wood")));
     }
 
     /// <summary>Workers on a frozen cycle resume it with the labor it had left: 120 labor with 3 workers takes 40 s.</summary>

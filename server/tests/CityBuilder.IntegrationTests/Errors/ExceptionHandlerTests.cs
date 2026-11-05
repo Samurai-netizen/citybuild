@@ -39,7 +39,7 @@ public sealed class ExceptionHandlerTests(ApiFactory factory) : IClassFixture<Ap
         get
         {
             var data = new TheoryData<string, string>();
-            foreach (string path in new[] { _commandPaths[0], _commandPaths[1], _commandPaths[2], _commandPaths[3], _devLoginPath })
+            foreach (string path in _commandPaths.Append(_devLoginPath))
             {
                 foreach (string body in new[]
                 {
@@ -59,7 +59,7 @@ public sealed class ExceptionHandlerTests(ApiFactory factory) : IClassFixture<Ap
     private static readonly string[] _commandPaths =
     [
         "/api/v1/commands/place-building", "/api/v1/commands/upgrade-building", "/api/v1/commands/assign-workers",
-        "/api/v1/commands/start-research",
+        "/api/v1/commands/start-research", "/api/v1/commands/place-roads", "/api/v1/commands/upgrade-roads", "/api/v1/commands/remove-roads",
     ];
 
     /// <summary>The dev login, which exists only in Development.</summary>

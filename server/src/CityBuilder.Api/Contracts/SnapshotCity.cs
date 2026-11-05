@@ -4,18 +4,27 @@ namespace CityBuilder.Api.Contracts;
 /// <param name="Clock">The city clock in seconds, JSON <c>clock</c>; the client's display clock is this plus the seconds since it received the snapshot,
 /// times <c>rules.timeScale</c>.</param>
 /// <param name="Era">The city's era number, JSON <c>era</c>.</param>
-/// <param name="Inventory">The stock, JSON <c>inventory</c>: item id to quantity, by item id; an item the city has none of is absent.</param>
-/// <param name="StorageCaps">The storage cap of each capped item now, JSON <c>storageCaps</c>: base cap plus the bonuses of completed research, by item id.</param>
+/// <param name="Purse">The coins, JSON <c>purse</c>: the currency, in no building (CR-0008).</param>
+/// <param name="Totals">Every item's city total, JSON <c>totals</c>: item id to quantity, by item id, 0 included; a good's total adds every store
+/// and every load on the way, the currency's is the purse (CR-0008).</param>
 /// <param name="Workers">The workers, JSON <c>workers</c>.</param>
 /// <param name="Builders">The builder slots, JSON <c>builders</c>.</param>
 /// <param name="Research">The research slot and the completed research, JSON <c>research</c>.</param>
 /// <param name="Buildings">The placed buildings, JSON <c>buildings</c>, by ascending id.</param>
+/// <param name="Roads">The road tiles, JSON <c>roads</c>, by column, then row (CR-0008).</param>
+/// <param name="Trips">The manual trips under way, JSON <c>trips</c>, by id (CR-0008).</param>
+/// <param name="Couriers">The couriers, JSON <c>couriers</c>, by station id, then slot (CR-0008).</param>
+/// <param name="Routes">The courier stations' routes, JSON <c>routes</c>, by station id, then slot (CR-0008).</param>
 public sealed record SnapshotCity(
     long Clock,
     int Era,
-    IReadOnlyDictionary<string, long> Inventory,
-    IReadOnlyDictionary<string, long> StorageCaps,
+    long Purse,
+    IReadOnlyDictionary<string, long> Totals,
     SnapshotWorkers Workers,
     SnapshotBuilders Builders,
     SnapshotResearch Research,
-    IReadOnlyList<SnapshotBuilding> Buildings);
+    IReadOnlyList<SnapshotBuilding> Buildings,
+    IReadOnlyList<SnapshotRoad> Roads,
+    IReadOnlyList<SnapshotTrip> Trips,
+    IReadOnlyList<SnapshotCourier> Couriers,
+    IReadOnlyList<SnapshotRoute> Routes);

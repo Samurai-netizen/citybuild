@@ -95,7 +95,8 @@ internal sealed class FakeCityStore : ICityRepository, IUnitOfWork, ICommandRece
     {
         // The real repository writes state_version + 1; the aggregate keeps the version it was loaded with, so the stored copy is a new one.
         _cities[city.PlayerId] = new CityAggregate(
-            city.CityId, city.PlayerId, city.State, city.ResearchCompletedAt, city.LastSettledUnixSec, checked(city.StateVersion + 1), city.ContentVersion);
+            city.CityId, city.PlayerId, city.State, city.ResearchCompletedAt, city.LastSettledUnixSec, checked(city.StateVersion + 1), city.ContentVersion,
+            city.LastSeenUnixSec);
         Ledger.AddRange(ledger);
         if (receipt is not null)
         {

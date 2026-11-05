@@ -26,36 +26,67 @@ public sealed class GameContentFactoryTests
         Assert.Equal("test-1", content.ContentVersion);
     }
 
-    /// <summary>Every global rule is carried over, and the base caps come sorted by item id.</summary>
+    /// <summary>Every global rule is carried over, the trip carry limit and the route limits of CR-0008 included.</summary>
     [Fact]
     public void Create_ValidData_CarriesOverTheRules()
     {
         GameRules rules = ContentAssert.Valid(Valid()).Rules;
 
         Assert.Equal((6, 5, 2, 1), (rules.GridWidth, rules.GridHeight, rules.BuilderSlots, rules.ResearchSlots));
-        Assert.Equal((3600L, 5L, 400), (rules.MaxOfflineProductionSeconds, rules.MinCycleSeconds, rules.MaxLaborReductionPermille));
-        Assert.Equal([("boards", 80L), ("wood", 100L)], rules.BaseStorageCaps.Select(cap => (cap.Item.Value, cap.Quantity)));
+        Assert.Equal((5L, 400), (rules.MinCycleSeconds, rules.MaxLaborReductionPermille));
+        Assert.Equal((6L, 6, 3), (rules.TripCarryLimit, rules.MaxRouteStops, rules.MaxStopActions));
     }
 
-    /// <summary>A capped item has a base cap and an uncapped one has none.</summary>
+    /// <summary>A level's store is carried over sorted by item id, and it finds only the goods it holds (CR-0008, <c>04</c> section 16).</summary>
     [Fact]
-    public void TryGetBaseStorageCap_CappedAndUncappedItems_FindsOnlyTheCapped()
+    public void TryGetStorageLimit_ALevelsStore_FindsOnlyItsGoods()
     {
-        GameRules rules = ContentAssert.Valid(Valid()).Rules;
+        BuildingLevelDefinition workshop = BuildingOf(ContentAssert.Valid(Valid()), "workshop").GetLevel(1);
 
-        Assert.True(rules.TryGetBaseStorageCap(new ItemId("wood"), out long woodCap));
-        Assert.Equal(100L, woodCap);
-        Assert.False(rules.TryGetBaseStorageCap(new ItemId("gold"), out _));
+        Assert.Equal([("boards", 80L), ("wood", 20L)], workshop.Storage.Select(limit => (limit.Item.Value, limit.Quantity)));
+        Assert.True(workshop.TryGetStorageLimit(new ItemId("wood"), out long wood));
+        Assert.Equal(20L, wood);
+        Assert.False(workshop.TryGetStorageLimit(new ItemId("gold"), out long none));
+        Assert.Equal(0L, none);
     }
 
-    /// <summary>The starting era and stock are carried over, the stock sorted by item id.</summary>
+    /// <summary>The starting era and purse are carried over; a new city has no goods (CR-0008 D2).</summary>
     [Fact]
     public void Create_ValidData_CarriesOverTheStartingCity()
     {
         StartingCityDefinition startingCity = ContentAssert.Valid(Valid()).StartingCity;
 
-        Assert.Equal(1, startingCity.Era);
-        Assert.Equal([("gold", 100L), ("wood", 5L)], startingCity.Inventory.Select(stock => (stock.Item.Value, stock.Quantity)));
+        Assert.Equal((1, 100L), (startingCity.Era, startingCity.Purse));
+    }
+
+    /// <summary>
+    /// The logistics model is carried over (CR-0008): each building kind, the science building's <c>maxPerCity</c>, a courier station's
+    /// couriers, carry limit and stamina per level, the amount presets sorted by id, and the two effect types of logistics.
+    /// </summary>
+    [Fact]
+    public void Create_ValidData_CarriesOverTheLogisticsModel()
+    {
+        GameContent content = ContentAssert.Valid(Valid());
+
+        Assert.Equal(
+            [
+                ("depot", BuildingKind.Warehouse), ("hut", BuildingKind.House), ("lumber_camp", BuildingKind.Producer),
+                ("post", BuildingKind.CourierStation), ("school", BuildingKind.Science), ("workshop", BuildingKind.Producer),
+            ],
+            content.Buildings.Select(building => (building.Id.Value, building.Kind)));
+        Assert.Equal((int?)1, BuildingOf(content, "school").MaxPerCity);
+        Assert.Null(BuildingOf(content, "hut").MaxPerCity);
+        Assert.Equal(
+            [(2, 5L, 600L), (3, 8L, 1200L)],
+            BuildingOf(content, "post").Levels.Select(level => (level.MaxWorkers, level.CarryLimit, level.StaminaSeconds)));
+        Assert.Equal([("all", "All", 100), ("half", "Half", 50)], content.AmountPresets.Select(preset => (preset.Id.Value, preset.Name, preset.Percent)));
+        Assert.True(content.TryGetAmountPreset(new AmountPresetId("half"), out AmountPresetDefinition? half));
+        Assert.Equal(50, half.Percent);
+        Assert.False(content.TryGetAmountPreset(new AmountPresetId("third"), out _));
+        Assert.True(content.TryGetResearch(new ResearchId("tallying"), out ResearchDefinition? tallying));
+        Assert.Equal(AmountMode.Percent, Assert.IsType<UnlockAmountModeEffect>(Assert.Single(tallying.Effects)).Mode);
+        Assert.True(content.TryGetResearch(new ResearchId("boots"), out ResearchDefinition? boots));
+        Assert.Equal(100, Assert.IsType<WalkSpeedBonusEffect>(Assert.Single(boots.Effects)).Permille);
     }
 
     /// <summary>Every era and item value is carried over.</summary>
@@ -66,9 +97,10 @@ public sealed class GameContentFactoryTests
 
         Assert.Equal([(1, "first_era", "First Era"), (2, "second_era", "Second Era")], content.Eras.Select(era => (era.Number, era.Id.Value, era.Name)));
         Assert.True(content.TryGetItem(new ItemId("wood"), out ItemDefinition? wood));
-        Assert.Equal(("Wood", 1, true, true), (wood.Name, wood.Era, wood.IsCapped, wood.IsTradable));
+        Assert.Equal(("Wood", 1, false, true), (wood.Name, wood.Era, wood.IsCurrency, wood.IsTradable));
         Assert.True(content.TryGetItem(new ItemId("gold"), out ItemDefinition? gold));
-        Assert.Equal((false, false), (gold.IsCapped, gold.IsTradable));
+        Assert.Equal((true, false), (gold.IsCurrency, gold.IsTradable));
+        Assert.Equal(new ItemId("gold"), content.Currency);
     }
 
     /// <summary>Items, building types and research nodes are sorted by id whatever order the file lists them in.</summary>
@@ -83,8 +115,8 @@ public sealed class GameContentFactoryTests
         GameContent content = ContentAssert.Valid(data);
 
         Assert.Equal(["boards", "gold", "wood"], content.Items.Select(item => item.Id.Value));
-        Assert.Equal(["hut", "lumber_camp", "workshop"], content.Buildings.Select(building => building.Id.Value));
-        Assert.Equal(["better_saws", "carpentry", "warehouses"], content.Research.Select(node => node.Id.Value));
+        Assert.Equal(["depot", "hut", "lumber_camp", "post", "school", "workshop"], content.Buildings.Select(building => building.Id.Value));
+        Assert.Equal(["better_saws", "boots", "carpentry", "tallying", "warehouses"], content.Research.Select(node => node.Id.Value));
     }
 
     /// <summary>Eras are sorted by number whatever order the file lists them in.</summary>
@@ -240,7 +272,8 @@ public sealed class GameContentFactoryTests
 
         Assert.False(content.Items is ItemDefinition[]);
         Assert.True(((ICollection<ItemDefinition>)content.Items).IsReadOnly);
-        Assert.True(((ICollection<ItemQuantity>)content.Rules.BaseStorageCaps).IsReadOnly);
+        Assert.True(((ICollection<ItemQuantity>)BuildingOf(content, "workshop").GetLevel(1).Storage).IsReadOnly);
+        Assert.True(((ICollection<AmountPresetDefinition>)content.AmountPresets).IsReadOnly);
         Assert.True(((ICollection<BuildingLevelDefinition>)BuildingOf(content, "hut").Levels).IsReadOnly);
     }
 

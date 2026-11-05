@@ -81,7 +81,7 @@ public sealed class CityAggregateTests
     [Fact]
     public void Advance_PastTheEndOfTheRunningResearch_RecordsItsEndAsTheCompletionClock()
     {
-        var state = new CityState(500, 1, 1, [], [], [_masonry], new ActiveResearch(Forestry, 400, 1_000));
+        var state = new CityState(500, 1, 1, 0, [], [_masonry], new ActiveResearch(Forestry, 400, 1_000));
         var city = new CityAggregate(CityId, PlayerId, state, [new(_masonry, 120)], 0, 0, "v1");
 
         SettlementReport report = city.Advance(SettleFixture.Content, 10_000);
@@ -94,7 +94,7 @@ public sealed class CityAggregateTests
     [Fact]
     public void Advance_BeforeTheEndOfTheRunningResearch_RecordsNothing()
     {
-        var state = new CityState(500, 1, 1, [], [], [], new ActiveResearch(Forestry, 400, 1_000));
+        var state = new CityState(500, 1, 1, 0, [], [], new ActiveResearch(Forestry, 400, 1_000));
         var city = new CityAggregate(CityId, PlayerId, state, [], 0, 0, "v1");
 
         city.Advance(SettleFixture.Content, 499);
@@ -125,6 +125,6 @@ public sealed class CityAggregateTests
         Assert.Equal((100L, "v1"), (city.LastSettledUnixSec, city.ContentVersion));
     }
 
-    /// <summary>A city at clock <paramref name="clock"/> with no buildings or stock that completed <c>masonry</c> and runs nothing.</summary>
-    private static CityState StateWithMasonry(long clock) => new(clock, 1, 1, [], [], [_masonry], activeResearch: null);
+    /// <summary>A city at clock <paramref name="clock"/> with no buildings or coins that completed <c>masonry</c> and runs nothing.</summary>
+    private static CityState StateWithMasonry(long clock) => new(clock, 1, 1, 0, [], [_masonry], activeResearch: null);
 }

@@ -130,7 +130,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Build
         public void Update_MarksTheTilesOfBuildingsOccupied_AndTheRestFree()
         {
             // BuildMenuTestData puts building n on tile (n, 0): two buildings under construction are on (1, 0) and (2, 0).
-            _flow.Update(BuildMenuTestData.City(700, 40, 10, new string[0], 2));
+            _flow.Update(BuildMenuTestData.City(700, 0, 0, new string[0], 2));
 
             Assert.That(_flow.HintAt(new GridCoordinate(1, 0)), Is.EqualTo(TileHint.Occupied));
             Assert.That(_flow.HintAt(new GridCoordinate(2, 0)), Is.EqualTo(TileHint.Occupied));

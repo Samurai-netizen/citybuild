@@ -1,5 +1,6 @@
 #nullable enable
 
+using System.Collections.Generic;
 using CityBuilder.Client.Presentation.Hud;
 using CityBuilder.Simulation;
 using CityBuilder.Simulation.Content;
@@ -28,23 +29,26 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Hud
             return ItemChipModel.Create(_content, city, definition!);
         }
 
-        /// <summary>A capped item shows its name, stock and cap; with no buildings the rate is zero.</summary>
+        /// <summary>
+        /// A good shows its name and the city's total; there is no city-wide cap since CR-0008 (limits are per store), so the cap text is empty
+        /// and the chip is not full. With no producers the rate is zero.
+        /// </summary>
         [Test]
-        public void CappedItem_ShowsStockAndCap()
+        public void Good_ShowsItsCityTotal_AndNoCap()
         {
             ItemChipModel chip = Chip("logs", HudTestData.City(0, 700, 40, 10, new Building[0]));
 
             Assert.That(chip.Name, Is.EqualTo("Logs"));
             Assert.That(chip.StockText, Is.EqualTo("40"));
-            Assert.That(chip.CapText, Is.EqualTo("500"));
+            Assert.That(chip.CapText, Is.Empty);
             Assert.That(chip.IsFull, Is.False);
             Assert.That(chip.RateText, Is.EqualTo("0/h"));
             Assert.That(chip.Trend, Is.EqualTo(RateTrend.Flat));
         }
 
-        /// <summary>Coins have no cap: the cap text is empty and the chip is never full.</summary>
+        /// <summary>Coins come from the purse: no cap, never full.</summary>
         [Test]
-        public void UncappedItem_HasNoCap()
+        public void Coins_ShowThePurse()
         {
             ItemChipModel chip = Chip("coins", HudTestData.City(0, 700, 40, 10, new Building[0]));
 
@@ -53,21 +57,27 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Hud
             Assert.That(chip.IsFull, Is.False);
         }
 
-        /// <summary>A stock at the cap is full.</summary>
+        /// <summary>
+        /// The total counts every store and every load on the way (CR-0008): 30 logs in a woodcutter, 40 in the warehouse and 5 carried make 75.
+        /// A store at its limit does not make the city's chip full: the stall shows on the building.
+        /// </summary>
         [Test]
-        public void StockAtTheCap_IsFull()
+        public void Total_CountsEveryStoreAndEveryLoad()
         {
-            Assert.That(Chip("logs", HudTestData.City(0, 0, 500, 0, new Building[0])).IsFull, Is.True);
-            Assert.That(Chip("logs", HudTestData.City(0, 0, 499, 0, new Building[0])).IsFull, Is.False);
-        }
+            var logs = new ItemId("logs");
+            var woodcutter = new Building(
+                1, new BuildingTypeId("woodcutter"), 0, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0,
+                new[] { new KeyValuePair<ItemId, long>(logs, 30) });
+            var warehouse = new Building(
+                2, new BuildingTypeId("warehouse"), 2, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0,
+                new[] { new KeyValuePair<ItemId, long>(logs, 40) });
+            var city = new CityState(
+                10, 1, 3, 0, new[] { woodcutter, warehouse }, new ResearchId[0], null, null, new[] { new Trip(1, 1, 2, logs, 5, 8, 20) }, 2);
 
-        /// <summary>A completed storage research raises the cap the chip shows.</summary>
-        [Test]
-        public void StorageResearch_RaisesTheShownCap()
-        {
-            CityState city = HudTestData.City(0, 0, 40, 0, new Building[0], new[] { "trade_charter", "storehouses" });
+            ItemChipModel chip = Chip("logs", city);
 
-            Assert.That(Chip("logs", city).CapText, Is.EqualTo("750"));
+            Assert.That(chip.StockText, Is.EqualTo("75"));
+            Assert.That(chip.IsFull, Is.False);
         }
 
         /// <summary>A woodcutter with two workers makes a log every 30 s: +120 an hour.</summary>

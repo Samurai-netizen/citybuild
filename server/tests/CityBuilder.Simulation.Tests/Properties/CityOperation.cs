@@ -78,14 +78,74 @@ internal abstract record CityOperation
         public override string ToString() => $"StartResearch {ResearchId}";
     }
 
-    /// <summary>Lets <paramref name="Seconds"/> pass: one settlement over that window.</summary>
+    /// <summary>Sends a free worker with goods from one building's store to another building (<c>04</c> section 18).</summary>
+    /// <param name="SourceId">The id of the building whose store the goods come from.</param>
+    /// <param name="TargetId">The id of the building they go to.</param>
+    /// <param name="Item">The good's id.</param>
+    /// <param name="Amount">How much of the source's stock.</param>
+    public sealed record StartTrip(int SourceId, int TargetId, string Item, Amount Amount) : Command
+    {
+        /// <inheritdoc/>
+        public override MutationResult Mutate(CityState city, GameContent content) =>
+            TripRules.StartTrip(city, content, SourceId, TargetId, new ItemId(Item), Amount);
+
+        /// <summary>The text a failing property prints, for example <c>StartTrip 3->5 logs half</c>.</summary>
+        public override string ToString() => string.Create(CultureInfo.InvariantCulture, $"StartTrip {SourceId}->{TargetId} {Item} {Amount}");
+    }
+
+    /// <summary>Sets the route of a courier station's slot (<c>04</c> section 19); no stops clears it.</summary>
+    /// <param name="StationId">The courier station's id.</param>
+    /// <param name="Slot">The slot.</param>
+    /// <param name="Stops">The stops in order.</param>
+    public sealed record SetRoute(int StationId, int Slot, IReadOnlyList<RouteStop> Stops) : Command
+    {
+        /// <inheritdoc/>
+        public override MutationResult Mutate(CityState city, GameContent content) => CourierRules.SetRoute(city, content, StationId, Slot, Stops);
+
+        /// <summary>
+        /// Equal when the text is: the station, the slot and every stop with its actions (a record would compare the stop list by reference,
+        /// so two generations of one seed would differ).
+        /// </summary>
+        public bool Equals(SetRoute? other) => other is not null && ToString() == other.ToString();
+
+        /// <summary>The hash of the text, in step with <see cref="Equals(SetRoute)"/>.</summary>
+        public override int GetHashCode() => ToString().GetHashCode(StringComparison.Ordinal);
+
+        /// <summary>The text a failing property prints, for example <c>SetRoute 4/1 3[Take logs all] 5[Put logs half]</c>.</summary>
+        public override string ToString() => string.Create(CultureInfo.InvariantCulture, $"SetRoute {StationId}/{Slot}")
+            + string.Concat(Stops.Select(stop => string.Create(CultureInfo.InvariantCulture, $" {stop.BuildingId}[")
+                + string.Join("; ", stop.Actions.Select(action => $"{action.Kind} {action.Item} {action.Amount}")) + "]"));
+    }
+
+    /// <summary>
+    /// Lets <paramref name="Seconds"/> pass: one settlement over that window, with the player present all of it or absent from
+    /// <paramref name="AbsentAfter"/> seconds after its start (<c>04</c> section 2).
+    /// </summary>
     /// <param name="Seconds">The seconds to pass; the engine counts a negative value as 0 (<c>04</c> section 1).</param>
-    public sealed record Advance(long Seconds) : CityOperation
+    /// <param name="AbsentAfter">Null when the player is present the whole window; else the seconds after the window's start at which the
+    /// absence begins (the engine's <c>absentFrom</c> is the start plus this).</param>
+    public sealed record Advance(long Seconds, long? AbsentAfter = null) : CityOperation
     {
         /// <summary>Advances the city by <see cref="Seconds"/>; time passing is never rejected, so the report is never null.</summary>
-        public override SettlementReport? TryApply(CityState city, GameContent content) => Simulator.Advance(city, content, Seconds);
+        public override SettlementReport? TryApply(CityState city, GameContent content) =>
+            Simulator.Advance(city, content, Seconds, AbsentFrom(city.Clock));
 
-        /// <summary>The text a failing property prints, for example <c>Advance 600</c>.</summary>
-        public override string ToString() => string.Create(CultureInfo.InvariantCulture, $"Advance {Seconds}");
+        /// <summary>The engine's <c>absentFrom</c> for a window that starts at <paramref name="start"/>: null when the player stays present.</summary>
+        public long? AbsentFrom(long start) => AbsentAfter is { } after ? start + after : null;
+
+        /// <summary>The text a failing property prints, for example <c>Advance 600</c> or <c>Advance 3600 absent after 120</c>.</summary>
+        public override string ToString() => AbsentAfter is { } after
+            ? string.Create(CultureInfo.InvariantCulture, $"Advance {Seconds} absent after {after}")
+            : string.Create(CultureInfo.InvariantCulture, $"Advance {Seconds}");
+    }
+
+    /// <summary>Re-energizes every courier of the city (<c>04</c> section 8).</summary>
+    public sealed record ReenergizeCouriers : Command
+    {
+        /// <inheritdoc/>
+        public override MutationResult Mutate(CityState city, GameContent content) => CourierRules.ReenergizeCouriers(city, content);
+
+        /// <summary>The text a failing property prints: <c>ReenergizeCouriers</c>.</summary>
+        public override string ToString() => "ReenergizeCouriers";
     }
 }
