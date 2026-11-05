@@ -4,23 +4,16 @@
 > Keep it ≤ 80 lines: overwrite old details. History lives in the build log and git.
 
 ## Resume point
-- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** CR-0008-T1 · Logistics rework: spec, engine and server (`[O]`; parts A–I, one PR) · branch `task/CR-0008-T1-logistics-engine-server` ·
-  build log `docs/build-log/2026/2026-11-02-07-CR-0008-T1.md` (its Session 1 plan lists every part and step)
-- **Part / step:** A–F done (design docs, spec, engine roads and paths, server roads end to end; draft PR #86); Session 2 reviewed
-  A–C. Part E (the switch): its plan with checkpoints and steps E1.1 … E4 is in the build log (Session 2, decisions 31–36). E1.1–E1.4 done;
-  E2.1 (engine trips, amounts, deliveries) done (decisions 37–40); E1.5 + E2.2 (server, goods panel) done, server suites green;
-  E1.6 + E2.3 (client, fixtures re-captured, decision 42; the new art, decision 44) done, **CP1 verified**. E3 (golden #1 on v2,
-  engine and HTTP; v1 deleted) done, **CP3 verified**. E4 (docs, self-review) done: **part E done**. Part F (engine: couriers and
-  routes): plan F1 → CP-F1, F2 → CP-F2, F3 → CP-F3 in the build log (decisions 45–51). F1 (state, `SetRoute`, staffing, the upgrade
-  stop, `INVALID_ROUTE`) done, **CP-F1**. F2 (couriers in the advance; decision 50) done, **CP-F2**. F3 (property harness, docs;
-  decision 51) done, **CP-F3**: **part F done**. Part G (server: couriers and routes): plan G1 → CP-G1,
-  G2 → CP-G2, G3 → CP-G3 in the build log; G1 (persistence) done, **CP-G1**; G2 (snapshot, `set-route`) done, **CP-G2**; G3 (client, docs) done, **CP-G3**: **part G done**. Part H plan:
-  H1 (engine) → CP-H1, H2 (server) → CP-H2, H3 (client, docs) → CP-H3 in the build log (decision 57); H1 step 1 (stamina, re-energizing) done; H1 (stamina, the cap removed, harness with absences, golden #2 on the engine; decisions 59–64) done, **CP-H1**; H2 done, **CP-H2**; H3 (docs) done, **CP-H3**: **part H done**. Part I plan (decision 66): I1 courier worst case done, **CP-I1** (Release 308 ms for 1.1 M arrivals, decision 67); I2 (review against `04`, decision 68) done, **CP-I2**: **part I done**. Next: `/finish-task` (Definition of Done, review, the PR ready). Owner art: T2 adopts visual v2 (decision 58). Then I, `/finish-task`.
-- **Last completed:** M0-60 · Client ↔ server boundary review (PR #85, merged)
-- **Next task:** CR-0008-T2 · client and art (`[S]`), after T1 merges; then CR-0008-T3, then M0-61.
+- **State:** IDLE   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** none. CR-0008-T1 (logistics: spec, engine and server; parts A–I) is in review: PR #86, build log
+  `docs/build-log/2026/2026-11-02-07-CR-0008-T1.md` (Done; decisions 1–68).
+- **Part / step:** —
+- **Last completed:** CR-0008-T1 · Logistics rework: spec, engine and server (PR #86, in review; the owner merges)
+- **Next task:** CR-0008-T2 · client and art (`[S]`), after T1 merges: it adopts the owner's visual v2 package first (`visual-v2/ADOPT.md`
+  Route A on branch `claude/compassionate-meitner-sd7nr0`; decision 58 of T1), then the screens. Then CR-0008-T3, then M0-61.
 - **Open questions for the owner:** CR-0008-T1: 8 Dependabot alerts on `main` (build log Follow-ups). M0-58: the [MANUAL] content-change check (`client/README.md`; no automated test covers the `GameRoot` rebuild). CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-54: the dev database still runs the fast clock until the owner does step 7 of the waiting-loop run (`LOCAL-E2E.md`). M0-55: the [MANUAL] look at the connection states (`client/README.md`). CR-0007-T1: the [MANUAL] look at the new UI (`client/README.md`); the status label may be removed (build log follow-ups).
-- **Known broken / do not touch:** nothing. The client has no re-energize button and shows no tired couriers yet (CR-0008-T2). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
+- **Known broken / do not touch:** nothing. The client has no re-energize button and shows no tired couriers yet (CR-0008-T2).
+  CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
 - **Verify with:** `bash scripts/dev/check-docs.sh --base origin/main` (as CI) · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
@@ -43,7 +36,7 @@
 | Dev tooling (CR-0006) | done | server panel goods for the `devtest` account: `server-panel/goods.sql`, `panel.sh goods`, tests (CR-0006-T1) |
 | Resilience (limits, retries, logging) | in progress | client logging M0-57 merged (PR #81) (`ClientLogger`, `ClientLog`); version and content compatibility M0-58 merged (PR #82) (`ContentSync`, `X-Client-Version`); mobile-safe UI M0-59 merged (PR #84) (Expand scaling, `ScaleToFit`, portrait rules); error catalogue, global handler, rate limits and input limits M0-34 merged (PR #46); logging, correlation and the dev time scale M0-35 merged (PR #47) |
 | Docs automation (DocTools) + docs completeness | in progress | handbook, Pages, docs-as-code checks and a full audit: CR-0002 done (PR #27); code documentation CR-0003 done (PR #29); DocTools is M0-61 |
-| Logistics (CR-0008) | in progress | T1 (spec, engine, server) on `task/CR-0008-T1-logistics-engine-server`; T2 (client, art) and T3 (playtest) after it |
+| Logistics (CR-0008) | in progress | T1 (spec, engine, server) in review (PR #86); T2 (client, art; adopts visual v2) and T3 (playtest) after it |
 | Balance simulator | not started | |
 | E2E / security / concurrency suites | in progress | server golden E2E over HTTP M0-36 merged (PR #48); lost responses and the kill check M0-56 merged (PR #80); boundary review M0-60 merged (PR #85) (`docs/testing/KILL-SERVER-CHECK.md`) |
 | Dev build + M0 close-out | not started | |
