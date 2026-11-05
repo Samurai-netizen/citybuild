@@ -30,10 +30,10 @@ Use these names in code, docs and UI text. Consistent words keep Claude and the 
 | Stop | One building on a route and the actions done there, in order | `RouteStop` |
 | Action | At a stop: take or put, an item and an amount | `RouteAction`, `RouteActionKind` |
 | Amount mode | How an amount is given: a preset (All, Half, Quarter; Era I), a percentage (by Era I research) or an exact number (by Era II research) | `Amount`, `AmountMode`, `AmountPresetDefinition`, `UnlockAmountModeEffect` |
-| Stamina | How long a courier keeps working while the player is away; spent only then | *(planned, CR-0008-T1)* |
-| Presence | The server's view of whether the player is there: absent from the presence grace after their last request until their next one | *(planned, CR-0008-T1)* |
-| Absence start | The second from which couriers spend stamina, derived by the server from the last request; an input of the advance | *(planned, CR-0008-T1)* |
-| Re-energize | The free command that refills every courier's stamina; resting couriers return to their routes | *(planned, CR-0008-T1)* |
+| Stamina | How long a courier keeps working while the player is away; spent only then, at each walk's arrival | `Courier.Stamina`, `BuildingLevelDefinition.StaminaSeconds`, `SettlementReport.CourierSeconds`, `TiredCourier` |
+| Presence | The server's view of whether the player is there: absent from the presence grace after their last request until their next one | `PresencePolicy`, `CityAggregate.LastSeenUnixSec`, `cities.last_seen_unix`, `Simulation:PresenceGraceSeconds` |
+| Absence start | The second from which couriers spend stamina, derived by the server from the last request; an input of the advance | `absentFrom` of `Simulator.Advance`, `PresencePolicy.AbsentFrom` |
+| Re-energize | The free command that refills every courier's stamina; resting couriers return to their routes | `CourierRules.ReenergizeCouriers`, `ReenergizeCouriersCommand`, `POST /api/v1/commands/reenergize-couriers` |
 | Reserved | Output quantity promised to a building's own running cycle (derived) | `CityQueries.Reserved` |
 | Recipe | Inputs → outputs with a labor cost, per building type and level | `Recipe` |
 | Labor | Worker-seconds one cycle needs | `Labor`, `CycleLabor`, `LaborRemaining` |
@@ -62,7 +62,7 @@ Use these names in code, docs and UI text. Consistent words keep Claude and the 
 | Settle | Advance a city from its last settlement to now | `SettleCity`, `Simulator.Advance` |
 | Settlement window | The server seconds one settle covers: from the last settled second to now; nothing elapses when the clock is behind | `SettlementWindow`, `CityAggregate.LastSettledUnixSec` |
 | Event source | One kind of timed event the advance processes, in a fixed order within a second: research timer, building timers, later the mailbox | `IEventSource` |
-| Production cap | Max seconds per settlement during which cycles may start; removed by CR-0008-T1 part H (courier stamina replaces it) | `Rules.MaxOfflineProductionSeconds` |
+| Production cap | Max seconds per settlement during which cycles could start; removed in CR-0008-T1 part H (courier stamina replaces it) | — (was `Rules.MaxOfflineProductionSeconds`) |
 | Dormant tail | Part of a settlement after the production cap: timers run, no new cycles; removed with the production cap | — |
 | Settlement report | What happened during a settle | `SettlementReport` |
 | Settlement | One settle on the server: the window's advance and the closing zero-length advance (a command's mutation runs between them), with its id, totals and ledger rows (`ref_type` `settlement`) | `Settlement`, `SettleCityResult`, `CitySettler` |

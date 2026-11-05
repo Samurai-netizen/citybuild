@@ -23,9 +23,9 @@ seed 29, 31 operations from the starting city:
 ```
 - **Invariant or property, content, seed:** which test, and `PropertyContent.Named(content)`.
 - **Operation N:** the step happened during or after the N-th operation of the list (0 = after the whole history).
-- **Step from clock A to B:** the observer (`InvariantObserver`) cuts every advance within the production cap into steps that end at each
-  next timer, so a step holds at most one event second, at its end. `(dormant tail)` means the part of an advance after its production
-  window, compared with the test model `DormantTail`.
+- **Step from clock A to B:** the observer (`InvariantObserver`) cuts every advance into steps that end at each next timer or arrival, so
+  a step holds at most one event second, at its end. `(absent from C)` means the advance had the player away from city second C (the
+  `absentFrom` every piece of it gets); a generated advance prints as `Advance 3600 absent after 120`.
 - **Branch:** the observer sometimes leaves the history on a copy (`branch at clock C: <command>, then Advance G`). The city at clock C is
   the history's city after operation N − 1, advanced to C.
 - The rest is the difference: the invariant's own words, or the first differing field (`inventory[logs]: expected 2, actual 1`).
@@ -53,7 +53,7 @@ public void Scratch()
     Assert.Fail(CityDump.Describe(city));                              // read the state before the failing step
 }
 ```
-`CityDump.Describe` prints every stored value. Advance once more to the step's end and compare. Within the production cap, advancing in
+`CityDump.Describe` prints every stored value. Advance once more to the step's end and compare. With the same `absentFrom`, advancing in
 pieces gives the same city as one advance (property 2), so you can stop at any second you like.
 
 ## 3. Shrink it to the rule

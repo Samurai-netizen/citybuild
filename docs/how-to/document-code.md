@@ -57,8 +57,8 @@ A primary constructor: describe each parameter on the type (`server/src/CityBuil
 ```csharp
 /// <summary>
 /// Settles a player's city to now (<c>core-instructions/04-simulation-model.md</c>, sections 1 and 2): the server clock, floored to whole
-/// seconds, gives the window from the last settled second, and the engine advances the city by it. Timers run for the whole window;
-/// production starts cycles only during the first <c>MaxOfflineProductionSeconds</c> of it. A skeleton: M0-23 adds the closing
+/// seconds, gives the window from the last settled second, and the engine advances the city by it. Timers run for the whole window.
+/// A skeleton: M0-23 adds the closing
 /// zero-length advance, the ledger rows and the transaction (M0-22).
 /// </summary>
 /// <param name="cities">The stored cities.</param>

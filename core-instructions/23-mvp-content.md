@@ -17,7 +17,7 @@
 | Grid | 8 × 8 tiles, every building occupies 1 tile |
 | Builder slots / research slots | 2 / 1 |
 | Currency | `coins`: the purse, uncapped, `long`; every other item lives in building stores (per-building limits below) |
-| Offline production cap | none (courier stamina, `04` §2; the JSON keeps `maxOfflineProductionSeconds` 28 800 until CR-0008-T1 part H) |
+| Offline production cap | none (courier stamina, `04` §2; the field left the JSON in CR-0008-T1 part H) |
 | Minimum cycle | 10 s with every research applied (content validation) |
 | Max total labor reduction per building type | 500 ‰ |
 | Walking | ground 5 000 ms per tile; crossing another building at 200 ‰ of the speed (25 000 ms per tile) |

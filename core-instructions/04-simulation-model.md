@@ -8,9 +8,9 @@ runs authoritatively on the server, and runs on the client for display only.
 > content (§14 rules 11, 12), roads in the city state, the path rule (§17) and the road mutations (§8) (part C); stores, the purse and
 > projects (§16), the delivery rule (§6), amounts and presets (§19 without routes), trips (§18) with `StartTrip` (§8), the report's
 > `delivered`, `moved` and `refunded` (§11), and the start rule per store (part E); couriers and routes (§19: `SetRoute`, staffing a
-> station, an upgrade stopping its couriers, arrivals and departures in the order of §6, a stop's takes and puts) without stamina (part F).
-> Until part H the engine keeps the 8 h offline production cap of the old §2, and a courier that arrives after it stops working
-> (CR-0008-T1 decision 45). Each part updates this line. Sections 16 to 19 are new; sections 1 to 15 keep their numbers (other files refer to them).
+> station, an upgrade stopping its couriers, arrivals and departures in the order of §6, a stop's takes and puts) (part F); presence,
+> stamina and `ReenergizeCouriers` (§2, §8, §11), with the offline production cap and its dormant tail removed (part H). Part I (review,
+> performance) updates this line. Sections 16 to 19 are new; sections 1 to 15 keep their numbers (other files refer to them).
 
 ## 1. Time
 - Simulation time is **integer seconds** (`long`) on a per-city **city clock**.
@@ -172,7 +172,7 @@ the advance); `courierSeconds` (the most stamina one courier spent, 0 when none 
 whose stamina ran out, at the second it did); `completedBuildings[id]` (constructions and upgrades), `completedResearch[id]`,
 `eraChanged` (false until the era transition, M2). Ids ascending, items in ordinal order.
 It is persisted as aggregated ledger entries (one per item and direction per settlement, `06`). On the server a settlement is the window's
-advance plus the request's closing zero-length advance (§7), so what restarted at the end of a long window counts in its report and its
+advance plus the request's closing zero-length advance (§7), so what a command's mutation made startable counts in its report and its
 ledger rows (`Settlement`, M0-23).
 
 ## 12. Performance budget

@@ -70,8 +70,9 @@ flowchart LR
   N -- "yes: t = next" --> C
   N -- no --> K["clock = target"] --> R[SettlementReport]
 ```
-The server runs it whenever a request touches a city ([ADR-0005](../adr/ADR-0005-settle-on-access.md)); cycles start only within the
-production cap of each window, while timers run on ([ADR-0006](../adr/ADR-0006-production-cap-dormant-tail.md)).
+The server runs it whenever a request touches a city ([ADR-0005](../adr/ADR-0005-settle-on-access.md)), with the absence start it derives
+from the player's last request (`absentFrom`, `04` §2); everything runs for the whole window (the production cap of
+[ADR-0006](../adr/ADR-0006-production-cap-dormant-tail.md) is gone since CR-0008-T1 part H).
 The loop of `04` §7: completions come before starts at every time, the clock included (a restored city may have a timer due there; M0-12). The event sources are an internal list, made for each advance (`IEventSource`: `ResearchTimerSource`, then `BuildingTimerSource`, then `TripArrivalSource`, then `CourierArrivalSource`, CR-0008), whose order
 is the order within a second; the mailbox of `04` §13 will be one more source. Research effects are derived from `CompletedResearch`, so a
 completed node counts from that second; running cycles keep their labor. Since CR-0008 a start takes its inputs from and reserves room in
@@ -80,7 +81,10 @@ CR-0008-T1 decision 34). The start rule and the stall reason share the checks in
 the target by the delivery rule (`Deliveries`: its own project, then the research when it is the science building, then the store; the rest
 goes back to the source) and starts a project whose last good arrived (`ProjectRules`). A courier's arrival runs its stop's takes and
 puts (a put by the same delivery rule) and sends it on to the next stop; couriers at their station leave after the cycles' starts
-(`CourierArrivalSource.StartWalks`); a courier arriving after the production cap stops working instead, until part H (decision 45).
+(`CourierArrivalSource.StartWalks`). At each arrival a walk spends `max(0, a − max(d, absentFrom))` of stamina, at most what is left
+(`CourierArrivalSource.SpendWalk`); a courier left with none does the stop's actions, walks home (`Returning`) and rests with its load, and
+the report notes it (`TiredCourier`) and the most one courier spent (`CourierSeconds`). `CourierRules.ReenergizeCouriers` fills every
+courier's stamina again (part H).
 There is no era transition until M2. Decisions: build log `docs/build-log/2026/2026-10-18-01-M0-09.md`, decisions 3–19.
 
 Each advance makes, before it changes anything, what it keeps up to date instead of scanning every building at every event time (M0-16,
@@ -100,7 +104,7 @@ table. Decisions: build log `docs/build-log/2026/2026-10-19-06-M0-16.md`, decisi
 | `Content.ContentIds` | The format of every content id: a lowercase ASCII letter, then lowercase letters, digits or `_`, at most `MaxLength` (64) characters; `IsValid(text)`, `FormatDescription`. The content loader refuses other ids (`ContentErrorCode.InvalidId`); public since M0-30, so the server's command shape checks refuse text that can't be an id before a city is locked |
 | `GameContentResult`, `ContentError`, `ContentErrorCode` | Either `Content` or every error (code, path, message; `ToString()` gives all three on one line), in a fixed order: shape errors, or rule errors rule by rule in file order |
 | `GameContent` | `ContentVersion`, `Rules`, `StartingCity`, `Currency` (the one currency item, CR-0008), and the sorted lists `Eras` (by number), `Items`, `Buildings`, `Research` (by id), `RoadLevels` (by level, at least one; `MaxRoadLevel`, `GetRoadLevel(n)`), `AmountPresets` (by id, 1 to 8), with `TryGetEra/Item/Building/Research/AmountPreset`. Immutable; lists are read-only collections |
-| `GameRules` | Grid size, builder and research slots (research exactly 1 in M0), `MaxOfflineProductionSeconds` (until CR-0008-T1 part H), `MinCycleSeconds`, `MaxLaborReductionPermille`; walking (CR-0008): `GroundTileMillis`, `CrossingSpeedPermille`, `MinWalkSeconds`, `MaxWalkBonusPermille`; carrying: `TripCarryLimit`, `MaxRouteStops`, `MaxStopActions` |
+| `GameRules` | Grid size, builder and research slots (research exactly 1 in M0), `MinCycleSeconds`, `MaxLaborReductionPermille`; walking (CR-0008): `GroundTileMillis`, `CrossingSpeedPermille`, `MinWalkSeconds`, `MaxWalkBonusPermille`; carrying: `TripCarryLimit`, `MaxRouteStops`, `MaxStopActions` |
 | `AmountPresetDefinition`, `AmountPresetId`, `AmountMode` | CR-0008 (`04` §19): a preset share (`Id`, `Name`, `Percent` 1..100) a trip or a route may always use; the two modes research unlocks (`Percent`, `Exact`) |
 | `RoadLevelDefinition` | One road level (CR-0008, `04` §17): `Level`, `Name`, `TileMillis` (faster than the ground and the level before, content rule 11), `Cost` (to place at level 1, to upgrade to it above) |
 | `Map.PathFinder`, `Map.WalkCost` | The path rule of `04` §17 (CR-0008): `new PathFinder(content)` allocates its arrays for the grid once; `Load(city)` reads which tiles have a building and every other tile's time (ground or its road level); `Measure(from, to)` → `WalkCost` (crossings, `D`) without allocating; `Route(from, to)` → the tiles in walking order (display and tests; allocates). A search runs Dijkstra from the end over reversed steps, ordered by crossings, then `D`, then tile index; the route then takes, from the start, the first direction in the order x+1, y+1, x−1, y−1 that stays on a best walk (the tie rule). The walk's own start and end tiles are ground; another building's tile is a crossing at `CeilDiv(ground × 1000, crossingSpeedPermille)`. `WalkCost.Seconds(bonus)` applies the walk bonus |
@@ -130,7 +134,7 @@ table. Decisions: build log `docs/build-log/2026/2026-10-19-06-M0-16.md`, decisi
 | `Settlement.Simulator` | `Advance(city, content, elapsedSeconds)`: the event loop of `04` §7, changing the city in place. Elapsed below 0 counts as 0; a timer due at the clock completes first; one due before the clock throws `InvalidOperationException` before anything changes. Allocates nothing per event |
 | `Settlement.TimerHeap`, `Settlement.CourierArrivalSource`, `Settlement.WalkTimes` (internal) | CR-0008-T1 part F: the indexed heap shared by the building timers and the couriers' arrivals (`Set`, `Pop`, `PeekIndex`); the couriers' arrivals and departures with a stop's actions (a stopped courier's stale entry is dropped when it comes up, decision 50); the walk times of one advance |
 | `Settlement.BuildingTimerQueue`, `Settlement.TripArrivalSource`, `Settlement.Deliveries` (internal) | One advance's building timers as an indexed min-heap by (end, building index), one entry per building, made from the city at the start of the advance and moved by starts, completions and deliveries, never stored; the trip arrivals in (arrival, id) order; the delivery rule |
-| `Settlement.SettlementReport` | `ElapsedSeconds`, `ProductionSeconds` (`min(elapsed, cap)`), `Produced` and `Consumed` (production only, per item in ordinal order), `Delivered` (handed to projects), `Moved` (put into stores), `Refunded` (an upgrade's inputs given back at its last delivery) (CR-0008), `CompletedBuildings` (constructions and upgrades, ascending), `CompletedResearch` (ordinal), `EraChanged` (false until M2) |
+| `Settlement.SettlementReport` | `ElapsedSeconds`, `Produced` and `Consumed` (production only, per item in ordinal order), `Delivered` (handed to projects), `Moved` (put into stores), `Refunded` (an upgrade's inputs given back at its last delivery) (CR-0008), `CompletedBuildings` (constructions and upgrades, ascending), `CompletedResearch` (ordinal), `EraChanged` (false until M2); `CourierSeconds` (the most stamina one courier spent) and `TiredCouriers` (`TiredCourier`: station, slot, second; by station and slot) (part H) |
 | `Settlement.SettlementWindow` | `Compute(lastSettledUnixSec, nowUnixSec)`: `ElapsedSeconds` (now minus the last settled second, never negative) and `NewLastSettledUnixSec` (now); with the clock behind (`IsClockBehind`) nothing elapses and the last settled second stays, so successive windows add up to the span from first to last. The engine never reads a clock: the server passes both seconds (`04` §1). An overflowing difference throws `OverflowException` |
 
 ## Rules and invariants
@@ -209,8 +213,8 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
   contributing 0, stalled and constructing buildings contributing 0, caps with bonuses, the clock before the start and after the end, a far-away
   clock without overflow, and null arguments.
 - `Settlement/`: `SettlementWindowTests` (same second, later, behind, successive windows, overflow), `AdvanceTests` (clock, window, target, a timer at the clock, bad input), `AdvanceAllocationTests` (eight hours of the golden city allocate no more than two minutes), `AdvanceTimerTests` (research, construction with auto-staffing, the
-  order within a second, upgrades, the dormant tail), `AdvanceProductionTests` (cycles, a chain, research and the next cycle, rounding, store
-  limits with a building's own reserved output, the production cap). `CityFixture` builds cities and one building per phase over `ContentFixture` (plus a
+  order within a second, upgrades, timers hours into a long advance), `AdvanceProductionTests` (cycles, a chain, research and the next
+  cycle, rounding, store limits with a building's own reserved output, a long window running to the store limit). `CityFixture` builds cities and one building per phase over `ContentFixture` (plus a
   workshop level 2 with 180 labor and 6 workers, 4 workers on lumber camp level 2, the era-2 house `manor` and `mint`, a producer of the
   currency gold, a school (the science building), a depot (a warehouse) and a post (a courier station); buildings take a `store` and `needs`,
   cities a `purse` and `trips`); `RulesAssert.Rejected` checks that a rejection names nothing spent or refunded and leaves the `CityDump` unchanged.
@@ -218,47 +222,53 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
   in a class per area (`CycleRuleTests`, `StartRuleTests`, `WorkerRuleTests`, `ResearchRuleTests`, `UpgradeRuleTests`). A rule is played out
   through advances and commands (`Commands`: the mutation, then a zero-length advance); the M0-10 build log lists which broken rule each test catches.
 - `Golden/`: golden scenario #1, the first-session table of `23` (CR-0008). `GoldenContent.V2` reads `Fixtures/content-golden-v2.json`, a
-  frozen copy of `mvp-content.json` that is never edited (until CR-0008-T1 part H it adds the offline cap, decision 22) (a content change
+  frozen copy of `mvp-content.json` that is never edited (a content change
   that should reach a golden scenario gets a new file and hand-checked numbers); `GoldenScenario1` runs the script (placements, the research,
   the manual trips) as the server runs commands, up to any time and with any largest step; `GoldenScenario1Tests` checks every table row
   (purse, free workers, the Woodcutter's and the Sawmill's stores, what waits for goods, each building's phase and stall reason, research),
   the trips at 660 and the totals of the table's check, and that one advance per action gap gives the same city as one-second steps.
+  `GoldenScenario2` (part H) runs golden scenario #2 (a route, a road, two absences, a tired courier, the re-energizing), each request
+  settling with the player away from 300 s after the one before; `GoldenScenario2Tests` checks every row, the walks, the reports of the
+  looks (148 produced, 98 moved, 14 045 courier seconds, tired at 15095), the totals, and one-second steps against one advance per gap.
 - `Properties/` (M0-14): seeded property tests over two frozen contents (golden-v2 and the rule fixture), seeds 0 to 499 each.
   `CityGenerator` makes a random city from a seed: aimed random commands (`CityOperation`: place, upgrade, assign workers, start research,
   start a trip (CR-0008-T1 decision 38: aimed at a good a target accepts), set a route (part F: aimed the same way, from a building with a
-  good to one that accepts it), each through the engine's rules and a zero-length advance) and gaps from 0 s to four production caps. It keeps the accepted operations as a
+  good to one that accepts it), each through the engine's rules and a zero-length advance), re-energizing when a courier is tired, and gaps from 0 s to four long
+  gaps (`LongGapOf`: the old cap of each content, 1 h fixture, 8 h golden-v2), some of them absences from within the 300 s grace, derived
+  from the gap so no random draw is added (CR-0008-T1 decision 63). It keeps the accepted operations as a
   `CityHistory` that can be replayed, copied at any point and printed. `SeededRandom` is SplitMix64 (the same numbers on every runtime).
   `StructuralEquality` names the first differing field of two cities or `ReportTotals` (the sum of reports). `PropertyCheck` runs a property
   over the seeds and fails with the property, content, seed, difference and operation list. Properties: `DeterminismPropertyTests` (same
   seed twice, and a replay, give the same operations, reports and city), `SplitInvariancePropertyTests` (a + b ≤ cap: the same city, and the
-  reports add up), `TimerInvariancePropertyTests` (any split up to four caps: each timer completes in the piece holding its end second, and
+  reports add up), `TimerInvariancePropertyTests` (any split up to four long gaps, with one absence start: each timer completes in the piece holding its end second, and
   the timer side of the city matches). `CityGeneratorTests` holds floors on what the seeds reach (every command, upgrades, research, locked
-  buildings, chains, frozen cycles, gaps beyond the cap, trips and deliveries) so a weaker generator fails; some floors are per content
-  (decision 38: golden-v2 can't reach refunds, upgrade-ended cycles and a few others within its cap). A failing seed is replayed by hand with
+  buildings, chains, frozen cycles, long absences, tired couriers, trips and deliveries) so a weaker generator fails; some floors are per
+  content (decision 38: golden-v2 can't reach refunds, upgrade-ended cycles and a few others). A failing seed is replayed by hand with
   `CityGenerator.Generate(PropertyContent.Named(name), seed)`; `docs/how-to/debug-determinism-failure.md` goes on to a rule test.
-- `Properties/` invariants 4–14 (M0-15; 14, loads within the carry limit, CR-0008; couriers and routes since part F: copied, compared,
-  stepped at their arrivals, in the dormant tail by decision 45, one courier per station worker, courier loads in conservation and the
-  store bound): `InvariantObserver` replays each seed's history step by step: a command is a step (`Mutate`,
-  then the zero-length advance); an advance within the cap is cut at every next timer, so each start and completion ends a step; an
-  advance beyond the cap runs whole, and a copy stepped to the window's end plus the test model `DormantTail` must give the same city.
+- `Properties/` invariants 4–14 but 12 (M0-15; 14, loads within the carry limit and the stamina spent, CR-0008; couriers and routes since
+  part F: copied, compared, stepped at their arrivals, one courier per station worker, courier loads in conservation and the store bound;
+  12, the path rule, is `Map/PathFinderBruteForceTests`'): `InvariantObserver` replays each seed's history step by step: a command is a
+  step (`Mutate`, then the zero-length advance); an advance is cut at every next timer or arrival, each piece with the advance's one
+  `absentFrom`, so each start, completion and stamina spend ends a step (the dormant-tail model went with the cap, part H).
   After 5 % of the steps a branch leaves on a copy (`CityCopy`, through the restore constructors) with an aimed command (mostly a worker
   change or an upgrade of a running cycle) and a short advance. `InvariantChecks` checks every step with its own sums (reserved outputs, store limits,
   workers, effective labor), never the engine's queries: conservation over stores, loads and the purse with the mutation's `Spent` and
   `Refunded` and the report's `Delivered` and `Refunded`, stock ≥ 0, each store within `max(limit, before)` plus refunds and returned loads,
   the clock, production only from cycles that ended, workers (trips included), builders and research, loads and the amount modes, labor (`LaborLedger` counts worker-seconds per
-  cycle), no start after the window, unlocks and prerequisites. `InvariantObservation` runs all seeds once per content (a few seconds) and
+  cycle), unlocks and prerequisites, and each walk's stamina spend (exactly its seconds after the absence start, decision 63). `InvariantObservation` runs all seeds once per content (a few seconds) and
   `InvariantPropertyTests` has one test per invariant and content, plus floors on what the checks exercised (printed in the test output).
 - `Performance/` (M0-16): the budget of `04` §12. `WorstCaseCity` builds the worst case through `CityRules` over
-  `Fixtures/content-performance.json`: 4 houses, 32 mines and 32 smelters, 10 s cycles at full staffing that never stall (a raw item under a
-  cap of 10¹², an uncapped product), placed one a second so the cycles end on all ten seconds of every ten (28,800 event times in 8 h), and
-  a 2-day research. `PerformanceBudgetTests` checks that shape, the exact counts of an 8 h advance (2,880 completions and starts per producer,
-  184,320 completions) and of a 7-day one after it (2,881 completions, 2,880 starts, the research in the tail, all idle at the end), and
-  times both advances: the median of 5 runs after a warm-up must stay within 500 ms; the test output prints median, min and max.
-  The tests run in the collection `RunsAlone`, after the parallel tests (beside the property suite a run took up to 427 ms).
-  Measured on an Apple A18 Pro (Mac17,5), .NET SDK 10.0.401, per advance (8 h / 7 d, median of 5): **Release 37 / 37 ms** alone (CI runs
-  Release; target 50 ms), 45–52 ms right after the parallel suite; Release without dynamic PGO (`DOTNET_TieredCompilation=0`, closer to
-  Unity's runtimes) 67 ms; Debug 161 / 161 ms. Before M0-16: Release 144 ms, Debug 605 ms (build log `docs/build-log/2026/2026-10-19-06-M0-16.md`). `Content/ContentFile` reads a fixture file as the
-  server does, for the golden and the performance contents.
+  `Fixtures/content-performance.json` (`performance-3`): 4 houses, 32 mines and 32 smelters, 10 s cycles at full staffing, placed one a
+  second so the cycles end on all ten seconds of every ten (28,800 event times in 8 h), and a 2-day research. The mines' store holds 12,000
+  ore and each smelter starts with 6,000, so a long advance ends when the stores stop the producers, as an absence does in the game
+  (CR-0008-T1 decision 62). `PerformanceBudgetTests` checks that shape, the exact counts of an 8 h advance (2,880 completions and starts
+  per producer, 184,320 completions) and of a 7-day one after it (each mine to its full store, each smelter to its last ore, read from the
+  city; the research completes; all idle at the end), and times both advances: the median of 5 runs after a warm-up must stay within
+  500 ms; the test output prints median, min and max. The tests run in the collection `RunsAlone`, after the parallel tests.
+  Measured on an Apple A18 Pro (Mac17,5), .NET SDK 10.0.401, per advance (8 h / 7 d, median of 5), Release alone: **47 / 54 ms** (CR-0008-T1
+  part H; M0-16's 37 / 37 ms had a 7-day run that only finished its last cycles); Debug 158 / 172 ms. Part I adds the courier worst case
+  of `04` §12 and sets the final number. Before M0-16: Release 144 ms, Debug 605 ms (build log `docs/build-log/2026/2026-10-19-06-M0-16.md`).
+  `Content/ContentFile` reads a fixture file as the server does, for the golden and the performance contents.
 - `SimulationDependencyTests`: the compiled assembly references exactly `netstandard` and is built for `netstandard2.1`.
 - `SimulationPackageTests`: the files only Unity sees. The asmdef (`noEngineReferences`, no references, no platform or define
   restrictions, same name as the assembly, auto-referenced, the only asmdef, no asmref), `package.json` (name, `unity` 6000.3,

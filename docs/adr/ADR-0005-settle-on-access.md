@@ -23,7 +23,8 @@ in it. `GET /city` settles too, so it is safe to repeat but not free of side eff
 - **Request lifecycle** (`03`): lock → (idempotency check) → settle → (mutation) → zero-length advance → write → commit. The settlement is
   committed even when the mutation is rejected (decision 014), and the zero-length advance leaves a canonical state (`04` §7).
 - **Bounded cost:** production starts only during the first `MaxOfflineProductionSeconds` of a window (ADR-0006), so one settle handles at
-  most that much production plus a few timers (`04` §12).
+  most that much production plus a few timers (`04` §12). *Since CR-0008-T1 part H:* there is no such cap; the couriers' stamina, spent only
+  while the player is away, bounds what one settle simulates, and producers stop when their stores are full (`04` §2, §12).
 - **Other players** (M2): deliveries wait in a mailbox and enter the receiver's next settle as timed events (`04` §13), so no transaction
   touches two cities.
 

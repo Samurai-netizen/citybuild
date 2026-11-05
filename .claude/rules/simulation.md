@@ -29,6 +29,8 @@ and Unity 6.3 (client, Mono/IL2CPP), and it must behave identically in both.
 - Mutations return a result object (`Ok` or an error code); they never throw for business rules.
 - Event sources in `Advance` (research timer, building timers, trip arrivals, courier arrivals; later mailbox deliveries) are gathered generically,
   so new sources are additive.
+- `Simulator.Advance(city, content, elapsedSeconds, absentFrom)`: the absence start is the server's to derive (`04` §2,
+  `PresencePolicy`); the client's display always passes null (present). There is no offline cap: production runs for the whole window.
 - Era, research and effects are data. Never write `if (researchId == "…")` or `if (era == 2)` in engine code.
   Add an effect type instead.
 - Keep `Advance` allocation-light (it can run ~200k steps).

@@ -102,9 +102,11 @@ flowchart LR
   each other, run them on a server with a lock timeout of a few hundred milliseconds: a wait then fails the test.
 - A whole session over HTTP (`Golden/`, M0-36; on v2 since CR-0008-T1): golden scenario #1 played the way the client will play it. `GoldenHttpPlayer` logs in with
   the dev login and sends every request with that token and every command with a new request id (anything but 200 fails with the body);
-  `GoldenScenario1Http` serves the engine test's frozen `content-golden-v2.json` (linked by the project file, never edited; until
-  CR-0008-T1 part H a temporary copy with the offline cap added, as the engine test adds it) through `Content:FilePath`, sends the
-  script's commands (placements, the research, the manual trips), and replays the same script on the engine alone. `GoldenScenario1HttpTests` walks the
+  `GoldenScenario1Http` serves the engine test's frozen `content-golden-v2.json` (linked by the project file, never edited) through
+  `Content:FilePath`, sends the script's commands (placements, the research, the manual trips), and replays the same script on the engine
+  alone. `GoldenScenario2Http` (CR-0008-T1 part H) does the same for golden scenario #2 (a route, a road, two absences, the re-energizing):
+  only the script's own requests are sent, since every request is presence, and its replay gives each settle the server's absence start;
+  `GoldenScenario2HttpTests` checks the looks, the stored city and the ledger. `GoldenScenario1HttpTests` walks the
   clock through the actions and the table's rows and checks each row's snapshot (as one line of text, so a failure names the row), the
   stored city against the replay (`SampleCities.Describe`), and the ledger against the city's totals. If a row fails there but the engine's golden
   test passes, the difference is in the server. The same requests by hand: `docs/api/smoke.http`.

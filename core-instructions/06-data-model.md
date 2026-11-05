@@ -8,7 +8,8 @@
 > rows (CR-0008-T1 part D); `cities.purse` and `next_trip_id`, `city_stores`, `city_project_needs`, `city_research_needs` and `city_trips`
 > in place of `city_inventory`, with the reset migration `LogisticsStoresTripsAndReset` (D10), their mapping and the
 > `SETTLEMENT_DELIVERED` and `SETTLEMENT_REFUNDED` rows (part E); `city_couriers`, `city_courier_loads` and `city_route_actions` with
-> the migration `AddCouriersAndRoutes` and their mapping (part G). A task that builds a part updates this line.
+> the migration `AddCouriersAndRoutes` and their mapping (part G); `cities.last_seen_unix` with the migration `AddLastSeen` (part H). A
+> task that builds a part updates this line.
 
 PostgreSQL is the only source of truth. Wall timestamps are `timestamptz` (UTC). Simulation times and labor
 are `bigint` city-clock seconds and worker-seconds. Quantities are `bigint`. Item, building, research and era ids are `text` from content.
@@ -18,7 +19,7 @@ are `bigint` city-clock seconds and worker-seconds. Quantities are `bigint`. Ite
 | Table | Key columns | Constraints / notes |
 |---|---|---|
 | `players` | `id uuid pk`, `dev_name text`, `created_at` | `unique(dev_name)`; real accounts come in M1 |
-| `cities` | `id uuid pk`, `player_id uuid`, `era smallint`, `clock_seconds bigint`, `last_settled_unix bigint`, `next_building_id int`, `purse bigint`, `next_trip_id int`, `research_id text null`, `research_started_at bigint null`, `research_ends_at bigint null`, `state_version bigint`, `content_version text`, `created_at`, `updated_at` | `unique(player_id)` (one city per player); checks: `era >= 1`, `purse >= 0` (the currency, `04` §16), `next_trip_id >= 1`; `state_version` is a concurrency token; `research_started_at` and `research_ends_at` are null while a running research waits for goods |
+| `cities` | `id uuid pk`, `player_id uuid`, `era smallint`, `clock_seconds bigint`, `last_settled_unix bigint`, `last_seen_unix bigint`, `next_building_id int`, `purse bigint`, `next_trip_id int`, `research_id text null`, `research_started_at bigint null`, `research_ends_at bigint null`, `state_version bigint`, `content_version text`, `created_at`, `updated_at` | `unique(player_id)` (one city per player); checks: `era >= 1`, `purse >= 0` (the currency, `04` §16), `next_trip_id >= 1`; `state_version` is a concurrency token; `research_started_at` and `research_ends_at` are null while a running research waits for goods |
 | `city_stores` | `(city_id, building_id, item_id) pk`, `quantity bigint` | `check (quantity >= 0)`; FK to `city_buildings`, cascade; a row per good the store holds, kept at 0 (CR-0008) |
 | `city_project_needs` | `(city_id, building_id, item_id) pk`, `quantity bigint` | `check (quantity > 0)`; FK to `city_buildings`, cascade; the goods a construction site or a waiting upgrade still needs; no rows = no project waiting |
 | `city_research_needs` | `(city_id, item_id) pk`, `quantity bigint` | `check (quantity > 0)`; FK to `cities`, cascade; only while the running research waits at the science building |
@@ -44,10 +45,10 @@ what an upgrade refunded, so its rows never come first.
 Derived on load, never stored: reserved outputs, stall reasons, workers provided/on trips/free, builders busy, effective store limits and
 labor, city totals, a building's project.
 
-## Tables for logistics (CR-0008: `city_roads` built in CR-0008-T1 part D, the stores, needs and trips above in part E, the courier tables in part G; `last_seen_unix` *planned*, part H)
+## Tables for logistics (CR-0008: `city_roads` built in CR-0008-T1 part D, the stores, needs and trips above in part E, the courier tables in part G, `last_seen_unix` in part H)
 | Table / column | Key columns | Constraints / notes |
 |---|---|---|
-| `cities` + `last_seen_unix bigint` *(planned, part H)* | — | the server second of the last request that settled the city, on the same clock as `last_settled_unix` |
+| `cities` + `last_seen_unix bigint` (built) | — | the server second of the last request that settled the city (not a replay), on the same clock as `last_settled_unix`; it never decreases; migration `AddLastSeen` sets it to `last_settled_unix` for stored cities |
 | `city_roads` (built) | `(city_id, x, y) pk`, `x smallint`, `y smallint`, `level smallint` | `x, y >= 0`, `level >= 1`; never on a building's tile (the engine checks it on load); FK to `cities`, cascade; a removed road's row is deleted |
 | `city_couriers` (built) | `(city_id, station_id, slot) pk`, `state text`, `to_stop smallint`, `departed_at bigint null`, `arrives_at bigint null`, `stamina_seconds bigint` | `slot >= 1`, `to_stop >= 0`, `stamina_seconds >= 0`, a walk has both times (`departed_at >= 0`, `arrives_at > departed_at`) or neither; `state` is the API's spelling; the times are set exactly while walking or returning; FK `(city_id, station_id)` to `city_buildings`, cascade |
 | `city_courier_loads` (built) | `(city_id, station_id, slot, item_id, from_building_id) pk`, `quantity bigint` | `quantity > 0`; FK to `city_couriers`, cascade; `from_building_id` gets the goods back when the courier is stopped (no FK; the engine checks it names a building of the city) |

@@ -172,6 +172,13 @@ Content-Type: application/json
 
 { "requestId": "{{$guid}}", "stationId": 7, "slot": 1, "stops": [] }
 
+### Couriers: re-energize; every courier's stamina is full again and resting ones leave (stamina is spent only 300 s after your last request)
+POST {{baseUrl}}/api/v1/commands/reenergize-couriers
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}" }
+
 ### Replay: send this twice. The second answer is the first one, byte for byte (a fixed requestId; change it for a new command)
 POST {{baseUrl}}/api/v1/commands/assign-workers
 Authorization: Bearer {{token}}
