@@ -83,6 +83,33 @@ internal sealed class GoldenHttpPlayer : IDisposable
     public Task<JsonNode> StartTripAsync(int sourceId, int targetId, string itemId, string amount) =>
         PostAsync("start-trip", new { requestId = Guid.NewGuid(), sourceId, targetId, itemId, amount });
 
+    /// <summary><c>POST /api/v1/commands/place-roads</c> with a new request id (CR-0008).</summary>
+    /// <param name="tiles">The tiles, as (x, y).</param>
+    /// <returns>The snapshot.</returns>
+    public Task<JsonNode> PlaceRoadsAsync(params (int X, int Y)[] tiles) =>
+        PostAsync("place-roads", new { requestId = Guid.NewGuid(), tiles = tiles.Select(tile => new { x = tile.X, y = tile.Y }).ToArray() });
+
+    /// <summary>
+    /// <c>POST /api/v1/commands/set-route</c> with a new request id (CR-0008): one slot's route of stops that each take or put one good with a
+    /// preset or other amount.
+    /// </summary>
+    /// <param name="stationId">The courier station.</param>
+    /// <param name="slot">The slot, from 1.</param>
+    /// <param name="stops">The stops: the building, the action kind (<c>take</c> or <c>put</c>), the good and the amount's text.</param>
+    /// <returns>The snapshot.</returns>
+    public Task<JsonNode> SetRouteAsync(int stationId, int slot, params (int BuildingId, string Kind, string ItemId, string Amount)[] stops) =>
+        PostAsync("set-route", new
+        {
+            requestId = Guid.NewGuid(),
+            stationId,
+            slot,
+            stops = stops.Select(stop => new { buildingId = stop.BuildingId, actions = new[] { new { kind = stop.Kind, itemId = stop.ItemId, amount = stop.Amount } } }).ToArray(),
+        });
+
+    /// <summary><c>POST /api/v1/commands/reenergize-couriers</c> with a new request id (CR-0008).</summary>
+    /// <returns>The snapshot.</returns>
+    public Task<JsonNode> ReenergizeCouriersAsync() => PostAsync("reenergize-couriers", new { requestId = Guid.NewGuid() });
+
     /// <summary>Disposes the client.</summary>
     public void Dispose() => _client.Dispose();
 
