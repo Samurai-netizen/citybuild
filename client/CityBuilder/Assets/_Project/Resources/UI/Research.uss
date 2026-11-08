@@ -1,5 +1,6 @@
-/* The research screen (M0-52, docs/how-to/add-ui-screen.md): a button at the bottom left next to the Build button and, above it, a parchment panel with
-   the era header and the list of nodes (one row of cards, CR-0007). Restyled in CR-0007; colours and sizes come from Common.uss. */
+/* The research screen (M0-52; visual v2, CR-0008-T2): the gold Research button right of Build, and a parchment sheet under the HUD with a
+   sideways row of node cards coloured by their state, like the showcase's research tree: done on green, running on gold with a glow, ready
+   to fund with a green edge, locked greyed. Colours and sizes come from Common.uss. */
 .research-root {
   position: absolute;
   left: 0;
@@ -17,11 +18,20 @@
   flex-grow: 1;
   margin-top: var(--hud-height);
   margin-bottom: var(--sp-2);
-  padding: var(--sp-2);
 }
 
 .research-panel--hidden {
   display: none;
+}
+
+/* Portrait: a sheet as tall as its cards, above the dock; landscape keeps the whole height and ResearchScreen scales the row to fit it. */
+.portrait .research-panel {
+  flex-grow: 0;
+}
+
+.portrait .research-scroll {
+  flex-grow: 0;
+  min-height: 252px;
 }
 
 .research-header {
@@ -32,12 +42,11 @@
 .research-titles {
   flex-grow: 1;
   flex-shrink: 1;
-  flex-direction: row;
-  align-items: flex-end;
+  flex-direction: column;
 }
 
 .research-rule {
-  margin: 0 0 2px var(--sp-3);
+  margin: 2px 0 0 0;
 }
 
 .research-rule--off {
@@ -45,16 +54,14 @@
 }
 
 .research-close {
-  display: none; /* the Close button under the panel closes it, as for the build tray: the header's height is the title's */
+  display: none; /* the gold Research button closes the screen (it reads "Close" while it is open) */
 }
 
-/* The cards scroll sideways only; ResearchScreen scales the row down when the panel is lower than a card (owner directive OD-17, M0-59). */
 .research-scroll {
   flex-grow: 1;
-  margin-top: var(--sp-1);
+  margin-top: var(--sp-2);
 }
 
-/* The scrollbar lies over the bottom edge of the cards instead of taking height from them. */
 .research-scroll .unity-scroll-view__horizontal-scroller {
   position: absolute;
   left: 0;
@@ -72,39 +79,46 @@
   align-items: flex-start;
 }
 
-/* A research card: the name, the big picture (about 60% of the card) and the text lines; the Finance button is laid over the whole card. */
 .research-node {
-  width: 200px;
-  height: 220px;
-  margin-right: var(--sp-2);
-  padding: 6px;
+  width: 188px;
+  height: 236px;
+  flex-shrink: 0;
+  margin: 0 var(--sp-2) var(--sp-2) 0;
+  padding: var(--sp-2);
   flex-direction: column;
-  border-width: 2px;
-  border-radius: var(--radius-md);
-  border-color: var(--c-parchment-3);
-  background-color: var(--c-parchment-2);
+  border-width: 3px;
+  border-bottom-width: 6px;
+  border-radius: 18px;
+  border-color: var(--c-wood);
+  background-color: var(--c-cream);
 }
 
 .research-node--locked {
-  opacity: 0.6;
+  border-color: var(--c-off-edge);
+  background-color: var(--c-locked);
+}
+
+.research-node--locked .research-node-icon {
+  opacity: 0.5;
 }
 
 .research-node--available {
-  border-color: var(--c-info);
+  border-color: var(--c-wood);
 }
 
 .research-node--running {
-  border-color: var(--c-gold);
-  border-width: 3px;
+  border-color: var(--c-gold-line);
+  background-color: var(--c-gold-soft);
 }
 
 .research-node--done {
   border-color: var(--c-go);
+  background-color: var(--c-go-soft);
 }
 
 .research-node--ready {
   border-color: var(--c-go);
-  border-width: 3px;
+  background-color: var(--c-cream);
 }
 
 .research-node-name {
@@ -116,24 +130,57 @@
 }
 
 .research-node-art {
-  height: 124px;
+  height: 120px;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
 }
 
 .research-node-icon {
-  width: 124px;
-  height: 124px;
+  width: 110px;
+  height: 110px;
   -unity-background-scale-mode: scale-to-fit;
 }
 
 .research-node-ring {
   position: absolute;
-  right: 0;
+  right: 2px;
+  top: 2px;
+  width: 34px;
+  height: 34px;
+}
+
+.research-node-numbers {
+  position: absolute;
+  left: 0;
   top: 0;
-  width: 32px;
-  height: 32px;
+  right: 0;
+  bottom: 0;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.research-node-chip {
+  -unity-font-definition: url("Fonts/Fredoka-SemiBold.ttf");
+  max-width: 62%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 1px var(--sp-2);
+  border-radius: 10px;
+  background-color: var(--c-card);
+  color: var(--c-ink);
+  font-size: var(--font-sm);
+  white-space: nowrap;
+}
+
+.research-node-chip--time {
+  padding-left: 20px;
+  background-size: 13px 13px;
+  background-repeat: no-repeat no-repeat;
+  background-position-x: left 5px;
+  background-position-y: center;
+  -unity-background-image-tint-color: var(--c-ink-soft);
 }
 
 .research-node-lines {
@@ -141,61 +188,49 @@
   flex-shrink: 1;
   overflow: hidden;
   flex-direction: column;
+  margin-top: var(--sp-1);
 }
 
-/* The chips sit over the picture: the time at the top left, the cost at the bottom (the first child is the lowest). */
-.research-node-numbers {
-  position: absolute;
-  left: 0;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  flex-direction: column-reverse;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-
-.research-node-chip {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding: 0 var(--sp-1);
-  border-radius: var(--radius-sm);
-  background-color: var(--c-parchment-3);
+.research-node-effect {
+  -unity-font-definition: url("Fonts/Nunito-ExtraBold.ttf");
+  flex-shrink: 0;
   color: var(--c-ink);
-  font-size: var(--font-xs);
-  -unity-font-style: bold;
-  white-space: nowrap;
+  font-size: var(--font-sm);
+  white-space: normal;
+}
+
+.research-node-status {
+  -unity-font-definition: url("Fonts/Fredoka-SemiBold.ttf");
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--c-ink);
+  font-size: var(--font-md);
+  white-space: normal;
+}
+
+.research-node--done .research-node-status {
+  color: var(--c-go-ink);
+}
+
+.research-node--running .research-node-status {
+  color: var(--c-warn-ink);
 }
 
 .research-node-note {
   flex-shrink: 0;
-  color: var(--c-warn-ink);
+  color: var(--c-ink-soft);
   font-size: var(--font-xs);
-  -unity-font-style: bold;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.research-node-effect,
-.research-node-status {
-  flex-shrink: 0;
-}
-
-.research-node-status {
-  color: var(--c-ink);
-  font-size: var(--font-sm);
-  -unity-font-style: bold;
   white-space: normal;
+  overflow: hidden;
 }
 
 .research-toggle {
-  min-width: var(--dock-width);
+  width: var(--dock-width);
   margin-left: var(--dock-next);
+  background-image: url("Icons/research.png");
 }
 
-/* The Finance button covers the whole card and shows nothing of its own: the card is the thing to tap. */
+/* The Fund button covers the card: see-through, so the card is the target; it darkens a little while pressed. */
 .research-node-finance,
 .research-node-finance:hover,
 .research-node-finance:active {
@@ -206,9 +241,10 @@
   bottom: 0;
   min-width: 0;
   min-height: 0;
+  margin: 0;
   padding: 0;
   border-width: 0;
-  border-radius: var(--radius-md);
+  border-radius: 16px;
   background-color: transparent;
   color: transparent;
 }

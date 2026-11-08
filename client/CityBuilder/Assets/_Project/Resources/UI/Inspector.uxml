@@ -1,8 +1,9 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
-  <!-- The building inspector that BuildingInspector shows (M0-51, docs/how-to/add-ui-screen.md): a parchment panel at the right under the HUD. A header with
-       the building's name and a close button, then two columns: on the left the status, the recipe and rates and the worker stepper (minus, "3 / 3", plus)
-       with the rate at the pending value; on the right the upgrade section with its button. Hidden while no building is selected.
-       Style: Common.uss and Inspector.uss. -->
+  <!-- The building inspector that BuildingInspector shows (M0-51; visual v2, CR-0008-T2): a parchment panel framed in wood, like the showcase's
+       inspector. A header with the building's big picture, its name and level and a round close button; then a box with its status, timer,
+       recipe and rates; a box with the worker stepper (red minus, the count, green plus) and the rate at the pending value; and a box with
+       the upgrade and its button. Under the HUD at the right in landscape, a sheet above the dock in portrait. Hidden while no building is
+       selected. Style: Common.uss and Inspector.uss. -->
   <Style src="Common.uss" />
   <Style src="Inspector.uss" />
   <ui:VisualElement name="inspector-root" class="inspector-root" picking-mode="Ignore">
@@ -13,28 +14,32 @@
           <ui:Label name="inspector-name" class="t-title" />
           <ui:Label name="inspector-level" class="t-small" />
         </ui:VisualElement>
-        <ui:Button name="inspector-close" class="inspector-close btn btn--quiet" text="X" />
+        <ui:Button name="inspector-close" class="inspector-close btn btn--round glyph glyph-close" text="" />
       </ui:VisualElement>
       <ui:VisualElement class="inspector-body">
         <ui:VisualElement class="inspector-column">
-          <ui:Label name="inspector-status" class="inspector-status t-heading" />
-          <ui:Label name="inspector-time" class="t-body" />
-          <ui:Label name="inspector-recipe" class="t-body" />
-          <ui:Label name="inspector-rates" class="t-small" />
-          <ui:VisualElement name="inspector-stepper" class="inspector-stepper">
-            <ui:Button name="inspector-minus" class="inspector-step btn btn--quiet" text="-" />
-            <ui:Label name="inspector-workers" class="inspector-workers" />
-            <ui:Button name="inspector-plus" class="inspector-step btn btn--quiet" text="+" />
+          <ui:VisualElement class="inspector-status-box box">
+            <ui:Label name="inspector-status" class="inspector-status t-heading" />
+            <ui:Label name="inspector-time" class="t-body" />
+            <ui:Label name="inspector-recipe" class="t-body" />
+            <ui:Label name="inspector-rates" class="t-small" />
           </ui:VisualElement>
-          <ui:Label name="inspector-preview" class="t-small" />
-          <ui:Label name="inspector-stepper-note" class="t-note" />
+          <ui:VisualElement class="inspector-workers-box box box--light">
+            <ui:VisualElement name="inspector-stepper" class="inspector-stepper">
+              <ui:Button name="inspector-minus" class="inspector-step btn btn--danger glyph glyph-minus" text="" />
+              <ui:Label name="inspector-workers" class="inspector-workers" />
+              <ui:Button name="inspector-plus" class="inspector-step btn btn--primary glyph glyph-plus" text="" />
+            </ui:VisualElement>
+            <ui:Label name="inspector-preview" class="inspector-preview t-small" />
+            <ui:Label name="inspector-stepper-note" class="t-note" />
+          </ui:VisualElement>
         </ui:VisualElement>
-        <ui:VisualElement class="inspector-column inspector-upgrade">
+        <ui:VisualElement class="inspector-column inspector-upgrade box">
           <ui:Label name="inspector-upgrade-title" class="t-heading" />
-          <ui:Label name="inspector-upgrade-cost" class="t-body" />
-          <ui:Label name="inspector-upgrade-time" class="t-small" />
+          <ui:Label name="inspector-upgrade-cost" class="inspector-upgrade-cost" />
+          <ui:Label name="inspector-upgrade-time" class="inspector-upgrade-time t-small glyph-time" />
           <ui:Label name="inspector-upgrade-gain" class="t-small" />
-          <ui:Label name="inspector-upgrade-note" class="t-note" />
+          <ui:Label name="inspector-upgrade-note" class="inspector-upgrade-note" />
           <ui:Button name="inspector-upgrade" class="inspector-upgrade-button btn btn--primary" text="Upgrade" />
         </ui:VisualElement>
       </ui:VisualElement>

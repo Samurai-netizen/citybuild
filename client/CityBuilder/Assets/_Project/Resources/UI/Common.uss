@@ -1,78 +1,107 @@
-/* The shared look of every screen (CR-0007): warm wood and parchment, the colours of the Era I art palette (art/blender/palette.py), and one
-   scale. Every layout imports this file; a screen's own stylesheet only says where things sit and uses these tokens, never a colour or a font
-   size of its own (a test checks it).
-   SCALE: the panel settings expand from 400 x 400 (M0-59), so the short side of the screen is 400 units in both turns (a phone from the iPhone XR
-   on, 19.5:9 to 20:9, is 866 to 889 by 400 in landscape and 400 by 866 to 889 in portrait; older phones are not designed for, owner directive
-   OD-18), one panel unit is about one dp, and a 48 unit button is a 48 dp touch target. What does not fit is scaled to fit (OD-17, ScaleToFit).
-   PORTRAIT: every screen root gets the class "portrait" while it is taller than wide (UiRoot.PadBySafeArea); a screen's stylesheet uses it to
-   rearrange for the 400 unit width. */
+/* The shared look of every screen, visual v2 (CR-0008-T2): the "CityBuilder UI Showcase" made into tokens and classes. Warm parchment sheets
+   framed in wood, dark see-through chips over the map, chunky buttons with a darker bottom edge, a gold ribbon for titles, the colours of
+   the Era I art palette, and two fonts: Fredoka for titles, buttons and every number, Nunito for labels and text (SIL OFL 1.1, Fonts/).
+   Every layout imports this file; a screen's own stylesheet says where things sit and uses these tokens, never a colour or a font size of
+   its own (SharedLookTests). The fonts are referenced by url() relative to this folder.
+   SCALE: the panel settings expand from 400 x 400 (M0-59), so the short side of the screen is 400 units in both turns, one panel unit is
+   about one dp, and a 52 unit button is a 52 dp touch target (phones from the iPhone XR on, OD-18). What does not fit is scaled to fit
+   (OD-17, ScaleToFit).
+   PORTRAIT: every screen root gets the class "portrait" while it is taller than wide (UiRoot.PadBySafeArea); a screen's stylesheet uses it
+   to rearrange for the 400 unit width. */
 :root {
-  /* Wood and parchment, from the palette: plaster, wood_end, wood, wood_dark, thatch, grass, red, blue, gold. */
-  --c-parchment: rgb(244, 232, 207);
-  --c-parchment-2: rgb(235, 217, 180);
-  --c-parchment-3: rgb(214, 190, 146);
-  --c-ink: rgb(66, 42, 24);
-  --c-ink-soft: rgb(122, 86, 52);
-  --c-wood: rgb(201, 142, 84);
-  --c-wood-dark: rgb(122, 78, 45);
-  --c-wood-deep: rgb(62, 40, 24);
-  --c-wood-deep-2: rgb(88, 58, 36);
-  --c-cream: rgb(251, 243, 223);
-  --c-cream-soft: rgb(226, 206, 170);
-  --c-go: rgb(59, 125, 52);
-  --c-go-edge: rgb(38, 86, 36);
-  --c-go-light: rgb(168, 220, 126);
-  --c-warn: rgb(229, 178, 76);
-  --c-warn-ink: rgb(150, 98, 20);
-  --c-stop: rgb(168, 59, 42);
-  --c-stop-edge: rgb(120, 38, 28);
-  --c-stop-light: rgb(255, 154, 128);
-  --c-info: rgb(79, 128, 185);
-  --c-gold: rgb(242, 194, 48);
-  --c-shade: rgba(36, 22, 12, 0.55);
-  --c-panel-wood: rgb(62, 40, 24);
+  -unity-font-definition: url("Fonts/Nunito-Bold.ttf");
 
-  /* Type: three sizes for text, one for titles. */
+  /* Ink and paper */
+  --c-ink: rgb(58, 42, 26);
+  --c-ink-soft: rgb(107, 84, 64);
+  --c-parchment: rgb(244, 232, 207);
+  --c-card: rgb(234, 219, 185);
+  --c-card-edge: rgb(216, 196, 155);
+  --c-cream: rgb(255, 246, 227);
+  --c-wood: rgb(122, 78, 45);
+  --c-wood-shadow: rgb(90, 56, 32);
+  --c-wood-light: rgb(201, 142, 84);
+
+  /* Signals: gold for research and the era, green for go and working, red for stopped and short, blue for information */
+  --c-gold: rgb(242, 194, 48);
+  --c-gold-edge: rgb(184, 134, 47);
+  --c-gold-line: rgb(217, 165, 32);
+  --c-gold-soft: rgb(255, 243, 201);
+  --c-go: rgb(59, 125, 52);
+  --c-go-edge: rgb(43, 94, 38);
+  --c-go-soft: rgb(227, 239, 214);
+  --c-go-ink: rgb(43, 94, 38);
+  --c-stop: rgb(184, 64, 44);
+  --c-stop-edge: rgb(132, 44, 30);
+  --c-stop-ink: rgb(162, 58, 40);
+  --c-stop-soft: rgb(246, 214, 204);
+  --c-warn-ink: rgb(138, 90, 0);
+  --c-info: rgb(79, 128, 185);
+
+  /* Switched off, locked */
+  --c-off: rgb(207, 195, 171);
+  --c-off-edge: rgb(168, 155, 130);
+  --c-off-ink: rgb(90, 74, 56);
+  --c-locked: rgb(230, 220, 200);
+
+  /* Over the map: the dark chips of the HUD, the toasts, the scrim behind a dialog */
+  --c-hud: rgba(48, 31, 18, 0.88);
+  --c-hud-strong: rgba(48, 31, 18, 0.94);
+  --c-hud-text: rgb(255, 246, 227);
+  --c-hud-caption: rgb(217, 203, 176);
+  --c-hud-up: rgb(165, 222, 134);
+  --c-hud-down: rgb(255, 164, 143);
+  --c-hud-flat: rgb(226, 211, 181);
+  --c-hud-inner: rgb(74, 50, 32);
+  --c-shade: rgba(30, 18, 8, 0.45);
+  --c-white: rgb(255, 255, 255);
+
+  /* Type: Nunito for 11 to 15, Fredoka for 15 to 26 */
   --font-xs: 11px;
   --font-sm: 12px;
   --font-md: 14px;
   --font-lg: 17px;
   --font-xl: 21px;
+  --font-xxl: 25px;
 
-  /* Space, radius, touch. */
+  /* Space, radius, touch */
   --sp-1: 4px;
   --sp-2: 8px;
   --sp-3: 12px;
   --sp-4: 16px;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --touch: 48px;
-  --hud-height: 52px; /* the HUD's bar and the gap under it: every screen that sits below the HUD starts here */
-  --dock-width: 100px; /* the Build button; the Research button sits right of it */
-  --toast-lift: 88px; /* the toasts stack up from the bottom left, above the status label and the buttons */
-  --dock-next: 108px; /* where the button after Build starts: the dock width and one gap */
-  --dock-lift: 56px; /* the 48 high buttons at the bottom and one gap: what sits above the dock starts here (M0-59) */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --touch: 52px;
+  --chip-height: 40px;
+  --hud-height: 52px; /* the HUD's row (40) and the gap under it (Hud.uss): every screen that sits below the HUD starts here */
+  --dock-width: 140px; /* the Build button; the Research button sits right of it */
+  --dock-next: 148px; /* where the button after Build starts: the dock width and one gap */
+  --dock-lift: 60px; /* the 52 high dock buttons and one gap: what sits above the dock starts here */
+  --toast-lift: 64px; /* the toasts stack up from above the dock */
 }
 
-/* Portrait (M0-59), set on each screen root by UiRoot.PadBySafeArea: the HUD is two rows, 80 high (Hud.uss), so every screen under it starts lower;
-   the toasts stack up from above the build tray and the placement bar, which sit above the dock in portrait, so a toast never covers them. */
+/* Portrait (M0-59), set on each screen root by UiRoot.PadBySafeArea: the HUD is two rows (Hud.uss), so every screen under it starts lower;
+   the toasts stack up from above the build sheet and the placement bar, which sit above the dock in portrait, so a toast never covers them. */
 .portrait {
-  --hud-height: 92px;
-  --toast-lift: 248px;
+  --hud-height: 122px;
+  --toast-lift: 240px;
+  --dock-width: 188px;
+  --dock-next: 196px;
 }
 
 /* Text */
 .t-title {
+  -unity-font-definition: url("Fonts/Fredoka-SemiBold.ttf");
   color: var(--c-ink);
   font-size: var(--font-xl);
-  -unity-font-style: bold;
   white-space: normal;
 }
 
 .t-heading {
+  -unity-font-definition: url("Fonts/Fredoka-SemiBold.ttf");
   color: var(--c-ink);
   font-size: var(--font-lg);
-  -unity-font-style: bold;
   white-space: normal;
 }
 
@@ -89,27 +118,88 @@
 }
 
 .t-note {
+  -unity-font-definition: url("Fonts/Nunito-ExtraBold.ttf");
   color: var(--c-warn-ink);
   font-size: var(--font-sm);
-  -unity-font-style: bold;
   white-space: normal;
+}
+
+.t-number {
+  -unity-font-definition: url("Fonts/Fredoka-SemiBold.ttf");
+}
+
+.t-caps {
+  -unity-font-definition: url("Fonts/Nunito-ExtraBold.ttf");
+  color: var(--c-ink-soft);
+  font-size: var(--font-xs);
+  letter-spacing: 1px;
 }
 
 /* Surfaces */
 .panel-parchment {
-  padding: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4) var(--sp-4);
+  border-width: 3px;
+  border-bottom-width: 6px;
+  border-radius: var(--radius-lg);
+  border-color: var(--c-wood);
+  border-bottom-color: var(--c-wood-shadow);
+  background-color: var(--c-parchment);
+}
+
+/* A bottom sheet: parchment rising from the bottom of the screen, a wood edge on top, round top corners. */
+.sheet {
+  padding: var(--sp-3) var(--sp-4) var(--sp-4);
+  border-width: 0;
+  border-top-width: 4px;
+  border-radius: 26px 26px 0 0;
+  border-color: var(--c-wood);
+  background-color: var(--c-parchment);
+}
+
+/* A box inside a panel: the stepper, the recipe, the upgrade. */
+.box {
+  padding: var(--sp-2) var(--sp-3);
   border-width: 2px;
   border-radius: var(--radius-md);
-  border-color: var(--c-wood-dark);
-  background-color: var(--c-parchment);
+  border-color: var(--c-card-edge);
+  background-color: var(--c-card);
+}
+
+.box--light {
+  background-color: var(--c-cream);
 }
 
 .panel-wood {
   padding: var(--sp-2);
-  border-width: 2px;
-  border-radius: var(--radius-md);
-  border-color: var(--c-wood-dark);
-  background-color: var(--c-panel-wood);
+  border-width: 0;
+  border-radius: var(--radius-lg);
+  background-color: var(--c-hud);
+}
+
+/* A dark chip over the map (the HUD). */
+.chip-dark {
+  height: var(--chip-height);
+  padding: 0 var(--sp-3) 0 0;
+  border-radius: 20px;
+  background-color: var(--c-hud);
+  color: var(--c-hud-text);
+  flex-direction: row;
+  align-items: center;
+}
+
+/* A gold ribbon: the era, a dialog's title. */
+.ribbon {
+  -unity-font-definition: url("Fonts/Fredoka-SemiBold.ttf");
+  padding: 2px var(--sp-3);
+  border-width: 0;
+  border-bottom-width: 3px;
+  border-radius: 6px;
+  border-color: var(--c-gold-edge);
+  background-color: var(--c-gold);
+  color: var(--c-ink);
+  font-size: var(--font-sm);
+  letter-spacing: 1px;
+  -unity-text-align: middle-center;
 }
 
 .scrim {
@@ -119,65 +209,151 @@
 .divider {
   height: 2px;
   margin: var(--sp-2) 0;
-  background-color: var(--c-parchment-3);
+  background-color: var(--c-card-edge);
 }
 
-/* Buttons: one height (48, the touch target), one radius; the variant sets the colours. */
+/* Buttons: one height (52, the touch target), round corners and a darker bottom edge; the variant sets the colours. A pressed button
+   sinks into its edge. */
 .btn {
+  -unity-font-definition: url("Fonts/Fredoka-SemiBold.ttf");
   min-width: var(--touch);
   min-height: var(--touch);
   margin: 0;
-  padding: 0 var(--sp-3);
-  border-width: 2px;
-  border-bottom-width: 4px;
-  border-radius: var(--radius-sm);
-  border-color: var(--c-wood-deep);
-  background-color: var(--c-wood-dark);
+  padding: 0 var(--sp-4);
+  border-width: 0;
+  border-bottom-width: 5px;
+  border-radius: var(--radius-md);
+  border-color: var(--c-wood-shadow);
+  background-color: var(--c-wood);
   color: var(--c-cream);
-  font-size: var(--font-md);
-  -unity-font-style: bold;
+  font-size: var(--font-lg);
   -unity-text-align: middle-center;
+  -unity-background-image-tint-color: var(--c-cream);
 }
 
 .btn:hover {
-  background-color: var(--c-wood);
+  background-color: var(--c-wood-light);
 }
 
 .btn:active {
   border-bottom-width: 2px;
-  padding-top: 2px;
+  margin-top: 3px;
 }
 
 .btn:disabled {
-  opacity: 0.45;
+  border-color: var(--c-off-edge);
+  background-color: var(--c-off);
+  color: var(--c-off-ink);
+  -unity-background-image-tint-color: var(--c-off-ink);
+  opacity: 1;
 }
 
 .btn--primary {
   border-color: var(--c-go-edge);
   background-color: var(--c-go);
+  color: var(--c-white);
+  -unity-background-image-tint-color: var(--c-white);
 }
 
 .btn--primary:hover {
-  background-color: rgb(78, 148, 66);
+  background-color: rgb(74, 145, 64);
+}
+
+.btn--gold {
+  border-color: var(--c-gold-edge);
+  background-color: var(--c-gold);
+  color: var(--c-ink);
+  -unity-background-image-tint-color: var(--c-ink);
+}
+
+.btn--gold:hover {
+  background-color: rgb(248, 208, 82);
 }
 
 .btn--danger {
   border-color: var(--c-stop-edge);
   background-color: var(--c-stop);
+  color: var(--c-white);
+  -unity-background-image-tint-color: var(--c-white);
 }
 
 .btn--danger:hover {
-  background-color: rgb(196, 78, 58);
+  background-color: rgb(204, 82, 60);
 }
 
+/* A cream button framed in wood, for secondary actions (Cancel, Close). */
 .btn--quiet {
-  border-color: var(--c-parchment-3);
-  background-color: var(--c-parchment-2);
+  border-width: 3px;
+  border-bottom-width: 5px;
+  border-color: var(--c-wood);
+  background-color: var(--c-cream);
   color: var(--c-ink);
+  -unity-background-image-tint-color: var(--c-wood-shadow);
 }
 
 .btn--quiet:hover {
-  background-color: var(--c-parchment-3);
+  background-color: var(--c-card);
+}
+
+/* A round icon button (close): the glyph is its background, tinted by the variant. */
+.btn--round {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border-width: 3px;
+  border-radius: 22px;
+  border-color: var(--c-wood);
+  background-color: var(--c-card);
+  -unity-background-image-tint-color: var(--c-wood-shadow);
+}
+
+/* A glyph on a button or a picture element: the image is centred at 24 units whatever the element's size. */
+.glyph {
+  background-size: 24px 24px;
+  background-repeat: no-repeat no-repeat;
+  background-position-x: center;
+  background-position-y: center;
+}
+
+.glyph-close {
+  background-image: url("Glyphs/close.png");
+}
+
+.glyph-plus {
+  background-image: url("Glyphs/plus.png");
+}
+
+.glyph-minus {
+  background-image: url("Glyphs/minus.png");
+}
+
+.glyph-lock {
+  background-image: url("Glyphs/lock.png");
+}
+
+.glyph-time {
+  background-image: url("Glyphs/time.png");
+}
+
+.glyph-done {
+  background-image: url("Glyphs/done.png");
+}
+
+.glyph-makes {
+  background-image: url("Glyphs/makes.png");
+}
+
+/* A dock button with a picture on its left: the icon is set by USS (Build, Research). */
+.btn--dock {
+  padding-left: 46px;
+  background-size: 38px 38px;
+  background-repeat: no-repeat no-repeat;
+  background-position-x: left 6px;
+  background-position-y: center;
+  -unity-background-image-tint-color: var(--c-white);
+  -unity-text-align: middle-left;
 }
 
 /* A label has no margin or padding of its own in this game: a screen sets what it needs. */
@@ -220,12 +396,12 @@
 
 .themed-scroll .unity-base-slider__tracker {
   border-width: 0;
-  border-radius: 5px;
-  background-color: var(--c-parchment-3);
+  border-radius: 4px;
+  background-color: var(--c-card-edge);
 }
 
 .themed-scroll .unity-base-slider__dragger {
   border-width: 0;
-  border-radius: 5px;
-  background-color: var(--c-wood-dark);
+  border-radius: 4px;
+  background-color: var(--c-wood);
 }

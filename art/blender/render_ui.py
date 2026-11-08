@@ -1,14 +1,12 @@
-"""Renders the 2D assets for the UI from the same models and palette: item, building and research icons
-(transparent PNG) and a portrait phone view of the golden scenario village with its building screen positions.
+"""Renders the UI icons of visual v2 from the same models and palette (transparent PNG, 256 x 256).
 
-    blender -b --factory-startup --python art/blender/render_ui.py [-- --only NAME ...]
+    blender -b --factory-startup --python art/blender/render_ui.py -- [--only NAME ...]
 
-`--only` renders just the named icons and skips the phone view: a render is not byte-identical from run to run, so a change that adds
-icons leaves the others as they are. Output: the icons <name>.png (256 x 256) straight into the Unity project, Resources/UI/Icons/ (the only copy, loaded by name),
-and ui/city_phone.png (780 x 1688) and ui/hotspots.json here in art/.
+Output: <name>.png in client/CityBuilder/Assets/_Project/Resources/UI/Icons/ (which the client loads by name through UiIcons).
+The 15 names of v1 keep their names; the new ones are for CR-0008. A render is not byte-identical from run to run, so run it only
+when an icon should change.
 """
 import argparse
-import json
 import math
 import os
 import sys
@@ -17,212 +15,224 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
 import bpy  # noqa: E402
-from bpy_extras.object_utils import world_to_camera_view  # noqa: E402
 
-import assets_common  # noqa: E402
-import assets_era1  # noqa: E402
-import build_all  # noqa: E402
+import assets_common as ac  # noqa: E402
+import assets_era1 as e1  # noqa: E402
+import build_all as ba  # noqa: E402
 import lib  # noqa: E402
 from lib import Model  # noqa: E402
 
-ROOT = os.path.dirname(HERE)
-OUT = os.path.join(ROOT, "ui")
-# Where the Unity project keeps the icons: under Resources, so a player build contains them and the client loads them by name (UiIcons).
-ICONS_OUT = os.path.join(os.path.dirname(ROOT), "client", "CityBuilder", "Assets", "_Project", "Resources", "UI", "Icons")
+ICONS_OUT = os.path.join(ba.UNITY_PROJECT, "Resources", "UI", "Icons")
 
 
 # --- small models that exist only as icons ------------------------------------------------------------------------
 
-def coins():
+def tool(name, build, rot):
     m = Model()
-    for i in range(4):
-        m.cyl(0.08, 0.026, (0.0 + 0.004 * (i % 2), 0, i * 0.027), "thatch", seg=14, cap="gold")
-    for i in range(2):
-        m.cyl(0.08, 0.026, (0.14, -0.06 + 0.004 * i, i * 0.027), "thatch", seg=14, cap="gold")
-    m.cyl(0.08, 0.026, (-0.06, 0.15, 0.07), "thatch", axis="Y", seg=14, cap="gold", rot=(-20, 0, 0))
-    return [m.to_object("coins")]
+    build(m)
+    obj = m.to_object(name)
+    obj.rotation_euler = tuple(math.radians(a) for a in rot)
+    return [obj]
 
 
 def hammer():
-    m = Model()
-    m.box((0.035, 0.035, 0.34), (0, 0, 0), "wood", bevel=0.008)
-    m.box((0.17, 0.06, 0.06), (0, 0, 0.3), "metal", bevel=0.012)
-    m.box((0.05, 0.065, 0.065), (-0.08, 0, 0.298), "stone_dark", bevel=0.01)
-    obj = m.to_object("hammer")
-    obj.rotation_euler = (0, math.radians(35), math.radians(-45))
-    return [obj]
+    def b(m):
+        m.box((0.035, 0.035, 0.34), (0, 0, 0), "wood", bevel=0.008)
+        m.box((0.036, 0.04, 0.04), (0, 0, 0.12), "wood_dark", bevel=0.006)
+        m.box((0.17, 0.06, 0.06), (0, 0, 0.3), "iron", bevel=0.012)
+        m.box((0.05, 0.065, 0.065), (-0.08, 0, 0.298), "metal", bevel=0.01)
+    return tool("hammer", b, (0, 35, -45))
 
 
 def axe():
-    m = Model()
-    m.box((0.032, 0.032, 0.36), (0, 0, 0), "wood", bevel=0.008)
-    m.box((0.11, 0.03, 0.09), (0.05, 0, 0.27), "metal", bevel=0.01)
-    m.box((0.02, 0.034, 0.11), (0.105, 0, 0.26), "stone", bevel=0.004)
-    obj = m.to_object("axe")
-    obj.rotation_euler = (0, math.radians(-25), math.radians(-45))
-    return [obj]
+    def b(m):
+        m.box((0.032, 0.032, 0.36), (0, 0, 0), "wood", bevel=0.008)
+        m.box((0.11, 0.03, 0.09), (0.05, 0, 0.27), "iron", bevel=0.01)
+        m.box((0.02, 0.034, 0.11), (0.105, 0, 0.26), "metal", bevel=0.004)
+        m.box((0.04, 0.036, 0.03), (0, 0, 0.05), "wood_dark", bevel=0.006)
+    return tool("axe", b, (0, -25, -45))
 
 
 def frame_saw():
-    m = Model()
-    for x in (-0.13, 0.13):
-        m.box((0.03, 0.03, 0.26), (x, 0, 0), "wood", bevel=0.008)
-    m.box((0.26, 0.026, 0.026), (0, 0, 0.12), "wood_dark", bevel=0.006)
-    m.box((0.28, 0.008, 0.04), (0, 0, 0.02), "metal", bevel=0)
-    m.box((0.26, 0.01, 0.01), (0, 0, 0.24), "thatch_dark", bevel=0)
-    obj = m.to_object("frame_saw")
-    obj.rotation_euler = (0, 0, math.radians(-45))
-    return [obj]
+    def b(m):
+        for x in (-0.13, 0.13):
+            m.box((0.03, 0.03, 0.26), (x, 0, 0), "wood", bevel=0.008)
+        m.box((0.26, 0.026, 0.026), (0, 0, 0.12), "wood_dark", bevel=0.006)
+        m.box((0.28, 0.008, 0.04), (0, 0, 0.02), "metal", bevel=0)
+        for k in range(7):
+            m.prism([(0, 0), (0.02, 0), (0.01, -0.016)], 0.008, (-0.13 + k * 0.04, 0, 0.022), "metal", axis="Y")
+        m.box((0.26, 0.01, 0.01), (0, 0, 0.24), "thatch_dark", bevel=0)
+    return tool("frame_saw", b, (0, 0, -45))
 
 
 def charter():
-    m = Model()
-    m.box((0.28, 0.012, 0.22), (0, 0.035, -0.22), "plaster", bevel=0.004)
-    m.cyl(0.05, 0.3, (0, 0, 0), "plaster", axis="X", seg=10)
-    for x in (-0.17, 0.17):
-        m.cyl(0.03, 0.05, (x, 0, 0), "wood_dark", axis="X", seg=8)
-    for k in range(3):
-        m.box((0.18 - k * 0.04, 0.004, 0.012), (-0.02, 0.043, -0.07 - k * 0.04), "wood_dark", bevel=0)
-    m.cyl(0.04, 0.014, (0.07, 0.048, -0.17), "red", axis="Y", seg=10)
-    obj = m.to_object("charter")
-    obj.rotation_euler = (math.radians(-10), 0, math.radians(-45))
-    return [obj]
+    def b(m):
+        m.box((0.28, 0.012, 0.22), (0, 0.035, -0.22), "plaster", bevel=0.004)
+        m.cyl(0.05, 0.3, (0, 0, 0), "plaster", axis="X", seg=10)
+        for x in (-0.17, 0.17):
+            m.cyl(0.03, 0.05, (x, 0, 0), "wood_dark", axis="X", seg=8)
+        for k in range(3):
+            m.box((0.18 - k * 0.04, 0.004, 0.012), (-0.02, 0.043, -0.07 - k * 0.04), "wood_dark", bevel=0)
+        m.cyl(0.04, 0.014, (0.07, 0.048, -0.17), "red", axis="Y", seg=10)
+    return tool("charter", b, (-10, 0, -45))
 
 
 def storehouse():
     m = Model()
-    assets_era1.crate(m, (0, 0, 0), s=0.14)
-    assets_era1.crate(m, (0.16, 0.02, 0), s=0.12, rot=10)
-    assets_era1.crate(m, (0.06, 0.0, 0.14), s=0.11, rot=-8)
-    m.ico(0.07, (-0.1, 0.12, 0.06), "thatch_dark", scale=(1, 1, 1.2))
+    e1.crate(m, (0, 0, 0), s=0.14)
+    e1.crate(m, (0.16, 0.02, 0), s=0.12, rot=10)
+    e1.crate(m, (0.06, 0.0, 0.14), s=0.11, rot=-8)
+    e1.sack(m, (-0.11, 0.13, 0), s=1.6)
     return [m.to_object("storehouse")]
 
 
 def book():
-    m = Model()
-    m.box((0.3, 0.22, 0.03), (0, 0, 0), "red", bevel=0.008)
-    m.box((0.28, 0.2, 0.05), (0.01, 0, 0.03), "plaster", bevel=0.006)
-    m.box((0.3, 0.22, 0.025), (0, 0, 0.08), "red", bevel=0.008)
-    m.cyl(0.045, 0.01, (0, 0, 0.105), "gold", seg=12)
-    obj = m.to_object("book")
-    obj.rotation_euler = (0, 0, math.radians(20))
-    return [obj]
+    def b(m):
+        m.box((0.3, 0.22, 0.03), (0, 0, 0), "red", bevel=0.008)
+        m.box((0.28, 0.2, 0.05), (0.01, 0, 0.03), "plaster", bevel=0.006)
+        m.box((0.3, 0.22, 0.025), (0, 0, 0.08), "red", bevel=0.008)
+        m.cyl(0.045, 0.01, (0, 0, 0.105), "gold", seg=12)
+        m.box((0.02, 0.06, 0.004), (0.06, -0.11, 0.06), "blue", bevel=0)
+    return tool("book", b, (0, 0, 20))
 
 
 def tally_sticks():
-    """Two notched tally sticks crossed over each other (Tally Sticks: counting by share)."""
-    out = []
-    for k, (x, rot) in enumerate(((-0.03, 30), (0.04, -25))):
-        m = Model()
-        m.box((0.05, 0.035, 0.42), (0, 0, -0.21), "wood_end", bevel=0.008)
-        for i in range(5):
-            m.box((0.056, 0.03, 0.012), (0, 0.004, -0.15 + i * 0.07), "wood_dark", bevel=0)
-        obj = m.to_object(f"tally_{k}")
-        obj.location = (x, k * 0.03, 0)
-        obj.rotation_euler = (0, math.radians(rot), math.radians(-45))
-        out.append(obj)
-    return out
+    """Notched tally sticks tied in a bundle (the research that unlocks any percentage)."""
+    def b(m):
+        for k in range(4):
+            x = (k - 1.5) * 0.045
+            m.box((0.034, 0.03, 0.3 - 0.03 * (k % 2)), (x, 0, 0), "wood_end", rot=(0, (k - 1.5) * 5, 0), bevel=0.006)
+            for n in range(3 + k % 2):
+                m.box((0.036, 0.034, 0.008), (x, 0.002, 0.06 + n * 0.05), "wood_dark", bevel=0)
+        m.box((0.2, 0.04, 0.03), (0, 0, 0.12), "red", bevel=0.006)
+    return tool("tally_sticks", b, (0, 0, -40))
 
 
-def boots():
-    """A pair of sturdy leather boots with laces (Sturdy Boots: faster walking)."""
-    out = []
-    for k, (x, y) in enumerate(((-0.07, 0.04), (0.08, -0.04))):
-        m = Model()
-        m.box((0.1, 0.09, 0.2), (0, 0, 0.0), "wood_dark", bevel=0.02)
-        m.box((0.2, 0.1, 0.07), (0.05, 0, 0.0), "wood_dark", bevel=0.025)
-        m.box((0.21, 0.105, 0.02), (0.05, 0, 0.0), "stone_dark", bevel=0.006)
-        m.box((0.11, 0.1, 0.03), (0, 0, 0.17), "wood", bevel=0.008)
-        for i in range(3):
-            m.box((0.012, 0.096, 0.01), (0.04, 0, 0.06 + i * 0.035), "wood_end", bevel=0)
-        obj = m.to_object(f"boot_{k}")
-        obj.location = (x, y, 0)
-        obj.rotation_euler = (0, 0, math.radians(150))
-        out.append(obj)
-    return out
+def boot():
+    """A sturdy leather boot (the research that makes walkers faster)."""
+    def b(m):
+        m.box((0.09, 0.07, 0.2), (0, 0, 0.03), "wood_dark", bevel=0.02)
+        m.box((0.2, 0.08, 0.06), (0.05, 0, 0.0), "wood_dark", bevel=0.02)
+        m.box((0.21, 0.085, 0.03), (0.05, 0, 0.0), "iron", bevel=0.008)
+        m.box((0.1, 0.08, 0.03), (0, 0, 0.2), "wood", bevel=0.008)
+        for k in range(3):
+            m.box((0.012, 0.075, 0.012), (0.02 + k * 0.004, 0.0, 0.08 + k * 0.04), "gold", bevel=0)
+    return tool("boot", b, (0, 0, -30))
+
+
+def bread_mug():
+    """Bread and a mug: the couriers' rest (re-energize)."""
+    m = Model()
+    m.ico(0.11, (0, 0.03, 0.07), "thatch", scale=(1.4, 0.9, 0.7))
+    for k in range(3):
+        m.box((0.012, 0.13, 0.012), (-0.06 + k * 0.06, 0.03, 0.12), "thatch_dark", rot=(0, 0, 20), anchor="center", bevel=0)
+    m.cyl(0.06, 0.16, (0.13, -0.08, 0), "wood", seg=10, cap="foam")
+    for zz in (0.03, 0.12):
+        m.cyl(0.063, 0.014, (0.13, -0.08, zz), "iron", seg=10)
+    m.box((0.03, 0.02, 0.09), (0.2, -0.08, 0.035), "wood_dark", bevel=0.008)
+    m.ico(0.05, (0.13, -0.08, 0.17), "foam", scale=(1.1, 1.1, 0.5))
+    return [m.to_object("bread_mug")]
 
 
 def workers():
     out = []
     for x, y, rot in ((0, 0, 200), (0.13, -0.1, 215), (-0.12, -0.08, 190)):
-        w = assets_common.worker()
-        w.location = (x, y, 0)
-        w.rotation_euler[2] = math.radians(rot)
-        out.append(w)
+        out.append(ba.place(ac.worker, (x, y, 0), rot_z=rot))
     return out
+
+
+def couriers():
+    out = []
+    for x, y, rot, load in ((0, 0, 200, ac.carry_logs), (0.14, -0.1, 215, ac.carry_planks)):
+        c = ba.place(ac.courier, (x, y, 0), rot_z=rot)
+        bpy.context.view_layer.update()
+        ba.place(load, ba.anchors(c)["Anchor_Load"].matrix_world.translation, rot_z=rot)
+        out.append(c)
+    return out
+
+
+def trips():
+    """A worker mid-stride carrying a bundle of logs on the head, footprints behind (a one-time trip)."""
+    w = ba.place(ac.worker, (0, 0, 0), rot_z=230)
+    lib.pose_at(w, 0.25, 1.0, fraction=True)
+    load = ba.place(ac.carry_logs, (0.0, 0.0, 0.166), rot_z=230 + 90)
+    m = Model()
+    for k in range(4):
+        side = 0.018 if k % 2 else -0.018
+        m.box((0.022, 0.012, 0.004), (0.05 + k * 0.035 + side * 0.3, 0.04 + k * 0.03 + side, 0), "dirt_dark", rot=(0, 0, 40))
+    steps = m.to_object("steps")
+    return [w, load, steps]
+
+
+def road(level):
+    def build():
+        r = ba.place(ac.ROADS[f"road_l{level}"], (0, 0, 0))
+        for child in r.children:
+            if child.name.split(".")[0] in ("Road_XPlus", "Road_XMinus"):
+                child.hide_render = False
+            else:
+                child.hide_render = True
+        return [r]
+    return build
 
 
 def one(build):
     return lambda: [build()]
 
 
+def with_fill(name, steps):
+    def build():
+        root = e1.BUILDINGS[name]()
+        base, level = ba.split_name(name)
+        fill_name = f"{base}_l{level}_fill"
+        if fill_name in e1.FILLS:
+            f = e1.FILLS[fill_name]()
+            f.parent = root
+            for child in f.children:
+                bits = child.name.split(".")[0].split("_")
+                child.hide_render = int(bits[2]) > steps
+        return [root]
+    return build
+
+
 ICONS = {
-    "item_coins": coins, "item_logs": one(assets_era1.PROPS["prop_logs_m"]),
-    "item_planks": one(assets_era1.PROPS["prop_planks_m"]),
+    # v1 names, drawn again from the v2 models
+    "item_coins": one(e1.PROPS["prop_coins_m"]), "item_logs": one(e1.PROPS["prop_logs_m"]),
+    "item_planks": one(e1.PROPS["prop_planks_m"]),
     "workers": workers, "builders": hammer, "research": book,
-    "bld_house": one(assets_era1.BUILDINGS["house_l1"]), "bld_woodcutter": one(assets_era1.BUILDINGS["woodcutter_l1"]),
-    "bld_sawmill": one(assets_era1.BUILDINGS["sawmill_l1"]),
-    "bld_trading_post": one(assets_era1.BUILDINGS["trading_post_l1"]),
-    "bld_construction": one(assets_era1.BUILDINGS["construction_site"]),
+    "bld_house": one(e1.BUILDINGS["house_l1"]), "bld_woodcutter": with_fill("woodcutter_l1", 2),
+    "bld_sawmill": with_fill("sawmill_l1", 2), "bld_trading_post": one(e1.BUILDINGS["trading_post_l1"]),
+    "bld_construction": one(e1.BUILDINGS["construction_site"]),
     "res_trade_charter": charter, "res_sharp_axes": axe, "res_frame_saw": frame_saw, "res_storehouses": storehouse,
-    "bld_courier_station": one(assets_era1.BUILDINGS["courier_station_l1"]),
-    "bld_scriptorium": one(assets_era1.BUILDINGS["scriptorium_l1"]),
-    "bld_warehouse": one(assets_era1.BUILDINGS["warehouse_l1"]),
-    "res_tally_sticks": tally_sticks, "res_sturdy_boots": boots,
+    # new for CR-0008
+    "bld_scriptorium": one(e1.BUILDINGS["scriptorium_l1"]), "bld_courier_station": one(e1.BUILDINGS["courier_station_l1"]),
+    "bld_warehouse": with_fill("warehouse_l1", 2), "road_l1": road(1), "road_l2": road(2),
+    "couriers": couriers, "trips": trips, "reenergize": bread_mug,
+    "res_tally_sticks": tally_sticks, "res_sturdy_boots": boot,
 }
 
 
 def meshes(objects):
     out = []
     for obj in objects:
-        out += [o for o in lib.descendants(obj) if o.type == "MESH"]
+        out += [o for o in lib.descendants(obj) if o.type == "MESH" and not o.hide_render]
     return out
-
-
-def icons(only=None):
-    for name, build in ICONS.items():
-        if only and name not in only:
-            continue
-        lib.clear_scene()
-        objects = build()
-        lib.setup_render(256, 256, transparent=True)
-        lib.frame_camera(meshes(objects), margin=1.08)
-        lib.render(os.path.join(ICONS_OUT, name + ".png"))
-
-
-def phone_city():
-    """The village in a phone's portrait frame, and where each building lands on a 390 x 844 screen."""
-    _, buildings = build_all.city_scene()
-    lib.setup_render(780, 1688)
-    cam = lib.frame_camera(meshes([root for _, root in buildings]), margin=0.92)
-    lib.render(os.path.join(OUT, "city_phone.png"))
-    scene = bpy.context.scene
-    bpy.context.view_layer.update()
-    spots = []
-    for k, (name, root) in enumerate(buildings):
-        a = build_all.anchors(root)
-        base = world_to_camera_view(scene, cam, root.matrix_world.translation)
-        top = world_to_camera_view(scene, cam, a["Anchor_Status"].matrix_world.translation)
-        spots.append({"id": k + 1, "model": name, "type": name.rsplit("_l", 1)[0],
-                      "x": round(base.x * 390, 1), "y": round((1 - base.y) * 844, 1),
-                      "statusX": round(top.x * 390, 1), "statusY": round((1 - top.y) * 844, 1)})
-    with open(os.path.join(OUT, "hotspots.json"), "w") as f:
-        json.dump(spots, f, indent=1)
-    print("HOTSPOTS", json.dumps(spots))
 
 
 def main():
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     parser = argparse.ArgumentParser(prog="render_ui.py")
-    parser.add_argument("--only", nargs="*", help="icon names to render, without the phone view (default: everything)")
+    parser.add_argument("--only", nargs="*")
     args = parser.parse_args(argv)
-    unknown = [name for name in args.only or [] if name not in ICONS]
-    if unknown:
-        sys.exit("unknown icons: " + ", ".join(unknown))
-    lib.load_palette(os.path.join(ROOT, "textures", "palette_era1.png"))
-    icons(args.only)
-    if not args.only:
-        phone_city()
+    lib.load_palette(os.path.join(ba.PACKAGE, "textures", "palette_era1.png"))
+    for name, build in ICONS.items():
+        if args.only and name not in args.only:
+            continue
+        lib.clear_scene()
+        objects = build()
+        lib.setup_render(256, 256, transparent=True)
+        lib.frame_camera(meshes(objects), margin=1.06)
+        lib.render(os.path.join(ICONS_OUT, name + ".png"))
 
 
 main()

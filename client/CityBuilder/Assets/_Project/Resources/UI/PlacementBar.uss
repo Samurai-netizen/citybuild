@@ -1,5 +1,5 @@
-/* The placement bar (docs/how-to/add-ui-screen.md): a parchment panel at the bottom right, opposite the Build button. M0-46, restyled in CR-0007.
-   Colours and sizes come from Common.uss. */
+/* The placement bar (M0-46; visual v2, CR-0008-T2): a parchment panel framed in wood at the bottom right, its buttons sharing the width;
+   above the dock in portrait. Colours and sizes come from Common.uss. */
 .placement-root {
   position: absolute;
   left: 0;
@@ -13,11 +13,10 @@
 }
 
 .placement-panel {
-  width: 280px;
+  width: 320px;
   max-width: 100%;
 }
 
-/* Portrait (M0-59): at the bottom right the bar would cover the Research button (116 to 216 units from the left), so it sits above the dock. */
 .portrait .placement-panel {
   margin-bottom: var(--dock-lift);
 }
@@ -31,20 +30,21 @@
 }
 
 .placement-error {
+  -unity-font-definition: url("Fonts/Nunito-ExtraBold.ttf");
   margin-top: var(--sp-1);
-  color: var(--c-stop);
+  color: var(--c-stop-ink);
   font-size: var(--font-sm);
-  -unity-font-style: bold;
   white-space: normal;
 }
 
+/* The row is pulled left by one gap and each button pushed right by one, so the gaps sit only between the buttons. */
 .placement-buttons {
-  margin-top: var(--sp-2);
+  margin: var(--sp-3) 0 0 -8px;
   flex-direction: row;
-  justify-content: flex-end;
 }
 
 .placement-button {
-  min-width: 96px;
+  flex-grow: 1;
+  flex-basis: 0;
   margin: 0 0 0 var(--sp-2);
 }

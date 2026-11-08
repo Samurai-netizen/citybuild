@@ -1,4 +1,5 @@
-"""The shared colour palette: one small texture, one material for every model.
+"""The shared colour palette: one small texture, one material for every model (visual v2: slots 0-19 as in art/blender/palette.py,
+new colours from slot 20).
 
 Each colour is a 16 x 16 px swatch on an 8 x 8 grid (128 x 128 px). A face takes its colour by putting all its UVs on
 the centre of a swatch, so a model needs one material and one draw call. Slots never move: add new colours in free slots.
@@ -18,6 +19,13 @@ PALETTE = [
     ("thatch", "E5B24C"), ("thatch_dark", "B8862F"), ("plaster", "F4E8CF"), ("red", "D4553F"),
     ("blue", "4F80B9"), ("window", "3A3F57"), ("leaf", "57A443"), ("metal", "C8CDD5"),
     ("leaf_dark", "3B7D34"), ("water", "6EC1E4"), ("skin", "F0C08A"), ("gold", "F2C230"),
+    # visual v2 (2026-11-04): tufts and tile highlights, smoke, flowers, dark iron, sacks and tarps, path ruts and edges, water foam,
+    # warm lit windows, pale stone
+    ("grass_light", "96C95A"), ("smoke", "ECE8E1"), ("flower_pink", "E98AB0"), ("flower_purple", "9C82D4"),
+    ("iron", "5A606B"), ("canvas", "D9C7A0"), ("dirt_dark", "9A6E45"), ("foam", "D2F0F8"),
+    ("lamp", "FFD36B"), ("stone_light", "CEC8BC"), ("dirt_light", "CFA777"),
+    # ground, second pass: soft mottling a step warmer and a step cooler than the grass
+    ("grass_warm", "88B94F"), ("grass_cool", "6EA845"), ("grass_dry", "B4BD5C"),
 ]
 
 INDEX = {name: i for i, (name, _) in enumerate(PALETTE)}
