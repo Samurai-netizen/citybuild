@@ -275,8 +275,8 @@ T1 adds the tasks to the M0 board. Model: Opus = Opus 5.5, Sonnet = Sonnet 5.5.
 
 | ID | Model | Parts | The owner is needed for | Status |
 |---|---|---|---|---|
-| CR-0008-T1 | Opus | A–I: spec, engine and server | starting it; two permission prompts (the `22` edit at the start, the golden fixture after part B); merging | In review (PR #86) |
-| CR-0008-T2 | Sonnet | A–F: client and art | starting it; merging | Todo |
+| CR-0008-T1 | Opus | A–I: spec, engine and server | starting it; two permission prompts (the `22` edit at the start, the golden fixture after part B); merging | Done (PR #86) |
+| CR-0008-T2 | Sonnet | A–F: client and art | starting it; merging | In progress |
 | CR-0008-T3 | Opus | close-out with a playtest `[MANUAL]` | about an hour of playing and looking; merging | Todo |
 
 The owner's steps: `/model` Opus → `/start-task CR-0008-T1` → answer the `22` prompt → later, answer the golden fixture prompt → merge →
@@ -458,13 +458,14 @@ Part E — Welcome-back report and re-energize
 - Every text about the 8 h production cap removed.
 - Tests for the report model.
 
-Part F — Art
-Read art/README.md and CR-0005.
-- Blender scripts in art/blender/: the courier station, the science building and the warehouse (each level of the M0 content), a courier
-  figure with a pack, a road tile per level that reads well alone and joins its neighbours, and UI icons for the courier station, the science
-  building, the warehouse, roads, trips and re-energize.
-- Run the Blender build headless (art/README.md); the client's looks pick the models up (BuildingLooks, the ground); lookup tests as in
-  CR-0005-T3. Without Blender on the machine, leave the run for T3 and say so.
+Part F — Art (Visual v2 adoption, Route A of visual-v2/ADOPT.md)
+Read art/README.md, CR-0005 and visual-v2/ADOPT.md (Route A, from branch origin/claude/compassionate-meitner-sd7nr0).
+- Before Part A, as its own checkpointed step: adopt visual-v2 (adopt.sh, unity-wiring.patch, after-cr0008.patch, merge held-back
+  WelcomeBack.uxml/uss keeping T1's cap-note removal, move the Blender sources to art/blender/, move MOTIONS.md to art/MOTIONS.md,
+  move ui-preview to art/ui/preview/, import in Unity and commit .meta files, add tests for the patched BuildingDecor rules).
+- Do not generate new art assets: replace all old assets with visual-v2's assets; check that every building type, level, research node,
+  item, road level and walker in server/content/mvp-content.json has its model and icon from visual-v2, merge ArtModelsTests with
+  ArtModelsV2Tests, and list any missing assets for the owner to make for later adoption.
 
 Then list every [MANUAL] look of parts A-F (what to open, what to check) in the build log for T3, and run /finish-task.
 ```
@@ -485,3 +486,5 @@ Then list every [MANUAL] look of parts A-F (what to open, what to check) in the 
   whole proposal as written, so D2–D4, D6–D9 and D11–D13 stand as recommended; T1 started the same day (build log BL-20261102-07).
 - 2026-11-02: the owner reviewed the first version and decided D1, D5 and D10 (quoted under "Owner's words"); the first version's
   D2–D4 and D6–D9 were not changed.
+- 2026-11-08 (at the start of CR-0008-T2, in chat): `/start-task CR-0008-T2 You must use visual-v2/ADOPT.md` /
+  `You must use new assets instead of old ones - change all of them for new. Do now generate new assets yourself. It you did not recieved some of the assets to change, from visual-v2, make a list of items that i should make for you for later adoption`. Persisted in Part F above and in `docs/build-log/2026/2026-11-08-01-CR-0008-T2.md`.

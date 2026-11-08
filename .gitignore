@@ -5,6 +5,9 @@
 *.local.json
 CLAUDE.local.md
 .claude/settings.local.json
+.local/
+game-description/
+landing/
 
 # --- .NET ---
 bin/
