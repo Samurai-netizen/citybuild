@@ -10,6 +10,7 @@ using CityBuilder.Client.Net;
 using CityBuilder.Client.Presentation.Build;
 using CityBuilder.Client.Presentation.City;
 using CityBuilder.Client.Presentation.Inspector;
+using CityBuilder.Client.Presentation.Roads;
 using CityBuilder.Client.Presentation.Trips;
 using CityBuilder.Client.Presentation.Ui;
 using CityBuilder.Simulation;
@@ -74,6 +75,15 @@ namespace CityBuilder.Client.Tests.PlayMode
         /// <summary>The manual trip flow.</summary>
         private TripFlow _tripFlow = null!;
 
+        /// <summary>The road mode flow model.</summary>
+        private RoadFlowModel _roads = null!;
+
+        /// <summary>The road bar.</summary>
+        private RoadBar _roadBar = null!;
+
+        /// <summary>The road mode flow.</summary>
+        private RoadFlow _roadFlow = null!;
+
         /// <summary>Cancels commands still open at the end of a test.</summary>
         private CancellationTokenSource _cancel = null!;
 
@@ -128,6 +138,7 @@ namespace CityBuilder.Client.Tests.PlayMode
         [TearDown]
         public void Destroy()
         {
+            _roadFlow.Dispose();
             _tripFlow.Dispose();
             _flow.Dispose();
             _cancel.Cancel();
@@ -163,15 +174,21 @@ namespace CityBuilder.Client.Tests.PlayMode
             _trips.Update(_display.Current!);
             _tripBar = TripBar.Create(_host.transform, _trips)!;
             _tripFlow = new TripFlow(_trips, _world, _sender, _tripBar, _inspector, _cancel.Token);
-            _flow = new InspectorFlow(content, _world, _sender, _inspector, _placement, _cancel.Token, _trips);
             _menu = BuildMenu.Create(_host.transform, new BuildMenuModel(content, _display.Current!))!;
+            _roads = new RoadFlowModel(content, grid);
+            _roads.Update(_display.Current!);
+            _roadBar = RoadBar.Create(_host.transform, _roads)!;
+            _roadFlow = new RoadFlow(_roads, _world, _sender, _roadBar, _menu, _placement, _trips, _cancel.Token);
+            _flow = new InspectorFlow(content, _world, _sender, _inspector, _placement, _cancel.Token, _trips, _roads);
             var menus = new MenuGroup();
             _menu.Opened += menus.Join(() => _menu.SetOpen(false)).NotifyOpened;
             _inspector.Opened += menus.Join(_flow.Close).NotifyOpened;
             _ = menus.Join(_trips.Cancel);
+            _ = menus.Join(_roads.Cancel);
             _display.Changed += () =>
             {
                 _trips.Update(_display.Current!);
+                _roads.Update(_display.Current!);
                 _flow.Update(_display.Current!);
             };
             _flow.Update(_display.Current!);
@@ -507,6 +524,44 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(_trips.Phase, Is.EqualTo(TripPhase.Idle));
             Assert.That(_world.Ground.ShownPath, Is.Empty);
             Assert.That(_tripBar.Root.Q<VisualElement>(TripBar.BarName).ClassListContains("trip-bar--hidden"), Is.True);
+        }
+
+        /// <summary>
+        /// Pressing Roads in the build menu opens road mode, tapping two tiles selects the line between them and draws it on the ground, and
+        /// pressing Build road sends <c>place-roads</c> and closes road mode on success (CR-0008).
+        /// </summary>
+        [UnityTest]
+        public IEnumerator BuildRoads_FromBuildMenu_SelectsLine_SendsPlaceRoads_AndClearsOnSuccess()
+        {
+            _menu.SetOpen(true);
+            _menu.PressRoads();
+
+            Assert.That(_menu.IsOpen, Is.False);
+            Assert.That(_roads.Phase, Is.EqualTo(RoadPhase.PickingTiles));
+            Assert.That(_roadBar.Root!.Q<VisualElement>(RoadBar.BarName).ClassListContains("road-bar--hidden"), Is.False);
+
+            TapTile(1, 1);
+            TapTile(3, 1);
+
+            Assert.That(_roads.Phase, Is.EqualTo(RoadPhase.Confirming));
+            Assert.That(_roads.Tiles.Count, Is.EqualTo(3));
+            Assert.That(_roads.CanPlace, Is.True);
+            Assert.That(_world.Ground!.ShownPath.Count, Is.EqualTo(3));
+
+            _roadBar.PressPlace();
+
+            Assert.That(_sender.Pending.Count, Is.EqualTo(1));
+            Assert.That(_sender.Pending[0].Intent.Kind, Is.EqualTo(CommandKind.PlaceRoads));
+            Assert.That(_sender.Pending[0].Intent.Tiles.Count, Is.EqualTo(3));
+            yield return WaitUntil(() => _transport.OpenCount == 1);
+            Assert.That(_transport.Requests[0].Url, Does.EndWith("/api/v1/commands/place-roads"));
+
+            _transport.Respond(200, InspectorCity(205, 3, 243, 11));
+            yield return WaitUntil(() => _sender.Pending.Count == 0);
+
+            Assert.That(_roads.Phase, Is.EqualTo(RoadPhase.Idle));
+            Assert.That(_world.Ground.ShownPath, Is.Empty);
+            Assert.That(_roadBar.Root.Q<VisualElement>(RoadBar.BarName).ClassListContains("road-bar--hidden"), Is.True);
         }
     }
 }

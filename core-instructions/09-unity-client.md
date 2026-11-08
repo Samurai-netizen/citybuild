@@ -120,8 +120,7 @@ open game is present) and sends intent; the server decides.
   Half or Quarter (a percentage once researched); the path is drawn by the shared engine (`04` §17, `GroundTiles.ShowPath`); the button is off
   with its reason (no free worker, nothing to carry, nothing needed there); it sends `start-trip`. A running trip shows on both ends with its
   countdown (`TripsText`).
-- **Road mode (T2 part B):** from the build menu, drag a line of tiles; ghosts show the total cost and each refused tile's reason;
-  confirming sends `place-roads`; selected road tiles can be upgraded or removed. The ground draws roads by level.
+- **Road mode (T2 part B, built):** from the build menu (`build-roads`) or by tapping a road tile, select empty tiles to place roads (`place-roads`) or existing road tiles to upgrade (`upgrade-roads`) or remove (`remove-roads`), with total coin cost, speed (`2.5s / tile` → `1.5s / tile`) and the disable reason in `RoadRules` order (`RoadFlowModel`, `RoadBar`, `RoadFlow`). The ground draws roads by level using `RoadArms` (`GroundTiles.ShowRoads`), and `PlacementFlowModel` marks road tiles occupied.
 - **Courier station and route editor (T2 part C):** the station's inspector lists its couriers (the worker stepper), each one's state,
   stamina and route summary, and a **Re-energize** button. The route editor (a menu) adds stops by tapping buildings, gives each stop take
   and put actions (good and amount: presets; a percentage once researched; exact shown locked with the research that unlocks it), reorders

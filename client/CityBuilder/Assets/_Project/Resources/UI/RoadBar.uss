@@ -1,0 +1,67 @@
+/* The road bar at the bottom of the screen while a player builds, upgrades or removes roads (CR-0008). Colours and sizes come from
+   Common.uss. */
+.road-root {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  padding: var(--sp-2); /* replaced by the safe area in code */
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.road-bar {
+  max-width: 100%;
+  flex-direction: column;
+  align-items: stretch;
+  padding: var(--sp-2) var(--sp-3);
+}
+
+.road-bar--hidden {
+  display: none;
+}
+
+.road-texts {
+  flex-direction: column;
+  margin-bottom: var(--sp-1);
+}
+
+.road-prompt {
+  -unity-font-definition: url("Fonts/Fredoka-SemiBold.ttf");
+  color: var(--c-ink);
+  font-size: var(--font-lg);
+  white-space: normal;
+}
+
+.road-detail {
+  margin-top: 2px;
+  color: var(--c-ink-soft);
+  white-space: normal;
+}
+
+.road-hint {
+  -unity-font-definition: url("Fonts/Nunito-ExtraBold.ttf");
+  margin-top: 2px;
+  color: var(--c-stop-ink);
+  font-size: var(--font-md);
+  white-space: normal;
+}
+
+.road-hint--hidden {
+  display: none;
+}
+
+.road-actions {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.road-button {
+  margin-left: var(--sp-1);
+  padding-left: var(--sp-3);
+  padding-right: var(--sp-3);
+}

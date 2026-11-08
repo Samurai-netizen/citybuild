@@ -221,6 +221,15 @@ namespace CityBuilder.Client.Presentation.Build
                 }
             }
 
+            for (int index = 0; index < city.Roads.Count; index++)
+            {
+                RoadTile road = city.Roads[index];
+                if (_grid.Contains(new GridCoordinate(road.X, road.Y)))
+                {
+                    _scratch[road.Y * _grid.Width + road.X] = TileHint.Occupied;
+                }
+            }
+
             bool changed = false;
             for (int index = 0; !changed && index < _hints.Length; index++)
             {

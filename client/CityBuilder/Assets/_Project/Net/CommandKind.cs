@@ -17,5 +17,14 @@ namespace CityBuilder.Client.Net
 
         /// <summary><c>start-trip</c>: send a free worker from a source store to a target building or project (CR-0008).</summary>
         StartTrip,
+
+        /// <summary><c>place-roads</c>: place level-1 roads on one or more tiles (CR-0008).</summary>
+        PlaceRoads,
+
+        /// <summary><c>upgrade-roads</c>: raise one or more road tiles one level (CR-0008).</summary>
+        UpgradeRoads,
+
+        /// <summary><c>remove-roads</c>: remove one or more road tiles (CR-0008).</summary>
+        RemoveRoads,
     }
 }

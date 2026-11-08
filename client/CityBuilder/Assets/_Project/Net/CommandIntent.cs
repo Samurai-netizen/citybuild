@@ -1,6 +1,7 @@
 #nullable enable
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -13,8 +14,20 @@ namespace CityBuilder.Client.Net
     /// </summary>
     public sealed class CommandIntent : IEquatable<CommandIntent>
     {
+        /// <summary>An empty road tile list shared by non-road intents.</summary>
+        private static readonly IReadOnlyList<RoadTileRequestDto> EmptyTiles = Array.Empty<RoadTileRequestDto>();
+
         /// <summary>Creates an intent; the factory methods are the way in, so each kind holds only the members it uses.</summary>
-        private CommandIntent(CommandKind kind, string? contentId, int x, int y, int buildingId, int workers, int targetId = 0, string? amount = null)
+        private CommandIntent(
+            CommandKind kind,
+            string? contentId,
+            int x,
+            int y,
+            int buildingId,
+            int workers,
+            int targetId = 0,
+            string? amount = null,
+            IReadOnlyList<RoadTileRequestDto>? tiles = null)
         {
             Kind = kind;
             ContentId = contentId;
@@ -24,6 +37,7 @@ namespace CityBuilder.Client.Net
             Workers = workers;
             TargetId = targetId;
             Amount = amount;
+            Tiles = tiles ?? EmptyTiles;
         }
 
         /// <summary>Which command it is.</summary>
@@ -49,6 +63,9 @@ namespace CityBuilder.Client.Net
 
         /// <summary>The amount text (<c>all</c>, <c>half</c>, <c>quarter</c>, <c>25%</c>, or an exact quantity) of a start-trip intent; null for the others.</summary>
         public string? Amount { get; }
+
+        /// <summary>The tiles of a <c>place-roads</c>, <c>upgrade-roads</c> or <c>remove-roads</c> intent; empty for the others.</summary>
+        public IReadOnlyList<RoadTileRequestDto> Tiles { get; }
 
         /// <summary>Build <paramref name="buildingTypeId"/> on the tile (<paramref name="x"/>, <paramref name="y"/>).</summary>
         /// <exception cref="ArgumentException">The type id is null or blank.</exception>
@@ -91,11 +108,33 @@ namespace CityBuilder.Client.Net
                 RequireId(amount, nameof(amount)));
         }
 
+        /// <summary>Place level-1 roads on <paramref name="tiles"/> (CR-0008).</summary>
+        /// <exception cref="ArgumentException"><paramref name="tiles"/> is null or empty.</exception>
+        public static CommandIntent PlaceRoads(IReadOnlyList<RoadTileRequestDto> tiles)
+        {
+            return new CommandIntent(CommandKind.PlaceRoads, null, 0, 0, 0, 0, tiles: RequireTiles(tiles, nameof(tiles)));
+        }
+
+        /// <summary>Raise the roads on <paramref name="tiles"/> one level (CR-0008).</summary>
+        /// <exception cref="ArgumentException"><paramref name="tiles"/> is null or empty.</exception>
+        public static CommandIntent UpgradeRoads(IReadOnlyList<RoadTileRequestDto> tiles)
+        {
+            return new CommandIntent(CommandKind.UpgradeRoads, null, 0, 0, 0, 0, tiles: RequireTiles(tiles, nameof(tiles)));
+        }
+
+        /// <summary>Remove the roads on <paramref name="tiles"/> (CR-0008).</summary>
+        /// <exception cref="ArgumentException"><paramref name="tiles"/> is null or empty.</exception>
+        public static CommandIntent RemoveRoads(IReadOnlyList<RoadTileRequestDto> tiles)
+        {
+            return new CommandIntent(CommandKind.RemoveRoads, null, 0, 0, 0, 0, tiles: RequireTiles(tiles, nameof(tiles)));
+        }
+
         /// <inheritdoc/>
         public bool Equals(CommandIntent? other)
         {
             return other != null && Kind == other.Kind && ContentId == other.ContentId && X == other.X && Y == other.Y
-                && BuildingId == other.BuildingId && Workers == other.Workers && TargetId == other.TargetId && Amount == other.Amount;
+                && BuildingId == other.BuildingId && Workers == other.Workers && TargetId == other.TargetId && Amount == other.Amount
+                && SameTiles(Tiles, other.Tiles);
         }
 
         /// <inheritdoc/>
@@ -107,7 +146,13 @@ namespace CityBuilder.Client.Net
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-            return HashCode.Combine(Kind, ContentId, X, Y, BuildingId, Workers, TargetId, Amount);
+            int tilesHash = Tiles.Count;
+            for (int i = 0; i < Tiles.Count; i++)
+            {
+                tilesHash = HashCode.Combine(tilesHash, Tiles[i]);
+            }
+
+            return HashCode.Combine(Kind, ContentId, X, Y, BuildingId, Workers, TargetId, HashCode.Combine(Amount, tilesHash));
         }
 
         /// <summary>A one-line form for logs, for example <c>AssignWorkers(building 3, workers 2)</c>.</summary>
@@ -123,6 +168,12 @@ namespace CityBuilder.Client.Net
                     return "AssignWorkers(building " + BuildingId + ", workers " + Workers + ")";
                 case CommandKind.StartTrip:
                     return "StartTrip(" + BuildingId + "->" + TargetId + " " + ContentId + " " + Amount + ")";
+                case CommandKind.PlaceRoads:
+                    return "PlaceRoads(" + FormatTiles(Tiles) + ")";
+                case CommandKind.UpgradeRoads:
+                    return "UpgradeRoads(" + FormatTiles(Tiles) + ")";
+                case CommandKind.RemoveRoads:
+                    return "RemoveRoads(" + FormatTiles(Tiles) + ")";
                 default:
                     return "StartResearch(" + ContentId + ")";
             }
@@ -141,6 +192,12 @@ namespace CityBuilder.Client.Net
                     return api.AssignWorkersAsync(new AssignWorkersRequestDto(requestId, BuildingId, Workers), cancellationToken);
                 case CommandKind.StartTrip:
                     return api.StartTripAsync(new StartTripRequestDto(requestId, BuildingId, TargetId, ContentId!, Amount!), cancellationToken);
+                case CommandKind.PlaceRoads:
+                    return api.PlaceRoadsAsync(new RoadTilesRequestDto(requestId, Tiles), cancellationToken);
+                case CommandKind.UpgradeRoads:
+                    return api.UpgradeRoadsAsync(new RoadTilesRequestDto(requestId, Tiles), cancellationToken);
+                case CommandKind.RemoveRoads:
+                    return api.RemoveRoadsAsync(new RoadTilesRequestDto(requestId, Tiles), cancellationToken);
                 default:
                     return api.StartResearchAsync(new StartResearchRequestDto(requestId, ContentId!), cancellationToken);
             }
@@ -155,6 +212,54 @@ namespace CityBuilder.Client.Net
             }
 
             return id!;
+        }
+
+        /// <summary>Copies a non-empty tile list and refuses null, empty, or null entries.</summary>
+        private static IReadOnlyList<RoadTileRequestDto> RequireTiles(IReadOnlyList<RoadTileRequestDto>? tiles, string name)
+        {
+            if (tiles == null || tiles.Count == 0)
+            {
+                throw new ArgumentException("At least one road tile is required.", name);
+            }
+
+            var copy = new RoadTileRequestDto[tiles.Count];
+            for (int i = 0; i < tiles.Count; i++)
+            {
+                copy[i] = tiles[i] ?? throw new ArgumentException("A road tile entry must not be null.", name);
+            }
+
+            return copy;
+        }
+
+        /// <summary>Whether two tile lists have the same tiles in the same order.</summary>
+        private static bool SameTiles(IReadOnlyList<RoadTileRequestDto> left, IReadOnlyList<RoadTileRequestDto> right)
+        {
+            if (left.Count != right.Count)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < left.Count; i++)
+            {
+                if (!left[i].Equals(right[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>Formats a road tile list for <see cref="ToString"/>.</summary>
+        private static string FormatTiles(IReadOnlyList<RoadTileRequestDto> tiles)
+        {
+            var parts = new string[tiles.Count];
+            for (int i = 0; i < tiles.Count; i++)
+            {
+                parts[i] = tiles[i].X + "," + tiles[i].Y;
+            }
+
+            return string.Join(";", parts);
         }
     }
 }

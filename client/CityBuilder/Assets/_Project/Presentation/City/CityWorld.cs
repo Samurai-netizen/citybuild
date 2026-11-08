@@ -102,11 +102,12 @@ namespace CityBuilder.Client.Presentation.City
             _input = new CityInputReader(Rig, Screen.dpi, position => IsPointerOverUi != null && IsPointerOverUi(position));
         }
 
-        /// <summary>Makes the building views match a city (<see cref="CityView.Show"/>). Does nothing before <see cref="ShowGrid"/>.</summary>
+        /// <summary>Makes the building and road views match a city (<see cref="CityView.Show"/>, <see cref="GroundTiles.ShowRoads"/>). Does nothing before <see cref="ShowGrid"/>.</summary>
         /// <param name="city">The displayed city.</param>
         /// <param name="content">The game content, which the building statuses need; null shows no status.</param>
         public void ShowCity(CityState city, GameContent? content = null)
         {
+            _ground?.ShowRoads(city.Roads);
             _buildings?.Show(city, content);
         }
 

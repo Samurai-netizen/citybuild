@@ -7,7 +7,7 @@
 - **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** CR-0008-T2 · Logistics rework: client and art (`task/CR-0008-T2-logistics-client-art`), build log
   `docs/build-log/2026/2026-11-08-01-CR-0008-T2.md`.
-- **Part / step:** CP-0 (`visual-v2` adopted) and CP-A (Part A: building stores, projects, science-building check and manual trip flow; EditMode 1197/1197, PlayMode 165/165) complete; next: Part B (roads).
+- **Part / step:** CP-0 (`visual-v2` adopted), CP-A (Part A: stores, projects, manual trips) and CP-B (Part B: roads on the map and road mode; EditMode 1204/1204, PlayMode 166/166) complete; next: Part C (courier station and route editor).
 - **Last completed:** CR-0008-T1 · Logistics rework: spec, engine and server (PR #86, merged)
 - **Next task:** CR-0008-T3 · Logistics rework: close-out and playtest (`[O] [MANUAL]`), then M0-61.
 - **Open questions for the owner:** CR-0008-T1: 8 Dependabot alerts on `main` (build log Follow-ups). M0-58: the [MANUAL] content-change check (`client/README.md`; no automated test covers the `GameRoot` rebuild). CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-54: the dev database still runs the fast clock until the owner does step 7 of the waiting-loop run (`LOCAL-E2E.md`). M0-55: the [MANUAL] look at the connection states (`client/README.md`). CR-0007-T1: the [MANUAL] look at the new UI (`client/README.md`); the status label may be removed (build log follow-ups).

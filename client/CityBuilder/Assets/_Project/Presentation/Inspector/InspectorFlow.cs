@@ -7,6 +7,7 @@ using CityBuilder.Client.Core;
 using CityBuilder.Client.Net;
 using CityBuilder.Client.Presentation.Build;
 using CityBuilder.Client.Presentation.City;
+using CityBuilder.Client.Presentation.Roads;
 using CityBuilder.Client.Presentation.Trips;
 using CityBuilder.Client.Presentation.Ui;
 using CityBuilder.Simulation.Content;
@@ -47,6 +48,9 @@ namespace CityBuilder.Client.Presentation.Inspector
         /// <summary>The manual trip flow's state, or null when there is none; the inspector stays closed while the player picks a trip target (CR-0008).</summary>
         private readonly TripFlowModel? _trips;
 
+        /// <summary>The road mode flow's state, or null when there is none; the inspector stays closed while the player builds or edits roads (CR-0008).</summary>
+        private readonly RoadFlowModel? _roads;
+
         /// <summary>Ends a command that is still open when the game object goes away.</summary>
         private readonly CancellationToken _cancellationToken;
 
@@ -67,7 +71,8 @@ namespace CityBuilder.Client.Presentation.Inspector
         /// <param name="placement">The placement flow's state, or null when there is none.</param>
         /// <param name="cancellationToken">Cancels a command still open when the game goes away (<c>destroyCancellationToken</c>).</param>
         /// <param name="trips">The manual trip flow's state, or null when there is none (CR-0008).</param>
-        /// <exception cref="ArgumentNullException">An argument other than <paramref name="placement"/> or <paramref name="trips"/> is null.</exception>
+        /// <param name="roads">The road mode flow's state, or null when there is none (CR-0008).</param>
+        /// <exception cref="ArgumentNullException">An argument other than <paramref name="placement"/>, <paramref name="trips"/> or <paramref name="roads"/> is null.</exception>
         /// <exception cref="ArgumentException">The world has no grid shown yet.</exception>
         public InspectorFlow(
             GameContent content,
@@ -76,7 +81,8 @@ namespace CityBuilder.Client.Presentation.Inspector
             BuildingInspector inspector,
             PlacementFlowModel? placement,
             CancellationToken cancellationToken,
-            TripFlowModel? trips = null)
+            TripFlowModel? trips = null,
+            RoadFlowModel? roads = null)
         {
             _content = content ?? throw new ArgumentNullException(nameof(content));
             _world = world != null ? world : throw new ArgumentNullException(nameof(world));
@@ -84,6 +90,7 @@ namespace CityBuilder.Client.Presentation.Inspector
             _inspector = inspector != null ? inspector : throw new ArgumentNullException(nameof(inspector));
             _placement = placement;
             _trips = trips;
+            _roads = roads;
             _cancellationToken = cancellationToken;
             if (_world.Selection == null)
             {
@@ -100,6 +107,11 @@ namespace CityBuilder.Client.Presentation.Inspector
             if (_trips != null)
             {
                 _trips.Changed += Refresh;
+            }
+
+            if (_roads != null)
+            {
+                _roads.Changed += Refresh;
             }
 
             _inspector.MinusRequested += OnMinus;
@@ -167,6 +179,11 @@ namespace CityBuilder.Client.Presentation.Inspector
                 _trips.Changed -= Refresh;
             }
 
+            if (_roads != null)
+            {
+                _roads.Changed -= Refresh;
+            }
+
             if (_inspector != null)
             {
                 _inspector.MinusRequested -= OnMinus;
@@ -198,7 +215,8 @@ namespace CityBuilder.Client.Presentation.Inspector
             if (city == null
                 || !tile.HasValue
                 || (_placement != null && _placement.Phase != PlacementPhase.Idle)
-                || (_trips != null && _trips.Phase != TripPhase.Idle))
+                || (_trips != null && _trips.Phase != TripPhase.Idle)
+                || (_roads != null && _roads.Phase != RoadPhase.Idle && _roads.IsBuildMode))
             {
                 return null;
             }

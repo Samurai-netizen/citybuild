@@ -10,6 +10,7 @@ using CityBuilder.Client.Presentation.Feedback;
 using CityBuilder.Client.Presentation.Hud;
 using CityBuilder.Client.Presentation.Inspector;
 using CityBuilder.Client.Presentation.Research;
+using CityBuilder.Client.Presentation.Roads;
 using CityBuilder.Client.Presentation.Trips;
 using CityBuilder.Client.Presentation.Ui;
 using CityBuilder.Client.Presentation.WelcomeBack;
@@ -105,6 +106,15 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         /// <summary>Joins the inspector's Send trip button, the map selection, the trip bar and the command sender (CR-0008).</summary>
         private TripFlow? _tripFlow;
 
+        /// <summary>The road mode flow state (CR-0008); null until the start has connected.</summary>
+        private RoadFlowModel? _roads;
+
+        /// <summary>The road bar (CR-0008); null until the start has connected, or when its assets are missing.</summary>
+        private RoadBar? _roadBar;
+
+        /// <summary>Joins the build menu's Roads button, the map selection, the road bar and the command sender (CR-0008).</summary>
+        private RoadFlow? _roadFlow;
+
         /// <summary>The research screen; null until the start has connected, or when its assets are missing.</summary>
         private ResearchScreen? _researchScreen;
 
@@ -170,6 +180,12 @@ namespace CityBuilder.Client.Presentation.Bootstrap
 
         /// <summary>The manual trip flow (CR-0008); null until the start has connected, or when the bar or inspector is missing.</summary>
         internal TripFlow? TripFlow => _tripFlow;
+
+        /// <summary>The road bar (CR-0008); null until the start has connected, or when its assets are missing.</summary>
+        internal RoadBar? RoadBar => _roadBar;
+
+        /// <summary>The road flow (CR-0008); null until the start has connected, or when the bar or build menu is missing.</summary>
+        internal RoadFlow? RoadFlow => _roadFlow;
 
         /// <summary>The research screen (<c>09</c> Research screen); null until the start has connected, or when its assets are missing.</summary>
         internal ResearchScreen? ResearchScreen => _researchScreen;
@@ -302,6 +318,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         {
             _placement?.Dispose();
             _tripFlow?.Dispose();
+            _roadFlow?.Dispose();
             _inspectorFlow?.Dispose();
             _researchFlow?.Dispose();
             _welcomeFlow?.Dispose();
@@ -315,6 +332,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             DestroyView(_buildMenu);
             DestroyView(_placementBar);
             DestroyView(_tripBar);
+            DestroyView(_roadBar);
             DestroyView(_inspector);
             DestroyView(_researchScreen);
             DestroyView(_welcomePanel);
@@ -322,6 +340,9 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             _trips = null;
             _tripBar = null;
             _tripFlow = null;
+            _roads = null;
+            _roadBar = null;
+            _roadFlow = null;
             _inspectorFlow = null;
             _researchFlow = null;
             _welcomeFlow = null;
@@ -366,6 +387,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         {
             _placement?.Dispose();
             _tripFlow?.Dispose();
+            _roadFlow?.Dispose();
             _inspectorFlow?.Dispose();
             _researchFlow?.Dispose();
             _welcomeFlow?.Dispose();
@@ -405,6 +427,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                 _buildMenu?.Model?.Update(city);
                 _placement?.Update(city);
                 _trips?.Update(city);
+                _roads?.Update(city);
                 _inspectorFlow?.Update(city);
                 _researchFlow?.Update(city);
                 _connectionFlow?.Update();
@@ -522,9 +545,33 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                     _tripFlow = new TripFlow(trips, _world, _commandSender, tripBar, _inspector, destroyCancellationToken);
                     _ = _menus.Join(trips.Cancel);
                 }
+
+                if (_buildMenu != null)
+                {
+                    var roads = new RoadFlowModel(content, _world.Grid);
+                    roads.Update(city);
+                    RoadBar? roadBar = RoadBar.Create(transform, roads);
+                    if (roadBar != null)
+                    {
+                        _roads = roads;
+                        _roadBar = roadBar;
+                        _roadFlow = new RoadFlow(roads, _world, _commandSender, roadBar, _buildMenu, _placement?.Model, _trips, destroyCancellationToken);
+                        _ = _menus.Join(roads.Cancel);
+                        if (_buildMenu.Model != null)
+                        {
+                            _buildMenu.Model.SelectionChanged += () =>
+                            {
+                                if (_buildMenu.Model.Selected.HasValue)
+                                {
+                                    roads.Cancel();
+                                }
+                            };
+                        }
+                    }
+                }
             }
 
-            var flow = _inspectorFlow = new InspectorFlow(content, _world, _commandSender, _inspector, _placement?.Model, destroyCancellationToken, _trips);
+            var flow = _inspectorFlow = new InspectorFlow(content, _world, _commandSender, _inspector, _placement?.Model, destroyCancellationToken, _trips, _roads);
             _inspector.Opened += _menus.Join(flow.Close).NotifyOpened;
             _world.IsPointerOverUi = IsOverUi;
         }
@@ -594,6 +641,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             return (_buildMenu != null && _buildMenu.IsOverUi(screenPosition))
                 || (_placementBar != null && _placementBar.IsOverUi(screenPosition))
                 || (_tripBar != null && _tripBar.IsOverUi(screenPosition))
+                || (_roadBar != null && _roadBar.IsOverUi(screenPosition))
                 || (_inspector != null && _inspector.IsOverUi(screenPosition))
                 || (_researchScreen != null && _researchScreen.IsOverUi(screenPosition))
                 || (_welcomePanel != null && _welcomePanel.IsOverUi(screenPosition))
@@ -621,6 +669,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             CommandAvailability availability = CommandAvailability.For(_monitor.State);
             _placement?.Model.SetCommandAvailability(availability);
             _trips?.SetCommandAvailability(availability);
+            _roads?.SetCommandAvailability(availability);
             _inspectorFlow?.SetCommandAvailability(availability);
             _researchFlow?.SetCommandAvailability(availability);
             CityState? city = _displayCity?.Current;
