@@ -31,10 +31,19 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Research
             return ResearchNodeModel.Create(_content, city, definition!, column, pending, availability);
         }
 
-        /// <summary>A city of Era I with the given coins and logs, planks, and completed research.</summary>
-        private static CityState City(long coins, long logs = 0, long planks = 0, string[]? done = null, ActiveResearch? active = null)
+        /// <summary>A city of Era I with the given coins and logs, planks, completed research, and by default a completed Scriptorium.</summary>
+        private static CityState City(
+            long coins,
+            long logs = 0,
+            long planks = 0,
+            string[]? done = null,
+            ActiveResearch? active = null,
+            bool withScienceBuilding = true)
         {
-            return HudTestData.City(1000, coins, logs, planks, new Building[0], done, active);
+            Building[] buildings = withScienceBuilding
+                ? new[] { new Building(90, new BuildingTypeId("scriptorium"), 6, 7, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0) }
+                : new Building[0];
+            return HudTestData.City(1000, coins, logs, planks, buildings, done, active);
         }
 
         /// <summary>Name, cost, duration and effect come from the content: an unlock names the building type.</summary>
@@ -68,6 +77,32 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Research
 
             Assert.That(node.EffectText, Is.EqualTo("+40 Logs storage, +40 Planks storage"));
             Assert.That(node.CostText, Is.EqualTo("Cost: 300 Coins, 50 Logs"));
+        }
+
+        /// <summary>A walk-speed bonus and an amount-mode unlock name their effects (CR-0008).</summary>
+        [Test]
+        public void Words_ForWalkSpeedAndAmountMode()
+        {
+            ResearchNodeModel boots = Node("sturdy_boots", City(500));
+            ResearchNodeModel tally = Node("tally_sticks", City(500, 0, 0, new[] { "sturdy_boots" }));
+
+            Assert.That(boots.EffectText, Is.EqualTo("+20% walk speed"));
+            Assert.That(tally.EffectText, Is.EqualTo("Unlocks percentage amounts"));
+        }
+
+        /// <summary>Without a completed science building the Finance button is off and names the science building, after missing prerequisites and before coins (CR-0008).</summary>
+        [Test]
+        public void WithoutScienceBuilding_TurnsButtonOff_AndNamesIt()
+        {
+            CityState withoutScriptorium = City(500, 0, 0, null, null, withScienceBuilding: false);
+
+            ResearchNodeModel available = Node("sharp_axes", withoutScriptorium);
+            ResearchNodeModel locked = Node("frame_saw", withoutScriptorium);
+
+            Assert.That(available.Status, Is.EqualTo(ResearchStatus.Available));
+            Assert.That(available.ButtonEnabled, Is.False);
+            Assert.That(available.ButtonNote, Is.EqualTo("Requires: Scriptorium"));
+            Assert.That(locked.ButtonNote, Is.EqualTo("Requires: Sharpened Axes"), "missing prerequisites come before the science building check");
         }
 
         /// <summary>A node with no prerequisite and enough stock is available, with a working button and no note.</summary>

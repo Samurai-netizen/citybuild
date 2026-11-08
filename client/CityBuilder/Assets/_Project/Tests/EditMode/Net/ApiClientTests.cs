@@ -194,7 +194,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         public async Task EachCommand_PostsItsBodyToItsPath()
         {
             string snapshot = Fixtures.Read("snapshot-command-place-building.json");
-            FakeTransport transport = new FakeTransport().Answer(200, snapshot).Answer(200, snapshot).Answer(200, snapshot).Answer(200, snapshot);
+            FakeTransport transport = new FakeTransport().Answer(200, snapshot).Answer(200, snapshot).Answer(200, snapshot).Answer(200, snapshot).Answer(200, snapshot);
             ApiClient client = NewClient(transport);
             client.SetAccessToken("tok");
 
@@ -202,8 +202,9 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             await client.UpgradeBuildingAsync(new UpgradeBuildingRequestDto(RequestId, 3), CancellationToken.None);
             await client.AssignWorkersAsync(new AssignWorkersRequestDto(RequestId, 3, 2), CancellationToken.None);
             await client.StartResearchAsync(new StartResearchRequestDto(RequestId, "trade_charter"), CancellationToken.None);
+            await client.StartTripAsync(new StartTripRequestDto(RequestId, 2, 5, "logs", "all"), CancellationToken.None);
 
-            string[] paths = { "place-building", "upgrade-building", "assign-workers", "start-research" };
+            string[] paths = { "place-building", "upgrade-building", "assign-workers", "start-research", "start-trip" };
             for (int i = 0; i < paths.Length; i++)
             {
                 ApiTransportRequest sent = transport.Requests[i];
@@ -214,6 +215,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             }
 
             Assert.That(transport.Requests[2].JsonBody, Is.EqualTo("{\"requestId\":\"6f1c0000-0000-4000-8000-000000000001\",\"buildingId\":3,\"workers\":2}"));
+            Assert.That(transport.Requests[4].JsonBody, Is.EqualTo("{\"requestId\":\"6f1c0000-0000-4000-8000-000000000001\",\"sourceId\":2,\"targetId\":5,\"itemId\":\"logs\",\"amount\":\"all\"}"));
         }
 
         /// <summary>A rule's refusal is a failed result with the server's code, not an exception.</summary>

@@ -53,6 +53,21 @@ namespace CityBuilder.Client.Presentation.Inspector
         /// <summary>The per-hour rates at the current staffing, such as <c>Uses 120 Logs/h · Makes 60 Planks/h</c>; empty for a house or while it is built.</summary>
         public string RatesText { get; private set; } = string.Empty;
 
+        /// <summary>Each item the building's store holds as <c>amount / limit</c> (such as <c>Logs: 10 / 40, Planks: 10 / 20</c>); empty when it has no store (CR-0008).</summary>
+        public string StoreText { get; private set; } = string.Empty;
+
+        /// <summary>What a construction site, a waiting upgrade or the science building with a waiting research still needs (such as <c>Still needs: 10 Logs</c>); empty otherwise (CR-0008).</summary>
+        public string NeedsText { get; private set; } = string.Empty;
+
+        /// <summary>Running manual trips leaving from or arriving at this building with their countdowns; empty when none is running (CR-0008).</summary>
+        public string TripsText { get; private set; } = string.Empty;
+
+        /// <summary>Whether the Send trip button is shown: the building is built and its store holds at least one good (CR-0008).</summary>
+        public bool HasSendTrip { get; private set; }
+
+        /// <summary>Whether the Send trip button works: <see cref="HasSendTrip"/> and commands are allowed (CR-0008).</summary>
+        public bool CanSendTrip { get; private set; }
+
         /// <summary>Whether the worker stepper is shown: a producer that is built (a house has no workers to set, a site cannot take any yet).</summary>
         public bool HasStepper { get; private set; }
 
@@ -135,6 +150,7 @@ namespace CityBuilder.Client.Presentation.Inspector
             BuildingLevelDefinition level = definition.GetLevel(building.Level);
             int? pendingTarget = pending.Workers;
             bool upgradePending = pending.Upgrade;
+            bool hasGoods = HasStoredGoods(building);
             var model = new BuildingInspectorModel
             {
                 BuildingId = building.Id,
@@ -144,6 +160,11 @@ namespace CityBuilder.Client.Presentation.Inspector
                 StatusText = StatusTextFor(content, city, building),
                 TimeText = TimeTextFor(city, building),
                 RecipeText = RecipeTextFor(content, level),
+                StoreText = StoreTextFor(content, city, building),
+                NeedsText = NeedsTextFor(content, city, building, definition),
+                TripsText = TripsTextFor(content, city, building.Id),
+                HasSendTrip = hasGoods,
+                CanSendTrip = hasGoods && availability.IsAllowed,
                 IsWorkersPending = pendingTarget.HasValue,
                 IsUpgradePending = upgradePending,
             };
@@ -164,6 +185,11 @@ namespace CityBuilder.Client.Presentation.Inspector
                 && TimeText == other.TimeText
                 && RecipeText == other.RecipeText
                 && RatesText == other.RatesText
+                && StoreText == other.StoreText
+                && NeedsText == other.NeedsText
+                && TripsText == other.TripsText
+                && HasSendTrip == other.HasSendTrip
+                && CanSendTrip == other.CanSendTrip
                 && HasStepper == other.HasStepper
                 && WorkersText == other.WorkersText
                 && WorkersTarget == other.WorkersTarget
@@ -263,11 +289,32 @@ namespace CityBuilder.Client.Presentation.Inspector
             UpgradeTitle = "Upgrade to level " + Number(next.Level);
             UpgradeCostText = "Cost: " + ItemText.Quantities(content, next.UpgradeCost, ", ");
             UpgradeTimeText = "Takes " + DurationText.Format(next.UpgradeSeconds);
-            UpgradeGainText = current.Recipe != null
-                ? "Max workers " + Number(current.MaxWorkers) + " → " + Number(next.MaxWorkers)
-                : "Provides " + Number(current.WorkersProvided) + " → " + Number(next.WorkersProvided) + " workers";
+            UpgradeGainText = UpgradeGainTextFor(content, definition, current, next);
             UpgradeNote = availability.IsAllowed ? UpgradeNoteFor(content, city, building, next, upgradePending) : availability.Reason;
             CanUpgrade = UpgradeNote.Length == 0;
+        }
+
+        /// <summary>What upgrading from <paramref name="current"/> to <paramref name="next"/> gives, by building kind.</summary>
+        private static string UpgradeGainTextFor(
+            GameContent content, BuildingDefinition definition, BuildingLevelDefinition current, BuildingLevelDefinition next)
+        {
+            if (current.Recipe != null)
+            {
+                return "Max workers " + Number(current.MaxWorkers) + " → " + Number(next.MaxWorkers);
+            }
+
+            if (definition.Kind == BuildingKind.CourierStation)
+            {
+                return "Couriers " + Number(current.MaxWorkers) + " → " + Number(next.MaxWorkers)
+                    + " · Carry " + Number(current.CarryLimit) + " → " + Number(next.CarryLimit);
+            }
+
+            if (next.Storage != null && next.Storage.Count > 0)
+            {
+                return "Storage: " + ItemText.Quantities(content, next.Storage, ", ");
+            }
+
+            return "Provides " + Number(current.WorkersProvided) + " → " + Number(next.WorkersProvided) + " workers";
         }
 
         /// <summary>The first reason the upgrade cannot start, or empty when nothing the client knows stands in the way.</summary>
@@ -376,6 +423,114 @@ namespace CityBuilder.Client.Presentation.Inspector
             ProductionRates rates = ProductionDisplay.PerHour(city, content, building, workers);
             string makes = "Makes " + ItemText.Rates(content, rates.Outputs);
             return rates.Inputs.Count == 0 ? makes : "Uses " + ItemText.Rates(content, rates.Inputs) + " · " + makes;
+        }
+
+        /// <summary>Each item the building's store holds as <c>amount / limit</c> in content item order; empty when it has no store (CR-0008).</summary>
+        private static string StoreTextFor(GameContent content, CityState city, Building building)
+        {
+            if (building.Phase == BuildingPhase.Constructing && building.Store.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var parts = new List<string>();
+            for (int i = 0; i < content.Items.Count; i++)
+            {
+                ItemDefinition item = content.Items[i];
+                long stock = building.GetStock(item.Id);
+                if (CityQueries.TryGetEffectiveLimit(city, content, building, item.Id, out long limit))
+                {
+                    parts.Add(item.Name + ": " + Number(stock) + " / " + Number(limit));
+                }
+                else if (stock > 0)
+                {
+                    parts.Add(item.Name + ": " + Number(stock));
+                }
+            }
+
+            return parts.Count == 0 ? string.Empty : string.Join(", ", parts);
+        }
+
+        /// <summary>What the building's waiting project or the waiting research at the science building still needs (CR-0008).</summary>
+        private static string NeedsTextFor(GameContent content, CityState city, Building building, BuildingDefinition definition)
+        {
+            if (building.Needs.Count > 0)
+            {
+                return "Still needs: " + ItemText.Needs(content, building.Needs, ", ");
+            }
+
+            if (definition.Kind == BuildingKind.Science
+                && building.Phase != BuildingPhase.Constructing
+                && city.ActiveResearch != null
+                && city.ActiveResearch.IsWaiting
+                && city.ActiveResearch.Needs.Count > 0)
+            {
+                return "Still needs: " + ItemText.Needs(content, city.ActiveResearch.Needs, ", ");
+            }
+
+            return string.Empty;
+        }
+
+        /// <summary>Running manual trips leaving from or arriving at <paramref name="buildingId"/> with their countdowns (CR-0008).</summary>
+        private static string TripsTextFor(GameContent content, CityState city, int buildingId)
+        {
+            if (city.Trips.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var lines = new List<string>();
+            for (int i = 0; i < city.Trips.Count; i++)
+            {
+                Trip trip = city.Trips[i];
+                if (trip.SourceId != buildingId && trip.TargetId != buildingId)
+                {
+                    continue;
+                }
+
+                string item = Number(trip.Quantity) + " " + ItemText.ItemName(content, trip.Item);
+                string countdown = DurationText.Format(Math.Max(0, trip.ArrivesAt - city.Clock));
+                if (trip.SourceId == buildingId)
+                {
+                    lines.Add("Sending " + item + " to " + BuildingNameOf(content, city, trip.TargetId) + " · " + countdown);
+                }
+                else
+                {
+                    lines.Add("Incoming " + item + " from " + BuildingNameOf(content, city, trip.SourceId) + " · " + countdown);
+                }
+            }
+
+            return lines.Count == 0 ? string.Empty : string.Join("\n", lines);
+        }
+
+        /// <summary>The display name of building <paramref name="id"/> in <paramref name="city"/>.</summary>
+        private static string BuildingNameOf(GameContent content, CityState city, int id)
+        {
+            if (city.TryGetBuilding(id, out Building? target) && content.TryGetBuilding(target!.TypeId, out BuildingDefinition? definition))
+            {
+                return definition!.Name;
+            }
+
+            return "Building #" + Number(id);
+        }
+
+        /// <summary>True when <paramref name="building"/> is built and holds at least one good in its store.</summary>
+        private static bool HasStoredGoods(Building building)
+        {
+            if (building.Phase == BuildingPhase.Constructing || building.Store.Count == 0)
+            {
+                return false;
+            }
+
+            foreach (KeyValuePair<ItemId, long> pair in building.Store)
+            {
+                if (pair.Value > 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>A whole number in text, never in the machine's culture.</summary>

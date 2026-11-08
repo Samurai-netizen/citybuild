@@ -51,7 +51,8 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Ui
         /// <summary>The model of a research node the city can pay and has no other research running: its button works when the connection allows it.</summary>
         private ResearchNodeModel Finance(CommandAvailability availability, string? pending = null)
         {
-            CityState city = HudTestData.City(1000, 250, 0, 0, new Building[0]);
+            Building[] buildings = { new Building(90, new BuildingTypeId("scriptorium"), 6, 7, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0) };
+            CityState city = HudTestData.City(1000, 250, 0, 0, buildings);
             Assert.That(_content.TryGetResearch(new ResearchId("sharp_axes"), out ResearchDefinition? definition), Is.True);
             return ResearchNodeModel.Create(_content, city, definition!, 0, pending, availability);
         }
@@ -171,7 +172,8 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Ui
         [Test]
         public void ResearchScreen_Offline_NoFinanceButtonWorks()
         {
-            CityState city = HudTestData.City(1000, 5000, 500, 500, new Building[0]);
+            Building[] buildings = { new Building(90, new BuildingTypeId("scriptorium"), 6, 7, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0) };
+            CityState city = HudTestData.City(1000, 5000, 500, 500, buildings);
             CommandAvailability offline = CommandAvailability.For(ConnectionState.Offline);
 
             ResearchScreenModel connected = ResearchScreenModel.Create(_content, city, null, CommandAvailability.Allowed);

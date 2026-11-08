@@ -1,0 +1,27 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+  <!-- The manual trip bar that TripBar shows at the bottom of the screen while the player sets up a manual trip (CR-0008): the prompt, walk
+       detail and refusal hint, the item chip button, the amount buttons (All, Half, Quarter, and a percentage once unlocked), Send and
+       Cancel. Style: Common.uss and TripBar.uss. -->
+  <Style src="Common.uss" />
+  <Style src="TripBar.uss" />
+  <ui:VisualElement name="trip-root" class="trip-root" picking-mode="Ignore">
+    <ui:VisualElement name="trip-bar" class="trip-bar panel-parchment trip-bar--hidden">
+      <ui:VisualElement class="trip-texts">
+        <ui:Label name="trip-prompt" class="trip-prompt" />
+        <ui:Label name="trip-detail" class="trip-detail t-small" />
+        <ui:Label name="trip-hint" class="trip-hint" />
+      </ui:VisualElement>
+      <ui:VisualElement class="trip-controls">
+        <ui:Button name="trip-item" class="trip-chip btn btn--secondary" text="Logs" />
+        <ui:Button name="trip-all" class="trip-preset btn btn--secondary" text="All" />
+        <ui:Button name="trip-half" class="trip-preset btn btn--secondary" text="Half" />
+        <ui:Button name="trip-quarter" class="trip-preset btn btn--secondary" text="Quarter" />
+        <ui:Button name="trip-percent" class="trip-preset btn btn--secondary" text="50%" />
+      </ui:VisualElement>
+      <ui:VisualElement class="trip-actions">
+        <ui:Button name="trip-confirm" class="trip-button btn btn--primary" text="Send" />
+        <ui:Button name="trip-cancel" class="trip-button btn btn--secondary" text="Cancel" />
+      </ui:VisualElement>
+    </ui:VisualElement>
+  </ui:VisualElement>
+</ui:UXML>

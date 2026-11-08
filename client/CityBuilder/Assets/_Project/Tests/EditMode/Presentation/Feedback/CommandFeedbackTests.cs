@@ -62,11 +62,11 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Feedback
             return Fixtures.Read("snapshot-city-start.json");
         }
 
-        /// <summary>Each of the four commands that works gives its own success toast.</summary>
+        /// <summary>Each accepted command gives its own success toast.</summary>
         [Test]
         public async Task EachAcceptedCommand_ShowsItsSuccessToast()
         {
-            _transport.Answer(200, Success()).Answer(200, Success()).Answer(200, Success()).Answer(200, Success());
+            _transport.Answer(200, Success()).Answer(200, Success()).Answer(200, Success()).Answer(200, Success()).Answer(200, Success());
 
             await _sender.SendAsync(CommandIntent.PlaceBuilding("house", 1, 2), CancellationToken.None);
             await _sender.SendAsync(CommandIntent.UpgradeBuilding(3), CancellationToken.None);
@@ -78,6 +78,9 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Feedback
             Assert.That(_queue.Visible[1].Text, Is.EqualTo("Workers updated"));
             Assert.That(_queue.Visible[2].Text, Is.EqualTo("Research started"));
             Assert.That(_queue.Visible[2].Kind, Is.EqualTo(ToastKind.Success));
+
+            await _sender.SendAsync(CommandIntent.StartTrip(2, 5, "logs", "all"), CancellationToken.None);
+            Assert.That(_queue.Visible[2].Text, Is.EqualTo("Trip started"));
         }
 
         /// <summary>A placement that works says so.</summary>

@@ -1,6 +1,8 @@
 #nullable enable
 
 using System;
+using System.Collections.Generic;
+using CityBuilder.Simulation.Map;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -44,6 +46,12 @@ namespace CityBuilder.Client.Presentation.City
         /// <summary>The colour of an occupied tile while the player picks where to build.</summary>
         private static readonly Color OccupiedHintColor = new Color(0.85f, 0.20f, 0.20f);
 
+        /// <summary>The colour of a path step marker while the player sets up a trip or route (CR-0008).</summary>
+        private static readonly Color PathColor = new Color(0.95f, 0.78f, 0.25f);
+
+        /// <summary>How much of a tile's width a path step marker fills.</summary>
+        private const float PathMarkerFill = 0.36f;
+
         /// <summary>The grid the tiles follow.</summary>
         private readonly CityGrid _grid;
 
@@ -51,7 +59,13 @@ namespace CityBuilder.Client.Presentation.City
         private readonly TileSelection _selection;
 
         /// <summary>The materials this object created, destroyed with it. The first two are the chessboard greens of the cube fallback, and stay null when tile models are used.</summary>
-        private readonly Material?[] _materials = new Material?[6];
+        private readonly Material?[] _materials = new Material?[7];
+
+        /// <summary>Pooled step markers that draw a preview path across the map (CR-0008).</summary>
+        private readonly List<GameObject> _pathMarkers = new List<GameObject>();
+
+        /// <summary>The path steps shown now; empty when no path is shown (CR-0008).</summary>
+        private IReadOnlyList<(int X, int Y)> _shownPath = Array.Empty<(int X, int Y)>();
 
         /// <summary>The material each tile shows when it has no hint, row by row: the art's shared material, or a chessboard green.</summary>
         private readonly Material[] _groundMaterials;
@@ -167,6 +181,7 @@ namespace CityBuilder.Client.Presentation.City
             SelectionMarker = CreateMarker("Selection marker", _materials[3] = PlaceholderArt.CreateMaterial(SelectionColor), MarkerThickness);
             _materials[4] = PlaceholderArt.CreateMaterial(FreeHintColor);
             _materials[5] = PlaceholderArt.CreateMaterial(OccupiedHintColor);
+            _materials[6] = PlaceholderArt.CreateMaterial(PathColor);
 
             _selection.Changed += ShowSelection;
             ShowSelection();
@@ -221,6 +236,50 @@ namespace CityBuilder.Client.Presentation.City
         public TileHint? ShownHintAt(GridCoordinate tile)
         {
             return _grid.Contains(tile) ? _shownHints[tile.Y * _grid.Width + tile.X] : null;
+        }
+
+        /// <summary>The path steps shown on the ground now; empty when no path is shown (CR-0008).</summary>
+        public IReadOnlyList<(int X, int Y)> ShownPath => _shownPath;
+
+        /// <summary>Draws <paramref name="steps"/> across the ground with pooled step markers, or hides them for null/empty (CR-0008).</summary>
+        /// <param name="steps">The tile steps from <see cref="PathFinder.Route"/>, or null to clear.</param>
+        public void ShowPath(IReadOnlyList<(int X, int Y)>? steps)
+        {
+            _shownPath = steps ?? Array.Empty<(int X, int Y)>();
+            int count = _shownPath.Count;
+            while (_pathMarkers.Count < count)
+            {
+                GameObject marker = CreateBlock(
+                    "Path step " + _pathMarkers.Count,
+                    PathMarkerFill,
+                    MarkerThickness,
+                    MarkerThickness * 1.5f,
+                    Vector3.zero);
+                marker.GetComponent<Renderer>().sharedMaterial = _materials[6]!;
+                _pathMarkers.Add(marker);
+            }
+
+            for (int i = 0; i < _pathMarkers.Count; i++)
+            {
+                GameObject marker = _pathMarkers[i];
+                if (i >= count)
+                {
+                    marker.SetActive(false);
+                    continue;
+                }
+
+                (int x, int y) = _shownPath[i];
+                var coord = new GridCoordinate(x, y);
+                if (!_grid.Contains(coord))
+                {
+                    marker.SetActive(false);
+                    continue;
+                }
+
+                Vector3 center = _grid.ToWorldCenter(coord);
+                marker.transform.localPosition = new Vector3(center.x, marker.transform.localPosition.y, center.z);
+                marker.SetActive(true);
+            }
         }
 
         /// <summary>The grass variants of visual v2 by <see cref="GroundVariants.For"/>, each loaded from <c>Resources</c>; a missing one is null.</summary>

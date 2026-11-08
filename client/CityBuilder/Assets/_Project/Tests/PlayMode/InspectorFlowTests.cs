@@ -10,6 +10,7 @@ using CityBuilder.Client.Net;
 using CityBuilder.Client.Presentation.Build;
 using CityBuilder.Client.Presentation.City;
 using CityBuilder.Client.Presentation.Inspector;
+using CityBuilder.Client.Presentation.Trips;
 using CityBuilder.Client.Presentation.Ui;
 using CityBuilder.Simulation;
 using CityBuilder.Simulation.Content;
@@ -63,6 +64,15 @@ namespace CityBuilder.Client.Tests.PlayMode
 
         /// <summary>The flow under test.</summary>
         private InspectorFlow _flow = null!;
+
+        /// <summary>The manual trip flow model.</summary>
+        private TripFlowModel _trips = null!;
+
+        /// <summary>The manual trip bar.</summary>
+        private TripBar _tripBar = null!;
+
+        /// <summary>The manual trip flow.</summary>
+        private TripFlow _tripFlow = null!;
 
         /// <summary>Cancels commands still open at the end of a test.</summary>
         private CancellationTokenSource _cancel = null!;
@@ -118,6 +128,7 @@ namespace CityBuilder.Client.Tests.PlayMode
         [TearDown]
         public void Destroy()
         {
+            _tripFlow.Dispose();
             _flow.Dispose();
             _cancel.Cancel();
             _cancel.Dispose();
@@ -148,12 +159,21 @@ namespace CityBuilder.Client.Tests.PlayMode
             _placement.Update(_display.Current!);
             _cancel = new CancellationTokenSource();
             _inspector = BuildingInspector.Create(_host.transform)!;
-            _flow = new InspectorFlow(content, _world, _sender, _inspector, _placement, _cancel.Token);
+            _trips = new TripFlowModel(content, grid);
+            _trips.Update(_display.Current!);
+            _tripBar = TripBar.Create(_host.transform, _trips)!;
+            _tripFlow = new TripFlow(_trips, _world, _sender, _tripBar, _inspector, _cancel.Token);
+            _flow = new InspectorFlow(content, _world, _sender, _inspector, _placement, _cancel.Token, _trips);
             _menu = BuildMenu.Create(_host.transform, new BuildMenuModel(content, _display.Current!))!;
             var menus = new MenuGroup();
             _menu.Opened += menus.Join(() => _menu.SetOpen(false)).NotifyOpened;
             _inspector.Opened += menus.Join(_flow.Close).NotifyOpened;
-            _display.Changed += () => _flow.Update(_display.Current!);
+            _ = menus.Join(_trips.Cancel);
+            _display.Changed += () =>
+            {
+                _trips.Update(_display.Current!);
+                _flow.Update(_display.Current!);
+            };
             _flow.Update(_display.Current!);
             yield return null;
         }
@@ -445,6 +465,48 @@ namespace CityBuilder.Client.Tests.PlayMode
             TapTile(2, 0);
 
             Assert.That(_inspector.IsShown, Is.False);
+        }
+
+        /// <summary>
+        /// Pressing Send trip on a stocked building hides the inspector, opens the trip bar, draws the path on the ground when a target building is
+        /// tapped, sends <c>start-trip</c> on Send, and clears the bar and path when the server answers (CR-0008).
+        /// </summary>
+        [UnityTest]
+        public IEnumerator SendTrip_FromInspector_DrawsPath_SendsStartTrip_AndClearsOnSuccess()
+        {
+            TapTile(2, 0);
+            Assert.That(_inspector.IsShown, Is.True);
+            Assert.That(LabelOf(BuildingInspector.StoreName).text, Is.EqualTo("Logs: 10 / 40, Planks: 10 / 20"));
+            Assert.That(ButtonOf(BuildingInspector.SendTripName).enabledSelf, Is.True);
+
+            _inspector.PressSendTrip();
+
+            Assert.That(_inspector.IsShown, Is.False, "inspector hides so the player can tap a target on the map");
+            Assert.That(_trips.Phase, Is.EqualTo(TripPhase.PickingTarget));
+            Assert.That(_tripBar.Root!.Q<VisualElement>(TripBar.BarName).ClassListContains("trip-bar--hidden"), Is.False);
+
+            // Tap woodcutter at (4, 0) — stores logs, 1 tile between (2, 0) and (4, 0).
+            TapTile(4, 0);
+
+            Assert.That(_trips.Phase, Is.EqualTo(TripPhase.Confirming));
+            Assert.That(_trips.CanConfirm, Is.True);
+            Assert.That(_world.Ground!.ShownPath.Count, Is.EqualTo(3));
+            Assert.That(_world.Ground.ShownPath[1].X, Is.EqualTo(3));
+
+            _tripBar.PressPreset("half");
+            _tripBar.PressConfirm();
+
+            Assert.That(_sender.Pending.Count, Is.EqualTo(1));
+            Assert.That(_sender.Pending[0].Intent, Is.EqualTo(CommandIntent.StartTrip(SawmillId, 4, "logs", "half")));
+            yield return WaitUntil(() => _transport.OpenCount == 1);
+            Assert.That(_transport.Requests[0].Url, Does.EndWith("/api/v1/commands/start-trip"));
+
+            _transport.Respond(200, InspectorCity(220, 3, 243, 11));
+            yield return WaitUntil(() => _sender.Pending.Count == 0);
+
+            Assert.That(_trips.Phase, Is.EqualTo(TripPhase.Idle));
+            Assert.That(_world.Ground.ShownPath, Is.Empty);
+            Assert.That(_tripBar.Root.Q<VisualElement>(TripBar.BarName).ClassListContains("trip-bar--hidden"), Is.True);
         }
     }
 }

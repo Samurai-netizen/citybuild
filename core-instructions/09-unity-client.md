@@ -112,13 +112,14 @@ T2's.
 Every screen follows the rules below (one scroll direction at most, the rest scaled to fit, OD-17; phones from the iPhone XR on, OD-18), and
 a menu joins the `MenuGroup` (OD-16). Display only: the client runs the shared engine on its copy (`DisplayCity`, with no absence start: an
 open game is present) and sends intent; the server decides.
-- **HUD and inspector (T2 part A):** the HUD chips show each item's **city total** (`totals`) and the purse; the inspector shows the
-  building's **store** (each good as amount / limit) next to its stall reason, and what a construction site or a waiting upgrade still
-  needs. The research screen shows a research waiting for goods at the science building, and its start button is off with its reason
-  until a science building stands.
-- **Trip flow (T2 part A):** from the inspector, pick the target on the map (a building or a project), the good and All, Half or Quarter
-  (a percentage once researched); the path is drawn by the shared engine (`04` §17); the button is off with its reason (no free worker,
-  nothing to carry, nothing needed there); it sends `start-trip`. A running trip shows on both ends with its countdown.
+- **HUD and inspector (T2 part A, built):** the HUD chips show each item's **city total** (`totals`) and the purse; the inspector shows the
+  building's **store** (each good as amount / limit) next to its stall reason, and what a construction site, a waiting upgrade or the science
+  building with a waiting research still needs. The research screen shows a research waiting for goods at the science building, and its start
+  button is off with its reason (`Requires: Scriptorium`) until a science building stands.
+- **Trip flow (T2 part A, built):** from the inspector (`Send trip`), pick the target on the map (a building or a project), the good and All,
+  Half or Quarter (a percentage once researched); the path is drawn by the shared engine (`04` §17, `GroundTiles.ShowPath`); the button is off
+  with its reason (no free worker, nothing to carry, nothing needed there); it sends `start-trip`. A running trip shows on both ends with its
+  countdown (`TripsText`).
 - **Road mode (T2 part B):** from the build menu, drag a line of tiles; ghosts show the total cost and each refused tile's reason;
   confirming sends `place-roads`; selected road tiles can be upgraded or removed. The ground draws roads by level.
 - **Courier station and route editor (T2 part C):** the station's inspector lists its couriers (the worker stepper), each one's state,

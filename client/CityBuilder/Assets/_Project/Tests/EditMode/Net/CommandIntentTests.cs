@@ -16,12 +16,14 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             CommandIntent upgrade = CommandIntent.UpgradeBuilding(3);
             CommandIntent workers = CommandIntent.AssignWorkers(3, 2);
             CommandIntent research = CommandIntent.StartResearch("trade_charter");
+            CommandIntent trip = CommandIntent.StartTrip(2, 5, "logs", "half");
 
             Assert.That(place.Kind, Is.EqualTo(CommandKind.PlaceBuilding));
             Assert.That((place.ContentId, place.X, place.Y), Is.EqualTo(("sawmill", 4, 7)));
             Assert.That((upgrade.Kind, upgrade.BuildingId), Is.EqualTo((CommandKind.UpgradeBuilding, 3)));
             Assert.That((workers.Kind, workers.BuildingId, workers.Workers), Is.EqualTo((CommandKind.AssignWorkers, 3, 2)));
             Assert.That((research.Kind, research.ContentId), Is.EqualTo((CommandKind.StartResearch, "trade_charter")));
+            Assert.That((trip.Kind, trip.BuildingId, trip.TargetId, trip.ContentId, trip.Amount), Is.EqualTo((CommandKind.StartTrip, 2, 5, "logs", "half")));
         }
 
         /// <summary>Intents with the same kind and arguments are equal; any difference makes them different.</summary>
@@ -34,6 +36,9 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(CommandIntent.PlaceBuilding("sawmill", 4, 7), Is.Not.EqualTo(CommandIntent.PlaceBuilding("house", 4, 7)));
             Assert.That(CommandIntent.AssignWorkers(3, 2), Is.Not.EqualTo(CommandIntent.AssignWorkers(3, 1)));
             Assert.That(CommandIntent.UpgradeBuilding(3), Is.Not.EqualTo(CommandIntent.AssignWorkers(3, 0)));
+            Assert.That(CommandIntent.StartTrip(2, 5, "logs", "all"), Is.EqualTo(CommandIntent.StartTrip(2, 5, "logs", "all")));
+            Assert.That(CommandIntent.StartTrip(2, 5, "logs", "all"), Is.Not.EqualTo(CommandIntent.StartTrip(2, 5, "logs", "half")));
+            Assert.That(CommandIntent.StartTrip(2, 5, "logs", "all"), Is.Not.EqualTo(CommandIntent.StartTrip(2, 6, "logs", "all")));
         }
 
         /// <summary>A blank content id is refused when the intent is made: no content has such an id.</summary>
@@ -44,6 +49,8 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         {
             Assert.That(() => CommandIntent.PlaceBuilding(id!, 0, 0), Throws.ArgumentException);
             Assert.That(() => CommandIntent.StartResearch(id!), Throws.ArgumentException);
+            Assert.That(() => CommandIntent.StartTrip(1, 2, id!, "all"), Throws.ArgumentException);
+            Assert.That(() => CommandIntent.StartTrip(1, 2, "logs", id!), Throws.ArgumentException);
         }
 
         /// <summary>The log form names the kind and the arguments.</summary>
@@ -54,6 +61,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(CommandIntent.UpgradeBuilding(3).ToString(), Is.EqualTo("UpgradeBuilding(building 3)"));
             Assert.That(CommandIntent.AssignWorkers(3, 2).ToString(), Is.EqualTo("AssignWorkers(building 3, workers 2)"));
             Assert.That(CommandIntent.StartResearch("trade_charter").ToString(), Is.EqualTo("StartResearch(trade_charter)"));
+            Assert.That(CommandIntent.StartTrip(2, 5, "logs", "all").ToString(), Is.EqualTo("StartTrip(2->5 logs all)"));
         }
     }
 }

@@ -21,8 +21,12 @@
           <ui:VisualElement class="inspector-status-box box">
             <ui:Label name="inspector-status" class="inspector-status t-heading" />
             <ui:Label name="inspector-time" class="t-body" />
+            <ui:Label name="inspector-needs" class="inspector-needs t-small" />
+            <ui:Label name="inspector-store" class="inspector-store t-small" />
+            <ui:Label name="inspector-trips" class="inspector-trips t-small" />
             <ui:Label name="inspector-recipe" class="t-body" />
             <ui:Label name="inspector-rates" class="t-small" />
+            <ui:Button name="inspector-send-trip" class="inspector-send-trip btn btn--secondary" text="Send trip" />
           </ui:VisualElement>
           <ui:VisualElement class="inspector-workers-box box box--light">
             <ui:VisualElement name="inspector-stepper" class="inspector-stepper">

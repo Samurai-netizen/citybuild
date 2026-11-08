@@ -138,6 +138,12 @@ namespace CityBuilder.Client.Net
             return SendAsync<CitySnapshotDto>("POST", "/commands/start-research", request, true, cancellationToken);
         }
 
+        /// <summary><c>POST /commands/start-trip</c> (CR-0008).</summary>
+        public Task<ApiResult<CitySnapshotDto>> StartTripAsync(StartTripRequestDto request, CancellationToken cancellationToken)
+        {
+            return SendAsync<CitySnapshotDto>("POST", "/commands/start-trip", request, true, cancellationToken);
+        }
+
         /// <summary>
         /// Sends one request and reads the answer. The timeout is the client's own, so it works the same on every transport: when it
         /// fires the transport's token is cancelled and the call returns <c>CLIENT_TIMEOUT</c>; when the caller's token is cancelled

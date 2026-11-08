@@ -58,6 +58,18 @@ namespace CityBuilder.Client.Presentation.Inspector
         /// <summary>The name of the rates label.</summary>
         public const string RatesName = "inspector-rates";
 
+        /// <summary>The name of the building store label (CR-0008).</summary>
+        public const string StoreName = "inspector-store";
+
+        /// <summary>The name of the project needs label (CR-0008).</summary>
+        public const string NeedsName = "inspector-needs";
+
+        /// <summary>The name of the running trips label (CR-0008).</summary>
+        public const string TripsName = "inspector-trips";
+
+        /// <summary>The name of the Send trip button (CR-0008).</summary>
+        public const string SendTripName = "inspector-send-trip";
+
         /// <summary>The name of the row that holds the worker stepper.</summary>
         public const string StepperName = "inspector-stepper";
 
@@ -117,6 +129,9 @@ namespace CityBuilder.Client.Presentation.Inspector
 
         /// <summary>Raised when the player presses Upgrade (only while the model allows it).</summary>
         public event Action? UpgradeRequested;
+
+        /// <summary>Raised when the player presses Send trip (only while the model allows it; CR-0008).</summary>
+        public event Action? SendTripRequested;
 
         /// <summary>Raised when the player presses the close button.</summary>
         public event Action? CloseRequested;
@@ -208,6 +223,15 @@ namespace CityBuilder.Client.Presentation.Inspector
             }
         }
 
+        /// <summary>The player pressed Send trip: what a finger on the button does, as a call. Does nothing unless the model allows it (CR-0008).</summary>
+        public void PressSendTrip()
+        {
+            if (_model != null && _model.CanSendTrip)
+            {
+                SendTripRequested?.Invoke();
+            }
+        }
+
         /// <summary>The player pressed the close button: what a finger on the button does, as a call.</summary>
         public void PressClose()
         {
@@ -238,6 +262,7 @@ namespace CityBuilder.Client.Presentation.Inspector
             elements.Minus.clicked += PressMinus;
             elements.Plus.clicked += PressPlus;
             elements.Upgrade.clicked += PressUpgrade;
+            elements.SendTrip.clicked += PressSendTrip;
             elements.Close.clicked += PressClose;
             root.RegisterCallback<GeometryChangedEvent>(_ => UiRoot.PadBySafeArea(root, BasePadding));
             Refresh();
@@ -267,6 +292,11 @@ namespace CityBuilder.Client.Presentation.Inspector
             SetLine(e.Time, model.TimeText);
             SetLine(e.Recipe, model.RecipeText);
             SetLine(e.Rates, model.RatesText);
+            SetLine(e.Store, model.StoreText);
+            SetLine(e.Needs, model.NeedsText);
+            SetLine(e.Trips, model.TripsText);
+            e.SendTrip.style.display = model.HasSendTrip ? DisplayStyle.Flex : DisplayStyle.None;
+            e.SendTrip.SetEnabled(model.CanSendTrip);
             e.Stepper.style.display = model.HasStepper ? DisplayStyle.Flex : DisplayStyle.None;
             e.Workers.text = model.WorkersText;
             e.Minus.SetEnabled(model.MinusEnabled);
@@ -307,11 +337,12 @@ namespace CityBuilder.Client.Presentation.Inspector
             public VisualElement Stepper = null!;
 
             /// <summary>The labels the inspector writes.</summary>
-            public Label Name = null!, Level = null!, Status = null!, Time = null!, Recipe = null!, Rates = null!, Workers = null!, Preview = null!,
-                StepperNote = null!, UpgradeTitle = null!, UpgradeCost = null!, UpgradeTime = null!, UpgradeGain = null!, UpgradeNote = null!;
+            public Label Name = null!, Level = null!, Status = null!, Time = null!, Recipe = null!, Rates = null!, Store = null!, Needs = null!,
+                Trips = null!, Workers = null!, Preview = null!, StepperNote = null!, UpgradeTitle = null!, UpgradeCost = null!, UpgradeTime = null!,
+                UpgradeGain = null!, UpgradeNote = null!;
 
             /// <summary>The buttons.</summary>
-            public Button Minus = null!, Plus = null!, Upgrade = null!, Close = null!;
+            public Button Minus = null!, Plus = null!, Upgrade = null!, SendTrip = null!, Close = null!;
 
             /// <summary>Finds every element in <paramref name="root"/>; null when one is missing.</summary>
             public static Elements? Find(VisualElement root)
@@ -327,6 +358,9 @@ namespace CityBuilder.Client.Presentation.Inspector
                     Time = root.Q<Label>(TimeName),
                     Recipe = root.Q<Label>(RecipeName),
                     Rates = root.Q<Label>(RatesName),
+                    Store = root.Q<Label>(StoreName),
+                    Needs = root.Q<Label>(NeedsName),
+                    Trips = root.Q<Label>(TripsName),
                     Workers = root.Q<Label>(WorkersName),
                     Preview = root.Q<Label>(PreviewName),
                     StepperNote = root.Q<Label>(StepperNoteName),
@@ -338,13 +372,15 @@ namespace CityBuilder.Client.Presentation.Inspector
                     Minus = root.Q<Button>(MinusName),
                     Plus = root.Q<Button>(PlusName),
                     Upgrade = root.Q<Button>(UpgradeName),
+                    SendTrip = root.Q<Button>(SendTripName),
                     Close = root.Q<Button>(CloseName),
                 };
                 bool complete = found.Panel != null && found.Icon != null && found.Stepper != null && found.Name != null && found.Level != null
-                    && found.Status != null && found.Time != null && found.Recipe != null && found.Rates != null && found.Workers != null
-                    && found.Preview != null && found.StepperNote != null && found.UpgradeTitle != null && found.UpgradeCost != null
-                    && found.UpgradeTime != null && found.UpgradeGain != null && found.UpgradeNote != null && found.Minus != null
-                    && found.Plus != null && found.Upgrade != null && found.Close != null;
+                    && found.Status != null && found.Time != null && found.Recipe != null && found.Rates != null && found.Store != null
+                    && found.Needs != null && found.Trips != null && found.Workers != null && found.Preview != null && found.StepperNote != null
+                    && found.UpgradeTitle != null && found.UpgradeCost != null && found.UpgradeTime != null && found.UpgradeGain != null
+                    && found.UpgradeNote != null && found.Minus != null && found.Plus != null && found.Upgrade != null
+                    && found.SendTrip != null && found.Close != null;
                 return complete ? found : null;
             }
         }

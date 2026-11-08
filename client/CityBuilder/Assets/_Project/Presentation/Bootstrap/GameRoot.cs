@@ -10,6 +10,7 @@ using CityBuilder.Client.Presentation.Feedback;
 using CityBuilder.Client.Presentation.Hud;
 using CityBuilder.Client.Presentation.Inspector;
 using CityBuilder.Client.Presentation.Research;
+using CityBuilder.Client.Presentation.Trips;
 using CityBuilder.Client.Presentation.Ui;
 using CityBuilder.Client.Presentation.WelcomeBack;
 using CityBuilder.Simulation.Content;
@@ -95,6 +96,15 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         /// <summary>Joins the tile selection, the inspector and the command sender; null until the start has connected, or when the inspector is missing.</summary>
         private InspectorFlow? _inspectorFlow;
 
+        /// <summary>The manual trip flow state (CR-0008); null until the start has connected.</summary>
+        private TripFlowModel? _trips;
+
+        /// <summary>The manual trip bar (CR-0008); null until the start has connected, or when its assets are missing.</summary>
+        private TripBar? _tripBar;
+
+        /// <summary>Joins the inspector's Send trip button, the map selection, the trip bar and the command sender (CR-0008).</summary>
+        private TripFlow? _tripFlow;
+
         /// <summary>The research screen; null until the start has connected, or when its assets are missing.</summary>
         private ResearchScreen? _researchScreen;
 
@@ -154,6 +164,12 @@ namespace CityBuilder.Client.Presentation.Bootstrap
 
         /// <summary>The inspector's flow (<c>09</c> Building inspector); null until the start has connected, or when the inspector is missing.</summary>
         internal InspectorFlow? InspectorFlow => _inspectorFlow;
+
+        /// <summary>The manual trip bar (CR-0008); null until the start has connected, or when its assets are missing.</summary>
+        internal TripBar? TripBar => _tripBar;
+
+        /// <summary>The manual trip flow (CR-0008); null until the start has connected, or when the bar or inspector is missing.</summary>
+        internal TripFlow? TripFlow => _tripFlow;
 
         /// <summary>The research screen (<c>09</c> Research screen); null until the start has connected, or when its assets are missing.</summary>
         internal ResearchScreen? ResearchScreen => _researchScreen;
@@ -285,6 +301,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         private void TearDownContentParts()
         {
             _placement?.Dispose();
+            _tripFlow?.Dispose();
             _inspectorFlow?.Dispose();
             _researchFlow?.Dispose();
             _welcomeFlow?.Dispose();
@@ -297,10 +314,14 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             DestroyView(_hud);
             DestroyView(_buildMenu);
             DestroyView(_placementBar);
+            DestroyView(_tripBar);
             DestroyView(_inspector);
             DestroyView(_researchScreen);
             DestroyView(_welcomePanel);
             _placement = null;
+            _trips = null;
+            _tripBar = null;
+            _tripFlow = null;
             _inspectorFlow = null;
             _researchFlow = null;
             _welcomeFlow = null;
@@ -344,6 +365,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         private void OnDestroy()
         {
             _placement?.Dispose();
+            _tripFlow?.Dispose();
             _inspectorFlow?.Dispose();
             _researchFlow?.Dispose();
             _welcomeFlow?.Dispose();
@@ -382,6 +404,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                 _hud?.Model?.Update(city, _monitor?.State ?? ConnectionState.Connected);
                 _buildMenu?.Model?.Update(city);
                 _placement?.Update(city);
+                _trips?.Update(city);
                 _inspectorFlow?.Update(city);
                 _researchFlow?.Update(city);
                 _connectionFlow?.Update();
@@ -475,6 +498,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         /// </summary>
         private void CreateInspector(GameContent content)
         {
+            CityState? city = _displayCity?.Current;
             if (_commandSender == null || _world!.Grid == null)
             {
                 return;
@@ -486,7 +510,21 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                 return;
             }
 
-            var flow = _inspectorFlow = new InspectorFlow(content, _world, _commandSender, _inspector, _placement?.Model, destroyCancellationToken);
+            if (city != null)
+            {
+                var trips = new TripFlowModel(content, _world.Grid);
+                trips.Update(city);
+                TripBar? tripBar = TripBar.Create(transform, trips);
+                if (tripBar != null)
+                {
+                    _trips = trips;
+                    _tripBar = tripBar;
+                    _tripFlow = new TripFlow(trips, _world, _commandSender, tripBar, _inspector, destroyCancellationToken);
+                    _ = _menus.Join(trips.Cancel);
+                }
+            }
+
+            var flow = _inspectorFlow = new InspectorFlow(content, _world, _commandSender, _inspector, _placement?.Model, destroyCancellationToken, _trips);
             _inspector.Opened += _menus.Join(flow.Close).NotifyOpened;
             _world.IsPointerOverUi = IsOverUi;
         }
@@ -555,6 +593,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         {
             return (_buildMenu != null && _buildMenu.IsOverUi(screenPosition))
                 || (_placementBar != null && _placementBar.IsOverUi(screenPosition))
+                || (_tripBar != null && _tripBar.IsOverUi(screenPosition))
                 || (_inspector != null && _inspector.IsOverUi(screenPosition))
                 || (_researchScreen != null && _researchScreen.IsOverUi(screenPosition))
                 || (_welcomePanel != null && _welcomePanel.IsOverUi(screenPosition))
@@ -581,6 +620,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             Show(ConnectionStatusModel.ForConnection(_monitor.State, _monitor.LastError, _content, _cityStore.Snapshot));
             CommandAvailability availability = CommandAvailability.For(_monitor.State);
             _placement?.Model.SetCommandAvailability(availability);
+            _trips?.SetCommandAvailability(availability);
             _inspectorFlow?.SetCommandAvailability(availability);
             _researchFlow?.SetCommandAvailability(availability);
             CityState? city = _displayCity?.Current;

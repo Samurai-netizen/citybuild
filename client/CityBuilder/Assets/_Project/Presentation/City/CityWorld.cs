@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using CityBuilder.Client.Net;
 using CityBuilder.Simulation.Content;
+using CityBuilder.Simulation.Map;
 using CityBuilder.Simulation.State;
 using UnityEngine;
 
@@ -114,6 +115,13 @@ namespace CityBuilder.Client.Presentation.City
         public void ShowHints(TileHint[]? hints)
         {
             _ground?.ShowHints(hints);
+        }
+
+        /// <summary>Draws a preview path across the ground (<see cref="GroundTiles.ShowPath"/>), or clears it for null (CR-0008). Does nothing before <see cref="ShowGrid"/>.</summary>
+        /// <param name="steps">The tile steps from <see cref="PathFinder.Route"/>, or null to clear.</param>
+        public void ShowPath(IReadOnlyList<(int X, int Y)>? steps)
+        {
+            _ground?.ShowPath(steps);
         }
 
         /// <summary>Makes the ghosts match the commands on their way (<see cref="PlacementGhosts.Show"/>). Does nothing before <see cref="ShowGrid"/>.</summary>

@@ -14,7 +14,7 @@ namespace CityBuilder.Client.Net
     public sealed class CommandIntent : IEquatable<CommandIntent>
     {
         /// <summary>Creates an intent; the factory methods are the way in, so each kind holds only the members it uses.</summary>
-        private CommandIntent(CommandKind kind, string? contentId, int x, int y, int buildingId, int workers)
+        private CommandIntent(CommandKind kind, string? contentId, int x, int y, int buildingId, int workers, int targetId = 0, string? amount = null)
         {
             Kind = kind;
             ContentId = contentId;
@@ -22,12 +22,14 @@ namespace CityBuilder.Client.Net
             Y = y;
             BuildingId = buildingId;
             Workers = workers;
+            TargetId = targetId;
+            Amount = amount;
         }
 
         /// <summary>Which command it is.</summary>
         public CommandKind Kind { get; }
 
-        /// <summary>The building type of a place-building intent, or the research of a start-research one; null for the others.</summary>
+        /// <summary>The building type of a place-building intent, the research of a start-research one, or the item id of a start-trip one; null for the others.</summary>
         public string? ContentId { get; }
 
         /// <summary>The tile's column of a place-building intent; 0 for the others.</summary>
@@ -36,11 +38,17 @@ namespace CityBuilder.Client.Net
         /// <summary>The tile's row of a place-building intent; 0 for the others.</summary>
         public int Y { get; }
 
-        /// <summary>The building of an upgrade or assign-workers intent; 0 for the others.</summary>
+        /// <summary>The building of an upgrade or assign-workers intent, or the source building of a start-trip intent; 0 for the others.</summary>
         public int BuildingId { get; }
 
         /// <summary>The absolute worker target of an assign-workers intent; 0 for the others.</summary>
         public int Workers { get; }
+
+        /// <summary>The target building of a start-trip intent; 0 for the others.</summary>
+        public int TargetId { get; }
+
+        /// <summary>The amount text (<c>all</c>, <c>half</c>, <c>quarter</c>, <c>25%</c>, or an exact quantity) of a start-trip intent; null for the others.</summary>
+        public string? Amount { get; }
 
         /// <summary>Build <paramref name="buildingTypeId"/> on the tile (<paramref name="x"/>, <paramref name="y"/>).</summary>
         /// <exception cref="ArgumentException">The type id is null or blank.</exception>
@@ -68,11 +76,26 @@ namespace CityBuilder.Client.Net
             return new CommandIntent(CommandKind.StartResearch, RequireId(researchId, nameof(researchId)), 0, 0, 0, 0);
         }
 
+        /// <summary>Send a free worker from <paramref name="sourceId"/> to <paramref name="targetId"/> carrying <paramref name="amount"/> of <paramref name="itemId"/> (CR-0008).</summary>
+        /// <exception cref="ArgumentException">The item id or amount text is null or blank.</exception>
+        public static CommandIntent StartTrip(int sourceId, int targetId, string itemId, string amount)
+        {
+            return new CommandIntent(
+                CommandKind.StartTrip,
+                RequireId(itemId, nameof(itemId)),
+                0,
+                0,
+                sourceId,
+                0,
+                targetId,
+                RequireId(amount, nameof(amount)));
+        }
+
         /// <inheritdoc/>
         public bool Equals(CommandIntent? other)
         {
             return other != null && Kind == other.Kind && ContentId == other.ContentId && X == other.X && Y == other.Y
-                && BuildingId == other.BuildingId && Workers == other.Workers;
+                && BuildingId == other.BuildingId && Workers == other.Workers && TargetId == other.TargetId && Amount == other.Amount;
         }
 
         /// <inheritdoc/>
@@ -84,7 +107,7 @@ namespace CityBuilder.Client.Net
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-            return HashCode.Combine(Kind, ContentId, X, Y, BuildingId, Workers);
+            return HashCode.Combine(Kind, ContentId, X, Y, BuildingId, Workers, TargetId, Amount);
         }
 
         /// <summary>A one-line form for logs, for example <c>AssignWorkers(building 3, workers 2)</c>.</summary>
@@ -98,6 +121,8 @@ namespace CityBuilder.Client.Net
                     return "UpgradeBuilding(building " + BuildingId + ")";
                 case CommandKind.AssignWorkers:
                     return "AssignWorkers(building " + BuildingId + ", workers " + Workers + ")";
+                case CommandKind.StartTrip:
+                    return "StartTrip(" + BuildingId + "->" + TargetId + " " + ContentId + " " + Amount + ")";
                 default:
                     return "StartResearch(" + ContentId + ")";
             }
@@ -114,6 +139,8 @@ namespace CityBuilder.Client.Net
                     return api.UpgradeBuildingAsync(new UpgradeBuildingRequestDto(requestId, BuildingId), cancellationToken);
                 case CommandKind.AssignWorkers:
                     return api.AssignWorkersAsync(new AssignWorkersRequestDto(requestId, BuildingId, Workers), cancellationToken);
+                case CommandKind.StartTrip:
+                    return api.StartTripAsync(new StartTripRequestDto(requestId, BuildingId, TargetId, ContentId!, Amount!), cancellationToken);
                 default:
                     return api.StartResearchAsync(new StartResearchRequestDto(requestId, ContentId!), cancellationToken);
             }

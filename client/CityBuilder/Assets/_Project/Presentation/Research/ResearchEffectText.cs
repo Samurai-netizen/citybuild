@@ -47,6 +47,10 @@ namespace CityBuilder.Client.Presentation.Research
                     return BuildingName(content, labor.Building) + ": −" + Percent(labor.Permille) + " labor";
                 case StorageCapBonusEffect storage:
                     return "+" + storage.Amount.ToString(CultureInfo.InvariantCulture) + " " + ItemText.ItemName(content, storage.Item) + " storage";
+                case WalkSpeedBonusEffect walk:
+                    return "+" + Percent(walk.Permille) + " walk speed";
+                case UnlockAmountModeEffect mode:
+                    return mode.Mode == AmountMode.Percent ? "Unlocks percentage amounts" : "Unlocks exact amounts";
                 default:
                     return string.Empty;
             }

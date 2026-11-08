@@ -64,6 +64,25 @@
   color: var(--c-go-ink);
 }
 
+.inspector-store {
+  margin-top: 2px;
+  color: var(--c-ink);
+}
+
+.inspector-needs {
+  margin-top: 2px;
+  color: var(--c-warn-ink);
+}
+
+.inspector-trips {
+  margin-top: 2px;
+  color: var(--c-ink-soft);
+}
+
+.inspector-send-trip {
+  margin-top: var(--sp-1);
+}
+
 .inspector-workers-box {
   flex-direction: column;
 }

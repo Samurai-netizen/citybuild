@@ -174,6 +174,8 @@ namespace CityBuilder.Client.Presentation.Feedback
                     return "Workers updated";
                 case CommandKind.StartResearch:
                     return "Research started";
+                case CommandKind.StartTrip:
+                    return "Trip started";
                 default:
                     return "Done";
             }

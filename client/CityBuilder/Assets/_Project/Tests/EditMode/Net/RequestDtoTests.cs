@@ -52,6 +52,15 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(text, Is.EqualTo("{\"requestId\":\"6f1c0000-0000-4000-8000-000000000001\",\"researchId\":\"trade_charter\"}"));
         }
 
+        /// <summary>Start-trip: <c>requestId</c>, <c>sourceId</c>, <c>targetId</c>, <c>itemId</c>, <c>amount</c> (CR-0008).</summary>
+        [Test]
+        public void StartTrip_HasExactlyItsFiveMembers()
+        {
+            string text = _json.Serialize(new StartTripRequestDto(RequestId, 2, 5, "logs", "all"));
+
+            Assert.That(text, Is.EqualTo("{\"requestId\":\"6f1c0000-0000-4000-8000-000000000001\",\"sourceId\":2,\"targetId\":5,\"itemId\":\"logs\",\"amount\":\"all\"}"));
+        }
+
         /// <summary>The dev login sends the name only; its answer reads the token and a UTC expiry.</summary>
         [Test]
         public void DevLogin_SendsTheNameAndReadsTheToken()
