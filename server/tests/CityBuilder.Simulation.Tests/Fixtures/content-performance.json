@@ -1,26 +1,37 @@
 {
-  "contentVersion": "performance-1",
+  "contentVersion": "performance-3",
   "rules": {
     "gridWidth": 10,
     "gridHeight": 10,
     "builderSlots": 10,
     "researchSlots": 1,
-    "baseStorageCaps": { "ore": 1000000000000 },
-    "maxOfflineProductionSeconds": 28800,
     "minCycleSeconds": 10,
-    "maxLaborReductionPermille": 0
+    "maxLaborReductionPermille": 0,
+    "groundTileMillis": 5000,
+    "crossingSpeedPermille": 200,
+    "minWalkSeconds": 2,
+    "maxWalkBonusPermille": 500,
+    "tripCarryLimit": 10,
+    "maxRouteStops": 8,
+    "maxStopActions": 4
   },
+  "roads": [
+    { "level": 1, "name": "Path", "tileMillis": 2500, "cost": { "coins": 5 } }
+  ],
   "startingCity": {
     "era": 1,
-    "inventory": { "coins": 10000, "ore": 100 }
+    "purse": 10000
   },
+  "amountPresets": [
+    { "id": "all", "name": "All", "percent": 100 }
+  ],
   "eras": [
     { "number": 1, "id": "test_era", "name": "Test Era" }
   ],
   "items": [
-    { "id": "coins", "name": "Coins", "era": 1, "capped": false, "tradable": false },
-    { "id": "ingots", "name": "Ingots", "era": 1, "capped": false, "tradable": true },
-    { "id": "ore", "name": "Ore", "era": 1, "capped": true, "tradable": true }
+    { "id": "coins", "name": "Coins", "era": 1, "currency": true, "tradable": false },
+    { "id": "ingots", "name": "Ingots", "era": 1, "currency": false, "tradable": true },
+    { "id": "ore", "name": "Ore", "era": 1, "currency": false, "tradable": true }
   ],
   "buildings": [
     {
@@ -47,7 +58,8 @@
         {
           "level": 1,
           "maxWorkers": 2,
-          "recipe": { "outputs": { "ore": 2 }, "labor": 20 }
+          "recipe": { "outputs": { "ore": 2 }, "labor": 20 },
+          "storage": { "ore": 12000 }
         }
       ]
     },
@@ -63,8 +75,22 @@
         {
           "level": 1,
           "maxWorkers": 2,
-          "recipe": { "inputs": { "ore": 1 }, "outputs": { "ingots": 1 }, "labor": 20 }
+          "recipe": { "inputs": { "ore": 1 }, "outputs": { "ingots": 1 }, "labor": 20 },
+          "storage": { "ingots": 1000000000000, "ore": 1000000000000 }
         }
+      ]
+    },
+    {
+      "id": "lab",
+      "name": "Lab",
+      "kind": "science",
+      "era": 1,
+      "availableAtStart": true,
+      "maxPerCity": 1,
+      "cost": { "coins": 10 },
+      "buildSeconds": 10,
+      "levels": [
+        { "level": 1 }
       ]
     }
   ],

@@ -6,7 +6,11 @@ using CityBuilder.Api.Http;
 using CityBuilder.Application.Commands;
 using CityBuilder.Application.Commands.AssignWorkers;
 using CityBuilder.Application.Commands.PlaceBuilding;
+using CityBuilder.Application.Commands.ReenergizeCouriers;
+using CityBuilder.Application.Commands.Roads;
+using CityBuilder.Application.Commands.SetRoute;
 using CityBuilder.Application.Commands.StartResearch;
+using CityBuilder.Application.Commands.StartTrip;
 using CityBuilder.Application.Commands.UpgradeBuilding;
 using CityBuilder.Application.Content;
 using CityBuilder.Application.Persistence;
@@ -37,6 +41,12 @@ public static class CommandEndpoints
         commands.MapPost("/upgrade-building", UpgradeBuildingAsync).Produces<CitySnapshot>(StatusCodes.Status200OK, "application/json");
         commands.MapPost("/assign-workers", AssignWorkersAsync).Produces<CitySnapshot>(StatusCodes.Status200OK, "application/json");
         commands.MapPost("/start-research", StartResearchAsync).Produces<CitySnapshot>(StatusCodes.Status200OK, "application/json");
+        commands.MapPost("/place-roads", PlaceRoadsAsync).Produces<CitySnapshot>(StatusCodes.Status200OK, "application/json");
+        commands.MapPost("/upgrade-roads", UpgradeRoadsAsync).Produces<CitySnapshot>(StatusCodes.Status200OK, "application/json");
+        commands.MapPost("/remove-roads", RemoveRoadsAsync).Produces<CitySnapshot>(StatusCodes.Status200OK, "application/json");
+        commands.MapPost("/start-trip", StartTripAsync).Produces<CitySnapshot>(StatusCodes.Status200OK, "application/json");
+        commands.MapPost("/set-route", SetRouteAsync).Produces<CitySnapshot>(StatusCodes.Status200OK, "application/json");
+        commands.MapPost("/reenergize-couriers", ReenergizeCouriersAsync).Produces<CitySnapshot>(StatusCodes.Status200OK, "application/json");
         return commands;
     }
 
@@ -160,6 +170,217 @@ public static class CommandEndpoints
         var command = new StartResearchCommand(request.RequestId, request.ResearchId ?? string.Empty);
         return await ExecuteAsync(command, player, pipeline, content, json, loggers, cancellationToken);
     }
+
+    /// <summary>
+    /// Sends a free worker with goods from one building's store to another in the acting player's city (<see cref="StartTripCommand"/>,
+    /// CR-0008). The body names only the two buildings, the good and the amount; a body with an unknown property, a missing field or a value of
+    /// the wrong type is refused by the binding (400) before anything runs.
+    /// </summary>
+    /// <param name="request">The body, or <see langword="null"/> when there is none.</param>
+    /// <param name="player">The acting player, from the access token.</param>
+    /// <param name="pipeline">Runs the command.</param>
+    /// <param name="content">The server's content, for the snapshot.</param>
+    /// <param name="json">The HTTP JSON settings, so the snapshot reads as <c>GET /city</c>'s.</param>
+    /// <param name="loggers">Gives the logger of the command lines.</param>
+    /// <param name="cancellationToken">The request's cancellation; nothing is committed then.</param>
+    /// <returns>200 with the snapshot, or Problem Details.</returns>
+    private static async Task<Results<ContentHttpResult, ProblemHttpResult>> StartTripAsync(
+        StartTripRequest? request,
+        ICurrentPlayer player,
+        CommandPipeline pipeline,
+        IContentProvider content,
+        IOptions<HttpJsonOptions> json,
+        ILoggerFactory loggers,
+        CancellationToken cancellationToken)
+    {
+        if (request is null)
+        {
+            return ApiProblem.Of(ErrorCatalogue.InvalidArgument.WithDetail("The body must be a JSON object."));
+        }
+
+        var command = new StartTripCommand(
+            request.RequestId, request.SourceId, request.TargetId, request.ItemId ?? string.Empty, request.Amount ?? string.Empty);
+        return await ExecuteAsync(command, player, pipeline, content, json, loggers, cancellationToken);
+    }
+
+    /// <summary>
+    /// Sets or clears the route of a courier station's slot in the acting player's city (<see cref="SetRouteCommand"/>, CR-0008). The body
+    /// names only the station, the slot and the stops; a body with an unknown property, a missing field or a value of the wrong type is
+    /// refused by the binding (400) before anything runs.
+    /// </summary>
+    /// <param name="request">The body, or <see langword="null"/> when there is none.</param>
+    /// <param name="player">The acting player, from the access token.</param>
+    /// <param name="pipeline">Runs the command.</param>
+    /// <param name="content">The server's content, for the snapshot.</param>
+    /// <param name="json">The HTTP JSON settings, so the snapshot reads as <c>GET /city</c>'s.</param>
+    /// <param name="loggers">Gives the logger of the command lines.</param>
+    /// <param name="cancellationToken">The request's cancellation; nothing is committed then.</param>
+    /// <returns>200 with the snapshot, or Problem Details.</returns>
+    private static async Task<Results<ContentHttpResult, ProblemHttpResult>> SetRouteAsync(
+        SetRouteRequest? request,
+        ICurrentPlayer player,
+        CommandPipeline pipeline,
+        IContentProvider content,
+        IOptions<HttpJsonOptions> json,
+        ILoggerFactory loggers,
+        CancellationToken cancellationToken)
+    {
+        if (request is null)
+        {
+            return ApiProblem.Of(ErrorCatalogue.InvalidArgument.WithDetail("The body must be a JSON object."));
+        }
+
+        var command = new SetRouteCommand(request.RequestId, request.StationId, request.Slot, ToCommandStops(request.Stops));
+        return await ExecuteAsync(command, player, pipeline, content, json, loggers, cancellationToken);
+    }
+
+    /// <summary>
+    /// Re-energizes every courier of the acting player's city (<see cref="ReenergizeCouriersCommand"/>, CR-0008). The body names only the
+    /// request id: intent, no stamina; a body with an unknown property, a missing field or a value of the wrong type is refused by the
+    /// binding (400) before anything runs.
+    /// </summary>
+    /// <param name="request">The body, or <see langword="null"/> when there is none.</param>
+    /// <param name="player">The acting player, from the access token.</param>
+    /// <param name="pipeline">Runs the command.</param>
+    /// <param name="content">The server's content, for the snapshot.</param>
+    /// <param name="json">The HTTP JSON settings, so the snapshot reads as <c>GET /city</c>'s.</param>
+    /// <param name="loggers">Gives the logger of the command lines.</param>
+    /// <param name="cancellationToken">The request's cancellation; nothing is committed then.</param>
+    /// <returns>200 with the snapshot, or Problem Details.</returns>
+    private static async Task<Results<ContentHttpResult, ProblemHttpResult>> ReenergizeCouriersAsync(
+        ReenergizeCouriersRequest? request,
+        ICurrentPlayer player,
+        CommandPipeline pipeline,
+        IContentProvider content,
+        IOptions<HttpJsonOptions> json,
+        ILoggerFactory loggers,
+        CancellationToken cancellationToken)
+    {
+        if (request is null)
+        {
+            return ApiProblem.Of(ErrorCatalogue.InvalidArgument.WithDetail("The body must be a JSON object."));
+        }
+
+        return await ExecuteAsync(new ReenergizeCouriersCommand(request.RequestId), player, pipeline, content, json, loggers, cancellationToken);
+    }
+
+    /// <summary>
+    /// Builds level-1 roads on tiles of the acting player's city (<see cref="PlaceRoadsCommand"/>, CR-0008). The body names only the tiles; a
+    /// body with an unknown property, a missing field or a value of the wrong type is refused by the binding (400) before anything runs.
+    /// </summary>
+    /// <param name="request">The body, or <see langword="null"/> when there is none.</param>
+    /// <param name="player">The acting player, from the access token.</param>
+    /// <param name="pipeline">Runs the command.</param>
+    /// <param name="content">The server's content, for the snapshot.</param>
+    /// <param name="json">The HTTP JSON settings, so the snapshot reads as <c>GET /city</c>'s.</param>
+    /// <param name="loggers">Gives the logger of the command lines.</param>
+    /// <param name="cancellationToken">The request's cancellation; nothing is committed then.</param>
+    /// <returns>200 with the snapshot, or Problem Details.</returns>
+    private static async Task<Results<ContentHttpResult, ProblemHttpResult>> PlaceRoadsAsync(
+        RoadTilesRequest? request,
+        ICurrentPlayer player,
+        CommandPipeline pipeline,
+        IContentProvider content,
+        IOptions<HttpJsonOptions> json,
+        ILoggerFactory loggers,
+        CancellationToken cancellationToken)
+    {
+        if (request is null)
+        {
+            return ApiProblem.Of(ErrorCatalogue.InvalidArgument.WithDetail("The body must be a JSON object."));
+        }
+
+        var command = new PlaceRoadsCommand(request.RequestId, ToCommandTiles(request.Tiles));
+        return await ExecuteAsync(command, player, pipeline, content, json, loggers, cancellationToken);
+    }
+
+    /// <summary>
+    /// Raises roads of the acting player's city one level (<see cref="UpgradeRoadsCommand"/>, CR-0008). The body names only the tiles; a body
+    /// with an unknown property, a missing field or a value of the wrong type is refused by the binding (400) before anything runs.
+    /// </summary>
+    /// <param name="request">The body, or <see langword="null"/> when there is none.</param>
+    /// <param name="player">The acting player, from the access token.</param>
+    /// <param name="pipeline">Runs the command.</param>
+    /// <param name="content">The server's content, for the snapshot.</param>
+    /// <param name="json">The HTTP JSON settings, so the snapshot reads as <c>GET /city</c>'s.</param>
+    /// <param name="loggers">Gives the logger of the command lines.</param>
+    /// <param name="cancellationToken">The request's cancellation; nothing is committed then.</param>
+    /// <returns>200 with the snapshot, or Problem Details.</returns>
+    private static async Task<Results<ContentHttpResult, ProblemHttpResult>> UpgradeRoadsAsync(
+        RoadTilesRequest? request,
+        ICurrentPlayer player,
+        CommandPipeline pipeline,
+        IContentProvider content,
+        IOptions<HttpJsonOptions> json,
+        ILoggerFactory loggers,
+        CancellationToken cancellationToken)
+    {
+        if (request is null)
+        {
+            return ApiProblem.Of(ErrorCatalogue.InvalidArgument.WithDetail("The body must be a JSON object."));
+        }
+
+        var command = new UpgradeRoadsCommand(request.RequestId, ToCommandTiles(request.Tiles));
+        return await ExecuteAsync(command, player, pipeline, content, json, loggers, cancellationToken);
+    }
+
+    /// <summary>
+    /// Takes roads off tiles of the acting player's city (<see cref="RemoveRoadsCommand"/>, CR-0008). The body names only the tiles; a body
+    /// with an unknown property, a missing field or a value of the wrong type is refused by the binding (400) before anything runs.
+    /// </summary>
+    /// <param name="request">The body, or <see langword="null"/> when there is none.</param>
+    /// <param name="player">The acting player, from the access token.</param>
+    /// <param name="pipeline">Runs the command.</param>
+    /// <param name="content">The server's content, for the snapshot.</param>
+    /// <param name="json">The HTTP JSON settings, so the snapshot reads as <c>GET /city</c>'s.</param>
+    /// <param name="loggers">Gives the logger of the command lines.</param>
+    /// <param name="cancellationToken">The request's cancellation; nothing is committed then.</param>
+    /// <returns>200 with the snapshot, or Problem Details.</returns>
+    private static async Task<Results<ContentHttpResult, ProblemHttpResult>> RemoveRoadsAsync(
+        RoadTilesRequest? request,
+        ICurrentPlayer player,
+        CommandPipeline pipeline,
+        IContentProvider content,
+        IOptions<HttpJsonOptions> json,
+        ILoggerFactory loggers,
+        CancellationToken cancellationToken)
+    {
+        if (request is null)
+        {
+            return ApiProblem.Of(ErrorCatalogue.InvalidArgument.WithDetail("The body must be a JSON object."));
+        }
+
+        var command = new RemoveRoadsCommand(request.RequestId, ToCommandTiles(request.Tiles));
+        return await ExecuteAsync(command, player, pipeline, content, json, loggers, cancellationToken);
+    }
+
+    /// <summary>
+    /// The body's tiles as the command's, one for one: a JSON <c>null</c> tile stays null and a missing list becomes an empty one, so the
+    /// command's shape check refuses both (<c>INVALID_ARGUMENT</c>) before the city is locked.
+    /// </summary>
+    /// <param name="tiles">The body's <c>tiles</c>.</param>
+    /// <returns>The command's tiles.</returns>
+    private static CommandTile?[] ToCommandTiles(IReadOnlyList<TileRequest?>? tiles) =>
+        tiles is null ? [] : [.. tiles.Select(tile => tile is null ? null : new CommandTile(tile.X, tile.Y))];
+
+    /// <summary>
+    /// The body's stops as the command's, keeping a missing list, stop or action as null so the command's shape check names it (a missing
+    /// list is not an empty one: only <c>[]</c> clears a route).
+    /// </summary>
+    /// <param name="stops">The body's <c>stops</c>.</param>
+    /// <returns>The command's stops, or null.</returns>
+    private static CommandRouteStop?[]? ToCommandStops(IReadOnlyList<RouteStopRequest?>? stops) =>
+        stops is null
+            ? null
+            : [.. stops.Select(stop => stop is null
+                ? null
+                : new CommandRouteStop(
+                    stop.BuildingId,
+                    stop.Actions is null
+                        ? null
+                        : [.. stop.Actions.Select(action => action is null
+                            ? null
+                            : new CommandRouteAction(action.Kind ?? string.Empty, action.ItemId ?? string.Empty, action.Amount ?? string.Empty))]))];
 
     /// <summary>
     /// Runs a command through the pipeline for the token's player, with the snapshot as its response, and answers with what the pipeline did.

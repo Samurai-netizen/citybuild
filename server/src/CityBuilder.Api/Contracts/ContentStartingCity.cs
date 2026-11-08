@@ -6,5 +6,5 @@ namespace CityBuilder.Api.Contracts;
 /// (<c>core-instructions/09-unity-client.md</c>) requires it, as the server does.
 /// </summary>
 /// <param name="Era">The number of the era a new city starts in, JSON <c>era</c>.</param>
-/// <param name="Inventory">The starting stock, JSON <c>inventory</c>: item id to quantity, by item id; an item that is not listed starts at 0.</param>
-public sealed record ContentStartingCity(int Era, IReadOnlyDictionary<string, long> Inventory);
+/// <param name="Purse">The coins a new city starts with, JSON <c>purse</c>; a new city has no goods (CR-0008 D2).</param>
+public sealed record ContentStartingCity(int Era, long Purse);

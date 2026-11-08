@@ -6,10 +6,10 @@
 # `core-instructions/15-change-control.md`): its city carries over between runs, so the golden walk needs the starter city first
 # (delete the player as `docs/getting-started.md` → "The test player" shows; the next login creates it again).
 # The golden walk runs on the real clock: the city clock counts server seconds from the login. The table's exact numbers need each
-# group of commands (t=0, t=30, t=750) inside one second; by hand they land a few seconds late, the buildings finish as much later, and
-# a t=30 command sent before both Cottages are done is 409 `NO_FREE_BUILDER` (send it when `GET /city` shows them `Idle`). So by hand,
-# check the course (costs paid, phases, stock moving), not the table's seconds: the exact table over HTTP is the integration test
-# `GoldenScenario1HttpTests` (`docs/testing/README.md`). Waiting longer than t=750 only moves the numbers on, as the table's last note says.
+# group of commands (t=0, 30, 60, 360, 490, 660) inside one second; by hand they land a few seconds late, the buildings finish as much
+# later, and a command sent before its building is done is refused (send it when `GET /city` shows the state the note names). So by hand,
+# check the course (coins paid, sites waiting, trips carrying, stores filling), not the table's seconds: the exact table over HTTP is the
+# integration test `GoldenScenario1HttpTests` (`docs/testing/README.md`). Waiting longer only moves the numbers on.
 
 @baseUrl = http://localhost:8080
 @displayName = devtest
@@ -31,79 +31,167 @@ Content-Type: application/json
 GET {{baseUrl}}/api/v1/content
 Authorization: Bearer {{token}}
 
-### Your city, settled to now (starter city: coins 700, logs 40, planks 10, clock 0)
+### Your city, settled to now (starter city since CR-0008: purse 800, no goods, no buildings, clock 0)
 GET {{baseUrl}}/api/v1/city
 Authorization: Bearer {{token}}
 
-### Golden t=0: start Trade Charter (150 coins, 600 s)
+### Golden t=0: Cottage 1 at (0, 2), 50 coins, 30 s
+POST {{baseUrl}}/api/v1/commands/place-building
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}", "buildingTypeId": "house", "x": 0, "y": 2 }
+
+### Golden t=0: Woodcutter's Hut 2 at (0, 0), 80 coins, 60 s; purse 670
+POST {{baseUrl}}/api/v1/commands/place-building
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}", "buildingTypeId": "woodcutter", "x": 0, "y": 0 }
+
+### Golden t=30 (Cottage 1 done): the Scriptorium 3 at (4, 0), the science building, 100 coins, 30 s; purse 570
+POST {{baseUrl}}/api/v1/commands/place-building
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}", "buildingTypeId": "scriptorium", "x": 4, "y": 0 }
+
+### Golden t=60 (Scriptorium done): start Trade Charter (150 coins, 600 s); before the Scriptorium stands it is 422 `NO_SCIENCE_BUILDING`
 POST {{baseUrl}}/api/v1/commands/start-research
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 { "requestId": "{{$guid}}", "researchId": "trade_charter" }
 
-### Golden t=0: Cottage 1 at (0, 0)
+### Golden t=60: Sawmill 4 at (2, 0), 150 coins now; a site (`project` "Construction", `needs` 10 logs) until its logs are delivered
 POST {{baseUrl}}/api/v1/commands/place-building
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
-{ "requestId": "{{$guid}}", "buildingTypeId": "house", "x": 0, "y": 0 }
+{ "requestId": "{{$guid}}", "buildingTypeId": "sawmill", "x": 2, "y": 0 }
 
-### Golden t=0: Cottage 2 at (1, 0); the city now has coins 450, logs 40, planks 10, free workers 0
+### Golden t=60: Cottage 5 at (1, 2); purse 220
 POST {{baseUrl}}/api/v1/commands/place-building
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
-{ "requestId": "{{$guid}}", "buildingTypeId": "house", "x": 1, "y": 0 }
+{ "requestId": "{{$guid}}", "buildingTypeId": "house", "x": 1, "y": 2 }
 
-### Golden t=30 (both Cottages done, 30 s after the second one): Woodcutter's Hut 3 at (2, 0)
+### Golden t=360 (10 logs in the hut) and again at t=490 (4 logs): a trip of all the hut's logs to the Sawmill (10 s on foot, `trips`)
+# The first fills the site's needs and the Sawmill builds for 120 s; the second goes into its store. With nothing in the hut: 422 `NOTHING_TO_CARRY`
+POST {{baseUrl}}/api/v1/commands/start-trip
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}", "sourceId": 2, "targetId": 4, "itemId": "logs", "amount": "all" }
+
+### Golden t=660 (Trade Charter done): Trading Post 6 at (2, 2), 200 coins; a site waiting for 10 planks; purse 20
 POST {{baseUrl}}/api/v1/commands/place-building
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
-{ "requestId": "{{$guid}}", "buildingTypeId": "woodcutter", "x": 2, "y": 0 }
+{ "requestId": "{{$guid}}", "buildingTypeId": "trading_post", "x": 2, "y": 2 }
 
-### Golden t=30: Sawmill 4 at (3, 0); coins 220, logs 10, planks 10, free workers 8
-POST {{baseUrl}}/api/v1/commands/place-building
+### Golden t=660: the Sawmill's planks to the Trading Post's site
+POST {{baseUrl}}/api/v1/commands/start-trip
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
-{ "requestId": "{{$guid}}", "buildingTypeId": "sawmill", "x": 3, "y": 0 }
+{ "requestId": "{{$guid}}", "sourceId": 4, "targetId": 6, "itemId": "planks", "amount": "all" }
 
-### Golden t=750 (Trade Charter done at 600; planks 20 by 750): Trading Post 5 at (4, 0); coins 20, planks 0
-POST {{baseUrl}}/api/v1/commands/place-building
+### Golden t=660: half the hut's logs to the Sawmill. "50%" instead is 422 `AMOUNT_MODE_LOCKED` until Tally Sticks is researched
+POST {{baseUrl}}/api/v1/commands/start-trip
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
-{ "requestId": "{{$guid}}", "buildingTypeId": "trading_post", "x": 4, "y": 0 }
+{ "requestId": "{{$guid}}", "sourceId": 2, "targetId": 4, "itemId": "logs", "amount": "half" }
 
-### After the Trading Post is built (t=930): one worker earns as much as two and frees a worker
-POST {{baseUrl}}/api/v1/commands/assign-workers
+### Refusal: logs to a Cottage, which neither needs nor stores them, 422 `ITEM_NOT_ACCEPTED`
+POST {{baseUrl}}/api/v1/commands/start-trip
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
-{ "requestId": "{{$guid}}", "buildingId": 5, "workers": 1 }
+{ "requestId": "{{$guid}}", "sourceId": 2, "targetId": 1, "itemId": "logs", "amount": "all" }
 
-### Upgrade a Cottage (120 coins + 30 logs, 90 s): `INSUFFICIENT_RESOURCE` (422) until the city has them
+### Upgrade a Cottage: 120 coins now (422 `INSUFFICIENT_RESOURCE` without them); it keeps working with `needs` 30 logs until a trip brings them
 POST {{baseUrl}}/api/v1/commands/upgrade-building
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 { "requestId": "{{$guid}}", "buildingId": 1 }
 
+### Roads (CR-0008): a Dirt path on three tiles of column 6, 5 coins a tile; `city.roads` lists them, no builder is taken
+POST {{baseUrl}}/api/v1/commands/place-roads
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}", "tiles": [{ "x": 6, "y": 0 }, { "x": 6, "y": 1 }, { "x": 6, "y": 2 }] }
+
+### Roads: upgrade (6, 0) to a Log road, 15 coins; again on the same tile is 422 `MAX_LEVEL` (level 2 is the last)
+POST {{baseUrl}}/api/v1/commands/upgrade-roads
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}", "tiles": [{ "x": 6, "y": 0 }] }
+
+### Roads: remove (6, 2); nothing is refunded. A tile without a road is 404 `ROAD_NOT_FOUND`
+POST {{baseUrl}}/api/v1/commands/remove-roads
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}", "tiles": [{ "x": 6, "y": 2 }] }
+
+### Refusal: a road on a building (the Woodcutter's Hut at (0, 0)), 409 `TILE_OCCUPIED`; the same tile twice would be 400 `INVALID_ARGUMENT`
+POST {{baseUrl}}/api/v1/commands/place-roads
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}", "tiles": [{ "x": 0, "y": 0 }] }
+
+### Couriers (CR-0008-T1 part G): a Courier Station at (7, 7), 120 coins, built in 60 s; when it completes, free workers staff it as couriers
+POST {{baseUrl}}/api/v1/commands/place-building
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}", "buildingTypeId": "courier_station", "x": 7, "y": 7 }
+
+### Couriers: slot 1 of the station (id 7 after the golden walk) carries half the hut's logs to the Sawmill in a loop; `city.routes` shows
+# the route, `city.couriers` the courier walking. One stop, a slot above the level's 2, or the hut twice in a row is 422 `INVALID_ROUTE`
+POST {{baseUrl}}/api/v1/commands/set-route
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}", "stationId": 7, "slot": 1, "stops": [
+  { "buildingId": 2, "actions": [{ "kind": "take", "itemId": "logs", "amount": "half" }] },
+  { "buildingId": 4, "actions": [{ "kind": "put", "itemId": "logs", "amount": "all" }] }] }
+
+### Couriers: no stops clear the route; the courier gives its load back and stands at its station
+POST {{baseUrl}}/api/v1/commands/set-route
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}", "stationId": 7, "slot": 1, "stops": [] }
+
+### Couriers: re-energize; every courier's stamina is full again and resting ones leave (stamina is spent only 300 s after your last request)
+POST {{baseUrl}}/api/v1/commands/reenergize-couriers
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}" }
+
 ### Replay: send this twice. The second answer is the first one, byte for byte (a fixed requestId; change it for a new command)
 POST {{baseUrl}}/api/v1/commands/assign-workers
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
-{ "requestId": "5e1f0000-0000-4000-8000-000000000001", "buildingId": 5, "workers": 2 }
+{ "requestId": "5e1f0000-0000-4000-8000-000000000001", "buildingId": 2, "workers": 2 }
 
 ### The same requestId with another body: 409 `IDEMPOTENCY_CONFLICT`
 POST {{baseUrl}}/api/v1/commands/assign-workers
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
-{ "requestId": "5e1f0000-0000-4000-8000-000000000001", "buildingId": 5, "workers": 1 }
+{ "requestId": "5e1f0000-0000-4000-8000-000000000001", "buildingId": 2, "workers": 1 }
 
 ### Refusal: a type the content doesn't have, 422 `UNKNOWN_BUILDING_TYPE`
 POST {{baseUrl}}/api/v1/commands/place-building

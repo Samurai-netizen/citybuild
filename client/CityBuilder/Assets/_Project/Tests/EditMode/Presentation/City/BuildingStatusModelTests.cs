@@ -1,5 +1,6 @@
 #nullable enable
 
+using System.Collections.Generic;
 using CityBuilder.Client.Presentation.City;
 using CityBuilder.Client.Tests.EditMode.Presentation.Hud;
 using CityBuilder.Simulation;
@@ -29,10 +30,11 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.City
             return BuildingStatusModel.Describe(city, _content, building);
         }
 
-        /// <summary>An idle building of <paramref name="typeId"/> with <paramref name="workers"/> workers.</summary>
-        private static Building Idle(string typeId, int workers)
+        /// <summary>An idle building of <paramref name="typeId"/> with <paramref name="workers"/> workers and <paramref name="logs"/> logs in its own store.</summary>
+        private static Building Idle(string typeId, int workers, long logs = 0)
         {
-            return new Building(1, new BuildingTypeId(typeId), 0, 0, 1, workers, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
+            KeyValuePair<ItemId, long>[] store = logs == 0 ? new KeyValuePair<ItemId, long>[0] : new[] { new KeyValuePair<ItemId, long>(new ItemId("logs"), logs) };
+            return new Building(1, new BuildingTypeId(typeId), 0, 0, 1, workers, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, store);
         }
 
         /// <summary>A building being built from second 0 to second 100 has a constructing ring that follows the clock.</summary>
@@ -113,11 +115,11 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.City
             Assert.That(status.Pips, Is.EqualTo(3));
         }
 
-        /// <summary>A woodcutter with workers whose logs are at the cap waits for room, and the bubble names the logs.</summary>
+        /// <summary>A woodcutter with workers whose own store holds its limit of logs (40; CR-0008) waits for room, and the bubble names the logs.</summary>
         [Test]
         public void Describe_IdleWithFullOutput_ShowsStorageFullAndTheItem()
         {
-            BuildingStatus status = Describe(Idle("woodcutter", 2), logs: 500);
+            BuildingStatus status = Describe(Idle("woodcutter", 2, logs: 40), logs: 0);
 
             Assert.That(status.Bubble, Is.EqualTo(StatusBubbleKind.StorageFull));
             Assert.That(status.BubbleItem, Is.EqualTo(new ItemId("logs")));

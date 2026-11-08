@@ -1,18 +1,20 @@
 # CR-0008 — Logistics rework: goods stored in buildings, couriers, routes and roads
 
-- **Status:** Proposed
+- **Status:** In progress
 - **Type:** Design change
-- **Requested by:** owner · **Date:** 2026-11-02
+- **Requested by:** owner · **Date:** 2026-11-02 (revised the same day after the owner's review: D1, D5, D10 and the task grouping)
 - **Milestone / era:** M0 / Era I (part of Era I's base set)
 - **Conflicts with pillars (`22`) or the era rule (`25`):** no pillar changes, but the Era I text of `22` (protected) does: items are stored
-  in buildings instead of city-wide; roads and couriers replace "there are no roads, and carts are only cosmetic"; courier stamina replaces
-  the 8 h offline production cap; placement matters from Era I instead of Era V. Logistics is a major mechanic (`25` rule 5). The owner puts
-  it into Era I's base set, so players have it from the start; only minor parts (percentages, exact amounts, faster roads) come by research.
+  in buildings instead of city-wide, and building work and research get their goods by delivery; roads and couriers replace "there are no
+  roads, and carts are only cosmetic"; courier stamina replaces the 8 h offline production cap; placement matters from Era I instead of
+  Era V. Logistics is a major mechanic (`25` rule 5). The owner puts it into Era I's base set, so players have it from the start; only minor
+  parts (percentages, exact amounts, faster roads) come by research.
 
 <!-- Status values: Proposed | Approved | In progress | Done | Rejected | Superseded.
      Only the owner moves a CR to Approved. No code before that. -->
 
-## Owner's request (2026-11-02, in chat, quoted as written)
+## Owner's words (2026-11-02, in chat, quoted as written)
+**The request:**
 > I want to change a game mechanic a little bit. Each building produce items and store them inside the building. Each building has a limit
 > of how much items can be stored in it. In order to move items between buildings, player need to build special building for couriers.
 > After that, player need to make a route, select where to take items, where to go, how much to take and put (in percent, in a number, and
@@ -33,68 +35,98 @@
 > Write down this as a separate game rework tasks, with it's own /start-task code. Find a time where it will be best to implement these
 > changes, among regular M0-XX tasks
 
+**The review of the first version** (D1–D10 were my recommendations then):
+> D1. For any building activities player must manually re-route the resources from the building or warehouse. Coins are an exemption, they
+> transfer instantly. For research that needs not only coins, resources must be delivered to the science building (initial level 1 science
+> building should cost only coins to build. Same for courier building).
+>
+> D5. Couriers should avoid going through the buildings, but if there is no other way around, they allowed to go through with 20% of their
+> base speed.
+>
+> D10. Okay.
+>
+> Also group CR tasks (WITHOUT LOOSING ANY QUALITY OF PROMPTS OR QUALITY OF WORK). Group it by the AI model needed. That way my presence
+> behind the laptop is needed only to change model and merge PRs. I want no decrease in quality of work, just longer work sessions
+
 ## Problem / goal
 Today every item sits in one city-wide stock, so the map is only a place to put buildings: distance, layout and roads mean nothing (`22`).
-The owner wants moving goods to be part of the game from the first session. Buildings keep what they make, goods travel on foot along
-paths the player shapes with roads, and how long the city keeps working while the player is away depends on the couriers instead of a
-fixed 8 hours. Building it inside M0, before the audits, balance simulator and test suites of Days 11–14, lets all of those cover
-the game as it will be (see "When to build it").
+The owner wants moving goods to be part of the game from the first session. Buildings keep what they make; goods travel on foot, along
+paths the player shapes with roads, to the buildings that use them, to construction sites and to the science building; and how long the
+city keeps working while the player is away depends on the couriers instead of a fixed 8 hours. Building it inside M0, before the audits,
+balance simulator and test suites of Days 11–14, lets all of those cover the game as it will be (see "When to build it").
 
 ## Proposal
-Where a choice was needed, the proposal uses my recommendation; the "Decisions for the owner" table lists each one (D1–D10) with its alternative.
+D1, D5 and D10 are the owner's decisions. Everywhere else the proposal uses my recommendation; the "Decisions" table lists each one (D1–D13).
 
 ### 1. Goods live in buildings
 - Every item except coins is kept in a building's **store**. Each level of a building type lists the items its store holds and a **limit**
   for each item (content). Limits are per item, so inputs can never fill the room a building's outputs need. A producer's store holds its
-  recipe's inputs and outputs; houses and the courier station have none.
+  recipe's inputs and outputs; houses, the courier station and the science building have none.
 - A producer starts a cycle only when its **own** store has the inputs and room for the outputs. The stall reasons stay
   (`MissingInput:item`, `StorageFull:item`), now about that store.
-- **Coins** are the city's purse: uncapped and not in any building. The Trading Post's coins go straight there.
-- **Spending** (placing, upgrading, research, roads) takes the items from the stores of the whole city in a fixed order (D1). Goods that
-  are being carried can't be spent.
+- **Coins** are the city's purse: uncapped, not in any building, paid and received at once (owner). The Trading Post's coins go straight there.
+- The **Warehouse** (new, available from the start) stores every Era I good up to a limit per item: the place to collect goods for building
+  work and to buffer chains (D13).
 - A **refund** (an upgrade ends a cycle) goes back into that building's store, also above its limit, as today. The Storehouses research
-  raises the limit of its items in every building.
+  raises the limit of its items in every building, the warehouse included.
 - A **new city** starts with coins only (D2): there is no building to keep goods in.
 - A building that is being upgraded keeps its store, and goods can still be taken from it and delivered to it.
 
-### 2. Paths and roads
-- Walkers (couriers and workers on a trip) move from tile centre to tile centre in four directions, so every turn is 90°. They walk over
-  empty ground and roads, never through another building: a building tile is only the start or the end of a walk (D5).
-- **Time:** ground takes **5 s per tile** (owner). Each road level has its own, much shorter time. A step takes half the time of the tile
-  it leaves plus half of the tile it enters (a building tile counts as ground). Walking-speed research shortens the total, and a walk is
-  rounded up to whole seconds (the engine is integer-only, `04` §9).
-- **Fastest path:** between two buildings the engine picks the path with the least total time (Dijkstra over the grid). It uses roads
-  exactly when they make the walk faster, even when that path has more tiles. Ties are broken by a fixed rule (`04`), so the server and the
-  client always pick the same path. A walk keeps the path it started with; a change to the map applies from the next walk.
-- **Roads** are built on empty tiles in a line the player drags (one command for many tiles), instantly and without a builder slot (D6).
-  Each road tile has a level; upgrading a tile makes it faster; a road can be removed (no refund). Buildings can't be placed on a road.
-  M0 has road levels 1–2; more come with later content.
+### 2. Building work and research get their goods by delivery (owner, D1)
+- Only coins are paid at once. No cost is ever taken from a store by itself: the player brings the goods with manual trips or courier
+  routes, from producer buildings or a warehouse.
+- **Placing** a building pays its coins and takes a builder. The building appears as a **construction site** that lists the goods still
+  missing, and its build timer starts when nothing is missing. A building that costs only coins starts at once, as today.
+- **Upgrading** pays its coins and takes a builder, and the goods are delivered to the building. It keeps producing while it waits; when the
+  last good arrives, the upgrade starts as today (production stops, a running cycle is refunded, the timer runs) (D12).
+- **Research** happens at the **science building** (new, one per city). Starting a research pays its coins and takes the research slot;
+  the goods it needs are delivered to the science building, and its timer starts when nothing is missing (D11). Level 1 of the science
+  building and of the courier station cost only coins (owner).
+- A delivery to a building with a waiting construction, upgrade or research (a **project**) first fills what the project still needs; the
+  rest goes into the building's store if it keeps that good, else stays with the walker.
+- Delivered goods are used up at once (ledger rows at the delivery). Cancelling a project is not part of this CR.
+- Roads cost coins only, so they still build at once (D6).
 
-### 3. Manual trips (before or without couriers)
-- From a building's inspector the player sends one **free worker** on a one-time trip: item, amount (the Era I presets), target building.
-  It needs a free worker and a path.
-- The worker takes the goods at once (at most the trip carry limit), walks to the target by the fastest path, delivers what fits and is
-  free again on arrival. What doesn't fit goes back to the source (D7). Trips run in real time, also while the player is away, and never tire.
+### 3. Paths and roads
+- **Walkers** (couriers and workers on a trip) move from tile centre to tile centre in four directions, so every turn is 90°.
+- **Time:** ground takes **5 s per tile** (owner). Each road level has its own, much shorter time. Crossing **another building's tile** goes
+  at 20 % of the base speed, 25 s per tile (owner, D5); the walk's own start and end buildings count as ground. A step takes half the time of
+  the tile it leaves plus half of the tile it enters. Walking-speed research shortens the total, and a walk is rounded up to whole seconds
+  (the engine is integer-only, `04` §9).
+- **Path rule:** walkers avoid other buildings whenever a way around exists, and among those ways take the fastest, so they use roads
+  exactly when roads make the walk faster, even with more tiles. Only when every way crosses a building do they cross, through as few building
+  tiles as possible, then the fastest (owner, D5). Every building can always be reached. Ties are broken by a fixed rule (`04`), so the server
+  and the client always pick the same path. A walk keeps the path it started with; a change to the map applies from the next walk.
+- **Roads** are built on empty tiles in a line the player drags (one command for many tiles), instantly, without a builder slot, for coins
+  only (D6). Each road tile has a level; upgrading a tile makes it faster; a road can be removed (no refund). Buildings can't be placed on a
+  road. M0 has road levels 1–2; more come with later content.
+
+### 4. Manual trips (before or without couriers)
+- From a building's inspector the player sends one **free worker** on a one-time trip: item, amount (the Era I presets), target (a building or
+  a project). It needs a free worker.
+- The worker takes the goods at once (at most the trip carry limit), walks to the target by the path rule, delivers what fits (a project
+  first) and is free again on arrival. What doesn't fit goes back to the source (D7). Trips run in real time, also while the player is away,
+  and never tire.
 - Trips stay available after a courier station exists (D7).
 
-### 4. Courier station, couriers and routes
-- The **Courier Station** is a new kind of building, available from the start. Workers assigned to it are its **couriers**, one per
-  worker, up to its level's limit. Its level also sets each courier's **carry limit** (all items together) and **stamina** (D4).
+### 5. Courier station, couriers and routes
+- The **Courier Station** is a new kind of building, available from the start; level 1 costs only coins (owner). Workers assigned to it are
+  its **couriers**, one per worker, up to its level's limit. Its level also sets each courier's **carry limit** (all items together) and
+  **stamina** (D4).
 - Each courier has one **route**: an ordered list of **stops**, from 2 up to a content limit, with different buildings at two stops in a
   row. A stop is a building and one or more **actions**: take or put, an item, an amount. The courier starts at its station and walks to
   stop 1, 2, … the last, then stop 1 again, and so on.
 - At a stop the actions run in order, at once. **Take** removes goods from the building's store, as much as the amount, the stock and the
-  free carry room allow. **Put** delivers carried goods, as much as the amount and the store's free room allow; the rest stays on the
-  courier. A courier never waits for goods: it does what it can and walks on.
+  free carry room allow. **Put** delivers carried goods, as much as the amount and the room allow (a waiting project first, then the
+  store); the rest stays on the courier. A courier never waits for goods: it does what it can and walks on.
 - **Amounts:** Era I starts with **All, Half and Quarter** (D3): of the building's stock for a take, of what the courier carries of that
   item for a put; rounded down, but at least 1 when there is any. An Era I research unlocks **any percentage** (1–100). An **exact
   number** is unlocked by an Era II research; the engine and the API support it now, and it stays locked until that research exists (OD-10).
-- A stop with no path is skipped and shown as unreachable. A courier with no reachable stop waits at its station until the map changes.
 - When a courier stops working (its worker is removed, its route is replaced, its station starts an upgrade), the goods it carries go back
   to the buildings they came from, like a refund, and it starts again from its station.
 - Couriers are drawn on the map walking their paths; research makes them walk faster (D4).
 
-### 5. Courier stamina replaces the 8 h offline production cap
+### 6. Courier stamina replaces the 8 h offline production cap
 - The fixed **offline production cap** (8 h) and the dormant tail (`04` §2) are removed. Production stops on its own: a building stops when
   its store is full or its inputs run out, and inputs only arrive by courier or trip.
 - **Stamina** is how long a courier keeps working while the player is away. It comes from its station's level (for example 4 h at level 1,
@@ -105,55 +137,65 @@ Where a choice was needed, the proposal uses my recommendation; the "Decisions f
 - **Re-energize:** a button (a new command) refills every courier's stamina, and resting couriers go back to their routes (D9).
 - Stamina also does the old cap's second job: it bounds how much one settlement has to simulate (`04` §12).
 
-### 6. Welcome-back report
+### 7. Welcome-back report
 The report (M0-53) is reworked around the couriers: time away; how long the couriers worked and when each station's couriers got tired;
-goods moved; produced and consumed; coins earned; completed buildings and research. Its main button is **Re-energize couriers** when any
-courier has spent stamina. Closing the report without it leaves the couriers resting; the HUD shows that, and the courier station's
-inspector has the same button.
+goods moved and delivered to projects; produced and consumed; coins earned; completed buildings and research. Its main button is
+**Re-energize couriers** when any courier has spent stamina. Closing the report without it leaves the couriers resting; the HUD shows that,
+and the courier station's inspector has the same button.
 
-### 7. Later eras
+### 8. Later eras
 Exact amounts arrive with an Era II research. Later eras replace couriers with carts, wagons and finally cargo trucks: the same routes and
 rules with more capacity, more speed and their own stamina, and better roads (stone in Era II). `25` records this now; each era builds its part.
 
-### First numbers (placeholders: T2 sets them in `23`, M0-67 and M0-68 balance them)
+### First numbers (placeholders: T1 part B sets them in `23`, M0-67 and M0-68 balance them)
 | What | Level 1 | Level 2 |
 |---|---|---|
-| Courier Station (available at start) | 2 couriers · carry 10 · stamina 4 h · 120 coins, 60 s | 4 couriers · carry 15 · stamina 8 h · upgrade 250 coins + 30 planks, 180 s |
+| Science building (one per city) | 100 coins, 30 s | none in M0 |
+| Courier Station | 2 couriers · carry 10 · stamina 4 h · 120 coins, 60 s | 4 couriers · carry 15 · stamina 8 h · upgrade 250 coins + 30 planks, 180 s |
+| Warehouse | 100 of each Era I good · 100 coins + 20 logs, 60 s | 200 of each · upgrade 200 coins + 30 planks, 120 s |
 | Woodcutter's Hut store | 40 logs | 80 logs |
 | Sawmill store | 40 logs · 20 planks | 80 logs · 40 planks |
 | Trading Post store | 40 planks | 80 planks |
-| Road tile | Dirt path: 2.5 s per tile · 5 coins | Log road: 1.5 s per tile · upgrade 5 coins + 2 logs |
+| Road tile | Dirt path: 2.5 s per tile · 5 coins | Log road: 1.5 s per tile · upgrade 15 coins |
 
-Ground: 5 s per tile. Trip carry limit: 10. New Era I research: **Tally Sticks** (any percentage) and **Sturdy Boots** (walking 20 % faster).
+Ground: 5 s per tile; crossing a building: 25 s per tile. Trip carry limit: 10. New Era I research: **Tally Sticks** (any percentage) and
+**Sturdy Boots** (walking 20 % faster).
 
-## Decisions for the owner
-| # | Question | Recommended (used above) | Alternative |
+## Decisions
+| # | Question | Decision or recommendation (used above) | Alternative |
 |---|---|---|---|
-| D1 | Where do costs (placing, upgrades, research, roads) come from? | The stores of the whole city, in a fixed order: buildings that make the item first, then buildings that use it, each by id | Only from a storehouse building that couriers fill (a new building, and every cost needs hauling first) |
-| D2 | What does a new city start with? | Coins only; T2 rebalances the first costs so the first coins still come within about 20 minutes (`24` goal 1) | A starting stockpile building holding today's 40 logs and 10 planks |
+| D1 | Where do the goods for building work and research come from? | **Owner:** delivered by the player (trips, couriers) from buildings or a warehouse; coins at once; research goods to the science building; level 1 of the science building and the courier station costs coins only | — |
+| D2 | What does a new city start with? | Coins only; T1 rebalances the first costs so the first coins still come within about 20 minutes (`24` goal 1) | A starting stockpile building holding today's 40 logs and 10 planks |
 | D3 | Which amounts does Era I offer before research? | All, Half, Quarter | Add Three quarters, or Third |
 | D4 | What makes couriers better? | Station level: more couriers, carry limit, stamina. Research: walking speed. Roads: speed on their tiles | Speed from the station level too, or upgrades per courier |
-| D5 | Can walkers cross buildings? | No, only ground and roads; a stop with no path is skipped and shown | Yes: never blocked, but couriers walk through houses and roads matter less |
-| D6 | How are roads built? | Instantly, no builder slot, a line of tiles per command; upgrades instant; removal free, no refund | As constructions with a build time and a builder slot |
+| D5 | Can walkers cross buildings? | **Owner:** they avoid buildings; when no way around exists they cross, at 20 % of the base speed (25 s per tile) | — |
+| D6 | How are roads built? | Instantly, no builder slot, a line of tiles per command, coins only (with goods, every tile would need a delivery, D1); upgrades instant; removal free, no refund | As constructions with a build time, a builder slot and delivered goods |
 | D7 | Manual trips | Stay available after a courier station exists; carry at most the trip limit; what doesn't fit at the target goes back to the source | Only until the first station is built; or the target takes everything, above its limit |
 | D8 | When is the player absent? | From 5 minutes after their game's last request (multiplied by `DevTimeScale` on dev servers); any request counts. A script that keeps polling keeps couriers awake, like an open game: accepted in M0, revisited with the market (M2) | A separate presence call (no safer: the client is untrusted either way) |
 | D9 | Re-energizing | Free, any time, refills every courier of the city | Per station, or with a cost or a cooldown |
-| D10 | Existing dev cities | The migration resets every dev city to the new starting city (no real players yet; G-Destructive, OD-14) | Convert today's stock into building stores (complex, no value now) |
+| D10 | Existing dev cities | **Owner ("Okay"):** the migration resets every dev city to the new starting city (G-Destructive, OD-14) | — |
+| D11 | The science building | Every research needs it (it is where research happens); one per city; it builds in about 30 s, so the first research still starts in the first minutes; M0 has level 1 only | Only research with goods needs it |
+| D12 | What waits for goods? | A construction site keeps its builder while it waits; an upgrade keeps producing until its goods are in, then stops and runs; a research keeps the research slot; a delivery fills the waiting project first | Upgrades stop production when ordered |
+| D13 | The warehouse (named by the owner in D1) | A new building, available from the start, that stores every Era I good up to a limit per item | One total limit for all goods together |
 
 ## Acceptance criteria
 - [ ] Items other than coins exist only in building stores, on couriers and on trip workers; no store goes above its limit except by a
       refund or a returned load (engine property test).
 - [ ] A producer starts a cycle only with the inputs in its own store and room there for the outputs; otherwise its stall reason names
       that store's missing input or full output.
-- [ ] Coins go to the city purse; costs are paid from the stores in the order of `04`, or refused with `INSUFFICIENT_RESOURCE`.
-- [ ] A manual trip needs a free worker and a path; the worker is busy until it arrives and free afterwards; it moves the chosen amount.
+- [ ] Coins are paid and received at once through the purse. No other cost is taken from a store: a construction site, an upgrade and a
+      research wait until their goods are delivered, then their timers start; research needs the science building, one per city.
+- [ ] Level 1 of the science building and of the courier station costs coins only; the warehouse stores every Era I good up to its limits.
+- [ ] A manual trip needs a free worker; the worker is busy until it arrives and free afterwards; it moves the chosen amount and fills a
+      waiting project first.
 - [ ] A courier station's workers are its couriers; each follows its route of 2 or more stops in a loop, taking and putting the chosen
-      amounts within its carry limit, the source's stock and the target's free room.
+      amounts within its carry limit, the source's stock and the target's room.
 - [ ] Era I offers All, Half and Quarter; any percentage after its research; an exact number is refused until an Era II research unlocks
       it (tested with test content).
-- [ ] The engine's path is the fastest by walking time (never slower than any other path, checked by brute force on small maps), uses
-      only 4-direction steps through tile centres and never enters another building; ground costs 5 s per tile and every road level is faster.
-- [ ] Roads can be placed on empty tiles, upgraded and removed; a building can't be placed on a road.
+- [ ] Paths use only 4-direction steps through tile centres. A path crosses another building only when every path does, and then as few as
+      possible, at 20 % of the base speed; among the paths with the fewest crossings it is the fastest (checked by brute force on small maps).
+      Ground costs 5 s per tile and every road level is faster.
+- [ ] Roads can be placed on empty tiles, upgraded and removed, for coins only; a building can't be placed on a road.
 - [ ] Couriers spend stamina only after the absence start that the server derives from the player's last request; a courier without
       stamina walks home and rests; re-energizing refills every courier.
 - [ ] There is no fixed offline production cap; the settlement report gives the couriers' working time and which couriers got tired, when.
@@ -167,7 +209,8 @@ Ground: 5 s per tile. Trip carry limit: 10. New Era I research: **Tally Sticks**
 
 ## Out of scope
 - Era II content (it brings the research for exact amounts), carts, wagons and trucks, stone and paved roads.
-- A storehouse or warehouse building, demolishing buildings, buildings larger than one tile.
+- Cancelling a construction, an upgrade or a research; demolishing buildings; buildings larger than one tile.
+- Science building levels above 1 (with the rest of the Era I content, M1).
 - Couriers blocking each other, loading time at a stop, diagonal steps, waiting at a stop for goods.
 - Notifications for resting couriers (with the other notifications in M1).
 - Where market deliveries land once goods live in buildings (decided with the market, M2).
@@ -176,250 +219,269 @@ Ground: 5 s per tile. Trip carry limit: 10. New Era I research: **Tally Sticks**
 ## Impact analysis
 | Area | Impact | Files / docs |
 |---|---|---|
-| Engine (`04`) | Stock moves into building stores; new state (stores, roads, trips, couriers, routes, stamina); path search; trip and courier arrivals as new event sources in `Advance`; new mutations; §2 (cap, dormant tail) removed; the absence start becomes an input of `Advance`; invariants, §11 report and §12 budget change | `shared/Simulation/Runtime/**`, `04` |
-| Content (`23`, JSON) | Store limits per level, the courier station (a new building kind), road levels, walking time, trip carry limit, stamina, amount presets, new effect types and Era I research, a starting city without goods, `contentVersion` `mvp-2`; the golden fixture (protected) | `server/content/mvp-content.json`, `23`, `server/tests/**/Fixtures/content-golden-*.json` |
-| API (`05`) | Breaking (G-Contract, covered by this CR's approval): the snapshot's `inventory` and `storageCaps` become stores, purse and totals; roads, trips, couriers, routes and stamina are added; the settlement report changes; six commands (`place-roads`, `upgrade-roads`, `remove-roads`, `start-trip`, `set-route`, `reenergize-couriers`); new error codes (for example `NO_PATH`, `AMOUNT_MODE_LOCKED`, `INVALID_ROUTE`); limits on every list | `05`, `server/src/CityBuilder.Api/**`, `server/src/CityBuilder.Application/**` |
-| Data / migration (`06`) | Tables for stores, roads, trips, couriers and routes; `cities.last_seen_at`; coins stay as the purse; ledger reason `COST_ROAD` (moves write no ledger rows: they don't change the city's totals); a migration that resets dev cities (D10) | `06`, `server/src/CityBuilder.Infrastructure/Persistence/**` |
-| Security (`07`) | Presence is derived by the server from request times; the new client inputs (tile lists, routes, amounts) are bounded and refused at the boundary; a polling script keeps couriers awake (known limitation) | `07` |
-| Client (`09`) | Store in the inspector, HUD totals, trip flow, road mode, courier station inspector, route editor (a new menu, OD-16), walkers on the map, welcome-back rework; the display prediction runs couriers too | `09`, `client/CityBuilder/Assets/_Project/**`, `client/README.md` |
-| Art | Courier station, courier figure, road tiles, icons | `art/**` |
+| Engine (`04`) | Stock moves into building stores; coins become the purse; projects wait for deliveries; new state (stores, projects, roads, trips, couriers, routes, stamina); path search with building crossings; trip and courier arrivals as new event sources in `Advance`; new mutations; §2 (cap, dormant tail) removed; the absence start becomes an input of `Advance`; invariants, §11 report and §12 budget change | `shared/Simulation/Runtime/**`, `04` |
+| Content (`23`, JSON) | Store limits per level; the courier station, the science building (one per city) and the warehouse; road levels; walking and crossing times; trip carry limit; stamina; amount presets; new effect types and Era I research; a starting city without goods; `contentVersion` `mvp-2`; the golden fixtures (protected) | `server/content/mvp-content.json`, `23`, `server/tests/**/Fixtures/content-golden-*.json` |
+| API (`05`) | Breaking (G-Contract, covered by this CR's approval): the snapshot's `inventory` and `storageCaps` become stores, purse and totals; projects, roads, trips, couriers, routes and stamina are added; the settlement report changes; six commands (`place-roads`, `upgrade-roads`, `remove-roads`, `start-trip`, `set-route`, `reenergize-couriers`); `place-building`, `upgrade-building` and `start-research` pay coins only and start projects; new error codes (for example `NO_SCIENCE_BUILDING`, `BUILDING_LIMIT`, `AMOUNT_MODE_LOCKED`, `INVALID_ROUTE`); limits on every list | `05`, `server/src/CityBuilder.Api/**`, `server/src/CityBuilder.Application/**` |
+| Data / migration (`06`) | Tables for stores, projects, roads, trips, couriers and routes; `cities.last_seen_at`; coins stay as the purse; ledger rows for deliveries and `COST_ROAD` (moves between stores write none: they don't change the city's totals); a migration that resets dev cities (D10) | `06`, `server/src/CityBuilder.Infrastructure/Persistence/**` |
+| Security (`07`) | Presence is derived by the server from request times; the new client inputs (tile lists, routes, amounts, trip targets) are bounded and refused at the boundary; a polling script keeps couriers awake (known limitation) | `07` |
+| Client (`09`) | Store in the inspector, HUD totals, projects waiting for goods, trip flow, road mode, courier station inspector, route editor (a new menu, OD-16), walkers on the map, welcome-back rework; the display prediction runs couriers too | `09`, `client/CityBuilder/Assets/_Project/**`, `client/README.md` |
+| Art | Courier station, science building, warehouse, courier figure, road tiles, icons | `art/**` |
 | Design docs | `22` (protected), `21`, `24`, `25`, `26` binding rule 4, `31`, `10`, `12`; the M0 plan (Definition of Done, §2, schedule, board); `13` | `core-instructions/**`, `docs/plan/M0-PLAN.md` |
 | Docs (recipes in `19`) | Module docs of every touched project and assembly; how-tos `add-command.md`, `add-building-or-item.md`, `add-research-effect.md`, `add-ui-screen.md`; `docs/testing/LOCAL-E2E.md`; `CHANGELOG.md` | `docs/**` |
 | Tests (`08`) | A rule test per rule; property tests; golden #1 rewritten and #2 new (engine and HTTP); integration tests per command with the OD-13 refusals; the performance budget; Unity EditMode and PlayMode tests | `shared/`, `server/tests/**`, `client/…/Tests/**` |
 
 ## Risks and alternatives
-- **Size.** 16 tasks, about 3–5 working days on top of M0's realistic 17–21 days. The riskiest step is T5: the storage model changes in the
-  engine, the database and the HTTP golden test at once, so it is a `[PLAN]` task with checkpoints.
-- **Tests change with the rules.** Golden scenario #1 and the tests built on the 8 h cap change because the design changes, not to get
-  green: each change gets its written reason in the task's build log (G-Tests), and the protected golden fixture needs the owner's OK.
+- **Size.** Three long tasks, the same work as the 16 tasks of the first version: about 3–5 working days on top of M0's realistic 17–21.
+  The riskiest step is T1 part E, where the storage model changes in the engine, the database and the HTTP golden test at once.
+- **Long sessions.** A session can stop (usage limits, a crash) and gets compacted as it grows. The resume point names the part and the step,
+  and the build log holds every decision, so `/resume` continues where it stopped. Each part ends fully verified, so a stop never leaves a
+  half-checked part behind.
+- **Where the sessions run.** This cloud container has no .NET SDK (the repository's setup script hasn't run in it), and Unity can't run in
+  the cloud. T1 and T2 must run where every check can run: the owner's laptop (see "Running the grouped tasks").
+- **Tests change with the rules.** Golden scenario #1 and the tests built on the 8 h cap and the city-wide stock change because the design
+  changes, not to get green: each change gets its written reason in the build log (G-Tests), and this CR's approval covers it.
 - **Performance.** Courier walks can outnumber production cycles (short walks on roads). Stamina bounds them while the player is away;
-  T13 sets and measures the new budget.
+  T1 part I sets and measures the new budget.
 - **Presence by polling.** A script that keeps polling keeps couriers awake, like an open game. It matters once goods can be sold to other
   players (M2): revisit then, for example with a daily limit on awake time or device attestation (M3).
 - **Split invariance changes meaning.** It holds for one absence start; a request is itself presence, so a request between two advances can
   change the outcome. The dev time scale must also scale the presence grace, or couriers would tire between polls.
-- **First session gets harder.** Before the first courier station the player moves goods by hand. `24` goal 1 (first coins within about 20
-  minutes) is at risk: T2 rebalances, M0-67 and M0-68 measure, M0-71 adds hints.
+- **The first session gets harder.** Before the first courier station the player moves goods by hand, also to construction sites and the
+  science building. `24` goal 1 (first coins within about 20 minutes) is at risk: T1 part B rebalances, M0-67 and M0-68 measure, M0-71 adds hints.
 - **No punishing timers (`21`).** Resting couriers are the cap on production that `21` allows; the re-energize button must not nag (no
   countdown, no penalty beyond the stop).
-- **Unity can't run in a cloud session.** The client tasks need the owner's `test-unity.sh` run and the [MANUAL] looks.
 - Alternative: build it in M1. M0's balance runs, audits and test suites would then be redone on the new model.
 - Alternative: keep city-wide stock and make couriers decoration. Rejected: the owner wants logistics as a mechanic.
 
 ## When to build it
 **Recommended: right after M0-60 (in progress while this CR was written), before M0-61.** The order becomes … M0-59, M0-60,
-CR-0008-T1 … CR-0008-T16, M0-61, M0-62 …
+CR-0008-T1, CR-0008-T2, CR-0008-T3, M0-61, M0-62 …
 - **Every later M0 task covers the new game once instead of twice.** M0-63 (docs completeness), M0-64 (ledger audit: it must now add up
-  stores and loads) and M0-66 (architecture review) see the final model. M0-67 (balance simulator) can only balance the game if its
-  strategies build stations, routes and roads. Day 13's suites (M0-73 to M0-76) and M0-78's security report test the new commands, and
+  stores, loads and deliveries) and M0-66 (architecture review) see the final model. M0-67 (balance simulator) can only balance the game if
+  its strategies build stations, routes and roads. Day 13's suites (M0-73 to M0-76) and M0-78's security report test the new commands, and
   Day 14 closes M0 on them.
-- **What it builds on is done:** the command pipeline, persistence, the screens it extends (inspector, welcome-back report, menus), the
-  phone-screen rules of M0-59 (OD-17, OD-18) and the art pipeline (CR-0005).
+- **What it builds on is done:** the command pipeline, persistence, the screens it extends (inspector, welcome-back report, research screen,
+  menus), the phone-screen rules of M0-59 (OD-17, OD-18) and the art pipeline (CR-0005).
 - **Not earlier:** M0-60 would be left half done. Its boundary review covers today's commands; each new command gets its boundary checks and
-  their tests in its own task (OD-13), and M0-74's attack suite covers them again.
+  their tests in its own part (OD-13), and M0-74's attack suite covers them again.
 - **Not later than M0-66:** after the balance simulator, Days 12 and 13 would have to be redone.
 - Workable alternative: after M0-62, so DocTools (generated reference docs) and the quality script help the rework; the cost is two more
   tasks done on the old model (M0-61 regenerates anyway).
 
 ## Tasks
-Written now because the owner asked for them with the proposal (`15` normally adds them after approval). `/start-task CR-0008-T1` works once
-this CR is Approved; T1 adds the tasks to the M0 board. Model: O = Opus 5.5, S = Sonnet 5.5.
+Grouped by model, as the owner asked: each task is one long session, one build log entry and one PR. Their parts are the 16 tasks of the
+first version, in the same order, every instruction kept, with D1 and D5 worked in. `/start-task CR-0008-T1` works once this CR is Approved;
+T1 adds the tasks to the M0 board. Model: Opus = Opus 5.5, Sonnet = Sonnet 5.5.
 
-| ID | Title | Model | Needs | Status |
+| ID | Model | Parts | The owner is needed for | Status |
 |---|---|---|---|---|
-| CR-0008-T1 | Design docs and plan update `[PLAN]` | O | approval | Todo |
-| CR-0008-T2 | Technical spec: engine, API, data, content numbers, golden scenarios | O | T1 | Todo |
-| CR-0008-T3 | Engine: map tiles, roads and fastest paths | O | T2 | Todo |
-| CR-0008-T4 | Server: roads end to end | O | T3 | Todo |
-| CR-0008-T5 | Building stores and manual trips: engine, server, golden scenario #1 `[PLAN]` | O | T4 | Todo |
-| CR-0008-T6 | Client: building stores and manual trips | S | T5 | Todo |
-| CR-0008-T7 | Client: roads | S | T4 | Todo |
-| CR-0008-T8 | Engine: courier station, couriers and routes | O | T5 | Todo |
-| CR-0008-T9 | Server: couriers and routes end to end | O | T8 | Todo |
-| CR-0008-T10 | Client: courier station and route editor | S | T9 | Todo |
-| CR-0008-T11 | Client: walkers on the map | S | T9 | Todo |
-| CR-0008-T12 | Courier stamina and presence; the 8 h cap removed; golden scenario #2 | O | T9 | Todo |
-| CR-0008-T13 | Logistics engine review: invariants and performance | O | T12 | Todo |
-| CR-0008-T14 | Client: welcome-back report and re-energize | S | T12 | Todo |
-| CR-0008-T15 | Art: courier station, courier and roads `[MANUAL]` | S | T2 (any time) | Todo |
-| CR-0008-T16 | Logistics close-out and playtest `[MANUAL]` | O | all | Todo |
+| CR-0008-T1 | Opus | A–I: spec, engine and server | starting it; two permission prompts (the `22` edit at the start, the golden fixture after part B); merging | In review (PR #86) |
+| CR-0008-T2 | Sonnet | A–F: client and art | starting it; merging | Todo |
+| CR-0008-T3 | Opus | close-out with a playtest `[MANUAL]` | about an hour of playing and looking; merging | Todo |
 
-Run them in this order; T15 can move anywhere after T2, since until then the client draws placeholders.
+The owner's steps: `/model` Opus → `/start-task CR-0008-T1` → answer the `22` prompt → later, answer the golden fixture prompt → merge →
+`/model` Sonnet → `/start-task CR-0008-T2` → merge → `/model` Opus → `/start-task CR-0008-T3` → play → merge.
+
+### Running the grouped tasks (T1 and T2)
+Each part keeps the full quality bar of the separate task it was; only the PR and the owner's start are shared.
+1. **Where:** a machine with the .NET 10 SDK, Docker and Unity 6000.3.25f1 (T2 also Blender), normally the owner's laptop, so the session
+   runs every check itself, `test-unity.sh` included (Editor closed). A cloud session can't run Unity, so it can't finish T1 part E or T2.
+2. **Write ahead for the whole task:** the build log plan lists every part with its steps; the Docs impact table covers every part; the
+   resume point names the part and the step.
+3. **Each part ends like a task, without the PR:** its tests (rule, property, integration, Unity), its docs by the recipes in `19`, a
+   self-review of the part's diff against its text below, and the full verification (format, build, fast tests, integration tests, Unity
+   tests when the client or the shared engine changed, `check-docs.sh`, the handbook build), then a checkpoint. Every step inside a part is
+   green before its checkpoint (`16`).
+4. **CI on every push:** after part A, open the task's PR as a draft. `/finish-task` at the end fills its body from the template and marks it
+   ready (no second PR).
+5. **No waiting for the owner inside this CR's scope:** decisions within it are made and logged (decision rows), and the work goes on. The
+   session stops only for a gate this CR doesn't cover (`15`): a new dependency, a protected file it doesn't name, loosening a test for any
+   reason other than a rule this CR changes, anything outside this CR.
+6. **What the approval of this CR covers:** the `22` edits; creating `content-golden-v2.json` and deleting `content-golden-v1.json`;
+   rewriting or removing tests whose rule this CR changes (each with its reason in the build log, never to get green); the API and database
+   breaks; resetting the dev cities. Two permission prompts still appear and wait for the owner: `22` (the first step of T1, while the owner
+   is still there) and the golden fixture (the last step of T1 part B, which is also the owner's chance to look at the spec and stop the
+   session). Say so in the session when each is due.
+7. **The `[PLAN]` stops of the first version are replaced** by the spec of T1 parts A and B, written and pushed before any code, and by a
+   written plan with checkpoints in the build log before part E.
+8. **Interruptions:** if a session stops, the owner runs `/resume` with the same model; the resume point says the part and the step.
 
 ### Task specs
 Each spec is the prompt for its task, on top of the standing rules (`AGENTS.md`, `16`, the change recipes in `19`). "This CR" is the design source.
 
-#### CR-0008-T1 — Design docs and plan update · [O] [PLAN]
+#### CR-0008-T1 — Spec, engine and server · [O]
 ```text
-Read this CR, 21, 22, 24, 25, 26, 31, 10, 12, 15 and docs/plan/M0-PLAN.md. Docs only, no code.
-Present the plan (each page and what changes in it) and wait for the owner's approval. Then:
-- 22 (protected: the approval of this CR covers it; the permission prompt still shows): Items and recipes, Workers, Grid and land,
-  Storage, builders, offline, and the Trading Post as this CR describes them. The six pillars stay word for word.
-- 21 (walkers and roads are mechanics, not decoration), 24 (logistics as a scarce resource; the caps on production), 25 (logistics in
-  Era I's base set; percentages and exact amounts by research; vehicles in later eras), 26 (binding rule 4 for building stores; market
-  deliveries need a destination, M2), 31 (store, limit, purse, walker, courier, courier station, route, stop, action, trip, road,
-  stamina, presence), 10 (M0 scope), 12 (a row for each decision D1-D10 as approved).
-- docs/plan/M0-PLAN.md: §1 Definition of Done (no 8 h cap, stores, couriers), §2 content diagram, §7 schedule (the CR-0008 tasks
-  between M0-60 and M0-61) and the realism check, board rows for the 16 tasks and the new task count; 13 "Deviations from the plan".
-```
+Follow "Running the grouped tasks" above. Parts run in this order; each ends fully verified and checkpointed.
 
-#### CR-0008-T2 — Technical spec · [O]
-```text
-Read this CR, 04, 05, 06, 07, 09, 23, 19 and the module docs of the engine and the server. Docs only, no code.
-- 04: building stores and the spending order (D1); trips; couriers, routes, stops, actions, amounts and rounding; tiles, roads, step
-  times, the fastest-path rule and its tie rule; stamina and the absence start as an input of Advance; the order at one second
-  (research, building completions, trip arrivals, courier arrivals, starts); every new mutation with its checks and error codes; content
-  rules (store limits, the shortest possible walk, route limits); invariants, the §11 report and the §12 budget; §2 removed.
-- 05: the six commands, the snapshot (stores, purse, totals, roads, trips, couriers with their current walk, stamina), the settlement
-  report, error codes and list limits. 06: tables, mapping, COST_ROAD, the migration that resets dev cities (D10). 07: presence and the new
-  inputs. 09: the screens and flows of T6, T7, T10, T11 and T14.
-- 23: every number (contentVersion mvp-2); golden scenario #1 rewritten (a first session with manual trips) and #2 new (a courier route,
-  a road, an absence, tired couriers, re-energize), both checked by hand like the M0 table.
-```
+Part A — Design docs (docs only)
+Read this CR, 21, 22, 24, 25, 26, 31, 10, 12, 15 and docs/plan/M0-PLAN.md.
+- First step, while the owner is still there: 22 (protected; this CR's approval covers it, the permission prompt still shows): Items and
+  recipes, Workers, Grid and land, Storage, builders, offline, and the Trading Post as this CR describes them. The six pillars stay word for word.
+- 21 (walkers and roads are mechanics, not decoration), 24 (logistics as a scarce resource; deliveries as the new sink; the caps on
+  production), 25 (logistics in Era I's base set; the science building; percentages and exact amounts by research; vehicles in later eras),
+  26 (binding rule 4 for building stores; market deliveries need a destination, M2), 31 (store, limit, purse, warehouse, science building,
+  project, construction site, delivery, walker, crossing, courier, courier station, route, stop, action, trip, road, stamina, presence),
+  10 (M0 scope), 12 (a row for each decision D1-D13 as approved).
+- docs/plan/M0-PLAN.md: §1 Definition of Done (no 8 h cap, stores, deliveries, couriers), §2 content diagram, §7 schedule (CR-0008-T1 to T3
+  between M0-60 and M0-61) and the realism check, board rows for the three tasks and the new task count; 13 "Deviations from the plan".
+- Then open the task's PR as a draft.
 
-#### CR-0008-T3 — Engine: map tiles, roads and fastest paths · [O]
-```text
-Read 04 as T2 left it and .claude/rules/simulation.md.
-- Content: ground time per tile; road levels (time per tile, cost and upgrade cost per tile) and their content rules.
+Part B — Technical spec (docs only)
+Read 04, 05, 06, 07, 09, 23, 19 and the module docs of the engine and the server.
+- 04: building stores and the purse; projects (construction sites, upgrades, research at the science building) waiting for deliveries, and
+  what a delivery fills first; the warehouse; trips; couriers, routes, stops, actions, amounts and rounding; tiles, roads, step times,
+  building crossings at 20 % speed, the path rule (fewest buildings crossed, then least time) and its tie rule; stamina and the absence start
+  as an input of Advance; the order at one second (research, building completions, trip arrivals, courier arrivals, starts); every new
+  mutation and every changed one (place, upgrade, start research) with its checks and error codes; content rules (store limits, one science
+  building per city, the shortest possible walk, route limits); invariants, the §11 report and the §12 budget; §2 removed.
+- 05: the six new commands and the three changed ones, the snapshot (stores, purse, totals, projects with what they still need, roads, trips,
+  couriers with their current walk, stamina), the settlement report, error codes and list limits. 06: tables, mapping, ledger rows for
+  deliveries and COST_ROAD, the migration that resets dev cities (D10). 07: presence and the new inputs. 09: the screens and flows of T2.
+- 23: every number (contentVersion mvp-2); golden scenario #1 rewritten (a first session: the science building, manual trips, deliveries to
+  a construction site) and #2 new (a courier route, a road, an absence, tired couriers, re-energize), both checked by hand like the M0 table.
+- Last step: server/tests/.../Fixtures/content-golden-v2.json, the frozen content of both golden scenarios (protected: say the session waits
+  for the permission prompt; it is the owner's chance to look at the spec). Nothing loads it before part E; if a test loads every golden
+  fixture, keep v2 out of it until then.
+
+Part C — Engine: map tiles, roads and paths
+Read 04 as part B left it and .claude/rules/simulation.md.
+- Content: ground time per tile; the building-crossing speed (20 %); road levels (time per tile, coins per tile and per upgrade) and their
+  content rules.
 - City state: road tiles with their levels; a query for what is on a tile (ground, road, building).
-- Path search: the fastest path between two buildings; 4-direction steps through tile centres; never through another building;
-  integer step times; the walking bonus; rounded up; the fixed tie rule; none when there is no path.
-- Mutations PlaceRoads, UpgradeRoads, RemoveRoads (a list of tiles, all or nothing, the checks and codes of 04); PlaceBuilding refuses a
-  road tile.
-- Tests: a rule test per check; never slower than any other path (brute force on small maps); never enters a building; the tie rule;
-  determinism. No change to production. Nothing places roads on the server before T4; if a server test needs the new state persisted,
-  bring the roads table forward from T4 and log it.
-```
+- Path search: 4-direction steps through tile centres; fewest other buildings crossed first, then least time; integer step times; the
+  walking bonus; rounded up; the fixed tie rule. Every building can always be reached.
+- Mutations PlaceRoads, UpgradeRoads, RemoveRoads (a list of tiles, all or nothing, the checks and codes of 04); PlaceBuilding refuses a road tile.
+- Tests: a rule test per check; brute force on small maps (no path crosses fewer buildings, and none with as few crossings is faster;
+  a building is crossed only when every path crosses one); the tie rule; determinism. No change to production yet. Nothing places roads
+  on the server before part D; if a server test needs the new state persisted, bring the roads table forward from part D and log it.
 
-#### CR-0008-T4 — Server: roads end to end · [O]
-```text
+Part D — Server: roads end to end
 Read 05, 06, docs/how-to/add-command.md and docs/how-to/add-migration.md.
 - Table city_roads with its migration and mapping; roads in the snapshot; road levels in GET /content.
 - Endpoints place-roads, upgrade-roads and remove-roads through the command pipeline; COST_ROAD ledger rows.
-- Boundary (OD-13): an empty or too long tile list, a repeated tile or a negative coordinate is INVALID_ARGUMENT before the lock, each with
-  a test that nothing was locked or stored.
+- Boundary (OD-13): an empty or too long tile list, a repeated tile or a negative coordinate is INVALID_ARGUMENT before the lock, each with a
+  test that nothing was locked or stored.
 - Integration tests for every success and refusal, and for idempotent replays.
-```
 
-#### CR-0008-T5 — Building stores and manual trips · [O] [PLAN]
-```text
-The switch from city-wide stock to building stores. The engine, the server and the golden scenario change together, so main stays green.
-Present the plan with its checkpoints and wait for the owner's approval.
-- Engine: stores and limits per level; the storage research per building; the coins purse; start and stall rules per store; the
-  spending order (D1); refunds into the store; a starting city with coins only; trips (state, StartTrip, arrival events, the worker busy
-  until it arrives, the leftover back to the source); conservation counts carried goods. The offline cap stays until T12.
-- Server: tables for stores and trips; the migration that resets dev cities (D10; record the owner's OK in the build log); mapping; the
-  snapshot (stores, purse, totals, trips); the start-trip endpoint with its boundary checks. Moves write no ledger rows.
-- Golden scenario #1 as T2 rewrote it: the engine test, the HTTP test and the golden fixture (protected: ask).
-- Client: keep it compiling and its tests green (the HUD reads the city's totals); its new screens are T6.
-```
+Part E — The switch: building stores, deliveries and manual trips
+The switch from city-wide stock to building stores. Engine, server and golden scenario #1 change together. Write this part's plan with its
+checkpoints into the build log before code, and keep every checkpoint green.
+- Engine: stores and limits per level; the storage research per building; the purse; start and stall rules per store; refunds into the
+  store; the warehouse; the science building (one per city; research needs it, D11); projects: a construction site, an upgrade and a research
+  wait for their goods after their coins are paid, and a delivery fills the project first (D12); a starting city with coins only; trips
+  (state, StartTrip, arrival events, the worker busy until it arrives, the leftover back to the source); conservation counts carried and
+  delivered goods. The offline cap stays until part H.
+- Server: tables for stores, projects and trips; the migration that resets dev cities (D10: quote the owner's OK from this CR in the build
+  log); mapping; the snapshot (stores, purse, totals,
+  projects, trips); place-building, upgrade-building and start-research as part B changed them; the start-trip endpoint with its boundary
+  checks; ledger rows for deliveries (moves between stores write none).
+- Golden scenario #1 on content-golden-v2.json: the engine test and the HTTP test. Then delete content-golden-v1.json, and rewrite or remove
+  the tests of rules this CR replaced, each with its reason in the build log (this CR's approval covers both).
+- Client: keep it compiling and its tests green (the HUD reads the city's totals; run test-unity.sh); its new screens are T2.
 
-#### CR-0008-T6 — Client: building stores and manual trips · [S]
-```text
-Read 09, docs/how-to/add-ui-screen.md and client/README.md.
-- Inspector: the building's store (each item as amount / limit) next to its stall reason; the HUD chips show the city's totals.
-- Trip flow from the inspector: pick the target building on the map, the item and All, Half or Quarter; the path drawn on the map by the
-  shared engine (display only); the button is off with its reason (no free worker, no path, nothing to carry); it sends start-trip;
-  feedback for every refusal code.
-- A running trip shows on both buildings with its countdown (the walking figure is T11).
-- EditMode tests for the view models; a [MANUAL] look in the Device Simulator (M0-59 rules, OD-17, OD-18).
-```
-
-#### CR-0008-T7 — Client: roads · [S]
-```text
-- Road mode from the build menu: drag a line of tiles; ghosts show the total cost and each refused tile's reason; confirming sends
-  place-roads. Selected road tiles can be upgraded (upgrade-roads) or removed (remove-roads).
-- The ground draws roads by level (a placeholder look until T15).
-- Tests for the road-mode model; a [MANUAL] look.
-```
-
-#### CR-0008-T8 — Engine: courier station, couriers and routes · [O]
-```text
-Read 04 as T2 left it.
-- Content: the courierStation building kind (per level: couriers, carry limit, stamina); amount presets; route limits; the research
-  effects UnlockAmountMode (percent, exact) and WalkSpeedBonus; the Era I research nodes of 23.
+Part F — Engine: courier station, couriers and routes
+- Content: the courierStation building kind (per level: couriers, carry limit, stamina; level 1 costs coins only); amount presets; route
+  limits; the research effects UnlockAmountMode (percent, exact) and WalkSpeedBonus; the Era I research nodes of 23.
 - State: couriers (per station and slot: current walk, load with where each item came from, stamina) and routes (stops and actions).
 - Mutation SetRoute with the checks of 04. AssignWorkers on a station adds or removes couriers; a removed courier's load goes back.
-- Advance: courier arrivals as a new event source in the order of 04; the actions at a stop; a stop with no path is skipped; the loop.
-  Until T12, no courier starts a walk after the production cap.
-- Tests: amounts and rounding, the carry limit, full and empty stores, skipping, the loop, locked amount modes (exact with test content),
-  determinism, conservation with loads.
-```
+- Advance: courier arrivals as a new event source in the order of 04; the actions at a stop (a put fills a waiting project first); the loop.
+  Until part H, no courier starts a walk after the production cap.
+- Tests: amounts and rounding, the carry limit, full and empty stores, deliveries to projects, the loop, locked amount modes (exact with
+  test content), determinism, conservation with loads.
 
-#### CR-0008-T9 — Server: couriers and routes end to end · [O]
-```text
-- Tables for couriers, routes and stops with their migration and mapping; the snapshot (each courier's current walk with its start,
-  arrival and target, its load, and each route); the courier station and the amount presets in GET /content.
+Part G — Server: couriers and routes end to end
+- Tables for couriers, routes and stops with their migration and mapping; the snapshot (each courier's current walk with its start, arrival
+  and target, its load, and each route); the courier station and the amount presets in GET /content.
 - Endpoint set-route with its boundary checks (OD-13: list lengths, amounts, ids).
 - Integration tests for every success and refusal, and for idempotent replays; golden scenario #1 over HTTP stays green.
-```
 
-#### CR-0008-T10 — Client: courier station and route editor · [S]
-```text
-- Courier station inspector: its couriers (the worker stepper), each courier's state (working, resting, no path), stamina and route summary.
-- Route editor (a menu in the MenuGroup, OD-16): add stops by tapping buildings; per stop, take and put actions with an item and an amount
-  (presets; a percentage once researched; exact shown locked with the research that unlocks it); reorder and remove stops; the path and
-  each walk's time on the map; it sends set-route; feedback for every refusal. A long route scrolls in one direction only and the rest
-  scales to fit (OD-17).
-- Tests for the editor model; a [MANUAL] look on a phone-sized screen (OD-18).
-```
-
-#### CR-0008-T11 — Client: walkers on the map · [S]
-```text
-- Couriers and trip workers walk from tile centre to tile centre with 90° turns. The position comes from the snapshot's current walk, the
-  path from the shared engine and the display clock (display only, never sent). Resting couriers stand at their station; a load shows as
-  an icon.
-- Pooled views and no allocations per frame when nothing changes (like CityView); a PlayMode test.
-```
-
-#### CR-0008-T12 — Courier stamina and presence · [O]
-```text
+Part H — Courier stamina and presence
 - Server: every authenticated city request sets cities.last_seen_at; the settle passes the absence start (last_seen_at plus the presence
   grace from the server options, multiplied by DevTimeScale) to Advance.
 - Engine: stamina is spent only after the absence start; a courier without stamina finishes its stop, walks home and rests; mutation
   ReenergizeCouriers. The offline production cap and the dormant tail are removed (content rule, Advance, and the report, whose
   productionSeconds becomes the couriers' working time and which couriers got tired, when).
 - Endpoint reenergize-couriers; stamina in the snapshot.
-- Golden scenario #2 as T2 wrote it: the engine and HTTP tests.
+- Golden scenario #2 on content-golden-v2.json: the engine and HTTP tests.
 - Tests: no stamina spent while present; split invariance for one absence start; timers unchanged; the report.
+
+Part I — Engine review: invariants and performance
+- Review the engine against 04 like M0-12, then extend the property harness of M0-14 and M0-15: determinism; split invariance for one
+  absence start; timer invariance; conservation (stores, loads, reserved outputs, deliveries); no store above its limit except by refunds
+  and returned loads; a path crosses a building only when every path does, and never more than needed; no stamina spent while present;
+  workers on trips plus assigned workers never more than provided.
+- Performance: the worst case that part B defines (most couriers, shortest walks, longest stamina) within the budget; the numbers go into
+  04 §12 and the Simulation module doc.
+- Then /finish-task: the draft PR becomes ready for review.
 ```
 
-#### CR-0008-T13 — Logistics engine review: invariants and performance · [O]
+#### CR-0008-T2 — Client and art · [S]
 ```text
-Review the engine against 04 like M0-12, then extend the property harness of M0-14 and M0-15: determinism; split invariance for one
-absence start; timer invariance; conservation (stores, loads, reserved outputs); no store above its limit except by refunds and
-returned loads; paths optimal and never through a building; no stamina spent while present; workers on trips plus assigned workers
-never more than provided.
-Performance: the worst case that T2 defines (most couriers, shortest walks, longest stamina) within the budget; the numbers go into 04
-§12 and the Simulation module doc.
-```
+Follow "Running the grouped tasks" above. Read 09, docs/how-to/add-ui-screen.md and client/README.md. Every screen follows the M0-59
+rules (one scroll direction at most, the rest scaled to fit, OD-17; phones from the iPhone XR on, OD-18) and joins the MenuGroup if it is a
+menu (OD-16). Parts run in this order; each ends with its tests green (test-unity.sh, Editor closed) and a checkpoint.
 
-#### CR-0008-T14 — Client: welcome-back report and re-energize · [S]
-```text
-- Welcome-back report (M0-53): time away, the couriers' working time and when they got tired, goods moved, produced and consumed, coins,
-  completed buildings and research; its main button Re-energize couriers (reenergize-couriers) when any courier spent stamina.
+Part A — Building stores, projects and manual trips
+- Inspector: the building's store (each item as amount / limit) next to its stall reason; the HUD chips show the city's totals.
+- Projects: a construction site, an upgrading building and the science building with a waiting research show what they still need; the
+  research screen shows a research waiting for goods, and its start button is off with its reason until the science building stands.
+- Trip flow from the inspector: pick the target (a building or a project) on the map, the item and All, Half or Quarter; the path drawn on
+  the map by the shared engine (display only); the button is off with its reason (no free worker, nothing to carry, nothing needed there);
+  it sends start-trip; feedback for every refusal code.
+- A running trip shows on both ends with its countdown (the walking figure is part D).
+- EditMode tests for the view models.
+
+Part B — Roads
+- Road mode from the build menu: drag a line of tiles; ghosts show the total cost and each refused tile's reason; confirming sends
+  place-roads. Selected road tiles can be upgraded (upgrade-roads) or removed (remove-roads).
+- The ground draws roads by level (the art of part F replaces the placeholder).
+- Tests for the road-mode model.
+
+Part C — Courier station and route editor
+- Courier station inspector: its couriers (the worker stepper), each courier's state (working, resting), stamina and route summary.
+- Route editor (a menu in the MenuGroup): add stops by tapping buildings; per stop, take and put actions with an item and an amount
+  (presets; a percentage once researched; exact shown locked with the research that unlocks it); reorder and remove stops; the path and
+  each walk's time on the map; it sends set-route; feedback for every refusal. A long route scrolls in one direction only and the rest
+  scales to fit.
+- Tests for the editor model.
+
+Part D — Walkers on the map
+- Couriers and trip workers walk from tile centre to tile centre with 90° turns, slowly across a building when their path crosses one. The
+  position comes from the snapshot's current walk, the path from the shared engine and the display clock (display only, never sent).
+  Resting couriers stand at their station; a load shows as an icon.
+- Pooled views and no allocations per frame when nothing changes (like CityView); a PlayMode test.
+
+Part E — Welcome-back report and re-energize
+- Welcome-back report (M0-53): time away, the couriers' working time and when they got tired, goods moved and delivered, produced and
+  consumed, coins, completed buildings and research; its main button Re-energize couriers (reenergize-couriers) when any courier spent stamina.
 - A HUD notice while couriers rest; the same button in the courier station inspector.
 - Every text about the 8 h production cap removed.
-- Tests for the report model; a [MANUAL] look.
-```
+- Tests for the report model.
 
-#### CR-0008-T15 — Art: courier station, courier and roads · [S] [MANUAL]
-```text
+Part F — Art
 Read art/README.md and CR-0005.
-- Blender scripts in art/blender/: the courier station at levels 1 and 2, a courier figure with a pack, a road tile per level that reads
-  well alone and joins its neighbours, and UI icons for the courier station, roads, trips and re-energize.
-- [MANUAL] the owner runs the Blender build; the client's looks pick the models up (BuildingLooks, the ground); lookup tests as in
-  CR-0005-T3.
+- Blender scripts in art/blender/: the courier station, the science building and the warehouse (each level of the M0 content), a courier
+  figure with a pack, a road tile per level that reads well alone and joins its neighbours, and UI icons for the courier station, the science
+  building, the warehouse, roads, trips and re-energize.
+- Run the Blender build headless (art/README.md); the client's looks pick the models up (BuildingLooks, the ground); lookup tests as in
+  CR-0005-T3. Without Blender on the machine, leave the run for T3 and say so.
+
+Then list every [MANUAL] look of parts A-F (what to open, what to check) in the build log for T3, and run /finish-task.
 ```
 
-#### CR-0008-T16 — Logistics close-out and playtest · [O] [MANUAL]
+#### CR-0008-T3 — Close-out and playtest · [O] [MANUAL]
 ```text
-- Docs sync over this CR's impact table; every Docs impact row of T1-T15 closed.
-- docs/testing/LOCAL-E2E.md: a logistics run (a manual trip, a courier route, a road, an absence with DevTimeScale, re-energize).
-- [MANUAL] the owner plays a first session and an absence; each problem becomes a P0-P3 issue in the build log; P0 and P1 are fixed with
-  regression tests.
+- With the owner (about an hour): the [MANUAL] looks T2 listed (Device Simulator, M0-59 rules, OD-17, OD-18), the Blender run if T2 left
+  it, a first session and an absence with DevTimeScale. Each problem becomes a P0-P3 issue in the build log.
+- Fix P0 and P1 with regression tests (client, engine or server).
+- Docs sync over this CR's impact table; every Docs impact row of T1 and T2 closed.
+- docs/testing/LOCAL-E2E.md: a logistics run (a manual trip, a delivery to a construction site, a research with goods, a courier route, a
+  road, an absence with DevTimeScale, re-energize).
 - This CR's status becomes Done; the M0 board and 13 are updated.
 ```
 
 ## Owner approval
-- Approved on: — (waiting for the owner: approve, change or reject; name any decision D1–D10 to change)
+- Approved on: 2026-11-02. The owner's words, in chat: "I approve the CR, go ahead with /start-task CR-0008-T1". The approval covers the
+  whole proposal as written, so D2–D4, D6–D9 and D11–D13 stand as recommended; T1 started the same day (build log BL-20261102-07).
+- 2026-11-02: the owner reviewed the first version and decided D1, D5 and D10 (quoted under "Owner's words"); the first version's
+  D2–D4 and D6–D9 were not changed.

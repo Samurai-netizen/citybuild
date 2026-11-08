@@ -120,11 +120,12 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(status.BubbleStruck, Is.False);
         }
 
-        /// <summary>A woodcutter whose logs are at the cap shows the blue bubble with the logs and no strike.</summary>
+        /// <summary>A woodcutter whose store holds its limit of logs (40 at level 1; CR-0008) shows the blue bubble with the logs and no strike.</summary>
         [Test]
         public void Bubble_OfFullStorage_IsBlueWithThePictureOfTheItem()
         {
-            Show(0, 500, Idle(1, "woodcutter", 2));
+            var full = new[] { new KeyValuePair<ItemId, long>(new ItemId("logs"), 40) };
+            Show(0, 0, new Building(1, new BuildingTypeId("woodcutter"), 1, 1, 1, 2, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, full));
 
             BuildingStatusView status = StatusOf(1)!;
             Assert.That(status.BubbleColor, Is.EqualTo(StatusArt.BubbleColor(StatusBubbleKind.StorageFull)));
@@ -255,22 +256,45 @@ namespace CityBuilder.Client.Tests.PlayMode
             return _world.Buildings!.TryGetView(id, out BuildingView? view) ? view!.Status : null;
         }
 
-        /// <summary>Shows a city at <paramref name="clock"/> with <paramref name="logs"/> logs and the given buildings, with the content.</summary>
+        /// <summary>
+        /// Shows a city at <paramref name="clock"/> with the given buildings, each sawmill holding <paramref name="logs"/> logs in its store (its
+        /// input; CR-0008), with the content.
+        /// </summary>
         private void Show(long clock, long logs, params Building[] buildings)
         {
             _world.ShowCity(City(clock, logs, buildings), _content);
         }
 
-        /// <summary>A city of Era I at <paramref name="clock"/> with 700 coins, <paramref name="logs"/> logs and 10 planks.</summary>
+        /// <summary>A city of Era I at <paramref name="clock"/> with 700 coins and the buildings, each sawmill with <paramref name="logs"/> logs in its store.</summary>
         private static CityState City(long clock, long logs, params Building[] buildings)
         {
-            var stock = new List<KeyValuePair<ItemId, long>>
+            var stocked = new List<Building>();
+            foreach (Building building in buildings)
             {
-                new KeyValuePair<ItemId, long>(new ItemId("coins"), 700),
-                new KeyValuePair<ItemId, long>(new ItemId("logs"), logs),
-                new KeyValuePair<ItemId, long>(new ItemId("planks"), 10),
-            };
-            return new CityState(clock, 1, 100, stock, new List<Building>(buildings), new List<ResearchId>(), null);
+                stocked.Add(building.TypeId.Value == "sawmill" && logs > 0 ? WithLogs(building, logs) : building);
+            }
+
+            return new CityState(clock, 1, 100, 700, stocked, new List<ResearchId>(), null);
+        }
+
+        /// <summary>A copy of <paramref name="building"/> whose store holds <paramref name="logs"/> logs.</summary>
+        private static Building WithLogs(Building building, long logs)
+        {
+            return new Building(
+                building.Id,
+                building.TypeId,
+                building.X,
+                building.Y,
+                building.Level,
+                building.AssignedWorkers,
+                building.Phase,
+                building.PhaseStartedAt,
+                building.PhaseEndsAt,
+                building.TargetLevel,
+                building.CycleLabor,
+                building.LaborRemaining,
+                building.SegmentStartedAt,
+                new[] { new KeyValuePair<ItemId, long>(new ItemId("logs"), logs) });
         }
 
         /// <summary>An idle building of <paramref name="typeId"/> on tile (1, 1) with <paramref name="workers"/> workers.</summary>

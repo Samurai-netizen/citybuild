@@ -143,8 +143,8 @@ public sealed class CommandLogTests(ApiFactory factory) : IClassFixture<ApiFacto
     }
 
     /// <summary>
-    /// <c>GET /city</c> logs its settlement with the trigger <c>city</c>: 100 seconds elapsed, all of them production seconds, no events, no
-    /// research.
+    /// <c>GET /city</c> logs its settlement with the trigger <c>city</c>: 100 seconds elapsed, no courier seconds and no tired couriers (the
+    /// city has none), no events, no research.
     /// </summary>
     [Fact]
     public async Task GetCity_After100Seconds_LogsTheSettlementsSize()
@@ -158,18 +158,19 @@ public sealed class CommandLogTests(ApiFactory factory) : IClassFixture<ApiFacto
         CapturingLogger.Entry settled = Assert.Single(logs.Events(6000));
         Assert.Equal(LogLevel.Information, settled.Level);
         Assert.Equal(
-            ("city", (object?)100L, (object?)100L, (object?)0, (object?)string.Empty),
-            (settled.Values["Trigger"], settled.Values["ElapsedSeconds"], settled.Values["ProductionSeconds"], settled.Values["Events"], settled.Values["ResearchCompleted"]));
+            ("city", (object?)100L, (object?)0L, (object?)0, (object?)0, (object?)string.Empty),
+            (settled.Values["Trigger"], settled.Values["ElapsedSeconds"], settled.Values["CourierSeconds"], settled.Values["TiredCouriers"],
+                settled.Values["Events"], settled.Values["ResearchCompleted"]));
         Assert.True((double)settled.Values["DurationMs"]! >= 0);
         Assert.Empty(logs.Events(6001));
     }
 
     /// <summary>
-    /// A settle that completes research names it and counts it as an event; after 9 hours away only the 8-hour cap is production time
-    /// (<c>04</c> §2).
+    /// A settle that completes research names it and counts it as an event; after 9 hours away all of them elapsed, with no cap (CR-0008,
+    /// <c>04</c> §2).
     /// </summary>
     [Fact]
-    public async Task GetCity_ResearchCompletesAfterNineHours_LogsItAndTheCappedProduction()
+    public async Task GetCity_ResearchCompletesAfterNineHours_LogsItAndTheElapsedSeconds()
     {
         var logs = new CapturingLogger();
         var store = new FakeCityStore();
@@ -181,8 +182,8 @@ public sealed class CommandLogTests(ApiFactory factory) : IClassFixture<ApiFacto
 
         CapturingLogger.Entry settled = Assert.Single(logs.Events(6000));
         Assert.Equal(
-            ((object?)32_400L, (object?)28_800L, (object?)1, (object?)"frame_saw"),
-            (settled.Values["ElapsedSeconds"], settled.Values["ProductionSeconds"], settled.Values["Events"], settled.Values["ResearchCompleted"]));
+            ((object?)32_400L, (object?)1, (object?)"frame_saw"),
+            (settled.Values["ElapsedSeconds"], settled.Values["Events"], settled.Values["ResearchCompleted"]));
     }
 
     /// <summary>

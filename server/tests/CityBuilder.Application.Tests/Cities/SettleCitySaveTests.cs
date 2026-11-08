@@ -102,7 +102,7 @@ public sealed class SettleCitySaveTests
             new(1, new BuildingTypeId("cottage"), 0, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
             new(2, new BuildingTypeId("woodcutter"), 1, 0, 1, 1, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
         ];
-        var state = new CityState(StartClock, era: 1, nextBuildingId: 3, [new(new ItemId("coins"), 80)], buildings, [], activeResearch: null);
+        var state = new CityState(StartClock, era: 1, nextBuildingId: 3, purse: 80, buildings, [], activeResearch: null);
         InMemoryCityRepository repository = RepositoryWith(state);
         FakeTimeProvider clock = ClockAtLastSettled();
 

@@ -1,11 +1,13 @@
 """Renders the 2D assets for the UI from the same models and palette: item, building and research icons
 (transparent PNG) and a portrait phone view of the golden scenario village with its building screen positions.
 
-    blender -b --factory-startup --python art/blender/render_ui.py
+    blender -b --factory-startup --python art/blender/render_ui.py [-- --only NAME ...]
 
-Output: the icons <name>.png (256 x 256) straight into the Unity project, Resources/UI/Icons/ (the only copy, loaded by name),
+`--only` renders just the named icons and skips the phone view: a render is not byte-identical from run to run, so a change that adds
+icons leaves the others as they are. Output: the icons <name>.png (256 x 256) straight into the Unity project, Resources/UI/Icons/ (the only copy, loaded by name),
 and ui/city_phone.png (780 x 1688) and ui/hotspots.json here in art/.
 """
+import argparse
 import json
 import math
 import os
@@ -107,6 +109,39 @@ def book():
     return [obj]
 
 
+def tally_sticks():
+    """Two notched tally sticks crossed over each other (Tally Sticks: counting by share)."""
+    out = []
+    for k, (x, rot) in enumerate(((-0.03, 30), (0.04, -25))):
+        m = Model()
+        m.box((0.05, 0.035, 0.42), (0, 0, -0.21), "wood_end", bevel=0.008)
+        for i in range(5):
+            m.box((0.056, 0.03, 0.012), (0, 0.004, -0.15 + i * 0.07), "wood_dark", bevel=0)
+        obj = m.to_object(f"tally_{k}")
+        obj.location = (x, k * 0.03, 0)
+        obj.rotation_euler = (0, math.radians(rot), math.radians(-45))
+        out.append(obj)
+    return out
+
+
+def boots():
+    """A pair of sturdy leather boots with laces (Sturdy Boots: faster walking)."""
+    out = []
+    for k, (x, y) in enumerate(((-0.07, 0.04), (0.08, -0.04))):
+        m = Model()
+        m.box((0.1, 0.09, 0.2), (0, 0, 0.0), "wood_dark", bevel=0.02)
+        m.box((0.2, 0.1, 0.07), (0.05, 0, 0.0), "wood_dark", bevel=0.025)
+        m.box((0.21, 0.105, 0.02), (0.05, 0, 0.0), "stone_dark", bevel=0.006)
+        m.box((0.11, 0.1, 0.03), (0, 0, 0.17), "wood", bevel=0.008)
+        for i in range(3):
+            m.box((0.012, 0.096, 0.01), (0.04, 0, 0.06 + i * 0.035), "wood_end", bevel=0)
+        obj = m.to_object(f"boot_{k}")
+        obj.location = (x, y, 0)
+        obj.rotation_euler = (0, 0, math.radians(150))
+        out.append(obj)
+    return out
+
+
 def workers():
     out = []
     for x, y, rot in ((0, 0, 200), (0.13, -0.1, 215), (-0.12, -0.08, 190)):
@@ -130,6 +165,10 @@ ICONS = {
     "bld_trading_post": one(assets_era1.BUILDINGS["trading_post_l1"]),
     "bld_construction": one(assets_era1.BUILDINGS["construction_site"]),
     "res_trade_charter": charter, "res_sharp_axes": axe, "res_frame_saw": frame_saw, "res_storehouses": storehouse,
+    "bld_courier_station": one(assets_era1.BUILDINGS["courier_station_l1"]),
+    "bld_scriptorium": one(assets_era1.BUILDINGS["scriptorium_l1"]),
+    "bld_warehouse": one(assets_era1.BUILDINGS["warehouse_l1"]),
+    "res_tally_sticks": tally_sticks, "res_sturdy_boots": boots,
 }
 
 
@@ -140,8 +179,10 @@ def meshes(objects):
     return out
 
 
-def icons():
+def icons(only=None):
     for name, build in ICONS.items():
+        if only and name not in only:
+            continue
         lib.clear_scene()
         objects = build()
         lib.setup_render(256, 256, transparent=True)
@@ -171,9 +212,17 @@ def phone_city():
 
 
 def main():
+    argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
+    parser = argparse.ArgumentParser(prog="render_ui.py")
+    parser.add_argument("--only", nargs="*", help="icon names to render, without the phone view (default: everything)")
+    args = parser.parse_args(argv)
+    unknown = [name for name in args.only or [] if name not in ICONS]
+    if unknown:
+        sys.exit("unknown icons: " + ", ".join(unknown))
     lib.load_palette(os.path.join(ROOT, "textures", "palette_era1.png"))
-    icons()
-    phone_city()
+    icons(args.only)
+    if not args.only:
+        phone_city()
 
 
 main()

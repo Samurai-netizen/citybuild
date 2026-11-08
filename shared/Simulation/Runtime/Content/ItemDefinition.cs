@@ -7,12 +7,12 @@ namespace CityBuilder.Simulation.Content
     public sealed class ItemDefinition
     {
         /// <summary>Creates the item from values the shape phase has read (<see cref="ContentReader"/>); each is described on its property.</summary>
-        internal ItemDefinition(ItemId id, string name, int era, bool isCapped, bool isTradable)
+        internal ItemDefinition(ItemId id, string name, int era, bool isCurrency, bool isTradable)
         {
             Id = id;
             Name = name ?? throw new ArgumentNullException(nameof(name));
             Era = era;
-            IsCapped = isCapped;
+            IsCurrency = isCurrency;
             IsTradable = isTradable;
         }
 
@@ -26,10 +26,10 @@ namespace CityBuilder.Simulation.Content
         public int Era { get; }
 
         /// <summary>
-        /// Whether production of the item stops at its storage cap (the base cap in <see cref="GameRules.BaseStorageCaps"/> plus research
-        /// bonuses). Coins are uncapped.
+        /// Whether the item is the currency (exactly one item is): it lives in the city's purse, uncapped and in no building, is paid and
+        /// received at once, and is never carried (<c>04</c> section 16). Every other item is a good, kept in building stores.
         /// </summary>
-        public bool IsCapped { get; }
+        public bool IsCurrency { get; }
 
         /// <summary>Whether the item may be traded on the player market (from Era II, <c>core-instructions/26-open-market.md</c>).</summary>
         public bool IsTradable { get; }

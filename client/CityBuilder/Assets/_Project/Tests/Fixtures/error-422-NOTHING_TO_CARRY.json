@@ -1,0 +1,1 @@
+{"type":"urn:citybuilder:error:nothing-to-carry","title":"Nothing to carry","status":422,"detail":"The source building has none of this item.","code":"NOTHING_TO_CARRY","requestId":"d21b5d6f-564f-4f31-aa78-03773ad1f68b","traceId":"00-71ab1279099eea055b95c6aeef60fdc7-7e13bc753a897c8c-00"}

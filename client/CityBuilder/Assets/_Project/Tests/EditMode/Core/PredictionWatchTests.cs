@@ -74,14 +74,10 @@ namespace CityBuilder.Client.Tests.EditMode.Core
         public void ASnapshotThatDiffers_ReportsBothCities()
         {
             CitySnapshot later = Later(0);
-            var changed = new List<KeyValuePair<ItemId, long>>(later.CopyCity().Inventory);
-            for (int index = 0; index < changed.Count; index++)
-            {
-                changed[index] = new KeyValuePair<ItemId, long>(changed[index].Key, changed[index].Value + 1);
-            }
-
             CityState city = later.CopyCity();
-            var other = new CityState(city.Clock, city.Era, city.NextBuildingId, changed, city.Buildings, city.CompletedResearch, city.ActiveResearch);
+            var other = new CityState(
+                city.Clock, city.Era, city.NextBuildingId, city.Purse + 1, city.Buildings, city.CompletedResearch, city.ActiveResearch, city.Roads,
+                city.Trips, city.NextTripId);
             string previous = PredictionWatch.ToJson(_store.Snapshot!.CopyCity());
 
             _store.Apply(new CitySnapshot(later.StateVersion, later.ContentVersion, other));
@@ -98,7 +94,7 @@ namespace CityBuilder.Client.Tests.EditMode.Core
         {
             CitySnapshot later = Later(0);
             CityState city = later.CopyCity();
-            var empty = new CityState(city.Clock, city.Era, city.NextBuildingId, new List<KeyValuePair<ItemId, long>>(), city.Buildings, city.CompletedResearch, city.ActiveResearch);
+            var empty = new CityState(city.Clock, city.Era, city.NextBuildingId, 0, city.Buildings, city.CompletedResearch, city.ActiveResearch);
             _commandsPending = true;
 
             _store.Apply(new CitySnapshot(later.StateVersion, later.ContentVersion, empty));
@@ -129,6 +125,52 @@ namespace CityBuilder.Client.Tests.EditMode.Core
 
             Assert.That(PredictionWatch.ToJson(_store.Snapshot!.CopyCity()), Is.EqualTo(PredictionWatch.ToJson(city)));
             Assert.That(PredictionWatch.ToJson(city), Does.StartWith("{\"clock\":" + city.Clock));
+        }
+
+        /// <summary>Two cities that differ only in a road give different texts: the roads are stored values too (CR-0008).</summary>
+        [Test]
+        public void ToJson_ACityWithARoad_DiffersFromTheCityWithout()
+        {
+            CityState city = _store.Snapshot!.CopyCity();
+            var withRoad = new CityState(
+                city.Clock, city.Era, city.NextBuildingId, city.Purse, city.Buildings, city.CompletedResearch, city.ActiveResearch,
+                new[] { new RoadTile(7, 7, 2) });
+
+            Assert.That(PredictionWatch.ToJson(withRoad), Is.Not.EqualTo(PredictionWatch.ToJson(city)));
+            Assert.That(PredictionWatch.ToJson(withRoad), Does.EndWith(",\"roads\":[{\"x\":7,\"y\":7,\"level\":2}],\"trips\":[],\"couriers\":[],\"routes\":[]}"));
+        }
+
+        /// <summary>
+        /// The text holds every value CR-0008 stores: the purse, each building's store and needs, the research's needs and the trips, so a
+        /// mismatch in any of them shows.
+        /// </summary>
+        [Test]
+        public void ToJson_ACityWithStoresNeedsAndATrip_WritesThemAll()
+        {
+            CityState city = CityTestData.Snapshot("snapshot-command-start-trip.json").CopyCity();
+
+            string text = PredictionWatch.ToJson(city);
+
+            Assert.That(text, Does.Contain("\"purse\":420"));
+            Assert.That(text, Does.Contain("\"store\":{},\"needs\":{\"logs\":10}"));
+            Assert.That(text, Does.Contain("\"trips\":[{\"id\":1,\"sourceId\":2,\"targetId\":4,\"itemId\":\"logs\",\"quantity\":4,"));
+        }
+
+        /// <summary>The text holds the couriers and the routes too (CR-0008-T1 part G), so a courier predicted wrongly shows.</summary>
+        [Test]
+        public void ToJson_ACityWithCouriersAndARoute_WritesThemAll()
+        {
+            CityState city = CityTestData.Snapshot("snapshot-command-set-route.json").CopyCity();
+
+            string text = PredictionWatch.ToJson(city);
+
+            Assert.That(
+                text,
+                Does.Contain("\"couriers\":[{\"stationId\":5,\"slot\":1,\"state\":\"Walking\",\"toStop\":1,\"departedAt\":894,\"arrivesAt\":904,\"stamina\":14400,\"load\":[]},"));
+            Assert.That(
+                text,
+                Does.EndWith("\"routes\":[{\"stationId\":5,\"slot\":1,\"stops\":[{\"buildingId\":2,\"actions\":[{\"kind\":\"Take\",\"itemId\":\"logs\",\"amount\":\"all\"}]},"
+                    + "{\"buildingId\":4,\"actions\":[{\"kind\":\"Put\",\"itemId\":\"logs\",\"amount\":\"all\"}]}]}]}"));
         }
     }
 }

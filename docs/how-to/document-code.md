@@ -18,15 +18,16 @@ name.
 ## Each kind
 The examples are the repository's own comments, so you can open the file and see them in place.
 
-A type: what it is, why it exists and how it fits (`shared/Simulation/Runtime/Settlement/Reservations.cs`).
+A type: what it is, why it exists and how it fits (`shared/Simulation/Runtime/Settlement/TripArrivalSource.cs`).
 ```csharp
 /// <summary>
-/// The reserved quantities during one advance: what <see cref="CityQueries.Reserved"/> would give, kept up to date instead of summed over
-/// every building for each capped output a start checks (the worst case of <c>04</c> section 12 did that about 200 times per event time).
-/// Inside an advance only two things change a reservation: a cycle that starts reserves its outputs, and a cycle that completes delivers
-/// them. Mutations run between advances, and the table is made new for each one, so it never outlives the city it was taken from.
+/// Trip arrivals (<c>core-instructions/04-simulation-model.md</c>, sections 6 and 18), step 3 of the order at one second, after building
+/// completions: trips that arrive at the same second do so in ascending trip id, each fully before the next. A trip's goods are delivered
+/// to its target (<see cref="Deliveries"/>); what is left goes back into the source's store at that second, even above its limit (a
+/// returned load); the trip ends and its worker is free. Only mutations start trips, so during an advance the set only shrinks, and the
+/// source keeps the next arrival instead of scanning the trips at every event.
 /// </summary>
-internal sealed class Reservations
+internal sealed class TripArrivalSource : IEventSource
 ```
 A method: what it does, its units and edge cases, what it returns, what it throws (`shared/Simulation/Runtime/IntegerMath.cs`).
 ```csharp
@@ -56,8 +57,8 @@ A primary constructor: describe each parameter on the type (`server/src/CityBuil
 ```csharp
 /// <summary>
 /// Settles a player's city to now (<c>core-instructions/04-simulation-model.md</c>, sections 1 and 2): the server clock, floored to whole
-/// seconds, gives the window from the last settled second, and the engine advances the city by it. Timers run for the whole window;
-/// production starts cycles only during the first <c>MaxOfflineProductionSeconds</c> of it. A skeleton: M0-23 adds the closing
+/// seconds, gives the window from the last settled second, and the engine advances the city by it. Timers run for the whole window.
+/// A skeleton: M0-23 adds the closing
 /// zero-length advance, the ledger rows and the transaction (M0-22).
 /// </summary>
 /// <param name="cities">The stored cities.</param>

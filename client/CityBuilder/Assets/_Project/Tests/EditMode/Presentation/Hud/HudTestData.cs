@@ -14,7 +14,10 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Hud
         /// <summary>The real content of the fixtures.</summary>
         public static GameContent Content() => CityTestData.Content();
 
-        /// <summary>A city of Era I at <paramref name="clock"/> with the given stock, buildings, completed research and running research.</summary>
+        /// <summary>
+        /// A city of Era I at <paramref name="clock"/> with the given coins in the purse, goods in a warehouse
+        /// (<see cref="CityTestData.GoodsStore"/>), buildings, completed research and running research.
+        /// </summary>
         public static CityState City(
             long clock,
             long coins,
@@ -24,19 +27,15 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Hud
             string[]? research = null,
             ActiveResearch? active = null)
         {
-            var stock = new List<KeyValuePair<ItemId, long>>
-            {
-                new KeyValuePair<ItemId, long>(new ItemId("coins"), coins),
-                new KeyValuePair<ItemId, long>(new ItemId("logs"), logs),
-                new KeyValuePair<ItemId, long>(new ItemId("planks"), planks),
-            };
             var completed = new List<ResearchId>();
             foreach (string id in research ?? new string[0])
             {
                 completed.Add(new ResearchId(id));
             }
 
-            return new CityState(clock, 1, 100, stock, new List<Building>(buildings), completed, active);
+            var all = new List<Building>(buildings);
+            all.AddRange(CityTestData.GoodsStore(logs, planks));
+            return new CityState(clock, 1, 100, coins, all, completed, active);
         }
 
         /// <summary>A finished cottage, which provides workers.</summary>

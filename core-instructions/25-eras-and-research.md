@@ -18,12 +18,14 @@ There are no XP points, player levels or city levels. A city progresses in three
 | Examples: open market, guilds, population needs, expeditions, fuel, power grid, automation | Examples: unlock Sawmill, −20 % labor, +250 storage, +1 builder slot, Land Survey (+2 rows) |
 
 When unsure, treat it as major and put it in the next era. The game stays simple early and gets deep later.
+**Logistics** (goods kept in building stores, trips, couriers, routes and roads) is a major mechanic in **Era I's base set** (owner,
+CR-0008): players have it from the start. Only its minor parts come by research: amount options, walking speed, and faster roads.
 
 ## Era roadmap (proposal — the owner can reorder)
 
 | # | Era | New goods (examples) | Major mechanics added | Target length* |
 |---|---|---|---|---|
-| I | Early Middle Ages | logs, planks, stone, grain, flour, bread | **Base set:** grid building, production chains, workers, building levels, storage, builders, research, Trading Post (NPC buyers) | 3–5 days |
+| I | Early Middle Ages | logs, planks, stone, grain, flour, bread | **Base set:** grid building, production chains, workers, building levels, storage in buildings, builders, research at the science building, **logistics** (trips, couriers and routes, roads), Trading Post (NPC buyers) | 3–5 days |
 | II | High Middle Ages | iron ore, iron, tools, wool, cloth, ale | **Open market** (player trading) · **Guilds** (co-op groups, shared projects) | 1–2 weeks |
 | III | Renaissance & Discovery | glass, paper, dyes, spices, fine clothes | **Population classes & needs** (citizens consume goods to grow) · **Expeditions** (timed voyages for exotic goods) | 2–3 weeks |
 | IV | Industrial Age | coal, steel, machine parts, textiles | **Fuel & machines** (optional fuel input speeds buildings up) · **Production lines** (switchable recipes, larger 2×2 factories) | 3–5 weeks |
@@ -39,7 +41,8 @@ When unsure, treat it as major and put it in the next era. The game stays simple
   Total research time is roughly 60–70 % of the target; the rest is coin and material gating.
 - **Each era's tree has 3–4 branches** (e.g. Production, Construction, Trade, Civic) so the player chooses an order,
   even though everything is eventually required.
-- **Research needs no workers.** Workers are for production; research is paid for in coins and goods.
+- **Research needs no workers.** Workers are for production and carrying; research is paid for in coins and goods. It happens at the
+  **science building** (one per city): its coins are paid when it starts, and its goods are delivered there before its timer runs.
 - **Durations grow by era:** I 10 min–4 h · II 1–12 h · III 4–24 h · IV 8–48 h · V+ 1–3 days.
 - **Slots:** one research slot at the start; at most one more from research in a later era (minor mechanic).
 
@@ -48,12 +51,25 @@ When unsure, treat it as major and put it in the next era. The game stays simple
 |---|---|---|
 | `UnlockBuilding(type)` | Trade Charter → Trading Post | yes |
 | `LaborReduction(type, ‰)` | Sharpened Axes → Woodcutter −200 ‰ | yes |
-| `StorageCapBonus(item, +n)` | Storehouses → +250 logs, planks | yes |
+| `StorageCapBonus(item, +n)` | Storehouses → a higher limit for logs and planks in every building's store | yes |
+| `UnlockAmountMode(mode)` | Tally Sticks → any percentage in courier actions (Era I); an Era II node → exact numbers | planned (CR-0008-T1) |
+| `WalkSpeedBonus(‰)` | Sturdy Boots → walkers 20 % faster | planned (CR-0008-T1) |
 | `MaxLevelBonus(type, +n)` | Timber Framing → Cottage max level 3 | later |
 | `LandExpansion(+rows, +cols)` | Land Survey I → grid 10 × 10 | later |
 | `BuilderSlots(+n)`, `ResearchSlots(+n)` | Guild of Masons → +1 builder | later |
-| `OfflineProductionBonus(+seconds)` | Overseers → +2 h production cap | later |
 | `UnlockRecipe(type, recipe)` | used once Era IV production lines exist | later |
+
+## Logistics through the eras
+Each era moves goods the same way, with more capacity and speed: the same routes, stops and actions, and stamina per vehicle.
+
+| Era | Carriers | Roads | Amounts |
+|---|---|---|---|
+| I | Couriers on foot (Courier Station); one-time trips by free workers | Dirt path, log road | All, Half, Quarter; any percentage by research |
+| II | Carts (planned) | Stone road (planned) | Exact numbers by research |
+| III–IV | Wagons (planned) | Paved roads (planned) | — |
+| V–VI | Cargo trucks (planned) | — | — |
+
+The courier's stamina replaces a fixed offline production cap (`22`, `24`); later carriers bring their own stamina.
 
 ## Era transition (built when Era II exists)
 - It triggers at the exact clock time the era's last research completes (inside `Advance`, so it is deterministic).
@@ -61,7 +77,8 @@ When unsure, treat it as major and put it in the next era. The game stays simple
 - Existing buildings keep working. New buildings use the new era's look. There are no resets or prestige.
 - **Nothing of a later era is usable early** (owner, OD-10): a building type of a later era can't be placed, research of another era can't
   start, and content may use an item only in its own era or a later one. Every new era-related feature gets the same check.
-- The player gets a one-time "era charter" grant of goods for the new era, so the first new building isn't a wait.
+- The player gets a one-time "era charter" grant of goods for the new era, so the first new building isn't a wait. Goods live in
+  buildings, so where the grant lands is decided with Era II, like market deliveries (`26`).
 
 ## Research UX (see `21-game-vision.md`)
 A tree view per era: nodes show cost, duration, effect and status (Locked / Available / In progress / Done).

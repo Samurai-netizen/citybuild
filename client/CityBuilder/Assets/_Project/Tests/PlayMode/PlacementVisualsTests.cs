@@ -277,7 +277,7 @@ namespace CityBuilder.Client.Tests.PlayMode
                 _world.ShowGhosts(new PendingCommand[0], 1);
 
                 var built = new List<Building> { new Building(1, new BuildingTypeId("house"), tile.X, tile.Y, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0) };
-                _world.ShowCity(new CityState(0, 1, 2, new List<KeyValuePair<ItemId, long>>(), built, new List<ResearchId>(), null));
+                _world.ShowCity(new CityState(0, 1, 2, 0, built, new List<ResearchId>(), null));
                 Color finished = MeanColorOver(tile);
 
                 float ghostShift = Distance(ghost, bare);

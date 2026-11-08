@@ -4,11 +4,13 @@ If a prompt seems to need any of these, stop and ask instead of building it.
 "Designed" means the docs describe it so the foundation doesn't block it, but no code is written.
 
 ## Gameplay
-- More than the 3 items, 4 buildings, 2 levels and 4 research nodes in `23-mvp-content.md`
+- More than the items, buildings, levels and research nodes in `23-mvp-content.md` (with the logistics base set of CR-0008)
 - Era transitions and any Era II+ content (designed in `25`, built in M2)
-- Research effect types beyond `UnlockBuilding`, `LaborReduction` and `StorageCapBonus`
+- Research effect types beyond `UnlockBuilding`, `LaborReduction`, `StorageCapBonus` and, from CR-0008, `UnlockAmountMode` and `WalkSpeedBonus`
 - A second research slot, cancelling research, or speeding research up
-- Land expansion, terrain, multi-tile buildings, roads, adjacency bonuses
+- Land expansion, terrain, multi-tile buildings, adjacency bonuses (roads arrive with CR-0008)
+- Logistics beyond CR-0008: Era II amounts and roads, carts, wagons, trucks, couriers blocking each other, loading time, diagonal steps,
+  waiting at a stop for goods, cancelling a project, science building levels above 1 (CR-0008 → Out of scope)
 - Demolition or moving buildings; more than one city per player
 - Multi-recipe buildings, fuel, power, automation, needs, expeditions (later eras)
 - Random events or disasters
@@ -33,7 +35,8 @@ If a prompt seems to need any of these, stop and ask instead of building it.
 
 ## Art and polish
 - Final art, animations beyond simple tweens, VFX beyond simple smoke, audio, haptics
-- Era looks beyond Era I placeholders, day/night, weather, walking workers, camera cinematics
+- Era looks beyond Era I placeholders, day/night, weather, camera cinematics; walking figures other than the walkers of CR-0008
+  (couriers and workers on a trip)
 
 ## Process
 - Building anything without a plan task or an owner-approved CR (`15`)

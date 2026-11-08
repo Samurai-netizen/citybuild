@@ -11,11 +11,12 @@ namespace CityBuilder.Client.Net
     {
         /// <summary>Creates the DTO. Newtonsoft calls this constructor with the JSON members of the same names, so the object is never half filled.</summary>
         [JsonConstructor]
-        public SnapshotResearchDto(string? activeId, long? startedAt, long? endsAt, List<string> completed)
+        public SnapshotResearchDto(string? activeId, long? startedAt, long? endsAt, Dictionary<string, long> needs, List<string> completed)
         {
             ActiveId = activeId;
             StartedAt = startedAt;
             EndsAt = endsAt;
+            Needs = needs;
             Completed = completed;
         }
 
@@ -23,13 +24,16 @@ namespace CityBuilder.Client.Net
         [JsonProperty(Required = Required.AllowNull)]
         public string? ActiveId { get; }
 
-        /// <summary>City-clock second the running research started, or <c>null</c> when none runs.</summary>
+        /// <summary>City-clock second the running research's timer started, or <c>null</c> when none runs or it waits for goods.</summary>
         [JsonProperty(Required = Required.AllowNull)]
         public long? StartedAt { get; }
 
-        /// <summary>City-clock second the running research completes, or <c>null</c> when none runs.</summary>
+        /// <summary>City-clock second the running research completes, or <c>null</c> when none runs or it waits for goods.</summary>
         [JsonProperty(Required = Required.AllowNull)]
         public long? EndsAt { get; }
+
+        /// <summary>Item id to what the running research still needs at the science building; empty when its timer runs (CR-0008).</summary>
+        public Dictionary<string, long> Needs { get; }
 
         /// <summary>Ids of the completed research, sorted by id (ordinal).</summary>
         public List<string> Completed { get; }

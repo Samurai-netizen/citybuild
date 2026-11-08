@@ -45,7 +45,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         /// <summary>The scheduler under the monitor.</summary>
         private PollScheduler _scheduler = null!;
 
-        /// <summary>The monitor under test, for the dev player <c>dev1</c> and the content <c>mvp-1</c>.</summary>
+        /// <summary>The monitor under test, for the dev player <c>dev1</c> and the content <c>mvp-2</c>.</summary>
         private ConnectionMonitor _monitor = null!;
 
         /// <summary>How many times the monitor raised <see cref="ConnectionMonitor.StateChanged"/>.</summary>
@@ -64,7 +64,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             _now = 1000;
             _reachable = true;
             _scheduler = new PollScheduler(() => _now, PollScheduler.DefaultIntervalSeconds);
-            _monitor = new ConnectionMonitor(api, auth, _store, "mvp-1", "dev1", _scheduler, () => _reachable);
+            _monitor = new ConnectionMonitor(api, auth, _store, "mvp-2", "dev1", _scheduler, () => _reachable);
             _changes = 0;
             _monitor.StateChanged += () => _changes++;
         }
@@ -96,7 +96,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             await _monitor.PollAsync(CancellationToken.None);
 
             Assert.That(_monitor.State, Is.EqualTo(ConnectionState.Connected));
-            Assert.That(_store.Snapshot!.StateVersion, Is.EqualTo(25L));
+            Assert.That(_store.Snapshot!.StateVersion, Is.EqualTo(10L));
             Assert.That(_transport.Requests, Has.Count.EqualTo(1));
             Assert.That(_transport.Requests[0].Method + " " + _transport.Requests[0].Url, Is.EqualTo("GET http://localhost:8080/api/v1/city"));
             Assert.That(_transport.Requests[0].AccessToken, Is.EqualTo("kept-token"));
@@ -113,7 +113,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             await _monitor.PollAsync(CancellationToken.None);
 
             Assert.That(_monitor.State, Is.EqualTo(ConnectionState.Connected));
-            Assert.That(_store.Snapshot!.StateVersion, Is.EqualTo(25L));
+            Assert.That(_store.Snapshot!.StateVersion, Is.EqualTo(10L));
         }
 
         /// <summary>No connection and no answer in time are both offline, with the client's code; the next usable answer is connected again.</summary>
@@ -241,8 +241,8 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         [Test]
         public async Task Poll_WithOtherContent_IsIncompatible_AndTheStoreIsUntouched()
         {
-            string other = Fixtures.Read("snapshot-city-producing.json").Replace("\"contentVersion\":\"mvp-1\"", "\"contentVersion\":\"mvp-2\"");
-            Assert.That(other, Does.Contain("mvp-2"));
+            string other = Fixtures.Read("snapshot-city-producing.json").Replace("\"contentVersion\":\"mvp-2\"", "\"contentVersion\":\"mvp-3\"");
+            Assert.That(other, Does.Contain("mvp-3"));
             _transport.Answer(200, other);
 
             await _monitor.PollAsync(CancellationToken.None);
@@ -264,7 +264,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             await _monitor.PollAsync(CancellationToken.None);
 
             Assert.That(_monitor.State, Is.EqualTo(ConnectionState.Connected));
-            Assert.That(_store.Snapshot!.StateVersion, Is.EqualTo(25L));
+            Assert.That(_store.Snapshot!.StateVersion, Is.EqualTo(10L));
             Assert.That(_transport.Requests, Has.Count.EqualTo(3));
             Assert.That(_transport.Requests[0].Url, Does.EndWith("/city"));
             Assert.That(_transport.Requests[0].AccessToken, Is.EqualTo("kept-token"));
@@ -303,7 +303,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
 
             await _monitor.PollAsync(CancellationToken.None);
 
-            Assert.That(_store.Snapshot!.StateVersion, Is.EqualTo(25L));
+            Assert.That(_store.Snapshot!.StateVersion, Is.EqualTo(10L));
         }
 
         /// <summary>
@@ -544,13 +544,13 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             var api = new ApiClient("http://localhost:8080", 15, _transport, allowInsecureHttp: true);
             var auth = new AuthService(api, _tokens);
 
-            Assert.Throws<ArgumentNullException>(() => new ConnectionMonitor(null!, auth, _store, "mvp-1", "dev1", _scheduler, () => true));
-            Assert.Throws<ArgumentNullException>(() => new ConnectionMonitor(api, null!, _store, "mvp-1", "dev1", _scheduler, () => true));
-            Assert.Throws<ArgumentNullException>(() => new ConnectionMonitor(api, auth, null!, "mvp-1", "dev1", _scheduler, () => true));
+            Assert.Throws<ArgumentNullException>(() => new ConnectionMonitor(null!, auth, _store, "mvp-2", "dev1", _scheduler, () => true));
+            Assert.Throws<ArgumentNullException>(() => new ConnectionMonitor(api, null!, _store, "mvp-2", "dev1", _scheduler, () => true));
+            Assert.Throws<ArgumentNullException>(() => new ConnectionMonitor(api, auth, null!, "mvp-2", "dev1", _scheduler, () => true));
             Assert.Throws<ArgumentNullException>(() => new ConnectionMonitor(api, auth, _store, null!, "dev1", _scheduler, () => true));
-            Assert.Throws<ArgumentNullException>(() => new ConnectionMonitor(api, auth, _store, "mvp-1", null!, _scheduler, () => true));
-            Assert.Throws<ArgumentNullException>(() => new ConnectionMonitor(api, auth, _store, "mvp-1", "dev1", null!, () => true));
-            Assert.Throws<ArgumentNullException>(() => new ConnectionMonitor(api, auth, _store, "mvp-1", "dev1", _scheduler, null!));
+            Assert.Throws<ArgumentNullException>(() => new ConnectionMonitor(api, auth, _store, "mvp-2", null!, _scheduler, () => true));
+            Assert.Throws<ArgumentNullException>(() => new ConnectionMonitor(api, auth, _store, "mvp-2", "dev1", null!, () => true));
+            Assert.Throws<ArgumentNullException>(() => new ConnectionMonitor(api, auth, _store, "mvp-2", "dev1", _scheduler, null!));
         }
     }
 }

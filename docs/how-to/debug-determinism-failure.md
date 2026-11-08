@@ -1,7 +1,7 @@
 # Debug a property test failure
 
 The property tests in `server/tests/CityBuilder.Simulation.Tests/Properties/` run every seed from 0 to 499 over two frozen contents
-(`golden-v1` and the rule `fixture`) and check determinism, split and timer invariance (M0-14) and invariants 4–13 of
+(`golden-v2` and the rule `fixture`) and check determinism, split and timer invariance (M0-14) and invariants 4–14 of
 `core-instructions/04-simulation-model.md` §10 (M0-15). When one fails, this guide takes you from the failing seed to a minimal rule test
 and a fix. The test harness itself is described in `docs/modules/CityBuilder.Simulation.md` → Tests.
 
@@ -12,7 +12,8 @@ and a fix. The test harness itself is described in `docs/modules/CityBuilder.Sim
 - The seeds are deterministic: `SeededRandom` is SplitMix64, pinned by `SeededRandomTests`, so a seed fails the same way on every machine.
 
 ## 1. Read the message
-Every property prints what it needs to replay the case. An invariant failure looks like this (shortened; from a bug planted in M0-15 to test the checks):
+Every property prints what it needs to replay the case. An invariant failure looks like this (shortened; from a bug planted in M0-15 to test
+the checks, on the content and the city-wide stock of that time; since CR-0008 the stock lines name a building's store):
 ```text
 Invariant 6 (StorageCap) failed on content golden-v1, seed 29: operation 28, branch at clock 119947: AssignWorkers 3 1, then Advance 212,
 step from clock 120097 to 120127: logs: stock + reserved went from 500 to 501 (refund 0), the cap is 500
@@ -22,9 +23,9 @@ seed 29, 31 operations from the starting city:
 ```
 - **Invariant or property, content, seed:** which test, and `PropertyContent.Named(content)`.
 - **Operation N:** the step happened during or after the N-th operation of the list (0 = after the whole history).
-- **Step from clock A to B:** the observer (`InvariantObserver`) cuts every advance within the production cap into steps that end at each
-  next timer, so a step holds at most one event second, at its end. `(dormant tail)` means the part of an advance after its production
-  window, compared with the test model `DormantTail`.
+- **Step from clock A to B:** the observer (`InvariantObserver`) cuts every advance into steps that end at each next timer or arrival, so
+  a step holds at most one event second, at its end. `(absent from C)` means the advance had the player away from city second C (the
+  `absentFrom` every piece of it gets); a generated advance prints as `Advance 3600 absent after 120`.
 - **Branch:** the observer sometimes leaves the history on a copy (`branch at clock C: <command>, then Advance G`). The city at clock C is
   the history's city after operation N − 1, advanced to C.
 - The rest is the difference: the invariant's own words, or the first differing field (`inventory[logs]: expected 2, actual 1`).
@@ -42,7 +43,7 @@ Then write a scratch test (never committed) next to the properties that rebuilds
 [Fact]
 public void Scratch()
 {
-    GameContent content = PropertyContent.Named("golden-v1");
+    GameContent content = PropertyContent.Named("golden-v2");
     CityHistory history = CityGenerator.Generate(content, seed: 29);
     CityState city = history.CopyAfter(content, 27);                   // the city after operation N − 1
     Simulator.Advance(city, content, 119947 - city.Clock);             // only for a branch: up to its clock (within the cap)
@@ -52,24 +53,26 @@ public void Scratch()
     Assert.Fail(CityDump.Describe(city));                              // read the state before the failing step
 }
 ```
-`CityDump.Describe` prints every stored value. Advance once more to the step's end and compare. Within the production cap, advancing in
+`CityDump.Describe` prints every stored value. Advance once more to the step's end and compare. With the same `absentFrom`, advancing in
 pieces gives the same city as one advance (property 2), so you can stop at any second you like.
 
 ## 3. Shrink it to the rule
 Look at the state before the step and find the two or three buildings involved: the one whose numbers are wrong and those that share an
 item with it. Then build that situation directly, without the history:
-- Use the rule fixture (`State/CityFixture`): `City(clock, inventory, buildings, completedResearch)` with `Idle`, `Constructing`,
-  `Upgrading` and `Producing` buildings, and `CityFixture.TestContent`. Its numbers are in the summaries of `Rules/*Tests.cs`.
+- Use the rule fixture (`State/CityFixture`): `City(clock, purse: …, buildings: …, completedResearch: …)` (also `trips`) with `Idle`,
+  `Constructing`, `Upgrading` and `Producing` buildings, each with its own `store` (CR-0008), and `CityFixture.TestContent`. Its numbers
+  are in the summaries of `Rules/*Tests.cs`.
 - Keep only what makes the failure happen: one item at its cap, one consumer, one producer. Put the clock right before the event.
 - Drive it with `Simulator.Advance` and the `EngineRules/Commands` helpers (a mutation, then a zero-length advance), as the server will.
 - Check the exact expected state with `CityDump.BuildingLine` or `CityDump.Describe`.
 
-Example: CR-0001 started as split invariance failing on golden-v1, seed 249, over 130 s with five buildings. Its rule was "a start frees
-room under a cap for a lower id". The rule test needs three buildings and one zero-length advance:
+Example: CR-0001 started as split invariance failing on golden-v1 (the frozen content of M0, replaced by v2 in CR-0008), seed 249, over
+130 s with five buildings. Its rule was "a start frees room under a cap for a lower id"; since CR-0008 a start touches only its own store,
+so that rule is gone, but the shape of a rule test is the same: a few buildings and one zero-length advance:
 ```csharp
 // EngineRules/StartRuleTests.cs
-CityState city = City(clock: 1000, inventory: [("wood", 100)], completedResearch: ["carpentry"], buildings:
-    [Idle(1, "hut", 0, 0), Idle(2, "lumber_camp", 1, 0, workers: 2), Idle(3, "workshop", 2, 0, workers: 1)]);
+CityState city = City(clock: 1000, completedResearch: ["carpentry"], buildings:
+    [Idle(1, "hut", 0, 0), Idle(2, "lumber_camp", 1, 0, workers: 2), Idle(3, "workshop", 2, 0, workers: 1, store: [("wood", 4)])]);
 Simulator.Advance(city, TestContent, 0);
 Assert.Equal("building 2 lumber_camp (1,0) L1 w=2 Producing 1000..1020 target=0 labor=40/40@1000", CityDump.BuildingLine(city, 2));
 ```

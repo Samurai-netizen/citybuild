@@ -9,7 +9,10 @@ namespace CityBuilder.Simulation.Rules
     /// </summary>
     public enum MutationErrorCode
     {
-        /// <summary><c>INVALID_ARGUMENT</c>: workers assigned to a building without a recipe (a house).</summary>
+        /// <summary>
+        /// <c>INVALID_ARGUMENT</c>: workers assigned to a building that takes none (a house, a warehouse, the science building); a trip whose
+        /// source is its target, that carries the currency, or whose amount names a preset the content doesn't have.
+        /// </summary>
         InvalidArgument,
 
         /// <summary><c>UNKNOWN_BUILDING_TYPE</c>: the building type is not in the content.</summary>
@@ -59,5 +62,32 @@ namespace CityBuilder.Simulation.Rules
 
         /// <summary><c>RESEARCH_COMPLETED</c>: the node is already researched.</summary>
         ResearchCompleted,
+
+        /// <summary><c>ROAD_NOT_FOUND</c>: a tile of a road command has no road to upgrade or remove (CR-0008).</summary>
+        RoadNotFound,
+
+        /// <summary><c>BUILDING_LIMIT</c>: the city already has the most buildings of the type its <c>maxPerCity</c> allows (CR-0008: the science building).</summary>
+        BuildingLimit,
+
+        /// <summary><c>NO_SCIENCE_BUILDING</c>: research needs a completed science building, and the city has none (CR-0008 D11).</summary>
+        NoScienceBuilding,
+
+        /// <summary><c>UNKNOWN_ITEM</c>: the item of a trip or a route is not in the content (CR-0008).</summary>
+        UnknownItem,
+
+        /// <summary><c>AMOUNT_MODE_LOCKED</c>: a percentage or an exact amount before the research that unlocks its mode (<c>04</c> section 19).</summary>
+        AmountModeLocked,
+
+        /// <summary><c>ITEM_NOT_ACCEPTED</c>: the trip's target neither needs the item for a project nor has it in its store (<c>04</c> section 8).</summary>
+        ItemNotAccepted,
+
+        /// <summary><c>NOTHING_TO_CARRY</c>: the trip's amount gives nothing, because the source's store has none of the item (<c>04</c> section 18).</summary>
+        NothingToCarry,
+
+        /// <summary>
+        /// <c>INVALID_ROUTE</c>: a route's slot above the station level's couriers, one stop or more than the content's most, a stop with more
+        /// than the most actions, or two consecutive stops (the last and the first included) at one building (<c>04</c> section 8).
+        /// </summary>
+        InvalidRoute,
     }
 }

@@ -47,7 +47,7 @@ to 0.1 ms; a Development fast clock doesn't change it.
 | 5001 | Information | A command was refused | `Command`, `RequestId`, `PlayerId`, `Code` (a rule's code, `INVALID_ARGUMENT` or `IDEMPOTENCY_CONFLICT`), `DurationMs` |
 | 5002 | Information | A retried command was answered from its receipt (nothing ran) | `Command`, `RequestId`, `PlayerId`, `DurationMs` |
 | 5003 | Warning | A command hit `CONCURRENCY_CONFLICT` (nothing committed) | `Command`, `RequestId`, `PlayerId`, `DurationMs` |
-| 6000 | Information | A city was settled (every `GET /city`, and every command that got past the receipt check, before its 5000 or 5001 line) | `PlayerId`, `Trigger` (`city` or the command type), `ElapsedSeconds`, `ProductionSeconds`, `Events` (constructions, upgrades and research completed, an era entered), `ResearchCompleted` (ids, comma-separated), `DurationMs` |
+| 6000 | Information | A city was settled (every `GET /city`, and every command that got past the receipt check, before its 5000 or 5001 line) | `PlayerId`, `Trigger` (`city` or the command type), `ElapsedSeconds`, `CourierSeconds` (the most stamina one courier spent), `TiredCouriers` (how many ran out; CR-0008-T1 part H), `Events` (constructions, upgrades and research completed, an era entered), `ResearchCompleted` (ids, comma-separated), `DurationMs` |
 | 6001 | Warning | The server clock was behind the city's last settled second, so nothing elapsed (`04` §1) | `PlayerId`, `SecondsBehind` |
 | 7000 | Warning | The Development fast clock is on (startup) | `TimeScale`, `ServerTimeUtc` (ISO 8601 with `Z`) |
 

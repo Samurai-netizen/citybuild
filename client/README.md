@@ -69,7 +69,7 @@ Claude cannot use the Editor GUI, and a scene file is never hand-edited. The sce
 3. **File → Save As…** → folder `Assets/Scenes`, name **`Bootstrap`** (exactly; the name triggers the bootstrap) → Save.
 4. **File → Build Profiles** (older Editors: **Build Settings**) → **Scene List**. With Bootstrap open click **Add Open Scenes**, drag
    `Scenes/Bootstrap` to the top so its number is **0**, and untick `Scenes/SampleScene` (the template's sample).
-5. Press **Play** with Bootstrap open. Expected: a dark rounded label at the bottom left of the Game view, just above the Build button once connected (the top belongs to the HUD, M0-49): "Not connected: Cannot reach the server (CLIENT_NETWORK_ERROR)" when no API runs, or "Connected - Early Middle Ages - Coins: 700" when the dev API runs (`docs/getting-started.md`; the client logs in as the player named in `Resources/Config/ApiClientSettings.asset`, `dev1`, and keeps the token in `PlayerPrefs` in the Editor and development builds; plain http works only there, so a release build needs an https address in the asset, `07`); in the Hierarchy a
+5. Press **Play** with Bootstrap open. Expected: a dark rounded label at the bottom left of the Game view, just above the Build button once connected (the top belongs to the HUD, M0-49): "Not connected: Cannot reach the server (CLIENT_NETWORK_ERROR)" when no API runs, or "Connected - Early Middle Ages - Coins: 800" when the dev API runs (`docs/getting-started.md`; the client logs in as the player named in `Resources/Config/ApiClientSettings.asset`, `dev1`, and keeps the token in `PlayerPrefs` in the Editor and development builds; plain http works only there, so a release build needs an https address in the asset, `07`); in the Hierarchy a
    `GameRoot` with the children `World` and `UI`; no red messages in the Console. The Game
    view is dark blue-grey behind the label: `GameRoot` makes the camera (M0-43), the scene needs none. With the server running, a green
    8 by 8 grid appears. Press Play again to stop.
@@ -118,8 +118,10 @@ server of `docs/testing/LOCAL-E2E.md` and play a minute.
 1. Open the **Bootstrap** scene and press **Play**; place a Woodcutter's Hut. While it is built you see the construction site with a yellow ring that fills
    clockwise. When it is done and has workers, a green ring fills over each cycle, and one small pale dot per worker sits under it (at most six).
 2. Set its workers to 0 with the stepper of the inspector (tap the building, press −; M0-51): an amber bubble with the workers picture
-   shows and the hut looks slightly washed out. Place a Sawmill with no logs in stock: a red bubble with the logs picture and a strike across it. Fill the
-   logs to their cap: a blue bubble with the logs.
+   shows and the hut looks slightly washed out. Since CR-0008 a Sawmill first waits as a site for its 10 logs, which only walkers deliver: until
+   CR-0008-T2 brings the trip screen, send a `start-trip` from the hut (`docs/api/smoke.http`). Once it stands with workers and no logs in its own
+   store: a red bubble with the logs picture and a strike across it. Fill the hut's store to its limit (`bash server-panel/panel.sh goods set logs
+   40 <hut id>`): a blue bubble with the logs.
 3. Zoom in and out and pan: the ring, bubble and dots keep their size on the building and face the screen. Check that nothing hides behind the building in front,
    that the dots can be told apart on a yellow roof, and that the washed-out look is slight and not dirty (`StalledTint.Mix` and `Grey` are the two numbers).
 4. Tell the AI coder "status looks right", or what looks wrong (too big, too small, too strong a tint, a bubble you cannot read). Stop Play mode without saving the scene.
@@ -132,8 +134,10 @@ server of `docs/testing/LOCAL-E2E.md` and play a few minutes.
    the same panel without the stepper. Tap an empty tile or the same tile again, or press the X: the panel closes.
 2. Press − once: the value drops at once, a line says the rate with the lower count, and "Updating workers…" shows until the server answers (about half a second
    later). Press − three times quickly: one request, the last target. With no free workers (every worker is assigned) + is dimmed and says so.
-3. With coins and planks in stock press **Upgrade** on a Sawmill: the button dims with "Upgrade requested…", the building gets the construction site and a blue
-   ring, and the panel says "Upgrading to level 2". Press it twice quickly: only one upgrade starts. With too little stock the button is dimmed and names what is missing.
+3. With the coins in the purse press **Upgrade** on a Sawmill: the button dims with "Upgrade requested…". Since CR-0008 the upgrade then waits for its
+   planks while the Sawmill keeps working (the button says "Busy until the current job is done"; CR-0008-T2 shows what it needs); deliver them with
+   trips (`docs/api/smoke.http`): the building gets the construction site and a blue ring, and the panel says "Upgrading to level 2". Press it twice
+   quickly: only one upgrade starts. With too few coins the button is dimmed and says "Not enough Coins".
 4. Check the layout: the panel must not hide the HUD or run off the bottom on your screen (the top margin is a fixed 124 and assumes the HUD's height), the lines must
    not be cut off, and − and + must be easy to hit with a thumb. Open the **Build** sheet while the panel is up: the panel closes (one menu at a time).
    With the sheet open, tap a building: the sheet closes and the panel opens. Pick a building in the sheet: placement starts.
@@ -156,11 +160,13 @@ server of `docs/testing/LOCAL-E2E.md` and play a few minutes.
 ## [MANUAL] Look at the welcome-back report (M0-53)
 The tests check the words, the threshold and the wiring; only a person can say the card reads well. Nothing here is saved or committed. Use the server of
 `docs/testing/LOCAL-E2E.md`. The report shows when a snapshot settled five real minutes or more (at a dev time scale, that many times more city seconds, M0-54), so the quickest way is to leave the city alone: stop the client
-(Play mode off), wait five minutes or more (or set `last_settled_unix` of the city in the `cities` table back in the development database), then press **Play** again.
+(Play mode off), wait five minutes or more (or set `last_settled_unix` and `last_seen_unix` of the city in the `cities` table back by the same seconds in the
+development database; since CR-0008-T1 part H the player counts as away from 300 s after `last_seen_unix`, and couriers spend stamina only then), then press **Play** again.
 1. A dark scrim covers the screen with a card in the middle: "While you were away (5 m)", the headings **Produced**, **Used**, **Buildings** and **Research** for what
    happened (a heading with nothing under it is absent), and a **Continue** button. Press the ground or a button behind it: nothing happens until you press **Continue**.
-2. After a long absence (set `last_settled_unix` back by more than the offline cap, 8 hours) the card ends with an amber note: "Production paused after 8 h. Check in more
-   often or research storage." Nothing was produced or finished at all: the card says "Nothing was produced or finished."
+2. After a long absence (set both columns back by 10 hours) the card counts all of it: "While you were away (10 h)"; there is no production-cap note any more
+   (the cap went in CR-0008-T1 part H; the couriers' lines and the re-energize button come with CR-0008-T2). Nothing was produced or finished at all: the card says
+   "Nothing was produced or finished."
 3. Check the layout: the card must not run off a narrow screen, a long list must scroll, the texts must not be cut off, and **Continue** must be easy to hit with a thumb.
    Open the **Build** sheet or the **Research** panel after Continue: they work as before. Let the game run a few minutes: the report never comes back by itself.
 4. Tell the AI coder "welcome-back report looks right", or what looks wrong. Stop Play mode without saving the scene.

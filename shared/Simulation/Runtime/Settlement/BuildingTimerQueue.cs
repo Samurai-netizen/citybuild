@@ -1,35 +1,24 @@
 #nullable enable
-using System;
 using System.Collections.Generic;
 using CityBuilder.Simulation.State;
 
 namespace CityBuilder.Simulation.Settlement
 {
     /// <summary>
-    /// The building timers of one advance in a binary min-heap, earliest end first and ascending id within a second (the order of <c>04</c>
-    /// section 6), so the next due time and the buildings due then are found without a scan of every building (the worst case of <c>04</c>
-    /// section 12 has 28,800 event times in 8 hours). It holds every building with a <see cref="Building.PhaseEndsAt"/> by its index in
-    /// <see cref="CityState.Buildings"/>, which is in id order and doesn't change during an advance. Inside an advance a timer ends only when
-    /// it completes, and a new one begins only when a cycle starts; mutations run between advances, and the queue is made new for each one.
+    /// The building timers of one advance in an indexed binary min-heap, earliest end first and ascending id within a second (the order of
+    /// <c>04</c> section 6), so the next due time and the buildings due then are found without a scan of every building (the worst case of
+    /// <c>04</c> section 12 has thousands of event times). It holds every building with a <see cref="Building.PhaseEndsAt"/> by its index in
+    /// <see cref="CityState.Buildings"/>, which is in id order and doesn't change during an advance, at most once each. Inside an advance a
+    /// timer ends when it completes, a cycle's start adds one, and a delivery that starts a project sets one, which replaces a running cycle's
+    /// (<c>04</c> section 16); mutations run between advances, and the queue is made new for each one.
     /// </summary>
-    internal sealed class BuildingTimerQueue
+    internal sealed class BuildingTimerQueue : TimerHeap
     {
-        /// <summary>The heap's end times: <c>_endsAt[slot]</c> belongs to <c>_indexes[slot]</c>; slot 0 holds the earliest timer.</summary>
-        private readonly long[] _endsAt;
-        /// <summary>The heap's building indexes in <see cref="CityState.Buildings"/>, slot by slot beside <see cref="_endsAt"/>.</summary>
-        private readonly int[] _indexes;
-        /// <summary>How many slots are in use; slots from here on are free.</summary>
-        private int _count;
-
         /// <summary>Creates an empty queue with room for one timer per building, so it never grows during the advance.</summary>
         private BuildingTimerQueue(int capacity)
+            : base(capacity)
         {
-            _endsAt = new long[capacity];
-            _indexes = new int[capacity];
         }
-
-        /// <summary>The number of timers in the queue.</summary>
-        public int Count => _count;
 
         /// <summary>The queue of every building of the city that has an end (constructing, upgrading, or producing with workers).</summary>
         public static BuildingTimerQueue Of(CityState city)
@@ -47,83 +36,5 @@ namespace CityBuilder.Simulation.Settlement
 
             return queue;
         }
-
-        /// <summary>The earliest end in the queue. The queue must not be empty.</summary>
-        public long PeekEndsAt() => _count > 0 ? _endsAt[0] : throw new InvalidOperationException("The timer queue is empty.");
-
-        /// <summary>Adds the timer of the building at <paramref name="index"/>, which ends at <paramref name="endsAt"/>.</summary>
-        public void Add(int index, long endsAt)
-        {
-            if (_count == _indexes.Length)
-            {
-                throw new InvalidOperationException("Every building already has a timer in the queue.");
-            }
-
-            // Sift up: the new timer takes the last slot, and every parent that comes later (a later end, or a higher index at the same end) moves down
-            // one level until the new timer's place is found. A heap of n timers needs at most log2(n) moves.
-            int slot = _count++;
-            while (slot > 0)
-            {
-                int parent = (slot - 1) / 2;
-                if (!IsEarlier(endsAt, index, _endsAt[parent], _indexes[parent]))
-                {
-                    break;
-                }
-
-                _endsAt[slot] = _endsAt[parent];
-                _indexes[slot] = _indexes[parent];
-                slot = parent;
-            }
-
-            _endsAt[slot] = endsAt;
-            _indexes[slot] = index;
-        }
-
-        /// <summary>Removes the earliest timer (the lowest index among the earliest ends) and returns its building index.</summary>
-        public int Pop()
-        {
-            if (_count == 0)
-            {
-                throw new InvalidOperationException("The timer queue is empty.");
-            }
-
-            int first = _indexes[0];
-            _count--;
-            long lastEndsAt = _endsAt[_count];
-            int lastIndex = _indexes[_count];
-            // Sift down: the last timer refills the root's place, and the earlier of the two children moves up one level until the last timer fits,
-            // which keeps every parent earlier than its children.
-            int slot = 0;
-            while (true)
-            {
-                int child = (2 * slot) + 1;
-                if (child >= _count)
-                {
-                    break;
-                }
-
-                if (child + 1 < _count && IsEarlier(_endsAt[child + 1], _indexes[child + 1], _endsAt[child], _indexes[child]))
-                {
-                    child++;
-                }
-
-                if (!IsEarlier(_endsAt[child], _indexes[child], lastEndsAt, lastIndex))
-                {
-                    break;
-                }
-
-                _endsAt[slot] = _endsAt[child];
-                _indexes[slot] = _indexes[child];
-                slot = child;
-            }
-
-            _endsAt[slot] = lastEndsAt;
-            _indexes[slot] = lastIndex;
-            return first;
-        }
-
-        /// <summary>The heap's order: an earlier end first, and at the same end the lower building index (which is the lower id) first.</summary>
-        private static bool IsEarlier(long endsAt, int index, long otherEndsAt, int otherIndex) =>
-            endsAt < otherEndsAt || (endsAt == otherEndsAt && index < otherIndex);
     }
 }

@@ -21,9 +21,11 @@ namespace CityBuilder.Application.Commands;
 /// <param name="receipts">Reads the stored receipts.</param>
 /// <param name="content">The game content.</param>
 /// <param name="timeProvider">The server clock, the only clock that drives progress.</param>
+/// <param name="presence">When the player counts as away, for the couriers' stamina (<c>04</c> section 2); a replay is no presence.</param>
 /// <exception cref="ArgumentNullException">A parameter is null.</exception>
 public sealed class CommandPipeline(
-    ICityTransactionRunner transactions, ICommandReceiptRepository receipts, IContentProvider content, TimeProvider timeProvider)
+    ICityTransactionRunner transactions, ICommandReceiptRepository receipts, IContentProvider content, TimeProvider timeProvider,
+    PresencePolicy presence)
 {
     /// <summary>Locks, loads and stores the acting player's city.</summary>
     private readonly ICityTransactionRunner _transactions = transactions ?? throw new ArgumentNullException(nameof(transactions));
@@ -33,6 +35,8 @@ public sealed class CommandPipeline(
     private readonly IContentProvider _content = content ?? throw new ArgumentNullException(nameof(content));
     /// <summary>The server clock, read once per command, under the lock.</summary>
     private readonly TimeProvider _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
+    /// <summary>When the player counts as away; the settle records the command as the player's last-seen second.</summary>
+    private readonly PresencePolicy _presence = presence ?? throw new ArgumentNullException(nameof(presence));
 
     /// <summary>Runs the player's command through every step, once.</summary>
     /// <param name="playerId">The acting player, from the access token.</param>
@@ -104,7 +108,7 @@ public sealed class CommandPipeline(
         CityAggregate city = transaction.City;
         GameContent content = _content.Content;
         DateTimeOffset now = _timeProvider.GetUtcNow();
-        CitySettler settler = CitySettler.Begin(city, content, now);
+        CitySettler settler = CitySettler.Begin(city, content, now, _presence);
         MutationResult mutation = command.Apply(city.State, content);
         if (mutation.ErrorCode is { } errorCode)
         {

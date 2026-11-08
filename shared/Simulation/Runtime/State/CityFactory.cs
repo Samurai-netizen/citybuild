@@ -1,6 +1,5 @@
 #nullable enable
 using System;
-using System.Collections.Generic;
 using CityBuilder.Simulation.Content;
 
 namespace CityBuilder.Simulation.State
@@ -9,8 +8,8 @@ namespace CityBuilder.Simulation.State
     public static class CityFactory
     {
         /// <summary>
-        /// Creates a new player's city as the content's starting city describes it: its era and stock, clock 0, no buildings, no research, and
-        /// the first building id 1.
+        /// Creates a new player's city as the content's starting city describes it: its era and the coins in its purse, clock 0, no buildings
+        /// (so no goods: they live in buildings, CR-0008 D2), no research, and the first building id 1.
         /// </summary>
         /// <param name="content">The game content.</param>
         /// <returns>The new city.</returns>
@@ -22,17 +21,11 @@ namespace CityBuilder.Simulation.State
                 throw new ArgumentNullException(nameof(content));
             }
 
-            var inventory = new List<KeyValuePair<ItemId, long>>();
-            foreach (ItemQuantity stock in content.StartingCity.Inventory)
-            {
-                inventory.Add(new KeyValuePair<ItemId, long>(stock.Item, stock.Quantity));
-            }
-
             return new CityState(
                 clock: 0,
                 era: content.StartingCity.Era,
                 nextBuildingId: 1,
-                inventory: inventory,
+                purse: content.StartingCity.Purse,
                 buildings: Array.Empty<Building>(),
                 completedResearch: Array.Empty<ResearchId>(),
                 activeResearch: null);

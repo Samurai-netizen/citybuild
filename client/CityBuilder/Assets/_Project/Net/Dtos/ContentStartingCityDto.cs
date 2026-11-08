@@ -11,16 +11,16 @@ namespace CityBuilder.Client.Net
     {
         /// <summary>Creates the DTO. Newtonsoft calls this constructor with the JSON members of the same names, so the object is never half filled.</summary>
         [JsonConstructor]
-        public ContentStartingCityDto(int era, Dictionary<string, long> inventory)
+        public ContentStartingCityDto(int era, long purse)
         {
             Era = era;
-            Inventory = inventory;
+            Purse = purse;
         }
 
         /// <summary>The era a new city starts in.</summary>
         public int Era { get; }
 
-        /// <summary>Item id to the starting quantity.</summary>
-        public Dictionary<string, long> Inventory { get; }
+        /// <summary>The coins a new city starts with; it has no goods (CR-0008 D2).</summary>
+        public long Purse { get; }
     }
 }

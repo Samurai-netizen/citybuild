@@ -6,20 +6,19 @@ using System.Linq;
 namespace CityBuilder.Simulation.Content
 {
     /// <summary>
-    /// The rule phase's era checks of item use: every item in a cost, a recipe or the starting inventory belongs to the era of what uses it
-    /// (building type, research node, starting city) or an earlier one, so no city meets an item before its era (owner directive OD-10).
+    /// The rule phase's era checks of item use: every item in a cost, a recipe or a store belongs to the era of what uses it (building type,
+    /// research node) or an earlier one; the starting city has coins only, no goods (CR-0008 D2), so no city meets an item before its era (owner directive OD-10).
     /// Unknown items and eras are reported by the reference rules and left out here; research effects are not checked, because the engine's
     /// era checks (placement, research start) already keep their targets out of reach until their era.
     /// </summary>
     internal static class EraRules
     {
         /// <summary>
-        /// Checks the items used by the starting city, by each building type (cost, upgrade costs, recipes) and by each research node (cost)
-        /// against the era of the user. Duplicates are left out: their own rule reports them.
+        /// Checks the items used by each building type (cost, upgrade costs, recipes, stores) and by each research node (cost) against the era
+        /// of the user. Duplicates are left out: their own rule reports them.
         /// </summary>
         public static void Check(ContentDraft draft, ContentErrorList errors)
         {
-            CheckItems(draft, draft.StartingCity.Era, draft.StartingCity.Inventory, "startingCity.inventory", "the starting city", errors);
             foreach (BuildingDefinition building in draft.Buildings.Where(draft.IsFirst))
             {
                 string buildingPath = ContentPaths.Building(building);
@@ -29,6 +28,7 @@ namespace CityBuilder.Simulation.Content
                 {
                     string levelPath = ContentPaths.Level(building, level);
                     CheckItems(draft, building.Era, level.UpgradeCost, levelPath + ".upgradeCost", user, errors);
+                    CheckItems(draft, building.Era, level.Storage, levelPath + ".storage", user, errors);
                     if (level.Recipe is not null)
                     {
                         CheckItems(draft, building.Era, level.Recipe.Inputs, levelPath + ".recipe.inputs", user, errors);

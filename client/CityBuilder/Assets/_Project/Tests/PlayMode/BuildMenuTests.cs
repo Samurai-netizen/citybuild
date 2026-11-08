@@ -44,7 +44,7 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(built.IsValid, Is.True);
             _content = built.Content!;
             _host = new GameObject("Test menu host");
-            BuildMenu? menu = BuildMenu.Create(_host.transform, new BuildMenuModel(_content, City(700, 40, 10, new string[0], 0)));
+            BuildMenu? menu = BuildMenu.Create(_host.transform, new BuildMenuModel(_content, City(700, new string[0], 0)));
             Assert.That(menu, Is.Not.Null, "the menu's assets must be found under Resources");
             _menu = menu!;
             yield return null;
@@ -57,15 +57,12 @@ namespace CityBuilder.Client.Tests.PlayMode
             Object.DestroyImmediate(_host);
         }
 
-        /// <summary>A city of Era I with the given stock, completed research and buildings under construction (each takes a builder).</summary>
-        private static CityState City(long coins, long logs, long planks, string[] research, int constructing)
+        /// <summary>
+        /// A city of Era I with the given coins in the purse, completed research and buildings under construction (each takes a builder); it has
+        /// no goods, which live in stores since CR-0008 and decide no card.
+        /// </summary>
+        private static CityState City(long coins, string[] research, int constructing)
         {
-            var stock = new List<KeyValuePair<ItemId, long>>
-            {
-                new KeyValuePair<ItemId, long>(new ItemId("coins"), coins),
-                new KeyValuePair<ItemId, long>(new ItemId("logs"), logs),
-                new KeyValuePair<ItemId, long>(new ItemId("planks"), planks),
-            };
             var buildings = new List<Building>();
             for (int id = 1; id <= constructing; id++)
             {
@@ -78,7 +75,8 @@ namespace CityBuilder.Client.Tests.PlayMode
                 completed.Add(new ResearchId(id));
             }
 
-            return new CityState(0, 1, constructing + 1, stock, buildings, completed, null);
+            // Goods are delivered to a site later (CR-0008), so only the coins in the purse decide whether a card is affordable.
+            return new CityState(0, 1, constructing + 1, coins, buildings, completed, null);
         }
 
         /// <summary>The element tree's card of the building type at <paramref name="index"/> of the content.</summary>
@@ -183,7 +181,7 @@ namespace CityBuilder.Client.Tests.PlayMode
             int sawmill = IndexOf("sawmill");
             Assert.That(LabelAt(sawmill, "card-hint").resolvedStyle.display, Is.EqualTo(DisplayStyle.None));
 
-            _menu.Model!.Update(City(100, 40, 10, new[] { "trade_charter" }, 0));
+            _menu.Model!.Update(City(100, new[] { "trade_charter" }, 0));
 
             Assert.That(LabelAt(post, "card-lock").style.display.value, Is.EqualTo(DisplayStyle.None));
             Assert.That(CardAt(post).enabledSelf, Is.True);
@@ -250,7 +248,7 @@ namespace CityBuilder.Client.Tests.PlayMode
             BuildMenuModel model = _menu.Model!;
             Object.DestroyImmediate(_menu.gameObject);
 
-            Assert.DoesNotThrow(() => model.Update(City(0, 0, 0, new string[0], 2)));
+            Assert.DoesNotThrow(() => model.Update(City(0, new string[0], 2)));
         }
     }
 }

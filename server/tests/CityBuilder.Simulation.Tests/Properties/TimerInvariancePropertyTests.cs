@@ -6,7 +6,7 @@ namespace CityBuilder.Simulation.Tests.Properties;
 
 /// <summary>
 /// Property 3, timer invariance (<c>04</c> section 10, invariant 3): constructions, upgrades and research complete at their end second however
-/// the time is split, also beyond the production cap, where the pieces' production differs. Each city is taken right after a random command
+/// the time is split, also over long absences, where couriers tire. Each city is taken right after a random command
 /// that started a timer, and the time is cut into up to six pieces, some cuts on a timer's end second or next to it. Every timer must complete
 /// in the piece that holds its end second, and afterwards the timer side of the city (levels, workers, buildings still under construction or
 /// upgrade, research) must equal one advance over the whole time.
@@ -19,7 +19,7 @@ public sealed class TimerInvariancePropertyTests
     /// <summary>Every seed of the content keeps timer invariance, and at least <see cref="_minimumSeedsWithTimers"/> of them had a running timer.</summary>
     [Theory]
     [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
-    public void Advance_AnySplitAlsoBeyondTheCap_CompletesEveryTimerAtItsEndSecond(string contentName)
+    public void Advance_AnySplitAlsoOverALongAbsence_CompletesEveryTimerAtItsEndSecond(string contentName)
     {
         GameContent content = PropertyContent.Named(contentName);
         int seedsWithTimers = 0;
@@ -31,9 +31,10 @@ public sealed class TimerInvariancePropertyTests
             seedsWithTimers += timers.Count > 0 ? 1 : 0;
 
             long start = whole.Clock;
-            long total = random.Between(0, 4 * content.Rules.MaxOfflineProductionSeconds);
+            long total = random.Between(0, 4 * CityGenerator.LongGapOf(content));
+            long? absentFrom = random.Chance(25) ? null : random.Between(start, start + total);
             long[] cuts = Cuts(random, start, total, timers);
-            SettlementReport wholeReport = Simulator.Advance(whole, content, total);
+            SettlementReport wholeReport = Simulator.Advance(whole, content, total, absentFrom);
 
             CityState split = history.CopyAfter(content, afterOperation);
             var splitReports = new List<SettlementReport>();
@@ -41,7 +42,7 @@ public sealed class TimerInvariancePropertyTests
             foreach (long cut in cuts.Append(start + total))
             {
                 long pieceStart = split.Clock;
-                SettlementReport report = Simulator.Advance(split, content, cut - pieceStart);
+                SettlementReport report = Simulator.Advance(split, content, cut - pieceStart, absentFrom);
                 splitReports.Add(report);
                 string? misplaced = FirstMisplacedCompletion(timers, report, pieceStart, split.Clock, firstPiece: splitReports.Count == 1);
                 if (misplaced is not null)
@@ -59,15 +60,15 @@ public sealed class TimerInvariancePropertyTests
     }
 
     /// <summary>
-    /// The number of operations to replay: up to a random command that started a timer (a placement, an upgrade or a research start), or the
-    /// whole history when there is none.
+    /// The number of operations to replay: up to a random command that may have started a timer (a placement, an upgrade or a research start;
+    /// with goods in its cost it waits for them instead, and a later trip's delivery starts it), or the whole history when there is none.
     /// </summary>
     private static int AfterATimerStarted(CityHistory history, SeededRandom random)
     {
         int[] candidates =
         [
             .. Enumerable.Range(1, history.Operations.Count)
-                .Where(count => history.Operations[count - 1] is not (CityOperation.Advance or CityOperation.AssignWorkers)),
+                .Where(count => history.Operations[count - 1] is not (CityOperation.Advance or CityOperation.AssignWorkers or CityOperation.StartTrip)),
         ];
         return candidates.Length == 0 ? history.Operations.Count : random.Pick(candidates);
     }
@@ -78,12 +79,13 @@ public sealed class TimerInvariancePropertyTests
         List<(string Name, long EndsAt)> timers =
         [
             .. city.Buildings
-                .Where(building => building.Phase is BuildingPhase.Constructing or BuildingPhase.Upgrading)
+                .Where(building => building.Phase is BuildingPhase.Constructing or BuildingPhase.Upgrading && !building.IsConstructionSite)
                 .Select(building => ($"building {building.Id}", building.PhaseEndsAt ?? throw new InvalidOperationException("A timer without an end."))),
         ];
-        if (city.ActiveResearch is { } research)
+        // A research waiting for goods has no timer yet (04 section 5); a construction site has none either and is left out above by its end.
+        if (city.ActiveResearch is { EndsAt: long researchEnd } research)
         {
-            timers.Add(($"research {research.Id}", research.EndsAt));
+            timers.Add(($"research {research.Id}", researchEnd));
         }
 
         return timers;

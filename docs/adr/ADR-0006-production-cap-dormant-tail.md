@@ -1,6 +1,10 @@
 # ADR-0006 — Production cap per absence: timers always run, production stops after the cap (dormant tail)
 
-- **Status:** Accepted
+- **Status:** Deprecated
+- **Deprecated by:** CR-0008 (logistics), built in CR-0008-T1 part H: there is no offline cap and no dormant tail any more. Production stops
+  on its own when stores are full or inputs run out, goods move only with walkers, and the couriers' stamina, spent only while the player is
+  away, bounds a long absence (`core-instructions/04-simulation-model.md` §2, §12; decision 049). Timers still run for the whole window, as
+  this ADR decided. The text below is the decision as it was.
 - **Date:** 2026-10-04 (decided with the kit, replacing an earlier "pause the whole city" cap; written down 2026-10-19) · **Task:** M0-18 ·
   **Decision row:** `core-instructions/12-decisions.md` #006
 

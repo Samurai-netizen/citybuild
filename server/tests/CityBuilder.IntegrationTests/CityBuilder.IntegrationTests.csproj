@@ -29,7 +29,7 @@
   <!-- Golden scenario #1's frozen content, the engine test's own file linked (never copied: one frozen file, protected in
        core-instructions/15-change-control.md), so the test over HTTP (Golden/) loads exactly what the engine test loads. -->
   <ItemGroup>
-    <None Include="..\CityBuilder.Simulation.Tests\Fixtures\content-golden-v1.json" Link="Fixtures\content-golden-v1.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\CityBuilder.Simulation.Tests\Fixtures\content-golden-v2.json" Link="Fixtures\content-golden-v2.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <!-- The server panel's goods script (CR-0006), the file itself linked, so GoodsPanelScriptTests run what panel.sh runs. -->

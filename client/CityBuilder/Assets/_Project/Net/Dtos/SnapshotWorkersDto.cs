@@ -10,10 +10,11 @@ namespace CityBuilder.Client.Net
     {
         /// <summary>Creates the DTO. Newtonsoft calls this constructor with the JSON members of the same names, so the object is never half filled.</summary>
         [JsonConstructor]
-        public SnapshotWorkersDto(long provided, long assigned, long free)
+        public SnapshotWorkersDto(long provided, long assigned, long onTrips, long free)
         {
             Provided = provided;
             Assigned = assigned;
+            OnTrips = onTrips;
             Free = free;
         }
 
@@ -23,7 +24,10 @@ namespace CityBuilder.Client.Net
         /// <summary>Workers assigned to buildings.</summary>
         public long Assigned { get; }
 
-        /// <summary>Workers still free to assign: provided minus assigned.</summary>
+        /// <summary>Workers carrying goods on manual trips, one per trip (CR-0008).</summary>
+        public long OnTrips { get; }
+
+        /// <summary>Workers still free: provided minus assigned minus on trips.</summary>
         public long Free { get; }
     }
 }

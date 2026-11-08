@@ -7,12 +7,13 @@ using CityBuilder.Simulation.Tests.Rules;
 namespace CityBuilder.Simulation.Tests.Golden;
 
 /// <summary>
-/// Golden scenario #1, the first session of <c>core-instructions/23-mvp-content.md</c>, over <see cref="GoldenContent.V1"/>. A new player's
-/// city runs the script: at t=0 StartResearch <c>trade_charter</c> and two Cottages (ids 1 and 2), at t=30 a Woodcutter's Hut (3) and a
-/// Sawmill (4), at t=750 a Trading Post (5); nothing else. Each action runs as the server runs a command: the city is settled to the action's
-/// time, the mutation must succeed, and a zero-length advance follows. The table doesn't name tiles; the buildings stand in a row from (0, 0).
-/// The integration tests play the same script over HTTP and replay it on the engine (<c>CityBuilder.IntegrationTests/Golden/GoldenScenario1Http</c>,
-/// M0-36): a change to the script here changes it there too.
+/// Golden scenario #1, the first session of <c>core-instructions/23-mvp-content.md</c> (CR-0008), over <see cref="GoldenContent.V2"/>. A new
+/// player's city (coins only) runs the script of the table: at t=0 a Cottage (1) on (0, 2) and a Woodcutter's Hut (2) on (0, 0); at t=30 the
+/// Scriptorium (3) on (4, 0); at t=60 StartResearch <c>trade_charter</c>, a Sawmill (4) on (2, 0) and a Cottage (5) on (1, 2); at t=360 and
+/// t=490 a trip of all the Woodcutter's logs to the Sawmill; at t=660 a Trading Post (6) on (2, 2), a trip of all the Sawmill's planks to it
+/// and a trip of half the Woodcutter's logs to the Sawmill; nothing else. Each action runs as the server runs a command: the city is settled
+/// to the action's time, the mutation must succeed, and a zero-length advance follows. The integration tests play the same script over HTTP
+/// (<c>CityBuilder.IntegrationTests/Golden/GoldenScenario1Http</c>): a change to the script here changes it there too.
 /// </summary>
 internal static class GoldenScenario1
 {
@@ -24,20 +25,28 @@ internal static class GoldenScenario1
     [
         (0, city =>
         {
-            Command(city, target => CityRules.StartResearch(target, Content, new ResearchId("trade_charter")));
-            Place(city, "house", 0);
-            Place(city, "house", 1);
+            Place(city, "house", 0, 2);
+            Place(city, "woodcutter", 0, 0);
         }),
-        (30, city =>
+        (30, city => Place(city, "scriptorium", 4, 0)),
+        (60, city =>
         {
-            Place(city, "woodcutter", 2);
-            Place(city, "sawmill", 3);
+            Command(city, target => CityRules.StartResearch(target, Content, new ResearchId("trade_charter")));
+            Place(city, "sawmill", 2, 0);
+            Place(city, "house", 1, 2);
         }),
-        (750, city => Place(city, "trading_post", 4)),
+        (360, city => Trip(city, 2, 4, "logs", "all")),
+        (490, city => Trip(city, 2, 4, "logs", "all")),
+        (660, city =>
+        {
+            Place(city, "trading_post", 2, 2);
+            Trip(city, 4, 6, "planks", "all");
+            Trip(city, 2, 4, "logs", "half");
+        }),
     ];
 
-    /// <summary>The frozen content the scenario was checked against by hand (<see cref="GoldenContent.V1"/>).</summary>
-    private static GameContent Content => GoldenContent.V1;
+    /// <summary>The frozen content the scenario was checked against by hand (<see cref="GoldenContent.V2"/>).</summary>
+    public static GameContent Content => GoldenContent.V2;
 
     /// <summary>The city at <paramref name="time"/>, after the actions due then.</summary>
     /// <param name="time">The city clock to stop at, in seconds.</param>
@@ -77,9 +86,13 @@ internal static class GoldenScenario1
         }
     }
 
-    /// <summary>Places a building of the type at (x, 0), as a command.</summary>
-    private static void Place(CityState city, string type, int x) =>
-        Command(city, target => CityRules.PlaceBuilding(target, Content, new BuildingTypeId(type), x, 0));
+    /// <summary>Places a building of the type on tile (x, y), as a command.</summary>
+    private static void Place(CityState city, string type, int x, int y) =>
+        Command(city, target => CityRules.PlaceBuilding(target, Content, new BuildingTypeId(type), x, y));
+
+    /// <summary>Starts a manual trip of the item from one building to another with a preset amount, as a command.</summary>
+    private static void Trip(CityState city, int sourceId, int targetId, string item, string preset) =>
+        Command(city, target => TripRules.StartTrip(target, Content, sourceId, targetId, new ItemId(item), Amount.Preset(new AmountPresetId(preset))));
 
     /// <summary>Applies a mutation as the server runs a command: it must succeed, and a zero-length advance follows.</summary>
     private static void Command(CityState city, Func<CityState, MutationResult> mutation)

@@ -1,7 +1,9 @@
 # Add a research effect type
 
-An effect type is what completing a research node changes (`core-instructions/25-eras-and-research.md` → Effect types). M0 has three:
-`unlockBuilding`, `laborReduction` and `storageCapBonus`. A node that only uses those is a content-only change (`add-building-or-item.md`).
+An effect type is what completing a research node changes (`core-instructions/25-eras-and-research.md` → Effect types). M0 has five:
+`unlockBuilding`, `laborReduction`, `storageCapBonus` (every store's limit of a good), and since CR-0008 `unlockAmountMode` (a trip's or
+route's percentage or exact amount) and `walkSpeedBonus` (every walk shorter by a share). A node that only uses those is a content-only
+change (`add-building-or-item.md`).
 A new type needs engine code, content validation, tests and docs: recipe "New engine rule or effect type" in `core-instructions/19-change-recipes.md`
 is the checklist; this guide walks through it with an example.
 
@@ -9,7 +11,7 @@ is the checklist; this guide walks through it with an example.
 - A new effect type changes the game's design. It needs a plan task or an approved CR (`core-instructions/15-change-control.md`), and its era:
   major mechanics arrive only with a new era (`25`), and nothing of a later era is usable early (OD-10).
 - Decide what kind of effect it is. A **derived** effect changes a value that a query computes from `CityState.CompletedResearch`
-  (all three M0 types are derived). A **one-time** effect changes stored state once, when the node completes (for example a grant of goods).
+  (all five M0 types are derived). A **one-time** effect changes stored state once, when the node completes (for example a grant of goods).
   Prefer derived: nothing is stored twice, and `Simulator.Advance` needs no new code.
 
 ## Worked example: `builderSlotBonus`

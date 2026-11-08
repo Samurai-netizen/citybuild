@@ -58,9 +58,9 @@ public sealed class CityQueriesTests
         Assert.Equal(8 - 5, CityQueries.FreeWorkers(city, TestContent));
     }
 
-    /// <summary>Builders are busy for constructions and upgrades only.</summary>
+    /// <summary>Builders are busy for constructions (a site too), upgrades, and upgrades waiting for goods (<c>04</c> section 8).</summary>
     [Fact]
-    public void BuildersBusy_EveryPhase_CountsConstructingAndUpgrading()
+    public void BuildersBusy_EveryPhase_CountsConstructingUpgradingAndWaitingUpgrades()
     {
         CityState city = City(buildings:
         [
@@ -68,14 +68,18 @@ public sealed class CityQueriesTests
             Upgrading(2, "hut", 1, 0, level: 1, workers: 0, startedAt: 995, endsAt: 1003),
             Idle(3, "hut", 2, 0),
             Producing(4, "lumber_camp", 3, 0, 1, workers: 1, cycleStartedAt: 990, cycleLabor: 40, laborRemaining: 40, segmentStartedAt: 990, endsAt: 1030),
+            Site(5, "workshop", 4, 0, needs: [("wood", 10)]),
+            Idle(6, "hut", 5, 0, needs: [("wood", 5)]),
+            Producing(7, "lumber_camp", 0, 1, 1, workers: 1, cycleStartedAt: 990, cycleLabor: 40, laborRemaining: 40, segmentStartedAt: 990, endsAt: 1030,
+                needs: [("boards", 1)]),
         ]);
 
-        Assert.Equal(2, CityQueries.BuildersBusy(city));
+        Assert.Equal(5, CityQueries.BuildersBusy(city));
     }
 
-    /// <summary>The reserved quantity sums the outputs of every producing building, frozen cycles included.</summary>
+    /// <summary>A building reserves its own running cycle's outputs, a frozen one's too; an idle building reserves nothing (<c>04</c> section 16).</summary>
     [Fact]
-    public void Reserved_ProducingBuildingsFrozenIncluded_SumsTheirOutputs()
+    public void Reserved_EachBuilding_IsItsOwnCyclesOutput()
     {
         CityState city = City(buildings:
         [
@@ -85,36 +89,80 @@ public sealed class CityQueriesTests
             Producing(4, "workshop", 3, 0, 1, workers: 1, cycleStartedAt: 990, cycleLabor: 90, laborRemaining: 90, segmentStartedAt: 990, endsAt: 1080),
         ]);
 
-        Assert.Equal(2, CityQueries.Reserved(city, TestContent, _wood));
-        Assert.Equal(1, CityQueries.Reserved(city, TestContent, _boards));
-        Assert.Equal(0, CityQueries.Reserved(city, TestContent, _gold));
+        Assert.Equal([1L, 1L, 0L, 0L], city.Buildings.Select(building => CityQueries.Reserved(TestContent, building, _wood)));
+        Assert.Equal([0L, 0L, 0L, 1L], city.Buildings.Select(building => CityQueries.Reserved(TestContent, building, _boards)));
+        Assert.Equal(0, CityQueries.Reserved(TestContent, city.Buildings[0], _gold));
     }
 
-    /// <summary>Without research the effective cap is the base cap.</summary>
+    /// <summary>Without research a store's effective limit is its level's limit; a good the store doesn't hold has none.</summary>
     [Fact]
-    public void TryGetEffectiveCap_NoResearch_IsTheBaseCap()
+    public void TryGetEffectiveLimit_NoResearch_IsTheLevelsLimit()
     {
-        Assert.True(CityQueries.TryGetEffectiveCap(City(), TestContent, _wood, out long cap));
-        Assert.Equal(100, cap);
+        CityState city = City(buildings: [Idle(1, "workshop", 0, 0), Idle(2, "lumber_camp", 1, 0, level: 2)]);
+
+        Assert.True(CityQueries.TryGetEffectiveLimit(city, TestContent, city.Buildings[0], _wood, out long workshopWood));
+        Assert.True(CityQueries.TryGetEffectiveLimit(city, TestContent, city.Buildings[1], _wood, out long campWood));
+        Assert.Equal((20L, 150L), (workshopWood, campWood));
+        Assert.False(CityQueries.TryGetEffectiveLimit(city, TestContent, city.Buildings[1], _boards, out long none));
+        Assert.Equal(0, none);
     }
 
-    /// <summary>A completed storage research adds its bonus to the base cap.</summary>
+    /// <summary>A completed storage research adds its bonus to the limit of its good in every store that holds it.</summary>
     [Fact]
-    public void TryGetEffectiveCap_StorageResearchCompleted_AddsTheBonus()
+    public void TryGetEffectiveLimit_StorageResearchCompleted_AddsTheBonusToEveryStore()
     {
-        CityState city = City(completedResearch: ["carpentry", "better_saws", "warehouses"]);
+        CityState city = City(buildings: [Idle(1, "workshop", 0, 0), Idle(2, "depot", 1, 0)], completedResearch: ["carpentry", "better_saws", "warehouses"]);
 
-        Assert.True(CityQueries.TryGetEffectiveCap(city, TestContent, _wood, out long woodCap));
-        Assert.True(CityQueries.TryGetEffectiveCap(city, TestContent, _boards, out long boardsCap));
-        Assert.Equal((150L, 120L), (woodCap, boardsCap));
+        Assert.True(CityQueries.TryGetEffectiveLimit(city, TestContent, city.Buildings[0], _wood, out long workshopWood));
+        Assert.True(CityQueries.TryGetEffectiveLimit(city, TestContent, city.Buildings[1], _boards, out long depotBoards));
+        Assert.Equal((70L, 140L), (workshopWood, depotBoards));
     }
 
-    /// <summary>An uncapped item has no cap at all.</summary>
+    /// <summary>The room for a good is limit − stock − the own cycle's output, never below 0 (a refund may put a store above its limit).</summary>
     [Fact]
-    public void TryGetEffectiveCap_UncappedItem_ReturnsFalse()
+    public void Room_StoreAndCycle_IsWhatIsLeftUnderTheLimit()
     {
-        Assert.False(CityQueries.TryGetEffectiveCap(City(completedResearch: ["warehouses"]), TestContent, _gold, out long cap));
-        Assert.Equal(0, cap);
+        CityState city = City(buildings:
+        [
+            Producing(1, "lumber_camp", 0, 0, 1, workers: 2, cycleStartedAt: 990, cycleLabor: 40, laborRemaining: 40, segmentStartedAt: 990, endsAt: 1010,
+                store: [("wood", 60)]),
+            Idle(2, "workshop", 1, 0, store: [("wood", 25)]),
+        ]);
+
+        Assert.Equal(39, CityQueries.Room(city, TestContent, city.Buildings[0], _wood));
+        Assert.Equal(0, CityQueries.Room(city, TestContent, city.Buildings[1], _wood));
+        Assert.Equal(80, CityQueries.Room(city, TestContent, city.Buildings[1], _boards));
+        Assert.Equal(0, CityQueries.Room(city, TestContent, city.Buildings[0], _boards));
+    }
+
+    /// <summary>A city total is the purse for the currency and the sum of every store for a good; <c>Totals</c> lists every item, 0 included.</summary>
+    [Fact]
+    public void Totals_PurseAndStores_AddUpPerItem()
+    {
+        CityState city = City(purse: 42, buildings: [Idle(1, "lumber_camp", 0, 0, store: [("wood", 7)]), Idle(2, "depot", 1, 0, store: [("wood", 3)])]);
+
+        Assert.Equal((42L, 10L, 0L), (CityQueries.Total(city, TestContent, _gold), CityQueries.Total(city, TestContent, _wood), CityQueries.Total(city, TestContent, _boards)));
+        Assert.Equal([("boards", 0L), ("gold", 42L), ("wood", 10L)], CityQueries.Totals(city, TestContent).Select(total => (total.Item.Value, total.Quantity)));
+    }
+
+    /// <summary>Only a completed science building counts; one still constructing or a site doesn't (<c>04</c> section 5).</summary>
+    [Fact]
+    public void ScienceBuilding_ConstructingOrCompleted_FindsOnlyTheCompletedOne()
+    {
+        Assert.Null(CityQueries.ScienceBuilding(City(buildings: [Constructing(1, "school", 0, 0, 990, 1005)]), TestContent));
+        Assert.Equal(2, CityQueries.ScienceBuilding(City(buildings: [Idle(1, "hut", 0, 0), Idle(2, "school", 1, 0)]), TestContent)?.Id);
+    }
+
+    /// <summary>The walk bonus adds up the completed research's walk bonuses; the count of a type counts every phase.</summary>
+    [Fact]
+    public void WalkBonusAndCountOfType_CompletedResearchAndPhases_AddUp()
+    {
+        CityState city = City(buildings: [Idle(1, "hut", 0, 0), Constructing(2, "hut", 1, 0, 990, 1005)], completedResearch: ["boots"]);
+
+        Assert.Equal(100, CityQueries.WalkBonusPermille(city, TestContent));
+        Assert.Equal(0, CityQueries.WalkBonusPermille(City(), TestContent));
+        Assert.Equal(2, CityQueries.CountOfType(city, new BuildingTypeId("hut")));
+        Assert.Equal(0, CityQueries.CountOfType(city, new BuildingTypeId("school")));
     }
 
     /// <summary>Without research the effective labor is the recipe's.</summary>
@@ -191,7 +239,8 @@ public sealed class CityQueriesTests
         CityState unknownResearch = City(completedResearch: ["alchemy"]);
 
         Assert.Throws<InvalidOperationException>(() => CityQueries.WorkersProvided(unknownBuilding, TestContent));
-        Assert.Throws<InvalidOperationException>(() => CityQueries.TryGetEffectiveCap(unknownResearch, TestContent, _wood, out _));
+        Assert.Throws<InvalidOperationException>(() => CityQueries.TryGetEffectiveLimit(
+            unknownResearch, TestContent, CityFixture.Idle(1, "workshop", 0, 0), _wood, out _));
         Assert.Throws<InvalidOperationException>(() => CityQueries.EffectiveLabor(unknownResearch, TestContent, new BuildingTypeId("lumber_camp"), 1));
     }
 }

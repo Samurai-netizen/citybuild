@@ -6,14 +6,14 @@ namespace CityBuilder.Simulation.Tests.State;
 /// <summary>A new city is exactly the content's starting city.</summary>
 public sealed class CityFactoryTests
 {
-    /// <summary>A new city has the content's starting era and stock.</summary>
+    /// <summary>A new city has the content's starting era and purse, and no goods (CR-0008 D2).</summary>
     [Fact]
-    public void CreateStarterCity_ValidContent_HasTheStartingEraAndStock()
+    public void CreateStarterCity_ValidContent_HasTheStartingEraAndPurse()
     {
         CityState city = CityFactory.CreateStarterCity(TestContent);
 
-        Assert.Equal(1, city.Era);
-        Assert.Equal([("gold", 100L), ("wood", 5L)], city.Inventory.Select(stock => (stock.Key.Value, stock.Value)));
+        Assert.Equal((1, 100L), (city.Era, city.Purse));
+        Assert.Equal(0, CityQueries.Total(city, TestContent, new ItemId("wood")));
     }
 
     /// <summary>A new city starts at clock 0 with next id 1, no buildings, no research.</summary>

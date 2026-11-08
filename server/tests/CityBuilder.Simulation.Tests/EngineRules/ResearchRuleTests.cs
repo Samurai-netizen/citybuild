@@ -67,7 +67,8 @@ public sealed class ResearchRuleTests
     [Fact]
     public void Unlock_ResearchCompletes_EnablesPlacementFromThatSecond()
     {
-        CityState city = City(clock: 1000, inventory: [("gold", 90), ("wood", 10)]);
+        // Research happens at the school (CR-0008 D11); the workshop's 10 wood is delivered later, so only coins matter here.
+        CityState city = City(clock: 1000, purse: 90, buildings: [Idle(1, "school", 5, 4)]);
         RulesAssert.Rejected(MutationErrorCode.BuildingLocked, city, PlaceWorkshop);
         Commands.StartResearch(city, "carpentry");
 
@@ -77,26 +78,29 @@ public sealed class ResearchRuleTests
         Simulator.Advance(city, TestContent, 1);
 
         Commands.PlaceBuilding(city, "workshop", 0, 0);
-        Assert.Equal("workshop", Assert.Single(city.Buildings).TypeId.Value);
+        Assert.Equal(["school", "workshop"], city.Buildings.Select(building => building.TypeId.Value));
     }
 
-    /// <summary>A storage bonus raises the cap from its research's second: a producer waiting on a full stock starts then, and stops at the new cap.</summary>
+    /// <summary>
+    /// A storage bonus raises the limit from its research's second: a producer waiting on a full store starts then, and stops at the new limit
+    /// (<c>04</c> section 16: the bonus raises its good's limit in every store that holds it).
+    /// </summary>
     [Fact]
-    public void StorageBonus_ResearchCompletes_RaisesTheCapFromThatSecond()
+    public void StorageBonus_ResearchCompletes_RaisesTheLimitFromThatSecond()
     {
-        // Wood is at its cap of 100, so the camp waits; warehouses completes at 1030 in this era-2 city.
-        CityState city = City(clock: 1000, era: 2, inventory: [("wood", 100)], completedResearch: ["carpentry", "better_saws"],
+        // The camp's store is at its limit of 100 wood, so the camp waits; warehouses completes at 1030 in this era-2 city.
+        CityState city = City(clock: 1000, era: 2, completedResearch: ["carpentry", "better_saws"],
             activeResearch: new ActiveResearch(new ResearchId("warehouses"), 730, 1030),
-            buildings: [Idle(1, "hut", 0, 0), Idle(2, "lumber_camp", 1, 0, workers: 2)]);
+            buildings: [Idle(1, "hut", 0, 0), Idle(2, "lumber_camp", 1, 0, workers: 2, store: [("wood", 100)])]);
         Simulator.Advance(city, TestContent, 29);
         Assert.Equal("StorageFull:wood", StallReason.Of(city, TestContent, city.Buildings[1])?.ToString());
 
         Simulator.Advance(city, TestContent, 1);
 
-        // The camp starts in the second the cap becomes 150 (30 labor with better_saws: 15 s), and stops when the stock reaches it.
+        // The camp starts in the second the limit becomes 150 (30 labor with better_saws: 15 s), and stops when its store reaches it.
         Assert.Equal("building 2 lumber_camp (1,0) L1 w=2 Producing 1030..1045 target=0 labor=30/30@1030", CityDump.BuildingLine(city, 2));
         Simulator.Advance(city, TestContent, 1000);
-        Assert.Equal((150L, "StorageFull:wood"), (city.GetQuantity(_wood), StallReason.Of(city, TestContent, city.Buildings[1])?.ToString()));
+        Assert.Equal((150L, "StorageFull:wood"), (city.Buildings[1].GetStock(_wood), StallReason.Of(city, TestContent, city.Buildings[1])?.ToString()));
     }
 
     /// <summary>Tries to place the locked workshop on tile (0, 0).</summary>

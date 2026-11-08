@@ -14,8 +14,9 @@ namespace CityBuilder.IntegrationTests.Contracts;
 internal static class ContentFromResponse
 {
     /// <summary>
-    /// Builds the content from a response body. The one adaptation is the building <c>kind</c>: the response names it <c>House</c> or
-    /// <c>Producer</c>, the content file <c>house</c> or <c>producer</c>; extra properties (<c>unlockedBy</c>, <c>timeScale</c>) are ignored.
+    /// Builds the content from a response body. The one adaptation is the building <c>kind</c>: the response names it <c>House</c>,
+    /// <c>Producer</c>, <c>Warehouse</c>, <c>CourierStation</c> or <c>Science</c>, the content file in camel case (<c>courierStation</c>);
+    /// extra properties (<c>unlockedBy</c>, <c>timeScale</c>) are ignored.
     /// </summary>
     /// <param name="body">The response text.</param>
     /// <returns>The content, validated by the factory.</returns>
@@ -24,7 +25,8 @@ internal static class ContentFromResponse
         JsonNode document = JsonNode.Parse(body)!;
         foreach (JsonNode? building in document["buildings"]!.AsArray())
         {
-            building!["kind"] = ((string)building["kind"]!).ToLowerInvariant();
+            string kind = (string)building!["kind"]!;
+            building["kind"] = char.ToLowerInvariant(kind[0]) + kind[1..];
         }
 
         GameContentData data = document.Deserialize<GameContentData>(JsonSerializerOptions.Web)!;

@@ -1,0 +1,1 @@
+{"type":"urn:citybuilder:error:item-not-accepted","title":"Item not accepted","status":422,"detail":"The target building neither needs this item for a project nor stores it.","code":"ITEM_NOT_ACCEPTED","requestId":"e605c066-dab1-4c3a-a6b3-4b0015af3edf","traceId":"00-59041293e170b253353aac805048bafa-6bdd92768ed3fe81-00"}

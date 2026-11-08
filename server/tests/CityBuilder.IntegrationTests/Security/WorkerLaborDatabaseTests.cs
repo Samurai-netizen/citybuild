@@ -54,8 +54,6 @@ public sealed class WorkerLaborDatabaseTests(PostgresServer server) : PostgresTe
             Factory,
             "mover",
             1000,
-            0,
-            0,
             House(1),
             Woodcutter(2, BuildingPhase.Idle, workers: 0, level: 2),
             Woodcutter(3, BuildingPhase.Idle, workers: 0, x: 2, level: 2));
@@ -104,7 +102,7 @@ public sealed class WorkerLaborDatabaseTests(PostgresServer server) : PostgresTe
         string run = $"seed {seed}";
         AssertSnapshotAgrees(end, assigned, run + ", end");
         long clock = (long)end["city"]!["clock"]!;
-        long logs = (long?)end["city"]!["inventory"]!["logs"] ?? 0;
+        long logs = (long)end["city"]!["totals"]!["logs"]!;
         long inCycles = LaborDone(Find(end, 2), clock) + LaborDone(Find(end, 3), clock);
         long accounted = (_laborPerLog * logs) + inCycles;
         string totals = $"{run}: delivered {delivered}, logs {logs}, in cycles {inCycles}";

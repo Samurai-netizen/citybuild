@@ -43,7 +43,7 @@ public sealed class StallReasonTests
     [Fact]
     public void Of_IdleProducerWithoutWorkers_IsNoWorkers()
     {
-        CityState city = City(inventory: [("wood", 2)], buildings: [Idle(1, "workshop", 0, 0)]);
+        CityState city = City(buildings: [Idle(1, "workshop", 0, 0, store: [("wood", 2)])]);
 
         Assert.Equal("NoWorkers", ReasonOf(city, 1));
     }
@@ -58,57 +58,62 @@ public sealed class StallReasonTests
         Assert.Equal("NoWorkers", ReasonOf(city, 1));
     }
 
-    /// <summary>A cycle running with workers makes progress, even with the output at its cap and no input left.</summary>
+    /// <summary>A cycle running with workers makes progress, even with the output at its limit and no input left.</summary>
     [Fact]
     public void Of_CycleRunningWithWorkers_IsNull()
     {
-        // Boards at the cap and no wood left: the running cycle still makes progress.
-        CityState city = City(inventory: [("boards", 80)], buildings:
-            [Producing(1, "workshop", 0, 0, 1, workers: 1, cycleStartedAt: 990, cycleLabor: 90, laborRemaining: 90, segmentStartedAt: 990, endsAt: 1080)]);
+        // Boards at the limit and no wood left in its store: the running cycle still makes progress.
+        CityState city = City(buildings:
+        [
+            Producing(1, "workshop", 0, 0, 1, workers: 1, cycleStartedAt: 990, cycleLabor: 90, laborRemaining: 90, segmentStartedAt: 990, endsAt: 1080,
+                store: [("boards", 80)]),
+        ]);
 
         Assert.Null(ReasonOf(city, 1));
     }
 
-    /// <summary>An idle producer short of an input: <c>MissingInput</c> with that item.</summary>
+    /// <summary>An idle producer whose own store is short of an input: <c>MissingInput</c> with that item; goods in other buildings don't count.</summary>
     [Fact]
     public void Of_IdleProducerLackingAnInput_IsMissingInputOfThatItem()
     {
-        CityState city = City(inventory: [("wood", 1)], buildings: [Idle(1, "workshop", 0, 0, workers: 1)]);
+        CityState city = City(buildings: [Idle(1, "workshop", 0, 0, workers: 1, store: [("wood", 1)]), Idle(2, "depot", 1, 0, store: [("wood", 50)])]);
 
         Assert.Equal("MissingInput:wood", ReasonOf(city, 1));
     }
 
-    /// <summary>An idle producer whose output is at its cap: <c>StorageFull</c> with that item.</summary>
+    /// <summary>An idle producer whose output is at its store's limit: <c>StorageFull</c> with that item.</summary>
     [Fact]
-    public void Of_IdleProducerWhoseOutputIsAtTheCap_IsStorageFullOfThatItem()
+    public void Of_IdleProducerWhoseOutputIsAtTheLimit_IsStorageFullOfThatItem()
     {
-        CityState city = City(inventory: [("wood", 2), ("boards", 80)], buildings: [Idle(1, "workshop", 0, 0, workers: 1)]);
+        CityState city = City(buildings: [Idle(1, "workshop", 0, 0, workers: 1, store: [("wood", 2), ("boards", 80)])]);
 
         Assert.Equal("StorageFull:boards", ReasonOf(city, 1));
     }
 
-    /// <summary>The reservation counts: 79 boards plus 1 reserved plus 1 more would make 81 > 80, so <c>StorageFull</c>.</summary>
+    /// <summary>
+    /// Another building's running cycle doesn't fill this store: a building reserves only its own cycle's outputs (CR-0008: 79 boards and one
+    /// more fit 80, whatever the other workshop runs).
+    /// </summary>
     [Fact]
-    public void Of_OutputFitsTheStockButNotTheReservation_IsStorageFull()
+    public void Of_AnotherBuildingsCycle_DoesNotCountForThisStore()
     {
-        // 79 boards in stock and 1 reserved by the running workshop: a second cycle's 1 board would make 81 > 80.
-        CityState city = City(inventory: [("wood", 2), ("boards", 79)], buildings:
+        CityState city = City(buildings:
         [
-            Producing(1, "workshop", 0, 0, 1, workers: 1, cycleStartedAt: 990, cycleLabor: 90, laborRemaining: 90, segmentStartedAt: 990, endsAt: 1080),
-            Idle(2, "workshop", 1, 0, workers: 1),
+            Producing(1, "workshop", 0, 0, 1, workers: 1, cycleStartedAt: 990, cycleLabor: 90, laborRemaining: 90, segmentStartedAt: 990, endsAt: 1080,
+                store: [("boards", 79)]),
+            Idle(2, "workshop", 1, 0, workers: 1, store: [("wood", 2), ("boards", 79)]),
         ]);
 
-        Assert.Equal("StorageFull:boards", ReasonOf(city, 2));
+        Assert.Null(ReasonOf(city, 2));
     }
 
-    /// <summary>The check uses the effective cap: with warehouses 80 boards + 1 fits under 120.</summary>
+    /// <summary>The check uses the effective limit: with warehouses 80 boards + 1 fits under 120.</summary>
     [Fact]
-    public void Of_CapRaisedByCompletedResearch_UsesTheEffectiveCap()
+    public void Of_LimitRaisedByCompletedResearch_UsesTheEffectiveLimit()
     {
-        // The base cap is 80; warehouses adds 40, so 80 boards + 1 fits.
+        // The level's limit is 80; warehouses adds 40, so 80 boards + 1 fits.
         CityState city = City(
-            inventory: [("wood", 2), ("boards", 80)],
-            buildings: [Idle(1, "workshop", 0, 0, workers: 1)],
+            buildings: [Idle(1, "workshop", 0, 0, workers: 1, store: [("wood", 2), ("boards", 80)])],
             completedResearch: ["carpentry", "better_saws", "warehouses"]);
 
         Assert.Null(ReasonOf(city, 1));
@@ -118,9 +123,21 @@ public sealed class StallReasonTests
     [Fact]
     public void Of_IdleProducerThatCanStart_IsNull()
     {
-        CityState city = City(inventory: [("wood", 2), ("boards", 79)], buildings: [Idle(1, "workshop", 0, 0, workers: 2)]);
+        CityState city = City(buildings: [Idle(1, "workshop", 0, 0, workers: 2, store: [("wood", 2), ("boards", 79)])]);
 
         Assert.Null(ReasonOf(city, 1));
+    }
+
+    /// <summary>
+    /// A courier station without couriers is <c>NoWorkers</c> and with them has none; a warehouse and the science building have no recipe
+    /// (<c>04</c> section 4, CR-0008).
+    /// </summary>
+    [Fact]
+    public void Of_LogisticsBuildings_HaveTheirReasons()
+    {
+        CityState city = City(buildings: [Idle(1, "post", 0, 0), Idle(2, "post", 1, 0, workers: 1), Idle(3, "depot", 2, 0), Idle(4, "school", 3, 0)]);
+
+        Assert.Equal(["NoWorkers", null, "NoRecipe", "NoRecipe"], city.Buildings.Select(building => ReasonOf(city, building.Id)));
     }
 
     /// <summary>The first match wins: no workers before a missing input.</summary>
@@ -136,28 +153,28 @@ public sealed class StallReasonTests
     [Fact]
     public void Of_MissingInputAndFullOutput_MissingInputWinsFirst()
     {
-        CityState city = City(inventory: [("boards", 80)], buildings: [Idle(1, "workshop", 0, 0, workers: 1)]);
+        CityState city = City(buildings: [Idle(1, "workshop", 0, 0, workers: 1, store: [("boards", 80)])]);
 
         Assert.Equal("MissingInput:wood", ReasonOf(city, 1));
     }
 
-    /// <summary>With two inputs missing, the first in ordinal item order is named ("gold" before "wood").</summary>
+    /// <summary>With two inputs missing, the first in ordinal item order is named ("boards" before "wood").</summary>
     [Fact]
     public void Of_TwoInputsMissing_NamesTheFirstInOrdinalOrder()
     {
-        // The workshop also needs 1 gold here; "gold" sorts before "wood".
+        // The workshop also needs 1 boards here (its store holds boards); "boards" sorts before "wood". The currency can't be an input (rule 4).
         GameContent content = ContentAssert.Valid(ContentFixture.ValidWith(data =>
-            ContentFixture.Level(data, "workshop", 1).Recipe!.Inputs = new Dictionary<string, long?> { ["wood"] = 2, ["gold"] = 1 }));
+            ContentFixture.Level(data, "workshop", 1).Recipe!.Inputs = new Dictionary<string, long?> { ["wood"] = 2, ["boards"] = 1 }));
         CityState city = City(buildings: [Idle(1, "workshop", 0, 0, workers: 1)]);
 
-        Assert.Equal("MissingInput:gold", StallReason.Of(city, content, city.Buildings[0])?.ToString());
+        Assert.Equal("MissingInput:boards", StallReason.Of(city, content, city.Buildings[0])?.ToString());
     }
 
     /// <summary>A reason exposes its kind and item; a house's <c>NoRecipe</c> has no item (the default).</summary>
     [Fact]
     public void Of_Reason_HasKindAndItem()
     {
-        CityState city = City(inventory: [("wood", 1)], buildings: [Idle(1, "workshop", 0, 0, workers: 1), Idle(2, "hut", 1, 0)]);
+        CityState city = City(buildings: [Idle(1, "workshop", 0, 0, workers: 1, store: [("wood", 1)]), Idle(2, "hut", 1, 0)]);
 
         StallReason missing = StallReason.Of(city, TestContent, city.Buildings[0])!;
         StallReason house = StallReason.Of(city, TestContent, city.Buildings[1])!;

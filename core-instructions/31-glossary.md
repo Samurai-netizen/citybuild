@@ -5,9 +5,36 @@ Use these names in code, docs and UI text. Consistent words keep Claude and the 
 | Term | Meaning | Code name |
 |---|---|---|
 | Item | Any countable good, including coins | `ItemId` |
-| Stock | Quantity of an item the city holds | `CityState.Inventory`, `GetQuantity(item)` |
-| Storage cap | Max stock that production may fill for a capped item (base + research bonuses) | `GameRules.BaseStorageCaps`, `CityQueries.TryGetEffectiveCap` |
-| Reserved | Output quantity promised to running cycles (derived) | `CityQueries.Reserved` |
+| Stock | The quantity of a good in one store (CR-0008; before it, the city-wide quantity) | `Building.Store`, `Building.GetStock(item)` |
+| Storage cap | Before CR-0008: the most stock production could fill for an item, city-wide; replaced by store limits in CR-0008-T1 part E | — (removed) |
+| Store | The goods one building keeps: every item except coins lives in a store (CR-0008) | `Building.Store`, `city_stores` |
+| Store limit | Max quantity of one item in one building's store, per building level, raised by storage research; refunds and returned loads may exceed it | `BuildingLevelDefinition.Storage`, `CityQueries.TryGetEffectiveLimit`, `Room`; `storeLimits` |
+| Purse | The city's coins: in no building, uncapped, paid and received at once | `CityState.Purse`, `cities.purse` |
+| City total | Of one item: every store, every walker's load and, for coins, the purse; what the HUD shows | `CityQueries.Total`, `Totals`; `totals` |
+| Warehouse | A building whose store keeps every good of the era up to a limit per item; it produces nothing | `BuildingKind.Warehouse` |
+| Science building | The building where research happens, one per city; a research's goods are delivered to it | `BuildingKind.Science`, `CityQueries.ScienceBuilding` |
+| Project | A construction, an upgrade or a research whose coins are paid and which waits for its goods; its timer starts when nothing is missing | `Building.Needs`, `ActiveResearch.Needs`; `project` |
+| Construction site | A placed building that is a project: it waits for its goods, then constructs | `Building.IsConstructionSite` |
+| Delivery | Goods a walker puts into a building: they fill the building's waiting project first (used up at once), then its store | `Deliveries` (internal), `SettlementReport.Delivered`, `Moved` |
+| Walker | Anyone who carries goods on the map: a courier or a worker on a trip | `Trip`, `Courier` |
+| Walk | One walker's way from one building to the next, with its path, start and arrival second | `WalkCost`, `WalkTime`; a trip's `DepartedAt`, `ArrivesAt` |
+| Path rule | A walk steps tile centre to tile centre in four directions; it crosses as few other buildings as possible (none when a way around exists), then takes the least time; a fixed rule breaks ties (`04`) | `PathFinder` (`Measure`, `Route`) |
+| Crossing | A step through another building's tile: allowed only when every way crosses one, at 20 % of the base speed | `WalkCost.Crossings`, `GameRules.CrossingSpeedPermille` |
+| Road | A tile with a road on it, built for coins; each road level shortens the time to walk across it | `RoadTile`, `CityState.Roads`, `RoadLevelDefinition`, `RoadRules`; `city_roads`, `PlaceRoadsCommand`, `UpgradeRoadsCommand`, `RemoveRoadsCommand`, `COST_ROAD` |
+| Trip | A free worker's one-time walk with goods from one building to another or to a project; the worker is busy until it arrives | `Trip`, `TripRules.StartTrip`; `start-trip` |
+| Courier Station | A building whose assigned workers are its couriers; its level sets their number, carry limit and stamina | `BuildingKind.CourierStation`, `CourierRules.StaffStation` |
+| Courier | A worker of a Courier Station who walks its route in a loop | `Courier`, `CourierState`; `CourierArrivalSource` (internal) |
+| Load | The goods a walker carries, each remembering the building it came from (for returns) | `Trip.Quantity`, `CourierLoad` |
+| Carry limit | Max goods (all items together) one courier or trip carries | `GameRules.TripCarryLimit`, `BuildingLevelDefinition.CarryLimit` |
+| Route | A courier's ordered list of 2 or more stops, walked in a loop | `Route`, `CourierRules.SetRoute` |
+| Stop | One building on a route and the actions done there, in order | `RouteStop` |
+| Action | At a stop: take or put, an item and an amount | `RouteAction`, `RouteActionKind` |
+| Amount mode | How an amount is given: a preset (All, Half, Quarter; Era I), a percentage (by Era I research) or an exact number (by Era II research) | `Amount`, `AmountMode`, `AmountPresetDefinition`, `UnlockAmountModeEffect` |
+| Stamina | How long a courier keeps working while the player is away; spent only then, at each walk's arrival | `Courier.Stamina`, `BuildingLevelDefinition.StaminaSeconds`, `SettlementReport.CourierSeconds`, `TiredCourier` |
+| Presence | The server's view of whether the player is there: absent from the presence grace after their last request until their next one | `PresencePolicy`, `CityAggregate.LastSeenUnixSec`, `cities.last_seen_unix`, `Simulation:PresenceGraceSeconds` |
+| Absence start | The second from which couriers spend stamina, derived by the server from the last request; an input of the advance | `absentFrom` of `Simulator.Advance`, `PresencePolicy.AbsentFrom` |
+| Re-energize | The free command that refills every courier's stamina; resting couriers return to their routes | `CourierRules.ReenergizeCouriers`, `ReenergizeCouriersCommand`, `POST /api/v1/commands/reenergize-couriers` |
+| Reserved | Output quantity promised to a building's own running cycle (derived) | `CityQueries.Reserved` |
 | Recipe | Inputs → outputs with a labor cost, per building type and level | `Recipe` |
 | Labor | Worker-seconds one cycle needs | `Labor`, `CycleLabor`, `LaborRemaining` |
 | Cycle | One run of a recipe | — |
@@ -35,8 +62,8 @@ Use these names in code, docs and UI text. Consistent words keep Claude and the 
 | Settle | Advance a city from its last settlement to now | `SettleCity`, `Simulator.Advance` |
 | Settlement window | The server seconds one settle covers: from the last settled second to now; nothing elapses when the clock is behind | `SettlementWindow`, `CityAggregate.LastSettledUnixSec` |
 | Event source | One kind of timed event the advance processes, in a fixed order within a second: research timer, building timers, later the mailbox | `IEventSource` |
-| Production cap | Max seconds per settlement during which cycles may start | `Rules.MaxOfflineProductionSeconds` |
-| Dormant tail | Part of a settlement after the production cap: timers run, no new cycles | — |
+| Production cap | Max seconds per settlement during which cycles could start; removed in CR-0008-T1 part H (courier stamina replaces it) | — (was `Rules.MaxOfflineProductionSeconds`) |
+| Dormant tail | Part of a settlement after the production cap: timers run, no new cycles; removed with the production cap | — |
 | Settlement report | What happened during a settle | `SettlementReport` |
 | Settlement | One settle on the server: the window's advance and the closing zero-length advance (a command's mutation runs between them), with its id, totals and ledger rows (`ref_type` `settlement`) | `Settlement`, `SettleCityResult`, `CitySettler` |
 | Zero-length advance | `Advance(city, 0)`: start eligible cycles at the current clock | `Simulator.Advance(city, content, 0)` |

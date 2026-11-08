@@ -53,11 +53,12 @@ public sealed class AssignWorkersContractTests(ApiFactory factory) : IClassFixtu
         JsonNode snapshot = response.Json();
         JsonShape.AssertObject(snapshot, "requestId:string stateVersion:int serverTimeUtc:string contentVersion:string city:object settlement:object", "$");
         Assert.Equal((_requestId, 1L), ((string)snapshot["requestId"]!, (long)snapshot["stateVersion"]!));
-        Assert.Equal("""{"coins":700,"logs":40,"planks":10}""", snapshot["city"]!["inventory"]!.ToJsonString());
-        Assert.Equal("""{"provided":4,"assigned":2,"free":2}""", snapshot["city"]!["workers"]!.ToJsonString());
+        Assert.Equal("""{"coins":700,"logs":0,"planks":0}""", snapshot["city"]!["totals"]!.ToJsonString());
+        Assert.Equal("""{"provided":4,"assigned":2,"onTrips":0,"free":2}""", snapshot["city"]!["workers"]!.ToJsonString());
         Assert.Equal(
             """{"id":3,"typeId":"woodcutter","x":2,"y":0,"level":1,"assignedWorkers":2,"maxWorkers":2,"phase":"Producing",""" +
-            """ "phaseStartedAt":0,"phaseEndsAt":30,"cycleLabor":60,"laborRemaining":60,"segmentStartedAt":0,"stallReason":null}""".TrimStart(),
+            """ "phaseStartedAt":0,"phaseEndsAt":30,"cycleLabor":60,"laborRemaining":60,"segmentStartedAt":0,"stallReason":null,""".TrimStart() +
+            """ "store":{},"storeLimits":{"logs":40},"needs":{},"project":null}""".TrimStart(),
             snapshot["city"]!["buildings"]![2]!.ToJsonString());
 
         Assert.Equal(1, store.SaveCount);
@@ -294,7 +295,7 @@ public sealed class AssignWorkersContractTests(ApiFactory factory) : IClassFixtu
             0,
             era: 1,
             nextBuildingId: 4,
-            [new(new ItemId("coins"), 700), new(new ItemId("logs"), 40), new(new ItemId("planks"), 10)],
+            purse: 700,
             buildings,
             [],
             activeResearch: null);

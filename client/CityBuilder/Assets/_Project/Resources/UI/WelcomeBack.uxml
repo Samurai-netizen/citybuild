@@ -1,6 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
   <!-- The welcome-back report that WelcomeBackPanel shows (M0-53, docs/how-to/add-ui-screen.md): a parchment card in the middle of a dark scrim with the
-       title, the sections (WelcomeBackPanel makes one heading and its lines per section), the production-cap note and a Continue button. The
+       title, the sections (WelcomeBackPanel makes one heading and its lines per section) and a Continue button. The
        scrim takes the pointer, so the ground and the other menus leave the screen alone until the player continues. Style: Common.uss and WelcomeBack.uss. -->
   <Style src="Common.uss" />
   <Style src="WelcomeBack.uss" />
@@ -12,7 +12,6 @@
           <ui:VisualElement name="welcome-sections" class="welcome-sections" />
           <ui:Label name="welcome-empty" class="welcome-empty t-body" />
         </ui:ScrollView>
-        <ui:Label name="welcome-cap-note" class="welcome-cap-note" />
         <ui:Button name="welcome-continue" class="welcome-continue btn btn--primary" text="Continue" />
       </ui:VisualElement>
     </ui:VisualElement>

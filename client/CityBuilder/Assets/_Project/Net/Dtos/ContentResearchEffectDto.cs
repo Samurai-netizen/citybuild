@@ -10,13 +10,14 @@ namespace CityBuilder.Client.Net
     {
         /// <summary>Creates the DTO. Newtonsoft calls this constructor with the JSON members of the same names, so the object is never half filled.</summary>
         [JsonConstructor]
-        public ContentResearchEffectDto(ResearchEffectTypeDto type, string? building, string? item, int? permille, long? amount)
+        public ContentResearchEffectDto(ResearchEffectTypeDto type, string? building, string? item, int? permille, long? amount, string? mode)
         {
             Type = type;
             Building = building;
             Item = item;
             Permille = permille;
             Amount = amount;
+            Mode = mode;
         }
 
         /// <summary>The effect's kind.</summary>
@@ -30,12 +31,16 @@ namespace CityBuilder.Client.Net
         [JsonProperty(Required = Required.AllowNull)]
         public string? Item { get; }
 
-        /// <summary>The labor reduction in permille (labor reduction), else <c>null</c>.</summary>
+        /// <summary>The share in permille (labor reduction, walk speed bonus), else <c>null</c>.</summary>
         [JsonProperty(Required = Required.AllowNull)]
         public int? Permille { get; }
 
         /// <summary>The storage cap bonus (storage cap bonus), else <c>null</c>.</summary>
         [JsonProperty(Required = Required.AllowNull)]
         public long? Amount { get; }
+
+        /// <summary>The amount mode it unlocks, <c>percent</c> or <c>exact</c> (unlock amount mode; CR-0008), else <c>null</c>.</summary>
+        [JsonProperty(Required = Required.AllowNull)]
+        public string? Mode { get; }
     }
 }

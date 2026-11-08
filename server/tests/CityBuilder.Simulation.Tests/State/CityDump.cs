@@ -11,35 +11,93 @@ namespace CityBuilder.Simulation.Tests.State;
 internal static class CityDump
 {
     /// <summary>
-    /// The city as text: a line with clock, era and next id, one with the stock, one per building (every stored field), the completed research
-    /// and the active research. Two cities with the same text have the same stored values.
+    /// The city as text: a line with clock, era, next id and the purse, one per building (every stored field, its store and its needs), the
+    /// completed research, the active research (with its needs), one per road and, once the city had a trip, the next trip id and one line per
+    /// trip under way (a city that never had one has next trip id 1), then one line per route and per courier (CR-0008-T1 part F). Two cities
+    /// with the same text have the same stored values.
     /// </summary>
     public static string Describe(CityState city)
     {
         var text = new StringBuilder();
-        text.Append(CultureInfo.InvariantCulture, $"clock={city.Clock} era={city.Era} next={city.NextBuildingId}\n");
-        text.Append("inventory:");
-        foreach (KeyValuePair<ItemId, long> stock in city.Inventory)
-        {
-            text.Append(CultureInfo.InvariantCulture, $" {stock.Key}={stock.Value}");
-        }
-
-        text.Append('\n');
+        text.Append(CultureInfo.InvariantCulture, $"clock={city.Clock} era={city.Era} next={city.NextBuildingId} purse={city.Purse}\n");
         foreach (Building building in city.Buildings)
         {
             text.Append(CultureInfo.InvariantCulture, $"building {building.Id} {building.TypeId} ({building.X},{building.Y}) L{building.Level} ");
             text.Append(CultureInfo.InvariantCulture, $"w={building.AssignedWorkers} {building.Phase} {building.PhaseStartedAt}..{Time(building.PhaseEndsAt)} ");
-            text.Append(CultureInfo.InvariantCulture, $"target={building.TargetLevel} labor={building.CycleLabor}/{building.LaborRemaining}@{building.SegmentStartedAt}\n");
+            text.Append(CultureInfo.InvariantCulture, $"target={building.TargetLevel} labor={building.CycleLabor}/{building.LaborRemaining}@{building.SegmentStartedAt}");
+            text.Append(" store:").Append(Amounts(building.Store)).Append(" needs:").Append(Amounts(building.Needs)).Append('\n');
         }
 
         text.Append("completed:").Append(string.Concat(city.CompletedResearch.Select(id => " " + id))).Append('\n');
         ActiveResearch? active = city.ActiveResearch;
-        text.Append(active is null ? "active: none" : string.Create(CultureInfo.InvariantCulture, $"active: {active.Id} {active.StartedAt}..{active.EndsAt}"));
+        text.Append(active is null
+            ? "active: none"
+            : string.Create(CultureInfo.InvariantCulture, $"active: {active.Id} {Time(active.StartedAt)}..{Time(active.EndsAt)} needs:{Amounts(active.Needs)}"));
+        foreach (RoadTile road in city.Roads)
+        {
+            text.Append(CultureInfo.InvariantCulture, $"\nroad ({road.X},{road.Y}) L{road.Level}");
+        }
+
+        if (city.NextTripId > 1)
+        {
+            text.Append(CultureInfo.InvariantCulture, $"\nnext trip={city.NextTripId}");
+        }
+
+        foreach (Trip trip in city.Trips)
+        {
+            text.Append(CultureInfo.InvariantCulture, $"\ntrip {trip.Id} {trip.SourceId}->{trip.TargetId} {trip.Item}={trip.Quantity} {trip.DepartedAt}..{trip.ArrivesAt}");
+        }
+
+        foreach (Route route in city.Routes)
+        {
+            text.Append(CultureInfo.InvariantCulture, $"\nroute {route.StationId}/{route.Slot}:");
+            text.Append(string.Concat(route.Stops.Select(stop => " " + stop.BuildingId.ToString(CultureInfo.InvariantCulture)
+                + "[" + string.Join("; ", stop.Actions.Select(action => $"{action.Kind} {action.Item} {action.Amount}")) + "]")));
+        }
+
+        foreach (Courier courier in city.Couriers)
+        {
+            text.Append(CourierLine(courier));
+        }
+
         return text.ToString();
     }
 
-    /// <summary>The line of <see cref="Describe"/> for one building.</summary>
-    public static string BuildingLine(CityState city, int buildingId) =>
+    /// <summary>
+    /// One courier as <see cref="Describe"/> writes it: <c>courier 4/1 Walking to=2 1000..1012 stamina=600 load: wood@2=3</c> (the stop only
+    /// while walking, times only on a walk, load parts by good, then origin).
+    /// </summary>
+    public static string CourierLine(Courier courier)
+    {
+        string walk = courier.State == CourierState.Walking ? string.Create(CultureInfo.InvariantCulture, $" to={courier.ToStop}") : string.Empty;
+        string times = courier.DepartedAt.HasValue ? $" {Time(courier.DepartedAt)}..{Time(courier.ArrivesAt)}" : string.Empty;
+        string loads = string.Concat(courier.Loads.Select(part => string.Create(CultureInfo.InvariantCulture, $" {part.Item}@{part.FromId}={part.Quantity}")));
+        return string.Create(CultureInfo.InvariantCulture, $"\ncourier {courier.StationId}/{courier.Slot} {courier.State}{walk}{times} stamina={courier.Stamina} load:{loads}");
+    }
+
+    /// <summary>Quantities as <c> logs=3 planks=1</c> in their (ordinal item) order; empty for none.</summary>
+    private static string Amounts(IReadOnlyDictionary<ItemId, long> amounts) =>
+        string.Concat(amounts.Select(amount => string.Create(CultureInfo.InvariantCulture, $" {amount.Key}={amount.Value}")));
+
+    /// <summary>
+    /// The line of <see cref="Describe"/> for one building without its store and needs: its phase, workers and labor, what the phase and
+    /// labor tests compare. <see cref="StoreLine"/> gives the rest.
+    /// </summary>
+    public static string BuildingLine(CityState city, int buildingId)
+    {
+        string line = FullLine(city, buildingId);
+        return line[..line.IndexOf(" store:", StringComparison.Ordinal)];
+    }
+
+    /// <summary>One building's store and needs as <see cref="Describe"/> writes them, for example <c>store: wood=3 needs: boards=2</c>.</summary>
+    public static string StoreLine(CityState city, int buildingId)
+    {
+        string line = FullLine(city, buildingId);
+        return line[(line.IndexOf(" store:", StringComparison.Ordinal) + 1)..];
+    }
+
+    /// <summary>The whole line of <see cref="Describe"/> for one building.</summary>
+    private static string FullLine(CityState city, int buildingId) =>
         Describe(city).Split('\n').Single(line => line.StartsWith($"building {buildingId} ", StringComparison.Ordinal));
 
     /// <summary>A nullable time as text, <c>null</c> for none.</summary>

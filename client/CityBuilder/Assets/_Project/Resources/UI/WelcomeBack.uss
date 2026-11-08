@@ -60,19 +60,6 @@
   margin-top: var(--sp-2);
 }
 
-.welcome-cap-note {
-  flex-shrink: 0;
-  margin-top: var(--sp-2);
-  padding: var(--sp-2);
-  border-left-width: 4px;
-  border-radius: var(--radius-sm);
-  border-left-color: var(--c-warn);
-  color: var(--c-warn-ink);
-  background-color: var(--c-parchment-2);
-  font-size: var(--font-sm);
-  white-space: normal;
-}
-
 .welcome-continue {
   flex-shrink: 0;
   margin-top: var(--sp-3);

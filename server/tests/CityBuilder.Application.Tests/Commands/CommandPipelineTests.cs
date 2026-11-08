@@ -64,16 +64,16 @@ public sealed class CommandPipelineTests
 
         long serverSecond = LastSettled.ToUnixTimeSeconds() + 60;
         Assert.Equal(
-            $"{{\"requestId\":\"{RequestId}\",\"stateVersion\":1,\"clock\":120,\"serverTime\":{serverSecond},\"buildings\":4}}",
+            $"{{\"requestId\":\"{RequestId}\",\"stateVersion\":1,\"clock\":120,\"serverTime\":{serverSecond},\"buildings\":5}}",
             result.ResponseJson);
         Assert.Equal(60, result.Settlement?.ElapsedSeconds);
-        Building placed = repository.Stored(PlayerId).State.Buildings.Single(building => building.Id == 4);
+        Building placed = repository.Stored(PlayerId).State.Buildings.Single(building => building.Id == 5);
         Assert.Equal((new BuildingTypeId("cottage"), 1, 1, BuildingPhase.Constructing), (placed.TypeId, placed.X, placed.Y, placed.Phase));
     }
 
     /// <summary>
     /// After an hour the settlement's rows come first (the woodcutter's 60 logs, with the settlement's reference), then the cost, as
-    /// <c>COST_PLACE</c> with the command's reference: 60 coins → 50.
+    /// <c>COST_PLACE</c> with the command's reference: 50 coins in the purse → 40.
     /// </summary>
     [Fact]
     public async Task ExecuteAsync_PaidCommand_LedgersTheCostAfterTheSettlement()
@@ -87,7 +87,7 @@ public sealed class CommandPipelineTests
         Assert.Equal(
             [
                 (Logs.Value, 60L, 60L, "SettlementProduced", "settlement"),
-                ("coins", -10L, 50L, "CostPlace", "command"),
+                ("coins", -10L, 40L, "CostPlace", "command"),
             ],
             repository.LastLedger!.Select(entry => (entry.Item.Value, entry.Delta, entry.BalanceAfter, entry.Reason.ToString(), entry.RefType)));
         Assert.Equal(RequestId.ToString(), repository.LastLedger![^1].RefId);

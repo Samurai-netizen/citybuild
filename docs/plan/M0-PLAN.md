@@ -2,7 +2,8 @@
 
 **Unity 6.3 LTS · .NET 10 · PostgreSQL 18.6 · AI coders (Claude Code: Opus 5.5 + Sonnet 5.5, or others)**
 
-This is the plan for milestone M0. It has 85 tasks (`M0-01` … `M0-84`, with M0-07 split into M0-07a and M0-07b), grouped into 14 working days plus a Day 0 setup.
+This is the plan for milestone M0. It has 85 tasks (`M0-01` … `M0-84`, with M0-07 split into M0-07a and M0-07b), grouped into 14 working days plus a Day 0 setup,
+and the three tasks of CR-0008 (logistics, `CR-0008-T1` … `T3`) between Day 10 and Day 11: 88 on the board.
 It lives in the repository so that **any AI coder can read the next task** without depending on earlier chats.
 - Start a task: `/start-task M0-NN` (Claude Code), or "Read AGENTS.md, then start task M0-NN" (any tool).
 - Print one task's spec: `bash scripts/dev/show-task.sh M0-NN`.
@@ -21,6 +22,12 @@ the market and guilds can be added without rewriting the core.
 ---
 
 ## 0. What changed
+
+### 0.00 v5 — logistics in Era I (CR-0008, November 2)
+The owner approved CR-0008 (`docs/changes/CR-0008-logistics-rework.md`): goods live in building stores, walkers (couriers on routes and
+workers on trips) carry them along 4-direction paths that roads make faster, building work and research get their goods by delivery, and
+courier stamina replaces the 8 h offline production cap. Its three tasks run after M0-60 and before M0-61, so the docs pass, the audits,
+the balance simulator and the Day 13 suites cover the game as it will be (§7). Specs: `22`, `04`, `05`, `06`, `23`.
 
 ### 0.0 v4 — the AI-building workflow (October 4)
 
@@ -78,20 +85,27 @@ After 14 days (realistically 16–20) you have a clean, tested, extensible spine
 
 - [ ] Unity opens without errors; the server builds with zero warnings in `src/`; `docker compose up` works.
 - [ ] Dev login creates a player and an Era I starter city on the server.
-- [ ] Unity shows the 8×8 grid, a build menu (locked cards name their research), and a HUD with stock / cap /
-      net rate per hour, free workers, builders, a research ring and an era badge.
+- [ ] Unity shows the 8×8 grid, a build menu (locked cards name their research), and a HUD with each item's city total and
+      net rate per hour, coins, free workers, builders, a research ring and an era badge.
 - [ ] Cottages provide workers; producers are auto-staffed when built; the **worker stepper** changes speed live.
-- [ ] Woodcutter → Sawmill → Trading Post runs in real time; storage caps and missing inputs stall buildings visibly.
+- [ ] Woodcutter → Sawmill → Trading Post runs in real time; each building keeps its goods in its own store; full stores and missing
+      inputs stall buildings visibly.
+- [ ] Goods move only with walkers: manual trips by free workers and couriers of a Courier Station on routes (All, Half, Quarter; any
+      percentage after its research), along 4-direction paths that avoid buildings and use roads when they are faster; roads can be built,
+      upgraded and removed for coins.
+- [ ] Constructions, upgrades and research pay coins at once and get their goods by delivery (research at the science building).
 - [ ] Research: financing Trade Charter unlocks the Trading Post; Sharpened Axes and Frame Saw speed up production.
 - [ ] Upgrades (L1 → L2) raise worker limits and refund an interrupted cycle.
-- [ ] Coming back after hours shows a welcome-back report. Research finishes on time; production stops after 8 h.
+- [ ] Coming back after hours shows a welcome-back report with what the couriers did and a Re-energize button. Research finishes on
+      time; there is no fixed 8 h cap: couriers work while the player is away only as long as their stamina lasts.
 - [ ] Invalid, locked, unaffordable, over-assigned, replayed, conflicting and concurrent requests are rejected correctly.
-- [ ] State survives server restarts, and the ledger reconciles with inventory.
-- [ ] Golden scenario #1 (`23-mvp-content.md`) passes in the engine and over HTTP.
+- [ ] State survives server restarts, and the ledger reconciles with the stores, the loads and the purse.
+- [ ] Golden scenarios #1 and #2 (`23-mvp-content.md`) pass in the engine and over HTTP.
 - [ ] Determinism, split invariance, timer invariance, conservation, attack and concurrency suites pass.
 - [ ] A clean clone can be set up from the README, and a development build reaches the city screen.
 - [ ] **Process:** every task has a build log entry with its decisions; every project or assembly has a current module doc;
-      generated reference docs are current; CI is green on `main`; the board shows all 85 tasks `Done` or `Skipped` (with a reason).
+      generated reference docs are current; CI is green on `main`; the board shows all 88 tasks (85 plan tasks and CR-0008's three) `Done` or
+      `Skipped` (with a reason).
 
 ---
 
@@ -108,12 +122,17 @@ Cottage ── provides 4 workers ───────────────�
                                                                             ▼
 Woodcutter's Hut ─ 60 labor/log ─▶ Sawmill ─ 2 logs→1 plank, 180 labor ─▶ Trading Post ─ 2 planks→10 coins, 120 labor
    (max 2 workers L1, 4 L2)          (max 3 / 6)                            (max 2 / 4; unlocked by research)
+        │ each building keeps its goods in its own store; the arrows are walkers:
+        └─ couriers (Courier Station, routes) and manual trips, along paths; roads make them faster
+Warehouse: a store for every good · Science building: research happens there · Coins: the purse, paid and received at once
 
-Research (1 slot): Trade Charter → Storehouses · Sharpened Axes → Frame Saw
+Research (1 slot): Trade Charter → Storehouses · Sharpened Axes → Frame Saw · Tally Sticks (any percentage) · Sturdy Boots (walk faster)
 ```
 
-- 3 items, 4 buildings, levels 1–2, 4 research nodes, 8×8 grid, 2 builder slots, 1 research slot.
+- 3 items, 7 buildings (the 4 above, the Courier Station, the science building, the Warehouse), levels 1–2 (the science building 1),
+  road levels 1–2, 6 research nodes, 8×8 grid, 2 builder slots, 1 research slot. Numbers and prerequisites: `23`.
 - Duration of a cycle = labor ÷ assigned workers (rounded up). 0 workers = paused.
+- A walk takes 5 s per ground tile, less on a road, 25 s across another building (only when there is no way around).
 
 ---
 
@@ -143,7 +162,7 @@ Research (1 slot): Trade Charter → Storehouses · Sharpened Axes → Frame Saw
 2. Validate the shape.
 3. `BEGIN`, then `SELECT … FOR UPDATE` on **your own** city.
 4. Commands: receipt check → replay or `IDEMPOTENCY_CONFLICT`.
-5. **Settle** the city to now (production capped at 8 h; timers uncapped).
+5. **Settle** the city to now (timers uncapped; couriers spend stamina only after the absence start that the last request sets, CR-0008).
 6. Commands: apply the mutation or return an error code (the settlement still commits).
 7. Zero-length advance.
 8. Persist, write ledger rows and the receipt, `state_version + 1`.
@@ -151,7 +170,7 @@ Research (1 slot): Trade Charter → Storehouses · Sharpened Axes → Frame Saw
 
 **The engine** (`04`) is an integer discrete-event simulation. Cycles take inputs at the start and give outputs at the end.
 Duration = labor ÷ workers, and reassigning workers keeps progress. Research completes on a timer and applies data-driven effects.
-At each moment, events run in a fixed order: research → completions by id → starts by id.
+At each moment, events run in a fixed order: research → completions by id → walker arrivals (trips, then couriers) → starts by id (`04`).
 The same input gives the same output on the server and on the phone.
 
 **Cross-player rule** (for the market later): a transaction never locks another player's city.
@@ -224,13 +243,15 @@ If a task conflicts with the design files (`21`–`26`), the files win. Report t
 | 8 | Grid + camera, building views, build menu | Placement flow, feedback, client review | Playable placement |
 | 9 | HUD, status visuals, inspector + workers | Research screen, welcome back, waiting-loop review | Workers and research are visible |
 | 10 | Connection states, retry proof, client logging | Version checks, mobile UI, boundary review | Resilient client |
+| 10+ | CR-0008-T1: logistics spec, engine and server (one long session) | CR-0008-T2: client and art; CR-0008-T3: close-out and playtest | Logistics in the game |
 | 11 | DocTools (generated docs), quality script, docs completeness | Ledger audit, banned APIs + arch tests, fitness + dependency review | Stronger codebase, docs complete |
 | 12 | Balance simulator, strategy runs, content changes | Content validation, first-session polish, playtest | Tuned, coherent loop |
 | 13 | HTTP E2E, attack suite, concurrency suite | Unity smoke, clean clone, security report | Tested prototype |
 | 14 | Triage, freeze review, invariant gaps | Dev build, final audit, M0 close-out | Runnable MVP |
 
 **Realism check:** the labor model and research make Days 2, 6 and 9 heavier, and the workflow (logs, docs, PRs) adds
-10–15 %. 85 tasks in 14 days means 4–8 focused hours a day; **17–21 days is the realistic outcome**. Cut in this order if you fall behind:
+10–15 %. 85 tasks in 14 days means 4–8 focused hours a day; **17–21 days is the realistic outcome**. CR-0008's three long tasks add about
+3–5 working days (the same work as the 16 tasks of its first version), so **20–26 days** with them. Cut in this order if you fall behind:
 - Day 10 polish (M0-57–M0-59);
 - M0-71;
 - display prediction (use the decision-007 fallback in `12`);
@@ -304,7 +325,10 @@ The AI coder updates its row at start (`In progress`) and finish (`In review`). 
 | M0-57 | 10 | Client logging | S | Done |
 | M0-58 | 10 | Version and content compatibility | S | Done |
 | M0-59 | 10 | Mobile-safe UI | S | Done |
-| M0-60 | 10 | Client ↔ server boundary review | O | In review |
+| M0-60 | 10 | Client ↔ server boundary review | O | Done |
+| CR-0008-T1 | 10+ | Logistics rework: spec, engine and server | O | In review |
+| CR-0008-T2 | 10+ | Logistics rework: client and art | S | Todo |
+| CR-0008-T3 | 10+ | Logistics rework: close-out and playtest | O MANUAL | Todo |
 | M0-61 | 11 | DocTools: generated reference docs | O PLAN | Todo |
 | M0-62 | 11 | Quality script | S | Todo |
 | M0-63 | 11 | Documentation completeness pass | O | Todo |
@@ -1434,9 +1458,10 @@ pillars in 22 or with already-built code. Don't change code yet.
 ### Simulation
 - [ ] Integer helpers (CeilDiv, permille reduction) edge cases
 - [ ] Each content validation rule · real content loads
-- [ ] Each rule in M0-10 (labor, workers, auto-staffing, research effects, ordering, caps, upgrade, dormant tail)
+- [ ] Each rule in M0-10 (labor, workers, auto-staffing, research effects, ordering, caps, upgrade, dormant tail; CR-0008: stores, projects,
+      deliveries, paths and roads, trips, couriers and routes, stamina)
 - [ ] Each mutation success path and error code (place, upgrade, assign workers, start research)
-- [ ] Golden scenario #1 (exact table) · big advances == 1-second advances
+- [ ] Golden scenarios #1 and #2 (exact tables) · big advances == 1-second advances
 - [ ] Settlement window: 0 s, cap, cap + 1, 30 days, clock backwards, sub-second calls
 - [ ] Properties: determinism, split invariance, timer invariance, conservation, non-negative, caps, worker limits,
       labor accounting, slots, no starts after the cap, unlock/prerequisite respect
@@ -1454,7 +1479,7 @@ pillars in 22 or with already-built code. Don't change code yet.
 ### API
 - [ ] Health · dev login (and 404 in Production) · token cases
 - [ ] Content and city contracts (raw JSON)
-- [ ] Place / upgrade / assign workers / start research: success + every error code, DB state asserted
+- [ ] Place / upgrade / assign workers / start research, and CR-0008's roads, trips, routes and re-energize: success + every error code, DB state asserted
 - [ ] ProblemDetails mapping for every code · no stack traces
 - [ ] Rate limits per player · body size limit · unknown JSON fields rejected
 - [ ] DevTimeScale guard · timeScale = 1 outside Development
@@ -1488,6 +1513,8 @@ POST /api/v1/commands/assign-workers        { requestId, buildingId, workers }
 POST /api/v1/commands/start-research        { requestId, researchId }
 ```
 
+CR-0008 adds `place-roads`, `upgrade-roads`, `remove-roads`, `start-trip`, `set-route` and `reenergize-couriers` (bodies in `05`).
+
 The full contract, snapshot shape and error catalogue are in `core-instructions/05-api-contract.md`.
 Never add endpoints like `give-coins`, `set-resources`, `set-level`, `finish-research` or `set-time`, not even for debugging.
 
@@ -1499,7 +1526,7 @@ The full list is `core-instructions/30-out-of-scope.md`. Headlines:
 - No era transitions or Era II content.
 - No market, guilds, mailbox or social features.
 - No research beyond the 3 effect types.
-- No land expansion, roads, demolition, needs or expeditions.
+- No land expansion, demolition, needs or expeditions (roads come with CR-0008).
 - No monetization, analytics, Redis, cloud, real accounts or final art.
 - Never XP or city levels.
 

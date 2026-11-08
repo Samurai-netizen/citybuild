@@ -32,6 +32,8 @@ namespace CityBuilder.Simulation.Display
             switch (building.Phase)
             {
                 case BuildingPhase.Constructing:
+                    // A construction site waits for its goods: its timer hasn't started, so it has made no progress yet (04 section 15).
+                    return building.IsConstructionSite ? 0 : TimePermille(building.PhaseStartedAt, building.PhaseEndsAt, clock);
                 case BuildingPhase.Upgrading:
                     return TimePermille(building.PhaseStartedAt, building.PhaseEndsAt, clock);
                 case BuildingPhase.Producing:
@@ -64,7 +66,7 @@ namespace CityBuilder.Simulation.Display
         /// <summary>How far the running research has come at <paramref name="clock"/>, in permille of its duration.</summary>
         /// <param name="city">The city.</param>
         /// <param name="clock">The city-clock second to show; a value before the start shows 0.</param>
-        /// <returns>0 to 1000; 0 when no research runs; 1000 once its end has passed.</returns>
+        /// <returns>0 to 1000; 0 when no research runs or it waits for goods; 1000 once its end has passed.</returns>
         /// <exception cref="ArgumentNullException">The city is null.</exception>
         public static int ResearchProgressPermille(CityState city, long clock)
         {
@@ -74,7 +76,7 @@ namespace CityBuilder.Simulation.Display
             }
 
             ActiveResearch? research = city.ActiveResearch;
-            return research is null ? 0 : TimePermille(research.StartedAt, research.EndsAt, clock);
+            return research?.StartedAt is null ? 0 : TimePermille(research.StartedAt.Value, research.EndsAt, clock);
         }
 
         /// <summary>

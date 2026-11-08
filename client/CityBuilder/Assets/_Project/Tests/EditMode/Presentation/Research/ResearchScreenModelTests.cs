@@ -1,5 +1,6 @@
 #nullable enable
 
+using System.Linq;
 using CityBuilder.Client.Presentation.Research;
 using CityBuilder.Client.Presentation.Ui;
 using CityBuilder.Client.Tests.EditMode.Presentation.Hud;
@@ -32,10 +33,10 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Research
         [Test]
         public void Header_CountsResearchedNodes()
         {
-            Assert.That(ResearchScreenModel.Create(_content, City(), null, CommandAvailability.Allowed).HeaderText, Is.EqualTo("Early Middle Ages — 0 / 4 researched"));
+            Assert.That(ResearchScreenModel.Create(_content, City(), null, CommandAvailability.Allowed).HeaderText, Is.EqualTo("Early Middle Ages — 0 / 6 researched"));
             Assert.That(
                 ResearchScreenModel.Create(_content, City(new[] { "sharp_axes" }), null, CommandAvailability.Allowed).HeaderText,
-                Is.EqualTo("Early Middle Ages — 1 / 4 researched"));
+                Is.EqualTo("Early Middle Ages — 1 / 6 researched"));
         }
 
         /// <summary>A node that is running is not counted as researched.</summary>
@@ -44,7 +45,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Research
         {
             CityState city = City(new[] { "sharp_axes" }, HudTestData.Research("trade_charter", 900, 1500));
 
-            Assert.That(ResearchScreenModel.Create(_content, city, null, CommandAvailability.Allowed).HeaderText, Is.EqualTo("Early Middle Ages — 1 / 4 researched"));
+            Assert.That(ResearchScreenModel.Create(_content, city, null, CommandAvailability.Allowed).HeaderText, Is.EqualTo("Early Middle Ages — 1 / 6 researched"));
         }
 
         /// <summary>The rule is worded as the owner words it, and is greyed out while the content has no later era (every M0 content).</summary>
@@ -64,11 +65,11 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Research
             ResearchScreenModel model = ResearchScreenModel.Create(_content, City(), null, CommandAvailability.Allowed);
 
             Assert.That(model.ColumnCount, Is.EqualTo(2));
-            Assert.That(model.Nodes.Count, Is.EqualTo(4));
+            Assert.That(model.Nodes.Count, Is.EqualTo(6));
             Assert.That(
-                new[] { model.Nodes[0].Id, model.Nodes[1].Id, model.Nodes[2].Id, model.Nodes[3].Id },
-                Is.EqualTo(new[] { "sharp_axes", "trade_charter", "frame_saw", "storehouses" }));
-            Assert.That(new[] { model.Nodes[0].Column, model.Nodes[1].Column, model.Nodes[2].Column, model.Nodes[3].Column }, Is.EqualTo(new[] { 0, 0, 1, 1 }));
+                model.Nodes.Select(node => node.Id),
+                Is.EqualTo(new[] { "sharp_axes", "sturdy_boots", "trade_charter", "frame_saw", "storehouses", "tally_sticks" }));
+            Assert.That(model.Nodes.Select(node => node.Column), Is.EqualTo(new[] { 0, 0, 0, 1, 1, 1 }));
         }
 
         /// <summary>The nodes carry the status the city gives them.</summary>
@@ -79,10 +80,13 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Research
 
             ResearchScreenModel model = ResearchScreenModel.Create(_content, city, null, CommandAvailability.Allowed);
 
-            Assert.That(model.Nodes[0].Status, Is.EqualTo(ResearchStatus.Done));
-            Assert.That(model.Nodes[1].Status, Is.EqualTo(ResearchStatus.InProgress));
-            Assert.That(model.Nodes[2].Status, Is.EqualTo(ResearchStatus.Available));
-            Assert.That(model.Nodes[3].Status, Is.EqualTo(ResearchStatus.Locked));
+            Assert.That(
+                model.Nodes.Select(node => node.Id + " " + node.Status),
+                Is.EqualTo(new[]
+                {
+                    "sharp_axes Done", "sturdy_boots Available", "trade_charter InProgress", "frame_saw Available", "storehouses Locked",
+                    "tally_sticks Locked",
+                }));
         }
 
         /// <summary>The pending research id reaches every node: with a start on its way no button works.</summary>

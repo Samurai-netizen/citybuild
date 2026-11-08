@@ -1,3 +1,4 @@
+using CityBuilder.Application.Cities;
 using Microsoft.Extensions.Options;
 
 namespace CityBuilder.Api.Time;
@@ -11,8 +12,9 @@ namespace CityBuilder.Api.Time;
 public static class ServerClock
 {
     /// <summary>
-    /// Registers <see cref="SimulationOptions"/> (validated on start: the scale in range, and 1 outside Development) and the server's
-    /// <see cref="TimeProvider"/>, built from them when first resolved.
+    /// Registers <see cref="SimulationOptions"/> (validated on start: the scale and the presence grace in range, and the scale 1 outside
+    /// Development), the server's <see cref="TimeProvider"/>, built from them when first resolved, and the <see cref="PresencePolicy"/> of
+    /// the settle: the grace times that clock's scale.
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <param name="configuration">The app's configuration; the section <see cref="SimulationOptions.SectionName"/> is bound.</param>
@@ -27,6 +29,8 @@ public static class ServerClock
             .Bind(configuration.GetSection(SimulationOptions.SectionName))
             .Validate(options => options.DevTimeScale is >= SimulationOptions.MinDevTimeScale and <= SimulationOptions.MaxDevTimeScale,
                 $"Simulation:DevTimeScale must be between {SimulationOptions.MinDevTimeScale} and {SimulationOptions.MaxDevTimeScale}.")
+            .Validate(options => options.PresenceGraceSeconds is >= 0 and <= SimulationOptions.MaxPresenceGraceSeconds,
+                $"Simulation:PresenceGraceSeconds must be between 0 and {SimulationOptions.MaxPresenceGraceSeconds}.")
             .Validate(options => options.DevTimeScale == 1 || environment.IsDevelopment(),
                 "Simulation:DevTimeScale may be other than 1 only in Development: a fast clock would hand every player hours of production " +
                 "for minutes (core-instructions/07-security-model.md).")
@@ -38,6 +42,11 @@ public static class ServerClock
             int scale = provider.GetRequiredService<IOptions<SimulationOptions>>().Value.DevTimeScale;
             return scale > 1 && environment.IsDevelopment() ? new ScaledTimeProvider(TimeProvider.System, scale) : TimeProvider.System;
         });
+
+        // The presence grace is real time: on a fast clock it is that many more server seconds (04 section 2).
+        services.AddSingleton(provider => new PresencePolicy(checked(
+            provider.GetRequiredService<IOptions<SimulationOptions>>().Value.PresenceGraceSeconds
+            * TimeScaleOf(provider.GetRequiredService<TimeProvider>()))));
         return services;
     }
 

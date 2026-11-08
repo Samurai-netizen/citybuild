@@ -1,0 +1,1 @@
+{"type":"urn:citybuilder:error:no-science-building","title":"No science building","status":422,"detail":"Research happens at the science building; build one and let it complete first.","code":"NO_SCIENCE_BUILDING","requestId":"5dffd5f3-d6bc-4cd3-b546-06cdd18eea58","traceId":"00-31ea3bd682e2d34ddd3f114d641c10c9-7fb3eff6ba967f75-00"}

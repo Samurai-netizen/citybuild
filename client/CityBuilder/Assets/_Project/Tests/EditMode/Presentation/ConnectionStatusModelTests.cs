@@ -40,7 +40,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation
             Assert.That(model.Details, Is.Empty);
         }
 
-        /// <summary>A connected start names the era and the coins from the content's names and the snapshot's inventory.</summary>
+        /// <summary>A connected start names the era and the coins from the content's names and the snapshot's purse.</summary>
         [Test]
         public void Connected_NamesTheEraAndTheCoins()
         {
@@ -48,15 +48,15 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation
 
             ConnectionStatusModel model = ConnectionStatusModel.From(outcome);
 
-            Assert.That(model.Headline, Is.EqualTo("Connected - Early Middle Ages - Coins: 700"));
+            Assert.That(model.Headline, Is.EqualTo("Connected - Early Middle Ages - Coins: 800"));
             Assert.That(model.IsFatal, Is.False);
         }
 
-        /// <summary>An era the content does not name shows its number, and an inventory without coins shows zero: the screen never fails on odd data.</summary>
+        /// <summary>An era the content does not name shows its number, and an empty purse shows zero: the screen never fails on odd data.</summary>
         [Test]
         public void Connected_WithAnUnknownEraAndNoCoins_FallsBack()
         {
-            string odd = Fixtures.Read("snapshot-city-start.json").Replace("\"era\":1,", "\"era\":9,").Replace("\"coins\":700,", string.Empty);
+            string odd = Fixtures.Read("snapshot-city-start.json").Replace("\"era\":1,", "\"era\":9,").Replace("\"purse\":800,", "\"purse\":0,");
 
             ConnectionStatusModel model = ConnectionStatusModel.From(StartupOutcome.Connected(_content, 1, City(odd)));
 
@@ -126,7 +126,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation
 
             ConnectionStatusModel model = ConnectionStatusModel.ForConnection(ConnectionState.Connected, null, _content, snapshot);
 
-            Assert.That(model.Headline, Is.EqualTo("Connected - Early Middle Ages - Coins: 700"));
+            Assert.That(model.Headline, Is.EqualTo("Connected - Early Middle Ages - Coins: 800"));
             Assert.That(model.IsFatal, Is.False);
         }
 

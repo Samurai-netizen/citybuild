@@ -19,9 +19,14 @@ public sealed class ContentValueRuleTests
         ["rules.gridHeight"] = data => RulesOf(data).GridHeight = -3,
         ["rules.builderSlots"] = data => RulesOf(data).BuilderSlots = 0,
         ["rules.researchSlots"] = data => RulesOf(data).ResearchSlots = 0,
-        ["rules.maxOfflineProductionSeconds"] = data => RulesOf(data).MaxOfflineProductionSeconds = 0,
         ["rules.minCycleSeconds"] = data => RulesOf(data).MinCycleSeconds = 0,
-        ["rules.baseStorageCaps.wood"] = data => RulesOf(data).BaseStorageCaps!["wood"] = 0,
+        ["rules.tripCarryLimit"] = data => RulesOf(data).TripCarryLimit = 0,
+        ["rules.maxRouteStops"] = data => RulesOf(data).MaxRouteStops = 0,
+        ["rules.maxStopActions"] = data => RulesOf(data).MaxStopActions = -1,
+        ["buildings[depot].levels[1].storage.wood"] = data => Level(data, "depot", 1).Storage!["wood"] = 0,
+        ["buildings[hut].maxPerCity"] = data => Building(data, "hut").MaxPerCity = 0,
+        ["amountPresets[half].percent"] = data => Preset(data, "half").Percent = 0,
+        ["research[boots].effects[#0].permille"] = data => Research(data, "boots").Effects![0]!.Permille = 0,
         ["buildings[hut].buildSeconds"] = data => Building(data, "hut").BuildSeconds = 0,
         ["buildings[hut].levels[2].upgradeSeconds"] = data => Level(data, "hut", 2).UpgradeSeconds = 0,
         ["buildings[workshop].levels[1].recipe.inputs.wood"] = data => Level(data, "workshop", 1).Recipe!.Inputs!["wood"] = 0,
@@ -33,11 +38,11 @@ public sealed class ContentValueRuleTests
         ["research[warehouses].effects[#1].amount"] = data => Research(data, "warehouses").Effects![1]!.Amount = 0,
     };
 
-    /// <summary>Costs, stock and the reduction limit set below 0, by the expected error path.</summary>
+    /// <summary>Costs, the purse and the reduction limit set below 0, by the expected error path.</summary>
     private static readonly Dictionary<string, Action<GameContentData>> _negative = new()
     {
         ["rules.maxLaborReductionPermille"] = data => RulesOf(data).MaxLaborReductionPermille = -1,
-        ["startingCity.inventory.wood"] = data => data.StartingCity!.Inventory!["wood"] = -5,
+        ["startingCity.purse"] = data => data.StartingCity!.Purse = -5,
         ["buildings[workshop].cost.wood"] = data => Building(data, "workshop").Cost!["wood"] = -10,
         ["buildings[hut].levels[2].upgradeCost.gold"] = data => Level(data, "hut", 2).UpgradeCost!["gold"] = -1,
         ["research[better_saws].cost.boards"] = data => Research(data, "better_saws").Cost!["boards"] = -1,
@@ -58,6 +63,10 @@ public sealed class ContentValueRuleTests
         },
         ["rules.maxLaborReductionPermille"] = data => RulesOf(data).MaxLaborReductionPermille = 1001,
         ["research[better_saws].effects[#0].permille"] = data => Research(data, "better_saws").Effects![0]!.Permille = 1001,
+        ["rules.maxRouteStops"] = data => RulesOf(data).MaxRouteStops = 17,
+        ["rules.maxStopActions"] = data => RulesOf(data).MaxStopActions = 9,
+        ["amountPresets[all].percent"] = data => Preset(data, "all").Percent = 101,
+        ["research[boots].effects[#0].permille"] = data => Research(data, "boots").Effects![0]!.Permille = 1001,
     };
 
     /// <summary>The error paths of <see cref="_notPositive"/>.</summary>
@@ -69,7 +78,7 @@ public sealed class ContentValueRuleTests
     /// <summary>The error paths of <see cref="_tooLarge"/>.</summary>
     public static TheoryData<string> TooLargePaths => new(_tooLarge.Keys);
 
-    /// <summary>A quantity, duration, cap or slot count of 0 or less gives one <see cref="ContentErrorCode.NotPositive"/>.</summary>
+    /// <summary>A quantity, duration, store limit, slot count, percentage or limit of 0 or less gives one <see cref="ContentErrorCode.NotPositive"/>.</summary>
     [Theory]
     [MemberData(nameof(NotPositivePaths))]
     public void Create_ValueThatMustBePositiveIsZeroOrLess_ReportsNotPositive(string path) =>
@@ -99,7 +108,31 @@ public sealed class ContentValueRuleTests
         Assert.True(GameContentFactory.Create(data).IsValid);
     }
 
-    /// <summary>Zero costs, zero stock and a limit of 1000 ‰ are allowed.</summary>
+    /// <summary>A route of one stop goes nowhere: <c>maxRouteStops</c> 1 is <see cref="ContentErrorCode.ValueTooSmall"/>; 2 and the API's 16 are allowed.</summary>
+    [Fact]
+    public void Create_MaxRouteStopsOfOne_ReportsValueTooSmall()
+    {
+        ContentAssert.SingleError(ValidWith(data => RulesOf(data).MaxRouteStops = 1), ContentErrorCode.ValueTooSmall, "rules.maxRouteStops");
+        ContentAssert.Valid(ValidWith(data => RulesOf(data).MaxRouteStops = 2));
+        ContentAssert.Valid(ValidWith(data => RulesOf(data).MaxRouteStops = 16));
+        ContentAssert.Valid(ValidWith(data => RulesOf(data).MaxStopActions = 8));
+    }
+
+    /// <summary>No amount preset, or more than 8, is <see cref="ContentErrorCode.InvalidAmountPresets"/>; 1 and 8 are allowed (content rule 13).</summary>
+    [Fact]
+    public void Create_NoOrNinePresets_ReportsInvalidAmountPresets()
+    {
+        // A preset of the n-th percent, for lists of a given length.
+        static AmountPresetData PresetOf(int percent) => new() { Id = "p" + percent, Name = "P" + percent, Percent = percent };
+
+        ContentAssert.SingleError(ValidWith(data => data.AmountPresets = []), ContentErrorCode.InvalidAmountPresets, "amountPresets");
+        ContentAssert.SingleError(
+            ValidWith(data => data.AmountPresets = [.. Enumerable.Range(1, 9).Select(PresetOf)]), ContentErrorCode.InvalidAmountPresets, "amountPresets");
+        ContentAssert.Valid(ValidWith(data => data.AmountPresets = [PresetOf(100)]));
+        ContentAssert.Valid(ValidWith(data => data.AmountPresets = [.. Enumerable.Range(1, 8).Select(PresetOf)]));
+    }
+
+    /// <summary>Zero costs, an empty purse and a limit of 1000 ‰ are allowed.</summary>
     [Fact]
     public void Create_ZeroCostsAndStock_AreAccepted()
     {
@@ -107,7 +140,7 @@ public sealed class ContentValueRuleTests
         Building(data, "hut").Cost = [];
         Building(data, "workshop").Cost!["wood"] = 0;
         Research(data, "carpentry").Cost!["gold"] = 0;
-        data.StartingCity!.Inventory!["wood"] = 0;
+        data.StartingCity!.Purse = 0;
         RulesOf(data).MaxLaborReductionPermille = 1000;
 
         ContentAssert.Valid(data);

@@ -1,0 +1,1 @@
+{"type":"urn:citybuilder:error:building-limit","title":"Building limit","status":422,"detail":"Your city already has the most buildings of this type.","code":"BUILDING_LIMIT","requestId":"de9270ae-3c03-4f15-bc3b-ad7e103a436d","traceId":"00-82a25d5f2043a2eac118cf987665a328-a72730b49d4bec74-00"}

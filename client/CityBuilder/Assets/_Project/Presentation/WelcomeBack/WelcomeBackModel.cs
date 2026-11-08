@@ -14,8 +14,8 @@ namespace CityBuilder.Client.Presentation.WelcomeBack
 {
     /// <summary>
     /// What the welcome-back report says (M0-53): the title <c>While you were away (7 h 12 m)</c>, what was produced and used per item, which
-    /// buildings were built or upgraded, which research finished and what it does, and, when the offline production cap cut the time short,
-    /// <c>Production paused after 8 h. Check in more often or research storage.</c>. It is made from the settlement block of one snapshot and
+    /// buildings were built or upgraded, and which research finished and what it does (the offline cap's note went with the cap, CR-0008-T1
+    /// part H; the couriers' lines are CR-0008-T2's). It is made from the settlement block of one snapshot and
     /// from that snapshot's city, which names the buildings and their levels. <see cref="Create"/> gives nothing for a settlement shorter than
     /// <see cref="ThresholdSeconds"/> of real time, so a routine poll never shows a report, also on a Development server whose clock runs faster. Pure code; no Unity objects, so EditMode tests check every sentence.
     /// </summary>
@@ -46,11 +46,10 @@ namespace CityBuilder.Client.Presentation.WelcomeBack
         private const long SecondsPerHour = 3600;
 
         /// <summary>Creates the model; <see cref="Create"/> is the way in.</summary>
-        private WelcomeBackModel(string title, IReadOnlyList<WelcomeBackSection> sections, string capNote)
+        private WelcomeBackModel(string title, IReadOnlyList<WelcomeBackSection> sections)
         {
             Title = title;
             Sections = sections;
-            CapNote = capNote;
         }
 
         /// <summary>The title, such as <c>While you were away (7 h 12 m)</c>.</summary>
@@ -59,14 +58,8 @@ namespace CityBuilder.Client.Presentation.WelcomeBack
         /// <summary>The blocks that have something to say, in the order produced, used, buildings, research; empty when nothing happened.</summary>
         public IReadOnlyList<WelcomeBackSection> Sections { get; }
 
-        /// <summary>The note about the production cap, or an empty text when production ran for the whole time away.</summary>
-        public string CapNote { get; }
-
         /// <summary>Whether there is no section: <see cref="NothingHappenedText"/> is shown instead.</summary>
         public bool IsEmpty => Sections.Count == 0;
-
-        /// <summary>Whether <see cref="CapNote"/> has a text.</summary>
-        public bool HasCapNote => CapNote.Length > 0;
 
         /// <summary>
         /// Makes the report of <paramref name="snapshot"/>, or returns null when there is nothing to report: the snapshot has no settlement, or the
@@ -107,10 +100,7 @@ namespace CityBuilder.Client.Presentation.WelcomeBack
             AddSection(sections, UsedHeading, Quantities(content, settlement.Consumed));
             AddSection(sections, BuildingsHeading, BuildingLines(content, snapshot.CopyCity(), settlement.CompletedBuildings));
             AddSection(sections, ResearchHeading, ResearchLines(content, settlement.CompletedResearch));
-            string capNote = settlement.ProductionSeconds < settlement.ElapsedSeconds
-                ? "Production paused after " + Duration(settlement.ProductionSeconds) + ". Check in more often or research storage."
-                : string.Empty;
-            return new WelcomeBackModel("While you were away (" + Duration(settlement.ElapsedSeconds) + ")", sections, capNote);
+            return new WelcomeBackModel("While you were away (" + Duration(settlement.ElapsedSeconds) + ")", sections);
         }
 
         /// <summary>Adds the section unless it has no line.</summary>

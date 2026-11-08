@@ -1,5 +1,6 @@
 #nullable enable
 
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -81,13 +82,14 @@ namespace CityBuilder.Client.Tests.EditMode.Net
 
             GameContent content = (await _service.LoadAsync(CancellationToken.None)).Content!;
 
-            Assert.That(content.ContentVersion, Is.EqualTo("mvp-1"));
+            Assert.That(content.ContentVersion, Is.EqualTo("mvp-2"));
             Assert.That(content.Rules.GridWidth, Is.EqualTo(8));
             Assert.That(content.Rules.BuilderSlots, Is.EqualTo(2));
-            Assert.That(content.Rules.TryGetBaseStorageCap(new ItemId("planks"), out long planksCap), Is.True);
-            Assert.That(planksCap, Is.EqualTo(500L));
+            Assert.That(content.Rules.TripCarryLimit, Is.EqualTo(10L));
             Assert.That(content.StartingCity.Era, Is.EqualTo(1));
-            Assert.That(content.StartingCity.Inventory.Single(q => q.Item.Value == "coins").Quantity, Is.EqualTo(700L));
+            Assert.That(content.StartingCity.Purse, Is.EqualTo(800L));
+            Assert.That(content.Currency.Value, Is.EqualTo("coins"));
+            Assert.That(content.AmountPresets.Select(preset => preset.Id.Value), Is.EqualTo(new[] { "all", "half", "quarter" }));
             Assert.That(content.TryGetEra(1, out EraDefinition? era), Is.True);
             Assert.That(era!.Name, Is.EqualTo("Early Middle Ages"));
             Assert.That(content.Items.Select(item => item.Id.Value), Is.EqualTo(new[] { "coins", "logs", "planks" }));
@@ -135,7 +137,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             }
         }
 
-        /// <summary>The mapper writes the content file's spelling of a kind (<c>house</c>, <c>producer</c>), not the response's.</summary>
+        /// <summary>The mapper writes the content file's spelling of a kind (<c>house</c>, <c>courierStation</c>), not the response's.</summary>
         [Test]
         public void Mapper_WritesTheContentFilesKindSpelling()
         {
@@ -143,7 +145,9 @@ namespace CityBuilder.Client.Tests.EditMode.Net
 
             var data = ContentMapper.ToData(dto);
 
-            Assert.That(data.Buildings!.Select(b => b!.Kind).Distinct().OrderBy(k => k), Is.EqualTo(new[] { "house", "producer" }));
+            Assert.That(
+                data.Buildings!.Select(b => b!.Kind).Distinct().OrderBy(k => k, StringComparer.Ordinal),
+                Is.EqualTo(new[] { "courierStation", "house", "producer", "science", "warehouse" }));
             Assert.That(data.Buildings!.First(b => b!.Id == "house")!.Levels![0]!.Recipe, Is.Null);
             Assert.That(data.Buildings!.First(b => b!.Id == "sawmill")!.Levels![0]!.UpgradeCost, Is.Null);
         }
@@ -168,7 +172,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         [Test]
         public async Task Load_ContentWithAnUnknownItem_IsInvalid()
         {
-            string broken = Fixtures.Read("content.json").Replace("\"cost\":{\"coins\":150,\"logs\":30}", "\"cost\":{\"coins\":150,\"gold\":30}");
+            string broken = Fixtures.Read("content.json").Replace("\"cost\":{\"coins\":150,\"logs\":10}", "\"cost\":{\"coins\":150,\"gold\":10}");
             _transport.Answer(200, broken);
 
             ContentLoadResult result = await _service.LoadAsync(CancellationToken.None);

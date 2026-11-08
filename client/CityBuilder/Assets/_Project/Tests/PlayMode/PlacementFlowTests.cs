@@ -253,7 +253,7 @@ namespace CityBuilder.Client.Tests.PlayMode
         [UnityTest]
         public IEnumerator PressingPlace_SendsTheCommand_ShowsAGhost_AndChangesNothingElse()
         {
-            long coinsBefore = _display.Current!.Inventory[new ItemId("coins")];
+            long coinsBefore = _display.Current!.Purse;
 
             yield return PlaceCottageAtOrigin();
 
@@ -262,7 +262,7 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(_transport.Requests[0].JsonBody, Does.Contain("\"buildingTypeId\":\"house\"").And.Contain("\"x\":0").And.Contain("\"y\":0"));
             Assert.That(_world.Ghosts!.Count, Is.EqualTo(1));
             Assert.That(_world.Buildings!.Count, Is.EqualTo(0), "no building before the server says so");
-            Assert.That(_display.Current.Inventory[new ItemId("coins")], Is.EqualTo(coinsBefore), "nothing is subtracted before the server says so");
+            Assert.That(_display.Current.Purse, Is.EqualTo(coinsBefore), "nothing is subtracted before the server says so");
             Assert.That(Element<Label>(PlacementBar.PromptName).text, Is.EqualTo("Building Cottage at (0, 0)…"));
             Assert.That(Element<Button>(PlacementBar.PlaceName).enabledSelf, Is.False);
             Assert.That(Element<Button>(PlacementBar.CancelName).enabledSelf, Is.False, "a command on its way cannot be taken back");
@@ -293,7 +293,7 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(_world.Buildings.TryGetView(1, out BuildingView? view), Is.True);
             Assert.That(view!.TypeId, Is.EqualTo("house"));
             Assert.That(_world.Ghosts!.Count, Is.EqualTo(0));
-            Assert.That(_display.Current!.Inventory[new ItemId("coins")], Is.EqualTo(500), "the coins are the server's");
+            Assert.That(_display.Current!.Purse, Is.EqualTo(750), "the coins are the server's");
             Assert.That(_menu.Selected, Is.Null);
             Assert.That(_world.Selection!.Selected, Is.Null);
             Assert.That(_world.Ground!.ShownHintAt(new GridCoordinate(3, 3)), Is.Null, "the highlights are gone");
@@ -313,7 +313,7 @@ namespace CityBuilder.Client.Tests.PlayMode
 
             Assert.That(_world.Ghosts!.Count, Is.EqualTo(0));
             Assert.That(_world.Buildings!.Count, Is.EqualTo(0));
-            Assert.That(_display.Current!.Inventory[new ItemId("coins")], Is.EqualTo(700));
+            Assert.That(_display.Current!.Purse, Is.EqualTo(800));
             Assert.That(_flow.Model.ErrorText, Is.EqualTo("That tile is already taken"));
             Assert.That(Element<Label>(PlacementBar.ErrorName).text, Is.EqualTo("That tile is already taken"));
             Assert.That(_menu.Selected, Is.EqualTo(House));

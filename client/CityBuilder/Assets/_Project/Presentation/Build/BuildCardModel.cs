@@ -158,7 +158,8 @@ namespace CityBuilder.Client.Presentation.Build
             IReadOnlyList<ItemQuantity> cost = definition.Cost;
             for (int index = 0; index < cost.Count; index++)
             {
-                if (city.GetQuantity(cost[index].Item) < cost[index].Quantity)
+                // Only the coins are paid at once; the goods of a cost are delivered to the site later (CR-0008).
+                if (cost[index].Item == content.Currency && city.Purse < cost[index].Quantity)
                 {
                     return BuildHint.CannotAfford;
                 }
@@ -179,7 +180,7 @@ namespace CityBuilder.Client.Presentation.Build
                     IReadOnlyList<ItemQuantity> cost = definition.Cost;
                     for (int index = 0; index < cost.Count; index++)
                     {
-                        if (city.GetQuantity(cost[index].Item) >= cost[index].Quantity)
+                        if (cost[index].Item != content.Currency || city.Purse >= cost[index].Quantity)
                         {
                             continue;
                         }

@@ -11,7 +11,7 @@ namespace CityBuilder.Client.Net
     {
         /// <summary>Creates the DTO. Newtonsoft calls this constructor with the JSON members of the same names, so the object is never half filled.</summary>
         [JsonConstructor]
-        public ContentBuildingDto(string id, string name, BuildingKindDto kind, int era, bool availableAtStart, string? unlockedBy, Dictionary<string, long> cost, long buildSeconds, List<ContentBuildingLevelDto> levels)
+        public ContentBuildingDto(string id, string name, BuildingKindDto kind, int era, bool availableAtStart, string? unlockedBy, int? maxPerCity, Dictionary<string, long> cost, long buildSeconds, List<ContentBuildingLevelDto> levels)
         {
             Id = id;
             Name = name;
@@ -19,6 +19,7 @@ namespace CityBuilder.Client.Net
             Era = era;
             AvailableAtStart = availableAtStart;
             UnlockedBy = unlockedBy;
+            MaxPerCity = maxPerCity;
             Cost = cost;
             BuildSeconds = buildSeconds;
             Levels = levels;
@@ -30,7 +31,7 @@ namespace CityBuilder.Client.Net
         /// <summary>The display name.</summary>
         public string Name { get; }
 
-        /// <summary>House or producer.</summary>
+        /// <summary>House, producer, warehouse, courier station or science building.</summary>
         public BuildingKindDto Kind { get; }
 
         /// <summary>The era the type belongs to.</summary>
@@ -43,7 +44,11 @@ namespace CityBuilder.Client.Net
         [JsonProperty(Required = Required.AllowNull)]
         public string? UnlockedBy { get; }
 
-        /// <summary>Item id to the quantity placing it costs.</summary>
+        /// <summary>The most buildings of the type one city may have, or <c>null</c> for no limit (CR-0008: the science building).</summary>
+        [JsonProperty(Required = Required.AllowNull)]
+        public int? MaxPerCity { get; }
+
+        /// <summary>Item id to the quantity placing it costs; the coins are paid at once, the goods delivered to the site (CR-0008).</summary>
         public Dictionary<string, long> Cost { get; }
 
         /// <summary>Seconds construction takes.</summary>

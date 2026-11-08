@@ -7,7 +7,8 @@ namespace CityBuilder.Simulation.State
     /// <summary>
     /// Why a building makes no progress, shown to players (<c>core-instructions/04-simulation-model.md</c>, section 4). It is derived from the
     /// city and the content, never stored. Constructing and upgrading buildings make progress, so they never have one; neither has a producer
-    /// whose cycle runs with workers, nor an idle producer that can start its next cycle.
+    /// whose cycle runs with workers, an idle producer that can start its next cycle, nor a courier station with couriers. The inputs and the
+    /// room it looks at are the building's own store (<c>04</c> section 16).
     /// </summary>
     public sealed class StallReason
     {
@@ -25,7 +26,8 @@ namespace CityBuilder.Simulation.State
         public ItemId Item { get; }
 
         /// <summary>
-        /// Derives a building's stall reason. The first match wins: <see cref="StallKind.NoRecipe"/>, <see cref="StallKind.NoWorkers"/>,
+        /// Derives a building's stall reason. A courier station has <see cref="StallKind.NoWorkers"/> without couriers and none with them.
+        /// Otherwise the first match wins: <see cref="StallKind.NoRecipe"/> (houses, warehouses, the science building), <see cref="StallKind.NoWorkers"/>,
         /// <see cref="StallKind.MissingInput"/>, <see cref="StallKind.StorageFull"/>; the item is the first one in recipe (ordinal item) order.
         /// </summary>
         /// <param name="city">The city the building is in.</param>
@@ -56,7 +58,14 @@ namespace CityBuilder.Simulation.State
                 return null;
             }
 
-            RecipeDefinition? recipe = CityQueries.DefinitionOf(content, building.TypeId).GetLevel(building.Level).Recipe;
+            BuildingDefinition definition = CityQueries.DefinitionOf(content, building.TypeId);
+            if (definition.Kind == BuildingKind.CourierStation)
+            {
+                // A station's workers are its couriers (04 section 19): without any it moves nothing.
+                return building.AssignedWorkers == 0 ? new StallReason(StallKind.NoWorkers, default) : null;
+            }
+
+            RecipeDefinition? recipe = definition.GetLevel(building.Level).Recipe;
             if (recipe is null)
             {
                 return new StallReason(StallKind.NoRecipe, default);
@@ -72,12 +81,12 @@ namespace CityBuilder.Simulation.State
                 return null;
             }
 
-            if (CityQueries.TryFindMissingInput(city, recipe, out ItemId missing))
+            if (CityQueries.TryFindMissingInput(building, recipe, out ItemId missing))
             {
                 return new StallReason(StallKind.MissingInput, missing);
             }
 
-            return CityQueries.TryFindFullOutput(city, content, recipe, out ItemId full) ? new StallReason(StallKind.StorageFull, full) : null;
+            return CityQueries.TryFindFullOutput(city, content, building, recipe, out ItemId full) ? new StallReason(StallKind.StorageFull, full) : null;
         }
 
         /// <summary>The text of the API (<c>05</c>): <c>NoRecipe</c>, <c>NoWorkers</c>, <c>MissingInput:logs</c> or <c>StorageFull:planks</c>.</summary>

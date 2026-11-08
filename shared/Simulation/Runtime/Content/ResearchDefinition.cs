@@ -44,7 +44,7 @@ namespace CityBuilder.Simulation.Content
         /// <summary>What starting the research costs, paid in full at the start, sorted by item id. May be empty.</summary>
         public IReadOnlyList<ItemQuantity> Cost { get; }
 
-        /// <summary>How long the research takes, in seconds (greater than zero). Timers are never capped by the production cap.</summary>
+        /// <summary>How long the research takes, in seconds (greater than zero).</summary>
         public long DurationSeconds { get; }
 
         /// <summary>The nodes that must be completed first, sorted by id. Each is in the same era or an earlier one, and the graph has no cycles.</summary>

@@ -3,7 +3,7 @@ using static CityBuilder.Simulation.Tests.State.CityFixture;
 
 namespace CityBuilder.Simulation.Tests.State;
 
-/// <summary>Restoring a city: sorted lists, the stock without zeros, lookups, read-only views, and the checks that need no content.</summary>
+/// <summary>Restoring a city: sorted lists, stores without zeros, projects, lookups, read-only views, and the checks that need no content.</summary>
 public sealed class CityStateTests
 {
     /// <summary>The restoring constructor keeps the clock, era and next building id.</summary>
@@ -25,29 +25,57 @@ public sealed class CityStateTests
         Assert.Equal([2, 3, 5], city.Buildings.Select(building => building.Id));
     }
 
-    /// <summary>The stock keeps only quantities above 0, in item order.</summary>
+    /// <summary>A building's store keeps only quantities above 0, in item order; the purse keeps its coins (CR-0008: goods live in buildings).</summary>
     [Fact]
-    public void Constructor_StockWithZeros_KeepsOnlyPositiveQuantitiesInItemOrder()
+    public void Constructor_StoreWithZeros_KeepsOnlyPositiveQuantitiesInItemOrder()
     {
-        CityState city = City(inventory: [("wood", 7), ("boards", 0), ("gold", 30)]);
+        CityState city = City(purse: 30, buildings: [Idle(1, "workshop", 0, 0, store: [("wood", 7), ("boards", 0)])]);
+        Building workshop = city.Buildings[0];
 
-        Assert.Equal([("gold", 30L), ("wood", 7L)], city.Inventory.Select(stock => (stock.Key.Value, stock.Value)));
-        Assert.Equal(0, city.GetQuantity(new ItemId("boards")));
+        Assert.Equal(30, city.Purse);
+        Assert.Equal([("wood", 7L)], workshop.Store.Select(stock => (stock.Key.Value, stock.Value)));
+        Assert.Equal((7L, 0L), (workshop.GetStock(new ItemId("wood")), workshop.GetStock(new ItemId("boards"))));
     }
 
-    /// <summary>The stock reads as a dictionary in item order, with 0 for items it doesn't hold.</summary>
+    /// <summary>A store reads as a dictionary in item order, with 0 for goods it doesn't hold.</summary>
     [Fact]
-    public void Inventory_ReadAsADictionary_GivesTheStockInItemOrder()
+    public void Store_ReadAsADictionary_GivesTheStockInItemOrder()
     {
-        CityState city = City(inventory: [("wood", 7), ("gold", 30)]);
-        IReadOnlyDictionary<ItemId, long> stock = city.Inventory;
+        IReadOnlyDictionary<ItemId, long> stock = Idle(1, "depot", 0, 0, store: [("wood", 7), ("boards", 30)]).Store;
 
-        Assert.Equal((2, 30L, true, false), (stock.Count, stock[new ItemId("gold")], stock.ContainsKey(new ItemId("wood")), stock.ContainsKey(new ItemId("boards"))));
-        Assert.Equal(["gold", "wood"], stock.Keys.Select(item => item.Value));
+        Assert.Equal((2, 30L, true, false), (stock.Count, stock[new ItemId("boards")], stock.ContainsKey(new ItemId("wood")), stock.ContainsKey(new ItemId("gold"))));
+        Assert.Equal(["boards", "wood"], stock.Keys.Select(item => item.Value));
         Assert.Equal([30L, 7L], stock.Values);
-        Assert.False(stock.TryGetValue(new ItemId("boards"), out long none));
+        Assert.False(stock.TryGetValue(new ItemId("gold"), out long none));
         Assert.Equal(0, none);
-        Assert.Throws<KeyNotFoundException>(() => stock[new ItemId("boards")]);
+        Assert.Throws<KeyNotFoundException>(() => stock[new ItemId("gold")]);
+    }
+
+    /// <summary>
+    /// A construction site is constructing without a start or an end and with needs; an idle or producing building with needs has an upgrade
+    /// waiting; neither is the other (<c>04</c> sections 4 and 16).
+    /// </summary>
+    [Fact]
+    public void Projects_SiteAndWaitingUpgrade_AreToldApart()
+    {
+        Building site = Site(1, "workshop", 0, 0, needs: [("wood", 10)]);
+        Building waiting = Idle(2, "hut", 1, 0, needs: [("wood", 5)]);
+        Building constructing = Constructing(3, "hut", 2, 0, 1000, 1005);
+
+        Assert.Equal((true, false, 10L), (site.IsConstructionSite, site.HasUpgradeWaiting, site.GetNeed(new ItemId("wood"))));
+        Assert.Equal((false, true, 5L), (waiting.IsConstructionSite, waiting.HasUpgradeWaiting, waiting.GetNeed(new ItemId("wood"))));
+        Assert.Equal((false, false), (constructing.IsConstructionSite, constructing.HasUpgradeWaiting));
+    }
+
+    /// <summary>A research waiting for goods has needs and no start or end; one whose timer runs has both and no needs (<c>04</c> section 5).</summary>
+    [Fact]
+    public void ActiveResearch_WaitingOrRunning_HoldsItsValues()
+    {
+        var waiting = new ActiveResearch(new ResearchId("carpentry"), null, null, [new(new ItemId("wood"), 4)]);
+        var running = new ActiveResearch(new ResearchId("carpentry"), 10, 110);
+
+        Assert.Equal((true, (long?)null, (long?)null, 4L), (waiting.IsWaiting, waiting.StartedAt, waiting.EndsAt, waiting.Needs[new ItemId("wood")]));
+        Assert.Equal((false, (long?)10, (long?)110, 0), (running.IsWaiting, running.StartedAt, running.EndsAt, running.Needs.Count));
     }
 
     /// <summary>Completed research comes sorted in ordinal order.</summary>
@@ -85,14 +113,16 @@ public sealed class CityStateTests
         Assert.Null(found);
     }
 
-    /// <summary>The city's lists can't be changed through a cast, and the stock has no writable interface at all.</summary>
+    /// <summary>The city's lists can't be changed through a cast, and a store and needs have no writable interface at all.</summary>
     [Fact]
     public void Lists_CastBack_CanNotBeChanged()
     {
-        CityState city = City(inventory: [("gold", 5)], buildings: [Idle(1, "hut", 0, 0)], completedResearch: ["carpentry"]);
+        CityState city = City(purse: 5, buildings: [Idle(1, "depot", 0, 0, store: [("wood", 1)], needs: [("boards", 2)])], completedResearch: ["carpentry"]);
+        Building depot = city.Buildings[0];
 
-        // The stock has no writable interface at all, so there is nothing to cast it back to (M0-12).
-        Assert.False(city.Inventory is ICollection<KeyValuePair<ItemId, long>> || city.Inventory is System.Collections.IDictionary);
+        // A store and needs have no writable interface at all, so there is nothing to cast them back to (M0-12).
+        Assert.False(depot.Store is ICollection<KeyValuePair<ItemId, long>> || depot.Store is System.Collections.IDictionary);
+        Assert.False(depot.Needs is ICollection<KeyValuePair<ItemId, long>> || depot.Needs is System.Collections.IDictionary);
         Assert.Throws<NotSupportedException>(() => ((IList<Building>)city.Buildings).Clear());
         Assert.Throws<NotSupportedException>(() => ((IList<ResearchId>)city.CompletedResearch).Clear());
     }
@@ -103,8 +133,16 @@ public sealed class CityStateTests
         ["negative clock"] = () => City(clock: -1),
         ["era 0"] = () => City(era: 0),
         ["next building id 0"] = () => City(nextBuildingId: 0),
-        ["negative stock"] = () => City(inventory: [("gold", -1)]),
-        ["item listed twice"] = () => City(inventory: [("gold", 1), ("gold", 2)]),
+        ["negative purse"] = () => City(purse: -1),
+        ["negative store"] = () => City(buildings: [Idle(1, "depot", 0, 0, store: [("wood", -1)])]),
+        ["good listed twice in a store"] = () => City(buildings: [Idle(1, "depot", 0, 0, store: [("wood", 1), ("wood", 2)])]),
+        ["negative need"] = () => City(buildings: [Site(1, "workshop", 0, 0, needs: [("wood", -1)])]),
+        ["needs on an upgrading building"] = () =>
+            City(buildings: [new Building(1, new BuildingTypeId("hut"), 0, 0, 1, 0, BuildingPhase.Upgrading, 1, 9, 2, 0, 0, 0, null, CityFixture.Pairs([("wood", 1)]))]),
+        ["a construction site with a timer"] = () =>
+            City(buildings: [new Building(1, new BuildingTypeId("workshop"), 0, 0, 1, 0, BuildingPhase.Constructing, 1, 9, 0, 0, 0, 0, null, CityFixture.Pairs([("wood", 1)]))]),
+        ["constructing without needs or an end"] = () =>
+            City(buildings: [new Building(1, new BuildingTypeId("hut"), 0, 0, 1, 0, BuildingPhase.Constructing, 0, null, 0, 0, 0, 0)]),
         ["building id listed twice"] = () => City(buildings: [Idle(2, "hut", 0, 0), Idle(2, "hut", 1, 0)]),
         ["building id not below the next id"] = () => City(buildings: [Idle(3, "hut", 0, 0)], nextBuildingId: 3),
         ["two buildings on one tile"] = () => City(buildings: [Idle(1, "hut", 2, 2), Idle(2, "hut", 2, 2)]),
@@ -126,10 +164,9 @@ public sealed class CityStateTests
     public void Constructor_NullListOrBuilding_Throws()
     {
         // The nulls are deliberate: a missing list is a programmer error.
-        Assert.Throws<ArgumentNullException>(() => new CityState(0, 1, 1, null!, [], [], null));
-        Assert.Throws<ArgumentNullException>(() => new CityState(0, 1, 1, [], null!, [], null));
-        Assert.Throws<ArgumentNullException>(() => new CityState(0, 1, 1, [], [], null!, null));
-        Assert.Throws<ArgumentNullException>(() => new CityState(0, 1, 1, [], [null!], [], null));
+        Assert.Throws<ArgumentNullException>(() => new CityState(0, 1, 1, 0, null!, [], null));
+        Assert.Throws<ArgumentNullException>(() => new CityState(0, 1, 1, 0, [], null!, null));
+        Assert.Throws<ArgumentNullException>(() => new CityState(0, 1, 1, 0, [null!], [], null));
     }
 
     /// <summary>A running research that ends before it starts, or starts before 0, throws.</summary>
@@ -138,6 +175,9 @@ public sealed class CityStateTests
     {
         Assert.Throws<ArgumentException>(() => new ActiveResearch(new ResearchId("carpentry"), 100, 99));
         Assert.Throws<ArgumentException>(() => new ActiveResearch(new ResearchId("carpentry"), -1, 10));
+        Assert.Throws<ArgumentException>(() => new ActiveResearch(new ResearchId("carpentry"), null, null, null));
+        Assert.Throws<ArgumentException>(() => new ActiveResearch(new ResearchId("carpentry"), 1, 10, [new(new ItemId("wood"), 1)]));
+        Assert.Throws<ArgumentException>(() => new ActiveResearch(new ResearchId("carpentry"), null, 10, [new(new ItemId("wood"), 1)]));
     }
 
     /// <summary>A city with three huts with the ids 1, 4 and 6.</summary>

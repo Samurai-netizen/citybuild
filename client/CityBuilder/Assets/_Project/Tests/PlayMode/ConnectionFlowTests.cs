@@ -49,7 +49,7 @@ namespace CityBuilder.Client.Tests.PlayMode
             var store = new ClientCityStore(() => _now);
             _now = 1000;
             _monitor = new ConnectionMonitor(
-                api, auth, store, "mvp-1", "dev1", new PollScheduler(() => _now, PollScheduler.DefaultIntervalSeconds), () => true);
+                api, auth, store, "mvp-2", "dev1", new PollScheduler(() => _now, PollScheduler.DefaultIntervalSeconds), () => true);
             _banner = ConnectionBanner.Create(_parent.transform)!;
             yield return null;
             _flow = new ConnectionFlow(_monitor, store, _banner);

@@ -22,15 +22,20 @@ public sealed class ContentShapeTests
         ["items"] = data => data.Items = null,
         ["buildings"] = data => data.Buildings = null,
         ["research"] = data => data.Research = null,
+        ["amountPresets"] = data => data.AmountPresets = null,
         ["rules.gridWidth"] = data => RulesOf(data).GridWidth = null,
         ["rules.researchSlots"] = data => RulesOf(data).ResearchSlots = null,
-        ["rules.baseStorageCaps"] = data => RulesOf(data).BaseStorageCaps = null,
-        ["rules.maxOfflineProductionSeconds"] = data => RulesOf(data).MaxOfflineProductionSeconds = null,
         ["rules.minCycleSeconds"] = data => RulesOf(data).MinCycleSeconds = null,
         ["rules.maxLaborReductionPermille"] = data => RulesOf(data).MaxLaborReductionPermille = null,
+        ["rules.tripCarryLimit"] = data => RulesOf(data).TripCarryLimit = null,
+        ["rules.maxRouteStops"] = data => RulesOf(data).MaxRouteStops = null,
+        ["rules.maxStopActions"] = data => RulesOf(data).MaxStopActions = null,
         ["startingCity.era"] = data => data.StartingCity!.Era = null,
-        ["startingCity.inventory"] = data => data.StartingCity!.Inventory = null,
-        ["startingCity.inventory.gold"] = data => data.StartingCity!.Inventory!["gold"] = null,
+        ["startingCity.purse"] = data => data.StartingCity!.Purse = null,
+        ["amountPresets[#1]"] = data => data.AmountPresets![1] = null,
+        ["amountPresets[#1].id"] = data => Preset(data, "half").Id = null,
+        ["amountPresets[all].name"] = data => Preset(data, "all").Name = null,
+        ["amountPresets[all].percent"] = data => Preset(data, "all").Percent = null,
         ["eras[first_era].number"] = data => Era(data, 1).Number = null,
         ["eras[#1].id"] = data => Era(data, 2).Id = null,
         ["eras[first_era].name"] = data => Era(data, 1).Name = "   ",
@@ -38,7 +43,7 @@ public sealed class ContentShapeTests
         ["items[#2].id"] = data => Item(data, "boards").Id = null,
         ["items[wood].name"] = data => Item(data, "wood").Name = null,
         ["items[wood].era"] = data => Item(data, "wood").Era = null,
-        ["items[wood].capped"] = data => Item(data, "wood").Capped = null,
+        ["items[wood].currency"] = data => Item(data, "wood").Currency = null,
         ["items[wood].tradable"] = data => Item(data, "wood").Tradable = null,
         ["buildings[hut].kind"] = data => Building(data, "hut").Kind = null,
         ["buildings[hut].era"] = data => Building(data, "hut").Era = null,
@@ -53,6 +58,7 @@ public sealed class ContentShapeTests
         ["buildings[lumber_camp].levels[1].recipe.outputs"] = data => Level(data, "lumber_camp", 1).Recipe!.Outputs = null,
         ["buildings[lumber_camp].levels[1].recipe.labor"] = data => Level(data, "lumber_camp", 1).Recipe!.Labor = null,
         ["buildings[workshop].levels[1].recipe.inputs.wood"] = data => Level(data, "workshop", 1).Recipe!.Inputs!["wood"] = null,
+        ["buildings[workshop].levels[1].storage.boards"] = data => Level(data, "workshop", 1).Storage!["boards"] = null,
         ["research[carpentry].name"] = data => Research(data, "carpentry").Name = string.Empty,
         ["research[carpentry].era"] = data => Research(data, "carpentry").Era = null,
         ["research[carpentry].cost"] = data => Research(data, "carpentry").Cost = null,
@@ -64,6 +70,8 @@ public sealed class ContentShapeTests
         ["research[better_saws].effects[#1].permille"] = data => Research(data, "better_saws").Effects![1]!.Permille = null,
         ["research[warehouses].effects[#0].item"] = data => Research(data, "warehouses").Effects![0]!.Item = null,
         ["research[warehouses].effects[#1].amount"] = data => Research(data, "warehouses").Effects![1]!.Amount = null,
+        ["research[tallying].effects[#0].mode"] = data => Research(data, "tallying").Effects![0]!.Mode = null,
+        ["research[boots].effects[#0].permille"] = data => Research(data, "boots").Effects![0]!.Permille = null,
     };
 
     /// <summary>Id texts that break the id format (case, first character, spaces, dashes, non-ASCII, empty), by the expected error path.</summary>
@@ -80,7 +88,8 @@ public sealed class ContentShapeTests
         ["buildings[Hut].id"] = data => Building(data, "hut").Id = "Hut",
         ["research[Carpentry].id"] = data => Research(data, "carpentry").Id = "Carpentry",
         ["buildings[hut].cost.Gold"] = data => Building(data, "hut").Cost = new() { ["Gold"] = 10 },
-        ["rules.baseStorageCaps. wood"] = data => RulesOf(data).BaseStorageCaps = new() { [" wood"] = 100, ["boards"] = 80 },
+        ["buildings[lumber_camp].levels[1].storage. wood"] = data => Level(data, "lumber_camp", 1).Storage = new() { [" wood"] = 100 },
+        ["amountPresets[Half].id"] = data => Preset(data, "half").Id = "Half",
         ["research[better_saws].prerequisites[#0]"] = data => Research(data, "better_saws").Prerequisites = ["Carpentry"],
         ["research[carpentry].effects[#0].building"] = data => Research(data, "carpentry").Effects![0]!.Building = "work shop",
         ["research[warehouses].effects[#0].item"] = data => Research(data, "warehouses").Effects![0]!.Item = "WOOD",
@@ -92,6 +101,8 @@ public sealed class ContentShapeTests
         ["buildings[hut].kind"] = data => Building(data, "hut").Kind = "farm",
         ["buildings[lumber_camp].kind"] = data => Building(data, "lumber_camp").Kind = "Producer",
         ["research[carpentry].effects[#0].type"] = data => Research(data, "carpentry").Effects![0]!.Type = "unlock",
+        ["buildings[depot].kind"] = data => Building(data, "depot").Kind = "warehouses",
+        ["research[tallying].effects[#0].mode"] = data => Research(data, "tallying").Effects![0]!.Mode = "preset",
     };
 
     /// <summary>Values given where none is allowed (an upgrade on level 1, an effect value of another type), by the expected error path.</summary>
@@ -104,14 +115,17 @@ public sealed class ContentShapeTests
         ["research[better_saws].effects[#0].item"] = data => Research(data, "better_saws").Effects![0]!.Item = "wood",
         ["research[warehouses].effects[#0].building"] = data => Research(data, "warehouses").Effects![0]!.Building = "hut",
         ["research[warehouses].effects[#0].permille"] = data => Research(data, "warehouses").Effects![0]!.Permille = 10,
+        ["research[tallying].effects[#0].permille"] = data => Research(data, "tallying").Effects![0]!.Permille = 10,
+        ["research[boots].effects[#0].mode"] = data => Research(data, "boots").Effects![0]!.Mode = "percent",
+        ["research[carpentry].effects[#0].mode"] = data => Research(data, "carpentry").Effects![0]!.Mode = "exact",
     };
 
     /// <summary>Numbers just above <see cref="GameContentFactory.MaxQuantity"/>, by the expected error path.</summary>
     private static readonly Dictionary<string, Action<GameContentData>> _valuesTooLarge = new()
     {
-        ["rules.maxOfflineProductionSeconds"] = data => RulesOf(data).MaxOfflineProductionSeconds = GameContentFactory.MaxQuantity + 1,
-        ["rules.baseStorageCaps.wood"] = data => RulesOf(data).BaseStorageCaps!["wood"] = long.MaxValue,
-        ["startingCity.inventory.gold"] = data => data.StartingCity!.Inventory!["gold"] = GameContentFactory.MaxQuantity + 1,
+        ["buildings[lumber_camp].levels[1].storage.wood"] = data => Level(data, "lumber_camp", 1).Storage!["wood"] = long.MaxValue,
+        ["startingCity.purse"] = data => data.StartingCity!.Purse = GameContentFactory.MaxQuantity + 1,
+        ["rules.tripCarryLimit"] = data => RulesOf(data).TripCarryLimit = GameContentFactory.MaxQuantity + 1,
         ["buildings[hut].buildSeconds"] = data => Building(data, "hut").BuildSeconds = GameContentFactory.MaxQuantity + 1,
         ["buildings[hut].levels[2].upgradeSeconds"] = data => Level(data, "hut", 2).UpgradeSeconds = GameContentFactory.MaxQuantity + 1,
         ["buildings[lumber_camp].levels[1].recipe.labor"] = data => Level(data, "lumber_camp", 1).Recipe!.Labor = GameContentFactory.MaxQuantity + 1,
@@ -169,8 +183,8 @@ public sealed class ContentShapeTests
     public void Create_NumbersExactlyAtMaxQuantity_AreAccepted()
     {
         GameContentData data = Valid();
-        RulesOf(data).MaxOfflineProductionSeconds = GameContentFactory.MaxQuantity;
-        data.StartingCity!.Inventory!["gold"] = GameContentFactory.MaxQuantity;
+        RulesOf(data).TripCarryLimit = GameContentFactory.MaxQuantity;
+        data.StartingCity!.Purse = GameContentFactory.MaxQuantity;
 
         ContentAssert.Valid(data);
     }
@@ -207,13 +221,13 @@ public sealed class ContentShapeTests
     {
         GameContentData data = Valid();
         Research(data, "warehouses").DurationSeconds = null;
-        Item(data, "wood").Capped = null;
+        Item(data, "wood").Currency = null;
         RulesOf(data).GridHeight = null;
 
         ContentAssert.Errors(
             data,
             (ContentErrorCode.MissingValue, "rules.gridHeight"),
-            (ContentErrorCode.MissingValue, "items[wood].capped"),
+            (ContentErrorCode.MissingValue, "items[wood].currency"),
             (ContentErrorCode.MissingValue, "research[warehouses].durationSeconds"));
     }
 
@@ -246,11 +260,12 @@ public sealed class ContentShapeTests
     /// <summary>Keeps the content valid when an item gets another id: every map key and effect that names it follows.</summary>
     private static void RenameItemKeys(GameContentData data, string from, string to)
     {
-        IEnumerable<Dictionary<string, long?>?> maps = new[] { data.Rules!.BaseStorageCaps, data.StartingCity!.Inventory }
-            .Concat(data.Buildings!.Select(building => building!.Cost))
+        IEnumerable<Dictionary<string, long?>?> maps = data.Buildings!.Select(building => building!.Cost)
+            .Concat(data.Buildings!.SelectMany(building => building!.Levels!).Select(level => level!.Storage))
             .Concat(data.Buildings!.SelectMany(building => building!.Levels!).Select(level => level!.UpgradeCost))
             .Concat(data.Buildings!.SelectMany(building => building!.Levels!).SelectMany(level => new[] { level!.Recipe?.Inputs, level.Recipe?.Outputs }))
-            .Concat(data.Research!.Select(node => node!.Cost));
+            .Concat(data.Research!.Select(node => node!.Cost))
+            .Concat(data.Roads!.Select(level => level!.Cost));
         foreach (Dictionary<string, long?> map in maps.OfType<Dictionary<string, long?>>())
         {
             if (map.Remove(from, out long? amount))

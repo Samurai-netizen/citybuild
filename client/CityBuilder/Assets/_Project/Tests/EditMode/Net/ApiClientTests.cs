@@ -152,7 +152,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             ApiResult<ContentResponseDto> result = await client.GetContentAsync(CancellationToken.None);
 
             Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Value.ContentVersion, Is.EqualTo("mvp-1"));
+            Assert.That(result.Value.ContentVersion, Is.EqualTo("mvp-2"));
             Assert.That(transport.Requests[0].Url, Is.EqualTo("http://localhost:8080/api/v1/content"));
         }
 

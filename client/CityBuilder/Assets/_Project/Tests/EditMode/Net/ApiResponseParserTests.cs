@@ -94,11 +94,16 @@ namespace CityBuilder.Client.Tests.EditMode.Net
                 .ToArray();
         }
 
-        /// <summary>The server's catalogue has the 25 codes of <c>05</c>; a code added there is added to <see cref="ApiErrorCodes"/> in the same change.</summary>
+        /// <summary>
+        /// The server's catalogue has the 33 codes of <c>05</c> (CR-0008 added <c>ROAD_NOT_FOUND</c>, <c>BUILDING_LIMIT</c>,
+        /// <c>NO_SCIENCE_BUILDING</c>, <c>UNKNOWN_ITEM</c>, <c>AMOUNT_MODE_LOCKED</c>, <c>ITEM_NOT_ACCEPTED</c>, <c>NOTHING_TO_CARRY</c> and
+        /// <c>INVALID_ROUTE</c>); a code
+        /// added there is added to <see cref="ApiErrorCodes"/> in the same change.
+        /// </summary>
         [Test]
-        public void TheServerCatalogue_HasTwentyFourCodes()
+        public void TheServerCatalogue_HasThirtyThreeCodes()
         {
-            Assert.That(ServerCodes(), Has.Length.EqualTo(25));
+            Assert.That(ServerCodes(), Has.Length.EqualTo(33));
         }
 
         /// <summary>A 2xx answer becomes its DTO.</summary>
@@ -109,7 +114,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
 
             Assert.That(result.IsSuccess, Is.True);
             Assert.That(result.Error, Is.Null);
-            Assert.That(result.Value.City.Inventory["coins"], Is.EqualTo(700L));
+            Assert.That(result.Value.City.Purse, Is.EqualTo(800L));
         }
 
         /// <summary>Bodies that must give <c>CLIENT_INVALID_RESPONSE</c> on a 200: broken JSON, cut-off JSON, empty, <c>null</c>, an array, an HTML page, a wrong type, a missing member.</summary>

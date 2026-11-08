@@ -44,22 +44,63 @@ public static class CitySnapshotMapper
             new SnapshotCity(
                 state.Clock,
                 state.Era,
-                ToAmounts(state.Inventory),
-                ToStorageCaps(state, content),
+                state.Purse,
+                ToTotals(state, content),
                 new SnapshotWorkers(
-                    CityQueries.WorkersProvided(state, content), CityQueries.WorkersAssigned(state), CityQueries.FreeWorkers(state, content)),
+                    CityQueries.WorkersProvided(state, content),
+                    CityQueries.WorkersAssigned(state),
+                    state.Trips.Count,
+                    CityQueries.FreeWorkers(state, content)),
                 new SnapshotBuilders(content.Rules.BuilderSlots, CityQueries.BuildersBusy(state)),
                 ToResearch(state),
-                state.Buildings.OrderBy(building => building.Id).Select(building => ToBuilding(state, content, building)).ToArray()),
+                state.Buildings.OrderBy(building => building.Id).Select(building => ToBuilding(state, content, building)).ToArray(),
+                state.Roads.OrderBy(road => road.X).ThenBy(road => road.Y).Select(road => new SnapshotRoad(road.X, road.Y, road.Level)).ToArray(),
+                state.Trips.OrderBy(trip => trip.Id)
+                    .Select(trip => new SnapshotTrip(
+                        trip.Id, trip.SourceId, trip.TargetId, trip.Item.Value, trip.Quantity, trip.DepartedAt, trip.ArrivesAt))
+                    .ToArray(),
+                state.Couriers.OrderBy(courier => courier.StationId).ThenBy(courier => courier.Slot).Select(ToCourier).ToArray(),
+                state.Routes.OrderBy(route => route.StationId).ThenBy(route => route.Slot).Select(ToRoute).ToArray()),
             new SnapshotSettlement(
                 settlement.ElapsedSeconds,
-                settlement.ProductionSeconds,
                 ToAmounts(settlement.Produced),
                 ToAmounts(settlement.Consumed),
+                ToAmounts(settlement.Delivered),
+                ToAmounts(settlement.Moved),
+                ToAmounts(settlement.Refunded),
+                settlement.CourierSeconds,
+                settlement.TiredCouriers.Select(tired => new SnapshotTiredCourier(tired.StationId, tired.Slot, tired.At)).ToArray(),
                 settlement.CompletedBuildings.Order().ToArray(),
                 settlement.CompletedResearch.Select(id => id.Value).Order(StringComparer.Ordinal).ToArray(),
                 settlement.EraChanged));
     }
+
+    /// <summary>A courier as the snapshot shows it: its state by name, its load by item id (ordinal), then origin.</summary>
+    /// <param name="courier">The courier.</param>
+    /// <returns>The snapshot's courier.</returns>
+    private static SnapshotCourier ToCourier(Courier courier) =>
+        new(
+            courier.StationId,
+            courier.Slot,
+            courier.State.ToString(),
+            courier.ToStop,
+            courier.DepartedAt,
+            courier.ArrivesAt,
+            courier.Stamina,
+            courier.Loads.OrderBy(part => part.Item.Value, StringComparer.Ordinal).ThenBy(part => part.FromId)
+                .Select(part => new SnapshotCourierLoad(part.Item.Value, part.FromId, part.Quantity)).ToArray());
+
+    /// <summary>A route as <c>set-route</c> sends it: the stops in order, each action's kind as <c>take</c> or <c>put</c> and its amount's text.</summary>
+    /// <param name="route">The route.</param>
+    /// <returns>The snapshot's route.</returns>
+    private static SnapshotRoute ToRoute(Simulation.State.Route route) =>
+        new(
+            route.StationId,
+            route.Slot,
+            route.Stops.Select(stop => new SnapshotRouteStop(
+                stop.BuildingId,
+                stop.Actions.Select(action => new SnapshotRouteAction(
+                    action.Kind == RouteActionKind.Take ? "take" : "put", action.Item.Value, action.Amount.ToString())).ToArray())).ToArray());
 
     /// <summary>Maps the research slot and the completed research.</summary>
     /// <param name="state">The city.</param>
@@ -71,6 +112,7 @@ public static class CitySnapshotMapper
             active?.Id.Value,
             active?.StartedAt,
             active?.EndsAt,
+            ToAmounts(active?.Needs ?? new Dictionary<ItemId, long>()),
             state.CompletedResearch.Select(id => id.Value).Order(StringComparer.Ordinal).ToArray());
     }
 
@@ -107,25 +149,46 @@ public static class CitySnapshotMapper
             building.CycleLabor,
             building.LaborRemaining,
             building.SegmentStartedAt,
-            StallReason.Of(state, content, building)?.ToString());
+            StallReason.Of(state, content, building)?.ToString(),
+            ToAmounts(building.Store),
+            ToStoreLimits(state, content, definition.GetLevel(building.Level), building),
+            ToAmounts(building.Needs),
+            building.IsConstructionSite ? "Construction" : building.HasUpgradeWaiting ? "Upgrade" : null);
     }
 
-    /// <summary>The storage cap of each capped item now, by item id.</summary>
-    /// <param name="state">The city, whose completed research raises the caps.</param>
+    /// <summary>Every item's city total (<see cref="CityQueries.Totals"/>), by item id, 0 included.</summary>
+    /// <param name="state">The city.</param>
     /// <param name="content">The game content.</param>
-    /// <returns>Item id to cap; uncapped items are absent.</returns>
-    private static SortedDictionary<string, long> ToStorageCaps(CityState state, GameContent content)
+    /// <returns>Item id to total.</returns>
+    private static SortedDictionary<string, long> ToTotals(CityState state, GameContent content)
     {
-        var caps = new SortedDictionary<string, long>(StringComparer.Ordinal);
-        foreach (ItemDefinition item in content.Items)
+        var totals = new SortedDictionary<string, long>(StringComparer.Ordinal);
+        foreach (ItemQuantity total in CityQueries.Totals(state, content))
         {
-            if (CityQueries.TryGetEffectiveCap(state, content, item.Id, out long cap))
+            totals.Add(total.Item.Value, total.Quantity);
+        }
+
+        return totals;
+    }
+
+    /// <summary>The effective limit of every good the building's level stores (<see cref="CityQueries.TryGetEffectiveLimit"/>), by item id.</summary>
+    /// <param name="state">The city, whose completed research raises the limits.</param>
+    /// <param name="content">The game content.</param>
+    /// <param name="level">The building's current level.</param>
+    /// <param name="building">The building.</param>
+    /// <returns>Item id to limit; empty for a level without a store.</returns>
+    private static SortedDictionary<string, long> ToStoreLimits(CityState state, GameContent content, BuildingLevelDefinition level, Building building)
+    {
+        var limits = new SortedDictionary<string, long>(StringComparer.Ordinal);
+        foreach (ItemQuantity good in level.Storage)
+        {
+            if (CityQueries.TryGetEffectiveLimit(state, content, building, good.Item, out long limit))
             {
-                caps.Add(item.Id.Value, cap);
+                limits.Add(good.Item.Value, limit);
             }
         }
 
-        return caps;
+        return limits;
     }
 
     /// <summary>Maps item quantities to a JSON object: item id to quantity, in ordinal id order.</summary>

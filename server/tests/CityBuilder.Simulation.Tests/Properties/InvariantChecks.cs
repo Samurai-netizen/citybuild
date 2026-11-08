@@ -53,8 +53,8 @@ internal sealed class InvariantChecks
         Report(Invariant.WorkerLimits, step, Workers(step.After));
         Report(Invariant.BuilderAndResearchSlots, step, Slots(step));
         Report(Invariant.LaborAccounting, step, _labor.Check(step, _count));
-        Report(Invariant.NoStartAfterTheCap, step, NoStartAfterTheCap(step));
         Report(Invariant.UnlockAndPrerequisites, step, Unlocks(step));
+        Report(Invariant.StaminaAndLoads, step, Stamina(step) ?? Loads(step));
     }
 
     /// <summary>Hands a failure, if there is one, to the callback, prefixed with where the step is.</summary>
@@ -66,65 +66,109 @@ internal sealed class InvariantChecks
         }
     }
 
-    /// <summary>Invariant 4: final = initial + produced − consumed − spent + refunded, per item, over every item any of them names.</summary>
+    /// <summary>
+    /// Invariant 4: per item, final total = initial total + produced − consumed − delivered + refunded − spent, where a total is the purse for
+    /// the currency and for a good every building's store, every trip's load and every courier's load (<c>04</c> section 16). Refunds come from an upgrade command
+    /// or from an upgrade a delivery started; moving goods between stores and loads changes no total.
+    /// </summary>
     private string? Conservation(InvariantStep step)
     {
         Dictionary<ItemId, long> spent = Quantities(step.Mutation?.Spent ?? []);
         Dictionary<ItemId, long> refunded = Quantities(step.Mutation?.Refunded ?? []);
+        foreach (KeyValuePair<ItemId, long> line in step.Refunded)
+        {
+            refunded[line.Key] = refunded.GetValueOrDefault(line.Key) + line.Value;
+        }
+
         CountIf(spent.Values.Any(quantity => quantity > 0), "steps that spent");
         CountIf(refunded.Values.Any(quantity => quantity > 0), "steps that refunded");
-        IEnumerable<ItemId> items = step.Before.Inventory.Keys.Concat(step.After.Inventory.Keys).Concat(step.Produced.Keys)
-            .Concat(step.Consumed.Keys).Concat(spent.Keys).Concat(refunded.Keys).Distinct().Order();
-        foreach (ItemId item in items)
+        CountIf(step.Refunded.Values.Any(quantity => quantity > 0), "steps that refunded by a delivery");
+        CountIf(step.Delivered.Values.Any(quantity => quantity > 0), "steps that delivered to a project");
+        CountIf(step.Moved.Values.Any(quantity => quantity > 0), "steps that moved goods into a store");
+        foreach (ItemDefinition definition in _content.Items)
         {
-            long expected = step.Before.GetQuantity(item) + step.Produced.GetValueOrDefault(item) - step.Consumed.GetValueOrDefault(item)
-                - spent.GetValueOrDefault(item) + refunded.GetValueOrDefault(item);
-            if (step.After.GetQuantity(item) != expected)
+            ItemId item = definition.Id;
+            long before = CityQueries.Total(step.Before, _content, item);
+            long after = CityQueries.Total(step.After, _content, item);
+            long expected = before + step.Produced.GetValueOrDefault(item) - step.Consumed.GetValueOrDefault(item)
+                - step.Delivered.GetValueOrDefault(item) - spent.GetValueOrDefault(item) + refunded.GetValueOrDefault(item);
+            if (after != expected)
             {
-                return $"{item}: {step.Before.GetQuantity(item)} + produced {step.Produced.GetValueOrDefault(item)} − consumed "
-                    + $"{step.Consumed.GetValueOrDefault(item)} − spent {spent.GetValueOrDefault(item)} + refunded "
-                    + $"{refunded.GetValueOrDefault(item)} = {expected}, but the stock is {step.After.GetQuantity(item)}";
+                return $"{item}: {before} + produced {step.Produced.GetValueOrDefault(item)} − consumed "
+                    + $"{step.Consumed.GetValueOrDefault(item)} − delivered {step.Delivered.GetValueOrDefault(item)} − spent "
+                    + $"{spent.GetValueOrDefault(item)} + refunded {refunded.GetValueOrDefault(item)} = {expected}, but the city total is {after}";
             }
         }
 
         return null;
     }
 
-    /// <summary>Invariant 5: no item below zero.</summary>
+    /// <summary>Invariant 5: no quantity below zero in the purse, a store, a project's needs, or a load (a trip carries at least 1).</summary>
     private static string? NoNegativeStock(CityState city)
     {
-        foreach (KeyValuePair<ItemId, long> stock in city.Inventory.Where(stock => stock.Value < 0))
+        if (city.Purse < 0)
         {
-            return $"{stock.Key} is {stock.Value}";
+            return $"the purse is {city.Purse}";
         }
 
-        return null;
+        foreach (Building building in city.Buildings)
+        {
+            foreach (KeyValuePair<ItemId, long> amount in building.Store.Concat(building.Needs).Where(amount => amount.Value < 0))
+            {
+                return $"building {building.Id}: {amount.Key} is {amount.Value}";
+            }
+        }
+
+        Trip? empty = city.Trips.FirstOrDefault(trip => trip.Quantity < 1);
+        return empty is null ? null : $"trip {empty.Id} carries {empty.Quantity}";
     }
 
     /// <summary>
-    /// Invariant 6: production never takes stock + reserved of a capped item above its cap. Only a refund may: so after the step it is at most
-    /// the cap, or what it was before plus the refund, whichever is more (a start needs room, a completion moves reserved to stock, inputs only
-    /// lower it).
+    /// Invariant 6: production and walkers never push a store's <c>stock + reserved</c> above its effective limit (<c>04</c> section 16);
+    /// only a refund into that building's store (an upgrade command, or an upgrade a delivery started in the step) and a returned load (a trip
+    /// from it that arrived in the step, counted whole since part of it may have been delivered; or what couriers carried from it less what
+    /// they still carry from it, when a courier stopped working) may, on top of the limit or of what the store held before, and a store
+    /// already above its limit may only fall otherwise.
     /// </summary>
     private string? StorageCap(InvariantStep step)
     {
-        foreach (ItemQuantity baseCap in _content.Rules.BaseStorageCaps)
+        foreach (Building after in step.After.Buildings)
         {
-            ItemId item = baseCap.Item;
-            long cap = Cap(step.After, item);
-            long before = step.Before.GetQuantity(item) + Reserved(step.Before, item);
-            long after = step.After.GetQuantity(item) + Reserved(step.After, item);
-            long refunded = step.Mutation?.Refunded.Where(line => line.Item == item).Sum(line => line.Quantity) ?? 0;
-            CountIf(after == cap, "steps ending with an item exactly at its cap");
-            CountIf(after > cap, "steps ending with an item above its cap");
-            if (after > Math.Max(cap, before + refunded))
+            step.Before.TryGetBuilding(after.Id, out Building? before);
+            foreach (ItemQuantity good in Level(after).Storage)
             {
-                return $"{item}: stock + reserved went from {before} to {after} (refund {refunded}), the cap is {cap}";
+                ItemId item = good.Item;
+                CityQueries.TryGetEffectiveLimit(step.After, _content, after, item, out long limit);
+                long afterHeld = after.GetStock(item) + CityQueries.Reserved(_content, after, item);
+                long beforeHeld = before is null ? 0 : before.GetStock(item) + CityQueries.Reserved(_content, before, item);
+                long refunded = step.Operation is CityOperation.UpgradeBuilding upgrade && upgrade.BuildingId == after.Id
+                    ? step.Mutation?.Refunded.Where(line => line.Item == item).Sum(line => line.Quantity) ?? 0
+                    : 0;
+                if (step.Mutation is null && before?.Phase == BuildingPhase.Producing && after.Phase == BuildingPhase.Upgrading)
+                {
+                    refunded += Level(before).Recipe!.Inputs.Where(line => line.Item == item).Sum(line => line.Quantity);
+                }
+
+                long returned = step.Before.Trips
+                    .Where(trip => trip.SourceId == after.Id && trip.Item == item && !step.After.Trips.Any(other => other.Id == trip.Id))
+                    .Sum(trip => trip.Quantity);
+                refunded += returned + Math.Max(0, CarriedFrom(step.Before, after.Id, item) - CarriedFrom(step.After, after.Id, item));
+                CountIf(afterHeld == limit, "stores ending with a good exactly at its limit");
+                CountIf(afterHeld > limit, "stores ending with a good above its limit");
+                // Deliveries and starts fill a store only up to its limit; refunds and returned loads come on top, also in the same second.
+                if (afterHeld > Math.Max(limit, beforeHeld) + refunded)
+                {
+                    return $"building {after.Id}, {item}: stock + reserved went from {beforeHeld} to {afterHeld} (refund and returned load {refunded}), the limit is {limit}";
+                }
             }
         }
 
         return null;
     }
+
+    /// <summary>What every courier of the city carries of <paramref name="item"/> that came from building <paramref name="buildingId"/>.</summary>
+    private static long CarriedFrom(CityState city, int buildingId, ItemId item) =>
+        city.Couriers.SelectMany(courier => courier.Loads).Where(part => part.FromId == buildingId && part.Item == item).Sum(part => part.Quantity);
 
     /// <summary>Invariant 7: the clock moves by exactly the requested seconds (0 for a command or a negative request), and the report says the same.</summary>
     private string? Clock(InvariantStep step)
@@ -207,17 +251,19 @@ internal sealed class InvariantChecks
     }
 
     /// <summary>
-    /// Invariant 9: the houses provide at least the workers assigned, every building stays within its level's limit, and a building under
-    /// construction has none.
+    /// Invariant 9: the houses provide at least the workers assigned plus one per trip under way, every building stays within its level's
+    /// limit, a building under construction has none, and a courier station has exactly one courier per worker, in slots 1 to the count
+    /// (couriers belong to stations only).
     /// </summary>
     private string? Workers(CityState city)
     {
-        long provided = DormantTail.Provided(_content, city.Buildings);
+        long provided = ContentLookup.Provided(_content, city.Buildings);
         long assigned = city.Buildings.Sum(building => (long)building.AssignedWorkers);
-        CountIf(assigned == provided && provided > 0, "steps with every worker assigned");
-        if (assigned > provided)
+        CountIf(assigned + city.Trips.Count == provided && provided > 0, "steps with every worker assigned or on a trip");
+        CountIf(city.Trips.Count > 0, "steps with workers on trips");
+        if (assigned + city.Trips.Count > provided)
         {
-            return $"{assigned} workers assigned, the houses provide {provided}";
+            return $"{assigned} workers assigned and {city.Trips.Count} on trips, the houses provide {provided}";
         }
 
         foreach (Building building in city.Buildings)
@@ -228,15 +274,25 @@ internal sealed class InvariantChecks
             {
                 return $"building {building.Id} ({building.Phase}, level {building.Level}) has {building.AssignedWorkers} workers, the limit is {limit}";
             }
+
+            int[] slots = [.. city.Couriers.Where(courier => courier.StationId == building.Id).Select(courier => courier.Slot)];
+            bool isStation = ContentLookup.Definition(_content, building.TypeId).Kind == BuildingKind.CourierStation;
+            int expected = isStation ? building.AssignedWorkers : 0;
+            CountIf(isStation && expected > 0, "steps with a staffed courier station");
+            if (!slots.SequenceEqual(Enumerable.Range(1, expected)))
+            {
+                return $"building {building.Id} has {building.AssignedWorkers} workers and couriers in slots [{string.Join(",", slots)}]";
+            }
         }
 
-        return null;
+        Courier? stray = city.Couriers.FirstOrDefault(courier => !city.TryGetBuilding(courier.StationId, out _));
+        return stray is null ? null : $"courier {stray.StationId}/{stray.Slot} has no station";
     }
 
     /// <summary>Invariant 10: busy builders within the slots; a research starts only when none runs, and the running one is not completed.</summary>
     private string? Slots(InvariantStep step)
     {
-        int busy = step.After.Buildings.Count(building => building.Phase is BuildingPhase.Constructing or BuildingPhase.Upgrading);
+        int busy = CityQueries.BuildersBusy(step.After);
         CountIf(busy == _content.Rules.BuilderSlots, "steps with every builder busy");
         if (busy > _content.Rules.BuilderSlots)
         {
@@ -257,48 +313,40 @@ internal sealed class InvariantChecks
     }
 
     /// <summary>
-    /// Invariant 12: every cycle that starts in a step starts within its window; and the dormant tail of an advance beyond the cap does
-    /// exactly what the model says: timers complete, nothing starts, nothing is consumed.
-    /// </summary>
-    private string? NoStartAfterTheCap(InvariantStep step)
-    {
-        foreach (Building after in step.After.Buildings.Where(building => building.Phase == BuildingPhase.Producing))
-        {
-            bool running = step.Before.TryGetBuilding(after.Id, out Building? before)
-                && before.Phase == BuildingPhase.Producing && before.PhaseStartedAt == after.PhaseStartedAt;
-            CountIf(!running && after.PhaseStartedAt == step.ProductionUntil, "cycles started at the last second of a window");
-            if (!running && after.PhaseStartedAt > step.ProductionUntil)
-            {
-                return $"building {after.Id} started a cycle at {after.PhaseStartedAt}, after the window's last second {step.ProductionUntil}";
-            }
-        }
-
-        if (step.ExpectedTail is not { } tail)
-        {
-            return null;
-        }
-
-        _count("dormant tails");
-        CountIf(tail.CompletedBuildings.Count > 0 || tail.CompletedResearch.Count > 0 || tail.Produced.Count > 0, "dormant tails with a completion");
-        string? consumed = step.Consumed.Where(item => item.Value != 0).Select(item => $"{item.Key} {item.Value}").FirstOrDefault();
-        return StructuralEquality.FirstDifference(tail.City, step.After)
-            ?? (consumed is not null ? $"the tail consumed {consumed}" : null)
-            ?? Differ("produced", Text(tail.Produced), Text(step.Produced))
-            ?? Differ("completed buildings", string.Join(",", tail.CompletedBuildings), string.Join(",", step.CompletedBuildings.Order()))
-            ?? Differ("completed research", string.Join(",", tail.CompletedResearch), string.Join(",", step.CompletedResearch));
-    }
-
-    /// <summary>
     /// Invariant 13: a placed type was unlocked and of the city's era or earlier when it was placed; a research started had its
-    /// prerequisites and the city's era; and at every step the completed research has all its prerequisites, and every building's type is
-    /// unlocked.
+    /// prerequisites and the city's era; a trip's percentage or exact amount had its mode unlocked; and at every step the completed research
+    /// has all its prerequisites, and every building's type is unlocked.
     /// </summary>
     private string? Unlocks(InvariantStep step)
     {
+        if (step.Mutation is not null && step.Operation is CityOperation.StartTrip { Amount.Mode: { } mode } trip)
+        {
+            _count("trips with a percentage or exact amount");
+            bool unlocked = step.Before.CompletedResearch.Any(id => Research(id).Effects.OfType<UnlockAmountModeEffect>().Any(effect => effect.Mode == mode));
+            if (!unlocked)
+            {
+                return $"{trip} used the {mode} mode, which no completed research unlocks";
+            }
+        }
+
+        if (step.Mutation is not null && step.Operation is CityOperation.SetRoute route)
+        {
+            _count("routes set");
+            foreach (RouteAction action in route.Stops.SelectMany(stop => stop.Actions).Where(action => action.Amount.Mode.HasValue))
+            {
+                _count("route actions with a percentage or exact amount");
+                AmountMode routeMode = action.Amount.Mode!.Value;
+                if (!step.Before.CompletedResearch.Any(id => Research(id).Effects.OfType<UnlockAmountModeEffect>().Any(effect => effect.Mode == routeMode)))
+                {
+                    return $"{route} used the {routeMode} mode, which no completed research unlocks";
+                }
+            }
+        }
+
         if (step.Mutation is not null && step.Operation is CityOperation.PlaceBuilding
             && step.After.TryGetBuilding(step.Before.NextBuildingId, out Building? placed))
         {
-            BuildingDefinition type = DormantTail.Definition(_content, placed.TypeId);
+            BuildingDefinition type = ContentLookup.Definition(_content, placed.TypeId);
             CountIf(!type.IsAvailableAtStart, "placements of a type locked at the start");
             if (!IsUnlocked(step.Before, type))
             {
@@ -328,8 +376,116 @@ internal sealed class InvariantChecks
             }
         }
 
-        Building? locked = step.After.Buildings.FirstOrDefault(building => !IsUnlocked(step.After, DormantTail.Definition(_content, building.TypeId)));
+        Building? locked = step.After.Buildings.FirstOrDefault(building => !IsUnlocked(step.After, ContentLookup.Definition(_content, building.TypeId)));
         return locked is null ? null : $"building {locked.Id} of the locked type {locked.TypeId} stands in the city";
+    }
+
+    /// <summary>
+    /// Invariant 14, the stamina half (<c>04</c> sections 2 and 19): every courier's stamina stays between 0 and its station level's; a new
+    /// courier and a re-energized one have all of it; in a time step a courier spends only when its walk ends at the step's end, and then
+    /// exactly the walk's seconds after <c>absentFrom</c> (none when the player is present), at most what it had; a command spends none. A
+    /// courier left with none walks home or rests, and the step's report names exactly the couriers that ran out in it, at its end, and the
+    /// most one of them spent.
+    /// </summary>
+    private string? Stamina(InvariantStep step)
+    {
+        long most = 0;
+        var tired = new List<(int StationId, int Slot)>();
+        foreach (Courier after in step.After.Couriers)
+        {
+            step.After.TryGetBuilding(after.StationId, out Building? station);
+            long full = station is null ? 0 : Level(station).StaminaSeconds;
+            string name = $"courier {after.StationId}/{after.Slot}";
+            if (after.Stamina < 0 || after.Stamina > full)
+            {
+                return $"{name} has {after.Stamina} s of stamina, its station level's is {full}";
+            }
+
+            if (after.Stamina == 0 && after.State is not (CourierState.Returning or CourierState.Resting))
+            {
+                return $"{name} has no stamina left and is {after.State}";
+            }
+
+            Courier? before = step.Before.Couriers.FirstOrDefault(courier => courier.StationId == after.StationId && courier.Slot == after.Slot);
+            bool reenergized = step.Operation is CityOperation.ReenergizeCouriers && step.Mutation is not null;
+            if (before is null || reenergized)
+            {
+                CountIf(reenergized && before is not null && before.Stamina < full, "couriers re-energized");
+                if (after.Stamina != full)
+                {
+                    return $"{name} is {(before is null ? "new" : "re-energized")} with {after.Stamina} s of stamina, not its station level's {full}";
+                }
+
+                continue;
+            }
+
+            long expected = 0;
+            if (step.Mutation is null && before.ArrivesAt == step.After.Clock && before.DepartedAt is { } departed
+                && step.After.Clock > step.Before.Clock && step.AbsentFrom is { } absentFrom)
+            {
+                expected = Math.Min(before.Stamina, Math.Max(0, step.After.Clock - Math.Max(departed, absentFrom)));
+            }
+
+            long spent = before.Stamina - after.Stamina;
+            if (spent != expected)
+            {
+                return $"{name} spent {spent} s of stamina in the step, the model says {expected} (its walk {before.DepartedAt}..{before.ArrivesAt})";
+            }
+
+            CountIf(spent > 0, "courier walks that spent stamina");
+            CountIf(spent > 0 && before.DepartedAt < step.AbsentFrom, "courier walks that spent part of their seconds");
+            most = Math.Max(most, spent);
+            if (spent > 0 && after.Stamina == 0)
+            {
+                tired.Add((after.StationId, after.Slot));
+            }
+        }
+
+        CountIf(tired.Count > 0, "steps with a courier tiring");
+        CountIf(step.After.Couriers.Any(courier => courier.State == CourierState.Resting), "steps with a courier resting");
+        string expectedTired = string.Join(", ", tired.Select(courier => $"{courier.StationId}/{courier.Slot}@{step.After.Clock}"));
+        string reportedTired = string.Join(", ", step.TiredCouriers.Select(courier => $"{courier.StationId}/{courier.Slot}@{courier.At}"));
+        return Differ("tired couriers", expectedTired, reportedTired) ?? Differ("courier seconds", StructuralEquality.Text(most), StructuralEquality.Text(step.CourierSeconds));
+    }
+
+    /// <summary>
+    /// Invariant 14, the carry half: every trip carries at most the content's trip carry limit, every courier at
+    /// most its station level's, and a trip a step started took its load out of its source's store, at most what the store had.
+    /// </summary>
+    private string? Loads(InvariantStep step)
+    {
+        foreach (Courier courier in step.After.Couriers)
+        {
+            step.After.TryGetBuilding(courier.StationId, out Building? station);
+            long limit = station is null ? 0 : Level(station).CarryLimit;
+            CountIf(courier.Carried > 0, "steps with a courier carrying");
+            CountIf(courier.Carried == limit && limit > 0, "couriers at their carry limit");
+            if (courier.Carried > limit)
+            {
+                return $"courier {courier.StationId}/{courier.Slot} carries {courier.Carried}, its station's limit is {limit}";
+            }
+        }
+
+        CountIf(step.Before.Couriers.Any(courier => courier.ArrivesAt <= step.After.Clock) && step.After.Clock > step.Before.Clock, "steps with a courier arriving");
+        Trip? heavy = step.After.Trips.FirstOrDefault(trip => trip.Quantity > _content.Rules.TripCarryLimit);
+        if (heavy is not null)
+        {
+            return $"trip {heavy.Id} carries {heavy.Quantity}, the limit is {_content.Rules.TripCarryLimit}";
+        }
+
+        foreach (Trip trip in step.After.Trips.Where(trip => !step.Before.Trips.Any(other => other.Id == trip.Id)))
+        {
+            _count("trips started");
+            CountIf(trip.Quantity == _content.Rules.TripCarryLimit, "trips at the carry limit");
+            step.Before.TryGetBuilding(trip.SourceId, out Building? source);
+            if (source is null || source.GetStock(trip.Item) < trip.Quantity)
+            {
+                return $"trip {trip.Id} took {trip.Quantity} {trip.Item} from building {trip.SourceId}, which had {source?.GetStock(trip.Item) ?? 0}";
+            }
+        }
+
+        CountIf(step.Before.Trips.Any(trip => !step.After.Trips.Any(other => other.Id == trip.Id)), "steps with a trip arriving");
+        return null;
     }
 
     /// <summary>
@@ -347,21 +503,8 @@ internal sealed class InvariantChecks
     private static string Text(IReadOnlyDictionary<ItemId, long> quantities) =>
         string.Join(",", quantities.Where(item => item.Value != 0).OrderBy(item => item.Key).Select(item => $"{item.Key} {item.Value}"));
 
-    /// <summary>The storage cap of an item now: its base cap plus the bonuses of the completed research.</summary>
-    private long Cap(CityState city, ItemId item) =>
-        _content.Rules.BaseStorageCaps.Single(cap => cap.Item == item).Quantity
-        + city.CompletedResearch.SelectMany(id => Research(id).Effects).OfType<StorageCapBonusEffect>()
-            .Where(bonus => bonus.Item == item).Sum(bonus => bonus.Amount);
-
-    /// <summary>What the running cycles (frozen ones too) will deliver of an item.</summary>
-    private long Reserved(CityState city, ItemId item) => city.Buildings
-        .Where(building => building.Phase == BuildingPhase.Producing)
-        .SelectMany(building => Level(building).Recipe!.Outputs)
-        .Where(output => output.Item == item)
-        .Sum(output => output.Quantity);
-
     /// <summary>The definition of a building's current level.</summary>
-    private BuildingLevelDefinition Level(Building building) => DormantTail.Definition(_content, building.TypeId).GetLevel(building.Level);
+    private BuildingLevelDefinition Level(Building building) => ContentLookup.Definition(_content, building.TypeId).GetLevel(building.Level);
 
     /// <summary>The definition of a research node; throws for one the content doesn't know.</summary>
     private ResearchDefinition Research(ResearchId id) =>

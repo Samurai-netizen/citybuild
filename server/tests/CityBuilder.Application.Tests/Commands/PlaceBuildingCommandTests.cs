@@ -5,6 +5,7 @@ using CityBuilder.Application.Tests.Cities;
 using CityBuilder.Domain.Commands;
 using CityBuilder.Domain.Ledger;
 using CityBuilder.Simulation;
+using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.Rules;
 using CityBuilder.Simulation.State;
 using static CityBuilder.Application.Tests.Cities.SettleFixture;
@@ -125,7 +126,7 @@ public sealed class PlaceBuildingCommandTests
         MutationResult ruleResult = CityRules.PlaceBuilding(byRule, SettleFixture.Content, new BuildingTypeId(typeId), x, y);
 
         Assert.Equal(ruleResult.ToString(), commandResult.ToString());
-        Assert.Equal(ruleResult.Spent, commandResult.Spent);
+        Assert.Equal(Lines(ruleResult.Spent), Lines(commandResult.Spent));
         Assert.Equal(Describe(byRule), Describe(byCommand));
     }
 
@@ -152,4 +153,7 @@ public sealed class PlaceBuildingCommandTests
         CommandReceipt receipt = repository.StoredReceipt(PlayerId, _requestId)!;
         Assert.Equal((PlaceBuildingCommand.Type, result.ResponseJson), (receipt.CommandType, receipt.ResponseJson));
     }
+
+    /// <summary>A mutation's item lines as values, so two results compare by what they name (the engine builds a new list per call).</summary>
+    private static (ItemId Item, long Quantity)[] Lines(IReadOnlyList<ItemQuantity> lines) => [.. lines.Select(line => (line.Item, line.Quantity))];
 }

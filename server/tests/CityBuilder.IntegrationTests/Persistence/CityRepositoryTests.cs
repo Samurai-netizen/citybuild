@@ -57,9 +57,16 @@ public sealed class CityRepositoryTests : IDisposable
 
         CityRow city = Assert.Single(Rows<CityRow>(EntityState.Added));
         Assert.Equal((8L, _now, _now), (city.StateVersion, city.CreatedAt, city.UpdatedAt));
-        Assert.Equal(2, Rows<CityInventoryRow>(EntityState.Added).Count);
-        Assert.Equal(6, Rows<CityBuildingRow>(EntityState.Added).Count);
+        Assert.Equal(8, Rows<CityBuildingRow>(EntityState.Added).Count);
+        Assert.Equal(3, Rows<CityStoreRow>(EntityState.Added).Count);
+        Assert.Equal(2, Rows<CityProjectNeedRow>(EntityState.Added).Count);
         Assert.Single(Rows<CityResearchRow>(EntityState.Added));
+        Assert.Empty(Rows<CityResearchNeedRow>(EntityState.Added));
+        Assert.Equal(3, Rows<CityRoadRow>(EntityState.Added).Count);
+        Assert.Single(Rows<CityTripRow>(EntityState.Added));
+        Assert.Equal(2, Rows<CityCourierRow>(EntityState.Added).Count);
+        Assert.Equal(3, Rows<CityCourierLoadRow>(EntityState.Added).Count);
+        Assert.Equal(5, Rows<CityRouteActionRow>(EntityState.Added).Count);
         Assert.All(_db.ChangeTracker.Entries(), entry => Assert.Equal(EntityState.Added, entry.State));
     }
 
@@ -76,23 +83,77 @@ public sealed class CityRepositoryTests : IDisposable
 
         CityRow city = Assert.Single(Rows<CityRow>(EntityState.Modified));
         Assert.Equal(7L, _db.Entry(city).OriginalValues.GetValue<long>(nameof(CityRow.StateVersion)));
-        Assert.Equal((8L, _createdAt, _now, 90_000L), (city.StateVersion, city.CreatedAt, city.UpdatedAt, city.ClockSeconds));
-        Assert.Equal((null, null, null), (city.ResearchId, city.ResearchStartedAt, city.ResearchEndsAt));
+        Assert.Equal((8L, _createdAt, _now, 90_000L, 240L), (city.StateVersion, city.CreatedAt, city.UpdatedAt, city.ClockSeconds, city.Purse));
+        Assert.Equal(("carpentry", (long?)null, (long?)null), (city.ResearchId, city.ResearchStartedAt, city.ResearchEndsAt));
     }
 
-    /// <summary>A changed quantity is written, an item the city used up is set to 0 (never deleted), a new item is inserted.</summary>
+    /// <summary>
+    /// Store rows: an unchanged one is left alone, a good the store gave away is set to 0 (never deleted), a new one is inserted, and the rows
+    /// of a deleted building go with it (CR-0008).
+    /// </summary>
     [Fact]
-    public void Save_LoadedCity_MergesTheInventory()
+    public void Save_LoadedCity_MergesTheStores()
     {
         AttachAsLoaded(Full());
 
         _repository.Save(Later(), [], receipt: null);
 
         Assert.Equal(
-            [("coins", 240L, EntityState.Modified), ("logs", 0L, EntityState.Modified), ("planks", 3L, EntityState.Added)],
-            _db.ChangeTracker.Entries<CityInventoryRow>()
-                .Select(entry => (entry.Entity.ItemId, entry.Entity.Quantity, entry.State))
-                .OrderBy(row => row.ItemId, StringComparer.Ordinal));
+            [
+                (UpgradingId, "logs", 3L, EntityState.Unchanged), (IdleId, "logs", 2L, EntityState.Deleted),
+                (ProducingId, "logs", 0L, EntityState.Modified), (SiteId, "planks", 1L, EntityState.Added),
+            ],
+            _db.ChangeTracker.Entries<CityStoreRow>()
+                .Select(entry => (entry.Entity.BuildingId, entry.Entity.ItemId, entry.Entity.Quantity, entry.State))
+                .OrderBy(row => row.BuildingId));
+    }
+
+    /// <summary>
+    /// Needs and trips: a need still missing is written, one filled (or of a deleted building) deleted, a waiting research's need inserted,
+    /// and an arrived trip deleted (CR-0008).
+    /// </summary>
+    [Fact]
+    public void Save_LoadedCity_MergesTheNeedsAndTrips()
+    {
+        AttachAsLoaded(Full());
+
+        _repository.Save(Later(), [], receipt: null);
+
+        Assert.Equal(
+            [(IdleId, "planks", 5L, EntityState.Deleted), (SiteId, "logs", 4L, EntityState.Modified)],
+            _db.ChangeTracker.Entries<CityProjectNeedRow>()
+                .Select(entry => (entry.Entity.BuildingId, entry.Entity.ItemId, entry.Entity.Quantity, entry.State))
+                .OrderBy(row => row.BuildingId));
+        Assert.Equal(
+            [("planks", 4L, EntityState.Added)],
+            _db.ChangeTracker.Entries<CityResearchNeedRow>().Select(entry => (entry.Entity.ItemId, entry.Entity.Quantity, entry.State)));
+        Assert.Equal([(1, EntityState.Deleted)], _db.ChangeTracker.Entries<CityTripRow>().Select(entry => (entry.Entity.TripId, entry.State)));
+    }
+
+    /// <summary>
+    /// Couriers, their loads and the routes merge like the other rows (CR-0008): courier 9/1 is written (it stands at its station now), 9/2
+    /// and every load part are deleted; of the routes' action rows the unchanged one stays, the changed one is written, a new third stop is
+    /// inserted, and slot 1's second take and slot 2's route are deleted.
+    /// </summary>
+    [Fact]
+    public void Save_LoadedCity_MergesTheCouriersAndRoutes()
+    {
+        AttachAsLoaded(Full());
+
+        _repository.Save(Later(), [], receipt: null);
+
+        Assert.Equal(
+            [(1, EntityState.Modified), (2, EntityState.Deleted)],
+            _db.ChangeTracker.Entries<CityCourierRow>().Select(entry => ((int)entry.Entity.Slot, entry.State)).Order());
+        Assert.All(_db.ChangeTracker.Entries<CityCourierLoadRow>(), entry => Assert.Equal(EntityState.Deleted, entry.State));
+        Assert.Equal(
+            [
+                ((short)1, (short)0, (short)0, EntityState.Unchanged), ((short)1, (short)0, (short)1, EntityState.Deleted),
+                ((short)1, (short)1, (short)0, EntityState.Modified), ((short)1, (short)2, (short)0, EntityState.Added),
+                ((short)2, (short)0, (short)0, EntityState.Deleted), ((short)2, (short)1, (short)0, EntityState.Deleted),
+            ],
+            _db.ChangeTracker.Entries<CityRouteActionRow>()
+                .Select(entry => (entry.Entity.Slot, entry.Entity.StopIndex, entry.Entity.ActionIndex, entry.State)).Order());
     }
 
     /// <summary>
@@ -118,10 +179,31 @@ public sealed class CityRepositoryTests : IDisposable
                 [FrozenId] = EntityState.Unchanged,
                 [StartedAtZeroId] = EntityState.Unchanged,
                 [7] = EntityState.Added,
+                [SiteId] = EntityState.Unchanged,
+                [StationId] = EntityState.Modified,
             },
             states);
-        CityBuildingRow finished = Rows<CityBuildingRow>(EntityState.Modified).Single();
+        CityBuildingRow finished = Rows<CityBuildingRow>(EntityState.Modified).Single(row => row.BuildingId == ProducingId);
         Assert.Equal(("Idle", null, null, null, null, null), (finished.Phase, finished.PhaseStartedAt, finished.PhaseEndsAt, finished.CycleLabor, finished.LaborRemaining, finished.SegmentStartedAt));
+    }
+
+    /// <summary>
+    /// A road whose level changed is written, a new road inserted, and roads the state no longer has (removed) are deleted (CR-0008).
+    /// </summary>
+    [Fact]
+    public void Save_LoadedCity_MergesTheRoads()
+    {
+        AttachAsLoaded(Full());
+
+        _repository.Save(Later(), [], receipt: null);
+
+        Assert.Equal(
+            [
+                (2, 1, 1, EntityState.Deleted), (3, 1, 2, EntityState.Deleted), (4, 0, 2, EntityState.Modified), (5, 5, 1, EntityState.Added),
+            ],
+            _db.ChangeTracker.Entries<CityRoadRow>()
+                .Select(entry => ((int)entry.Entity.X, (int)entry.Entity.Y, (int)entry.Entity.Level, entry.State))
+                .OrderBy(row => row.Item1));
     }
 
     /// <summary>A research completed since the load is inserted with its completion clock; one completed before is left alone.</summary>
@@ -202,9 +284,16 @@ public sealed class CityRepositoryTests : IDisposable
         rows.City.CreatedAt = _createdAt;
         rows.City.UpdatedAt = _createdAt;
         _db.Attach(rows.City);
-        _db.AttachRange(rows.Inventory);
         _db.AttachRange(rows.Buildings);
+        _db.AttachRange(rows.Stores);
+        _db.AttachRange(rows.ProjectNeeds);
         _db.AttachRange(rows.Research);
+        _db.AttachRange(rows.ResearchNeeds);
+        _db.AttachRange(rows.Roads);
+        _db.AttachRange(rows.Trips);
+        _db.AttachRange(rows.Couriers);
+        _db.AttachRange(rows.CourierLoads);
+        _db.AttachRange(rows.RouteActions);
     }
 
     /// <summary>The tracked rows of one table in one state.</summary>
