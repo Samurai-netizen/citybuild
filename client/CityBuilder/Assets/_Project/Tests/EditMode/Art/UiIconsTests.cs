@@ -75,13 +75,14 @@ namespace CityBuilder.Client.Tests.EditMode.Art
             Assert.That(UiIcons.ForResearch(new ResearchId(id)), Is.Not.Null, id);
         }
 
-        /// <summary>The icons of workers, builders and research exist.</summary>
+        /// <summary>The icons of workers, builders, couriers and research exist.</summary>
         [Test]
         public void TheFixedIcons_Exist()
         {
             Assert.That(UiIcons.Workers, Is.Not.Null);
             Assert.That(UiIcons.Builders, Is.Not.Null);
             Assert.That(UiIcons.Research, Is.Not.Null);
+            Assert.That(UiIcons.Couriers, Is.Not.Null);
         }
 
         /// <summary>A content id with no file gives null, not an exception, and asking again gives null again.</summary>
