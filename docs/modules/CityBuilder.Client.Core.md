@@ -67,4 +67,4 @@ folder area follows the recipe "New project, assembly or folder area" in `core-i
 - `Time.realtimeSinceStartupAsDouble` may or may not count while the app is in the background, depending on the platform. The poll on resume
   (`PollScheduler`, M0-41) replaces the snapshot, so this lasts only until that answer arrives.
 
-Last updated: CR-0008-T1
+Last updated: CR-0008-T2

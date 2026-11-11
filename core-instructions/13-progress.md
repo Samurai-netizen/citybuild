@@ -5,11 +5,11 @@
 > This file is loaded into every session: Milestone-table notes are task ids and PR numbers only (≤ ~100 characters per row).
 
 ## Resume point
-- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** CR-0008-T2 · Logistics rework: client and art (`task/CR-0008-T2-logistics-client-art`), build log
-  `docs/build-log/2026/2026-11-08-01-CR-0008-T2.md`.
-- **Part / step:** CP-0 (`visual-v2` adopted), CP-A (Part A: stores, projects, manual trips) and CP-B (Part B: roads on the map and road mode) complete. CP-C (Part C: courier station section, `RouteEditorModel`, `RouteEditorScreen`, `RouteEditorFlow`; EditMode 1232/1232, PlayMode 169/169) complete. CP-D (Part D: `CityWalkers`, `WalkerView`, `WalkPath`, `WalkPlanner`; EditMode 1240/1240, PlayMode 175/175) complete. CP-E (Part E: Re-energize Net, welcome-back report, HUD notice, inspector button; engine fix for staffed courier stations; EditMode 1248/1248, PlayMode 179/179, server fast suite green) complete. CP-F (art verified, tests merged, Docs impact closed, [MANUAL] list in `client/README.md`; EditMode 1250/1250, PlayMode 179/179) complete. Next: `/finish-task` (full verification, self-review, PR). Owner: commit everything at the end of T2 (`/finish-task`).
-- **Last completed:** CR-0008-T1 · Logistics rework: spec, engine and server (PR #86, merged)
+- **State:** IDLE          <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** none. CR-0008-T2 (client and art) is finished and in review as PR #87 (`task/CR-0008-T2-logistics-client-art`, build log
+  `docs/build-log/2026/2026-11-08-01-CR-0008-T2.md`); the owner merges.
+- **Part / step:** all of CR-0008-T2 (parts A to F, checkpoints CP-0 to CP-F) done; EditMode 1250/1250, PlayMode 179/179, server fast suite, `check-docs`, handbook build green.
+- **Last completed:** CR-0008-T2 · Logistics rework: client and art (PR #87, in review)
 - **Next task:** CR-0008-T3 · Logistics rework: close-out and playtest (`[O] [MANUAL]`), then M0-61.
 - **Open questions for the owner:** CR-0008-T1: 8 Dependabot alerts on `main` (build log Follow-ups). M0-58: the [MANUAL] content-change check (`client/README.md`; no automated test covers the `GameRoot` rebuild). CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-54: the dev database still runs the fast clock until the owner does step 7 of the waiting-loop run (`LOCAL-E2E.md`). M0-55: the [MANUAL] look at the connection states (`client/README.md`). CR-0007-T1: the [MANUAL] look at the new UI (`client/README.md`); the status label may be removed (build log follow-ups).
 - **Known broken / do not touch:** nothing.
@@ -35,7 +35,7 @@
 | Dev tooling (CR-0006) | done | goods for the `devtest` account (CR-0006-T1) |
 | Resilience (limits, retries, logging) | in progress | M0-34, M0-35, M0-57 to M0-59 (PR #46, #47, #81, #82, #84) |
 | Docs automation (DocTools) + docs completeness | in progress | CR-0002, CR-0003 done (PR #27, #29); DocTools is M0-61 |
-| Logistics (CR-0008) | in progress | T1 merged (PR #86); T2 (client, art) in progress; T3 (playtest) after it |
+| Logistics (CR-0008) | in progress | T1 merged (PR #86); T2 in review (PR #87); T3 (playtest) after it |
 | Balance simulator | not started | |
 | E2E / security / concurrency suites | in progress | M0-36, M0-56, M0-60 (PR #48, #80, #85); `docs/testing/KILL-SERVER-CHECK.md` |
 | Dev build + M0 close-out | not started | |

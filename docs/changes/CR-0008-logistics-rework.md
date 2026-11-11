@@ -276,7 +276,7 @@ T1 adds the tasks to the M0 board. Model: Opus = Opus 5.5, Sonnet = Sonnet 5.5.
 | ID | Model | Parts | The owner is needed for | Status |
 |---|---|---|---|---|
 | CR-0008-T1 | Opus | A–I: spec, engine and server | starting it; two permission prompts (the `22` edit at the start, the golden fixture after part B); merging | Done (PR #86) |
-| CR-0008-T2 | Sonnet | A–F: client and art | starting it; merging | In progress |
+| CR-0008-T2 | Sonnet | A–F: client and art | starting it; merging | In review (PR #87) |
 | CR-0008-T3 | Opus | close-out with a playtest `[MANUAL]` | about an hour of playing and looking; merging | Todo |
 
 The owner's steps: `/model` Opus → `/start-task CR-0008-T1` → answer the `22` prompt → later, answer the golden fixture prompt → merge →
