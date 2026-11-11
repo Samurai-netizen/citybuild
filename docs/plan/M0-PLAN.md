@@ -327,8 +327,8 @@ The AI coder updates its row at start (`In progress`) and finish (`In review`). 
 | M0-59 | 10 | Mobile-safe UI | S | Done |
 | M0-60 | 10 | Client ↔ server boundary review | O | Done |
 | CR-0008-T1 | 10+ | Logistics rework: spec, engine and server | O | Done |
-| CR-0008-T2 | 10+ | Logistics rework: client and art | S | In review |
-| CR-0008-T3 | 10+ | Logistics rework: close-out and playtest | O MANUAL | Todo |
+| CR-0008-T2 | 10+ | Logistics rework: client and art | S | Done |
+| CR-0008-T3 | 10+ | Logistics rework: close-out and playtest | O MANUAL | In progress |
 | M0-61 | 11 | DocTools: generated reference docs | O PLAN | Todo |
 | M0-62 | 11 | Quality script | S | Todo |
 | M0-63 | 11 | Documentation completeness pass | O | Todo |
