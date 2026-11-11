@@ -79,3 +79,8 @@
   flex-shrink: 0;
   margin-top: var(--sp-3);
 }
+
+.welcome-reenergize {
+  flex-shrink: 0;
+  margin-top: var(--sp-3);
+}

@@ -8,6 +8,7 @@ using CityBuilder.Client.Presentation.Research;
 using CityBuilder.Client.Presentation.Ui;
 using CityBuilder.Simulation;
 using CityBuilder.Simulation.Content;
+using CityBuilder.Simulation.Settlement;
 using CityBuilder.Simulation.State;
 
 namespace CityBuilder.Client.Presentation.WelcomeBack
@@ -33,6 +34,18 @@ namespace CityBuilder.Client.Presentation.WelcomeBack
         /// <summary>The heading of the items production took.</summary>
         public const string UsedHeading = "Used";
 
+        /// <summary>The heading of the goods couriers and trip workers took out of stores.</summary>
+        public const string MovedHeading = "Moved";
+
+        /// <summary>The heading of the goods couriers and trip workers put into buildings and projects.</summary>
+        public const string DeliveredHeading = "Delivered";
+
+        /// <summary>The heading of the couriers' working time and tiredness.</summary>
+        public const string CouriersHeading = "Couriers";
+
+        /// <summary>The text of the report's main button when couriers spent stamina (the <c>reenergize-couriers</c> command).</summary>
+        public const string ReenergizeText = "Re-energize couriers";
+
         /// <summary>The heading of the finished constructions and upgrades.</summary>
         public const string BuildingsHeading = "Buildings";
 
@@ -46,10 +59,11 @@ namespace CityBuilder.Client.Presentation.WelcomeBack
         private const long SecondsPerHour = 3600;
 
         /// <summary>Creates the model; <see cref="Create"/> is the way in.</summary>
-        private WelcomeBackModel(string title, IReadOnlyList<WelcomeBackSection> sections)
+        private WelcomeBackModel(string title, IReadOnlyList<WelcomeBackSection> sections, bool canReenergize)
         {
             Title = title;
             Sections = sections;
+            CanReenergize = canReenergize;
         }
 
         /// <summary>The title, such as <c>While you were away (7 h 12 m)</c>.</summary>
@@ -57,6 +71,9 @@ namespace CityBuilder.Client.Presentation.WelcomeBack
 
         /// <summary>The blocks that have something to say, in the order produced, used, buildings, research; empty when nothing happened.</summary>
         public IReadOnlyList<WelcomeBackSection> Sections { get; }
+
+        /// <summary>Whether the report offers <see cref="ReenergizeText"/>: a courier spent stamina or got tired while the player was away.</summary>
+        public bool CanReenergize { get; }
 
         /// <summary>Whether there is no section: <see cref="NothingHappenedText"/> is shown instead.</summary>
         public bool IsEmpty => Sections.Count == 0;
@@ -98,9 +115,38 @@ namespace CityBuilder.Client.Presentation.WelcomeBack
             var sections = new List<WelcomeBackSection>();
             AddSection(sections, ProducedHeading, Quantities(content, settlement.Produced));
             AddSection(sections, UsedHeading, Quantities(content, settlement.Consumed));
-            AddSection(sections, BuildingsHeading, BuildingLines(content, snapshot.CopyCity(), settlement.CompletedBuildings));
+            AddSection(sections, MovedHeading, Quantities(content, settlement.Moved));
+            AddSection(sections, DeliveredHeading, Quantities(content, settlement.Delivered));
+            CityState city = snapshot.CopyCity();
+            AddSection(sections, CouriersHeading, CourierLines(content, city, settlement, snapshot.Clock));
+            AddSection(sections, BuildingsHeading, BuildingLines(content, city, settlement.CompletedBuildings));
             AddSection(sections, ResearchHeading, ResearchLines(content, settlement.CompletedResearch));
-            return new WelcomeBackModel("While you were away (" + Duration(settlement.ElapsedSeconds) + ")", sections);
+            bool canReenergize = settlement.CourierSeconds > 0 || settlement.TiredCouriers.Count > 0;
+            return new WelcomeBackModel("While you were away (" + Duration(settlement.ElapsedSeconds) + ")", sections, canReenergize);
+        }
+
+        /// <summary>
+        /// The couriers' lines: <c>Worked 6 h 40 m</c> for the longest working time, then <c>Courier 2 of Courier Station got tired after 3 h 12 m</c> for each
+        /// courier whose stamina ran out, counted from the start of the time away (the city clock now minus the time the settlement covered).
+        /// </summary>
+        private static List<string> CourierLines(GameContent content, CityState city, SettlementSummary settlement, long clockNow)
+        {
+            var lines = new List<string>();
+            if (settlement.CourierSeconds > 0)
+            {
+                lines.Add("Worked " + Duration(settlement.CourierSeconds));
+            }
+
+            long start = clockNow - settlement.ElapsedSeconds;
+            foreach (TiredCourier tired in settlement.TiredCouriers)
+            {
+                string station = city.TryGetBuilding(tired.StationId, out Building? building) && content.TryGetBuilding(building.TypeId, out BuildingDefinition? definition)
+                    ? definition.Name
+                    : "station " + tired.StationId.ToString(CultureInfo.InvariantCulture);
+                lines.Add("Courier " + tired.Slot.ToString(CultureInfo.InvariantCulture) + " of " + station + " got tired after " + Duration(Math.Max(0, tired.At - start)));
+            }
+
+            return lines;
         }
 
         /// <summary>Adds the section unless it has no line.</summary>

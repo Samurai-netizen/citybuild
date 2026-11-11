@@ -1,7 +1,10 @@
 #nullable enable
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using CityBuilder.Client.Core;
+using CityBuilder.Client.Net;
 using CityBuilder.Simulation.Content;
 
 namespace CityBuilder.Client.Presentation.WelcomeBack
@@ -28,6 +31,12 @@ namespace CityBuilder.Client.Presentation.WelcomeBack
         /// <summary>How many city seconds pass per real second; what counts as "away" is real time.</summary>
         private readonly int _timeScale;
 
+        /// <summary>Sends the re-energize command; null in tests that need no command.</summary>
+        private readonly CommandSender? _sender;
+
+        /// <summary>Ends a command that is still open when the game object goes away.</summary>
+        private readonly CancellationToken _cancellationToken;
+
         /// <summary>The snapshot looked at last, so one snapshot is never reported twice.</summary>
         private CitySnapshot? _last;
 
@@ -39,13 +48,24 @@ namespace CityBuilder.Client.Presentation.WelcomeBack
         /// <param name="store">The city store.</param>
         /// <param name="panel">The panel.</param>
         /// <param name="timeScale">The <c>timeScale</c> of <c>GET /content</c>, at least 1.</param>
-        /// <exception cref="ArgumentNullException">An argument is null.</exception>
-        public WelcomeBackFlow(GameContent content, ClientCityStore store, WelcomeBackPanel panel, int timeScale)
+        /// <param name="sender">The command sender the Re-energize button uses; null leaves the button without effect.</param>
+        /// <param name="cancellationToken">Cancelled when the game object goes away.</param>
+        /// <exception cref="ArgumentNullException">A required argument is null.</exception>
+        public WelcomeBackFlow(
+            GameContent content,
+            ClientCityStore store,
+            WelcomeBackPanel panel,
+            int timeScale,
+            CommandSender? sender = null,
+            CancellationToken cancellationToken = default)
         {
             _content = content ?? throw new ArgumentNullException(nameof(content));
             _store = store ?? throw new ArgumentNullException(nameof(store));
             _panel = panel != null ? panel : throw new ArgumentNullException(nameof(panel));
             _timeScale = timeScale;
+            _sender = sender;
+            _cancellationToken = cancellationToken;
+            _panel.ReenergizeRequested += OnReenergizeRequested;
             _store.SnapshotChanged += OnSnapshotChanged;
             OnSnapshotChanged();
         }
@@ -60,6 +80,47 @@ namespace CityBuilder.Client.Presentation.WelcomeBack
 
             _disposed = true;
             _store.SnapshotChanged -= OnSnapshotChanged;
+            _panel.ReenergizeRequested -= OnReenergizeRequested;
+        }
+
+        /// <summary>The player pressed Re-energize couriers: send the command; success closes the report, a refusal leaves it open (the toast says why).</summary>
+        private void OnReenergizeRequested()
+        {
+            if (_disposed || _sender == null)
+            {
+                return;
+            }
+
+            _ = ReenergizeAsync(_sender);
+        }
+
+        /// <summary>Sends <c>reenergize-couriers</c> and waits for the answer.</summary>
+        private async Task ReenergizeAsync(CommandSender sender)
+        {
+            _panel.SetReenergizeBusy(true);
+            try
+            {
+                CommandOutcome outcome = await sender.SendAsync(CommandIntent.ReenergizeCouriers(), _cancellationToken);
+                if (!_disposed && outcome.IsSuccess)
+                {
+                    _panel.Dismiss();
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // The game object went away; the flow is disposed with it.
+            }
+            catch (Exception exception)
+            {
+                ClientLog.Exception(exception);
+            }
+            finally
+            {
+                if (!_disposed)
+                {
+                    _panel.SetReenergizeBusy(false);
+                }
+            }
         }
 
         /// <summary>The store took a snapshot (or the flow was just made): shows its report when it has one, once per snapshot.</summary>

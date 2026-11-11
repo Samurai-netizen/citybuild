@@ -149,6 +149,12 @@ namespace CityBuilder.Client.Net
             return new CommandIntent(CommandKind.SetRoute, null, 0, 0, stationId, 0, slot: slot, stops: RequireStops(stops, nameof(stops)));
         }
 
+        /// <summary>Give every courier its full stamina again (CR-0008); it has no argument.</summary>
+        public static CommandIntent ReenergizeCouriers()
+        {
+            return new CommandIntent(CommandKind.ReenergizeCouriers, null, 0, 0, 0, 0);
+        }
+
         /// <inheritdoc/>
         public bool Equals(CommandIntent? other)
         {
@@ -196,6 +202,8 @@ namespace CityBuilder.Client.Net
                     return "RemoveRoads(" + FormatTiles(Tiles) + ")";
                 case CommandKind.SetRoute:
                     return "SetRoute(station " + BuildingId + ", slot " + Slot + ", " + Stops.Count + " stops)";
+                case CommandKind.ReenergizeCouriers:
+                    return "ReenergizeCouriers()";
                 default:
                     return "StartResearch(" + ContentId + ")";
             }
@@ -222,6 +230,8 @@ namespace CityBuilder.Client.Net
                     return api.RemoveRoadsAsync(new RoadTilesRequestDto(requestId, Tiles), cancellationToken);
                 case CommandKind.SetRoute:
                     return api.SetRouteAsync(new SetRouteRequestDto(requestId, BuildingId, Slot, Stops), cancellationToken);
+                case CommandKind.ReenergizeCouriers:
+                    return api.ReenergizeCouriersAsync(new ReenergizeCouriersRequestDto(requestId), cancellationToken);
                 default:
                     return api.StartResearchAsync(new StartResearchRequestDto(requestId, ContentId!), cancellationToken);
             }

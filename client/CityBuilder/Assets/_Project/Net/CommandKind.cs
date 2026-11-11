@@ -29,5 +29,8 @@ namespace CityBuilder.Client.Net
 
         /// <summary><c>set-route</c>: set or clear a courier slot's route (CR-0008).</summary>
         SetRoute,
+
+        /// <summary><c>reenergize-couriers</c>: give every courier its full stamina again (CR-0008).</summary>
+        ReenergizeCouriers,
     }
 }

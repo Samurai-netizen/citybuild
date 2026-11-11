@@ -53,6 +53,9 @@ namespace CityBuilder.Client.Presentation.WelcomeBack
         /// <summary>The name of the Continue button.</summary>
         public const string ContinueName = "welcome-continue";
 
+        /// <summary>The name of the Re-energize couriers button, shown only when the report offers it.</summary>
+        public const string ReenergizeName = "welcome-reenergize";
+
         /// <summary>The USS class of a section's heading.</summary>
         public const string HeadingClass = "welcome-heading";
 
@@ -82,6 +85,15 @@ namespace CityBuilder.Client.Presentation.WelcomeBack
 
         /// <summary>Raised when the player dismisses the open report.</summary>
         public event Action? Dismissed;
+
+        /// <summary>Raised when the player presses Re-energize couriers.</summary>
+        public event Action? ReenergizeRequested;
+
+        /// <summary>Whether the Re-energize button waits for an answer: it is off then, so a second press sends nothing.</summary>
+        public bool ReenergizeBusy { get; private set; }
+
+        /// <summary>Whether the Re-energize button is shown now.</summary>
+        public bool ShowsReenergize => _model != null && _model.CanReenergize && IsOpen;
 
         /// <summary>The root of the panel's element tree; null when the layout was not loaded.</summary>
         public VisualElement? Root => _document == null ? null : _document.rootVisualElement;
@@ -149,6 +161,23 @@ namespace CityBuilder.Client.Presentation.WelcomeBack
             Dismissed?.Invoke();
         }
 
+        /// <summary>Turns the Re-energize button off while its command is on its way, and on again after.</summary>
+        /// <param name="busy">True while the command waits for the server.</param>
+        public void SetReenergizeBusy(bool busy)
+        {
+            ReenergizeBusy = busy;
+            Refresh();
+        }
+
+        /// <summary>The player pressed Re-energize couriers: what a finger on the button does, as a call. Does nothing when the button is not shown or waits.</summary>
+        public void PressReenergize()
+        {
+            if (ShowsReenergize && !ReenergizeBusy)
+            {
+                ReenergizeRequested?.Invoke();
+            }
+        }
+
         /// <summary>The player pressed Continue: what a finger on the button does, as a call.</summary>
         public void PressContinue()
         {
@@ -177,6 +206,7 @@ namespace CityBuilder.Client.Presentation.WelcomeBack
 
             _elements = elements;
             elements.Continue.clicked += PressContinue;
+            elements.Reenergize.clicked += PressReenergize;
             // The scrim fills the screen and holds the padding, so a press anywhere is the scrim's while the report is open.
             elements.Scrim.RegisterCallback<GeometryChangedEvent>(_ => UiRoot.PadBySafeArea(elements.Scrim, BasePadding));
             Refresh();
@@ -209,6 +239,10 @@ namespace CityBuilder.Client.Presentation.WelcomeBack
                 }
             }
 
+            e.Reenergize.style.display = model.CanReenergize ? DisplayStyle.Flex : DisplayStyle.None;
+            e.Reenergize.SetEnabled(!ReenergizeBusy);
+            e.Continue.EnableInClassList("btn--primary", !model.CanReenergize);
+            e.Continue.EnableInClassList("btn--quiet", model.CanReenergize);
             SetLine(e.Empty, model.IsEmpty ? WelcomeBackModel.NothingHappenedText : string.Empty);
         }
 
@@ -240,7 +274,7 @@ namespace CityBuilder.Client.Presentation.WelcomeBack
             public Label Title = null!, Empty = null!;
 
             /// <summary>The Continue button.</summary>
-            public Button Continue = null!;
+            public Button Continue = null!, Reenergize = null!;
 
             /// <summary>Finds every element in <paramref name="root"/>; null when one is missing.</summary>
             public static Elements? Find(VisualElement root)
@@ -252,9 +286,10 @@ namespace CityBuilder.Client.Presentation.WelcomeBack
                     Title = root.Q<Label>(TitleName),
                     Empty = root.Q<Label>(EmptyName),
                     Continue = root.Q<Button>(ContinueName),
+                    Reenergize = root.Q<Button>(ReenergizeName),
                 };
                 bool complete = found.Scrim != null && found.Sections != null && found.Title != null && found.Empty != null
-                    && found.Continue != null;
+                    && found.Continue != null && found.Reenergize != null;
                 return complete ? found : null;
             }
         }

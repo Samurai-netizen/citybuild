@@ -13,6 +13,7 @@
           <ui:VisualElement name="welcome-sections" class="welcome-sections" />
           <ui:Label name="welcome-empty" class="welcome-empty t-body" />
         </ui:ScrollView>
+        <ui:Button name="welcome-reenergize" class="welcome-reenergize btn btn--primary" text="Re-energize couriers" style="display: none;" />
         <ui:Button name="welcome-continue" class="welcome-continue btn btn--primary" text="Back to town" />
       </ui:VisualElement>
     </ui:VisualElement>

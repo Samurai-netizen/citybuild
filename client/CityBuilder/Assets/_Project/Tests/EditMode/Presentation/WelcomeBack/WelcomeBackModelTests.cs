@@ -294,6 +294,54 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.WelcomeBack
             Assert.Throws<ArgumentNullException>(() => WelcomeBackModel.Create(_content, null!, 1));
         }
 
+        /// <summary>Goods moved and delivered while away are listed after what was produced and used, in the server's order.</summary>
+        [Test]
+        public void Create_ListsMovedAndDeliveredGoods()
+        {
+            var settlement = new SettlementSummary(
+                600, Quantities(null), Quantities(null), 0, new TiredCourier[0], new int[0], new ResearchId[0], false,
+                Quantities(new[] { ("logs", 12L) }), Quantities(new[] { ("logs", 30L), ("planks", 4L) }));
+
+            WelcomeBackModel model = Report(settlement);
+
+            Assert.That(Lines(model, WelcomeBackModel.DeliveredHeading), Is.EqualTo(new[] { "12 Logs" }));
+            Assert.That(Lines(model, WelcomeBackModel.MovedHeading), Is.EqualTo(new[] { "30 Logs", "4 Planks" }));
+            Assert.That(model.CanReenergize, Is.False);
+        }
+
+        /// <summary>
+        /// A courier that spent stamina gives a working-time line and offers Re-energize; a tired one names its station and how long into the
+        /// time away it got tired (counted from the clock the time away started at).
+        /// </summary>
+        [Test]
+        public void Create_WithTiredCouriers_SaysWhenAndOffersReenergize()
+        {
+            Building station = new Building(1, new BuildingTypeId("courier_station"), 0, 0, 1, 1, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
+            // The clock is 100000, the time away 7200 s: it started at 92800, so 96400 is one hour in.
+            var settlement = new SettlementSummary(
+                7200, Quantities(null), Quantities(null), 14400, new[] { new TiredCourier(1, 2, 96_400) }, new int[0], new ResearchId[0], false);
+
+            WelcomeBackModel model = Report(settlement, station);
+
+            Assert.That(_content.TryGetBuilding(new BuildingTypeId("courier_station"), out BuildingDefinition? definition), Is.True);
+            string stationName = definition!.Name;
+            Assert.That(
+                Lines(model, WelcomeBackModel.CouriersHeading),
+                Is.EqualTo(new[] { "Worked 4 h", "Courier 2 of " + stationName + " got tired after 1 h" }));
+            Assert.That(model.CanReenergize, Is.True);
+            Assert.That(WelcomeBackModel.ReenergizeText, Is.EqualTo("Re-energize couriers"));
+        }
+
+        /// <summary>No courier spent stamina: no couriers section and no Re-energize.</summary>
+        [Test]
+        public void Create_WithRestedCouriers_HasNoCouriersSectionAndNoReenergize()
+        {
+            WelcomeBackModel model = Report(Settlement(600, produced: new[] { ("logs", 3L) }));
+
+            Assert.That(model.Sections.Select(section => section.Heading), Does.Not.Contain(WelcomeBackModel.CouriersHeading));
+            Assert.That(model.CanReenergize, Is.False);
+        }
+
         /// <summary>A section copies its lines, refuses none, and needs a heading.</summary>
         [Test]
         public void Section_CopiesItsLinesAndRefusesNone()

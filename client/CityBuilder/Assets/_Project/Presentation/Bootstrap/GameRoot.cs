@@ -648,7 +648,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             }
 
             panel.Opened += _menus.Join(panel.Dismiss).NotifyOpened;
-            _welcomeFlow = new WelcomeBackFlow(content, _cityStore, panel, timeScale);
+            _welcomeFlow = new WelcomeBackFlow(content, _cityStore, panel, timeScale, _commandSender, destroyCancellationToken);
             _world!.IsPointerOverUi = IsOverUi;
         }
 

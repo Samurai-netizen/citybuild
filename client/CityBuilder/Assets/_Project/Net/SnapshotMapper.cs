@@ -111,7 +111,9 @@ namespace CityBuilder.Client.Net
                 settlement.TiredCouriers.ConvertAll(tired => new TiredCourier(tired.StationId, tired.Slot, tired.At)),
                 settlement.CompletedBuildings,
                 settlement.CompletedResearch.ConvertAll(id => new ResearchId(id)),
-                settlement.EraChanged);
+                settlement.EraChanged,
+                ToQuantities(settlement.Delivered),
+                ToQuantities(settlement.Moved));
         }
 
         /// <summary>Item id to quantity as the engine's pairs, in the dictionary's order (the server sends them sorted).</summary>

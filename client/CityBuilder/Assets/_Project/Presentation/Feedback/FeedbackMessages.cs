@@ -184,6 +184,8 @@ namespace CityBuilder.Client.Presentation.Feedback
                     return "Road removed";
                 case CommandKind.SetRoute:
                     return "Route saved";
+                case CommandKind.ReenergizeCouriers:
+                    return "Couriers re-energized";
                 default:
                     return "Done";
             }

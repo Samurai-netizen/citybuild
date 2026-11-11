@@ -133,7 +133,9 @@ open game is present) and sends intent; the server decides.
 - **Welcome back (T2 part E):** time away, the couriers' working time and when they got tired (`courierSeconds`, `tiredCouriers`), goods
   moved and delivered, produced and consumed, coins, completed buildings and research; its main button **Re-energize couriers**
   (`reenergize-couriers`) when any courier spent stamina; a HUD notice while couriers rest. (The 8 h production-cap note went in T1 part
-  H, with the cap; the client already reads `courierSeconds` and `tiredCouriers` into `SettlementSummary`.)
+  H, with the cap; the client already reads `courierSeconds` and `tiredCouriers` into `SettlementSummary`.) **Built (CP-E step 1):** the report
+  (Moved, Delivered, Couriers sections and the Re-energize button) and the `reenergize-couriers` Net layer; the HUD notice and the inspector
+  button come next. The settlement carries no coins, so the report has no coins line.
 
 ## UX rules
 - **One menu at a time (owner directive OD-16, `15`).** The screens the player opens and closes (the build menu's sheet, the building inspector, the research screen, the welcome-back report, and every later one) are one `MenuGroup`: when one opens, the others close. A menu joins the group in `GameRoot` with the action that closes it, and tells the group when it goes from closed to open (an `Opened` event). Its close action must be safe when the menu is already closed, and must not drop state that belongs to another flow (the inspector closes by dropping the tile only while it is shown, because the placement flow owns the tile while it runs). The placement bar and the toasts are not menus: they belong to a flow or to a result.
