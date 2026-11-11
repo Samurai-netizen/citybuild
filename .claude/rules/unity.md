@@ -22,5 +22,6 @@ Full guide: `core-instructions/09-unity-client.md`.
   (`core-instructions/14-coding-standards.md` → Documentation in code). Unity doesn't check them: `CityBuilder.Repository.Tests` and
   `check-docs.sh` do.
 - Every new script folder needs the correct `.asmdef`; tests go in `Assets/_Project/Tests/EditMode|PlayMode`.
+- **Batch Unity test runs:** `test-unity.sh` runs headless Unity and is slow/noisy. Batch your C#, UXML, USS and test edits for a step, run `python3 art/ui/preview/check-ui-rules.py` first (instant), and run `test-unity.sh` once when the step is ready.
 - Commit `.meta` files with their assets. Never commit `Library/`, `Temp/`, `Logs/`, `UserSettings/`.
 - Anything requiring the Editor GUI → write numbered **[MANUAL]** steps in your report.

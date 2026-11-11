@@ -24,7 +24,7 @@ If the task doesn't exist, stop.)
    - the working tree is clean;
    - you are on an up-to-date `main` (`git switch main && git pull --ff-only`);
    - the previous PR is merged.
-2. **Read** every file the task names, plus the "Read before" rows in `AGENTS.md` that match. Check the Definition of Ready (`11`).
+2. **Read** every file the task names, plus the "Read before" rows in `AGENTS.md` that match (for large files, use `grep -n` first and read targeted line ranges). Check the Definition of Ready (`11`).
    If acceptance criteria are unclear, ask now.
 3. **Branch:** `git switch -c task/$id-<short-slug>`.
 4. **Write ahead:**
@@ -35,4 +35,4 @@ If the task doesn't exist, stop.)
    - plan board row (or CR task row): `In progress`;
    - commit `chore($id): start task` and push with `git push -u origin HEAD`.
 5. **If the task is tagged [PLAN]:** present the plan and **wait for the owner's approval**. Record it under "Owner input" in the build log.
-6. Then implement step by step. After every green step, run `/checkpoint`. Log each decision as you make it.
+6. Then implement step by step. During inner-loop coding, build quietly (`dotnet build -v q`) and run filtered tests (`dotnet test --no-build -v q --filter "FullyQualifiedName~<Class>"`) and fast static checks; run the full area suite once at `/checkpoint`. On multi-part tasks, run `/compact` after each checkpointed part. Log each decision as you make it.

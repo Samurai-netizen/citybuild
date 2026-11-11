@@ -9,12 +9,12 @@ argument-hint: "[optional task id]"
 
 ## Do this (read-only — change nothing)
 1. Read `core-instructions/13-progress.md` → Resume point. Note the state, task, branch, next step and open questions.
-2. If a task is IN PROGRESS: open its build log entry (path in the resume point) and read the last session section.
+2. If a task is IN PROGRESS: open its build log entry (path in the resume point) and read only the header, Docs impact table and the last session section.
    Print the task spec with `bash scripts/dev/show-task.sh <ID>`.
 3. Compare the resume point with the git state above:
    - Is the branch right and pushed?
    - Are uncommitted changes explained? If not, follow `core-instructions/16-session-protocol.md` §F.
-4. Run the fast baseline if code exists: `dotnet build server/CityBuilder.slnx` and the fast tests. Note the results.
+4. Run the fast baseline if code exists: `dotnet build server/CityBuilder.slnx -v q` and `dotnet test server/CityBuilder.slnx --no-build -v q --filter "Category!=Integration"`. Note the results.
 5. Report to the owner in ≤ 15 lines:
    - where things stand;
    - anything inconsistent;
