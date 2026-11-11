@@ -682,15 +682,19 @@ namespace CityBuilder.Client.Presentation.Routes
                 }
 
                 var actions = new List<string>(stop.Actions.Count);
+                var parts = new List<RouteActionLine>(stop.Actions.Count);
                 for (int j = 0; j < stop.Actions.Count; j++)
                 {
                     RouteActionEdit action = stop.Actions[j];
                     locked |= action.Amount.Mode.HasValue && !CityQueries.IsAmountModeUnlocked(_city, _content, action.Amount.Mode.Value);
-                    actions.Add((action.Kind == RouteActionKind.Take ? "Take " : "Put ") + ItemText.ItemName(_content, action.Item) + " · " + AmountLabel(action.Amount));
+                    var part = new RouteActionLine(
+                        action.Kind == RouteActionKind.Take ? "Take" : "Put", ItemText.ItemName(_content, action.Item), AmountLabel(action.Amount));
+                    parts.Add(part);
+                    actions.Add(part.KindText + " " + part.ItemText + " · " + part.AmountText);
                 }
 
                 _lines.Add(new RouteStopLine(
-                    Number(i + 1) + ". " + (exists ? BuildingNameOf(building!) : "Missing building"), walk, actions));
+                    Number(i + 1) + ". " + (exists ? BuildingNameOf(building!) : "Missing building"), walk, actions, parts));
             }
 
             Path = path;
@@ -822,11 +826,12 @@ namespace CityBuilder.Client.Presentation.Routes
     public sealed class RouteStopLine
     {
         /// <summary>Makes a stop line.</summary>
-        public RouteStopLine(string title, string walkText, IReadOnlyList<string> actions)
+        public RouteStopLine(string title, string walkText, IReadOnlyList<string> actions, IReadOnlyList<RouteActionLine> parts)
         {
             Title = title;
             WalkText = walkText;
             Actions = actions;
+            Parts = parts;
         }
 
         /// <summary>For example <c>1. Lumberjack</c>.</summary>
@@ -837,6 +842,30 @@ namespace CityBuilder.Client.Presentation.Routes
 
         /// <summary>For example <c>Take Logs · All</c>, one text per action.</summary>
         public IReadOnlyList<string> Actions { get; }
+
+        /// <summary>The same actions split into the words of their three buttons, in the same order as <see cref="Actions"/>.</summary>
+        public IReadOnlyList<RouteActionLine> Parts { get; }
+    }
+
+    /// <summary>The words of one action's three buttons: take or put, the item, and the amount.</summary>
+    public sealed class RouteActionLine
+    {
+        /// <summary>Makes an action line.</summary>
+        public RouteActionLine(string kindText, string itemText, string amountText)
+        {
+            KindText = kindText;
+            ItemText = itemText;
+            AmountText = amountText;
+        }
+
+        /// <summary><c>Take</c> or <c>Put</c>.</summary>
+        public string KindText { get; }
+
+        /// <summary>The item's name, for example <c>Logs</c>.</summary>
+        public string ItemText { get; }
+
+        /// <summary>The amount: a preset's name, <c>50%</c> or an exact number.</summary>
+        public string AmountText { get; }
     }
 
     /// <summary>Where the route editor is.</summary>

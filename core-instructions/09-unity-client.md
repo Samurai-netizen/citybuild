@@ -121,8 +121,8 @@ open game is present) and sends intent; the server decides.
   with its reason (no free worker, nothing to carry, nothing needed there); it sends `start-trip`. A running trip shows on both ends with its
   countdown (`TripsText`).
 - **Road mode (T2 part B, built):** from the build menu (`build-roads`) or by tapping a road tile, select empty tiles to place roads (`place-roads`) or existing road tiles to upgrade (`upgrade-roads`) or remove (`remove-roads`), with total coin cost, speed (`2.5s / tile` → `1.5s / tile`) and the disable reason in `RoadRules` order (`RoadFlowModel`, `RoadBar`, `RoadFlow`). The ground draws roads by level using `RoadArms` (`GroundTiles.ShowRoads`), and `PlacementFlowModel` marks road tiles occupied.
-- **Courier station and route editor (T2 part C):** the station's inspector lists its couriers (the worker stepper), each one's state,
-  stamina and route summary, and a **Re-energize** button. The route editor (a menu) adds stops by tapping buildings, gives each stop take
+- **Courier station and route editor (T2 part C, built):** the station's inspector lists its couriers (the worker stepper), each one's state,
+  stamina and route summary, and an **Edit routes** button (the **Re-energize** button is part E). The route editor (a menu, a low sheet so the map stays tappable) adds stops by tapping buildings, gives each stop take
   and put actions (good and amount: presets; a percentage once researched; exact shown locked with the research that unlocks it), reorders
   and removes stops, draws the path and each walk's time, and sends `set-route`. A long route scrolls in one direction only.
 - **Walkers (T2 part D):** couriers and trip workers walk tile centre to tile centre with 90° turns, slowly across a building, from the

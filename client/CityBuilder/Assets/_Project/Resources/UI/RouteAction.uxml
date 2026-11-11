@@ -1,0 +1,10 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+  <!-- One action of a stop in the route editor (CR-0008-T2 part C): RouteEditorScreen clones it once per action. Three buttons that each
+       change one thing on a tap (take or put, the item, the amount) and the one that removes the action. Style: RouteEditor.uss. -->
+  <ui:VisualElement name="route-action" class="route-action">
+    <ui:Button name="route-action-kind" class="route-action-button btn btn--quiet" text="Take" />
+    <ui:Button name="route-action-item" class="route-action-button btn btn--quiet" text="Logs" />
+    <ui:Button name="route-action-amount" class="route-action-button btn btn--quiet" text="All" />
+    <ui:Button name="route-action-remove" class="route-action-remove btn btn--danger glyph glyph-minus" text="" />
+  </ui:VisualElement>
+</ui:UXML>

@@ -11,6 +11,7 @@ using CityBuilder.Client.Presentation.Hud;
 using CityBuilder.Client.Presentation.Inspector;
 using CityBuilder.Client.Presentation.Research;
 using CityBuilder.Client.Presentation.Roads;
+using CityBuilder.Client.Presentation.Routes;
 using CityBuilder.Client.Presentation.Trips;
 using CityBuilder.Client.Presentation.Ui;
 using CityBuilder.Client.Presentation.WelcomeBack;
@@ -106,6 +107,15 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         /// <summary>Joins the inspector's Send trip button, the map selection, the trip bar and the command sender (CR-0008).</summary>
         private TripFlow? _tripFlow;
 
+        /// <summary>The courier route editor state (CR-0008); null until the start has connected, or when its assets are missing.</summary>
+        private RouteEditorModel? _routes;
+
+        /// <summary>The courier route editor sheet (CR-0008); null until the start has connected, or when its assets are missing.</summary>
+        private RouteEditorScreen? _routeScreen;
+
+        /// <summary>Joins the inspector's Edit routes button, the map selection, the route editor sheet and the command sender (CR-0008).</summary>
+        private RouteEditorFlow? _routeFlow;
+
         /// <summary>The road mode flow state (CR-0008); null until the start has connected.</summary>
         private RoadFlowModel? _roads;
 
@@ -180,6 +190,12 @@ namespace CityBuilder.Client.Presentation.Bootstrap
 
         /// <summary>The manual trip flow (CR-0008); null until the start has connected, or when the bar or inspector is missing.</summary>
         internal TripFlow? TripFlow => _tripFlow;
+
+        /// <summary>The courier route editor state (CR-0008); null until the start has connected, or when its assets are missing.</summary>
+        internal RouteEditorModel? RouteEditor => _routes;
+
+        /// <summary>The courier route editor sheet (CR-0008); null until the start has connected, or when its assets are missing.</summary>
+        internal RouteEditorScreen? RouteEditorScreen => _routeScreen;
 
         /// <summary>The road bar (CR-0008); null until the start has connected, or when its assets are missing.</summary>
         internal RoadBar? RoadBar => _roadBar;
@@ -318,6 +334,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         {
             _placement?.Dispose();
             _tripFlow?.Dispose();
+            _routeFlow?.Dispose();
             _roadFlow?.Dispose();
             _inspectorFlow?.Dispose();
             _researchFlow?.Dispose();
@@ -332,6 +349,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             DestroyView(_buildMenu);
             DestroyView(_placementBar);
             DestroyView(_tripBar);
+            DestroyView(_routeScreen);
             DestroyView(_roadBar);
             DestroyView(_inspector);
             DestroyView(_researchScreen);
@@ -340,6 +358,9 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             _trips = null;
             _tripBar = null;
             _tripFlow = null;
+            _routes = null;
+            _routeScreen = null;
+            _routeFlow = null;
             _roads = null;
             _roadBar = null;
             _roadFlow = null;
@@ -387,6 +408,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         {
             _placement?.Dispose();
             _tripFlow?.Dispose();
+            _routeFlow?.Dispose();
             _roadFlow?.Dispose();
             _inspectorFlow?.Dispose();
             _researchFlow?.Dispose();
@@ -427,6 +449,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                 _buildMenu?.Model?.Update(city);
                 _placement?.Update(city);
                 _trips?.Update(city);
+                _routes?.Update(city);
                 _roads?.Update(city);
                 _inspectorFlow?.Update(city);
                 _researchFlow?.Update(city);
@@ -546,6 +569,17 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                     _ = _menus.Join(trips.Cancel);
                 }
 
+                var routes = new RouteEditorModel(content, _world.Grid);
+                routes.Update(city);
+                RouteEditorScreen? routeScreen = RouteEditorScreen.Create(transform);
+                if (routeScreen != null)
+                {
+                    _routes = routes;
+                    _routeScreen = routeScreen;
+                    _routeFlow = new RouteEditorFlow(routes, _world, _commandSender, routeScreen, _inspector, destroyCancellationToken);
+                    routeScreen.Opened += _menus.Join(_routeFlow.Close).NotifyOpened;
+                }
+
                 if (_buildMenu != null)
                 {
                     var roads = new RoadFlowModel(content, _world.Grid);
@@ -571,7 +605,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                 }
             }
 
-            var flow = _inspectorFlow = new InspectorFlow(content, _world, _commandSender, _inspector, _placement?.Model, destroyCancellationToken, _trips, _roads);
+            var flow = _inspectorFlow = new InspectorFlow(content, _world, _commandSender, _inspector, _placement?.Model, destroyCancellationToken, _trips, _roads, _routes);
             _inspector.Opened += _menus.Join(flow.Close).NotifyOpened;
             _world.IsPointerOverUi = IsOverUi;
         }
@@ -641,6 +675,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             return (_buildMenu != null && _buildMenu.IsOverUi(screenPosition))
                 || (_placementBar != null && _placementBar.IsOverUi(screenPosition))
                 || (_tripBar != null && _tripBar.IsOverUi(screenPosition))
+                || (_routeScreen != null && _routeScreen.IsOverUi(screenPosition))
                 || (_roadBar != null && _roadBar.IsOverUi(screenPosition))
                 || (_inspector != null && _inspector.IsOverUi(screenPosition))
                 || (_researchScreen != null && _researchScreen.IsOverUi(screenPosition))
@@ -669,6 +704,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             CommandAvailability availability = CommandAvailability.For(_monitor.State);
             _placement?.Model.SetCommandAvailability(availability);
             _trips?.SetCommandAvailability(availability);
+            _routes?.SetCommandAvailability(availability);
             _roads?.SetCommandAvailability(availability);
             _inspectorFlow?.SetCommandAvailability(availability);
             _researchFlow?.SetCommandAvailability(availability);

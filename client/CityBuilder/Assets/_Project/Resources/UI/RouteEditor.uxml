@@ -1,0 +1,29 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+  <!-- The courier route editor that RouteEditorScreen shows (CR-0008-T2 part C): a parchment sheet above the dock that stays low so the map
+       stays tappable (tapping a building adds it as a stop). From the top: the title with the courier slot button and the close button, the
+       summary (stops and the lap time), the last refused edit, one row of stop cards that scrolls sideways only (RouteStop.uxml is one stop;
+       RouteAction.uxml is one action in it; RouteEditorScreen makes them from RouteEditorModel and scales the row down until it fits, OD-17),
+       and the footer with the note on locked amounts, the reason Save is off, Revert and Save. Style: Common.uss and RouteEditor.uss. -->
+  <Style src="Common.uss" />
+  <Style src="RouteEditor.uss" />
+  <ui:VisualElement name="route-root" class="route-root" picking-mode="Ignore">
+    <ui:VisualElement name="route-panel" class="route-panel panel-parchment route-panel--hidden">
+      <ui:VisualElement class="route-header">
+        <ui:Label name="route-title" class="route-title t-title" />
+        <ui:Button name="route-slot" class="route-slot btn btn--quiet" text="Next courier" />
+        <ui:Button name="route-close" class="route-close btn btn--round glyph glyph-close" text="" />
+      </ui:VisualElement>
+      <ui:Label name="route-summary" class="route-summary t-body" />
+      <ui:Label name="route-note" class="route-note t-note" />
+      <ui:ScrollView name="route-scroll" class="route-scroll themed-scroll" mode="Horizontal">
+        <ui:VisualElement name="route-stops" class="route-stops" />
+      </ui:ScrollView>
+      <ui:Label name="route-amount-note" class="route-amount-note t-note" />
+      <ui:Label name="route-hint" class="route-hint t-note" />
+      <ui:VisualElement class="route-footer">
+        <ui:Button name="route-revert" class="route-footer-button btn btn--quiet" text="Revert" />
+        <ui:Button name="route-confirm" class="route-footer-button btn btn--primary" text="Save route" />
+      </ui:VisualElement>
+    </ui:VisualElement>
+  </ui:VisualElement>
+</ui:UXML>
