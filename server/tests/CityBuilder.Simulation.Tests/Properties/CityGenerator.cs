@@ -189,10 +189,13 @@ internal static class CityGenerator
     /// <summary>
     /// A route for a courier station's slot, aimed like a trip (<c>04</c> section 19): four times in five, when goods could go somewhere, a
     /// building that has a good (take it) and one that accepts it (put it), sometimes with a third stop that puts the rest elsewhere; else two
-    /// random buildings with random takes and puts. The slot is mostly one that has a courier; one time in 20 the route is cleared. Amounts as
-    /// <see cref="RandomAmount"/>. Null without a courier station or with fewer than two buildings.
+    /// random buildings with random takes and puts. The slot is mostly one that has a courier, one without delivery lines when the station has
+    /// one; one time in 20 the route is cleared. Amounts as
+    /// <see cref="RandomAmount"/>. When every courier of the station has delivery lines (it takes no route, CR-0008 D19) the chosen one's
+    /// lines are cancelled instead (<see cref="LinesOrRoute"/>). Null without a courier station or with fewer than two
+    /// buildings.
     /// </summary>
-    private static CityOperation.SetRoute? SetRoute(SeededRandom random, CityState city, GameContent content)
+    private static CityOperation.Command? SetRoute(SeededRandom random, CityState city, GameContent content)
     {
         var stations = city.Buildings
             .Where(building => content.TryGetBuilding(building.TypeId, out BuildingDefinition? type) && type.Kind == BuildingKind.CourierStation)
@@ -207,9 +210,19 @@ internal static class CityGenerator
         int slot = station.AssignedWorkers > 0 && random.Chance(80)
             ? (int)random.Between(1, station.AssignedWorkers)
             : (int)random.Between(1, Math.Max(1, levelSlots));
+        // A courier with delivery lines takes no route (CR-0008 D19): move to the first slot of the station without lines, if one has none,
+        // with no extra draw, so a history only changes where the rule would refuse the route.
+        for (int other = 1; city.CountLines(station.Id, slot) > 0 && other <= station.AssignedWorkers; other++)
+        {
+            if (city.CountLines(station.Id, other) == 0)
+            {
+                slot = other;
+            }
+        }
+
         if (random.Chance(5))
         {
-            return new CityOperation.SetRoute(station.Id, slot, []);
+            return LinesOrRoute(city, station.Id, slot, []);
         }
 
         List<(Building Target, ItemId Item, bool ForProject, bool ForInput)> pairs = CarryPairs(city, content);
@@ -238,7 +251,25 @@ internal static class CityGenerator
             }
         }
 
-        return new CityOperation.SetRoute(station.Id, slot, stops);
+        return LinesOrRoute(city, station.Id, slot, stops);
+    }
+
+    /// <summary>
+    /// The route, or, when the slot's courier has delivery lines (it takes no route, CR-0008 D19), the cancel of all of them, or of its first
+    /// line when it has 4 or more and that line's id is a multiple of 4. Decided after the route's draws and without one of its own, so the histories keep the
+    /// random draws they had while such routes were refused.
+    /// </summary>
+    private static CityOperation.Command LinesOrRoute(CityState city, int stationId, int slot, List<RouteStop> stops)
+    {
+        int lines = city.CountLines(stationId, slot);
+        if (lines == 0)
+        {
+            return new CityOperation.SetRoute(stationId, slot, stops);
+        }
+
+        // Cancelling all frees the courier for a later route; one line in four or more is cancelled alone, so both kinds happen.
+        city.TryGetFirstLine(stationId, slot, out DeliveryLine? first);
+        return new CityOperation.CancelDelivery(stationId, slot, lines >= 4 && first!.Id % 4 == 0 ? first.Id : null);
     }
 
     /// <summary>

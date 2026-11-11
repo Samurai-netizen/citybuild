@@ -22,6 +22,7 @@ namespace CityBuilder.Simulation.Content
             CheckItemReferences(draft, errors);
             CheckCurrency(draft, errors);
             CheckScienceBuilding(draft, errors);
+            CheckRouteBuilding(draft, errors);
             CheckEffectTargets(draft, errors);
             CheckPrerequisiteReferences(draft, errors);
         }
@@ -190,6 +191,16 @@ namespace CityBuilder.Simulation.Content
                         ContentPaths.RoadLevel(level) + ".cost." + good.Item.Value,
                         good.Item.Value + " is a good; a road costs the currency only, as it is built at once.");
                 }
+            }
+        }
+
+        /// <summary>Rule 13: the route building, when the rules name one, is a building type of the content.</summary>
+        private static void CheckRouteBuilding(ContentDraft draft, ContentErrorList errors)
+        {
+            BuildingTypeId? building = draft.Rules.RouteBuilding;
+            if (building.HasValue)
+            {
+                BuildingExists(draft, building.Value, "rules.routeBuilding", errors);
             }
         }
 

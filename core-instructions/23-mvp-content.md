@@ -22,8 +22,9 @@
 | Max total labor reduction per building type | 500 ‰ |
 | Walking | ground 5 000 ms per tile; crossing another building at 200 ‰ of the speed (25 000 ms per tile) |
 | Shortest walk / max walk bonus | at least 2 s with every bonus (content validation) / 500 ‰ |
-| Trip carry limit | 10 (all goods together) |
-| Routes | at most 8 stops, at most 4 actions per stop |
+| Trip carry limit | 10 (all goods together): one load of a worker's delivery, before any courier station is built (`04` §18) |
+| Routes | at most 8 stops, at most 4 actions per stop; need a built `scriptorium` (`routeBuilding`, CR-0008 D15) |
+| Delivery lines | at most 20 per courier (`maxDeliveryLines`, CR-0008 D16–D17) |
 | Amount presets | `all` 100 % · `half` 50 % · `quarter` 25 % |
 | Content version | `mvp-2` |
 
@@ -122,7 +123,7 @@ Check: logs produced 22 (90 … 720) = 10 delivered + 6 consumed + 5 + 1 in stor
 800 − 780 spent = 20. The Woodcutter fills one log every 30 s; the Sawmill waits for hand trips: the reason to build a Courier Station.
 
 ## Golden scenario #2 — couriers, a road, an absence (hand-checked; re-check whenever content changes)
-Content `content-golden-v2.json`. Ids and tiles: Cottage 1 (0,3), Woodcutter 2 (0,0), Courier Station 3 (0,1), Warehouse 4 (3,0); dirt
+Content `content-golden-v2.json` (it has no `routeBuilding`, so routes need no Scriptorium there; the gate has its own rule tests). Ids and tiles: Cottage 1 (0,3), Woodcutter 2 (0,0), Courier Station 3 (0,1), Warehouse 4 (3,0); dirt
 paths on (1,0) and (2,0). Walks: station → Woodcutter 1 step (5 s); Woodcutter ↔ Warehouse along the road (10 s: steps of 3 750 + 2 500 + 3 750
 ms; without the road 15 s); Warehouse → station 15 s along the road and round the Woodcutter (`04` §17: never through it).
 Actions (each a request; the player is absent from 300 s after the last one, `04` §2): `t=0` place Cottage 1 and Woodcutter 2 · `t=30`

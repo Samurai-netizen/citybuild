@@ -11,9 +11,10 @@ namespace CityBuilder.Simulation.Settlement
     /// Couriers in an advance (<c>core-instructions/04-simulation-model.md</c>, sections 6 and 19). Their arrivals are step 4 of the order at one
     /// second, after the trips, in ascending (station, slot): every arrival first spends the walk's stamina from the absence start on
     /// (<c>04</c> section 2); at a stop a courier does the stop's actions in order, then walks to the next stop (after the last, the first), or
-    /// home when its stamina reached 0; at home it stands at its station, or rests without stamina. Their departures are the last part of step 5
-    /// (<see cref="StartWalks"/>): a courier at its station with a route and stamina, whose station is neither constructing nor upgrading,
-    /// leaves for the first stop. The arrivals are an indexed heap keyed by station and slot (the station's building
+    /// home when its stamina reached 0; at home it stands at its station, or rests without stamina. A courier without a route runs its delivery
+    /// lines instead (<c>04</c> sections 18 and 19, CR-0008 D16): stop 1 is the first line's source, stop 2 its target, and after the last line
+    /// it walks home. Their departures are the last part of step 5 (<see cref="StartWalks"/>): a courier at its station with a route or a line
+    /// and stamina, whose station is neither constructing nor upgrading, leaves for the first stop. The arrivals are an indexed heap keyed by station and slot (the station's building
     /// index times the content's most courier slots, plus the slot), which stays valid while auto-staffing adds couriers during the advance
     /// and orders arrivals at one second by (station, slot); a courier stopped inside the advance (its station's upgrade started) leaves a
     /// stale entry, which is dropped when it comes up.
@@ -87,7 +88,7 @@ namespace CityBuilder.Simulation.Settlement
 
         /// <summary>
         /// The departures of step 5 at <paramref name="time"/> (<c>04</c> section 19), in ascending (station, slot): every courier at its station
-        /// with a route and stamina, whose station is neither constructing nor upgrading, walks to its route's first stop.
+        /// with stamina, whose station is neither constructing nor upgrading, walks to its route's first stop, or to its first line's source.
         /// </summary>
         public void StartWalks(CityState city, long time)
         {
@@ -95,8 +96,14 @@ namespace CityBuilder.Simulation.Settlement
             for (int index = 0; index < couriers.Count; index++)
             {
                 Courier courier = couriers[index];
-                if (courier.State != CourierState.AtStation || courier.Stamina < 1
-                    || !city.TryGetRoute(courier.StationId, courier.Slot, out Route? route))
+                if (courier.State != CourierState.AtStation || courier.Stamina < 1)
+                {
+                    continue;
+                }
+
+                bool hasRoute = city.TryGetRoute(courier.StationId, courier.Slot, out Route? route);
+                DeliveryLine? line = null;
+                if (!hasRoute && !city.TryGetFirstLine(courier.StationId, courier.Slot, out line))
                 {
                     continue;
                 }
@@ -108,7 +115,14 @@ namespace CityBuilder.Simulation.Settlement
                     continue;
                 }
 
-                WalkOn(city, courier, station, route, 1, time);
+                if (hasRoute)
+                {
+                    WalkOn(city, courier, station, route!, 1, time);
+                }
+                else
+                {
+                    WalkTo(city, courier, station, line!.SourceId, 1, time);
+                }
             }
         }
 
@@ -135,7 +149,15 @@ namespace CityBuilder.Simulation.Settlement
 
             if (!city.TryGetRoute(courier.StationId, courier.Slot, out Route? route))
             {
-                CourierRules.StopWorking(city, courier);
+                if (city.TryGetFirstLine(courier.StationId, courier.Slot, out DeliveryLine? line))
+                {
+                    ArriveOnLine(city, content, courier, line, time, report);
+                }
+                else
+                {
+                    CourierRules.StopWorking(city, courier);
+                }
+
                 return;
             }
 
@@ -186,6 +208,83 @@ namespace CityBuilder.Simulation.Settlement
             {
                 report.AddTiredCourier(courier.StationId, courier.Slot, time);
             }
+        }
+
+        /// <summary>
+        /// A courier on its first delivery line arrives (<c>04</c> section 19, CR-0008 D16). At the source (stop 1) it takes the line's quantity
+        /// less what it already carries of the good, at most the stock and its free carry room, and walks to the target; carrying none, the line
+        /// ends. At the target (stop 2) it puts all it carries of the good by the delivery rule, gives the rest of its load back to where it came
+        /// from (a returned load), and the line ends. After a line ends it walks to its next line's source, or home. A tired courier walks home
+        /// instead, its lines waiting.
+        /// </summary>
+        private void ArriveOnLine(CityState city, GameContent content, Courier courier, DeliveryLine line, long time, SettlementReportBuilder report)
+        {
+            int here = city.IndexOfBuilding(courier.ToStop == 1 ? line.SourceId : line.TargetId);
+            Building building = city.Buildings[here];
+            if (courier.ToStop == 1)
+            {
+                Building station = city.Buildings[city.IndexOfBuilding(courier.StationId)];
+                long carryLimit = CityQueries.DefinitionOf(content, station.TypeId).GetLevel(station.Level).CarryLimit;
+                long room = Math.Max(0, checked(carryLimit - courier.Carried));
+                long wanted = Math.Max(0, checked(line.Quantity - courier.CarriedOf(line.Item)));
+                long quantity = Math.Min(Math.Min(wanted, building.GetStock(line.Item)), room);
+                if (quantity > 0)
+                {
+                    building.TakeFromStore(line.Item, quantity);
+                    courier.Load(line.Item, building.Id, quantity);
+                }
+
+                if (courier.CarriedOf(line.Item) > 0)
+                {
+                    if (courier.Stamina < 1)
+                    {
+                        WalkHome(city, courier, here, time);
+                    }
+                    else
+                    {
+                        WalkTo(city, courier, here, line.TargetId, 2, time);
+                    }
+
+                    return;
+                }
+            }
+            else
+            {
+                long carried = courier.CarriedOf(line.Item);
+                if (carried > 0 && !Put(city, content, courier, line.Item, carried, here, time, report))
+                {
+                    return;
+                }
+
+                CourierRules.GiveLoadBack(city, courier);
+            }
+
+            // The line ended: the next one, or home.
+            city.RemoveLineAt(city.FirstLineIndex(courier.StationId, courier.Slot));
+            if (courier.Stamina >= 1 && city.TryGetFirstLine(courier.StationId, courier.Slot, out DeliveryLine? next))
+            {
+                WalkTo(city, courier, here, next.SourceId, 1, time);
+            }
+            else
+            {
+                WalkHome(city, courier, here, time);
+            }
+        }
+
+        /// <summary>Sends a courier from the building at <paramref name="fromIndex"/> home to its station, from now.</summary>
+        private void WalkHome(CityState city, Courier courier, int fromIndex, long time)
+        {
+            long home = checked(time + _walks.Seconds(fromIndex, city.IndexOfBuilding(courier.StationId)));
+            courier.ReturnHome(time, home);
+            _arrivals.Set(Key(city, courier), home);
+        }
+
+        /// <summary>Sends a courier from the building at <paramref name="fromIndex"/> to building <paramref name="toId"/> as stop <paramref name="toStop"/> of its line, from now.</summary>
+        private void WalkTo(CityState city, Courier courier, int fromIndex, int toId, int toStop, long time)
+        {
+            long arrivesAt = checked(time + _walks.Seconds(fromIndex, city.IndexOfBuilding(toId)));
+            courier.WalkTo(toStop, time, arrivesAt);
+            _arrivals.Set(Key(city, courier), arrivesAt);
         }
 
         /// <summary>Sends a courier from the building at <paramref name="fromIndex"/> to stop <paramref name="toStop"/> of its route, from now.</summary>

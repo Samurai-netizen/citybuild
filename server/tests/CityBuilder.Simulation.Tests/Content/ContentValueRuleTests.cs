@@ -23,6 +23,7 @@ public sealed class ContentValueRuleTests
         ["rules.tripCarryLimit"] = data => RulesOf(data).TripCarryLimit = 0,
         ["rules.maxRouteStops"] = data => RulesOf(data).MaxRouteStops = 0,
         ["rules.maxStopActions"] = data => RulesOf(data).MaxStopActions = -1,
+        ["rules.maxDeliveryLines"] = data => RulesOf(data).MaxDeliveryLines = 0,
         ["buildings[depot].levels[1].storage.wood"] = data => Level(data, "depot", 1).Storage!["wood"] = 0,
         ["buildings[hut].maxPerCity"] = data => Building(data, "hut").MaxPerCity = 0,
         ["amountPresets[half].percent"] = data => Preset(data, "half").Percent = 0,
@@ -65,6 +66,7 @@ public sealed class ContentValueRuleTests
         ["research[better_saws].effects[#0].permille"] = data => Research(data, "better_saws").Effects![0]!.Permille = 1001,
         ["rules.maxRouteStops"] = data => RulesOf(data).MaxRouteStops = 17,
         ["rules.maxStopActions"] = data => RulesOf(data).MaxStopActions = 9,
+        ["rules.maxDeliveryLines"] = data => RulesOf(data).MaxDeliveryLines = 101,
         ["amountPresets[all].percent"] = data => Preset(data, "all").Percent = 101,
         ["research[boots].effects[#0].permille"] = data => Research(data, "boots").Effects![0]!.Permille = 1001,
     };

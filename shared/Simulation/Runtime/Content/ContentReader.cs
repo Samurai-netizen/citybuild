@@ -92,7 +92,7 @@ namespace CityBuilder.Simulation.Content
             return null;
         }
 
-        /// <summary>Reads the global rules; every value is required.</summary>
+        /// <summary>Reads the global rules; every value is required but the route building.</summary>
         private GameRules ReadRules(GameRulesData data, string path) =>
             new GameRules(
                 _fields.RequireInt(data.GridWidth, path + ".gridWidth"),
@@ -107,7 +107,10 @@ namespace CityBuilder.Simulation.Content
                 _fields.RequireInt(data.MaxWalkBonusPermille, path + ".maxWalkBonusPermille"),
                 _fields.RequireLong(data.TripCarryLimit, path + ".tripCarryLimit"),
                 _fields.RequireInt(data.MaxRouteStops, path + ".maxRouteStops"),
-                _fields.RequireInt(data.MaxStopActions, path + ".maxStopActions"));
+                _fields.RequireInt(data.MaxStopActions, path + ".maxStopActions"),
+                _fields.RequireInt(data.MaxDeliveryLines, path + ".maxDeliveryLines"),
+                data.RouteBuilding is null ? (BuildingTypeId?)null
+                    : _fields.RequireId(data.RouteBuilding, path + ".routeBuilding", text => new BuildingTypeId(text)));
 
         /// <summary>Reads the starting city: its era number and stock (the map may be empty).</summary>
         private StartingCityDefinition ReadStartingCity(StartingCityData data, string path) =>

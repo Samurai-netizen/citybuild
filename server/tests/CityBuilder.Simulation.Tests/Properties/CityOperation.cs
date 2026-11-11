@@ -139,6 +139,21 @@ internal abstract record CityOperation
             : string.Create(CultureInfo.InvariantCulture, $"Advance {Seconds}");
     }
 
+    /// <summary>Cancels one delivery line of a courier, or all its lines and its route (<c>04</c> section 8, CR-0008 D18).</summary>
+    /// <param name="StationId">The courier station's id.</param>
+    /// <param name="Slot">The courier's slot.</param>
+    /// <param name="LineId">The line to cancel, or null for all.</param>
+    public sealed record CancelDelivery(int StationId, int Slot, int? LineId) : Command
+    {
+        /// <inheritdoc/>
+        public override MutationResult Mutate(CityState city, GameContent content) => CourierRules.CancelDelivery(city, content, StationId, Slot, LineId);
+
+        /// <summary>The text a failing property prints, for example <c>CancelDelivery 4/1 line 7</c> or <c>CancelDelivery 4/1 all</c>.</summary>
+        public override string ToString() => LineId is { } line
+            ? string.Create(CultureInfo.InvariantCulture, $"CancelDelivery {StationId}/{Slot} line {line}")
+            : string.Create(CultureInfo.InvariantCulture, $"CancelDelivery {StationId}/{Slot} all");
+    }
+
     /// <summary>Re-energizes every courier of the city (<c>04</c> section 8).</summary>
     public sealed record ReenergizeCouriers : Command
     {

@@ -43,5 +43,11 @@ namespace CityBuilder.Simulation.Content.Data
 
         /// <summary>Required. The most actions one stop of a route may have, 1 to 8 (<c>04</c> section 19).</summary>
         public int? MaxStopActions { get; set; }
+
+        /// <summary>Required. The most delivery lines one courier may have queued, 1 to 100 (<c>04</c> section 18).</summary>
+        public int? MaxDeliveryLines { get; set; }
+
+        /// <summary>Optional. The building type that must be built before a courier may get a route (<c>04</c> section 19); absent: none.</summary>
+        public string? RouteBuilding { get; set; }
     }
 }

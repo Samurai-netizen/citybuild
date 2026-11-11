@@ -38,6 +38,7 @@ internal static class ContentFixture
             TripCarryLimit = 6,
             MaxRouteStops = 6,
             MaxStopActions = 3,
+            MaxDeliveryLines = 20,
         },
         Roads =
         [

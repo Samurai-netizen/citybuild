@@ -13,7 +13,8 @@
     "maxWalkBonusPermille": 500,
     "tripCarryLimit": 10,
     "maxRouteStops": 8,
-    "maxStopActions": 4
+    "maxStopActions": 4,
+    "maxDeliveryLines": 20
   },
   "roads": [
     { "level": 1, "name": "Path", "tileMillis": 2500, "cost": { "coins": 5 } }

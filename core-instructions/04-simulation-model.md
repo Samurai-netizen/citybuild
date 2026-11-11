@@ -40,7 +40,7 @@ full or its inputs run out (§6), and goods move only with walkers (§18, §19).
 
 ## 3. Workers and labor
 - Completed Houses provide workers (per level; an upgrading house those of its current level until the upgrade completes).
-  `free = provided − Σ assigned − workers on trips` (§18).
+  `free = provided − Σ assigned − workers on trips` (§18). Couriers are assigned workers: a delivery by courier uses no free worker.
 - Every producer and courier station level has `MaxWorkers`. `0 ≤ assigned ≤ MaxWorkers`. Placing a building never needs workers. The
   workers of a courier station are its couriers, one per worker (§19); they do no labor.
 - A recipe costs **labor** in worker-seconds per cycle. Effective labor =
@@ -126,8 +126,9 @@ once per advance and kept (§17).
 | PlaceRoads(tiles) | every tile in bounds (`OUT_OF_BOUNDS`), without a building or road (`TILE_OCCUPIED`), the coins of level 1 for every tile (`INSUFFICIENT_RESOURCE`) | pay, a level-1 road on every tile (§17) |
 | UpgradeRoads(tiles) | every tile has a road (`ROAD_NOT_FOUND`) below the last road level (`MAX_LEVEL`), the coins of every next level (`INSUFFICIENT_RESOURCE`) | pay, every road one level up |
 | RemoveRoads(tiles) | every tile has a road (`ROAD_NOT_FOUND`) | remove them; nothing is refunded |
-| StartTrip(source, target, item, amount) | both buildings exist (`BUILDING_NOT_FOUND`), item known (`UNKNOWN_ITEM`) and not the currency (`INVALID_ARGUMENT`), amount allowed (§19: `INVALID_ARGUMENT` for an unknown preset, `AMOUNT_MODE_LOCKED`), the target accepts the item (`ITEM_NOT_ACCEPTED`: its waiting project needs it or its store holds it), a free worker (`INSUFFICIENT_WORKERS`), the amount gives at least 1 (`NOTHING_TO_CARRY`) | take the goods from the source's store, the worker walks (§18) |
-| SetRoute(station, slot, stops) | station exists (`BUILDING_NOT_FOUND`) and is a courier station (`INVALID_ARGUMENT`), slot 1..MaxWorkers of its level, 0 or 2..`maxRouteStops` stops, 1..`maxStopActions` actions per stop, no two consecutive stops (last and first included) at one building (`INVALID_ROUTE`), every stop's building exists (`BUILDING_NOT_FOUND`), every item known (`UNKNOWN_ITEM`) and not the currency (`INVALID_ARGUMENT`), every amount allowed (as StartTrip) | replace the slot's route (0 stops clears it); the slot's courier, if any, returns its load and starts again from its station (§19) |
+| StartTrip(source, target, item, amount) | both buildings exist (`BUILDING_NOT_FOUND`), item known (`UNKNOWN_ITEM`) and not the currency (`INVALID_ARGUMENT`), amount allowed (§19: `INVALID_ARGUMENT` for an unknown preset, `AMOUNT_MODE_LOCKED`), the target accepts the item (`ITEM_NOT_ACCEPTED`: its waiting project needs it or its store holds it); with a built courier station a free courier (`NO_FREE_COURIER`), else a free worker (`INSUFFICIENT_WORKERS`); the amount gives at least 1 (`NOTHING_TO_CARRY`); the courier's queue has room for the lines (`DELIVERY_QUEUE_FULL`) | a courier gets the delivery's lines, or a worker takes the first load and walks (§18) |
+| SetRoute(station, slot, stops) | station exists (`BUILDING_NOT_FOUND`) and is a courier station (`INVALID_ARGUMENT`), slot 1..MaxWorkers of its level, 0 or 2..`maxRouteStops` stops, 1..`maxStopActions` actions per stop, no two consecutive stops (last and first included) at one building (`INVALID_ROUTE`), every stop's building exists (`BUILDING_NOT_FOUND`), every item known (`UNKNOWN_ITEM`) and not the currency (`INVALID_ARGUMENT`), every amount allowed (as StartTrip); with 1 or more stops: a built `routeBuilding` (`ROUTES_LOCKED`) and no delivery lines on the slot's courier (`COURIER_BUSY`) | replace the slot's route (0 stops clears it); the slot's courier, if any, returns its load and starts again from its station (§19) |
+| CancelDelivery(station, slot, line or all) | station exists (`BUILDING_NOT_FOUND`) and is a courier station (`INVALID_ARGUMENT`), the slot has a courier (`INVALID_ARGUMENT`), the line is one of its lines (`DELIVERY_NOT_FOUND`); "all" always applies | remove the line, or every line and the route; a courier whose running line or route went returns its load and starts again from its station (§19) |
 | ReenergizeCouriers | — | every courier's stamina is its station level's; resting couriers are at their station again, ready to leave (§19) |
 
 **Starting an upgrade** (at once, or when its last good arrives): a running cycle (frozen or not) ends without output and its inputs go back
@@ -163,6 +164,8 @@ frozen cycle counts as running (its inputs are refunded). Workers on a house, a 
 12. A walk crosses another building only when every path does, and then through as few buildings as possible (§17).
 13. Locked buildings are never placed, research prerequisites are always respected, and a locked amount mode is never used.
 14. No stamina is spent before `absentFrom`; a load never exceeds its carry limit.
+15. A courier has a route or delivery lines, never both; at most `maxDeliveryLines` lines each; every line names its courier's station and
+    slot, two different buildings and a quantity of 1..that station level's carry limit; a removed courier leaves no lines (§18).
 
 ## 11. Settlement report
 Returned with every settled snapshot: `elapsedSeconds` (the simulated seconds, ≥ 0); `produced{item:qty}` (outputs of completed cycles, the
@@ -216,8 +219,8 @@ quantities, durations, milliseconds and labor ≤ 10¹²; grid size and worker c
     at level 1, to upgrade to it above), the currency only (CR-0008 D6). `crossingSpeedPermille` 1..1000.
 12. **The shortest possible walk** (one step between adjacent buildings, every walk bonus applied, §17) takes ≥ `MinWalkSeconds`;
     Σ walk bonuses ≤ `MaxWalkBonusPermille` (≤ 900).
-13. **Routes and amounts:** 1..8 amount presets with unique ids and a percentage 1..100; `tripCarryLimit` ≥ 1; an `UnlockAmountMode` names
-    `percent` or `exact`.
+13. **Routes and amounts:** 1..8 amount presets with unique ids and a percentage 1..100; `tripCarryLimit` ≥ 1; `maxDeliveryLines` 1..100;
+    `routeBuilding`, when given, names a known building type (without it routes need no building); an `UnlockAmountMode` names `percent` or `exact`.
 
 ## 15. Display helpers (not authority)
 `shared/Simulation/Runtime/Display/` holds pure estimates for the player's screens. The server never calls them, and nothing they return
@@ -264,25 +267,43 @@ is sent or stored. All values are integers, rounded down: seconds, permille (0..
   the end, then choosing from the start the first direction that stays on a best path). Every building can be reached.
 - A walk keeps the time it started with; the map only changes between advances, and a change applies from the next walk.
 
-## 18. Trips (CR-0008)
-- `StartTrip` (§8) takes `q` = the amount (§19) of the source store's stock, at most `tripCarryLimit`, out of the store at once, and
-  gives the trip the next trip id. A free worker walks it to the target by §17 (it counts as busy, §3); trips never tire.
-- At arrival the goods are delivered (§16); what doesn't fit goes back into the source's store at that second, even above its limit (a
-  **returned load**), and the worker is free again. A trip keeps its source, target, item, quantity, departure and arrival.
+## 18. Deliveries and trips (CR-0008, amendment 1: D14–D21)
+- `StartTrip` (§8) counts `Q` = the amount (§19) of the source store's stock **at the send**, at most the stock. Who carries it:
+  - **A courier**, when the city has a courier station that is not `Constructing`: the free couriers are those without a route (D19) whose
+    station is not `Constructing`; the engine picks the one with the fewest lines, then the shortest walk from its station to the source,
+    then the lowest station id and slot (D17). `Q` becomes `ceil(Q / c)` **lines** in order, `c` = that station level's `carryLimit`, each of
+    `c` but the last (the rest); each line gets the next line id (`NextLineId`, never reused). A courier's lines, at most
+    `maxDeliveryLines`, are its queue; nothing leaves the store at the send.
+  - **A worker**, only while no courier station is built: a free worker (§3) takes `min(Q, tripCarryLimit)` out of the store at once and
+    walks to the target; the trip remembers the rest `Remaining = Q − taken` (D21) and gets the next trip id.
+- **A trip** (a worker's delivery) walks by §17 and never tires. At the target the load is delivered (§16); what doesn't fit goes back into
+  the source's store at that second, even above its limit (a **returned load**). With `Remaining > 0` the worker walks back to the source
+  (`ToSource`), takes `min(Remaining, stock, tripCarryLimit)` there (none: the trip ends), lowers `Remaining` and walks to the target again;
+  after the last put the trip ends and the worker is free. A trip keeps its source, target and item; its load, rest, leg, departure and
+  arrival change at each end of a leg. A trip can't be cancelled in M0 (D18).
+- **A courier's lines** run as §19 describes; CancelDelivery (§8) removes one line or, with "all", every line and the route.
 
 ## 19. Couriers, routes and amounts (CR-0008)
 - A **courier station**'s level sets `MaxWorkers` (couriers), `carryLimit` (all goods together) and `staminaSeconds`. Its workers are
-  couriers in slots 1..assigned; adding workers adds couriers at the station with full stamina; removing them removes the highest slots.
+  couriers in slots 1..assigned; adding workers adds couriers at the station with full stamina; removing them removes the highest slots
+  (with their delivery lines; their loads go back).
 - A **route** belongs to a slot: 2..`maxRouteStops` stops in order, each a building and 1..`maxStopActions` actions (take or put, a good,
   an amount). Two consecutive stops (the last and the first included) are at different buildings.
-- **Courier states:** `AtStation` (ready, or without a route) · `Walking` to stop `i` · `Returning` home · `Resting` (no stamina). A courier
-  `AtStation` with a route and stamina > 0, whose station is neither constructing nor upgrading, leaves in step (5) of §6 for stop 1. At an
+- **Routes need the `routeBuilding`** (content: the Scriptorium; none named: no gate) built, i.e. present and not `Constructing` (D15); a courier has a route or
+  delivery lines, never both (D19).
+- **Courier states:** `AtStation` (ready, or without work) · `Walking` to stop `i` (on lines: `1` = the first line's source, `2` = its
+  target) · `Returning` home · `Resting` (no stamina). A courier `AtStation` with a route or a line and stamina > 0, whose station is
+  neither constructing nor upgrading, leaves in step (5) of §6 for stop 1.
+- **On lines** (D16): at the first line's source it takes `min(quantity − carried of the good, stock, free carry room)` and walks to the
+  target; if it carries none of the good, the line ends there. At the target it puts all it carries of the good (§16), what doesn't fit
+  goes back to the stores it came from at once (a returned load), and the line ends. After a line ends it walks to the next line's source,
+  or home when none is left (`Returning`); arrivals spend stamina and a tired courier walks home as on a route, its lines waiting. At an
   arrival at stop `i` it spends stamina (§2), runs the stop's actions in order, then walks to stop `i+1` (after the last: stop 1); if its
   stamina reached 0 it walks home instead (`Returning`), and on arrival rests, or stands `AtStation` if it was re-energized meanwhile.
 - **Take:** from the building's store, the amount of its stock, at most the stock and the free carry room. **Put:** the amount of what the
   courier carries of that good, delivered by §16; the rest stays on the courier. A courier never waits: it does what it can and walks on.
 - **Load:** every carried quantity remembers the building it came from. When a courier stops working (its worker is removed, its route is
-  replaced, its station starts an upgrade), each quantity goes back into the store it came from at once, even above its limit (a returned
+  replaced, its running line or route is cancelled, its station starts an upgrade), each quantity goes back into the store it came from at once, even above its limit (a returned
   load), and the courier stands `AtStation` (one without stamina, resting or walking home tired, rests). Otherwise a resting courier
   keeps its load.
 - **Amounts:** a **preset** (content: All 100 %, Half 50 %, Quarter 25 %) is always allowed; **percent** (1..100) and **exact** (≥ 1) only

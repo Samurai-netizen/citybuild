@@ -27,6 +27,8 @@ namespace CityBuilder.Simulation.State
         private readonly List<Courier> _couriers;
         /// <summary>The routes, sorted by (station, slot), each pair once; every stop at a building of the city.</summary>
         private readonly List<Route> _routes;
+        /// <summary>The couriers' delivery lines, sorted by (station, slot, id): each courier's queue in the order it runs it.</summary>
+        private readonly List<DeliveryLine> _lines;
 
         /// <summary>
         /// Restores a city with every value, for example from the database. The city takes the building objects over: the caller must not keep
@@ -48,6 +50,11 @@ namespace CityBuilder.Simulation.State
         /// content (invariant 9, the property tests).
         /// </param>
         /// <param name="routes">The routes, in any order: each (station, slot) once, every stop at a building of the city; null for none.</param>
+        /// <param name="deliveryLines">
+        /// The couriers' delivery lines, in any order: unique ids below <paramref name="nextLineId"/>, each of a courier of the city that has
+        /// no route, between buildings of the city; null for none.
+        /// </param>
+        /// <param name="nextLineId">The id the next delivery line gets, above every line's id, at least 1.</param>
         /// <exception cref="ArgumentNullException">A list or a building is null.</exception>
         /// <exception cref="ArgumentException">The values don't form a valid city; the message says which rule they break.</exception>
         public CityState(
@@ -62,11 +69,13 @@ namespace CityBuilder.Simulation.State
             IEnumerable<Trip>? trips = null,
             int nextTripId = 1,
             IEnumerable<Courier>? couriers = null,
-            IEnumerable<Route>? routes = null)
+            IEnumerable<Route>? routes = null,
+            IEnumerable<DeliveryLine>? deliveryLines = null,
+            int nextLineId = 1)
         {
-            if (clock < 0 || era < 1 || nextBuildingId < 1 || purse < 0 || nextTripId < 1)
+            if (clock < 0 || era < 1 || nextBuildingId < 1 || purse < 0 || nextTripId < 1 || nextLineId < 1)
             {
-                throw new ArgumentException("The clock and the purse must not be negative, and the era and the next building and trip ids must be at least 1.");
+                throw new ArgumentException("The clock and the purse must not be negative, and the era and the next building, trip and line ids must be at least 1.");
             }
 
             Clock = clock;
@@ -99,6 +108,19 @@ namespace CityBuilder.Simulation.State
             }
 
             _couriers = SortedByStationAndSlot(couriers ?? Array.Empty<Courier>(), courier => (courier.StationId, courier.Slot), nameof(couriers));
+            NextLineId = nextLineId;
+            _lines = SortedLines(deliveryLines ?? Array.Empty<DeliveryLine>(), nextLineId);
+            foreach (DeliveryLine line in _lines)
+            {
+                RequireBuilding(line.SourceId, nameof(deliveryLines));
+                RequireBuilding(line.TargetId, nameof(deliveryLines));
+                if (FindCourier(line.StationId, line.Slot) < 0 || TryGetRoute(line.StationId, line.Slot, out _))
+                {
+                    throw new ArgumentException(
+                        FormattableString.Invariant($"Delivery line {line.Id} names courier {line.StationId}/{line.Slot}, which the city doesn't have or which has a route."), nameof(deliveryLines));
+                }
+            }
+
             foreach (Courier courier in _couriers)
             {
                 RequireBuilding(courier.StationId, nameof(couriers));
@@ -107,11 +129,12 @@ namespace CityBuilder.Simulation.State
                     RequireBuilding(load.FromId, nameof(couriers));
                 }
 
-                if (courier.State == CourierState.Walking
-                    && !(TryGetRoute(courier.StationId, courier.Slot, out Route? route) && courier.ToStop <= route.Stops.Count))
+                bool onRoute = TryGetRoute(courier.StationId, courier.Slot, out Route? route) && courier.ToStop <= route.Stops.Count;
+                bool onLines = route is null && FirstLineIndex(courier.StationId, courier.Slot) >= 0 && courier.ToStop <= 2;
+                if (courier.State == CourierState.Walking && !onRoute && !onLines)
                 {
                     throw new ArgumentException(
-                        FormattableString.Invariant($"Courier {courier.StationId}/{courier.Slot} walks to stop {courier.ToStop}, which its slot's route doesn't have."), nameof(couriers));
+                        FormattableString.Invariant($"Courier {courier.StationId}/{courier.Slot} walks to stop {courier.ToStop}, which neither its slot's route nor its first delivery line has."), nameof(couriers));
                 }
             }
 
@@ -121,6 +144,7 @@ namespace CityBuilder.Simulation.State
             Trips = _trips.AsReadOnly();
             Couriers = _couriers.AsReadOnly();
             Routes = _routes.AsReadOnly();
+            DeliveryLines = _lines.AsReadOnly();
         }
 
         /// <summary>The city clock in seconds: how much game time the city has lived. It never decreases.</summary>
@@ -161,6 +185,112 @@ namespace CityBuilder.Simulation.State
 
         /// <summary>The routes, by station id, then slot (<c>04</c> section 19).</summary>
         public IReadOnlyList<Route> Routes { get; }
+
+        /// <summary>
+        /// The couriers' delivery lines (<c>04</c> section 18), by station id, slot, then line id: each courier's queue in the order it runs it,
+        /// the first of a courier being the one it runs now.
+        /// </summary>
+        public IReadOnlyList<DeliveryLine> DeliveryLines { get; }
+
+        /// <summary>The id the next delivery line gets. Ids are never reused.</summary>
+        public int NextLineId { get; private set; }
+
+        /// <summary>How many delivery lines the courier of a station's slot has queued.</summary>
+        /// <param name="stationId">The courier station's building id.</param>
+        /// <param name="slot">The slot.</param>
+        /// <returns>The number of its lines, 0 for none.</returns>
+        public int CountLines(int stationId, int slot)
+        {
+            int first = FirstLineIndex(stationId, slot);
+            if (first < 0)
+            {
+                return 0;
+            }
+
+            int end = first;
+            while (end < _lines.Count && _lines[end].StationId == stationId && _lines[end].Slot == slot)
+            {
+                end++;
+            }
+
+            return end - first;
+        }
+
+        /// <summary>Looks up the line the courier of a station's slot runs now: the first of its queue.</summary>
+        /// <param name="stationId">The courier station's building id.</param>
+        /// <param name="slot">The slot.</param>
+        /// <param name="line">The line, when the courier has one.</param>
+        /// <returns>True when the courier has a line.</returns>
+        public bool TryGetFirstLine(int stationId, int slot, [NotNullWhen(true)] out DeliveryLine? line)
+        {
+            int index = FirstLineIndex(stationId, slot);
+            line = index >= 0 ? _lines[index] : null;
+            return line is not null;
+        }
+
+        /// <summary>The index in <see cref="DeliveryLines"/> of the first line of a station's slot, or -1 when it has none.</summary>
+        internal int FirstLineIndex(int stationId, int slot)
+        {
+            for (int index = 0; index < _lines.Count; index++)
+            {
+                DeliveryLine line = _lines[index];
+                if (line.StationId == stationId && line.Slot == slot)
+                {
+                    return index;
+                }
+
+                if (line.StationId > stationId || (line.StationId == stationId && line.Slot > slot))
+                {
+                    return -1;
+                }
+            }
+
+            return -1;
+        }
+
+        /// <summary>The index in <see cref="DeliveryLines"/> of the line with the id, or -1 when the city has none.</summary>
+        internal int IndexOfLine(int id)
+        {
+            for (int index = 0; index < _lines.Count; index++)
+            {
+                if (_lines[index].Id == id)
+                {
+                    return index;
+                }
+            }
+
+            return -1;
+        }
+
+        /// <summary>Adds a line with the next line id at the end of its courier's queue; the caller checks the courier and the queue limit.</summary>
+        internal DeliveryLine AddLine(int stationId, int slot, int sourceId, int targetId, ItemId item, long quantity)
+        {
+            var line = new DeliveryLine(NextLineId, stationId, slot, sourceId, targetId, item, quantity);
+            NextLineId = checked(NextLineId + 1);
+            // The new id is the highest, so the line goes after every line of a lower or equal (station, slot).
+            int at = 0;
+            while (at < _lines.Count
+                && (_lines[at].StationId < stationId || (_lines[at].StationId == stationId && _lines[at].Slot <= slot)))
+            {
+                at++;
+            }
+
+            _lines.Insert(at, line);
+            return line;
+        }
+
+        /// <summary>Removes the line at <paramref name="index"/> in <see cref="DeliveryLines"/>: it ended or was cancelled.</summary>
+        internal void RemoveLineAt(int index) => _lines.RemoveAt(index);
+
+        /// <summary>Removes every line of a station's slot.</summary>
+        internal void RemoveLinesOf(int stationId, int slot)
+        {
+            int first = FirstLineIndex(stationId, slot);
+            while (first >= 0 && first < _lines.Count && _lines[first].StationId == stationId && _lines[first].Slot == slot)
+            {
+                _lines.RemoveAt(first);
+            }
+        }
 
         /// <summary>Looks up the route of a station's slot.</summary>
         /// <param name="stationId">The courier station's building id.</param>
@@ -322,10 +452,13 @@ namespace CityBuilder.Simulation.State
         internal Building AddConstructionSite(BuildingTypeId typeId, int x, int y, IReadOnlyList<ItemQuantity> needs) =>
             Append(Building.StartConstructionSite(NextBuildingId, typeId, x, y, needs));
 
-        /// <summary>Starts a trip with the next trip id; ids only grow, so appending keeps the list sorted.</summary>
-        internal Trip AddTrip(int sourceId, int targetId, ItemId item, long quantity, long arrivesAt)
+        /// <summary>
+        /// Starts a trip with the next trip id, carrying its first load of <paramref name="quantity"/> with <paramref name="remaining"/> still in
+        /// the source for later loads; ids only grow, so appending keeps the list sorted.
+        /// </summary>
+        internal Trip AddTrip(int sourceId, int targetId, ItemId item, long quantity, long arrivesAt, long remaining = 0)
         {
-            var trip = new Trip(NextTripId, sourceId, targetId, item, quantity, Clock, arrivesAt);
+            var trip = new Trip(NextTripId, sourceId, targetId, item, quantity, Clock, arrivesAt, remaining);
             NextTripId = checked(NextTripId + 1);
             _trips.Add(trip);
             return trip;
@@ -583,6 +716,34 @@ namespace CityBuilder.Simulation.State
                 if (sorted[index].Id >= nextTripId || (index > 0 && sorted[index].Id == sorted[index - 1].Id))
                 {
                     throw new ArgumentException(FormattableString.Invariant($"Trip {sorted[index].Id}: listed twice or not below the next trip id {nextTripId}."), nameof(trips));
+                }
+            }
+
+            return sorted;
+        }
+
+        /// <summary>The restoring constructor's delivery lines, checked and sorted by (station, slot, id): none null, every id unique and below the next line id.</summary>
+        private static List<DeliveryLine> SortedLines(IEnumerable<DeliveryLine> lines, int nextLineId)
+        {
+            var sorted = new List<DeliveryLine>();
+            foreach (DeliveryLine line in lines)
+            {
+                sorted.Add(line ?? throw new ArgumentNullException(nameof(lines), "A delivery line in the list is null."));
+            }
+
+            sorted.Sort((left, right) => (left.StationId, left.Slot, left.Id).CompareTo((right.StationId, right.Slot, right.Id)));
+            var ids = new List<int>(sorted.Count);
+            for (int index = 0; index < sorted.Count; index++)
+            {
+                ids.Add(sorted[index].Id);
+            }
+
+            ids.Sort();
+            for (int index = 0; index < ids.Count; index++)
+            {
+                if (ids[index] >= nextLineId || (index > 0 && ids[index] == ids[index - 1]))
+                {
+                    throw new ArgumentException(FormattableString.Invariant($"Delivery line {ids[index]}: listed twice or not below the next line id {nextLineId}."), nameof(lines));
                 }
             }
 

@@ -45,6 +45,7 @@ public sealed class ContentReferenceRuleTests
     private static readonly Dictionary<string, Action<GameContentData>> _unknownReferences = new()
     {
         ["startingCity.era"] = data => data.StartingCity!.Era = 3,
+        ["rules.routeBuilding"] = data => data.Rules!.RouteBuilding = "library",
         ["items[wood].era"] = data => Item(data, "wood").Era = 7,
         ["buildings[hut].era"] = data => Building(data, "hut").Era = 0,
         ["research[warehouses].era"] = data => Research(data, "warehouses").Era = 3,

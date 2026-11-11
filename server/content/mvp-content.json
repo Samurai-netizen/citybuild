@@ -13,7 +13,9 @@
     "maxWalkBonusPermille": 500,
     "tripCarryLimit": 10,
     "maxRouteStops": 8,
-    "maxStopActions": 4
+    "maxStopActions": 4,
+    "maxDeliveryLines": 20,
+    "routeBuilding": "scriptorium"
   },
   "startingCity": {
     "era": 1,

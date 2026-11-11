@@ -25,6 +25,9 @@ namespace CityBuilder.Simulation.Content
         /// <summary>The API's limit on a stop's actions (<c>05</c>, OD-13): the content's own limit can't be larger.</summary>
         private const int _apiStopActions = 8;
 
+        /// <summary>The most delivery lines per courier the content may allow (<c>04</c> section 14 rule 13; the snapshot's list limit).</summary>
+        private const int _mostDeliveryLines = 100;
+
         /// <summary>The most amount presets the content may have (rule 13): the screens show them as one row of buttons.</summary>
         private const int _mostAmountPresets = 8;
 
@@ -74,6 +77,7 @@ namespace CityBuilder.Simulation.Content
             Positive(rules.TripCarryLimit, "rules.tripCarryLimit", errors);
             InRange(rules.MaxRouteStops, _leastRouteStops, _apiRouteStops, "rules.maxRouteStops", errors);
             InRange(rules.MaxStopActions, 1, _apiStopActions, "rules.maxStopActions", errors);
+            InRange(rules.MaxDeliveryLines, 1, _mostDeliveryLines, "rules.maxDeliveryLines", errors);
         }
 
         /// <summary>

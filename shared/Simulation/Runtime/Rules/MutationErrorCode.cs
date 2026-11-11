@@ -89,5 +89,23 @@ namespace CityBuilder.Simulation.Rules
         /// than the most actions, or two consecutive stops (the last and the first included) at one building (<c>04</c> section 8).
         /// </summary>
         InvalidRoute,
+
+        /// <summary>
+        /// <c>NO_FREE_COURIER</c>: the city has a built courier station, but every courier has a route, so none can take a delivery
+        /// (<c>04</c> section 18, CR-0008 D14).
+        /// </summary>
+        NoFreeCourier,
+
+        /// <summary><c>DELIVERY_QUEUE_FULL</c>: the delivery's lines don't fit in the chosen courier's queue (<c>maxDeliveryLines</c>, CR-0008 D17).</summary>
+        DeliveryQueueFull,
+
+        /// <summary><c>ROUTES_LOCKED</c>: a route before the city has built the content's route building (the Scriptorium, CR-0008 D15).</summary>
+        RoutesLocked,
+
+        /// <summary><c>COURIER_BUSY</c>: a route for a courier that still has delivery lines; a courier has one or the other (CR-0008 D19).</summary>
+        CourierBusy,
+
+        /// <summary><c>DELIVERY_NOT_FOUND</c>: the delivery line to cancel is not one of that courier's lines (<c>04</c> section 8).</summary>
+        DeliveryNotFound,
     }
 }
