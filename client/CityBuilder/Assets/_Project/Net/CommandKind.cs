@@ -26,5 +26,8 @@ namespace CityBuilder.Client.Net
 
         /// <summary><c>remove-roads</c>: remove one or more road tiles (CR-0008).</summary>
         RemoveRoads,
+
+        /// <summary><c>set-route</c>: set or clear a courier slot's route (CR-0008).</summary>
+        SetRoute,
     }
 }

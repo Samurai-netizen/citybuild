@@ -17,6 +17,9 @@ namespace CityBuilder.Client.Net
         /// <summary>An empty road tile list shared by non-road intents.</summary>
         private static readonly IReadOnlyList<RoadTileRequestDto> EmptyTiles = Array.Empty<RoadTileRequestDto>();
 
+        /// <summary>An empty stop list shared by non-route intents.</summary>
+        private static readonly IReadOnlyList<RouteStopRequestDto> EmptyStops = Array.Empty<RouteStopRequestDto>();
+
         /// <summary>Creates an intent; the factory methods are the way in, so each kind holds only the members it uses.</summary>
         private CommandIntent(
             CommandKind kind,
@@ -27,7 +30,9 @@ namespace CityBuilder.Client.Net
             int workers,
             int targetId = 0,
             string? amount = null,
-            IReadOnlyList<RoadTileRequestDto>? tiles = null)
+            IReadOnlyList<RoadTileRequestDto>? tiles = null,
+            int slot = 0,
+            IReadOnlyList<RouteStopRequestDto>? stops = null)
         {
             Kind = kind;
             ContentId = contentId;
@@ -38,6 +43,8 @@ namespace CityBuilder.Client.Net
             TargetId = targetId;
             Amount = amount;
             Tiles = tiles ?? EmptyTiles;
+            Slot = slot;
+            Stops = stops ?? EmptyStops;
         }
 
         /// <summary>Which command it is.</summary>
@@ -66,6 +73,12 @@ namespace CityBuilder.Client.Net
 
         /// <summary>The tiles of a <c>place-roads</c>, <c>upgrade-roads</c> or <c>remove-roads</c> intent; empty for the others.</summary>
         public IReadOnlyList<RoadTileRequestDto> Tiles { get; }
+
+        /// <summary>The courier slot of a set-route intent; 0 for the others.</summary>
+        public int Slot { get; }
+
+        /// <summary>The stops of a set-route intent (empty clears the route); empty for the others.</summary>
+        public IReadOnlyList<RouteStopRequestDto> Stops { get; }
 
         /// <summary>Build <paramref name="buildingTypeId"/> on the tile (<paramref name="x"/>, <paramref name="y"/>).</summary>
         /// <exception cref="ArgumentException">The type id is null or blank.</exception>
@@ -129,12 +142,19 @@ namespace CityBuilder.Client.Net
             return new CommandIntent(CommandKind.RemoveRoads, null, 0, 0, 0, 0, tiles: RequireTiles(tiles, nameof(tiles)));
         }
 
+        /// <summary>Set the route of courier <paramref name="slot"/> at station <paramref name="stationId"/> to <paramref name="stops"/>; none clears it (CR-0008).</summary>
+        /// <exception cref="ArgumentException"><paramref name="stops"/> is null or has a null entry.</exception>
+        public static CommandIntent SetRoute(int stationId, int slot, IReadOnlyList<RouteStopRequestDto> stops)
+        {
+            return new CommandIntent(CommandKind.SetRoute, null, 0, 0, stationId, 0, slot: slot, stops: RequireStops(stops, nameof(stops)));
+        }
+
         /// <inheritdoc/>
         public bool Equals(CommandIntent? other)
         {
             return other != null && Kind == other.Kind && ContentId == other.ContentId && X == other.X && Y == other.Y
                 && BuildingId == other.BuildingId && Workers == other.Workers && TargetId == other.TargetId && Amount == other.Amount
-                && SameTiles(Tiles, other.Tiles);
+                && SameTiles(Tiles, other.Tiles) && Slot == other.Slot && SameStops(Stops, other.Stops);
         }
 
         /// <inheritdoc/>
@@ -152,7 +172,7 @@ namespace CityBuilder.Client.Net
                 tilesHash = HashCode.Combine(tilesHash, Tiles[i]);
             }
 
-            return HashCode.Combine(Kind, ContentId, X, Y, BuildingId, Workers, TargetId, HashCode.Combine(Amount, tilesHash));
+            return HashCode.Combine(Kind, ContentId, X, Y, BuildingId, Workers, TargetId, HashCode.Combine(Amount, tilesHash, Slot, Stops.Count));
         }
 
         /// <summary>A one-line form for logs, for example <c>AssignWorkers(building 3, workers 2)</c>.</summary>
@@ -174,6 +194,8 @@ namespace CityBuilder.Client.Net
                     return "UpgradeRoads(" + FormatTiles(Tiles) + ")";
                 case CommandKind.RemoveRoads:
                     return "RemoveRoads(" + FormatTiles(Tiles) + ")";
+                case CommandKind.SetRoute:
+                    return "SetRoute(station " + BuildingId + ", slot " + Slot + ", " + Stops.Count + " stops)";
                 default:
                     return "StartResearch(" + ContentId + ")";
             }
@@ -198,6 +220,8 @@ namespace CityBuilder.Client.Net
                     return api.UpgradeRoadsAsync(new RoadTilesRequestDto(requestId, Tiles), cancellationToken);
                 case CommandKind.RemoveRoads:
                     return api.RemoveRoadsAsync(new RoadTilesRequestDto(requestId, Tiles), cancellationToken);
+                case CommandKind.SetRoute:
+                    return api.SetRouteAsync(new SetRouteRequestDto(requestId, BuildingId, Slot, Stops), cancellationToken);
                 default:
                     return api.StartResearchAsync(new StartResearchRequestDto(requestId, ContentId!), cancellationToken);
             }
@@ -229,6 +253,42 @@ namespace CityBuilder.Client.Net
             }
 
             return copy;
+        }
+
+        /// <summary>Copies a stop list and refuses null or null entries; an empty list is valid (it clears the route).</summary>
+        private static IReadOnlyList<RouteStopRequestDto> RequireStops(IReadOnlyList<RouteStopRequestDto>? stops, string name)
+        {
+            if (stops == null)
+            {
+                throw new ArgumentException("The stop list must not be null.", name);
+            }
+
+            var copy = new RouteStopRequestDto[stops.Count];
+            for (int i = 0; i < stops.Count; i++)
+            {
+                copy[i] = stops[i] ?? throw new ArgumentException("A route stop must not be null.", name);
+            }
+
+            return copy;
+        }
+
+        /// <summary>Whether two stop lists have equal stops in the same order.</summary>
+        private static bool SameStops(IReadOnlyList<RouteStopRequestDto> left, IReadOnlyList<RouteStopRequestDto> right)
+        {
+            if (left.Count != right.Count)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < left.Count; i++)
+            {
+                if (!left[i].Equals(right[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         /// <summary>Whether two tile lists have the same tiles in the same order.</summary>

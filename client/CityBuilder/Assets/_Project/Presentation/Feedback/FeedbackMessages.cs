@@ -182,6 +182,8 @@ namespace CityBuilder.Client.Presentation.Feedback
                     return "Road upgraded";
                 case CommandKind.RemoveRoads:
                     return "Road removed";
+                case CommandKind.SetRoute:
+                    return "Route saved";
                 default:
                     return "Done";
             }
