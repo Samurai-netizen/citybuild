@@ -67,6 +67,12 @@ namespace CityBuilder.Client.Presentation.Inspector
         /// <summary>The name of the running trips label (CR-0008).</summary>
         public const string TripsName = "inspector-trips";
 
+        /// <summary>The name of the courier lines label of a courier station (CR-0008).</summary>
+        public const string CouriersName = "inspector-couriers";
+
+        /// <summary>The name of the Edit routes button of a courier station (CR-0008).</summary>
+        public const string EditRoutesName = "inspector-edit-routes";
+
         /// <summary>The name of the Send trip button (CR-0008).</summary>
         public const string SendTripName = "inspector-send-trip";
 
@@ -132,6 +138,9 @@ namespace CityBuilder.Client.Presentation.Inspector
 
         /// <summary>Raised when the player presses Send trip (only while the model allows it; CR-0008).</summary>
         public event Action? SendTripRequested;
+
+        /// <summary>Raised when the player presses Edit routes (only on a courier station with couriers; CR-0008).</summary>
+        public event Action? EditRoutesRequested;
 
         /// <summary>Raised when the player presses the close button.</summary>
         public event Action? CloseRequested;
@@ -232,6 +241,15 @@ namespace CityBuilder.Client.Presentation.Inspector
             }
         }
 
+        /// <summary>The player pressed Edit routes: what a finger on the button does, as a call. Does nothing unless the model shows it (CR-0008).</summary>
+        public void PressEditRoutes()
+        {
+            if (_model != null && _model.HasRouteEditor)
+            {
+                EditRoutesRequested?.Invoke();
+            }
+        }
+
         /// <summary>The player pressed the close button: what a finger on the button does, as a call.</summary>
         public void PressClose()
         {
@@ -263,6 +281,7 @@ namespace CityBuilder.Client.Presentation.Inspector
             elements.Plus.clicked += PressPlus;
             elements.Upgrade.clicked += PressUpgrade;
             elements.SendTrip.clicked += PressSendTrip;
+            elements.EditRoutes.clicked += PressEditRoutes;
             elements.Close.clicked += PressClose;
             root.RegisterCallback<GeometryChangedEvent>(_ => UiRoot.PadBySafeArea(root, BasePadding));
             Refresh();
@@ -295,6 +314,8 @@ namespace CityBuilder.Client.Presentation.Inspector
             SetLine(e.Store, model.StoreText);
             SetLine(e.Needs, model.NeedsText);
             SetLine(e.Trips, model.TripsText);
+            SetLine(e.Couriers, model.CouriersText);
+            e.EditRoutes.style.display = model.HasRouteEditor ? DisplayStyle.Flex : DisplayStyle.None;
             e.SendTrip.style.display = model.HasSendTrip ? DisplayStyle.Flex : DisplayStyle.None;
             e.SendTrip.SetEnabled(model.CanSendTrip);
             e.Stepper.style.display = model.HasStepper ? DisplayStyle.Flex : DisplayStyle.None;
@@ -338,11 +359,11 @@ namespace CityBuilder.Client.Presentation.Inspector
 
             /// <summary>The labels the inspector writes.</summary>
             public Label Name = null!, Level = null!, Status = null!, Time = null!, Recipe = null!, Rates = null!, Store = null!, Needs = null!,
-                Trips = null!, Workers = null!, Preview = null!, StepperNote = null!, UpgradeTitle = null!, UpgradeCost = null!, UpgradeTime = null!,
+                Trips = null!, Couriers = null!, Workers = null!, Preview = null!, StepperNote = null!, UpgradeTitle = null!, UpgradeCost = null!, UpgradeTime = null!,
                 UpgradeGain = null!, UpgradeNote = null!;
 
             /// <summary>The buttons.</summary>
-            public Button Minus = null!, Plus = null!, Upgrade = null!, SendTrip = null!, Close = null!;
+            public Button Minus = null!, Plus = null!, Upgrade = null!, SendTrip = null!, EditRoutes = null!, Close = null!;
 
             /// <summary>Finds every element in <paramref name="root"/>; null when one is missing.</summary>
             public static Elements? Find(VisualElement root)
@@ -361,6 +382,7 @@ namespace CityBuilder.Client.Presentation.Inspector
                     Store = root.Q<Label>(StoreName),
                     Needs = root.Q<Label>(NeedsName),
                     Trips = root.Q<Label>(TripsName),
+                    Couriers = root.Q<Label>(CouriersName),
                     Workers = root.Q<Label>(WorkersName),
                     Preview = root.Q<Label>(PreviewName),
                     StepperNote = root.Q<Label>(StepperNoteName),
@@ -373,14 +395,15 @@ namespace CityBuilder.Client.Presentation.Inspector
                     Plus = root.Q<Button>(PlusName),
                     Upgrade = root.Q<Button>(UpgradeName),
                     SendTrip = root.Q<Button>(SendTripName),
+                    EditRoutes = root.Q<Button>(EditRoutesName),
                     Close = root.Q<Button>(CloseName),
                 };
                 bool complete = found.Panel != null && found.Icon != null && found.Stepper != null && found.Name != null && found.Level != null
                     && found.Status != null && found.Time != null && found.Recipe != null && found.Rates != null && found.Store != null
-                    && found.Needs != null && found.Trips != null && found.Workers != null && found.Preview != null && found.StepperNote != null
+                    && found.Needs != null && found.Trips != null && found.Couriers != null && found.Workers != null && found.Preview != null && found.StepperNote != null
                     && found.UpgradeTitle != null && found.UpgradeCost != null && found.UpgradeTime != null && found.UpgradeGain != null
                     && found.UpgradeNote != null && found.Minus != null && found.Plus != null && found.Upgrade != null
-                    && found.SendTrip != null && found.Close != null;
+                    && found.SendTrip != null && found.EditRoutes != null && found.Close != null;
                 return complete ? found : null;
             }
         }

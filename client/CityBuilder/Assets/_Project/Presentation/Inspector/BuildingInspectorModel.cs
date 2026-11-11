@@ -65,6 +65,12 @@ namespace CityBuilder.Client.Presentation.Inspector
         /// <summary>Whether the Send trip button is shown: the building is built and its store holds at least one good (CR-0008).</summary>
         public bool HasSendTrip { get; private set; }
 
+        /// <summary>One line per courier of a courier station: slot, state, stamina and route summary (CR-0008); empty for other buildings.</summary>
+        public string CouriersText { get; private set; } = string.Empty;
+
+        /// <summary>Whether the Edit routes button shows: a built courier station with at least one courier (CR-0008).</summary>
+        public bool HasRouteEditor { get; private set; }
+
         /// <summary>Whether the Send trip button works: <see cref="HasSendTrip"/> and commands are allowed (CR-0008).</summary>
         public bool CanSendTrip { get; private set; }
 
@@ -163,6 +169,9 @@ namespace CityBuilder.Client.Presentation.Inspector
                 StoreText = StoreTextFor(content, city, building),
                 NeedsText = NeedsTextFor(content, city, building, definition),
                 TripsText = TripsTextFor(content, city, building.Id),
+                CouriersText = CouriersTextFor(content, city, building, level),
+                HasRouteEditor = definition.Kind == BuildingKind.CourierStation && building.Phase != BuildingPhase.Constructing
+                    && building.AssignedWorkers > 0,
                 HasSendTrip = hasGoods,
                 CanSendTrip = hasGoods && availability.IsAllowed,
                 IsWorkersPending = pendingTarget.HasValue,
@@ -188,6 +197,8 @@ namespace CityBuilder.Client.Presentation.Inspector
                 && StoreText == other.StoreText
                 && NeedsText == other.NeedsText
                 && TripsText == other.TripsText
+                && CouriersText == other.CouriersText
+                && HasRouteEditor == other.HasRouteEditor
                 && HasSendTrip == other.HasSendTrip
                 && CanSendTrip == other.CanSendTrip
                 && HasStepper == other.HasStepper
@@ -501,6 +512,75 @@ namespace CityBuilder.Client.Presentation.Inspector
             }
 
             return lines.Count == 0 ? string.Empty : string.Join("\n", lines);
+        }
+
+        /// <summary>
+        /// One line per courier of the station, by slot: <c>Courier 1 · At station · Stamina 30m · Route: Lumberjack → Sawmill</c>
+        /// (CR-0008). A slot without a route says <c>No route</c>. Empty for a building that is not a built courier station.
+        /// </summary>
+        private static string CouriersTextFor(GameContent content, CityState city, Building station, BuildingLevelDefinition level)
+        {
+            if (station.Phase == BuildingPhase.Constructing || !content.TryGetBuilding(station.TypeId, out BuildingDefinition? definition)
+                || definition!.Kind != BuildingKind.CourierStation)
+            {
+                return string.Empty;
+            }
+
+            var mine = new List<Courier>();
+            for (int i = 0; i < city.Couriers.Count; i++)
+            {
+                if (city.Couriers[i].StationId == station.Id)
+                {
+                    mine.Add(city.Couriers[i]);
+                }
+            }
+
+            if (mine.Count == 0)
+            {
+                return "No couriers yet: assign workers to the station";
+            }
+
+            mine.Sort((left, right) => left.Slot.CompareTo(right.Slot));
+            var lines = new List<string>(mine.Count);
+            for (int i = 0; i < mine.Count; i++)
+            {
+                Courier courier = mine[i];
+                string route = city.TryGetRoute(station.Id, courier.Slot, out Route? found)
+                    ? "Route: " + RouteSummary(content, city, found!)
+                    : "No route";
+                lines.Add("Courier " + Number(courier.Slot) + " · " + CourierStateText(courier.State) + " · Stamina "
+                    + DurationText.Format(courier.Stamina) + " of " + DurationText.Format(level.StaminaSeconds) + " · " + route);
+            }
+
+            return string.Join("\n", lines);
+        }
+
+        /// <summary>The words for a courier's state.</summary>
+        private static string CourierStateText(CourierState state)
+        {
+            switch (state)
+            {
+                case CourierState.Walking:
+                    return "Working";
+                case CourierState.Returning:
+                    return "Returning";
+                case CourierState.Resting:
+                    return "Resting";
+                default:
+                    return "At station";
+            }
+        }
+
+        /// <summary>The stops of a route as building names joined by arrows, for example <c>Lumberjack → Sawmill</c>.</summary>
+        private static string RouteSummary(GameContent content, CityState city, Route route)
+        {
+            var names = new string[route.Stops.Count];
+            for (int i = 0; i < names.Length; i++)
+            {
+                names[i] = BuildingNameOf(content, city, route.Stops[i].BuildingId);
+            }
+
+            return string.Join(" → ", names);
         }
 
         /// <summary>The display name of building <paramref name="id"/> in <paramref name="city"/>.</summary>
