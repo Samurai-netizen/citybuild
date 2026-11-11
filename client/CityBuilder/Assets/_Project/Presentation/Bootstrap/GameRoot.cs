@@ -304,7 +304,8 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         private void BuildContentParts(GameContent content, int timeScale)
         {
             _content = content;
-            _displayCity = new DisplayCity(_cityStore, new DisplayClock(_cityStore, timeScale), content);
+            var displayClock = new DisplayClock(_cityStore, timeScale);
+            _displayCity = new DisplayCity(_cityStore, displayClock, content);
             if (Debug.isDebugBuild && _commandSender != null)
             {
                 CommandSender sender = _commandSender;
@@ -312,6 +313,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             }
 
             _world!.ShowGrid(new CityGrid(content.Rules.GridWidth, content.Rules.GridHeight));
+            _world.DisplayNow = () => displayClock.PreciseNow;
             _displayCity.Changed += ShowBuildings;
             CreateHud(content);
             CreateBuildMenu(content);

@@ -127,8 +127,9 @@ open game is present) and sends intent; the server decides.
   and removes stops, draws the path and each walk's time, and sends `set-route`. A long route scrolls in one direction only.
 - **Walkers (T2 part D):** couriers and trip workers walk tile centre to tile centre with 90° turns, slowly across a building, from the
   snapshot's walk (`departedAt`, `arrivesAt`) and the path the shared engine computes on the current map (a map change after the walk
-  started may draw a different path that still ends on time); resting couriers stand at their station; a load shows as an icon. Pooled
-  views, no allocations per frame when nothing changes.
+  started may draw a different path that still ends on time); resting couriers stand at their station; a load shows on the walker's back.
+  Pooled views, no allocations per frame when nothing changes. **Built (CP-D):** `CityWalkers` / `WalkerView` / `WalkPath` / `WalkPlanner`
+  under `CityWorld`; the display time is `DisplayClock.PreciseNow`.
 - **Welcome back (T2 part E):** time away, the couriers' working time and when they got tired (`courierSeconds`, `tiredCouriers`), goods
   moved and delivered, produced and consumed, coins, completed buildings and research; its main button **Re-energize couriers**
   (`reenergize-couriers`) when any courier spent stamina; a HUD notice while couriers rest. (The 8 h production-cap note went in T1 part
