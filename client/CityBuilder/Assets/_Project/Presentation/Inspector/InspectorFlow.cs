@@ -129,6 +129,7 @@ namespace CityBuilder.Client.Presentation.Inspector
             _inspector.MinusRequested += OnMinus;
             _inspector.PlusRequested += OnPlus;
             _inspector.UpgradeRequested += OnUpgrade;
+            _inspector.ReenergizeRequested += OnReenergize;
             _inspector.CloseRequested += OnClose;
         }
 
@@ -206,6 +207,7 @@ namespace CityBuilder.Client.Presentation.Inspector
                 _inspector.MinusRequested -= OnMinus;
                 _inspector.PlusRequested -= OnPlus;
                 _inspector.UpgradeRequested -= OnUpgrade;
+                _inspector.ReenergizeRequested -= OnReenergize;
                 _inspector.CloseRequested -= OnClose;
             }
         }
@@ -280,6 +282,15 @@ namespace CityBuilder.Client.Presentation.Inspector
             if (model != null && _availability.IsAllowed)
             {
                 Send(CommandIntent.UpgradeBuilding(model.BuildingId));
+            }
+        }
+
+        /// <summary>Re-energize couriers was pressed: the command has no argument.</summary>
+        private void OnReenergize()
+        {
+            if (_inspector.Model != null && _availability.IsAllowed)
+            {
+                Send(CommandIntent.ReenergizeCouriers());
             }
         }
 

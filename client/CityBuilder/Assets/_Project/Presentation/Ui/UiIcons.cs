@@ -34,6 +34,9 @@ namespace CityBuilder.Client.Presentation.Ui
         /// <summary>The name of the builders icon.</summary>
         public const string BuildersName = "builders";
 
+        /// <summary>The name of the couriers icon.</summary>
+        public const string CouriersName = "couriers";
+
         /// <summary>The name of the icon for research as a whole (the HUD's ring).</summary>
         public const string ResearchName = "research";
 
@@ -45,6 +48,9 @@ namespace CityBuilder.Client.Presentation.Ui
 
         /// <summary>The icon of builders, or null when the file is missing.</summary>
         public static Texture2D? Builders => Find(BuildersName);
+
+        /// <summary>The icon of couriers, or null when the file is missing.</summary>
+        public static Texture2D? Couriers => Find(CouriersName);
 
         /// <summary>The icon of research as a whole, or null when the file is missing.</summary>
         public static Texture2D? Research => Find(ResearchName);

@@ -28,6 +28,7 @@
             <ui:Label name="inspector-recipe" class="t-body" />
             <ui:Label name="inspector-rates" class="t-small" />
             <ui:Button name="inspector-edit-routes" class="inspector-send-trip btn btn--secondary" text="Edit routes" />
+            <ui:Button name="inspector-reenergize" class="inspector-send-trip btn btn--secondary" text="Re-energize couriers" />
             <ui:Button name="inspector-send-trip" class="inspector-send-trip btn btn--secondary" text="Send trip" />
           </ui:VisualElement>
           <ui:VisualElement class="inspector-workers-box box box--light">

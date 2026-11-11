@@ -55,6 +55,15 @@ namespace CityBuilder.Client.Presentation.Hud
         /// <summary>The name of the builders icon.</summary>
         public const string BuildersIconName = "hud-builders-icon";
 
+        /// <summary>The name of the box that holds the notice while couriers rest; hidden when none does.</summary>
+        public const string RestingBoxName = "hud-resting-box";
+
+        /// <summary>The name of the notice's picture.</summary>
+        public const string RestingIconName = "hud-resting-icon";
+
+        /// <summary>The name of the notice's text.</summary>
+        public const string RestingName = "hud-resting";
+
         /// <summary>The name of the research icon in the middle of the ring.</summary>
         public const string RingIconName = "hud-ring-icon";
 
@@ -139,6 +148,12 @@ namespace CityBuilder.Client.Presentation.Hud
         /// <summary>The builders label.</summary>
         private Label? _builders;
 
+        /// <summary>The notice that couriers rest and the box around it.</summary>
+        private Label? _resting;
+
+        /// <summary>The box around the resting notice.</summary>
+        private VisualElement? _restingBox;
+
         /// <summary>The element the ring is drawn on.</summary>
         private VisualElement? _ring;
 
@@ -210,6 +225,9 @@ namespace CityBuilder.Client.Presentation.Hud
             _chipList = root?.Q<VisualElement>(ChipListName);
             _workers = root?.Q<Label>(WorkersName);
             _builders = root?.Q<Label>(BuildersName);
+            _resting = root?.Q<Label>(RestingName);
+            _restingBox = root?.Q<VisualElement>(RestingBoxName);
+            VisualElement? restingIcon = root?.Q<VisualElement>(RestingIconName);
             _ring = root?.Q<VisualElement>(RingName);
             VisualElement? workersIcon = root?.Q<VisualElement>(WorkersIconName);
             VisualElement? buildersIcon = root?.Q<VisualElement>(BuildersIconName);
@@ -221,7 +239,7 @@ namespace CityBuilder.Client.Presentation.Hud
             _connectionText = root?.Q<Label>(ConnectionTextName);
             if (_model == null || root == null || _chipList == null || _workers == null || _builders == null || _ring == null
                 || _researchName == null || _researchTime == null || _era == null || _connectionDot == null || _connectionText == null
-                || workersIcon == null || buildersIcon == null || ringIcon == null)
+                || workersIcon == null || buildersIcon == null || ringIcon == null || _resting == null || _restingBox == null || restingIcon == null)
             {
                 ClientLog.Error("HudView: the layout lacks one of its named elements (see the names in HudView).");
                 return;
@@ -230,6 +248,7 @@ namespace CityBuilder.Client.Presentation.Hud
             ShowFixedIcon(workersIcon, UiIcons.Workers);
             ShowFixedIcon(buildersIcon, UiIcons.Builders);
             ShowFixedIcon(ringIcon, UiIcons.Research);
+            ShowFixedIcon(restingIcon, UiIcons.Couriers);
             _ring.generateVisualContent += PaintRing;
             root.RegisterCallback<GeometryChangedEvent>(_ => UiRoot.PadBySafeArea(root, BasePadding));
             _model.Changed += Refresh;
@@ -264,6 +283,12 @@ namespace CityBuilder.Client.Presentation.Hud
             ShowChips(_model.Chips);
             _workers.text = _model.WorkersText;
             _builders.text = _model.BuildersText;
+            if (_resting != null && _restingBox != null)
+            {
+                _resting.text = _model.RestingText;
+                _restingBox.style.display = _model.RestingText.Length == 0 ? DisplayStyle.None : DisplayStyle.Flex;
+            }
+
             _researchName.text = _model.Research.Name;
             _researchTime.text = _model.Research.TimeLeftText;
             _researchTime.style.display = _model.Research.TimeLeftText.Length == 0 ? DisplayStyle.None : DisplayStyle.Flex;

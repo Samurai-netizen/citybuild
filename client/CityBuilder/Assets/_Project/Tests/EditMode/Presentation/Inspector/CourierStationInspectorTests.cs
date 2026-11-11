@@ -112,6 +112,22 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Inspector
             Assert.That(first, Is.Not.EqualTo(other));
         }
 
+        /// <summary>Re-energize shows for a station with a resting courier or one below full stamina, and not for rested couriers or other buildings.</summary>
+        [Test]
+        public void Station_OffersReenergizeOnlyWhenACourierRestsOrIsBelowFullStamina()
+        {
+            Building station = Station(workers: 1, BuildingPhase.Idle);
+            Assert.That(_content.TryGetBuilding(station.TypeId, out BuildingDefinition? definition), Is.True);
+            int full = (int)definition!.Levels[0].StaminaSeconds;
+            var rested = new[] { new Courier(1, 1, CourierState.AtStation, 0, null, null, full) };
+            var resting = new[] { new Courier(1, 1, CourierState.Resting, 0, null, null, 0) };
+            var below = new[] { new Courier(1, 1, CourierState.AtStation, 0, null, null, full - 1) };
+
+            Assert.That(Model(station, new[] { station }, rested, Array.Empty<Route>()).HasReenergize, Is.False);
+            Assert.That(Model(station, new[] { station }, resting, Array.Empty<Route>()).HasReenergize, Is.True);
+            Assert.That(Model(station, new[] { station }, below, Array.Empty<Route>()).HasReenergize, Is.True);
+        }
+
         /// <summary>A courier station with id 1 at level 1.</summary>
         private static Building Station(int workers, BuildingPhase phase)
         {

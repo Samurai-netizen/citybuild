@@ -25,6 +25,10 @@
           <ui:VisualElement name="hud-builders-icon" class="hud-stat-icon" picking-mode="Ignore" />
           <ui:Label name="hud-builders" class="hud-value" picking-mode="Ignore" />
         </ui:VisualElement>
+        <ui:VisualElement name="hud-resting-box" class="hud-stat chip-dark" picking-mode="Ignore" style="display: none;">
+          <ui:VisualElement name="hud-resting-icon" class="hud-stat-icon" picking-mode="Ignore" />
+          <ui:Label name="hud-resting" class="hud-value" picking-mode="Ignore" />
+        </ui:VisualElement>
         <ui:VisualElement class="hud-research chip-dark" picking-mode="Ignore">
           <ui:VisualElement name="hud-ring" class="hud-ring" picking-mode="Ignore">
             <ui:VisualElement class="hud-ring-hole" picking-mode="Ignore">

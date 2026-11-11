@@ -173,6 +173,12 @@ namespace CityBuilder.Simulation.Display
                 return false;
             }
 
+            // A courier station's workers are couriers (04 section 19): it runs no cycle and has no recipe, so it makes and uses nothing here.
+            if (CityQueries.DefinitionOf(content, building.TypeId).Kind == BuildingKind.CourierStation)
+            {
+                return false;
+            }
+
             // A running cycle with workers makes progress; an idle producer counts only when it could start its next cycle.
             return building.Phase == BuildingPhase.Producing || StallReason.Of(city, content, building) is null;
         }

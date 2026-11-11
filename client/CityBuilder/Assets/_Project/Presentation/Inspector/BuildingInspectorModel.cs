@@ -71,6 +71,9 @@ namespace CityBuilder.Client.Presentation.Inspector
         /// <summary>Whether the Edit routes button shows: a built courier station with at least one courier (CR-0008).</summary>
         public bool HasRouteEditor { get; private set; }
 
+        /// <summary>Whether the Re-energize couriers button shows: a built courier station with a courier that rests or has less stamina than its level gives (CR-0008-T2 part E).</summary>
+        public bool HasReenergize { get; private set; }
+
         /// <summary>Whether the Send trip button works: <see cref="HasSendTrip"/> and commands are allowed (CR-0008).</summary>
         public bool CanSendTrip { get; private set; }
 
@@ -172,6 +175,7 @@ namespace CityBuilder.Client.Presentation.Inspector
                 CouriersText = CouriersTextFor(content, city, building, level),
                 HasRouteEditor = definition.Kind == BuildingKind.CourierStation && building.Phase != BuildingPhase.Constructing
                     && building.AssignedWorkers > 0,
+                HasReenergize = NeedsReenergize(content, city, building, level),
                 HasSendTrip = hasGoods,
                 CanSendTrip = hasGoods && availability.IsAllowed,
                 IsWorkersPending = pendingTarget.HasValue,
@@ -199,6 +203,7 @@ namespace CityBuilder.Client.Presentation.Inspector
                 && TripsText == other.TripsText
                 && CouriersText == other.CouriersText
                 && HasRouteEditor == other.HasRouteEditor
+                && HasReenergize == other.HasReenergize
                 && HasSendTrip == other.HasSendTrip
                 && CanSendTrip == other.CanSendTrip
                 && HasStepper == other.HasStepper
@@ -553,6 +558,27 @@ namespace CityBuilder.Client.Presentation.Inspector
             }
 
             return string.Join("\n", lines);
+        }
+
+        /// <summary>Whether a built courier station has a courier that rests or whose stamina is below the level's full stamina.</summary>
+        private static bool NeedsReenergize(GameContent content, CityState city, Building station, BuildingLevelDefinition level)
+        {
+            if (station.Phase == BuildingPhase.Constructing || !content.TryGetBuilding(station.TypeId, out BuildingDefinition? definition)
+                || definition!.Kind != BuildingKind.CourierStation)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < city.Couriers.Count; i++)
+            {
+                Courier courier = city.Couriers[i];
+                if (courier.StationId == station.Id && (courier.State == CourierState.Resting || courier.Stamina < level.StaminaSeconds))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>The words for a courier's state.</summary>

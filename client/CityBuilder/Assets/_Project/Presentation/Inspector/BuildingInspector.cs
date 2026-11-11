@@ -73,6 +73,9 @@ namespace CityBuilder.Client.Presentation.Inspector
         /// <summary>The name of the Edit routes button of a courier station (CR-0008).</summary>
         public const string EditRoutesName = "inspector-edit-routes";
 
+        /// <summary>The name of the Re-energize couriers button.</summary>
+        public const string ReenergizeName = "inspector-reenergize";
+
         /// <summary>The name of the Send trip button (CR-0008).</summary>
         public const string SendTripName = "inspector-send-trip";
 
@@ -141,6 +144,9 @@ namespace CityBuilder.Client.Presentation.Inspector
 
         /// <summary>Raised when the player presses Edit routes (only on a courier station with couriers; CR-0008).</summary>
         public event Action? EditRoutesRequested;
+
+        /// <summary>Raised when the player presses Re-energize couriers (CR-0008-T2 part E).</summary>
+        public event Action? ReenergizeRequested;
 
         /// <summary>Raised when the player presses the close button.</summary>
         public event Action? CloseRequested;
@@ -250,6 +256,15 @@ namespace CityBuilder.Client.Presentation.Inspector
             }
         }
 
+        /// <summary>The player pressed Re-energize couriers: what a finger on the button does, as a call. Does nothing unless the model shows it.</summary>
+        public void PressReenergize()
+        {
+            if (_model != null && _model.HasReenergize)
+            {
+                ReenergizeRequested?.Invoke();
+            }
+        }
+
         /// <summary>The player pressed the close button: what a finger on the button does, as a call.</summary>
         public void PressClose()
         {
@@ -282,6 +297,7 @@ namespace CityBuilder.Client.Presentation.Inspector
             elements.Upgrade.clicked += PressUpgrade;
             elements.SendTrip.clicked += PressSendTrip;
             elements.EditRoutes.clicked += PressEditRoutes;
+            elements.Reenergize.clicked += PressReenergize;
             elements.Close.clicked += PressClose;
             root.RegisterCallback<GeometryChangedEvent>(_ => UiRoot.PadBySafeArea(root, BasePadding));
             Refresh();
@@ -316,6 +332,7 @@ namespace CityBuilder.Client.Presentation.Inspector
             SetLine(e.Trips, model.TripsText);
             SetLine(e.Couriers, model.CouriersText);
             e.EditRoutes.style.display = model.HasRouteEditor ? DisplayStyle.Flex : DisplayStyle.None;
+            e.Reenergize.style.display = model.HasReenergize ? DisplayStyle.Flex : DisplayStyle.None;
             e.SendTrip.style.display = model.HasSendTrip ? DisplayStyle.Flex : DisplayStyle.None;
             e.SendTrip.SetEnabled(model.CanSendTrip);
             e.Stepper.style.display = model.HasStepper ? DisplayStyle.Flex : DisplayStyle.None;
@@ -363,7 +380,7 @@ namespace CityBuilder.Client.Presentation.Inspector
                 UpgradeGain = null!, UpgradeNote = null!;
 
             /// <summary>The buttons.</summary>
-            public Button Minus = null!, Plus = null!, Upgrade = null!, SendTrip = null!, EditRoutes = null!, Close = null!;
+            public Button Minus = null!, Plus = null!, Upgrade = null!, SendTrip = null!, EditRoutes = null!, Reenergize = null!, Close = null!;
 
             /// <summary>Finds every element in <paramref name="root"/>; null when one is missing.</summary>
             public static Elements? Find(VisualElement root)
@@ -396,6 +413,7 @@ namespace CityBuilder.Client.Presentation.Inspector
                     Upgrade = root.Q<Button>(UpgradeName),
                     SendTrip = root.Q<Button>(SendTripName),
                     EditRoutes = root.Q<Button>(EditRoutesName),
+                    Reenergize = root.Q<Button>(ReenergizeName),
                     Close = root.Q<Button>(CloseName),
                 };
                 bool complete = found.Panel != null && found.Icon != null && found.Stepper != null && found.Name != null && found.Level != null
@@ -403,7 +421,7 @@ namespace CityBuilder.Client.Presentation.Inspector
                     && found.Needs != null && found.Trips != null && found.Couriers != null && found.Workers != null && found.Preview != null && found.StepperNote != null
                     && found.UpgradeTitle != null && found.UpgradeCost != null && found.UpgradeTime != null && found.UpgradeGain != null
                     && found.UpgradeNote != null && found.Minus != null && found.Plus != null && found.Upgrade != null
-                    && found.SendTrip != null && found.EditRoutes != null && found.Close != null;
+                    && found.SendTrip != null && found.EditRoutes != null && found.Reenergize != null && found.Close != null;
                 return complete ? found : null;
             }
         }

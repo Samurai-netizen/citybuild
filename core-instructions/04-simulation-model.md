@@ -224,7 +224,7 @@ quantities, durations, milliseconds and labor ≤ 10¹²; grid size and worker c
 is sent or stored. All values are integers, rounded down: seconds, permille (0..1000), or rates in thousandths of an item per hour.
 - `PerHour(city, content, building, workers)`: the inputs and outputs per hour at a staffing, from `CeilDiv(effective labor, workers)`; 0 with no workers.
 - `NetPerHour(city, content, item)`: outputs minus inputs of the buildings able to run: with workers, and producing, or idle and
-  able to start (no stall reason). Frozen cycles, houses, buildings without workers, constructing or upgrading ones, and stalled ones give 0.
+  able to start (no stall reason). Frozen cycles, houses, courier stations (their workers are couriers, §19), buildings without workers, constructing or upgrading ones, and stalled ones give 0.
 - `SecondsUntilFull(city, content, building, item)`: seconds until the item fills that building's store at its own net rate; null when
   the store doesn't hold the item or the rate is ≤ 0 (CR-0008: per store, part E).
 - `ProgressPermille(building, clock)`, `SecondsUntilNextEvent(building, clock)`, `ResearchProgressPermille(city, clock)`: the bar and the

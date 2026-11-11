@@ -108,6 +108,21 @@ namespace CityBuilder.Client.Tests.PlayMode
             Object.DestroyImmediate(_host);
         }
 
+        /// <summary>The courier station's Re-energize button shows for a courier below full stamina and sends <c>reenergize-couriers</c>.</summary>
+        [UnityTest]
+        public IEnumerator Inspector_Reenergize_SendsTheCommand()
+        {
+            TapTile(6, 0);
+            Button button = _inspector.Root!.Q<Button>(BuildingInspector.ReenergizeName);
+            Assert.That(button.style.display.value, Is.EqualTo(DisplayStyle.Flex));
+
+            _inspector.PressReenergize();
+            yield return null;
+
+            Assert.That(_transport.Requests, Has.Count.EqualTo(1));
+            Assert.That(_transport.Requests[0].Url, Does.EndWith("/commands/reenergize-couriers"));
+        }
+
         /// <summary>
         /// Tapping the station shows its courier line and Edit routes; pressing it opens the editor and hides the inspector; tapping two buildings
         /// adds them as stops and draws the lap; Save sends one <c>set-route</c>; the server's answer closes the sheet and clears the path.
