@@ -483,7 +483,7 @@ Make only small fixes.
 Write docs/adr/ADR-0001-server-authoritative.md, ADR-0002-postgresql-only.md, ADR-0003-command-endpoints.md and
 ADR-0004-idempotency.md from docs/adr/TEMPLATE.md and core-instructions/12-decisions.md, and index them in docs/adr/README.md.
 Write the first real docs/architecture/overview.md (projects table, references, mermaid diagram as built).
-Fill "Commands that work right now" in 13-progress.md and update the marks in AGENTS.md (protected: ask) and docs/getting-started.md.
+Update the "Not yet" line in 13-progress.md → Commands and the marks in AGENTS.md (protected: ask) and docs/getting-started.md.
 Run all server tests; run Unity tests if possible.
 ```
 

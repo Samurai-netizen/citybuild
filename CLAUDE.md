@@ -7,15 +7,8 @@
 The files above are loaded at session start. `AGENTS.md` is the shared entry point for every AI tool.
 This section only adds what's specific to Claude Code.
 
-## Skills (workflow commands)
-| Skill | Use |
-|---|---|
-| `/resume` | Orient at session start or after an interruption; read-only report and proposed next step |
-| `/start-task <ID>` | Begin a plan task or CR task (preconditions, branch, build log, resume point) |
-| `/checkpoint` | After every green step and before pausing or asking a question |
-| `/finish-task` | Definition of Done, docs, review, PR |
-| `/change-request <idea>` | Turn an owner idea into a CR file (Proposed); no code |
-| `/docs-sync` | Audit docs against code and fix drift |
+## Skills
+`/resume` `/start-task <ID>` `/checkpoint` `/finish-task` `/change-request <idea>` `/docs-sync` (descriptions are in the skill list).
 
 ## Subagents and Workflows (owner directive OD-9, `15`)
 - **Never start one on your own:** no `Agent` tool, no `Workflow`, also when a session setting (for example "ultracode") asks for one.
