@@ -60,6 +60,7 @@ public static class CityMapping
             NextBuildingId = state.NextBuildingId,
             Purse = state.Purse,
             NextTripId = state.NextTripId,
+            NextLineId = state.NextLineId,
             ResearchId = active?.Id.Value,
             ResearchStartedAt = active?.StartedAt,
             ResearchEndsAt = active?.EndsAt,
@@ -100,6 +101,21 @@ public static class CityMapping
                 Quantity = trip.Quantity,
                 DepartedAt = trip.DepartedAt,
                 ArrivesAt = trip.ArrivesAt,
+                Remaining = trip.Remaining,
+                Leg = trip.Leg.ToString(),
+            })
+            .ToList();
+        var deliveryLines = state.DeliveryLines
+            .Select(line => new CityDeliveryLineRow
+            {
+                CityId = city.CityId,
+                LineId = line.Id,
+                StationId = line.StationId,
+                Slot = checked((short)line.Slot),
+                SourceId = line.SourceId,
+                TargetId = line.TargetId,
+                ItemId = line.Item.Value,
+                Quantity = line.Quantity,
             })
             .ToList();
         var research = state.CompletedResearch
@@ -154,7 +170,7 @@ public static class CityMapping
             })))
             .ToList();
 
-        return new CityRows(cityRow, buildings, stores, projectNeeds, research, researchNeeds, roads, trips, couriers, courierLoads, routeActions);
+        return new CityRows(cityRow, buildings, stores, projectNeeds, research, researchNeeds, roads, trips, couriers, courierLoads, routeActions, deliveryLines);
     }
 
     /// <summary>The city the rows describe, with its engine state built from them.</summary>
@@ -182,10 +198,13 @@ public static class CityMapping
                 ToActiveResearch(city, rows.ResearchNeeds),
                 rows.Roads.Select(row => new RoadTile(row.X, row.Y, row.Level)),
                 rows.Trips.Select(row => new Trip(
-                    row.TripId, row.SourceId, row.TargetId, new ItemId(row.ItemId), row.Quantity, row.DepartedAt, row.ArrivesAt)),
+                    row.TripId, row.SourceId, row.TargetId, new ItemId(row.ItemId), row.Quantity, row.DepartedAt, row.ArrivesAt, row.Remaining, ToLeg(row))),
                 city.NextTripId,
                 ToCouriers(rows),
-                ToRoutes(rows));
+                ToRoutes(rows),
+                rows.DeliveryLines.Select(row => new DeliveryLine(
+                    row.LineId, row.StationId, row.Slot, row.SourceId, row.TargetId, new ItemId(row.ItemId), row.Quantity)),
+                city.NextLineId);
             IEnumerable<KeyValuePair<ResearchId, long>> completedAt =
                 rows.Research.Select(row => new KeyValuePair<ResearchId, long>(new ResearchId(row.ResearchId), row.CompletedAt));
 
@@ -439,6 +458,17 @@ public static class CityMapping
         }
     }
 
+    /// <summary>The leg of a stored trip, from its <c>leg</c> text.</summary>
+    /// <param name="row">The trip's row.</param>
+    /// <returns>The leg.</returns>
+    /// <exception cref="ArgumentException">The text names no leg.</exception>
+    private static TripLeg ToLeg(CityTripRow row) => row.Leg switch
+    {
+        nameof(TripLeg.ToTarget) => TripLeg.ToTarget,
+        nameof(TripLeg.ToSource) => TripLeg.ToSource,
+        _ => throw new ArgumentException($"Trip {row.TripId} has the leg '{row.Leg}', which no trip has."),
+    };
+
     /// <summary>Checks that every child row belongs to the city row.</summary>
     /// <param name="rows">The city's rows.</param>
     /// <exception cref="InvalidOperationException">A child row names another city.</exception>
@@ -454,7 +484,8 @@ public static class CityMapping
             && rows.Trips.All(row => row.CityId == cityId)
             && rows.Couriers.All(row => row.CityId == cityId)
             && rows.CourierLoads.All(row => row.CityId == cityId)
-            && rows.RouteActions.All(row => row.CityId == cityId);
+            && rows.RouteActions.All(row => row.CityId == cityId)
+            && rows.DeliveryLines.All(row => row.CityId == cityId);
         if (!allOwn)
         {
             throw new InvalidOperationException($"The rows of city {cityId} include a row of another city.");

@@ -35,6 +35,9 @@ public sealed class CityBuilderDbContext(DbContextOptions<CityBuilderDbContext> 
     /// <summary><c>city_courier_loads</c>: the parts of the couriers' loads (CR-0008).</summary>
     public DbSet<CityCourierLoadRow> CityCourierLoads => Set<CityCourierLoadRow>();
 
+    /// <summary>The <c>city_delivery_lines</c> table: each courier's delivery queue (CR-0008 amendment 1).</summary>
+    public DbSet<CityDeliveryLineRow> CityDeliveryLines => Set<CityDeliveryLineRow>();
+
     /// <summary><c>city_route_actions</c>: the routes, an action per row (CR-0008).</summary>
     public DbSet<CityRouteActionRow> CityRouteActions => Set<CityRouteActionRow>();
 
@@ -70,6 +73,7 @@ public sealed class CityBuilderDbContext(DbContextOptions<CityBuilderDbContext> 
         modelBuilder.ApplyConfiguration(new CityTripConfiguration());
         modelBuilder.ApplyConfiguration(new CityCourierConfiguration());
         modelBuilder.ApplyConfiguration(new CityCourierLoadConfiguration());
+        modelBuilder.ApplyConfiguration(new CityDeliveryLineConfiguration());
         modelBuilder.ApplyConfiguration(new CityRouteActionConfiguration());
         modelBuilder.ApplyConfiguration(new CommandReceiptConfiguration());
         modelBuilder.ApplyConfiguration(new LedgerEntryConfiguration());

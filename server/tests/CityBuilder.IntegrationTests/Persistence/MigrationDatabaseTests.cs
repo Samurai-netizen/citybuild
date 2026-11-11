@@ -20,7 +20,7 @@ public sealed class MigrationDatabaseTests(PostgresServer server) : PostgresTest
     /// <summary>The tables of the M0 schema (<c>06</c>) and EF's migration history, by name.</summary>
     private static readonly string[] _tables =
     [
-        "__EFMigrationsHistory", "cities", "city_buildings", "city_courier_loads", "city_couriers", "city_project_needs", "city_research", "city_research_needs", "city_roads",
+        "__EFMigrationsHistory", "cities", "city_buildings", "city_courier_loads", "city_couriers", "city_delivery_lines", "city_project_needs", "city_research", "city_research_needs", "city_roads",
         "city_route_actions", "city_stores", "city_trips", "command_receipts", "ledger_entries", "players",
     ];
 

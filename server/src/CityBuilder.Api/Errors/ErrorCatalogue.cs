@@ -120,6 +120,29 @@ public static class ErrorCatalogue
         "INVALID_ROUTE", StatusCodes.Status422UnprocessableEntity, "Invalid route",
         "The route's slot, stops or actions break the station's or the content's route rules.");
 
+    /// <summary>The city has a built courier station, but every courier has a route, so none can take the delivery (CR-0008 D14).</summary>
+    public static readonly ApiError NoFreeCourier = new(
+        "NO_FREE_COURIER", StatusCodes.Status422UnprocessableEntity, "No free courier",
+        "Every courier has a route; assign another worker to a courier station or cancel a route.");
+
+    /// <summary>The delivery's lines don't fit in the chosen courier's queue (CR-0008 D17).</summary>
+    public static readonly ApiError DeliveryQueueFull = new(
+        "DELIVERY_QUEUE_FULL", StatusCodes.Status422UnprocessableEntity, "Delivery queue full",
+        "The courier's delivery queue is full; wait for it to deliver or cancel some of its lines.");
+
+    /// <summary>A route before the city has built the content's route building, the Scriptorium (CR-0008 D15).</summary>
+    public static readonly ApiError RoutesLocked = new(
+        "ROUTES_LOCKED", StatusCodes.Status422UnprocessableEntity, "Routes locked", "Build a Scriptorium first; until then couriers make one-time deliveries.");
+
+    /// <summary>A route for a courier that still has delivery lines (CR-0008 D19).</summary>
+    public static readonly ApiError CourierBusy = new(
+        "COURIER_BUSY", StatusCodes.Status422UnprocessableEntity, "Courier busy",
+        "This courier still has deliveries; cancel them or wait until they are done.");
+
+    /// <summary>The delivery line to cancel is not one of that courier's lines (CR-0008 D18).</summary>
+    public static readonly ApiError DeliveryNotFound = new(
+        "DELIVERY_NOT_FOUND", StatusCodes.Status422UnprocessableEntity, "Delivery not found", "This courier has no such delivery line any more.");
+
     /// <summary>A request id that was used before with another command or payload.</summary>
     public static readonly ApiError IdempotencyConflict = new(
         "IDEMPOTENCY_CONFLICT", StatusCodes.Status409Conflict, "Request id already used",
@@ -168,7 +191,7 @@ public static class ErrorCatalogue
         AuthenticationRequired, InvalidArgument, UnknownBuildingType, BuildingLocked, OutOfBounds, TileOccupied, InsufficientResource,
         InsufficientWorkers, WorkerLimit, NoFreeBuilder, BuildingNotFound, BuildingBusy, MaxLevel, UnknownResearch, ResearchLocked,
         ResearchInProgress, ResearchCompleted, RoadNotFound, BuildingLimit, NoScienceBuilding, UnknownItem, AmountModeLocked, ItemNotAccepted,
-        NothingToCarry, InvalidRoute, IdempotencyConflict, RateLimited, ConcurrencyConflict, InternalError, NotFound, MethodNotAllowed, UnsupportedMediaType,
+        NothingToCarry, InvalidRoute, NoFreeCourier, DeliveryQueueFull, RoutesLocked, CourierBusy, DeliveryNotFound, IdempotencyConflict, RateLimited, ConcurrencyConflict, InternalError, NotFound, MethodNotAllowed, UnsupportedMediaType,
         UnsupportedClientVersion,
     ];
 
@@ -179,7 +202,7 @@ public static class ErrorCatalogue
     public static ApiError Of(MutationErrorCode code) => code switch
     {
         MutationErrorCode.InvalidArgument => InvalidArgument.WithDetail(
-            "A value the rule refuses: workers on a building that takes none, a trip to its own source or with the currency, an unknown amount preset."),
+            "A value the rule refuses: workers on a building that takes none, a trip to its own source or with the currency, an unknown amount preset, a delivery cancel for a slot without a courier."),
         MutationErrorCode.UnknownBuildingType => UnknownBuildingType,
         MutationErrorCode.BuildingLocked => BuildingLocked,
         MutationErrorCode.OutOfBounds => OutOfBounds,
@@ -203,6 +226,11 @@ public static class ErrorCatalogue
         MutationErrorCode.ItemNotAccepted => ItemNotAccepted,
         MutationErrorCode.NothingToCarry => NothingToCarry,
         MutationErrorCode.InvalidRoute => InvalidRoute,
+        MutationErrorCode.NoFreeCourier => NoFreeCourier,
+        MutationErrorCode.DeliveryQueueFull => DeliveryQueueFull,
+        MutationErrorCode.RoutesLocked => RoutesLocked,
+        MutationErrorCode.CourierBusy => CourierBusy,
+        MutationErrorCode.DeliveryNotFound => DeliveryNotFound,
         _ => throw new InvalidOperationException($"No API error for the engine code {code}."),
     };
 }

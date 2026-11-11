@@ -17,6 +17,7 @@ namespace CityBuilder.Infrastructure.Persistence.Mapping;
 /// <param name="couriers">The <c>city_couriers</c> rows (CR-0008); null for none.</param>
 /// <param name="courierLoads">The <c>city_courier_loads</c> rows (CR-0008); null for none.</param>
 /// <param name="routeActions">The <c>city_route_actions</c> rows (CR-0008); null for none.</param>
+/// <param name="deliveryLines">The <c>city_delivery_lines</c> rows (CR-0008 amendment 1); null for none.</param>
 public sealed class CityRows(
     CityRow city,
     IReadOnlyList<CityBuildingRow> buildings,
@@ -28,7 +29,8 @@ public sealed class CityRows(
     IReadOnlyList<CityTripRow> trips,
     IReadOnlyList<CityCourierRow>? couriers = null,
     IReadOnlyList<CityCourierLoadRow>? courierLoads = null,
-    IReadOnlyList<CityRouteActionRow>? routeActions = null)
+    IReadOnlyList<CityRouteActionRow>? routeActions = null,
+    IReadOnlyList<CityDeliveryLineRow>? deliveryLines = null)
 {
     /// <summary>The <c>cities</c> row.</summary>
     public CityRow City { get; } = city ?? throw new ArgumentNullException(nameof(city));
@@ -62,4 +64,7 @@ public sealed class CityRows(
 
     /// <summary>The <c>city_route_actions</c> rows.</summary>
     public IReadOnlyList<CityRouteActionRow> RouteActions { get; } = routeActions ?? [];
+
+    /// <summary>The <c>city_delivery_lines</c> rows.</summary>
+    public IReadOnlyList<CityDeliveryLineRow> DeliveryLines { get; } = deliveryLines ?? [];
 }

@@ -131,6 +131,23 @@ public sealed class SetRouteContractTests(ApiFactory factory) : IClassFixture<Ap
         AssertNothingRan(store);
     }
 
+    /// <summary>
+    /// Without a built Scriptorium a route is <c>ROUTES_LOCKED</c> (CR-0008 D15) and nothing is saved; clearing the route still works, since a
+    /// route that is gone needs no Scriptorium.
+    /// </summary>
+    [Fact]
+    public async Task Post_NoScriptorium_IsRoutesLocked()
+    {
+        (FakeCityStore store, WebApplicationFactory<Program> server) = Serve(new FakeTimeProvider(_settledAt), scriptorium: false);
+        await using WebApplicationFactory<Program> _ = server;
+        string stops = "[" + Stop(2, Action("take", "logs", "all")) + "," + Stop(3, Action("put", "logs", "all")) + "]";
+
+        ApiResponse response = await ApiClient.PostAsync(server, _path, _playerId, Body(4, 1, stops));
+
+        AssertProblem(response, (HttpStatusCode)422, "ROUTES_LOCKED", _requestId);
+        AssertNothingRan(store);
+    }
+
     /// <summary>The cases of <see cref="Post_RuleRefuses_IsProblemWithTheRulesCode"/>.</summary>
     /// <returns>Station, slot, stops, status and code.</returns>
     public static TheoryData<int, int, string, int, string> RuleRefusals()
@@ -290,23 +307,26 @@ public sealed class SetRouteContractTests(ApiFactory factory) : IClassFixture<Ap
     /// <summary>A server copy with a store holding <see cref="City"/>, settled at <see cref="_settledAt"/>, and the given clock.</summary>
     /// <param name="clock">The server clock.</param>
     /// <param name="walking">Whether courier 4/1 already walks the route with 4 logs.</param>
+    /// <param name="scriptorium">Whether the city has its built Scriptorium, which routes need (CR-0008 D15).</param>
     /// <returns>The store and the server; the caller disposes the server.</returns>
-    private (FakeCityStore Store, WebApplicationFactory<Program> Server) Serve(FakeTimeProvider clock, bool walking = false)
+    private (FakeCityStore Store, WebApplicationFactory<Program> Server) Serve(FakeTimeProvider clock, bool walking = false, bool scriptorium = true)
     {
         var store = new FakeCityStore();
-        store.Add(City(ContentOf(factory), walking));
+        store.Add(City(ContentOf(factory), walking, scriptorium));
         return (store, store.Serve(factory, clock));
     }
 
     /// <summary>
     /// The city of the tests at clock 0: 100 coins; house 1 at (0,0) (4 workers); woodcutter 2 at (2,0), idle without workers, with 30 logs in
     /// its store; warehouse 3 at (2,2) with 5 logs; courier station 4 at (0,2) with 1 worker, courier 4/1 at the station with full stamina,
-    /// or (<paramref name="walking"/>) on the warehouse route, walking to the warehouse with 4 of the woodcutter's logs (26 left there).
+    /// or (<paramref name="walking"/>) on the warehouse route, walking to the warehouse with 4 of the woodcutter's logs (26 left there);
+    /// Scriptorium 5 at (5,5), built, unless <paramref name="scriptorium"/> is false.
     /// </summary>
     /// <param name="content">The server's content.</param>
     /// <param name="walking">Whether the courier walks.</param>
+    /// <param name="scriptorium">Whether the city has the Scriptorium.</param>
     /// <returns>The city at state version 0.</returns>
-    private static CityAggregate City(GameContent content, bool walking)
+    private static CityAggregate City(GameContent content, bool walking, bool scriptorium)
     {
         var logs = new ItemId("logs");
         Building[] buildings =
@@ -315,6 +335,7 @@ public sealed class SetRouteContractTests(ApiFactory factory) : IClassFixture<Ap
             new(2, new BuildingTypeId("woodcutter"), 2, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, [new(logs, walking ? 26 : 30)]),
             new(3, new BuildingTypeId("warehouse"), 2, 2, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, [new(logs, 5)]),
             new(4, new BuildingTypeId("courier_station"), 0, 2, 1, 1, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
+            .. scriptorium ? [new Building(5, new BuildingTypeId("scriptorium"), 5, 5, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0)] : Array.Empty<Building>(),
         ];
         Courier courier = walking
             ? new Courier(4, 1, CourierState.Walking, 2, 0, 10, 14_400, [new CourierLoad(logs, 2, 4)])
@@ -327,7 +348,7 @@ public sealed class SetRouteContractTests(ApiFactory factory) : IClassFixture<Ap
                     new RouteStop(3, [new RouteAction(RouteActionKind.Put, logs, Amount.Preset(new AmountPresetId("all")))])]),
             ]
             : [];
-        var state = new CityState(0, era: 1, nextBuildingId: 5, purse: 100, buildings, [], activeResearch: null, couriers: [courier], routes: routes);
+        var state = new CityState(0, era: 1, nextBuildingId: 6, purse: 100, buildings, [], activeResearch: null, couriers: [courier], routes: routes);
         return new CityAggregate(
             Guid.Parse("0199a1b2-c3d4-7e5f-8a9b-0c1d2e3f4c81"), _playerId, state, [], _settledAt.ToUnixTimeSeconds(), 0, content.ContentVersion);
     }

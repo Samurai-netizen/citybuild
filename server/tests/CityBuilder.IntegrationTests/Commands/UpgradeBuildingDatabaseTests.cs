@@ -67,10 +67,11 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     }
 
     /// <summary>
-    /// A producing sawmill whose store is full (40 logs, its cycle took 2 more) is upgraded and keeps producing while three trips bring its 30
-    /// planks from the warehouse (10 each, 5 s away). The last arrival, at second 10, starts the upgrade: the cycle ends without output and its
-    /// 2 logs come back into the store, above the limit (42); that settlement writes <c>SETTLEMENT_REFUNDED</c> and
-    /// <c>SETTLEMENT_DELIVERED</c> rows with the city's totals, and the sawmill is <c>Upgrading</c> from 10 for 180 seconds.
+    /// A producing sawmill whose store is full (40 logs, its cycle took 2 more) is upgraded and keeps producing while two workers bring its 30
+    /// planks from the warehouse, 5 s away, 10 a load (CR-0008 D21): both deliver at second 5 (20 planks, 10 still needed) and walk back; at
+    /// 10 the first takes the last 10, the second finds none and is done. The last arrival, at second 15, starts the upgrade: the cycle ends
+    /// without output and its 2 logs come back into the store, above the limit (42); that settlement writes <c>SETTLEMENT_REFUNDED</c> and
+    /// <c>SETTLEMENT_DELIVERED</c> rows with the city's totals, and the sawmill is <c>Upgrading</c> from 15 for 180 seconds.
     /// </summary>
     [Fact]
     public async Task Post_ProducingSawmill_LastPlanksDeliveredStartTheUpgradeAndRefundAboveTheLimit()
@@ -81,14 +82,13 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
         await TripAsync(player, 3, 2, "planks");
         Factory.Clock.Advance(TimeSpan.FromSeconds(5));
         JsonNode waiting = (await ApiClient.GetAsync(Factory, "/api/v1/city", player)).Json();
-        await TripAsync(player, 3, 2, "planks");
-        Factory.Clock.Advance(TimeSpan.FromSeconds(5));
+        Factory.Clock.Advance(TimeSpan.FromSeconds(10));
 
         JsonNode started = (await ApiClient.GetAsync(Factory, "/api/v1/city", player)).Json();
 
         Assert.Equal(("Producing", """{"planks":10}"""), ((string)waiting["city"]!["buildings"]![1]!["phase"]!, waiting["city"]!["buildings"]![1]!["needs"]!.ToJsonString()));
         Assert.Equal("""{"delivered":{"planks":10},"moved":{},"refunded":{"logs":2}}""", Maps(started["settlement"]!));
-        Assert.Equal("2 sawmill L1 Upgrading 10-190 target 2 workers 2", await BuildingAsync(Database, city, 2));
+        Assert.Equal("2 sawmill L1 Upgrading 15-195 target 2 workers 2", await BuildingAsync(Database, city, 2));
         Assert.Equal("coins 750, logs 42", await StockAsync(Database, city));
         Assert.Equal(
             ["logs 2 42 SETTLEMENT_REFUNDED settlement", "planks -10 0 SETTLEMENT_DELIVERED settlement"],

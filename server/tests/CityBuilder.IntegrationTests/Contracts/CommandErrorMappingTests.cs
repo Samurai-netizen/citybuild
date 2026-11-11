@@ -38,6 +38,11 @@ public sealed class CommandErrorMappingTests
         { MutationErrorCode.ItemNotAccepted, "ITEM_NOT_ACCEPTED", 422 },
         { MutationErrorCode.NothingToCarry, "NOTHING_TO_CARRY", 422 },
         { MutationErrorCode.InvalidRoute, "INVALID_ROUTE", 422 },
+        { MutationErrorCode.NoFreeCourier, "NO_FREE_COURIER", 422 },
+        { MutationErrorCode.DeliveryQueueFull, "DELIVERY_QUEUE_FULL", 422 },
+        { MutationErrorCode.RoutesLocked, "ROUTES_LOCKED", 422 },
+        { MutationErrorCode.CourierBusy, "COURIER_BUSY", 422 },
+        { MutationErrorCode.DeliveryNotFound, "DELIVERY_NOT_FOUND", 422 },
     };
 
     /// <summary>Each engine code answers with the API code and status of the contract's table, and the type made from the code.</summary>

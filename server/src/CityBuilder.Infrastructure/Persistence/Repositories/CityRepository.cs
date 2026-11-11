@@ -50,9 +50,10 @@ public sealed class CityRepository(CityBuilderDbContext db, TimeProvider timePro
         List<CityCourierRow> couriers = await _db.CityCouriers.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
         List<CityCourierLoadRow> courierLoads = await _db.CityCourierLoads.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
         List<CityRouteActionRow> routeActions = await _db.CityRouteActions.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
+        List<CityDeliveryLineRow> deliveryLines = await _db.CityDeliveryLines.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
 
         return CityMapping.ToAggregate(
-            new CityRows(city, buildings, stores, projectNeeds, research, researchNeeds, roads, trips, couriers, courierLoads, routeActions));
+            new CityRows(city, buildings, stores, projectNeeds, research, researchNeeds, roads, trips, couriers, courierLoads, routeActions, deliveryLines));
     }
 
     /// <summary>
@@ -111,6 +112,7 @@ public sealed class CityRepository(CityBuilderDbContext db, TimeProvider timePro
             _db.CityCouriers.AddRange(rows.Couriers);
             _db.CityCourierLoads.AddRange(rows.CourierLoads);
             _db.CityRouteActions.AddRange(rows.RouteActions);
+            _db.CityDeliveryLines.AddRange(rows.DeliveryLines);
         }
         else
         {
@@ -126,6 +128,7 @@ public sealed class CityRepository(CityBuilderDbContext db, TimeProvider timePro
             Merge(_db.CityCouriers, city.CityId, rows.Couriers, row => row.CityId, row => (row.StationId, row.Slot));
             Merge(_db.CityCourierLoads, city.CityId, rows.CourierLoads, row => row.CityId, row => (row.StationId, row.Slot, row.ItemId, row.FromBuildingId));
             Merge(_db.CityRouteActions, city.CityId, rows.RouteActions, row => row.CityId, row => (row.StationId, row.Slot, row.StopIndex, row.ActionIndex));
+            Merge(_db.CityDeliveryLines, city.CityId, rows.DeliveryLines, row => row.CityId, row => row.LineId);
         }
 
         _db.LedgerEntries.AddRange(ledger.Select(entry => LedgerMapping.ToRow(city.CityId, entry, now)));

@@ -34,9 +34,10 @@ public sealed class StartTripContractTests(ApiFactory factory) : IClassFixture<A
     private static readonly Guid _playerId = Guid.Parse("0199a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a80");
 
     /// <summary>
-    /// A trip of all the woodcutter's logs to the warehouse answers 200 with the snapshot of the city as it is saved: the trip takes 10 (the
-    /// carry limit) of the 30 logs at once, walks the two free tiles in 10 s, and keeps a worker busy; the city's total of logs is the same
-    /// (they are on the way) and no ledger row is written. It is the same snapshot <c>GET /city</c> shows.
+    /// A trip of all the woodcutter's logs to the warehouse (no courier station yet: a worker carries it, CR-0008 D14) answers 200 with the
+    /// snapshot of the city as it is saved: the worker takes the first load of 10 (the carry limit) of the 30 logs at once, with 20 left for
+    /// later loads (D21), walks the two free tiles in 10 s, and is busy; the city's total of logs is the same (they are on the way) and no
+    /// ledger row is written. It is the same snapshot <c>GET /city</c> shows.
     /// </summary>
     [Fact]
     public async Task Post_LogsToTheWarehouse_TakesThemAndShowsTheTrip()
@@ -50,7 +51,7 @@ public sealed class StartTripContractTests(ApiFactory factory) : IClassFixture<A
         JsonNode snapshot = response.Json();
         Assert.Equal((_requestId, 1L), ((string)snapshot["requestId"]!, (long)snapshot["stateVersion"]!));
         Assert.Equal(
-            """[{"id":1,"sourceId":2,"targetId":3,"itemId":"logs","quantity":10,"departedAt":0,"arrivesAt":10}]""",
+            """[{"id":1,"sourceId":2,"targetId":3,"itemId":"logs","quantity":10,"departedAt":0,"arrivesAt":10,"remaining":20,"leg":"ToTarget"}]""",
             snapshot["city"]!["trips"]!.ToJsonString());
         Assert.Equal("""{"provided":4,"assigned":0,"onTrips":1,"free":3}""", snapshot["city"]!["workers"]!.ToJsonString());
         Assert.Equal("""{"logs":20}""", snapshot["city"]!["buildings"]![1]!["store"]!.ToJsonString());
@@ -63,11 +64,12 @@ public sealed class StartTripContractTests(ApiFactory factory) : IClassFixture<A
     }
 
     /// <summary>
-    /// When the walk is over the request that settles the city delivers the load: the warehouse holds 5 + 10 logs, the settlement says 10 logs
-    /// were moved, the trip is gone and its worker free.
+    /// When the first walk is over the request that settles the city delivers the load: the warehouse holds 5 + 10 logs, the settlement says
+    /// 10 logs were moved, and the worker walks back for the next load (D21). After the third load, at 50 s, all 30 are delivered, the trip is
+    /// gone and its worker free.
     /// </summary>
     [Fact]
-    public async Task Get_AfterTheWalk_DeliversTheLoad()
+    public async Task Get_AfterEachLoad_DeliversItUntilEverythingIsThere()
     {
         FakeTimeProvider clock = new(_settledAt);
         (FakeCityStore _, WebApplicationFactory<Program> server) = Serve(clock);
@@ -75,28 +77,36 @@ public sealed class StartTripContractTests(ApiFactory factory) : IClassFixture<A
         Assert.Equal(HttpStatusCode.OK, (await ApiClient.PostAsync(server, _path, _playerId, Body(2, 3, "logs", "all"))).Status);
         clock.Advance(TimeSpan.FromSeconds(10));
 
-        JsonNode snapshot = (await ApiClient.GetAsync(server, "/api/v1/city", _playerId)).Json();
+        JsonNode first = (await ApiClient.GetAsync(server, "/api/v1/city", _playerId)).Json();
+        clock.Advance(TimeSpan.FromSeconds(40));
+        JsonNode last = (await ApiClient.GetAsync(server, "/api/v1/city", _playerId)).Json();
 
-        Assert.Equal("""{"logs":15}""", snapshot["city"]!["buildings"]![2]!["store"]!.ToJsonString());
-        Assert.Equal("""{"logs":10}""", snapshot["settlement"]!["moved"]!.ToJsonString());
-        Assert.Equal("[]", snapshot["city"]!["trips"]!.ToJsonString());
-        Assert.Equal(4, (int)snapshot["city"]!["workers"]!["free"]!);
+        Assert.Equal("""{"logs":15}""", first["city"]!["buildings"]![2]!["store"]!.ToJsonString());
+        Assert.Equal("""{"logs":10}""", first["settlement"]!["moved"]!.ToJsonString());
+        Assert.Equal(
+            """[{"id":1,"sourceId":2,"targetId":3,"itemId":"logs","quantity":0,"departedAt":10,"arrivesAt":20,"remaining":20,"leg":"ToSource"}]""",
+            first["city"]!["trips"]!.ToJsonString());
+        Assert.Equal("""{"logs":35}""", last["city"]!["buildings"]![2]!["store"]!.ToJsonString());
+        Assert.Equal("[]", last["city"]!["trips"]!.ToJsonString());
+        Assert.Equal(4, (int)last["city"]!["workers"]!["free"]!);
     }
 
-    /// <summary>The amount's forms: <c>half</c> of 30 is 15, at most 10; <c>quarter</c> of 30 is 7 (rounded down).</summary>
+    /// <summary>The amount's forms, counted at the send: <c>half</c> of 30 is 15, a load of 10 and 5 left; <c>quarter</c> of 30 is 7 (rounded down), one load.</summary>
     /// <param name="amount">The amount sent.</param>
-    /// <param name="quantity">The load expected.</param>
+    /// <param name="quantity">The first load expected.</param>
+    /// <param name="remaining">What is left for later loads.</param>
     [Theory]
-    [InlineData("half", 10)]
-    [InlineData("quarter", 7)]
-    public async Task Post_Preset_CarriesItsShareWithinTheCarryLimit(string amount, long quantity)
+    [InlineData("half", 10, 5)]
+    [InlineData("quarter", 7, 0)]
+    public async Task Post_Preset_CarriesItsShareWithinTheCarryLimit(string amount, long quantity, long remaining)
     {
         (FakeCityStore _, WebApplicationFactory<Program> server) = Serve(new FakeTimeProvider(_settledAt));
         await using WebApplicationFactory<Program> _ = server;
 
         ApiResponse response = await ApiClient.PostAsync(server, _path, _playerId, Body(2, 3, "logs", amount));
 
-        Assert.Equal(quantity, (long)response.Json()["city"]!["trips"]![0]!["quantity"]!);
+        JsonNode trip = response.Json()["city"]!["trips"]![0]!;
+        Assert.Equal((quantity, remaining), ((long)trip["quantity"]!, (long)trip["remaining"]!));
     }
 
     /// <summary>

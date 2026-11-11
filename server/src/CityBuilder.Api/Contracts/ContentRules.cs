@@ -14,6 +14,9 @@ namespace CityBuilder.Api.Contracts;
 /// <param name="TripCarryLimit">The most goods one manual trip carries, JSON <c>tripCarryLimit</c> (CR-0008).</param>
 /// <param name="MaxRouteStops">The most stops a courier's route has, JSON <c>maxRouteStops</c> (CR-0008).</param>
 /// <param name="MaxStopActions">The most actions one stop of a route has, JSON <c>maxStopActions</c> (CR-0008).</param>
+/// <param name="MaxDeliveryLines">The most delivery lines one courier may have queued, JSON <c>maxDeliveryLines</c> (CR-0008 amendment 1).</param>
+/// <param name="RouteBuilding">The building type a city must have built before a courier gets a route, JSON <c>routeBuilding</c>; null when
+/// routes need none (CR-0008 D15).</param>
 /// <param name="TimeScale">How many city-clock seconds pass per server second, JSON <c>timeScale</c>; always 1 outside Development. The client's
 /// display clock is <c>city.clock + secondsSinceSnapshotReceived × timeScale</c> (<c>05</c>, snapshot).</param>
 public sealed record ContentRules(
@@ -30,4 +33,6 @@ public sealed record ContentRules(
     long TripCarryLimit,
     int MaxRouteStops,
     int MaxStopActions,
+    int MaxDeliveryLines,
+    string? RouteBuilding,
     int TimeScale);

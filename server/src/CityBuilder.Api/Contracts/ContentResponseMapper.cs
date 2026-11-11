@@ -51,6 +51,8 @@ public static class ContentResponseMapper
         rules.TripCarryLimit,
         rules.MaxRouteStops,
         rules.MaxStopActions,
+        rules.MaxDeliveryLines,
+        rules.RouteBuilding?.Value,
         timeScale);
 
     /// <summary>Maps a building type with its levels.</summary>
