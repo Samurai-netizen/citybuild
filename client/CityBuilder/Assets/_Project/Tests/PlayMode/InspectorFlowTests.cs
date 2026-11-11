@@ -546,7 +546,8 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(_roads.Phase, Is.EqualTo(RoadPhase.Confirming));
             Assert.That(_roads.Tiles.Count, Is.EqualTo(3));
             Assert.That(_roads.CanPlace, Is.True);
-            Assert.That(_world.Ground!.ShownPath.Count, Is.EqualTo(3));
+            Assert.That(_world.Ground!.ShownRoadPreview.Count, Is.EqualTo(3), "new roads show as see-through roads (CR-0008-T3)");
+            Assert.That(_world.Ground.ShownPath, Is.Empty, "not as the yellow path markers");
 
             _roadBar.PressPlace();
 
@@ -561,6 +562,7 @@ namespace CityBuilder.Client.Tests.PlayMode
 
             Assert.That(_roads.Phase, Is.EqualTo(RoadPhase.Idle));
             Assert.That(_world.Ground.ShownPath, Is.Empty);
+            Assert.That(_world.Ground.ShownRoadPreview, Is.Empty);
             Assert.That(_roadBar.Root.Q<VisualElement>(RoadBar.BarName).ClassListContains("road-bar--hidden"), Is.True);
         }
     }

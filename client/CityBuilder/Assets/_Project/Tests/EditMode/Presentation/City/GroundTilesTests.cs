@@ -173,6 +173,71 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.City
             Assert.DoesNotThrow(() => _selection.SetHovered(new GridCoordinate(1, 1)));
         }
 
+        /// <summary>
+        /// The road preview (CR-0008-T3, playtest issue 1): each picked tile inside the grid gets the level 1 road model in a see-through copy
+        /// of its material (a quarter opaque) whose ground plane floats over the tallest grass of the map, so no grass hides it; the previewed
+        /// roads join each other; null hides them.
+        /// </summary>
+        [Test]
+        public void ShowRoadPreview_ShowsSeeThroughRoads_AboveTheGrass_JoinedToEachOther()
+        {
+            _ground.ShowRoadPreview(new[] { (1, 1), (2, 1), (9, 9) });
+
+            Assert.That(_ground.ShownRoadPreview, Is.EqualTo(new[] { (1, 1), (2, 1) }), "a tile outside the grid is left out");
+            Assert.That(_ground.RoadPreviewObjects, Has.Count.EqualTo(2));
+            GameObject first = _ground.RoadPreviewObjects[0];
+            Assert.That(first.activeSelf, Is.True);
+            Assert.That(first.transform.localPosition.x, Is.EqualTo(1.5f).Within(0.0001f));
+            Assert.That(first.transform.localPosition.z, Is.EqualTo(1.5f).Within(0.0001f));
+            Assert.That(first.transform.localPosition.y, Is.GreaterThanOrEqualTo(TallestGrass()), "the grass must not hide the preview");
+            Assert.That(BuildingViewFactory.FindByName(first.transform, RoadArms.XPlus), Is.Not.Null, "it is the road model, not a marker");
+            Assert.That(BuildingViewFactory.FindByName(first.transform, RoadArms.XPlus)!.gameObject.activeSelf, Is.True);
+            Assert.That(BuildingViewFactory.FindByName(first.transform, RoadArms.XMinus)!.gameObject.activeSelf, Is.False);
+            foreach (Renderer renderer in first.GetComponentsInChildren<Renderer>(true))
+            {
+                Material[] materials = renderer.sharedMaterials;
+                Assert.That(materials, Has.Length.EqualTo(2), renderer.name);
+                Assert.That(materials[1].color.a, Is.EqualTo(GroundTiles.RoadPreviewAlpha).Within(0.0001f), renderer.name);
+                Assert.That(materials[1].mainTexture, Is.Not.Null, "the road's own texture, see-through");
+            }
+
+            Assert.That(GroundTiles.RoadPreviewAlpha, Is.EqualTo(0.25f), "75 % transparency, the owner's words");
+
+            _ground.ShowRoadPreview(null);
+
+            Assert.That(_ground.ShownRoadPreview, Is.Empty);
+            Assert.That(first.activeSelf, Is.False);
+        }
+
+        /// <summary>The yellow markers of a path (a trip, or existing roads picked for an upgrade) lie over the tallest grass of the map (CR-0008-T3, playtest issue 1).</summary>
+        [Test]
+        public void ShowPath_PutsTheMarkersAboveTheGrass()
+        {
+            _ground.ShowPath(new[] { (0, 0), (1, 0) });
+
+            Transform marker = _ground.Root.transform.Find("Path step 0");
+            Assert.That(marker, Is.Not.Null);
+            Assert.That(marker.GetComponent<Renderer>().bounds.min.y, Is.GreaterThanOrEqualTo(TallestGrass()));
+        }
+
+        /// <summary>The highest point of any grass tile of the ground (its details included), in world units.</summary>
+        private float TallestGrass()
+        {
+            float top = float.MinValue;
+            for (int y = 0; y < _grid.Height; y++)
+            {
+                for (int x = 0; x < _grid.Width; x++)
+                {
+                    foreach (Renderer renderer in _ground.Root.transform.Find("Tile " + new GridCoordinate(x, y)).GetComponentsInChildren<Renderer>())
+                    {
+                        top = Mathf.Max(top, renderer.bounds.max.y);
+                    }
+                }
+            }
+
+            return top;
+        }
+
         /// <summary>ShowRoads replaces road tiles by level, connects arms to neighbouring road tiles, and restores grass when removed (CR-0008).</summary>
         [Test]
         public void ShowRoads_DrawsRoadsByLevel_ConnectsNeighbours_AndRestoresGrass()

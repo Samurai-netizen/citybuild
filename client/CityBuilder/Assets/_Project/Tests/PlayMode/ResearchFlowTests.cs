@@ -187,6 +187,27 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(nodes[3].ClassListContains("research-node--locked"), Is.True);
         }
 
+        /// <summary>
+        /// A card whose Fund button is off shows its picture and words without a pointer over it: the button laid over the card stays see-through
+        /// and its "Fund" text unseen, as on a card that can be funded (CR-0008-T3, playtest issue 3: the shared <c>.btn:disabled</c> grey covered the card).
+        /// </summary>
+        [UnityTest]
+        public IEnumerator ACardWhoseButtonIsOff_IsNotCoveredByTheButton()
+        {
+            _screen.SetOpen(true);
+            yield return null;
+
+            foreach (string id in new[] { "frame_saw", "trade_charter" })
+            {
+                Button finance = _screen.FinanceButton(id)!;
+                Assert.That(finance.resolvedStyle.backgroundColor.a, Is.EqualTo(0f), id + ": the button's background");
+                Assert.That(finance.resolvedStyle.color.a, Is.EqualTo(0f), id + ": the button's text");
+                Assert.That(finance.resolvedStyle.backgroundImage.texture, Is.Null, id + ": no picture over the card");
+            }
+
+            Assert.That(_screen.FinanceButton("frame_saw")!.enabledSelf, Is.False, "the case that broke: a button that is off");
+        }
+
         /// <summary>A press on a button that is off sends nothing.</summary>
         [Test]
         public void PressingALockedNode_SendsNothing()

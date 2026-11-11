@@ -149,6 +149,13 @@ namespace CityBuilder.Client.Presentation.City
             _ground?.ShowPath(steps);
         }
 
+        /// <summary>Shows the see-through roads the player is about to build (<see cref="GroundTiles.ShowRoadPreview"/>), or clears them for null (CR-0008-T3). Does nothing before <see cref="ShowGrid"/>.</summary>
+        /// <param name="tiles">The picked road tiles, or null to clear.</param>
+        public void ShowRoadPreview(IReadOnlyList<(int X, int Y)>? tiles)
+        {
+            _ground?.ShowRoadPreview(tiles);
+        }
+
         /// <summary>Makes the ghosts match the commands on their way (<see cref="PlacementGhosts.Show"/>). Does nothing before <see cref="ShowGrid"/>.</summary>
         /// <param name="pending">The command sender's pending commands.</param>
         /// <param name="era">The city's era.</param>

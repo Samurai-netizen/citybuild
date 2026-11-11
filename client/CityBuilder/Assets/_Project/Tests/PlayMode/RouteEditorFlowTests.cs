@@ -9,6 +9,7 @@ using CityBuilder.Client.Net;
 using CityBuilder.Client.Presentation.City;
 using CityBuilder.Client.Presentation.Inspector;
 using CityBuilder.Client.Presentation.Routes;
+using CityBuilder.Client.Presentation.Ui;
 using CityBuilder.Simulation.Content;
 using NUnit.Framework;
 using UnityEngine;
@@ -106,6 +107,41 @@ namespace CityBuilder.Client.Tests.PlayMode
             _cancel.Cancel();
             _cancel.Dispose();
             Object.DestroyImmediate(_host);
+        }
+
+        /// <summary>
+        /// With the inspector and the editor in one menu group, as <c>GameRoot</c> joins them, tapping a building opens the inspector and it stays
+        /// open: the closed editor's <see cref="RouteEditorFlow.Close"/> must not drop the tile (CR-0008-T3, playtest issue 2).
+        /// </summary>
+        [UnityTest]
+        public IEnumerator TapBuilding_WithTheMenusJoined_KeepsTheInspectorOpen()
+        {
+            var menus = new MenuGroup();
+            _inspector.Opened += menus.Join(_inspectorFlow.Close).NotifyOpened;
+            _screen.Opened += menus.Join(_flow.Close).NotifyOpened;
+
+            TapTile(2, 0);
+            yield return null;
+
+            Assert.That(_inspector.IsShown, Is.True);
+            Assert.That(_world.Selection!.Selected, Is.EqualTo(new GridCoordinate(2, 0)));
+        }
+
+        /// <summary>Opening the editor from the inspector, with the menus joined, still closes the inspector and keeps the editor open (CR-0008-T3).</summary>
+        [UnityTest]
+        public IEnumerator EditRoutes_WithTheMenusJoined_OpensTheEditor_AndClosesTheInspector()
+        {
+            var menus = new MenuGroup();
+            _inspector.Opened += menus.Join(_inspectorFlow.Close).NotifyOpened;
+            _screen.Opened += menus.Join(_flow.Close).NotifyOpened;
+            TapTile(6, 0);
+            Assert.That(_inspector.IsShown, Is.True);
+
+            _inspector.PressEditRoutes();
+            yield return null;
+
+            Assert.That(_routes.Phase, Is.EqualTo(RouteEditorPhase.Editing));
+            Assert.That(_inspector.IsShown, Is.False);
         }
 
         /// <summary>The courier station's Re-energize button shows for a courier below full stamina and sends <c>reenergize-couriers</c>.</summary>

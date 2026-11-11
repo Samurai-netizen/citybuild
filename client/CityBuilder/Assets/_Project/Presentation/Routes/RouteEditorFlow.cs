@@ -94,10 +94,13 @@ namespace CityBuilder.Client.Presentation.Routes
             }
         }
 
-        /// <summary>Closes the editor without sending anything; the other menus call it when one of them opens (<see cref="Ui.MenuGroup"/>).</summary>
+        /// <summary>
+        /// Closes the editor without sending anything; the other menus call it when one of them opens (<see cref="Ui.MenuGroup"/>). Does nothing
+        /// while the editor is closed: the tile may then be the inspector's, and dropping it would close the inspector that just opened (CR-0008-T3).
+        /// </summary>
         public void Close()
         {
-            if (_disposed)
+            if (_disposed || _model.Phase == RouteEditorPhase.Idle)
             {
                 return;
             }
