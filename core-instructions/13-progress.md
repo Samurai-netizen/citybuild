@@ -8,9 +8,9 @@
 - **State:** IN PROGRESS          <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** CR-0008-T3 · Logistics rework: close-out and playtest (`[O] [MANUAL]`) · branch `task/CR-0008-T3-logistics-playtest` ·
   build log `docs/build-log/2026/2026-11-11-01-CR-0008-T3.md`
-- **Part / step:** write-ahead done; steps 1 prepare → 2 playtest with the owner → 3 fix P0/P1 → 4 LOCAL-E2E logistics run → 5 docs sync → 6 close-out.
+- **Part / step:** CP-1 done (baseline green, Blender build checked); steps 1 prepare → 2 playtest with the owner → 3 fix P0/P1 → 4 LOCAL-E2E logistics run → 5 docs sync → 6 close-out.
 - **Last completed:** CR-0008-T2 · Logistics rework: client and art (PR #87, merged)
-- **Next step:** step 1 (baseline checks, Blender build, dev database and server), then the playtest with the owner.
+- **Next step:** step 2, the playtest with the owner (dev database reset and server at `DevTimeScale=60` need the owner's yes).
 - **Open questions for the owner:** CR-0008-T1: 8 Dependabot alerts on `main` (build log Follow-ups). M0-58: the [MANUAL] content-change check (`client/README.md`; no automated test covers the `GameRoot` rebuild). CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-54: the dev database still runs the fast clock until the owner does step 7 of the waiting-loop run (`LOCAL-E2E.md`). M0-55: the [MANUAL] look at the connection states (`client/README.md`). CR-0007-T1: the [MANUAL] look at the new UI (`client/README.md`); the status label may be removed (build log follow-ups).
 - **Known broken / do not touch:** nothing.
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
