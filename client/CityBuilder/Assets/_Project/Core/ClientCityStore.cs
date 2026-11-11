@@ -47,6 +47,15 @@ namespace CityBuilder.Client.Core
             }
         }
 
+        /// <summary>The real seconds, with their fraction, since <see cref="Snapshot"/> arrived; 0 before the first one and never below 0.</summary>
+        public double SecondsSinceReceived
+        {
+            get
+            {
+                return Snapshot == null ? 0d : Math.Max(0d, _realtimeSeconds() - ReceivedAtSeconds);
+            }
+        }
+
         /// <summary>Takes <paramref name="snapshot"/> unless the one held is as new or newer, and raises <see cref="SnapshotChanged"/> when it does.</summary>
         /// <param name="snapshot">The server's snapshot.</param>
         /// <returns>True when the store took it.</returns>

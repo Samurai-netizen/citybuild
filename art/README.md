@@ -10,14 +10,16 @@ which also brings the art into the Unity client, task by task.
 
 | Path | What |
 |---|---|
-| `art/blender/` | The source. `build_all.py` builds everything; `assets_era1.py` buildings and stockpiles; `assets_common.py` tiles, nature, worker; `lib.py` geometry, export, rendering; `palette.py` the colours; `render_ui.py` the 2D assets |
-| `client/CityBuilder/Assets/_Project/Art/Resources/Models/era1/` | Unity-ready FBX, the **only copy**: the M0 buildings at every level of the content (the four producers and the cottage at levels 1 and 2; since CR-0008 also the courier station at 1 and 2, the scriptorium at 1, the warehouse at 1 and 2), the construction site, stockpile props |
-| `client/CityBuilder/Assets/_Project/Art/Resources/Models/common/` | Era-independent FBX: grass and dirt tiles, pine, round tree, bush, rock, worker |
+| `art/blender/` | The source. `build_all.py` builds everything; `assets_era1.py` buildings, store fills and stockpiles; `assets_common.py` tiles, roads, nature, worker, courier, carried loads and smoke puff; `assets_ground.py` grass and road variants; `lib.py` geometry, moving parts, export, rendering; `palette.py` the colours; `render_ui.py` the 2D icons; `render_previews.py` the lineups, town and motion GIFs |
+| `art/MOTIONS.md` | The contract between the art and the client for moving parts (`_Pose` empties, `PartMotions`, `MotionRig`), store fill (`_fill` models, `Fill_<item>_<step>`), chimney smoke (`Anchor_Smoke`, `fx_smoke_puff`), roads (`RoadArms`) and ground variants (`GroundVariants`) |
+| `client/CityBuilder/Assets/_Project/Art/Resources/Models/era1/` | Unity-ready FBX, the **only copy**: the M0 buildings at every level of the content (the four producers and the cottage at levels 1 and 2; the courier station at 1 and 2, the scriptorium at 1, the warehouse at 1 and 2), their 8 store-fill models (`*_fill.fbx`), the construction site, and stockpile props (`prop_logs_*`, `prop_planks_*`, `prop_coins_*`) |
+| `client/CityBuilder/Assets/_Project/Art/Resources/Models/common/` | Era-independent FBX: the 8 grass tiles (`tile_grass`, `_b`..`_h`), the dirt tile, the 6 road tiles (`road_l1`, `road_l2` and their `_b`, `_c` variants), pine, round tree, bush, rock, flowers, stump, worker, courier, carried loads (`carry_logs`, `carry_planks`), and the smoke puff (`fx_smoke_puff`) |
 | `art/textures/palette_era1.png` | The one texture every model uses (128 × 128). The build also copies it to `…/Art/Textures/` |
-| `art/previews/` | Renders of every model, `lineup_era1.png`, `city_golden_scenario.png` and `city_closeup.png` (the golden scenario #1 village on the 8 × 8 grid). Git tracks only the two city pictures; the build rewrites the rest |
-| `art/ui/` | 2D assets from the same models: `city_phone.jpg` (the village in a phone's portrait frame) and `hotspots.json` (where each building lands on a 390 × 844 screen) |
-| `client/CityBuilder/Assets/_Project/Resources/UI/Icons/` | The 20 transparent 256 px UI icons (items, workers, builders, research, buildings, research nodes; CR-0008 added `bld_courier_station`, `bld_scriptorium`, `bld_warehouse`, `res_tally_sticks`, `res_sturdy_boots`), the **only copy**: `render_ui.py` writes them there, and the client loads them by name (`UiIcons`) |
-| `art/ui/showcase/` | Source of the UI showcase canvas (interactive phone mockups and the UI kit): a design reference for the screen tasks (M0-51 to M0-53); no code reads it |
+| `art/previews/` | Renders of every model, the visual v2 lineups (`lineup_buildings.jpg`, `lineup_ground.jpg`, `lineup_props.jpg`), the town (`town.jpg`, `town_closeup.jpg`), the motion contact sheet (`motion_sheet.jpg`) and `motion/*.gif` (plus the earlier `city_golden_scenario.png` and `city_closeup.png`). Git tracks the `.jpg` lineups/town, `motion/*.gif` and the two city `.png` pictures; the build rewrites `models/` |
+| `art/ui/` | 2D assets and preview tools: `city_phone.jpg`, `hotspots.json`, `showcase/` (design reference) and `preview/` (`check-ui-rules.py`, `preview.js`, `render-glyphs.js`, `uitk.js`) |
+| `client/CityBuilder/Assets/_Project/Resources/UI/Icons/` | The 25 transparent 256 px UI icons (items, workers, builders, research, buildings, research nodes, roads `road_l1`/`road_l2`, `couriers`, `trips`, `reenergize`), the **only copy**: `render_ui.py` writes them there, and the client loads them by name (`UiIcons`) |
+| `client/CityBuilder/Assets/_Project/Resources/UI/Glyphs/` | The 8 white 96 px UI glyphs (`alert`, `close`, `done`, `lock`, `makes`, `minus`, `plus`, `time`), written by `art/ui/preview/render-glyphs.js` and tinted by USS |
+| `client/CityBuilder/Assets/_Project/Resources/UI/Fonts/` | `Fredoka-SemiBold.ttf`, `Nunito-Bold.ttf` and `Nunito-ExtraBold.ttf` with their OFL licences |
 
 ## Rebuild
 
@@ -77,6 +79,13 @@ a swatch. Slots never move: a new colour goes into a free slot (grey).
 | 7 | wood_end | `#EBC88E` | 17 | water | `#6EC1E4` |
 | 8 | thatch | `#E5B24C` | 18 | skin | `#F0C08A` |
 | 9 | thatch_dark | `#B8862F` | 19 | gold | `#F2C230` |
+| 20 | grass_light | `#96C95A` | 27 | foam | `#D2F0F8` |
+| 21 | smoke | `#ECE8E1` | 28 | lamp | `#FFD36B` |
+| 22 | flower_pink | `#E98AB0` | 29 | stone_light | `#CEC8BC` |
+| 23 | flower_purple | `#9C82D4` | 30 | dirt_light | `#CFA777` |
+| 24 | iron | `#5A606B` | 31 | grass_warm | `#88B94F` |
+| 25 | canvas | `#D9C7A0` | 32 | grass_cool | `#6EA845` |
+| 26 | dirt_dark | `#9A6E45` | 33 | grass_dry | `#B4BD5C` |
 
 **Scale and orientation.**
 - 1 unit = 1 m = 1 Unity unit, and one grid tile is 1 × 1. A building fills most of its tile (about 85 %, like the reference
@@ -88,7 +97,7 @@ a swatch. Slots never move: a new colour goes into a free slot (grey).
   Details that matter go on those two sides.
 - A worker is about 0.17 tall and a door about 0.2: toy proportions, not real ones.
 
-**Budget.** Buildings ≤ 4,500 triangles (today 850–2,430; the CR-0008 buildings 1,000–1,720), props ≤ 1,500, tiles ≤ 200. One mesh plus parts that move, and one
+**Budget.** Buildings ≤ 6,000 triangles, store fills ≤ 1,500, props ≤ 1,500, roads ≤ 2,000, tiles ≤ 1,000, fx ≤ 300. One mesh plus parts that move (`art/MOTIONS.md`), and one
 material: a whole city is a handful of draw calls, and washing out a stalled building is a property block on its renderers, not a second material (M0-50: the base colour times 0.65 and a grey emission; the shared material has `_EMISSION` on with an emission of 0.002, which URP needs to keep the keyword).
 
 **Names.** `Models/<set>/<contentId>_l<level>.fbx`, matching the client's lookup by `(typeId, era)` (`09` → UX rules) plus the
@@ -129,10 +138,7 @@ The client draws these models since T3 (`core-instructions/09-unity-client.md` r
   showed the six checked models with the right colours and sharp swatches.
 - The city view draws the models (CR-0005-T3, 2026-11-01): Unity tests of the model for every reachable level of every building type of the content, the anchors, the construction site, the ground, the ghost (a picture of it is between the bare tile and the finished building) and one shared material for the whole city, EditMode 708 / 708 and PlayMode 90 / 90 with a graphics device.
 - The status above the buildings (M0-50, 2026-11-01): one rendered frame of eight buildings showed the ring (yellow on a construction site, blue on an upgrade, green on producers), the red, amber and blue bubbles with the workers or the item, one to six pips and the washed-out look of two stalled buildings (the same roof colour went from saturation 0.64 to 0.49); the sizes were set by that picture.
-- The CR-0008 buildings (CR-0008-T1, 2026-11-04, decision 44 of its build log): `build_all.py --only` passes every check for the five new
-  models, `render_ui.py --only` rendered their three icons and the two research icons, and Unity imported them with the same settings as
-  the others (the `.meta` files differ only in their guids); `ArtModelsTests`, `UiIconsTests` and the build menu's picture test pass.
-  CR-0008-T2 part F adds the courier figure, the road tiles and the roads, trips and re-energize icons, and may rework these models.
+- Visual v2 adopted (CR-0008-T2, 2026-11-08): 57 models (every Era I building reworked with moving parts and `_Pose` empties, 8 `*_fill.fbx` store-fill models, 8 grass variants, 6 road tiles with 4 arms each, worker and courier with limb poses and `Anchor_Load`, `carry_logs`, `carry_planks`, `fx_smoke_puff`, `flowers`, `stump`, `prop_coins_*`), 25 UI icons, 8 UI glyphs and the Fredoka/Nunito fonts imported into Unity 6000.3.25f1; `ArtModelsTests`, `ArtModelsV2Tests`, `ArtImportTests`, `UiIconsTests`, `BuildingDecorTests` and `check-ui-rules.py` pass.
 - **Not checked:** the look in the Editor by a person (the [MANUAL] steps in `client/README.md`); a device build (it should contain the models, because they are in `Resources`).
 
 ## Owner decisions and open questions

@@ -1,6 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
-  <!-- The bar of the placement flow that PlacementBar shows (M0-46, docs/how-to/add-ui-screen.md): what to do next, the tile's warning, the last
-       error, and the Cancel and Place buttons. It sits at the bottom right and is hidden while no card is picked. Style: Common.uss and PlacementBar.uss. -->
+  <!-- The bar of the placement flow that PlacementBar shows (M0-46; visual v2, CR-0008-T2): a parchment panel framed in wood with what to do
+       next, the tile's warning, the last error, and the Cancel and Place buttons. It sits at the bottom right (above the dock in portrait)
+       and is hidden while no card is picked. Style: Common.uss and PlacementBar.uss. -->
   <Style src="Common.uss" />
   <Style src="PlacementBar.uss" />
   <ui:VisualElement name="placement-root" class="placement-root" picking-mode="Ignore">

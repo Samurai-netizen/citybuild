@@ -1,14 +1,17 @@
 #nullable enable
 
 using System;
+using System.Collections.Generic;
+using CityBuilder.Simulation.Map;
+using CityBuilder.Simulation.State;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace CityBuilder.Client.Presentation.City
 {
     /// <summary>
-    /// The ground of the city: one flat tile per grid cell, an instance of the art's grass tile (CR-0005); if the tile model is missing, a cube
-    /// primitive in two greens like a chessboard instead. Plus a hover marker and a selection marker that follow a <see cref="TileSelection"/>.
+    /// The ground of the city: one flat tile per grid cell, an instance of the art's grass tile (CR-0005), varied by the grass variants of visual v2
+    /// and their quarter turns (<see cref="GroundVariants"/>); if the tile model is missing, a cube primitive in two greens like a chessboard instead. Plus a hover marker and a selection marker that follow a <see cref="TileSelection"/>.
     /// The tiles have no colliders: the pointer's tile is found with maths (<see cref="CityGrid"/>), not physics. <see cref="Destroy"/> removes
     /// everything it made.
     /// </summary>
@@ -44,6 +47,12 @@ namespace CityBuilder.Client.Presentation.City
         /// <summary>The colour of an occupied tile while the player picks where to build.</summary>
         private static readonly Color OccupiedHintColor = new Color(0.85f, 0.20f, 0.20f);
 
+        /// <summary>The colour of a path step marker while the player sets up a trip or route (CR-0008).</summary>
+        private static readonly Color PathColor = new Color(0.95f, 0.78f, 0.25f);
+
+        /// <summary>How much of a tile's width a path step marker fills.</summary>
+        private const float PathMarkerFill = 0.36f;
+
         /// <summary>The grid the tiles follow.</summary>
         private readonly CityGrid _grid;
 
@@ -51,7 +60,13 @@ namespace CityBuilder.Client.Presentation.City
         private readonly TileSelection _selection;
 
         /// <summary>The materials this object created, destroyed with it. The first two are the chessboard greens of the cube fallback, and stay null when tile models are used.</summary>
-        private readonly Material?[] _materials = new Material?[6];
+        private readonly Material?[] _materials = new Material?[7];
+
+        /// <summary>Pooled step markers that draw a preview path across the map (CR-0008).</summary>
+        private readonly List<GameObject> _pathMarkers = new List<GameObject>();
+
+        /// <summary>The path steps shown now; empty when no path is shown (CR-0008).</summary>
+        private IReadOnlyList<(int X, int Y)> _shownPath = Array.Empty<(int X, int Y)>();
 
         /// <summary>The material each tile shows when it has no hint, row by row: the art's shared material, or a chessboard green.</summary>
         private readonly Material[] _groundMaterials;
@@ -59,19 +74,37 @@ namespace CityBuilder.Client.Presentation.City
         /// <summary>The tile blocks, row by row (<c>y * width + x</c>), so a hint can change a tile's material.</summary>
         private readonly Renderer[] _tileRenderers;
 
+        /// <summary>The tile objects, row by row (<c>y * width + x</c>), so a road can replace a tile in place.</summary>
+        private readonly GameObject[] _tileObjects;
+
+        /// <summary>The road level each tile shows now, row by row; 0 while the tile shows grass (CR-0008).</summary>
+        private readonly int[] _roadLevels;
+
+        /// <summary>Scratch road levels for the next <see cref="ShowRoads"/> call, row by row (CR-0008).</summary>
+        private readonly int[] _scratchRoadLevels;
+
+        /// <summary>The default grass model passed to the constructor; null in the cube fallback.</summary>
+        private readonly GameObject? _tileModel;
+
+        /// <summary>The grass variants passed to the constructor; null when variants are not used.</summary>
+        private readonly GameObject?[]? _variants;
+
         /// <summary>The hint each tile shows now, row by row; null while the tile shows its ground colour.</summary>
         private readonly TileHint?[] _shownHints;
 
         /// <summary>Whether <see cref="Destroy"/> has run.</summary>
         private bool _destroyed;
 
-        /// <summary>Builds the tiles and the markers under a new object called <c>Ground</c> that is a child of <paramref name="parent"/>.</summary>
+        /// <summary>
+        /// Builds the tiles and the markers under a new object called <c>Ground</c> that is a child of <paramref name="parent"/>. Each tile is
+        /// one of the grass variants of visual v2 (<see cref="GroundVariants"/>), and the plain grass tile where a variant is missing.
+        /// </summary>
         /// <param name="grid">The grid to cover.</param>
         /// <param name="selection">The state the markers show; this object listens to it until <see cref="Destroy"/>.</param>
         /// <param name="parent">The transform the ground hangs under.</param>
         /// <exception cref="ArgumentNullException">An argument is null.</exception>
         public GroundTiles(CityGrid grid, TileSelection selection, Transform parent)
-            : this(grid, selection, parent, Resources.Load<GameObject>(BuildingLooks.GrassTilePath))
+            : this(grid, selection, parent, Resources.Load<GameObject>(BuildingLooks.GrassTilePath), LoadVariants())
         {
         }
 
@@ -85,6 +118,22 @@ namespace CityBuilder.Client.Presentation.City
         /// <param name="tileModel">The model of one tile, whose top is the ground plane, or null for cube blocks.</param>
         /// <exception cref="ArgumentNullException">An argument other than <paramref name="tileModel"/> is null.</exception>
         public GroundTiles(CityGrid grid, TileSelection selection, Transform parent, GameObject? tileModel)
+            : this(grid, selection, parent, tileModel, null)
+        {
+        }
+
+        /// <summary>
+        /// Builds the tiles and the markers: each tile from its grass variant in <paramref name="variants"/> when there is one, else from
+        /// <paramref name="tileModel"/>, else from a cube. With variants, every model tile is turned by its quarter turns
+        /// (<see cref="GroundVariants.RotationFor"/>).
+        /// </summary>
+        /// <param name="grid">The grid to cover.</param>
+        /// <param name="selection">The state the markers show; this object listens to it until <see cref="Destroy"/>.</param>
+        /// <param name="parent">The transform the ground hangs under.</param>
+        /// <param name="tileModel">The model of one tile, whose top is the ground plane, or null for cube blocks.</param>
+        /// <param name="variants">The grass variants by <see cref="GroundVariants.For"/>, any of them null, or null for none.</param>
+        /// <exception cref="ArgumentNullException">An argument other than the models is null.</exception>
+        private GroundTiles(CityGrid grid, TileSelection selection, Transform parent, GameObject? tileModel, GameObject?[]? variants)
         {
             _grid = grid ?? throw new ArgumentNullException(nameof(grid));
             _selection = selection ?? throw new ArgumentNullException(nameof(selection));
@@ -96,9 +145,14 @@ namespace CityBuilder.Client.Presentation.City
             Root = new GameObject("Ground");
             Root.transform.SetParent(parent, false);
 
+            _tileModel = tileModel;
+            _variants = variants;
+            _tileObjects = new GameObject[grid.Width * grid.Height];
             _tileRenderers = new Renderer[grid.Width * grid.Height];
             _groundMaterials = new Material[grid.Width * grid.Height];
             _shownHints = new TileHint?[grid.Width * grid.Height];
+            _roadLevels = new int[grid.Width * grid.Height];
+            _scratchRoadLevels = new int[grid.Width * grid.Height];
             if (tileModel == null)
             {
                 _materials[0] = PlaceholderArt.CreateMaterial(LightGround);
@@ -109,23 +163,7 @@ namespace CityBuilder.Client.Presentation.City
             {
                 for (int x = 0; x < grid.Width; x++)
                 {
-                    var tile = new GridCoordinate(x, y);
-                    int index = y * grid.Width + x;
-                    if (tileModel != null)
-                    {
-                        GameObject instance = Object.Instantiate(tileModel, Root.transform, false);
-                        instance.name = "Tile " + tile;
-                        instance.transform.localPosition = grid.ToWorldCenter(tile);
-                        _tileRenderers[index] = instance.GetComponentInChildren<Renderer>();
-                    }
-                    else
-                    {
-                        GameObject block = CreateBlock("Tile " + tile, TileFill, TileThickness, -TileThickness * 0.5f, grid.ToWorldCenter(tile));
-                        _tileRenderers[index] = block.GetComponent<Renderer>();
-                        _tileRenderers[index].sharedMaterial = (x + y) % 2 == 0 ? _materials[0]! : _materials[1]!;
-                    }
-
-                    _groundMaterials[index] = _tileRenderers[index].sharedMaterial;
+                    BuildTileAt(x, y, 0);
                 }
             }
 
@@ -133,6 +171,7 @@ namespace CityBuilder.Client.Presentation.City
             SelectionMarker = CreateMarker("Selection marker", _materials[3] = PlaceholderArt.CreateMaterial(SelectionColor), MarkerThickness);
             _materials[4] = PlaceholderArt.CreateMaterial(FreeHintColor);
             _materials[5] = PlaceholderArt.CreateMaterial(OccupiedHintColor);
+            _materials[6] = PlaceholderArt.CreateMaterial(PathColor);
 
             _selection.Changed += ShowSelection;
             ShowSelection();
@@ -187,6 +226,201 @@ namespace CityBuilder.Client.Presentation.City
         public TileHint? ShownHintAt(GridCoordinate tile)
         {
             return _grid.Contains(tile) ? _shownHints[tile.Y * _grid.Width + tile.X] : null;
+        }
+
+        /// <summary>The road level a tile shows now (1 or 2), or 0 when it shows grass or lies outside the grid (CR-0008).</summary>
+        public int ShownRoadLevelAt(GridCoordinate tile)
+        {
+            return _grid.Contains(tile) ? _roadLevels[tile.Y * _grid.Width + tile.X] : 0;
+        }
+
+        /// <summary>
+        /// Makes the ground tiles match <paramref name="roads"/> by level and shows each road tile's arms toward neighbouring road tiles
+        /// (<see cref="RoadArms"/>, CR-0008). When the roads have not changed, allocates nothing and touches no GameObjects.
+        /// </summary>
+        /// <param name="roads">The road tiles of the displayed city, or null for no roads.</param>
+        public void ShowRoads(IReadOnlyList<RoadTile>? roads)
+        {
+            Array.Clear(_scratchRoadLevels, 0, _scratchRoadLevels.Length);
+            if (roads != null)
+            {
+                for (int i = 0; i < roads.Count; i++)
+                {
+                    RoadTile road = roads[i];
+                    var coord = new GridCoordinate(road.X, road.Y);
+                    if (_grid.Contains(coord))
+                    {
+                        _scratchRoadLevels[road.Y * _grid.Width + road.X] = road.Level;
+                    }
+                }
+            }
+
+            bool anyChanged = false;
+            for (int y = 0; y < _grid.Height; y++)
+            {
+                for (int x = 0; x < _grid.Width; x++)
+                {
+                    int index = y * _grid.Width + x;
+                    int nextLevel = _scratchRoadLevels[index];
+                    if (_roadLevels[index] == nextLevel)
+                    {
+                        continue;
+                    }
+
+                    anyChanged = true;
+                    _roadLevels[index] = nextLevel;
+                    BuildTileAt(x, y, nextLevel);
+                }
+            }
+
+            if (!anyChanged)
+            {
+                return;
+            }
+
+            for (int y = 0; y < _grid.Height; y++)
+            {
+                for (int x = 0; x < _grid.Width; x++)
+                {
+                    int index = y * _grid.Width + x;
+                    if (_roadLevels[index] <= 0)
+                    {
+                        continue;
+                    }
+
+                    RoadArms.Show(
+                        _tileObjects[index].transform,
+                        HasRoad(x + 1, y),
+                        HasRoad(x - 1, y),
+                        HasRoad(x, y + 1),
+                        HasRoad(x, y - 1));
+                }
+            }
+        }
+
+        /// <summary>Whether the tile at (<paramref name="x"/>, <paramref name="y"/>) is inside the grid and shows a road.</summary>
+        private bool HasRoad(int x, int y)
+        {
+            var coord = new GridCoordinate(x, y);
+            return _grid.Contains(coord) && _roadLevels[y * _grid.Width + x] > 0;
+        }
+
+        /// <summary>Builds or replaces the tile object at (<paramref name="x"/>, <paramref name="y"/>) for road <paramref name="roadLevel"/> (0 = grass).</summary>
+        private void BuildTileAt(int x, int y, int roadLevel)
+        {
+            var tile = new GridCoordinate(x, y);
+            int index = y * _grid.Width + x;
+            if (_tileObjects[index] != null)
+            {
+                PlaceholderArt.Destroy(_tileObjects[index]);
+            }
+
+            GameObject? model = null;
+            bool turnGrass = false;
+            if (roadLevel > 0 && _tileModel != null)
+            {
+                string roadPath = RoadArms.PathOf(roadLevel, RoadArms.VariantFor(x, y));
+                model = Resources.Load<GameObject>(roadPath) ?? Resources.Load<GameObject>(RoadArms.PathOf(roadLevel, 0)) ?? _tileModel;
+            }
+            else if (_tileModel != null)
+            {
+                model = _tileModel;
+                if (_variants != null)
+                {
+                    GameObject? variant = _variants[GroundVariants.For(x, y)];
+                    if (variant != null)
+                    {
+                        model = variant;
+                    }
+
+                    turnGrass = true;
+                }
+            }
+
+            GameObject instance;
+            if (model != null)
+            {
+                instance = Object.Instantiate(model, Root.transform, false);
+                instance.name = "Tile " + tile;
+                instance.transform.localPosition = _grid.ToWorldCenter(tile);
+                if (turnGrass)
+                {
+                    instance.transform.localRotation = Quaternion.Euler(0f, 90f * GroundVariants.RotationFor(x, y), 0f) * instance.transform.localRotation;
+                }
+
+                _tileRenderers[index] = instance.GetComponentInChildren<Renderer>();
+            }
+            else
+            {
+                instance = CreateBlock("Tile " + tile, TileFill, TileThickness, -TileThickness * 0.5f, _grid.ToWorldCenter(tile));
+                _tileRenderers[index] = instance.GetComponent<Renderer>();
+                _tileRenderers[index].sharedMaterial = (x + y) % 2 == 0 ? _materials[0]! : _materials[1]!;
+            }
+
+            _tileObjects[index] = instance;
+            _groundMaterials[index] = _tileRenderers[index].sharedMaterial;
+            TileHint? hint = _shownHints[index];
+            if (hint != null)
+            {
+                _tileRenderers[index].sharedMaterial = hint == TileHint.Occupied ? _materials[5]! : _materials[4]!;
+            }
+        }
+
+        /// <summary>The path steps shown on the ground now; empty when no path is shown (CR-0008).</summary>
+        public IReadOnlyList<(int X, int Y)> ShownPath => _shownPath;
+
+        /// <summary>Draws <paramref name="steps"/> across the ground with pooled step markers, or hides them for null/empty (CR-0008).</summary>
+        /// <param name="steps">The tile steps from <see cref="PathFinder.Route"/>, or null to clear.</param>
+        public void ShowPath(IReadOnlyList<(int X, int Y)>? steps)
+        {
+            _shownPath = steps ?? Array.Empty<(int X, int Y)>();
+            int count = _shownPath.Count;
+            while (_pathMarkers.Count < count)
+            {
+                GameObject marker = CreateBlock(
+                    "Path step " + _pathMarkers.Count,
+                    PathMarkerFill,
+                    MarkerThickness,
+                    MarkerThickness * 1.5f,
+                    Vector3.zero);
+                marker.GetComponent<Renderer>().sharedMaterial = _materials[6]!;
+                _pathMarkers.Add(marker);
+            }
+
+            for (int i = 0; i < _pathMarkers.Count; i++)
+            {
+                GameObject marker = _pathMarkers[i];
+                if (i >= count)
+                {
+                    marker.SetActive(false);
+                    continue;
+                }
+
+                (int x, int y) = _shownPath[i];
+                var coord = new GridCoordinate(x, y);
+                if (!_grid.Contains(coord))
+                {
+                    marker.SetActive(false);
+                    continue;
+                }
+
+                Vector3 center = _grid.ToWorldCenter(coord);
+                marker.transform.localPosition = new Vector3(center.x, marker.transform.localPosition.y, center.z);
+                marker.SetActive(true);
+            }
+        }
+
+        /// <summary>The grass variants of visual v2 by <see cref="GroundVariants.For"/>, each loaded from <c>Resources</c>; a missing one is null.</summary>
+        /// <returns>One entry per variant.</returns>
+        private static GameObject?[] LoadVariants()
+        {
+            var variants = new GameObject?[GroundVariants.Count];
+            for (int i = 0; i < variants.Length; i++)
+            {
+                variants[i] = Resources.Load<GameObject>(GroundVariants.PathOf(i));
+            }
+
+            return variants;
         }
 
         /// <summary>Stops listening to the selection and destroys every object and material this created. Safe to call twice.</summary>

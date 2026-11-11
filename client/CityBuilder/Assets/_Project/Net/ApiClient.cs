@@ -138,6 +138,42 @@ namespace CityBuilder.Client.Net
             return SendAsync<CitySnapshotDto>("POST", "/commands/start-research", request, true, cancellationToken);
         }
 
+        /// <summary><c>POST /commands/start-trip</c> (CR-0008).</summary>
+        public Task<ApiResult<CitySnapshotDto>> StartTripAsync(StartTripRequestDto request, CancellationToken cancellationToken)
+        {
+            return SendAsync<CitySnapshotDto>("POST", "/commands/start-trip", request, true, cancellationToken);
+        }
+
+        /// <summary><c>POST /commands/place-roads</c> (CR-0008).</summary>
+        public Task<ApiResult<CitySnapshotDto>> PlaceRoadsAsync(RoadTilesRequestDto request, CancellationToken cancellationToken)
+        {
+            return SendAsync<CitySnapshotDto>("POST", "/commands/place-roads", request, true, cancellationToken);
+        }
+
+        /// <summary><c>POST /commands/upgrade-roads</c> (CR-0008).</summary>
+        public Task<ApiResult<CitySnapshotDto>> UpgradeRoadsAsync(RoadTilesRequestDto request, CancellationToken cancellationToken)
+        {
+            return SendAsync<CitySnapshotDto>("POST", "/commands/upgrade-roads", request, true, cancellationToken);
+        }
+
+        /// <summary><c>POST /commands/remove-roads</c> (CR-0008).</summary>
+        public Task<ApiResult<CitySnapshotDto>> RemoveRoadsAsync(RoadTilesRequestDto request, CancellationToken cancellationToken)
+        {
+            return SendAsync<CitySnapshotDto>("POST", "/commands/remove-roads", request, true, cancellationToken);
+        }
+
+        /// <summary><c>POST /commands/set-route</c> (CR-0008).</summary>
+        public Task<ApiResult<CitySnapshotDto>> SetRouteAsync(SetRouteRequestDto request, CancellationToken cancellationToken)
+        {
+            return SendAsync<CitySnapshotDto>("POST", "/commands/set-route", request, true, cancellationToken);
+        }
+
+        /// <summary><c>POST /commands/reenergize-couriers</c> (CR-0008).</summary>
+        public Task<ApiResult<CitySnapshotDto>> ReenergizeCouriersAsync(ReenergizeCouriersRequestDto request, CancellationToken cancellationToken)
+        {
+            return SendAsync<CitySnapshotDto>("POST", "/commands/reenergize-couriers", request, true, cancellationToken);
+        }
+
         /// <summary>
         /// Sends one request and reads the answer. The timeout is the client's own, so it works the same on every transport: when it
         /// fires the transport's token is cancelled and the call returns <c>CLIENT_TIMEOUT</c>; when the caller's token is cancelled

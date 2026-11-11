@@ -82,7 +82,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Inspector
 
             return new Building(
                 building.Id, building.TypeId, building.X, building.Y, building.Level, building.AssignedWorkers, building.Phase, building.PhaseStartedAt,
-                building.PhaseEndsAt, building.TargetLevel, building.CycleLabor, building.LaborRemaining, building.SegmentStartedAt, store);
+                building.PhaseEndsAt, building.TargetLevel, building.CycleLabor, building.LaborRemaining, building.SegmentStartedAt, store, building.Needs);
         }
 
         /// <summary>An idle building of <paramref name="typeId"/> with id 1 at <paramref name="level"/> with <paramref name="workers"/> workers.</summary>
@@ -460,6 +460,74 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Inspector
             Assert.That(Model(buildings, new InspectorPending(null, true)), Is.Not.EqualTo(first));
             Assert.That(Model(buildings, clock: 1), Is.Not.EqualTo(first));
             Assert.That(first.Equals(null), Is.False);
+        }
+
+        /// <summary>A building with a store shows each item as <c>amount / limit</c> (including research bonuses), and enables Send trip when it holds goods (CR-0008).</summary>
+        [Test]
+        public void Store_ShowsAmountOverLimit_AndEnablesSendTripWhenStocked()
+        {
+            BuildingInspectorModel stocked = Model(new[] { BusySawmill(), Cottage() }, logs: 10, planks: 5);
+            BuildingInspectorModel empty = Model(new[] { Idle("sawmill", 0), Cottage() }, logs: 0, planks: 0);
+            BuildingInspectorModel boosted = Model(new[] { BusySawmill(), Cottage() }, logs: 10, planks: 5, research: new[] { "storehouses" });
+            BuildingInspectorModel cottage = Model(new[] { HudTestData.House(1, 0) });
+
+            Assert.That(stocked.StoreText, Is.EqualTo("Logs: 10 / 40, Planks: 5 / 20"));
+            Assert.That(stocked.HasSendTrip, Is.True);
+            Assert.That(stocked.CanSendTrip, Is.True);
+            Assert.That(empty.StoreText, Is.EqualTo("Logs: 0 / 40, Planks: 0 / 20"));
+            Assert.That(empty.HasSendTrip, Is.False);
+            Assert.That(empty.CanSendTrip, Is.False);
+            Assert.That(boosted.StoreText, Is.EqualTo("Logs: 10 / 80, Planks: 5 / 60"));
+            Assert.That(cottage.StoreText, Is.Empty);
+            Assert.That(cottage.HasSendTrip, Is.False);
+        }
+
+        /// <summary>A construction site, a waiting upgrade, and the science building with a waiting research show what they still need (CR-0008).</summary>
+        [Test]
+        public void Needs_ShownForConstructionSiteWaitingUpgradeAndScienceBuilding()
+        {
+            var siteNeeds = new[] { new KeyValuePair<ItemId, long>(new ItemId("logs"), 15) };
+            var site = new Building(1, new BuildingTypeId("sawmill"), 0, 0, 1, 0, BuildingPhase.Constructing, 0, null, 0, 0, 0, 0, null, siteNeeds);
+            var upgradeNeeds = new[] { new KeyValuePair<ItemId, long>(new ItemId("planks"), 30) };
+            var waitingUpgrade = new Building(1, new BuildingTypeId("sawmill"), 0, 0, 1, 3, BuildingPhase.Producing, 0, 60, 0, 180, 180, 0, null, upgradeNeeds);
+            var scriptorium = new Building(1, new BuildingTypeId("scriptorium"), 0, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
+            var researchNeeds = new[] { new KeyValuePair<ItemId, long>(new ItemId("planks"), 18) };
+            var waitingResearch = new ActiveResearch(new ResearchId("frame_saw"), null, null, researchNeeds);
+            CityState scienceCity = HudTestData.City(0, 500, 0, 0, new[] { scriptorium }, new[] { "sharp_axes" }, waitingResearch);
+
+            BuildingInspectorModel siteModel = Model(new[] { site, Cottage() }, logs: 0, planks: 0);
+            BuildingInspectorModel upgradeModel = Model(new[] { waitingUpgrade, Cottage() });
+            BuildingInspectorModel scienceModel = BuildingInspectorModel.Create(_content, scienceCity, scriptorium, Nothing, CommandAvailability.Allowed)!;
+
+            Assert.That(siteModel.NeedsText, Is.EqualTo("Still needs: 15 Logs"));
+            Assert.That(upgradeModel.NeedsText, Is.EqualTo("Still needs: 30 Planks"));
+            Assert.That(scienceModel.NeedsText, Is.EqualTo("Still needs: 18 Planks"));
+        }
+
+        /// <summary>Running trips appear on both the source and the target building with their countdowns (CR-0008).</summary>
+        [Test]
+        public void Trips_ShownOnSourceAndTargetWithCountdowns()
+        {
+            Building sawmill = BusySawmill();
+            var woodcutter = new Building(2, new BuildingTypeId("woodcutter"), 2, 0, 1, 2, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
+            var trip = new Trip(1, 2, 1, new ItemId("logs"), 4, 10, 35);
+            var city = new CityState(
+                clock: 20,
+                era: 1,
+                nextBuildingId: 10,
+                purse: 500,
+                buildings: new[] { sawmill, woodcutter },
+                completedResearch: Array.Empty<ResearchId>(),
+                activeResearch: null,
+                roads: Array.Empty<RoadTile>(),
+                nextTripId: 2,
+                trips: new[] { trip });
+
+            BuildingInspectorModel targetModel = BuildingInspectorModel.Create(_content, city, sawmill, Nothing, CommandAvailability.Allowed)!;
+            BuildingInspectorModel sourceModel = BuildingInspectorModel.Create(_content, city, woodcutter, Nothing, CommandAvailability.Allowed)!;
+
+            Assert.That(targetModel.TripsText, Is.EqualTo("Incoming 4 Logs from Woodcutter's Hut · 15s"));
+            Assert.That(sourceModel.TripsText, Is.EqualTo("Sending 4 Logs to Sawmill · 15s"));
         }
     }
 }

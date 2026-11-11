@@ -1,0 +1,16 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+  <!-- One stop of the route editor (CR-0008-T2 part C): RouteEditorScreen clones it once per stop and writes the texts of RouteEditorModel
+       into the labels by name. A card, from the top: the stop's number and building, the walk to the next stop, its actions (RouteAction.uxml,
+       one row each), the add-action button, and the row of tools that move the stop earlier or later or remove it. Style: RouteEditor.uss. -->
+  <ui:VisualElement name="route-stop" class="route-stop box">
+    <ui:Label name="route-stop-title" class="route-stop-title t-heading" />
+    <ui:Label name="route-stop-walk" class="route-stop-walk t-small" />
+    <ui:VisualElement name="route-stop-actions" class="route-stop-actions" />
+    <ui:Button name="route-stop-add-action" class="route-stop-add btn btn--quiet" text="Add action" />
+    <ui:VisualElement class="route-stop-tools">
+      <ui:Button name="route-stop-left" class="route-stop-tool btn btn--quiet" text="&lt;" />
+      <ui:Button name="route-stop-right" class="route-stop-tool btn btn--quiet" text="&gt;" />
+      <ui:Button name="route-stop-remove" class="route-stop-tool btn btn--danger glyph glyph-minus" text="" />
+    </ui:VisualElement>
+  </ui:VisualElement>
+</ui:UXML>

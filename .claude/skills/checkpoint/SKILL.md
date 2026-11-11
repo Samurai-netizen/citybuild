@@ -7,7 +7,7 @@ description: Save progress so any other AI coder can continue - update the resum
 !`git branch --show-current; git status --short | head -30`
 
 ## Do this (`core-instructions/16-session-protocol.md` §D)
-1. Run the build and fast tests for the area you changed. If they're red, either fix them or record precisely
+1. Run the build and fast tests for the area you changed (use `-v q`; `--no-build` only right after a build; run `test-unity.sh` only when `client/` or `shared/` changed, and parse `Logs/test-unity/*.xml` for `result="Failed"` rather than dumping full logs). If they're red, either fix them or record precisely
    what's broken under "Known broken" in the resume point and use a `wip(...)` commit.
 2. Docs: the pages this step changed are in this commit, and their **Docs impact** rows say so (a page you didn't plan for gets a row).
 3. Build log entry (path in the resume point), current session section:
@@ -20,4 +20,4 @@ description: Save progress so any other AI coder can continue - update the resum
    - `feat|fix|test|docs|refactor(<ID>): <what>` when green;
    - `wip(<ID>): <what>` when not green.
 6. `git push` (or `git push -u origin HEAD` the first time).
-7. Tell the owner in one line what was checkpointed.
+7. Tell the owner in one line what was checkpointed. If more parts remain and context has grown large, run `/compact` before starting the next part.

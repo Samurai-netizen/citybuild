@@ -1,5 +1,5 @@
-/* The fatal error screen: a full-screen dark wood panel with a title and the lines of the error. M0-38 shows it for invalid server content; restyled in CR-0007.
-   ConnectionStatusView pads it by the safe area (M0-59), so the text keeps clear of a notch while the wood still fills the screen. */
+/* The fatal error screen (visual v2, CR-0008-T2): the whole screen in deep wood with the reason in cream, under a red title. Colours and
+   sizes come from Common.uss. */
 .fatal-error {
   position: absolute;
   left: 0;
@@ -7,18 +7,19 @@
   right: 0;
   bottom: 0;
   padding: var(--sp-4); /* replaced by the safe area in code */
-  background-color: var(--c-wood-deep);
+  justify-content: center;
+  background-color: var(--c-wood-shadow);
 }
 
 .fatal-error-title {
+  -unity-font-definition: url("Fonts/Fredoka-SemiBold.ttf");
   margin-bottom: var(--sp-3);
-  color: var(--c-stop-light);
-  font-size: var(--font-xl);
-  -unity-font-style: bold;
+  color: var(--c-hud-down);
+  font-size: var(--font-xxl);
 }
 
 .fatal-error-details {
-  color: var(--c-cream);
+  color: var(--c-hud-text);
   font-size: var(--font-md);
   white-space: normal;
 }

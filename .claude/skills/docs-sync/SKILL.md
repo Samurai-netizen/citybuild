@@ -4,9 +4,9 @@ description: Audit documentation against the code and fix drift - module docs, a
 ---
 
 ## Do this (`core-instructions/17-documentation-system.md`)
-1. Run `bash scripts/dev/check-docs.sh` and `bash scripts/dev/docs-site.sh build` (the handbook: links, anchors, sidebar). Once DocTools
+1. Run `bash scripts/dev/check-docs.sh` and `bash scripts/dev/docs-site.sh build >/tmp/docs-build.log 2>&1 && echo "docs-site: OK" || tail -40 /tmp/docs-build.log` (the handbook: links, anchors, sidebar; quiet on success). Once DocTools
    exists, also run `dotnet run --project tools/DocTools -- check`.
-2. Compare `docs/` and `core-instructions/` with the code yourself (read, grep). Don't start an agent on your own (owner directive OD-9,
+2. Compare `docs/` and `core-instructions/` with the code yourself using targeted `grep -n` and line-range reads. Don't start an agent on your own (owner directive OD-9,
    `core-instructions/15`): if you think the `docs-auditor` would help, ask the owner first with a proposal and wait for the answer.
 3. Fix each confirmed finding in the doc that owns the fact (`17` §2). If the **code** is wrong and the spec right,
    don't change the code here: log it as a follow-up or a CR.

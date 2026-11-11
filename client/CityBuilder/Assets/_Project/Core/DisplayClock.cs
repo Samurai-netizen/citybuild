@@ -44,5 +44,18 @@ namespace CityBuilder.Client.Core
                 return snapshot == null ? 0 : snapshot.Clock + ElapsedSeconds;
             }
         }
+
+        /// <summary>
+        /// The city clock with its fraction of a second (the snapshot's clock plus the real time since it arrived, times the clock's speed), for
+        /// moving walkers smoothly; 0 before the first snapshot. Display only.
+        /// </summary>
+        public double PreciseNow
+        {
+            get
+            {
+                CitySnapshot? snapshot = _store.Snapshot;
+                return snapshot == null ? 0d : snapshot.Clock + (_store.SecondsSinceReceived * _timeScale);
+            }
+        }
     }
 }

@@ -196,6 +196,25 @@ server of `docs/testing/LOCAL-E2E.md` and press **Play**, then:
    screen with "Update needed" covers everything and no press reaches the city. **Check again** asks once more. Stop it by pressing Stop in the Editor.
 6. Tell the AI coder "connection states look right", or what looks wrong. Stop Play mode without saving the scene.
 
+## [MANUAL] Look at the logistics rework (CR-0008-T2, for CR-0008-T3)
+The tests hold the models, the flows, the texts and the walkers' places, but no test sees the real screen. Use the server of `docs/testing/LOCAL-E2E.md`
+with the `devtest` goods (`CR-0006-T1`), a phone-sized Game view (2400 × 1080, then the Device Simulator in portrait, owner directive OD-18), press **Play**:
+1. **Art (visual v2).** Buildings stand on varied grass with their parts moving while they work (wheel, saw, axe, sign); a store fills in steps as goods arrive;
+   smoke rises from a working sawmill. Nothing is dark, floating or half hidden.
+2. **Stores and projects (part A).** Tap a building with goods: the inspector lists the store, each good with its limit; a building waiting for goods says what it
+   waits for. **Send trip**: pick source, target and amount; the path shows on the map; the worker walks and the trip shows on both buildings.
+3. **Roads (part B).** In **Build**, press **Roads**: drag a line of tiles, the ghosts show the coin cost and a refusal per tile; place, upgrade and remove. A walk
+   goes along a road when that is faster.
+4. **Courier station and route editor (part C).** Build a courier station, give it a worker: the inspector lists its courier with the state, stamina and route.
+   **Edit routes**: tap two buildings (the stops), set take and put actions with good and amount, **Save**. The sheet leaves the map free, a long route
+   scrolls sideways only and the cards scale to fit; Save names why it is off.
+5. **Walkers (part D).** Couriers and trip workers walk from tile centre to tile centre with right-angle turns, slowly across a building; they face the way
+   they walk, wave arms and legs, and carry a load (logs or planks) on the back; a resting courier stands at its station. Nothing jerks once a second.
+6. **Re-energize (part E).** Let a courier run out of stamina (`staminaSeconds`, or the fast clock): the top bar says `1 courier resting`, the station's
+   inspector offers **Re-energize couriers**, and after a long absence the welcome-back card lists Moved, Delivered and Couriers and offers the same button
+   as its main one. After pressing it the courier walks again.
+7. Tell the AI coder "logistics looks decent", or what looks wrong (which screen, which size). Stop Play mode without saving the scene.
+
 ## [MANUAL] Look at the new UI (CR-0007)
 The tests hold the rules of the look (the shared stylesheet, the sizes, the touch target) and the AI coder looked at screenshots of every screen at 2400 × 1080 and
 1920 × 1080, but only you can say it looks decent. Nothing here is saved or committed. Set the Game view to a landscape phone: **Free Aspect** off, choose

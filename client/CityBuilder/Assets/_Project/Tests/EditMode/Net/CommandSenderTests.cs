@@ -157,12 +157,14 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(rig.PendingChanges, Is.GreaterThanOrEqualTo(2), "The intent started and ended.");
         }
 
-        /// <summary>Each of the four commands goes to its own endpoint with its own arguments and the intent's request id.</summary>
+        /// <summary>Each command goes to its own endpoint with its own arguments and the intent's request id.</summary>
         [Test]
         public async Task EachCommand_IsSentToItsEndpoint()
         {
             var rig = new Rig(true);
-            rig.Transport.Answer(200, Rig.Success()).Answer(200, Rig.Success()).Answer(200, Rig.Success()).Answer(200, Rig.Success());
+            rig.Transport.Answer(200, Rig.Success()).Answer(200, Rig.Success()).Answer(200, Rig.Success()).Answer(200, Rig.Success())
+                .Answer(200, Rig.Success()).Answer(200, Rig.Success()).Answer(200, Rig.Success()).Answer(200, Rig.Success());
+            var roadTiles = new[] { new RoadTileRequestDto(1, 2) };
 
             await rig.Sender.SendAsync(CommandIntent.PlaceBuilding("house", 4, 7), CancellationToken.None);
             await rig.Sender.SendAsync(CommandIntent.UpgradeBuilding(3), CancellationToken.None);
@@ -172,6 +174,10 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             rig.Delay.CompleteAt(0);
             await workers;
             await rig.Sender.SendAsync(CommandIntent.StartResearch("trade_charter"), CancellationToken.None);
+            await rig.Sender.SendAsync(CommandIntent.StartTrip(2, 5, "logs", "all"), CancellationToken.None);
+            await rig.Sender.SendAsync(CommandIntent.PlaceRoads(roadTiles), CancellationToken.None);
+            await rig.Sender.SendAsync(CommandIntent.UpgradeRoads(roadTiles), CancellationToken.None);
+            await rig.Sender.SendAsync(CommandIntent.RemoveRoads(roadTiles), CancellationToken.None);
 
             IReadOnlyList<ApiTransportRequest> sent = rig.Transport.Requests;
             Assert.That(sent[0].Url, Is.EqualTo("http://localhost:8080/api/v1/commands/place-building"));
@@ -182,6 +188,14 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(sent[2].JsonBody, Is.EqualTo("{\"requestId\":\"" + Rig.IdNumber(3) + "\",\"buildingId\":3,\"workers\":2}"));
             Assert.That(sent[3].Url, Is.EqualTo("http://localhost:8080/api/v1/commands/start-research"));
             Assert.That(sent[3].JsonBody, Is.EqualTo("{\"requestId\":\"" + Rig.IdNumber(4) + "\",\"researchId\":\"trade_charter\"}"));
+            Assert.That(sent[4].Url, Is.EqualTo("http://localhost:8080/api/v1/commands/start-trip"));
+            Assert.That(sent[4].JsonBody, Is.EqualTo("{\"requestId\":\"" + Rig.IdNumber(5) + "\",\"sourceId\":2,\"targetId\":5,\"itemId\":\"logs\",\"amount\":\"all\"}"));
+            Assert.That(sent[5].Url, Is.EqualTo("http://localhost:8080/api/v1/commands/place-roads"));
+            Assert.That(sent[5].JsonBody, Is.EqualTo("{\"requestId\":\"" + Rig.IdNumber(6) + "\",\"tiles\":[{\"x\":1,\"y\":2}]}"));
+            Assert.That(sent[6].Url, Is.EqualTo("http://localhost:8080/api/v1/commands/upgrade-roads"));
+            Assert.That(sent[6].JsonBody, Is.EqualTo("{\"requestId\":\"" + Rig.IdNumber(7) + "\",\"tiles\":[{\"x\":1,\"y\":2}]}"));
+            Assert.That(sent[7].Url, Is.EqualTo("http://localhost:8080/api/v1/commands/remove-roads"));
+            Assert.That(sent[7].JsonBody, Is.EqualTo("{\"requestId\":\"" + Rig.IdNumber(8) + "\",\"tiles\":[{\"x\":1,\"y\":2}]}"));
         }
 
         /// <summary>A retry sends the very same request id; the waits are 0.5 s and then 1 s; the third request is accepted.</summary>

@@ -13,7 +13,8 @@ namespace CityBuilder.Client.Presentation.City
     /// and its level (<see cref="BuildingLooks.FindModel"/>), or of the construction site while it is built or upgraded, with the anchors found
     /// by name. A level with no model falls back to the placeholder look of its type from primitives with no collider, stretched upward for the
     /// level and the phase, and an unknown type to the grey box. Models share the art's one material; the primitives get one material per colour,
-    /// which the factory destroys in <see cref="Destroy"/>. Display only: it reads a <see cref="Building"/> and never changes it.
+    /// which the factory destroys in <see cref="Destroy"/>. A new body of a model also gets its moving parts, smoke and store fill (visual v2,
+    /// <see cref="BuildingDecor.Attach"/>). Display only: it reads a <see cref="Building"/> and never changes it.
     /// </summary>
     public sealed class BuildingViewFactory
     {
@@ -103,6 +104,7 @@ namespace CityBuilder.Client.Presentation.City
                 if (view.Body == null || view.Model != model || view.Look != look)
                 {
                     BuildBody(view, model, look);
+                    BuildingDecor.Attach(view, site ? null : BuildingDecor.FindFill(typeId, era, building.Level));
                 }
 
                 view.TypeId = typeId;

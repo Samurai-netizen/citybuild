@@ -172,5 +172,32 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.City
             Assert.That(root == null, Is.True);
             Assert.DoesNotThrow(() => _selection.SetHovered(new GridCoordinate(1, 1)));
         }
+
+        /// <summary>ShowRoads replaces road tiles by level, connects arms to neighbouring road tiles, and restores grass when removed (CR-0008).</summary>
+        [Test]
+        public void ShowRoads_DrawsRoadsByLevel_ConnectsNeighbours_AndRestoresGrass()
+        {
+            Assert.That(_ground.ShownRoadLevelAt(new GridCoordinate(1, 1)), Is.EqualTo(0));
+
+            _ground.ShowRoads(new[]
+            {
+                new CityBuilder.Simulation.State.RoadTile(1, 1, 1),
+                new CityBuilder.Simulation.State.RoadTile(2, 1, 2),
+            });
+
+            Assert.That(_ground.ShownRoadLevelAt(new GridCoordinate(1, 1)), Is.EqualTo(1));
+            Assert.That(_ground.ShownRoadLevelAt(new GridCoordinate(2, 1)), Is.EqualTo(2));
+            Transform tile11 = _ground.Root.transform.Find("Tile (1, 1)");
+            Transform tile21 = _ground.Root.transform.Find("Tile (2, 1)");
+            Assert.That(BuildingViewFactory.FindByName(tile11, RoadArms.XPlus)!.gameObject.activeSelf, Is.True);
+            Assert.That(BuildingViewFactory.FindByName(tile11, RoadArms.XMinus)!.gameObject.activeSelf, Is.False);
+            Assert.That(BuildingViewFactory.FindByName(tile21, RoadArms.XMinus)!.gameObject.activeSelf, Is.True);
+            Assert.That(BuildingViewFactory.FindByName(tile21, RoadArms.YPlus)!.gameObject.activeSelf, Is.False);
+
+            _ground.ShowRoads(null);
+
+            Assert.That(_ground.ShownRoadLevelAt(new GridCoordinate(1, 1)), Is.EqualTo(0));
+            Assert.That(BuildingViewFactory.FindByName(_ground.Root.transform.Find("Tile (1, 1)"), RoadArms.XPlus), Is.Null);
+        }
     }
 }

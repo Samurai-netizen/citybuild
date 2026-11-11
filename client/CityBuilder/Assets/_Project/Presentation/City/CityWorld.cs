@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using CityBuilder.Client.Net;
 using CityBuilder.Simulation.Content;
+using CityBuilder.Simulation.Map;
 using CityBuilder.Simulation.State;
 using UnityEngine;
 
@@ -35,11 +36,23 @@ namespace CityBuilder.Client.Presentation.City
         /// <summary>The pending-building ghosts, or null before <see cref="ShowGrid"/>.</summary>
         private PlacementGhosts? _ghosts;
 
+        /// <summary>The couriers and trip workers, or null before the first city with its content (CR-0008-T2 part D).</summary>
+        private CityWalkers? _walkers;
+
+        /// <summary>The clock of the last city shown, used for the walkers when <see cref="DisplayNow"/> is not set.</summary>
+        private long _shownClock;
+
         /// <summary>
         /// Tells whether a screen position (pixels, origin bottom left) is over the UI, so a press there is the UI's and not the ground's; set by
         /// <c>GameRoot</c> once the UI exists. Read when the pointer is pressed, so setting it after <see cref="ShowGrid"/> works. Null: no UI.
         /// </summary>
         public Func<Vector2, bool>? IsPointerOverUi { get; set; }
+
+        /// <summary>
+        /// The display city clock in seconds with its fraction, which places the walkers between their departure and arrival (set by <c>GameRoot</c>
+        /// from <c>DisplayClock.PreciseNow</c>). Null: the whole-second clock of the city shown.
+        /// </summary>
+        public Func<double>? DisplayNow { get; set; }
 
         /// <summary>The camera that shows the city; made in <c>Awake</c>.</summary>
         public Camera Camera { get; private set; } = null!;
@@ -61,6 +74,9 @@ namespace CityBuilder.Client.Presentation.City
 
         /// <summary>The ghosts of buildings on their way; null before <see cref="ShowGrid"/>.</summary>
         public PlacementGhosts? Ghosts => _ghosts;
+
+        /// <summary>The walkers on the map; null until <see cref="ShowCity"/> got the content.</summary>
+        public CityWalkers? Walkers => _walkers;
 
         /// <summary>Unity calls it once, right after the component is created: it makes the camera and the light.</summary>
         private void Awake()
@@ -92,6 +108,8 @@ namespace CityBuilder.Client.Presentation.City
             _ground?.Destroy();
             _buildings?.Destroy();
             _ghosts?.Destroy();
+            _walkers?.Destroy();
+            _walkers = null;
             Grid = grid;
             Selection = new TileSelection(grid);
             _ground = new GroundTiles(grid, Selection, transform);
@@ -101,12 +119,20 @@ namespace CityBuilder.Client.Presentation.City
             _input = new CityInputReader(Rig, Screen.dpi, position => IsPointerOverUi != null && IsPointerOverUi(position));
         }
 
-        /// <summary>Makes the building views match a city (<see cref="CityView.Show"/>). Does nothing before <see cref="ShowGrid"/>.</summary>
+        /// <summary>Makes the building and road views match a city (<see cref="CityView.Show"/>, <see cref="GroundTiles.ShowRoads"/>). Does nothing before <see cref="ShowGrid"/>.</summary>
         /// <param name="city">The displayed city.</param>
         /// <param name="content">The game content, which the building statuses need; null shows no status.</param>
         public void ShowCity(CityState city, GameContent? content = null)
         {
+            _ground?.ShowRoads(city.Roads);
             _buildings?.Show(city, content);
+            _shownClock = city.Clock;
+            if (_walkers == null && content != null && _buildings != null)
+            {
+                _walkers = new CityWalkers(transform, content);
+            }
+
+            _walkers?.Show(city);
         }
 
         /// <summary>Paints the tiles green or red by their hints, or gives them their ground colour back (<see cref="GroundTiles.ShowHints"/>). Does nothing before <see cref="ShowGrid"/>.</summary>
@@ -114,6 +140,13 @@ namespace CityBuilder.Client.Presentation.City
         public void ShowHints(TileHint[]? hints)
         {
             _ground?.ShowHints(hints);
+        }
+
+        /// <summary>Draws a preview path across the ground (<see cref="GroundTiles.ShowPath"/>), or clears it for null (CR-0008). Does nothing before <see cref="ShowGrid"/>.</summary>
+        /// <param name="steps">The tile steps from <see cref="PathFinder.Route"/>, or null to clear.</param>
+        public void ShowPath(IReadOnlyList<(int X, int Y)>? steps)
+        {
+            _ground?.ShowPath(steps);
         }
 
         /// <summary>Makes the ghosts match the commands on their way (<see cref="PlacementGhosts.Show"/>). Does nothing before <see cref="ShowGrid"/>.</summary>
@@ -128,6 +161,7 @@ namespace CityBuilder.Client.Presentation.City
         private void Update()
         {
             _input?.Tick();
+            _walkers?.Tick(Time.deltaTime, DisplayNow != null ? DisplayNow() : _shownClock);
         }
 
         /// <summary>Unity calls it when the object is destroyed: the ground takes its listener off the selection, and the buildings' and ghosts' materials go.</summary>
@@ -136,6 +170,7 @@ namespace CityBuilder.Client.Presentation.City
             _ground?.Destroy();
             _buildings?.Destroy();
             _ghosts?.Destroy();
+            _walkers?.Destroy();
         }
     }
 }

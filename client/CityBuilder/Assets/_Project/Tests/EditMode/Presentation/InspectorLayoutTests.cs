@@ -27,7 +27,8 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation
             foreach (string name in new[]
             {
                 BuildingInspector.NameName, BuildingInspector.LevelName, BuildingInspector.StatusName, BuildingInspector.TimeName,
-                BuildingInspector.RecipeName, BuildingInspector.RatesName, BuildingInspector.WorkersName, BuildingInspector.PreviewName,
+                BuildingInspector.RecipeName, BuildingInspector.RatesName, BuildingInspector.StoreName, BuildingInspector.NeedsName,
+                BuildingInspector.TripsName, BuildingInspector.WorkersName, BuildingInspector.PreviewName,
                 BuildingInspector.StepperNoteName, BuildingInspector.UpgradeTitleName, BuildingInspector.UpgradeCostName,
                 BuildingInspector.UpgradeTimeName, BuildingInspector.UpgradeGainName, BuildingInspector.UpgradeNoteName,
             })
@@ -35,7 +36,11 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation
                 Assert.That(root.Q<Label>(name), Is.Not.Null, name);
             }
 
-            foreach (string name in new[] { BuildingInspector.MinusName, BuildingInspector.PlusName, BuildingInspector.UpgradeName, BuildingInspector.CloseName })
+            foreach (string name in new[]
+            {
+                BuildingInspector.MinusName, BuildingInspector.PlusName, BuildingInspector.UpgradeName, BuildingInspector.SendTripName,
+                BuildingInspector.CloseName,
+            })
             {
                 Assert.That(root.Q<Button>(name), Is.Not.Null, name);
             }

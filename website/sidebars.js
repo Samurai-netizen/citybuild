@@ -66,6 +66,7 @@ const handbook = [
     spec('09'),
     page('client/README.md', 'Unity project (client/)'),
     page('art/README.md', 'Art (art/)'),
+    page('art/MOTIONS.md', 'Motions, store fill and roads'),
   ]),
   chapter('Development guide', [
     spec('19'),

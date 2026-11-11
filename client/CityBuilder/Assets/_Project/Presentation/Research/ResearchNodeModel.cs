@@ -227,6 +227,11 @@ namespace CityBuilder.Client.Presentation.Research
                 return "Requires: " + missing;
             }
 
+            if (CityQueries.ScienceBuilding(city, content) == null)
+            {
+                return "Requires: " + ScienceBuildingName(content);
+            }
+
             var lacking = new StringBuilder();
             for (int index = 0; index < node.Cost.Count; index++)
             {
@@ -238,6 +243,20 @@ namespace CityBuilder.Client.Presentation.Research
             }
 
             return lacking.ToString();
+        }
+
+        /// <summary>The display name of the science building in <paramref name="content"/> (such as <c>Scriptorium</c>).</summary>
+        private static string ScienceBuildingName(GameContent content)
+        {
+            for (int i = 0; i < content.Buildings.Count; i++)
+            {
+                if (content.Buildings[i].Kind == BuildingKind.Science)
+                {
+                    return content.Buildings[i].Name;
+                }
+            }
+
+            return "Science building";
         }
     }
 }

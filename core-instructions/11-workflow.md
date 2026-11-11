@@ -38,7 +38,8 @@ Roles:
 4. Answer questions, and do [MANUAL] steps when asked.
 5. Read the task report, review the PR on GitHub, and squash-merge when satisfied. The handbook
    (https://samurai-netizen.github.io/citybuild/) shows the merged docs a few minutes later.
-6. If the session ended early (tokens ran out), start a new session (any tool) and run `/resume`, or say "resume".
+6. If the session ended early (tokens ran out) or context grew large between parts of a grouped task, run `/compact` after a
+   checkpoint, or start a new session and run `/resume`.
 
 ## Definition of Ready (before coding starts)
 - The task has an id, a clear goal and testable acceptance criteria (in the plan or an approved CR).

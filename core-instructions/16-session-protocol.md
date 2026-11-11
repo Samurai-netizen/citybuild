@@ -43,6 +43,10 @@ This protocol is tool-agnostic. Claude Code has skills for each part (`/resume`,
 
 ## C. While working
 - Implement step by step. Tests come with the step, not at the end (test-first for engine rules).
+- **Inner-loop test discipline:** while iterating inside a step, run only the filtered test class or assembly you are working on
+  (`dotnet build -v q` then `dotnet test --no-build -v q --filter "FullyQualifiedName~<Class>"`; never `--no-build` after an edit
+  without a build, it runs stale binaries) and fast static checks (`check-ui-rules.py`). Run the full
+  suite (including `test-unity.sh` when `client/` or `shared/` changed) once when the step is ready to checkpoint.
 - **Docs come with the step too.** A step that changes behaviour, a contract, a command or a file name updates its pages in the same
   commit and marks their Docs impact rows. A page you didn't plan for gets a new row.
 - **Log each decision when you make it** (build log → Decisions), including small ones: names, data shapes,
@@ -55,19 +59,20 @@ This protocol is tool-agnostic. Claude Code has skills for each part (`/resume`,
   escalate (stronger model or owner) instead of trying a third variation.
 
 ## D. Checkpoint (after every green step, before any pause, before asking the owner a question)
-1. Build and fast tests are green, or the step is explicitly marked broken in the resume point.
+1. Build and fast tests are green (use `-v q` or redirect noisy logs on success), or the step is explicitly marked broken in the resume point.
 2. Resume point updated: done steps, next step, open questions, anything half-done.
 3. Build log updated: session notes, decisions and Docs impact rows since the last checkpoint.
 4. Commit (`feat(<ID>): …`, or `wip(<ID>): …` on task branches only) and `git push`.
+5. On multi-part tasks, run `/compact` (or `/clear` then `/resume`) after checkpointing a part once context grows large.
 
 ## E. Finish a task
 1. Go through the Definition of Done (`11-workflow.md`) and the change recipe for this kind of change (`19-change-recipes.md`).
 2. Update the docs per the recipe and close every Docs impact row (`updated`, `new`, `deleted` or `no change: <why>`).
    Regenerate the generated docs once `tools/DocTools` exists (from M0-61).
-3. Run `bash scripts/dev/check-docs.sh --base origin/main`, `bash scripts/dev/docs-site.sh build` (the handbook: links, anchors,
-   sidebar) and the quality script (once it exists), and fix everything.
+3. Run `bash scripts/dev/check-docs.sh --base origin/main`, `bash scripts/dev/docs-site.sh build >/tmp/docs-build.log 2>&1 && echo "docs-site: OK" || tail -40 /tmp/docs-build.log`
+   (the handbook: links, anchors, sidebar; quiet on success) and the quality script (once it exists), and fix everything.
 4. Review your own branch against the task spec, the Definition of Done (`11-workflow.md`) and the recipe: line by line for `[O]` tasks and any
-   task touching the engine, persistence or security. Fix blocking findings and log them. Don't start an agent for this on your own: it needs
+   task touching the engine, persistence or security (exclude `.meta` and binary assets from diff reads). Fix blocking findings and log them. Don't start an agent for this on your own: it needs
    the owner's approval of a proposal (OD-9, `15`). The owner can also start a fresh session as the independent reviewer.
 5. Finalize:
    - build log status `Done`, plus verification results and follow-ups;
@@ -96,6 +101,9 @@ This protocol is tool-agnostic. Claude Code has skills for each part (`/resume`,
 - Tag mapping: `[O]` = the strongest available model; `[S]` = a fast standard model.
 - If your tool has its own memory feature, don't rely on it. Anything worth remembering goes into the repo.
 
-## H. Context hygiene
-Read only the files the task and the "Read before" table point to. Don't paste whole large files into chat; quote the lines you need.
-Keep `13-progress.md` short (≤ 80 lines). History belongs in the build log and git, not in the resume point.
+## H. Context and token hygiene
+- **Targeted reads:** read only the files the task and the "Read before" table point to. Locate symbols or sections with `grep -n` first,
+  then read only the narrow line range you need (your tool's offset/limit) rather than loading whole large files. Don't paste whole files into chat.
+- **Quiet commands:** use compact git flags (`git status -s`, `git diff --stat`, `git log --oneline -8`) and quiet build/test flags
+  (`-v q`; `--no-build` only right after a build), or redirect verbose output (`docs-site.sh build`) to `/tmp/` and print only on failure.
+- **Compaction:** keep `13-progress.md` short (≤ 80 lines). Use `/compact` between checkpointed parts of long tasks to shed stale tool outputs.

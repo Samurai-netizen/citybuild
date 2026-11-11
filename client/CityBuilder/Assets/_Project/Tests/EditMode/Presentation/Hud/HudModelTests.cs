@@ -3,6 +3,7 @@
 using System.Collections.Generic;
 using CityBuilder.Client.Core;
 using CityBuilder.Client.Presentation.Hud;
+using CityBuilder.Simulation;
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.State;
 using NUnit.Framework;
@@ -165,6 +166,36 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Hud
 
             Assert.That(raised, Is.EqualTo(1));
             Assert.That(model.Research.TimeLeftText, Is.EqualTo("29m 49s"));
+        }
+
+        /// <summary>The notice names the resting couriers (singular for one) and is empty when none rests; updating it raises Changed once.</summary>
+        [Test]
+        public void RestingText_CountsRestingCouriers()
+        {
+            Building station = new Building(9, new BuildingTypeId("courier_station"), 5, 0, 1, 2, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
+            CityState none = CityWith(station, new Courier(9, 1, CourierState.AtStation, 0, null, null, 100));
+            CityState one = CityWith(station, new Courier(9, 1, CourierState.Resting, 0, null, null, 0));
+            CityState two = CityWith(station, new Courier(9, 1, CourierState.Resting, 0, null, null, 0), new Courier(9, 2, CourierState.Resting, 0, null, null, 0));
+            var model = new HudModel(_content, none, ConnectionState.Connected);
+            int raised = 0;
+            model.Changed += () => raised++;
+
+            Assert.That(model.RestingText, Is.Empty);
+
+            model.Update(one, ConnectionState.Connected);
+            Assert.That(model.RestingText, Is.EqualTo("1 courier resting"));
+
+            model.Update(two, ConnectionState.Connected);
+            Assert.That(model.RestingText, Is.EqualTo("2 couriers resting"));
+
+            model.Update(two, ConnectionState.Connected);
+            Assert.That(raised, Is.EqualTo(2));
+        }
+
+        /// <summary>A city with the station and the given couriers.</summary>
+        private static CityState CityWith(Building station, params Courier[] couriers)
+        {
+            return new CityState(0, 1, 100, 0, new[] { station }, new ResearchId[0], null, null, null, 1, couriers);
         }
     }
 }

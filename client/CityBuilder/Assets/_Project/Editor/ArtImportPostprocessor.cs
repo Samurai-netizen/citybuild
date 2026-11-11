@@ -8,7 +8,8 @@ namespace CityBuilder.Client.Editor
     /// <summary>
     /// Applies the art's import settings, so nobody sets them by hand (<c>09</c> rule 1, CR-0005): the palette texture keeps its hard-edged
     /// swatches, every model under <c>Art/Resources/Models</c> comes in at scale 1, without cameras or lights, drawn with the one shared material,
-    /// and every UI icon under <c>Resources/UI/Icons</c> comes in smooth, without mips, as a picture with a transparent background.
+    /// and every UI icon under <c>Resources/UI/Icons</c> (and every glyph under <c>Resources/UI/Glyphs</c>, visual v2) comes in smooth, without
+    /// mips, as a picture with a transparent background.
     /// </summary>
     internal sealed class ArtImportPostprocessor : AssetPostprocessor
     {
@@ -18,6 +19,8 @@ namespace CityBuilder.Client.Editor
         private const string _texturesFolder = "Assets/_Project/Art/Textures/";
         /// <summary>The folder of the UI icons (PNG, 256 px) the client loads by name (<c>UiIcons</c>).</summary>
         private const string _iconsFolder = "Assets/_Project/Resources/UI/Icons/";
+        /// <summary>The folder of the UI glyphs of visual v2 (white PNG, 96 px, tinted by USS): the same settings as the icons.</summary>
+        private const string _glyphsFolder = "Assets/_Project/Resources/UI/Glyphs/";
         /// <summary>The material name every FBX of Era I carries (<c>MATERIAL_NAME</c> in <c>art/blender/lib.py</c>); this is what gets remapped.</summary>
         private const string _sourceMaterialName = "M_Palette_Era1";
         /// <summary>The Era I palette; the shared material's Base Map.</summary>
@@ -40,7 +43,8 @@ namespace CityBuilder.Client.Editor
         private void OnPreprocessTexture()
         {
             var importer = (TextureImporter)assetImporter;
-            if (assetPath.StartsWith(_iconsFolder, System.StringComparison.Ordinal))
+            if (assetPath.StartsWith(_iconsFolder, System.StringComparison.Ordinal)
+                || assetPath.StartsWith(_glyphsFolder, System.StringComparison.Ordinal))
             {
                 importer.textureType = TextureImporterType.Default;
                 importer.alphaIsTransparency = true;

@@ -37,6 +37,7 @@ namespace CityBuilder.Client.Presentation.Hud
             _chips = MakeChips(content, city);
             WorkersText = WorkersTextFor(content, city);
             BuildersText = BuildersTextFor(content, city);
+            RestingText = RestingTextFor(city);
             Research = ResearchRingModel.Create(content, city);
             EraName = EraNameFor(content, city);
             ConnectionText = ConnectionTextFor(connection);
@@ -45,6 +46,9 @@ namespace CityBuilder.Client.Presentation.Hud
 
         /// <summary>Raised after any value changed; never when an update changes nothing.</summary>
         public event Action? Changed;
+
+        /// <summary>The notice that couriers rest, such as <c>2 couriers resting</c>; empty (the notice is hidden) when none does.</summary>
+        public string RestingText { get; private set; }
 
         /// <summary>The item chips, in the content's order.</summary>
         public IReadOnlyList<ItemChipModel> Chips => _chips;
@@ -107,6 +111,13 @@ namespace CityBuilder.Client.Presentation.Hud
                 changed = true;
             }
 
+            string resting = RestingTextFor(city);
+            if (resting != RestingText)
+            {
+                RestingText = resting;
+                changed = true;
+            }
+
             ResearchRingModel research = ResearchRingModel.Create(_content, city);
             if (!research.Equals(Research))
             {
@@ -166,6 +177,26 @@ namespace CityBuilder.Client.Presentation.Hud
         private static string BuildersTextFor(GameContent content, CityState city)
         {
             return Fraction(CityQueries.BuildersBusy(city), content.Rules.BuilderSlots);
+        }
+
+        /// <summary>The notice while couriers rest (<c>2 couriers resting</c>, CR-0008-T2 part E); empty when none does.</summary>
+        private static string RestingTextFor(CityState city)
+        {
+            int resting = 0;
+            for (int i = 0; i < city.Couriers.Count; i++)
+            {
+                if (city.Couriers[i].State == CourierState.Resting)
+                {
+                    resting++;
+                }
+            }
+
+            if (resting == 0)
+            {
+                return string.Empty;
+            }
+
+            return resting.ToString(CultureInfo.InvariantCulture) + (resting == 1 ? " courier resting" : " couriers resting");
         }
 
         /// <summary>The era's name from the content; <c>Era 2</c> when the content does not know the number.</summary>

@@ -174,6 +174,18 @@ namespace CityBuilder.Client.Presentation.Feedback
                     return "Workers updated";
                 case CommandKind.StartResearch:
                     return "Research started";
+                case CommandKind.StartTrip:
+                    return "Trip started";
+                case CommandKind.PlaceRoads:
+                    return "Road built";
+                case CommandKind.UpgradeRoads:
+                    return "Road upgraded";
+                case CommandKind.RemoveRoads:
+                    return "Road removed";
+                case CommandKind.SetRoute:
+                    return "Route saved";
+                case CommandKind.ReenergizeCouriers:
+                    return "Couriers re-energized";
                 default:
                     return "Done";
             }

@@ -1,0 +1,21 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+  <!-- The road bar that RoadBar shows at the bottom of the screen while the player builds, upgrades or removes roads (CR-0008): the prompt,
+       cost/speed detail and refusal hint, and the Place, Upgrade, Remove and Cancel buttons. Style: Common.uss and RoadBar.uss. -->
+  <Style src="Common.uss" />
+  <Style src="RoadBar.uss" />
+  <ui:VisualElement name="road-root" class="road-root" picking-mode="Ignore">
+    <ui:VisualElement name="road-bar" class="road-bar panel-parchment road-bar--hidden">
+      <ui:VisualElement class="road-texts">
+        <ui:Label name="road-prompt" class="road-prompt" />
+        <ui:Label name="road-detail" class="road-detail t-small" />
+        <ui:Label name="road-hint" class="road-hint" />
+      </ui:VisualElement>
+      <ui:VisualElement class="road-actions">
+        <ui:Button name="road-place" class="road-button btn btn--primary" text="Build road" />
+        <ui:Button name="road-upgrade" class="road-button btn btn--primary" text="Upgrade road" />
+        <ui:Button name="road-remove" class="road-button btn btn--danger" text="Remove road" />
+        <ui:Button name="road-cancel" class="road-button btn btn--secondary" text="Cancel" />
+      </ui:VisualElement>
+    </ui:VisualElement>
+  </ui:VisualElement>
+</ui:UXML>

@@ -24,6 +24,8 @@ namespace CityBuilder.Client.Core
         /// <param name="completedBuildings">The ids of the buildings whose construction or upgrade completed.</param>
         /// <param name="completedResearch">The research that completed.</param>
         /// <param name="eraChanged">Whether the city entered a new era.</param>
+        /// <param name="delivered">What couriers and trip workers put into buildings and projects, per item (CR-0008); null for none.</param>
+        /// <param name="moved">What couriers and trip workers took out of stores, per item (CR-0008); null for none.</param>
         /// <exception cref="ArgumentNullException">A list is null.</exception>
         /// <exception cref="ArgumentException">A number is below 0: no settlement does that.</exception>
         public SettlementSummary(
@@ -34,7 +36,9 @@ namespace CityBuilder.Client.Core
             IReadOnlyList<TiredCourier> tiredCouriers,
             IReadOnlyList<int> completedBuildings,
             IReadOnlyList<ResearchId> completedResearch,
-            bool eraChanged)
+            bool eraChanged,
+            IReadOnlyList<KeyValuePair<ItemId, long>>? delivered = null,
+            IReadOnlyList<KeyValuePair<ItemId, long>>? moved = null)
         {
             if (elapsedSeconds < 0 || courierSeconds < 0)
             {
@@ -49,6 +53,8 @@ namespace CityBuilder.Client.Core
             CompletedBuildings = Copy(completedBuildings ?? throw new ArgumentNullException(nameof(completedBuildings)));
             CompletedResearch = Copy(completedResearch ?? throw new ArgumentNullException(nameof(completedResearch)));
             EraChanged = eraChanged;
+            Delivered = CopyQuantities(delivered ?? Array.Empty<KeyValuePair<ItemId, long>>());
+            Moved = CopyQuantities(moved ?? Array.Empty<KeyValuePair<ItemId, long>>());
         }
 
         /// <summary>The seconds the city clock moved.</summary>
@@ -74,6 +80,12 @@ namespace CityBuilder.Client.Core
 
         /// <summary>Whether the city entered a new era.</summary>
         public bool EraChanged { get; }
+
+        /// <summary>What couriers and trip workers put into buildings and projects, per item (CR-0008).</summary>
+        public IReadOnlyList<KeyValuePair<ItemId, long>> Delivered { get; }
+
+        /// <summary>What couriers and trip workers took out of stores, per item (CR-0008).</summary>
+        public IReadOnlyList<KeyValuePair<ItemId, long>> Moved { get; }
 
         /// <summary>A copy of the list as an array, so the summary stays as it was made.</summary>
         private static T[] Copy<T>(IReadOnlyList<T> source)

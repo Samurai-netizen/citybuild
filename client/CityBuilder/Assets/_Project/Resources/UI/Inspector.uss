@@ -1,5 +1,6 @@
-/* The building inspector (M0-51, docs/how-to/add-ui-screen.md): a parchment panel at the right under the HUD, restyled in CR-0007. Colours and sizes come
-   from Common.uss. It is two columns wide so that it fits under the HUD on a landscape phone: 400 high at most. */
+/* The building inspector (M0-51; visual v2, CR-0008-T2): a parchment panel framed in wood with boxes for the status, the workers and the
+   upgrade, like the showcase's inspector; under the HUD at the right in landscape (two columns), a sheet above the dock in portrait (one
+   column). Colours and sizes come from Common.uss. */
 .inspector-root {
   position: absolute;
   left: 0;
@@ -13,8 +14,8 @@
 }
 
 .inspector-panel {
-  width: 390px;
-  max-width: 100%; /* portrait: 400 units wide */
+  width: 420px;
+  max-width: 100%;
   margin-top: var(--hud-height);
 }
 
@@ -25,12 +26,14 @@
 .inspector-header {
   flex-direction: row;
   align-items: center;
+  margin-bottom: var(--sp-2);
 }
 
 .inspector-icon {
-  width: 36px;
-  height: 36px;
-  margin-right: var(--sp-2);
+  width: 64px;
+  height: 64px;
+  margin: -14px var(--sp-2) -6px -6px;
+  flex-shrink: 0;
   -unity-background-scale-mode: scale-to-fit;
 }
 
@@ -39,9 +42,12 @@
   flex-shrink: 1;
 }
 
+.inspector-close {
+  margin-left: var(--sp-2);
+}
+
 .inspector-body {
   flex-direction: row;
-  margin-top: var(--sp-2);
 }
 
 .inspector-column {
@@ -50,40 +56,116 @@
   flex-direction: column;
 }
 
+.inspector-status-box {
+  margin-bottom: var(--sp-2);
+}
+
 .inspector-status {
-  color: var(--c-go);
+  color: var(--c-go-ink);
+}
+
+.inspector-store {
+  margin-top: 2px;
+  color: var(--c-ink);
+}
+
+.inspector-needs {
+  margin-top: 2px;
+  color: var(--c-warn-ink);
+}
+
+.inspector-trips {
+  margin-top: 2px;
+  color: var(--c-ink-soft);
+}
+
+.inspector-send-trip {
+  margin-top: var(--sp-1);
+}
+
+.inspector-workers-box {
+  flex-direction: column;
 }
 
 .inspector-stepper {
-  margin-top: var(--sp-2);
   flex-direction: row;
   align-items: center;
   justify-content: center;
 }
 
+.inspector-step {
+  width: var(--touch);
+  padding: 0;
+}
+
 .inspector-workers {
-  min-width: 64px;
+  -unity-font-definition: url("Fonts/Fredoka-SemiBold.ttf");
+  min-width: 76px;
   color: var(--c-ink);
-  font-size: var(--font-xl);
-  -unity-font-style: bold;
+  font-size: var(--font-xxl);
+  -unity-text-align: middle-center;
+}
+
+.inspector-preview {
+  margin-top: var(--sp-1);
   -unity-text-align: middle-center;
 }
 
 .inspector-upgrade {
-  margin-left: var(--sp-3);
-  padding-left: var(--sp-3);
-  border-left-width: 2px;
-  border-left-color: var(--c-parchment-3);
-}
-
-.inspector-step {
-  font-size: var(--font-xl);
-}
-
-.inspector-close {
   margin-left: var(--sp-2);
+}
+
+.inspector-upgrade-cost {
+  -unity-font-definition: url("Fonts/Fredoka-SemiBold.ttf");
+  margin-top: 2px;
+  color: var(--c-ink);
+  font-size: var(--font-md);
+  white-space: normal;
+}
+
+.inspector-upgrade-time {
+  padding-left: 18px;
+  background-size: 14px 14px;
+  background-repeat: no-repeat no-repeat;
+  background-position-x: left 0px;
+  background-position-y: center;
+  -unity-background-image-tint-color: var(--c-ink-soft);
+}
+
+.inspector-upgrade-note {
+  -unity-font-definition: url("Fonts/Nunito-ExtraBold.ttf");
+  margin-top: 2px;
+  color: var(--c-stop-ink);
+  font-size: var(--font-sm);
+  white-space: normal;
 }
 
 .inspector-upgrade-button {
   margin-top: var(--sp-2);
+}
+
+/* Portrait: a sheet above the dock, the full width, its boxes in one column. */
+.portrait .inspector-root {
+  justify-content: flex-end;
+  align-items: stretch;
+}
+
+.portrait .inspector-panel {
+  width: auto;
+  margin-top: 0;
+  margin-bottom: var(--dock-lift);
+}
+
+.portrait .inspector-body {
+  flex-direction: column;
+}
+
+/* In a column the boxes take their own height: a flex-basis of 0 (right for the two columns side by side) would squash them to nothing. */
+.portrait .inspector-column {
+  flex-grow: 0;
+  flex-basis: auto;
+}
+
+.portrait .inspector-upgrade {
+  margin: var(--sp-2) 0 0 0;
 }

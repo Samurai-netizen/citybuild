@@ -1,0 +1,85 @@
+/* The manual trip bar at the bottom of the screen while a player picks a trip target, item and amount (CR-0008). Colours and sizes come
+   from Common.uss. */
+.trip-root {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  padding: var(--sp-2); /* replaced by the safe area in code */
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.trip-bar {
+  max-width: 100%;
+  flex-direction: column;
+  align-items: stretch;
+  padding: var(--sp-2) var(--sp-3);
+}
+
+.trip-bar--hidden {
+  display: none;
+}
+
+.trip-texts {
+  flex-direction: column;
+  margin-bottom: var(--sp-1);
+}
+
+.trip-prompt {
+  -unity-font-definition: url("Fonts/Fredoka-SemiBold.ttf");
+  color: var(--c-ink);
+  font-size: var(--font-lg);
+  white-space: normal;
+}
+
+.trip-detail {
+  margin-top: 2px;
+  color: var(--c-ink-soft);
+  white-space: normal;
+}
+
+.trip-hint {
+  -unity-font-definition: url("Fonts/Nunito-ExtraBold.ttf");
+  margin-top: 2px;
+  color: var(--c-stop-ink);
+  font-size: var(--font-md);
+  white-space: normal;
+}
+
+.trip-hint--hidden {
+  display: none;
+}
+
+.trip-controls {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: var(--sp-1);
+}
+
+.trip-chip {
+  margin-right: var(--sp-1);
+  padding-left: var(--sp-2);
+  padding-right: var(--sp-2);
+}
+
+.trip-preset {
+  margin-right: var(--sp-1);
+  padding-left: var(--sp-2);
+  padding-right: var(--sp-2);
+}
+
+.trip-actions {
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.trip-button {
+  margin-left: var(--sp-1);
+  padding-left: var(--sp-4);
+  padding-right: var(--sp-4);
+}

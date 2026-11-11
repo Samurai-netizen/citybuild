@@ -1,5 +1,5 @@
-/* The welcome-back report (M0-53, docs/how-to/add-ui-screen.md): a parchment card in the middle of a dark scrim. Restyled in CR-0007; colours and sizes
-   come from Common.uss. */
+/* The welcome-back report (M0-53; visual v2, CR-0008-T2): a parchment card on a dark scrim, its title on a gold ribbon over the top edge, the
+   sections in a cream box, and a full-width green button, like the showcase's report. Colours and sizes come from Common.uss. */
 .welcome-root {
   position: absolute;
   left: 0;
@@ -14,7 +14,7 @@
   top: 0;
   right: 0;
   bottom: 0;
-  padding: var(--sp-2); /* replaced by the safe area in code */
+  padding: var(--sp-2) var(--sp-4); /* replaced by the safe area in code */
   justify-content: center;
   align-items: center;
 }
@@ -27,15 +27,28 @@
   width: 440px;
   max-width: 100%;
   max-height: 100%;
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-2);
+  border-width: 4px;
+  border-bottom-width: 7px;
 }
 
 .welcome-title {
   flex-shrink: 0;
+  align-self: center;
+  margin: -24px 0 var(--sp-2) 0;
+  padding: var(--sp-1) var(--sp-4);
+  font-size: var(--font-xl);
+  letter-spacing: 0;
 }
 
 .welcome-scroll {
   flex-shrink: 1;
-  margin-top: var(--sp-2);
+  padding: var(--sp-1) var(--sp-3) var(--sp-2);
+  border-width: 2px;
+  border-radius: var(--radius-md);
+  border-color: var(--c-card-edge);
+  background-color: var(--c-cream);
 }
 
 .welcome-sections {
@@ -43,13 +56,15 @@
 }
 
 .welcome-heading {
+  -unity-font-definition: url("Fonts/Nunito-ExtraBold.ttf");
   margin-top: var(--sp-2);
   color: var(--c-ink-soft);
-  font-size: var(--font-md);
-  -unity-font-style: bold;
+  font-size: var(--font-xs);
+  letter-spacing: 1px;
 }
 
 .welcome-line {
+  -unity-font-definition: url("Fonts/Fredoka-SemiBold.ttf");
   margin-top: 2px;
   color: var(--c-ink);
   font-size: var(--font-md);
@@ -61,6 +76,11 @@
 }
 
 .welcome-continue {
+  flex-shrink: 0;
+  margin-top: var(--sp-3);
+}
+
+.welcome-reenergize {
   flex-shrink: 0;
   margin-top: var(--sp-3);
 }

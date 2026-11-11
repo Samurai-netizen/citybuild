@@ -47,6 +47,9 @@ namespace CityBuilder.Client.Presentation.Build
         /// <summary>The name of the button that opens and closes the sheet.</summary>
         public const string ToggleName = "build-toggle";
 
+        /// <summary>The name of the button that starts road mode (CR-0008).</summary>
+        public const string RoadsName = "build-roads";
+
         /// <summary>The name of a card's picture element in <c>BuildCard.uxml</c>.</summary>
         public const string CardIconName = "card-icon";
 
@@ -111,11 +114,17 @@ namespace CityBuilder.Client.Presentation.Build
         /// <summary>The button that opens and closes the sheet.</summary>
         private Button? _toggle;
 
+        /// <summary>The button that starts road mode (CR-0008).</summary>
+        private Button? _roads;
+
         /// <summary>Whether the sheet of cards is open.</summary>
         public bool IsOpen { get; private set; }
 
         /// <summary>Raised when the sheet goes from closed to open (never for a call that changes nothing), so the other menus can close (<see cref="Ui.MenuGroup"/>).</summary>
         public event Action? Opened;
+
+        /// <summary>Raised when the player presses the Roads button in the build menu (CR-0008).</summary>
+        public event Action? RoadsRequested;
 
         /// <summary>The model the screen shows; null before <see cref="Create"/> succeeded.</summary>
         public BuildMenuModel? Model => _model;
@@ -167,6 +176,12 @@ namespace CityBuilder.Client.Presentation.Build
         public bool Tap(BuildingTypeId typeId)
         {
             return _model != null && _model.TryToggle(typeId);
+        }
+
+        /// <summary>Simulates pressing the Roads button in the build menu (CR-0008).</summary>
+        public void PressRoads()
+        {
+            RoadsRequested?.Invoke();
         }
 
         /// <summary>Opens or closes the sheet of cards. Opening a closed sheet raises <see cref="Opened"/>.</summary>
@@ -224,6 +239,7 @@ namespace CityBuilder.Client.Presentation.Build
             var cards = root?.Q<ScrollView>(CardsName);
             _panel = root?.Q<VisualElement>(PanelName);
             _toggle = root?.Q<Button>(ToggleName);
+            _roads = root?.Q<Button>(RoadsName);
             if (model == null || cardLayout == null || root == null || cards == null || _panel == null || _toggle == null)
             {
                 ClientLog.Error($"BuildMenu: the layout lacks '{RootName}', '{PanelName}', '{CardsName}' or '{ToggleName}'.");
@@ -231,6 +247,10 @@ namespace CityBuilder.Client.Presentation.Build
             }
 
             _toggle.clicked += () => SetOpen(!IsOpen);
+            if (_roads != null)
+            {
+                _roads.clicked += PressRoads;
+            }
             root.RegisterCallback<GeometryChangedEvent>(_ => UiRoot.PadBySafeArea(root, BasePadding));
             for (int index = 0; index < model.Cards.Count; index++)
             {

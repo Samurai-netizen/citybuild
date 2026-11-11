@@ -326,8 +326,8 @@ The AI coder updates its row at start (`In progress`) and finish (`In review`). 
 | M0-58 | 10 | Version and content compatibility | S | Done |
 | M0-59 | 10 | Mobile-safe UI | S | Done |
 | M0-60 | 10 | Client ↔ server boundary review | O | Done |
-| CR-0008-T1 | 10+ | Logistics rework: spec, engine and server | O | In review |
-| CR-0008-T2 | 10+ | Logistics rework: client and art | S | Todo |
+| CR-0008-T1 | 10+ | Logistics rework: spec, engine and server | O | Done |
+| CR-0008-T2 | 10+ | Logistics rework: client and art | S | In review |
 | CR-0008-T3 | 10+ | Logistics rework: close-out and playtest | O MANUAL | Todo |
 | M0-61 | 11 | DocTools: generated reference docs | O PLAN | Todo |
 | M0-62 | 11 | Quality script | S | Todo |
@@ -483,7 +483,7 @@ Make only small fixes.
 Write docs/adr/ADR-0001-server-authoritative.md, ADR-0002-postgresql-only.md, ADR-0003-command-endpoints.md and
 ADR-0004-idempotency.md from docs/adr/TEMPLATE.md and core-instructions/12-decisions.md, and index them in docs/adr/README.md.
 Write the first real docs/architecture/overview.md (projects table, references, mermaid diagram as built).
-Fill "Commands that work right now" in 13-progress.md and update the marks in AGENTS.md (protected: ask) and docs/getting-started.md.
+Update the "Not yet" line in 13-progress.md → Commands and the marks in AGENTS.md (protected: ask) and docs/getting-started.md.
 Run all server tests; run Unity tests if possible.
 ```
 

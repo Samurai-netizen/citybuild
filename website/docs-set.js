@@ -18,6 +18,7 @@ const pageFiles = [
   'CHANGELOG.md',
   'client/README.md',
   'art/README.md',
+  'art/MOTIONS.md',
   'server/README.md',
   'shared/README.md',
   'tools/README.md',

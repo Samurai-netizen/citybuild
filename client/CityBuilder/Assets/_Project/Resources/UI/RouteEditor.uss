@@ -1,0 +1,113 @@
+/* The courier route editor (CR-0008-T2 part C): a parchment sheet above the dock, as low as its cards so the map stays tappable, with one
+   row of stop cards that scrolls sideways only. Colours and sizes come from Common.uss. */
+.route-root {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  padding: var(--sp-2); /* replaced by the safe area in code */
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.route-panel {
+  align-self: stretch;
+  flex-shrink: 1;
+  max-height: 64%;
+  margin-bottom: var(--dock-lift);
+}
+
+.route-panel--hidden {
+  display: none;
+}
+
+.route-header {
+  flex-direction: row;
+  align-items: center;
+}
+
+.route-title {
+  flex-grow: 1;
+  flex-shrink: 1;
+}
+
+.route-slot {
+  margin-right: var(--sp-2);
+}
+
+.route-summary {
+  margin-top: var(--sp-1);
+}
+
+.route-note {
+  margin-top: var(--sp-1);
+  color: var(--c-stop-ink);
+}
+
+.route-scroll {
+  flex-grow: 1;
+  flex-shrink: 1;
+  min-height: 150px;
+  margin-top: var(--sp-2);
+}
+
+.route-scroll .unity-scroll-view__horizontal-scroller {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin-top: 0;
+}
+
+.route-stops {
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.route-stop {
+  width: 260px;
+  max-width: 100%;
+  margin-right: var(--sp-2);
+}
+
+.route-stop-walk {
+  margin-bottom: var(--sp-1);
+}
+
+.route-action {
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: var(--sp-1);
+}
+
+.route-action-button {
+  flex-grow: 1;
+  flex-basis: 0;
+  margin-right: var(--sp-1);
+}
+
+.route-stop-tools {
+  flex-direction: row;
+  justify-content: space-between;
+  margin-top: var(--sp-1);
+}
+
+.route-amount-note {
+  margin-top: var(--sp-1);
+}
+
+.route-hint {
+  margin-top: var(--sp-1);
+  color: var(--c-stop-ink);
+}
+
+.route-footer {
+  flex-direction: row;
+  justify-content: flex-end;
+  margin-top: var(--sp-2);
+}
+
+.route-footer-button {
+  margin-left: var(--sp-2);
+}

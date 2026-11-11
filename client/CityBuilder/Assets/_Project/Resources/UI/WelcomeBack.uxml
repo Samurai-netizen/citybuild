@@ -1,18 +1,20 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
-  <!-- The welcome-back report that WelcomeBackPanel shows (M0-53, docs/how-to/add-ui-screen.md): a parchment card in the middle of a dark scrim with the
-       title, the sections (WelcomeBackPanel makes one heading and its lines per section) and a Continue button. The
-       scrim takes the pointer, so the ground and the other menus leave the screen alone until the player continues. Style: Common.uss and WelcomeBack.uss. -->
+  <!-- The welcome-back report that WelcomeBackPanel shows (M0-53; visual v2, CR-0008-T2): a parchment card framed in wood in the middle of a
+       dark scrim, its title on a gold ribbon over the top edge like the showcase's report, the sections (WelcomeBackPanel makes one heading
+       and its lines per section) in a cream box, and a green Continue button. The scrim takes the pointer, so the ground and the other menus
+       leave the screen alone until the player continues. Style: Common.uss and WelcomeBack.uss. -->
   <Style src="Common.uss" />
   <Style src="WelcomeBack.uss" />
   <ui:VisualElement name="welcome-root" class="welcome-root" picking-mode="Ignore">
     <ui:VisualElement name="welcome-scrim" class="welcome-scrim scrim welcome-scrim--hidden">
       <ui:VisualElement name="welcome-card" class="welcome-card panel-parchment">
-        <ui:Label name="welcome-title" class="welcome-title t-title" />
+        <ui:Label name="welcome-title" class="welcome-title ribbon" />
         <ui:ScrollView name="welcome-scroll" class="welcome-scroll themed-scroll" mode="Vertical">
           <ui:VisualElement name="welcome-sections" class="welcome-sections" />
           <ui:Label name="welcome-empty" class="welcome-empty t-body" />
         </ui:ScrollView>
-        <ui:Button name="welcome-continue" class="welcome-continue btn btn--primary" text="Continue" />
+        <ui:Button name="welcome-reenergize" class="welcome-reenergize btn btn--primary" text="Re-energize couriers" style="display: none;" />
+        <ui:Button name="welcome-continue" class="welcome-continue btn btn--primary" text="Back to town" />
       </ui:VisualElement>
     </ui:VisualElement>
   </ui:VisualElement>

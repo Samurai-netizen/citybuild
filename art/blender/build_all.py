@@ -1,10 +1,10 @@
-"""Builds every model, exports it for Unity, checks it and renders the previews.
+"""Builds every model of visual v2, exports it for Unity, checks it and renders the previews.
 
-    blender -b --factory-startup --python art/blender/build_all.py -- [--only NAME ...] [--no-render]
+    blender -b --factory-startup --python art/blender/build_all.py -- [--only NAME ...] [--no-render] [--out DIR]
 
-Run from the repository root. Output: in `art/` (the folder above this script) textures/palette_era1.png, previews/<name>.png,
-previews/lineup_era1.png and previews/city_golden_scenario.png; in the Unity project (UNITY_ART) Resources/Models/<set>/<name>.fbx and a copy of
-the palette in Textures/. The models exist only there: one copy. Exits 1 if a check fails.
+Run from the repository root. `--out` is the folder that stands for the Unity project's Assets/_Project (default:
+client/CityBuilder/Assets/_Project); the build writes Art/Textures/palette_era1.png and Art/Resources/Models/<set>/<name>.fbx under it.
+Previews go to art/previews/models/ (git-ignored) and the contact sheets to art/previews/. Exits 1 if a check fails.
 """
 import argparse
 import math
@@ -21,57 +21,110 @@ import assets_common  # noqa: E402
 import assets_era1  # noqa: E402
 import lib  # noqa: E402
 
-ROOT = os.path.dirname(HERE)
-# Where the Unity project keeps the art (client/CityBuilder/Assets/_Project/Art): the only home of the FBX files, in Resources/Models
-# so a player build contains them and the client loads them by name (Resources.Load)
-UNITY_ART = os.path.join(os.path.dirname(ROOT), "client", "CityBuilder", "Assets", "_Project", "Art")
-# kind -> (max |x|, |y| from the pivot, triangle budget, lowest z: rocks and bushes sit slightly in the ground)
-LIMITS = {"building": (0.475, 4500, -0.006), "prop": (None, 1500, -0.025), "tile": (None, 200, -0.1)}
+PACKAGE = os.path.dirname(HERE)
+UNITY_PROJECT = os.path.join(os.path.dirname(PACKAGE), "client", "CityBuilder", "Assets", "_Project")
+PREVIEWS = os.path.join(PACKAGE, "previews")
+# kind -> (max |x|, |y| from the pivot or None, triangle budget, lowest z: rocks and bushes sit slightly in the ground)
+LIMITS = {"building": (0.475, 6000, -0.006), "fill": (0.475, 1500, -0.006), "prop": (None, 1500, -0.03),
+          "tile": (None, 1000, -0.1), "road": (None, 2000, -0.1), "fx": (None, 300, -1.0)}
+REQUIRED_ANCHORS = ("Anchor_Status", "Anchor_Door")
+ITEMS = ("logs", "planks", "coins")
 
 
 def jobs():
+    for name, build in assets_common.TILES.items():
+        yield "common", name, build, "tile"
+    for name, build in assets_common.ROADS.items():
+        yield "common", name, build, "road"
     for name, build in assets_common.ASSETS.items():
-        yield "common", name, build, "tile" if name.startswith("tile_") else "prop"
+        yield "common", name, build, "fx" if name.startswith("fx_") else "prop"
     for name, build in assets_era1.BUILDINGS.items():
         yield "era1", name, build, "building"
+    for name, build in assets_era1.FILLS.items():
+        yield "era1", name, build, "fill"
     for name, build in assets_era1.PROPS.items():
         yield "era1", name, build, "prop"
 
 
-def check(name, kind, root):
-    lo, hi, tris, mats = lib.stats(root)
-    reach, budget, floor = LIMITS[kind]
-    problems = []
+def footprint_problem(lo, hi, reach):
     if reach is not None and max(abs(lo.x), abs(lo.y), hi.x, hi.y) > reach:
-        problems.append(f"footprint {lo.x:.3f}..{hi.x:.3f} x {lo.y:.3f}..{hi.y:.3f} leaves the tile")
+        return f"footprint {lo.x:.3f}..{hi.x:.3f} x {lo.y:.3f}..{hi.y:.3f} leaves the tile"
+    return None
+
+
+def check(name, kind, root):
+    """Bounds (with every moving part at rest and along its motion), floor, triangles, material, and the structure rules."""
+    reach, budget, floor = LIMITS[kind]
+    lo, hi, tris, mats = lib.stats(root)
+    problems = []
+    for t in (0.0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875):  # every moving part along its cycle
+        if not lib.moving_parts(root):
+            break
+        lib.pose_at(root, t, 1.0, fraction=True)
+        plo, phi, _, _ = lib.stats(root)
+        problem = footprint_problem(plo, phi, reach)
+        if problem:
+            problems.append(f"in motion (t = {t:.3f} of a cycle): {problem}")
+            break
+        if plo.z < floor - 1e-4:
+            problems.append(f"in motion (t = {t:.3f} of a cycle) goes below the ground (z = {plo.z:.3f})")
+            break
+    lib.pose_at(root, 0.0, 0.0)
+    problem = footprint_problem(lo, hi, reach)
+    if problem:
+        problems.append(problem)
     if lo.z < floor - 1e-4:
         problems.append(f"goes below the ground (z = {lo.z:.3f})")
     if tris > budget:
         problems.append(f"{tris} triangles > budget {budget}")
     if mats != {lib.MATERIAL_NAME}:
         problems.append(f"materials {sorted(mats)}")
+    problems += structure_problems(kind, root)
     size = hi - lo
-    print(f"  {name:22} {tris:5d} tris  {size.x:.2f} x {size.y:.2f} x {size.z:.2f}  " + ("; ".join(problems) or "ok"))
+    print(f"  {name:24} {tris:5d} tris  {size.x:.2f} x {size.y:.2f} x {size.z:.2f}  " + ("; ".join(problems) or "ok"))
     return [f"{name}: {p}" for p in problems]
 
 
-def check_stockpile(name, root):
-    """The largest stockpile prop, placed at the building's Anchor_Stockpile, must stay inside the tile too."""
-    stock = assets_era1.PREVIEW_STOCK.get(name.rsplit("_l", 1)[0])
-    a = anchors(root)
-    if not stock or "Anchor_Stockpile" not in a:
-        return []
-    bpy.context.view_layer.update()
-    big = stock[:-1] + "l"
-    prop = place(assets_era1.PROPS[big], a["Anchor_Stockpile"].matrix_world.translation)
-    lo, hi, _, _ = lib.stats(prop)
-    for obj in lib.descendants(prop):
-        bpy.data.objects.remove(obj, do_unlink=True)
-    reach = LIMITS["building"][0]
-    if max(abs(lo.x), abs(lo.y), hi.x, hi.y) > reach:
-        print(f"  {name:22} {big} at the anchor leaves the tile: {lo.x:.3f}..{hi.x:.3f} x {lo.y:.3f}..{hi.y:.3f}")
-        return [f"{name}: {big} at Anchor_Stockpile leaves the tile"]
-    return []
+def structure_problems(kind, root):
+    names = {o.name for o in lib.descendants(root)}
+    out = []
+    poses = {n for n in names if n.endswith(lib.POSE_SUFFIX)}
+    parts = {p.name for p, _, _ in lib.moving_parts(root)}
+    for pose in poses:
+        part = pose[: -len(lib.POSE_SUFFIX)]
+        if part not in parts:
+            out.append(f"{pose} has no part {part}")
+        elif lib.motion_of(part) is None:
+            out.append(f"part {part} has no MOTIONS row")
+    if kind == "building":
+        for a in REQUIRED_ANCHORS:
+            if a not in names:
+                out.append(f"no {a}")
+        for obj in lib.descendants(root)[1:]:
+            if obj.type == "MESH" and obj.name not in parts:
+                out.append(f"mesh child {obj.name} is not a moving part (no pose)")
+    if kind == "fill":
+        if root.type != "EMPTY":
+            out.append("a fill model's root must be an empty")
+        steps = {}
+        for obj in root.children:
+            bits = obj.name.split("_")
+            if obj.type != "MESH" or len(bits) != 3 or bits[0] != "Fill" or bits[1] not in ITEMS or not bits[2].isdigit():
+                out.append(f"child {obj.name} is not Fill_<item>_<step>")
+                continue
+            steps.setdefault(bits[1], []).append(int(bits[2]))
+        for item, ks in steps.items():
+            if sorted(ks) != list(range(1, len(ks) + 1)) or not 1 <= len(ks) <= 3:
+                out.append(f"{item} steps {sorted(ks)} are not 1..n with n in 1..3")
+    if kind == "tile":
+        top = max((v.co.z for v in root.data.vertices), default=0.0) if root.type == "MESH" else 1.0
+        if top > 0.01:
+            out.append(f"the tile's own mesh reaches z = {top:.3f}: what rises above the ground belongs in its Details child")
+    if kind == "road":
+        arms = {o.name for o in root.children}
+        if arms != set(assets_common.ARMS):
+            out.append(f"arms {sorted(arms)} are not {sorted(assets_common.ARMS)}")
+    return out
 
 
 def place(build, location, rot_z=0.0):
@@ -85,13 +138,14 @@ def anchors(root):
     return {c.name.split(".")[0]: c for c in root.children if c.type == "EMPTY"}
 
 
-def dress(root, base):
-    """Preview-only extras: the medium stockpile at Anchor_Stockpile and a worker at the door."""
+def dress(root, base, level, fill=True):
+    """Preview-only extras: the building's full store (every fill step) and a worker at the door."""
     a = anchors(root)
-    stock = assets_era1.PREVIEW_STOCK.get(base)
     bpy.context.view_layer.update()
-    if stock and "Anchor_Stockpile" in a:
-        place(assets_era1.PROPS[stock], a["Anchor_Stockpile"].matrix_world.translation)
+    fill_name = f"{base}_l{level}_fill"
+    if fill and fill_name in assets_era1.FILLS:
+        f = assets_era1.FILLS[fill_name]()
+        f.parent = root
     if "Anchor_Door" in a:
         p = a["Anchor_Door"].matrix_world.translation.copy()
         p.x += 0.07
@@ -105,87 +159,26 @@ def preview(path, size=(512, 512), direction=(1.0, 1.0, 1.25), frame=None, margi
     lib.render(path)
 
 
-def lineup():
-    lib.clear_scene()
-    tile = assets_common.ASSETS["tile_grass"]
-    names = ["house", "woodcutter", "sawmill", "trading_post"]
-    for col, base in enumerate(names):
-        for row, level in enumerate((2, 1)):
-            x, y = col * 1.0, row * 1.0
-            place(tile, (x, y, 0))
-            root = place(assets_era1.BUILDINGS[f"{base}_l{level}"], (x, y, 0))
-            dress(root, base)
-    place(tile, (4.0, 1.0, 0))
-    place(assets_era1.construction_site, (4.0, 1.0, 0))
-    place(tile, (4.0, 0.0, 0))
-    for i, prop in enumerate(("prop_logs_s", "prop_logs_m", "prop_logs_l")):
-        place(assets_era1.PROPS[prop], (3.75 + i * 0.25, -0.22, 0), rot_z=90)
-    for i, prop in enumerate(("prop_planks_s", "prop_planks_m", "prop_planks_l")):
-        place(assets_era1.PROPS[prop], (3.72 + i * 0.28, 0.2, 0), rot_z=90)
-    preview(os.path.join(ROOT, "previews", "lineup_era1.png"), size=(1600, 900), margin=1.06)
-
-
-# Golden scenario #1 (core-instructions/23-mvp-content.md): 2 Cottages, a Woodcutter's Hut, a Sawmill and a Trading
-# Post on the 8 x 8 grid, plus one construction site, paths and nature. Tile (i, j) -> (i - 3.5, j - 3.5).
-CITY = [
-    ("trading_post_l1", 1, 5), ("sawmill_l1", 3, 5), ("construction_site", 5, 5), ("woodcutter_l1", 6, 5),
-    ("house_l1", 2, 3), ("house_l1", 5, 3),
-]
-NATURE = [
-    ("tree_pine", 0, 0, 0), ("tree_round", 1, 0, 30), ("tree_pine", 7, 0, 10), ("tree_pine", 7, 1, 50),
-    ("tree_round", 7, 3, 0), ("bush", 0, 2, 0), ("rock", 6, 0, 40), ("bush", 3, 1, 70), ("rock", 0, 7, 0),
-    ("bush", 7, 7, 20),
-]
-
-
-def city_scene():
-    """Builds the golden scenario village. Returns its tiles by (i, j) and its buildings as (name, root)."""
-    lib.clear_scene()
-    tiles, buildings = {}, []
-    for i in range(8):
-        for j in range(8):
-            path = j == 6 or (i == 4 and j <= 5)
-            tiles[i, j] = place(assets_common.ASSETS["tile_dirt" if path else "tile_grass"], (i - 3.5, j - 3.5, 0))
-    ground = lib.Model()
-    ground.box((16, 16, 0.3), (0, 0, -0.4), "grass_dark", bevel=0)
-    ground.to_object("ground")
-    for name, i, j in CITY:
-        root = place(assets_era1.BUILDINGS[name], (i - 3.5, j - 3.5, 0))
-        dress(root, name.rsplit("_l", 1)[0])
-        buildings.append((name, root))
-    for name, i, j, rot in NATURE:
-        place(assets_common.ASSETS[name], (i - 3.5 + 0.1, j - 3.5 - 0.05, 0), rot_z=rot)
-    for k in range(14):  # a forest edge on the far (-X, -Y) sides, on the lower ground
-        a = k / 13.0
-        for name, x, y in (("tree_pine", -4.6 - 0.5 * (k % 2), -4.4 + 8.8 * a),
-                           ("tree_pine" if k % 3 else "tree_round", -4.4 + 8.8 * a, -4.6 - 0.5 * (k % 2))):
-            place(assets_common.ASSETS[name], (x, y, -0.1), rot_z=k * 37)
-    for x, y, rot in ((-0.5, 2.5, 90), (1.2, 2.55, 270), (0.55, 0.3, 180), (2.0, 2.6, 80)):
-        place(assets_common.worker, (x, y, 0), rot_z=rot)
-    return tiles, buildings
-
-
-def city():
-    tiles, _ = city_scene()
-    out = os.path.join(ROOT, "previews")
-    preview(os.path.join(out, "city_golden_scenario.png"), size=(1600, 1100), frame=list(tiles.values()), margin=1.0)
-    # what a phone shows when zoomed in on the village (a 3/4 view, about 5 x 3 tiles)
-    near = [t for (i, j), t in tiles.items() if 1 <= i <= 6 and 3 <= j <= 6]
-    preview(os.path.join(out, "city_closeup.png"), size=(1600, 1000), frame=near, margin=0.9)
+def split_name(name):
+    base, _, level = name.rpartition("_l")
+    return (base, int(level)) if level.isdigit() else (name, 1)
 
 
 def main():
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     parser = argparse.ArgumentParser(prog="build_all.py")
-    parser.add_argument("--only", nargs="*", help="model names to build, or 'lineup' / 'city' (default: all)")
+    parser.add_argument("--only", nargs="*", help="model names to build (default: all)")
     parser.add_argument("--no-render", action="store_true", help="skip every preview render")
+    parser.add_argument("--out", default=UNITY_PROJECT, help="the folder that stands for Assets/_Project")
     args = parser.parse_args(argv)
 
-    palette_path = os.path.join(ROOT, "textures", "palette_era1.png")
+    art = os.path.join(args.out, "Art")
+    palette_path = os.path.join(PACKAGE, "textures", "palette_era1.png")
     lib.load_palette(palette_path)
-    unity_palette = os.path.join(UNITY_ART, "Textures", "palette_era1.png")
+    unity_palette = os.path.join(art, "Textures", "palette_era1.png")
     os.makedirs(os.path.dirname(unity_palette), exist_ok=True)
-    shutil.copyfile(palette_path, unity_palette)
+    if os.path.abspath(palette_path) != os.path.abspath(unity_palette):
+        shutil.copyfile(palette_path, unity_palette)
     problems = []
     print("Models:")
     for folder, name, build, kind in jobs():
@@ -194,19 +187,13 @@ def main():
         lib.clear_scene()
         root = build()
         problems += check(name, kind, root)
-        if kind == "building":
-            problems += check_stockpile(name, root)
-        lib.export_fbx(root, os.path.join(UNITY_ART, "Resources", "Models", folder, name + ".fbx"))
+        lib.export_fbx(root, os.path.join(art, "Resources", "Models", folder, name + ".fbx"))
         if not args.no_render:
-            if kind != "tile":
-                place(assets_common.ASSETS["tile_grass"], (0, 0, 0))
+            if kind in ("building", "fill", "prop"):
+                place(assets_common.TILES["tile_grass"], (0, 0, 0))
             if kind == "building":
-                dress(root, name.rsplit("_l", 1)[0])
-            preview(os.path.join(ROOT, "previews", name + ".png"))
-    if not args.no_render:
-        for name, scene in (("lineup", lineup), ("city", city)):
-            if not args.only or name in args.only:
-                scene()
+                dress(root, *split_name(name))
+            preview(os.path.join(PREVIEWS, "models", name + ".png"))
     if problems:
         print("FAILED:\n  " + "\n  ".join(problems))
         sys.exit(1)

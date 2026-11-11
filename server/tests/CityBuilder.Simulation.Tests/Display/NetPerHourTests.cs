@@ -32,6 +32,19 @@ public sealed class NetPerHourTests
         Assert.Equal(90_000L, ProductionDisplay.NetPerHour(city, TestContent, _wood));
     }
 
+    /// <summary>
+    /// A courier station with workers (its couriers) has no recipe and contributes 0, and a city with one still has a net rate (a regression
+    /// test: the display once asked a staffed station for its recipe and threw, which broke the client's top bar).
+    /// </summary>
+    [Fact]
+    public void NetPerHour_StaffedCourierStation_ContributesZeroAndDoesNotThrow()
+    {
+        CityState city = City(buildings: [Idle(1, "lumber_camp", 0, 0, workers: 1), Idle(2, "post", 3, 0, workers: 1)]);
+
+        Assert.Equal(90_000L, ProductionDisplay.NetPerHour(city, TestContent, _wood));
+        Assert.Null(ProductionDisplay.SecondsUntilFull(city, TestContent, city.Buildings[1], _wood));
+    }
+
     /// <summary>A running cycle counts at its current workers: 2 workers make 180 wood an hour.</summary>
     [Fact]
     public void NetPerHour_RunningCycle_CountsItAtItsWorkers()

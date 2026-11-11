@@ -52,6 +52,25 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(text, Is.EqualTo("{\"requestId\":\"6f1c0000-0000-4000-8000-000000000001\",\"researchId\":\"trade_charter\"}"));
         }
 
+        /// <summary>Start-trip: <c>requestId</c>, <c>sourceId</c>, <c>targetId</c>, <c>itemId</c>, <c>amount</c> (CR-0008).</summary>
+        [Test]
+        public void StartTrip_HasExactlyItsFiveMembers()
+        {
+            string text = _json.Serialize(new StartTripRequestDto(RequestId, 2, 5, "logs", "all"));
+
+            Assert.That(text, Is.EqualTo("{\"requestId\":\"6f1c0000-0000-4000-8000-000000000001\",\"sourceId\":2,\"targetId\":5,\"itemId\":\"logs\",\"amount\":\"all\"}"));
+        }
+
+        /// <summary>Road commands (<c>place-roads</c>, <c>upgrade-roads</c>, <c>remove-roads</c>): <c>requestId</c> and <c>tiles</c> (CR-0008).</summary>
+        [Test]
+        public void RoadTiles_HasRequestIdAndOrderedTiles()
+        {
+            var tiles = new[] { new RoadTileRequestDto(1, 2), new RoadTileRequestDto(2, 2) };
+            string text = _json.Serialize(new RoadTilesRequestDto(RequestId, tiles));
+
+            Assert.That(text, Is.EqualTo("{\"requestId\":\"6f1c0000-0000-4000-8000-000000000001\",\"tiles\":[{\"x\":1,\"y\":2},{\"x\":2,\"y\":2}]}"));
+        }
+
         /// <summary>The dev login sends the name only; its answer reads the token and a UTC expiry.</summary>
         [Test]
         public void DevLogin_SendsTheNameAndReadsTheToken()
