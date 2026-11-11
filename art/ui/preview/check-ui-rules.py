@@ -169,6 +169,10 @@ if re.search(r'name="research-scroll"[^>]*mode="Horizontal"', read("Research.uxm
 for n in files(".uss"):
     if re.search(r":(first|last|nth)-child|\bgap\s*:", no_comments(read(n))):
         fail(f"{n} uses a selector or property UI Toolkit does not have (:first-child, :last-child, :nth-child, gap)")
+    # A sibling combinator (+ or ~) makes Unity drop the whole stylesheet (CR-0008-T3: the hidden inspector panel took the pointer).
+    for selector in re.findall(r"(?:^|\})([^{}]+)\{", no_comments(read(n))):
+        if re.search(r"[+~]", selector):
+            fail(f"{n} uses a sibling combinator (+ or ~), which UI Toolkit does not have: {selector.strip()}")
 
 print(f"{len(looked_up)} element names looked up by the views; {len(elements)} named elements in the layouts")
 if problems:

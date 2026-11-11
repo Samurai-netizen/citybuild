@@ -130,6 +130,8 @@ namespace CityBuilder.Client.Presentation.Inspector
             _inspector.PlusRequested += OnPlus;
             _inspector.UpgradeRequested += OnUpgrade;
             _inspector.ReenergizeRequested += OnReenergize;
+            _inspector.CancelLineRequested += OnCancelLine;
+            _inspector.CancelAllRequested += OnCancelAll;
             _inspector.CloseRequested += OnClose;
         }
 
@@ -208,6 +210,8 @@ namespace CityBuilder.Client.Presentation.Inspector
                 _inspector.PlusRequested -= OnPlus;
                 _inspector.UpgradeRequested -= OnUpgrade;
                 _inspector.ReenergizeRequested -= OnReenergize;
+                _inspector.CancelLineRequested -= OnCancelLine;
+                _inspector.CancelAllRequested -= OnCancelAll;
                 _inspector.CloseRequested -= OnClose;
             }
         }
@@ -298,6 +302,24 @@ namespace CityBuilder.Client.Presentation.Inspector
         private void OnClose()
         {
             _world.Selection!.ClearSelection();
+        }
+
+        /// <summary>Cancel on a delivery line: sends <c>cancel-delivery</c> for that line of the shown station's courier (CR-0008 D18).</summary>
+        private void OnCancelLine(int slot, int lineId)
+        {
+            if (_inspector.Model != null && _availability.IsAllowed)
+            {
+                Send(CommandIntent.CancelDelivery(_inspector.Model.BuildingId, slot, lineId));
+            }
+        }
+
+        /// <summary>Cancel all on a courier: sends <c>cancel-delivery</c> without a line, which cancels its lines and its route (CR-0008 D18).</summary>
+        private void OnCancelAll(int slot)
+        {
+            if (_inspector.Model != null && _availability.IsAllowed)
+            {
+                Send(CommandIntent.CancelDelivery(_inspector.Model.BuildingId, slot, 0));
+            }
         }
 
         /// <summary>

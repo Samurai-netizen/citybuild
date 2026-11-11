@@ -95,15 +95,16 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         }
 
         /// <summary>
-        /// The server's catalogue has the 33 codes of <c>05</c> (CR-0008 added <c>ROAD_NOT_FOUND</c>, <c>BUILDING_LIMIT</c>,
+        /// The server's catalogue has the 38 codes of <c>05</c> (CR-0008 added <c>ROAD_NOT_FOUND</c>, <c>BUILDING_LIMIT</c>,
         /// <c>NO_SCIENCE_BUILDING</c>, <c>UNKNOWN_ITEM</c>, <c>AMOUNT_MODE_LOCKED</c>, <c>ITEM_NOT_ACCEPTED</c>, <c>NOTHING_TO_CARRY</c> and
-        /// <c>INVALID_ROUTE</c>); a code
+        /// <c>INVALID_ROUTE</c>; its amendment 1 <c>NO_FREE_COURIER</c>, <c>DELIVERY_QUEUE_FULL</c>, <c>ROUTES_LOCKED</c>, <c>COURIER_BUSY</c>
+        /// and <c>DELIVERY_NOT_FOUND</c>); a code
         /// added there is added to <see cref="ApiErrorCodes"/> in the same change.
         /// </summary>
         [Test]
-        public void TheServerCatalogue_HasThirtyThreeCodes()
+        public void TheServerCatalogue_HasThirtyEightCodes()
         {
-            Assert.That(ServerCodes(), Has.Length.EqualTo(33));
+            Assert.That(ServerCodes(), Has.Length.EqualTo(38));
         }
 
         /// <summary>A 2xx answer becomes its DTO.</summary>

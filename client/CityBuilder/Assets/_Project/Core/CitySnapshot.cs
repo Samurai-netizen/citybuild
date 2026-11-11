@@ -80,7 +80,8 @@ namespace CityBuilder.Client.Core
                     new List<KeyValuePair<ItemId, long>>(building.Needs)));
             }
 
-            // The research changes in place when a delivery fills its needs or starts its timer (CR-0008), so it is copied too; trips never change.
+            // The research changes in place when a delivery fills its needs or starts its timer (CR-0008), so it is copied too; so are trips,
+            // which change at each end of a leg (CR-0008 D21). Delivery lines never change: they only leave the city.
             // Couriers walk, load and unload in place (CR-0008-T1 part G), so each is copied; routes never change in an advance.
             ActiveResearch? research = _city.ActiveResearch;
             ActiveResearch? researchCopy = research == null
@@ -93,9 +94,15 @@ namespace CityBuilder.Client.Core
                     courier.StationId, courier.Slot, courier.State, courier.ToStop, courier.DepartedAt, courier.ArrivesAt, courier.Stamina, courier.Loads));
             }
 
+            var trips = new List<Trip>(_city.Trips.Count);
+            foreach (Trip trip in _city.Trips)
+            {
+                trips.Add(new Trip(trip.Id, trip.SourceId, trip.TargetId, trip.Item, trip.Quantity, trip.DepartedAt, trip.ArrivesAt, trip.Remaining, trip.Leg));
+            }
+
             return new CityState(
-                _city.Clock, _city.Era, _city.NextBuildingId, _city.Purse, buildings, _city.CompletedResearch, researchCopy, _city.Roads, _city.Trips,
-                _city.NextTripId, couriers, _city.Routes);
+                _city.Clock, _city.Era, _city.NextBuildingId, _city.Purse, buildings, _city.CompletedResearch, researchCopy, _city.Roads, trips,
+                _city.NextTripId, couriers, _city.Routes, _city.DeliveryLines, _city.NextLineId);
         }
     }
 }

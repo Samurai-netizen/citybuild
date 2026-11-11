@@ -155,6 +155,34 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Routes
             Assert.That(_editor.Lines[1].WalkText, Does.StartWith("Next stop in "), "the lap closes from the last stop to the first");
         }
 
+        /// <summary>Without a built Scriptorium Save is off and says to build one (CR-0008 D15); clearing needs none.</summary>
+        [Test]
+        public void Save_WithoutAScriptorium_NamesTheRouteBuilding()
+        {
+            _editor.Update(City(couriers: 1, scriptorium: false));
+            _editor.Open(Station, 1);
+            _editor.AddStop(Sawmill);
+            _editor.AddStop(Cottage);
+
+            Assert.That(_editor.CanConfirm, Is.False);
+            Assert.That(_editor.HintText, Does.StartWith("Build a Scriptorium first"));
+        }
+
+        /// <summary>A courier with deliveries takes no route: Save says to cancel them first (CR-0008 D19), and the editor opens on a courier without any.</summary>
+        [Test]
+        public void Save_CourierWithDeliveries_IsBusy_AndTheEditorOpensOnAFreeOne()
+        {
+            _editor.Update(City(couriers: 2, lines: new[] { new DeliveryLine(1, Station, 1, Sawmill, Cottage, new ItemId("logs"), 5) }));
+
+            Assert.That(_editor.FirstFreeSlot(Station), Is.EqualTo(2));
+            _editor.Open(Station, 1);
+            _editor.AddStop(Sawmill);
+            _editor.AddStop(Cottage);
+
+            Assert.That(_editor.CanConfirm, Is.False);
+            Assert.That(_editor.HintText, Is.EqualTo(RouteEditorModel.CourierBusyReason));
+        }
+
         /// <summary>A route equal to the saved one has nothing to save.</summary>
         [Test]
         public void Open_WithASavedRoute_ShowsItAndOffersNoSaveUntilChanged()
@@ -385,10 +413,12 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Routes
         }
 
         /// <summary>
-        /// A city with the courier station (id 1, at (0,0)), a sawmill holding logs (id 2, at (4,0)) and two cottages (ids 3 and 4, at (0,5) and (0,6)),
-        /// <paramref name="couriers"/> couriers at the station and, when given, <paramref name="saved"/> as slot 1's route.
+        /// A city with the courier station (id 1, at (0,0)), a sawmill holding logs (id 2, at (4,0)), two cottages (ids 3 and 4, at (0,5) and
+        /// (0,6)) and, unless <paramref name="scriptorium"/> is false, a built Scriptorium (id 5, at (6,7)), which routes need (CR-0008 D15);
+        /// <paramref name="couriers"/> couriers at the station, when given <paramref name="saved"/> as slot 1's route, and the delivery
+        /// <paramref name="lines"/>.
         /// </summary>
-        private static CityState City(int couriers, Route? saved = null)
+        private static CityState City(int couriers, Route? saved = null, bool scriptorium = true, DeliveryLine[]? lines = null)
         {
             var buildings = new[]
             {
@@ -399,6 +429,12 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Routes
                 new Building(Cottage, new BuildingTypeId("house"), 0, 5, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
                 new Building(Cottage2, new BuildingTypeId("house"), 0, 6, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
             };
+            var all = new List<Building>(buildings);
+            if (scriptorium)
+            {
+                all.Add(new Building(5, new BuildingTypeId("scriptorium"), 6, 7, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0));
+            }
+
             var list = new List<Courier>();
             for (int slot = 1; slot <= couriers; slot++)
             {
@@ -406,7 +442,8 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Routes
             }
 
             return new CityState(
-                0, 1, 10, 700, buildings, Array.Empty<ResearchId>(), null, null, null, 1, list, saved == null ? Array.Empty<Route>() : new[] { saved });
+                0, 1, 10, 700, all, Array.Empty<ResearchId>(), null, null, null, 1, list, saved == null ? Array.Empty<Route>() : new[] { saved },
+                lines, lines == null || lines.Length == 0 ? 1 : 10);
         }
     }
 }

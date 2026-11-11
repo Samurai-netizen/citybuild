@@ -206,6 +206,23 @@ namespace CityBuilder.Client.Presentation.Build
         }
 
         /// <summary>
+        /// Dims the dock's Build button while a building's menu is open (CR-0008 D22, the owner's playtest point 4): it fades to
+        /// <see cref="UiRoot.DimmedClass"/> and can't be pressed; false brings it back.
+        /// </summary>
+        /// <param name="dimmed">Whether a building's menu is open.</param>
+        public void SetDockDimmed(bool dimmed)
+        {
+            IsDockDimmed = dimmed;
+            if (_toggle != null)
+            {
+                UiRoot.Dim(_toggle, dimmed);
+            }
+        }
+
+        /// <summary>Whether the Build button is dimmed because a building's menu is open (<see cref="SetDockDimmed"/>).</summary>
+        public bool IsDockDimmed { get; private set; }
+
+        /// <summary>
         /// Whether a screen position (pixels, origin bottom left) is over the menu or any other element that takes the pointer: the build
         /// button, the open sheet. The ground ignores a press there. False before the UI exists.
         /// </summary>
@@ -247,6 +264,7 @@ namespace CityBuilder.Client.Presentation.Build
             }
 
             _toggle.clicked += () => SetOpen(!IsOpen);
+            UiRoot.Dim(_toggle, IsDockDimmed);
             if (_roads != null)
             {
                 _roads.clicked += PressRoads;

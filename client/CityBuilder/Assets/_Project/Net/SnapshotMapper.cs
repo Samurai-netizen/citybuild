@@ -151,7 +151,17 @@ namespace CityBuilder.Client.Net
             foreach (SnapshotTripDto trip in city.Trips)
             {
                 highestTripId = Math.Max(highestTripId, trip.Id);
-                trips.Add(new Trip(trip.Id, trip.SourceId, trip.TargetId, new ItemId(trip.ItemId), trip.Quantity, trip.DepartedAt, trip.ArrivesAt));
+                trips.Add(new Trip(
+                    trip.Id, trip.SourceId, trip.TargetId, new ItemId(trip.ItemId), trip.Quantity, trip.DepartedAt, trip.ArrivesAt, trip.Remaining,
+                    trip.Leg == TripLegDto.ToSource ? TripLeg.ToSource : TripLeg.ToTarget));
+            }
+
+            int highestLineId = 0;
+            var lines = new List<DeliveryLine>(city.DeliveryLines.Count);
+            foreach (SnapshotDeliveryLineDto line in city.DeliveryLines)
+            {
+                highestLineId = Math.Max(highestLineId, line.Id);
+                lines.Add(new DeliveryLine(line.Id, line.StationId, line.Slot, line.SourceId, line.TargetId, new ItemId(line.ItemId), line.Quantity));
             }
 
             var couriers = new List<Courier>(city.Couriers.Count);
@@ -178,7 +188,9 @@ namespace CityBuilder.Client.Net
                 trips,
                 highestTripId + 1,
                 couriers,
-                routes);
+                routes,
+                lines,
+                highestLineId + 1);
         }
 
         /// <summary>One courier; the state names match the engine's one to one (CR-0008).</summary>

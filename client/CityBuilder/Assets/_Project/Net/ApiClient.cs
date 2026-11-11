@@ -168,6 +168,12 @@ namespace CityBuilder.Client.Net
             return SendAsync<CitySnapshotDto>("POST", "/commands/set-route", request, true, cancellationToken);
         }
 
+        /// <summary><c>POST /commands/cancel-delivery</c> (CR-0008 amendment 1).</summary>
+        public Task<ApiResult<CitySnapshotDto>> CancelDeliveryAsync(CancelDeliveryRequestDto request, CancellationToken cancellationToken)
+        {
+            return SendAsync<CitySnapshotDto>("POST", "/commands/cancel-delivery", request, true, cancellationToken);
+        }
+
         /// <summary><c>POST /commands/reenergize-couriers</c> (CR-0008).</summary>
         public Task<ApiResult<CitySnapshotDto>> ReenergizeCouriersAsync(ReenergizeCouriersRequestDto request, CancellationToken cancellationToken)
         {

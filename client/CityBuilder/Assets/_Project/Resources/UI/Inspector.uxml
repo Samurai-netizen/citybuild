@@ -1,9 +1,11 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
-  <!-- The building inspector that BuildingInspector shows (M0-51; visual v2, CR-0008-T2): a parchment panel framed in wood, like the showcase's
-       inspector. A header with the building's big picture, its name and level and a round close button; then a box with its status, timer,
-       recipe and rates; a box with the worker stepper (red minus, the count, green plus) and the rate at the pending value; and a box with
-       the upgrade and its button. Under the HUD at the right in landscape, a sheet above the dock in portrait. Hidden while no building is
-       selected. Style: Common.uss and Inspector.uss. -->
+  <!-- The building inspector that BuildingInspector shows (M0-51; visual v2, CR-0008-T2; centred and larger, CR-0008 D22): a parchment panel
+       framed in wood in the middle of the screen. A header with the building's big picture, its name and level and a round close button;
+       then a body that scrolls up and down only (OD-17) with three columns in landscape and one in portrait: a box with its status, timer,
+       store, recipe and rates and a box with the worker stepper (red minus, the count, green plus); the courier station's box with its
+       couriers, each courier's deliveries (a Cancel per line and Cancel all, made by BuildingInspector from the model) and the route buttons;
+       and a box with the upgrade and its button. The root lets presses through, so the map around the panel stays tappable. Hidden while no
+       building is selected. Style: Common.uss and Inspector.uss. -->
   <Style src="Common.uss" />
   <Style src="Inspector.uss" />
   <ui:VisualElement name="inspector-root" class="inspector-root" picking-mode="Ignore">
@@ -16,40 +18,49 @@
         </ui:VisualElement>
         <ui:Button name="inspector-close" class="inspector-close btn btn--round glyph glyph-close" text="" />
       </ui:VisualElement>
-      <ui:VisualElement class="inspector-body">
-        <ui:VisualElement class="inspector-column">
-          <ui:VisualElement class="inspector-status-box box">
-            <ui:Label name="inspector-status" class="inspector-status t-heading" />
-            <ui:Label name="inspector-time" class="t-body" />
-            <ui:Label name="inspector-needs" class="inspector-needs t-small" />
-            <ui:Label name="inspector-store" class="inspector-store t-small" />
-            <ui:Label name="inspector-trips" class="inspector-trips t-small" />
-            <ui:Label name="inspector-couriers" class="inspector-trips t-small" />
-            <ui:Label name="inspector-recipe" class="t-body" />
-            <ui:Label name="inspector-rates" class="t-small" />
-            <ui:Button name="inspector-edit-routes" class="inspector-send-trip btn btn--secondary" text="Edit routes" />
-            <ui:Button name="inspector-reenergize" class="inspector-send-trip btn btn--secondary" text="Re-energize couriers" />
-            <ui:Button name="inspector-send-trip" class="inspector-send-trip btn btn--secondary" text="Send trip" />
-          </ui:VisualElement>
-          <ui:VisualElement class="inspector-workers-box box box--light">
-            <ui:VisualElement name="inspector-stepper" class="inspector-stepper">
-              <ui:Button name="inspector-minus" class="inspector-step btn btn--danger glyph glyph-minus" text="" />
-              <ui:Label name="inspector-workers" class="inspector-workers" />
-              <ui:Button name="inspector-plus" class="inspector-step btn btn--primary glyph glyph-plus" text="" />
+      <ui:ScrollView name="inspector-scroll" class="inspector-scroll themed-scroll" mode="Vertical" horizontal-scroller-visibility="Hidden">
+        <ui:VisualElement name="inspector-body" class="inspector-body">
+          <ui:VisualElement class="inspector-column">
+            <ui:VisualElement class="inspector-status-box box">
+              <ui:Label name="inspector-status" class="inspector-status t-heading" />
+              <ui:Label name="inspector-time" class="t-body" />
+              <ui:Label name="inspector-needs" class="inspector-needs t-small" />
+              <ui:Label name="inspector-store" class="inspector-store t-small" />
+              <ui:Label name="inspector-trips" class="inspector-trips t-small" />
+              <ui:Label name="inspector-recipe" class="t-body" />
+              <ui:Label name="inspector-rates" class="t-small" />
+              <ui:Button name="inspector-send-trip" class="inspector-action btn btn--secondary" text="Send delivery" />
             </ui:VisualElement>
-            <ui:Label name="inspector-preview" class="inspector-preview t-small" />
-            <ui:Label name="inspector-stepper-note" class="t-note" />
+            <ui:VisualElement class="inspector-workers-box box box--light">
+              <ui:VisualElement name="inspector-stepper" class="inspector-stepper">
+                <ui:Button name="inspector-minus" class="inspector-step btn btn--danger glyph glyph-minus" text="" />
+                <ui:Label name="inspector-workers" class="inspector-workers" />
+                <ui:Button name="inspector-plus" class="inspector-step btn btn--primary glyph glyph-plus" text="" />
+              </ui:VisualElement>
+              <ui:Label name="inspector-preview" class="inspector-preview t-small" />
+              <ui:Label name="inspector-stepper-note" class="t-note" />
+            </ui:VisualElement>
+          </ui:VisualElement>
+          <ui:VisualElement name="inspector-courier-column" class="inspector-column inspector-courier-column">
+            <ui:VisualElement class="inspector-courier-box box">
+              <ui:Label class="t-heading" text="Couriers" />
+              <ui:Label name="inspector-couriers" class="inspector-couriers t-small" />
+              <ui:VisualElement name="inspector-queues" class="inspector-queues" />
+              <ui:Button name="inspector-edit-routes" class="inspector-action btn btn--secondary" text="Edit routes" />
+              <ui:Label name="inspector-routes-note" class="inspector-routes-note t-note" />
+              <ui:Button name="inspector-reenergize" class="inspector-action btn btn--secondary" text="Re-energize couriers" />
+            </ui:VisualElement>
+          </ui:VisualElement>
+          <ui:VisualElement class="inspector-column inspector-upgrade box">
+            <ui:Label name="inspector-upgrade-title" class="t-heading" />
+            <ui:Label name="inspector-upgrade-cost" class="inspector-upgrade-cost" />
+            <ui:Label name="inspector-upgrade-time" class="inspector-upgrade-time t-small glyph-time" />
+            <ui:Label name="inspector-upgrade-gain" class="t-small" />
+            <ui:Label name="inspector-upgrade-note" class="inspector-upgrade-note" />
+            <ui:Button name="inspector-upgrade" class="inspector-upgrade-button btn btn--primary" text="Upgrade" />
           </ui:VisualElement>
         </ui:VisualElement>
-        <ui:VisualElement class="inspector-column inspector-upgrade box">
-          <ui:Label name="inspector-upgrade-title" class="t-heading" />
-          <ui:Label name="inspector-upgrade-cost" class="inspector-upgrade-cost" />
-          <ui:Label name="inspector-upgrade-time" class="inspector-upgrade-time t-small glyph-time" />
-          <ui:Label name="inspector-upgrade-gain" class="t-small" />
-          <ui:Label name="inspector-upgrade-note" class="inspector-upgrade-note" />
-          <ui:Button name="inspector-upgrade" class="inspector-upgrade-button btn btn--primary" text="Upgrade" />
-        </ui:VisualElement>
-      </ui:VisualElement>
+      </ui:ScrollView>
     </ui:VisualElement>
   </ui:VisualElement>
 </ui:UXML>

@@ -307,7 +307,7 @@ namespace CityBuilder.Client.Presentation.City
             ShowLoad(entry, courier.Loads.Count > 0 ? courier.Loads[0].Item.Value : null);
         }
 
-        /// <summary>Shows one trip's worker on its walk from the source to the target.</summary>
+        /// <summary>Shows one trip's worker on its current leg: from the source to the target with a load, or back for the next one (CR-0008 D21).</summary>
         private void ShowTrip(CityState city, Trip trip)
         {
             if (!city.TryGetBuilding(trip.SourceId, out Building? source) || !city.TryGetBuilding(trip.TargetId, out Building? target))
@@ -321,7 +321,7 @@ namespace CityBuilder.Client.Presentation.City
             {
                 entry.Planned = true;
                 EnsurePlanner(city);
-                entry.Path = _planner.Path(source, target);
+                entry.Path = trip.Leg == TripLeg.ToSource ? _planner.Path(target!, source!) : _planner.Path(source!, target!);
                 entry.Walking = true;
                 entry.DepartedAt = trip.DepartedAt;
                 entry.ArrivesAt = trip.ArrivesAt;
@@ -333,13 +333,14 @@ namespace CityBuilder.Client.Presentation.City
         /// <summary>
         /// The path of a courier's walk. Its start is not in the snapshot, so it is worked out from the route: the stop before the one it walks
         /// to; for the first stop, the station or the last stop, whichever gives the walk's length; for a walk home, the stop whose walk to the
-        /// station has the walk's length (the last when none does). Null when the route is gone.
+        /// station has the walk's length (the last when none does). A courier without a route walks its first delivery line instead
+        /// (<see cref="PlanLineWalk"/>). Null when it has neither.
         /// </summary>
         private WalkPath? PlanCourierWalk(CityState city, Courier courier, Building station)
         {
             if (!city.TryGetRoute(courier.StationId, courier.Slot, out Route? route))
             {
-                return null;
+                return PlanLineWalk(city, courier, station);
             }
 
             EnsurePlanner(city);
@@ -385,6 +386,52 @@ namespace CityBuilder.Client.Presentation.City
             }
 
             return origin == null ? null : _planner.Path(origin, target);
+        }
+
+        /// <summary>
+        /// The path of a courier's walk on its delivery lines (CR-0008 D16): to its first line's target (stop 2) from that line's source; to the
+        /// line's source (stop 1) from its station, or else from the building whose walk has the walk's length (the last line's target); home
+        /// from the building whose walk to the station has that length. Null when no start fits and the courier has no line.
+        /// </summary>
+        private WalkPath? PlanLineWalk(CityState city, Courier courier, Building station)
+        {
+            EnsurePlanner(city);
+            long length = courier.ArrivesAt!.Value - courier.DepartedAt!.Value;
+            if (courier.State == CourierState.Returning)
+            {
+                Building? from = BuildingAtWalk(city, station, length);
+                return from == null ? null : _planner.Path(from, station);
+            }
+
+            if (!city.TryGetFirstLine(courier.StationId, courier.Slot, out DeliveryLine? line)
+                || !city.TryGetBuilding(line.SourceId, out Building? source) || !city.TryGetBuilding(line.TargetId, out Building? target))
+            {
+                return null;
+            }
+
+            if (courier.ToStop == 2)
+            {
+                return _planner.Path(source!, target!);
+            }
+
+            Building origin = _planner.Seconds(station, source!) == length ? station : BuildingAtWalk(city, source!, length) ?? station;
+            return _planner.Path(origin, source!);
+        }
+
+        /// <summary>The first building (by id) other than <paramref name="place"/> whose walk to it takes <paramref name="length"/> seconds, or null.</summary>
+        private Building? BuildingAtWalk(CityState city, Building place, long length)
+        {
+            IReadOnlyList<Building> buildings = city.Buildings;
+            for (int i = 0; i < buildings.Count; i++)
+            {
+                Building candidate = buildings[i];
+                if (candidate.Id != place.Id && _planner.Seconds(candidate, place) == length)
+                {
+                    return candidate;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>Reads the map into the planner once per <see cref="Show"/>, the first time a path is needed.</summary>

@@ -71,6 +71,18 @@ namespace CityBuilder.Client.Presentation.Inspector
         /// <summary>Whether the Edit routes button shows: a built courier station with at least one courier (CR-0008).</summary>
         public bool HasRouteEditor { get; private set; }
 
+        /// <summary>Whether the Edit routes button works: it shows and the city has built the route building (CR-0008 D15).</summary>
+        public bool CanEditRoutes { get; private set; }
+
+        /// <summary>Why Edit routes is off, such as <c>Repeating routes need a Scriptorium</c>; empty when it works or doesn't show.</summary>
+        public string RoutesNote { get; private set; } = string.Empty;
+
+        /// <summary>
+        /// The work of each courier of a courier station that has some, by slot: its delivery lines with their Cancel buttons, or its route, and
+        /// Cancel all (CR-0008 amendment 1); empty for other buildings and for couriers without work.
+        /// </summary>
+        public IReadOnlyList<CourierQueueModel> Queues { get; private set; } = Array.Empty<CourierQueueModel>();
+
         /// <summary>Whether the Re-energize couriers button shows: a built courier station with a courier that rests or has less stamina than its level gives (CR-0008-T2 part E).</summary>
         public bool HasReenergize { get; private set; }
 
@@ -175,12 +187,16 @@ namespace CityBuilder.Client.Presentation.Inspector
                 CouriersText = CouriersTextFor(content, city, building, level),
                 HasRouteEditor = definition.Kind == BuildingKind.CourierStation && building.Phase != BuildingPhase.Constructing
                     && building.AssignedWorkers > 0,
+                Queues = QueuesFor(content, city, building),
                 HasReenergize = NeedsReenergize(content, city, building, level),
                 HasSendTrip = hasGoods,
                 CanSendTrip = hasGoods && availability.IsAllowed,
                 IsWorkersPending = pendingTarget.HasValue,
                 IsUpgradePending = upgradePending,
             };
+            bool routesUnlocked = CityQueries.AreRoutesUnlocked(city, content);
+            model.CanEditRoutes = model.HasRouteEditor && routesUnlocked;
+            model.RoutesNote = model.HasRouteEditor && !routesUnlocked ? RoutesLockedNote(content) : string.Empty;
             model.FillStepper(content, city, building, level, pendingTarget, availability);
             model.FillUpgrade(content, city, building, definition, upgradePending, availability);
             return model;
@@ -203,6 +219,9 @@ namespace CityBuilder.Client.Presentation.Inspector
                 && TripsText == other.TripsText
                 && CouriersText == other.CouriersText
                 && HasRouteEditor == other.HasRouteEditor
+                && CanEditRoutes == other.CanEditRoutes
+                && RoutesNote == other.RoutesNote
+                && SameQueues(Queues, other.Queues)
                 && HasReenergize == other.HasReenergize
                 && HasSendTrip == other.HasSendTrip
                 && CanSendTrip == other.CanSendTrip
@@ -550,14 +569,98 @@ namespace CityBuilder.Client.Presentation.Inspector
             for (int i = 0; i < mine.Count; i++)
             {
                 Courier courier = mine[i];
+                int queued = city.CountLines(station.Id, courier.Slot);
                 string route = city.TryGetRoute(station.Id, courier.Slot, out Route? found)
                     ? "Route: " + RouteSummary(content, city, found!)
-                    : "No route";
+                    : queued > 0 ? Deliveries(queued) : "No route";
                 lines.Add("Courier " + Number(courier.Slot) + " · " + CourierStateText(courier.State) + " · Stamina "
                     + DurationText.Format(courier.Stamina) + " of " + DurationText.Format(level.StaminaSeconds) + " · " + route);
             }
 
             return string.Join("\n", lines);
+        }
+
+        /// <summary>
+        /// The work of each courier of a built courier station that has some (CR-0008 amendment 1): its delivery lines in the order it runs them
+        /// (the first marked <c>now</c> while it walks), or its route; empty for other buildings.
+        /// </summary>
+        private static IReadOnlyList<CourierQueueModel> QueuesFor(GameContent content, CityState city, Building station)
+        {
+            if (station.Phase == BuildingPhase.Constructing || !content.TryGetBuilding(station.TypeId, out BuildingDefinition? definition)
+                || definition!.Kind != BuildingKind.CourierStation)
+            {
+                return Array.Empty<CourierQueueModel>();
+            }
+
+            var queues = new List<CourierQueueModel>();
+            for (int i = 0; i < city.Couriers.Count; i++)
+            {
+                Courier courier = city.Couriers[i];
+                if (courier.StationId != station.Id)
+                {
+                    continue;
+                }
+
+                if (city.TryGetRoute(station.Id, courier.Slot, out Route? route))
+                {
+                    queues.Add(new CourierQueueModel(
+                        courier.Slot, "Courier " + Number(courier.Slot) + " · Route: " + RouteSummary(content, city, route!), Array.Empty<CourierQueueLine>()));
+                    continue;
+                }
+
+                var lines = new List<CourierQueueLine>();
+                for (int j = 0; j < city.DeliveryLines.Count; j++)
+                {
+                    DeliveryLine line = city.DeliveryLines[j];
+                    if (line.StationId != station.Id || line.Slot != courier.Slot)
+                    {
+                        continue;
+                    }
+
+                    bool now = lines.Count == 0 && courier.State == CourierState.Walking;
+                    lines.Add(new CourierQueueLine(
+                        line.Id,
+                        Number(line.Quantity) + " " + ItemText.ItemName(content, line.Item) + " · " + BuildingNameOf(content, city, line.SourceId) + " → "
+                        + BuildingNameOf(content, city, line.TargetId) + (now ? " · now" : string.Empty)));
+                }
+
+                if (lines.Count > 0)
+                {
+                    queues.Add(new CourierQueueModel(courier.Slot, "Courier " + Number(courier.Slot) + " · " + Deliveries(lines.Count), lines));
+                }
+            }
+
+            return queues;
+        }
+
+        /// <summary>The number of deliveries in words: <c>1 delivery</c> or <c>3 deliveries</c>.</summary>
+        private static string Deliveries(int count) => Number(count) + (count == 1 ? " delivery" : " deliveries");
+
+        /// <summary>The note under Edit routes while routes are locked: the route building's name (CR-0008 D15).</summary>
+        private static string RoutesLockedNote(GameContent content)
+        {
+            BuildingTypeId? needed = content.Rules.RouteBuilding;
+            string name = needed.HasValue && content.TryGetBuilding(needed.Value, out BuildingDefinition? definition) ? definition!.Name : "another building";
+            return "Repeating routes need a " + name + ". Until then couriers make one-time deliveries";
+        }
+
+        /// <summary>Whether two lists of queues say the same, in the same order.</summary>
+        private static bool SameQueues(IReadOnlyList<CourierQueueModel> left, IReadOnlyList<CourierQueueModel> right)
+        {
+            if (left.Count != right.Count)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < left.Count; i++)
+            {
+                if (!left[i].Equals(right[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         /// <summary>Whether a built courier station has a courier that rests or whose stamina is below the level's full stamina.</summary>

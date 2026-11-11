@@ -11,7 +11,7 @@ namespace CityBuilder.Client.Net
     {
         /// <summary>Creates the DTO. Newtonsoft calls this constructor with the JSON members of the same names, so the object is never half filled.</summary>
         [JsonConstructor]
-        public ContentRulesDto(int gridWidth, int gridHeight, int builderSlots, int researchSlots, long minCycleSeconds, int maxLaborReductionPermille, long groundTileMillis, int crossingSpeedPermille, long minWalkSeconds, int maxWalkBonusPermille, long tripCarryLimit, int maxRouteStops, int maxStopActions, int timeScale)
+        public ContentRulesDto(int gridWidth, int gridHeight, int builderSlots, int researchSlots, long minCycleSeconds, int maxLaborReductionPermille, long groundTileMillis, int crossingSpeedPermille, long minWalkSeconds, int maxWalkBonusPermille, long tripCarryLimit, int maxRouteStops, int maxStopActions, int maxDeliveryLines, string? routeBuilding, int timeScale)
         {
             GridWidth = gridWidth;
             GridHeight = gridHeight;
@@ -26,6 +26,8 @@ namespace CityBuilder.Client.Net
             TripCarryLimit = tripCarryLimit;
             MaxRouteStops = maxRouteStops;
             MaxStopActions = maxStopActions;
+            MaxDeliveryLines = maxDeliveryLines;
+            RouteBuilding = routeBuilding;
             TimeScale = timeScale;
         }
 
@@ -65,6 +67,13 @@ namespace CityBuilder.Client.Net
         public int MaxRouteStops { get; }
         /// <summary>Most actions one stop of a route has (CR-0008).</summary>
         public int MaxStopActions { get; }
+
+        /// <summary>The most delivery lines one courier may have queued (CR-0008 amendment 1).</summary>
+        public int MaxDeliveryLines { get; }
+
+        /// <summary>The building type a city must have built before a courier gets a route, or null when routes need none (CR-0008 D15).</summary>
+        [JsonProperty(Required = Required.AllowNull)]
+        public string? RouteBuilding { get; }
         /// <summary>Server seconds per real second: 1 outside Development.</summary>
         public int TimeScale { get; }
     }

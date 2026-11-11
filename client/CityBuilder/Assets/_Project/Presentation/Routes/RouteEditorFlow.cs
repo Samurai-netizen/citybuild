@@ -150,7 +150,7 @@ namespace CityBuilder.Client.Presentation.Routes
 
             int stationId = _inspector.Model.BuildingId;
             _selection?.ClearSelection();
-            if (_model.Open(stationId, 1))
+            if (_model.Open(stationId, _model.FirstFreeSlot(stationId)))
             {
                 _screen.SetOpen(true);
             }

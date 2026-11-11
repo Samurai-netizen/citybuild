@@ -205,6 +205,35 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(_world.Ground.ShownPath, Is.Empty);
         }
 
+        /// <summary>
+        /// Once the courier has a route, the station's inspector shows that courier's queue with a Clear route button (Cancel all, CR-0008 D18);
+        /// pressing it sends one <c>cancel-delivery</c> for slot 1 with <c>lineId</c> null.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator Inspector_CancelAll_OnACourierWithARoute_SendsCancelDelivery()
+        {
+            TapTile(6, 0);
+            _inspector.PressEditRoutes();
+            TapTile(2, 0);
+            TapTile(4, 0);
+            _screen.PressConfirm();
+            yield return WaitUntil(() => _transport.OpenCount == 1);
+            _transport.Respond(200, RouteCity(11, withRoute: true));
+            yield return WaitUntil(() => _sender.Pending.Count == 0);
+
+            TapTile(6, 0);
+            yield return null;
+            List<Button> cancelAll = _inspector.Root!.Query<Button>(className: BuildingInspector.QueueCancelAllClass).ToList();
+            Assert.That(cancelAll, Has.Count.EqualTo(1));
+            Assert.That(cancelAll[0].text, Is.EqualTo("Clear route"));
+
+            _inspector.PressCancelAll(1);
+            yield return WaitUntil(() => _transport.OpenCount == 1);
+
+            Assert.That(_transport.Requests[1].Url, Does.EndWith("/api/v1/commands/cancel-delivery"));
+            Assert.That(_transport.Requests[1].JsonBody, Does.Contain("\"slot\":1").And.Contain("\"lineId\":null"));
+        }
+
         /// <summary>Removing a stop and pressing the close button leave nothing sent; closing clears the path and hides the sheet.</summary>
         [Test]
         public void Close_AfterEdits_SendsNothingAndClearsThePath()
@@ -271,7 +300,8 @@ namespace CityBuilder.Client.Tests.PlayMode
 
         /// <summary>
         /// The test city as an answer's JSON: the real producing answer's clock, era and content with two cottages (tiles 0 and 1), a sawmill
-        /// (tile 2), a woodcutter (tile 4) and the courier station <see cref="StationId"/> on tile 6 with one courier at the station; when
+        /// (tile 2), a woodcutter (tile 4), the courier station <see cref="StationId"/> on tile 6 with one courier at the station and a built
+        /// Scriptorium at (7, 7), which routes need (CR-0008 D15); when
         /// <paramref name="withRoute"/> is set, slot 1 holds a route sawmill → woodcutter.
         /// </summary>
         private static string RouteCity(long stateVersion, bool withRoute)
@@ -291,6 +321,7 @@ namespace CityBuilder.Client.Tests.PlayMode
                     4, "woodcutter", 4, 0, 1, 2, 2, BuildingPhaseDto.Producing, 183, 213, 60, 60, 183, null, none,
                     new Dictionary<string, long> { ["logs"] = 40 }, none, null),
                 new SnapshotBuildingDto(StationId, "courier_station", 6, 0, 1, 1, 2, BuildingPhaseDto.Idle, 0, null, 0, 0, 0, "NoRecipe", none, none, none, null),
+                new SnapshotBuildingDto(9, "scriptorium", 7, 7, 1, 0, 0, BuildingPhaseDto.Idle, 0, null, 0, 0, 0, "NoRecipe", none, none, none, null),
             };
             var couriers = new List<SnapshotCourierDto>
             {
@@ -318,7 +349,8 @@ namespace CityBuilder.Client.Tests.PlayMode
                 new List<SnapshotRoadDto>(),
                 new List<SnapshotTripDto>(),
                 couriers,
-                routes);
+                routes,
+                new List<SnapshotDeliveryLineDto>());
             return json.Serialize(new CitySnapshotDto(real.RequestId, stateVersion, real.ServerTimeUtc, real.ContentVersion, cityDto, real.Settlement));
         }
     }

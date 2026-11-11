@@ -32,5 +32,8 @@ namespace CityBuilder.Client.Net
 
         /// <summary><c>reenergize-couriers</c>: give every courier its full stamina again (CR-0008).</summary>
         ReenergizeCouriers,
+
+        /// <summary><c>cancel-delivery</c>: cancel one delivery line of a courier, or all of its lines and its route (CR-0008 amendment 1).</summary>
+        CancelDelivery,
     }
 }

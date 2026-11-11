@@ -22,6 +22,11 @@
   display: none;
 }
 
+/* Every text of the editor wraps inside its card instead of running into the next one (CR-0008 D22). */
+.route-panel .unity-label {
+  white-space: normal;
+}
+
 .route-header {
   flex-direction: row;
   align-items: center;
@@ -66,7 +71,7 @@
 }
 
 .route-stop {
-  width: 260px;
+  width: 300px;
   max-width: 100%;
   margin-right: var(--sp-2);
 }
@@ -84,7 +89,10 @@
 .route-action-button {
   flex-grow: 1;
   flex-basis: 0;
+  min-width: 0;
   margin-right: var(--sp-1);
+  padding: 0 var(--sp-1);
+  font-size: var(--font-sm);
 }
 
 .route-stop-tools {

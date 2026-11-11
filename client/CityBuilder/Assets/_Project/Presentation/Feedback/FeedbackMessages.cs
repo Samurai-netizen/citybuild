@@ -190,7 +190,7 @@ namespace CityBuilder.Client.Presentation.Feedback
                 case CommandKind.StartResearch:
                     return "Research started";
                 case CommandKind.StartTrip:
-                    return "Trip started";
+                    return "Delivery sent";
                 case CommandKind.PlaceRoads:
                     return "Road built";
                 case CommandKind.UpgradeRoads:
@@ -201,6 +201,8 @@ namespace CityBuilder.Client.Presentation.Feedback
                     return "Route saved";
                 case CommandKind.ReenergizeCouriers:
                     return "Couriers re-energized";
+                case CommandKind.CancelDelivery:
+                    return "Delivery cancelled";
                 default:
                     return "Done";
             }

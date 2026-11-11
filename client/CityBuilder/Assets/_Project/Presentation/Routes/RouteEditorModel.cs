@@ -18,7 +18,8 @@ namespace CityBuilder.Client.Presentation.Routes
     /// The state of the courier route editor (CR-0008-T2 part C): which courier station and slot the player edits, the stops in order with
     /// their take and put actions (item and amount), the walk time of every leg and of the whole lap, the path drawn on the map, and the words
     /// and enable rule of the Save button. The refusals follow <see cref="CourierRules.SetRoute"/>: the connection's
-    /// <see cref="CommandAvailability"/> first, then the number of stops, then a locked amount mode. Pure C# with no Unity objects, so EditMode
+    /// <see cref="CommandAvailability"/> first, then the number of stops, then a locked amount mode, then the route building (the Scriptorium,
+    /// CR-0008 D15) and a courier with deliveries (D19). Pure C# with no Unity objects, so EditMode
     /// tests check every transition and reason.
     /// </summary>
     public sealed class RouteEditorModel
@@ -34,6 +35,9 @@ namespace CityBuilder.Client.Presentation.Routes
 
         /// <summary>Shown when an amount needs a research that is not done.</summary>
         public const string AmountModeLockedReason = "Research needed for that amount";
+
+        /// <summary>Shown when the courier still has delivery lines: it takes no route until they are done or cancelled (CR-0008 D19).</summary>
+        public const string CourierBusyReason = "This courier still has deliveries: cancel them first";
 
         /// <summary>Shown when the route is the one already saved.</summary>
         public const string NoChangesReason = "No changes to save";
@@ -735,7 +739,48 @@ namespace CityBuilder.Client.Presentation.Routes
                 return AmountModeLockedReason;
             }
 
+            if (_stops.Count > 0 && !CityQueries.AreRoutesUnlocked(_city!, _content))
+            {
+                return RoutesLockedReason();
+            }
+
+            if (_stops.Count > 0 && _city!.CountLines(StationId, Slot) > 0)
+            {
+                return CourierBusyReason;
+            }
+
             return EqualsSaved() ? NoChangesReason : string.Empty;
+        }
+
+        /// <summary>The reason Save is off while routes are locked: the route building's name, such as <c>Build a Scriptorium first</c>.</summary>
+        private string RoutesLockedReason()
+        {
+            BuildingTypeId? needed = _content.Rules.RouteBuilding;
+            string name = needed.HasValue && _content.TryGetBuilding(needed.Value, out BuildingDefinition? definition) ? definition!.Name : "the route building";
+            return "Build a " + name + " first for repeating routes";
+        }
+
+        /// <summary>
+        /// The slot the editor opens on at <paramref name="stationId"/>: the first courier's slot without delivery lines, else slot 1 (a courier
+        /// with deliveries takes no route, CR-0008 D19).
+        /// </summary>
+        public int FirstFreeSlot(int stationId)
+        {
+            if (_city == null)
+            {
+                return 1;
+            }
+
+            for (int i = 0; i < _city.Couriers.Count; i++)
+            {
+                Courier courier = _city.Couriers[i];
+                if (courier.StationId == stationId && _city.CountLines(stationId, courier.Slot) == 0)
+                {
+                    return courier.Slot;
+                }
+            }
+
+            return 1;
         }
 
         /// <summary>Whether <paramref name="index"/> is a stop of the edited route and the editor is editing.</summary>

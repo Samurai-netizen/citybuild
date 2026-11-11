@@ -1,6 +1,7 @@
-/* The building inspector (M0-51; visual v2, CR-0008-T2): a parchment panel framed in wood with boxes for the status, the workers and the
-   upgrade, like the showcase's inspector; under the HUD at the right in landscape (two columns), a sheet above the dock in portrait (one
-   column). Colours and sizes come from Common.uss. */
+/* The building inspector (M0-51; visual v2, CR-0008-T2; centred and larger, CR-0008 D22): a parchment panel framed in wood in the middle of
+   the screen, between the HUD and the dock, with boxes for the status and workers, the couriers and the upgrade: three columns side by side
+   in landscape, one column in portrait. The body scrolls up and down only (OD-17); every text wraps, so nothing overlaps. Colours and sizes
+   come from Common.uss. */
 .inspector-root {
   position: absolute;
   left: 0;
@@ -9,29 +10,39 @@
   bottom: 0;
   padding: var(--sp-2); /* replaced by the safe area in code */
   flex-direction: column;
-  justify-content: flex-start;
-  align-items: flex-end;
+  justify-content: center;
+  align-items: center;
 }
 
 .inspector-panel {
-  width: 420px;
-  max-width: 100%;
+  width: 90%;
+  max-width: 1080px;
+  max-height: 100%;
   margin-top: var(--hud-height);
+  margin-bottom: var(--dock-lift);
+  flex-shrink: 1;
+  flex-direction: column;
 }
 
 .inspector-panel--hidden {
   display: none;
 }
 
+/* Every text of the panel wraps inside its box instead of running into the next one. */
+.inspector-panel .unity-label {
+  white-space: normal;
+}
+
 .inspector-header {
   flex-direction: row;
   align-items: center;
+  flex-shrink: 0;
   margin-bottom: var(--sp-2);
 }
 
 .inspector-icon {
-  width: 64px;
-  height: 64px;
+  width: 72px;
+  height: 72px;
   margin: -14px var(--sp-2) -6px -6px;
   flex-shrink: 0;
   -unity-background-scale-mode: scale-to-fit;
@@ -46,14 +57,29 @@
   margin-left: var(--sp-2);
 }
 
+.inspector-scroll {
+  flex-grow: 0;
+  flex-shrink: 1;
+  min-height: 0;
+}
+
 .inspector-body {
   flex-direction: row;
+  align-items: flex-start;
 }
 
 .inspector-column {
   flex-grow: 1;
+  flex-shrink: 1;
   flex-basis: 0;
+  min-width: 0;
   flex-direction: column;
+}
+
+/* The columns after the first keep a gap from the one before (USS has no sibling selector, so they are named). */
+.inspector-courier-column,
+.inspector-upgrade {
+  margin-left: var(--sp-2);
 }
 
 .inspector-status-box {
@@ -74,13 +100,56 @@
   color: var(--c-warn-ink);
 }
 
-.inspector-trips {
+.inspector-trips,
+.inspector-couriers {
   margin-top: 2px;
   color: var(--c-ink-soft);
 }
 
-.inspector-send-trip {
+.inspector-action {
+  margin-top: var(--sp-2);
+}
+
+.inspector-routes-note {
   margin-top: var(--sp-1);
+  color: var(--c-stop-ink);
+}
+
+/* One courier's work: its heading, a row per delivery line with its Cancel button, and Cancel all. */
+.inspector-queues {
+  flex-direction: column;
+}
+
+.inspector-queue {
+  margin-top: var(--sp-2);
+  padding: var(--sp-2);
+}
+
+.inspector-queue-title {
+  color: var(--c-ink);
+}
+
+.inspector-queue-row {
+  flex-direction: row;
+  align-items: center;
+  margin-top: var(--sp-1);
+}
+
+.inspector-queue-text {
+  flex-grow: 1;
+  flex-shrink: 1;
+  min-width: 0;
+  margin-right: var(--sp-2);
+  color: var(--c-ink);
+}
+
+.inspector-queue-cancel {
+  flex-shrink: 0;
+  padding: 0 var(--sp-3);
+}
+
+.inspector-queue-cancel-all {
+  margin-top: var(--sp-2);
 }
 
 .inspector-workers-box {
@@ -111,16 +180,11 @@
   -unity-text-align: middle-center;
 }
 
-.inspector-upgrade {
-  margin-left: var(--sp-2);
-}
-
 .inspector-upgrade-cost {
   -unity-font-definition: url("Fonts/Fredoka-SemiBold.ttf");
   margin-top: 2px;
   color: var(--c-ink);
   font-size: var(--font-md);
-  white-space: normal;
 }
 
 .inspector-upgrade-time {
@@ -137,35 +201,29 @@
   margin-top: 2px;
   color: var(--c-stop-ink);
   font-size: var(--font-sm);
-  white-space: normal;
 }
 
 .inspector-upgrade-button {
   margin-top: var(--sp-2);
 }
 
-/* Portrait: a sheet above the dock, the full width, its boxes in one column. */
-.portrait .inspector-root {
-  justify-content: flex-end;
-  align-items: stretch;
-}
-
+/* Portrait: the full width between the HUD and the dock, the boxes in one column. */
 .portrait .inspector-panel {
-  width: auto;
-  margin-top: 0;
-  margin-bottom: var(--dock-lift);
+  width: 100%;
 }
 
 .portrait .inspector-body {
   flex-direction: column;
+  align-items: stretch;
 }
 
-/* In a column the boxes take their own height: a flex-basis of 0 (right for the two columns side by side) would squash them to nothing. */
+/* In a column the boxes take their own height: a flex-basis of 0 (right for the columns side by side) would squash them to nothing. */
 .portrait .inspector-column {
   flex-grow: 0;
   flex-basis: auto;
 }
 
+.portrait .inspector-courier-column,
 .portrait .inspector-upgrade {
   margin: var(--sp-2) 0 0 0;
 }
