@@ -5,18 +5,19 @@
 > (`CommandPipeline`, M0-26) and its first endpoint, `POST /api/v1/commands/place-building`, with the Commands rules below (M0-29); the
 > request limits below and the stricter bodies of the attack review (M0-30); `POST /api/v1/commands/upgrade-building` (M0-31);
 > `POST /api/v1/commands/assign-workers` (M0-32); `POST /api/v1/commands/start-research` (M0-33); the error catalogue, the global exception handler
-> and the rate limits below (M0-34). The rest of `/api/v1/` is *(planned)*. A task that builds a part updates this line.
+> and the rate limits below (M0-34); the CR-0008 commands and snapshot (next note). Everything in this file is built except what is marked
+> *(planned)*. A task that builds a part updates this line.
 
 > **As built:** this file is the normative contract. What the server serves today is generated from the code: the endpoints and their
 > bodies in `docs/reference/generated/endpoints.md` (the OpenAPI document) and the error codes in `docs/reference/generated/errors.md`
 > (the catalogue), checked in CI (M0-61). Contract tests keep the two equal.
-> **CR-0008 (logistics)** changes this contract (G-Contract, approved with the CR): the six new commands, the changed bodies' effects, the
+> **CR-0008 (logistics)** changes this contract (G-Contract, approved with the CR): the eight new commands, the changed bodies' effects, the
 > snapshot (stores, purse, totals, projects, roads, trips, couriers, routes), the settlement report and the content document. **Built:**
 > the walking rules and road levels in `GET /content` (part C); the three road commands, `city.roads` in the snapshot and the road check of
 > `place-building` (part D); stores, the purse, totals, projects, the content's new members and `start-trip` with its codes (part E);
 > `set-route` with `INVALID_ROUTE`, the snapshot's `couriers` and `routes` (part G); stamina spent while the player is away,
 > `reenergize-couriers`, the settlement's `courierSeconds` and `tiredCouriers`, and the content without `maxOfflineProductionSeconds`
-> (part H). It stays `/api/v1`: no client outside this repository exists yet (decision 050
+> (part H); `cancel-delivery`, `set-paused` and the snapshot's `deliveryLines` (CR-0008-T3, amendments 1 and 2). It stays `/api/v1`: no client outside this repository exists yet (decision 050
 > in `12`).
 
 JSON in camelCase. Enums are strings, quantities are integers, and times are city-clock seconds.
@@ -207,7 +208,15 @@ There is no "claim" command, because production and research complete on their o
     ],
     "roads": [ { "x": 2, "y": 5, "level": 1 }, { "x": 3, "y": 5, "level": 2 } ],
     "trips": [ { "id": 9, "sourceId": 4, "targetId": 6, "itemId": "planks", "quantity": 10,
-                 "departedAt": 123450, "arrivesAt": 123465, "remaining": 2, "leg": "ToTarget" } ]
+                 "departedAt": 123450, "arrivesAt": 123465, "remaining": 2, "leg": "ToTarget" } ],
+    "couriers": [ { "stationId": 3, "slot": 1, "state": "Walking", "toStop": 2, "departedAt": 123440, "arrivesAt": 123470,
+                    "stamina": 7200, "load": [ { "itemId": "logs", "fromId": 4, "quantity": 10 } ] },
+                  { "stationId": 3, "slot": 2, "state": "AtStation", "toStop": 0, "departedAt": null, "arrivesAt": null,
+                    "stamina": 7200, "load": [] } ],
+    "routes": [ { "stationId": 3, "slot": 2, "stops": [
+                  { "buildingId": 4, "actions": [ { "kind": "take", "itemId": "logs", "amount": "all" } ] },
+                  { "buildingId": 6, "actions": [ { "kind": "put", "itemId": "logs", "amount": "all" } ] } ] } ],
+    "deliveryLines": [ { "id": 5, "stationId": 3, "slot": 1, "sourceId": 4, "targetId": 6, "itemId": "logs", "quantity": 10 } ]
   },
   "settlement": { "elapsedSeconds": 36000,
                   "produced": { "logs": 960 }, "consumed": { "logs": 940 },
@@ -330,7 +339,7 @@ the server's own: a `traceparent` the client sends is ignored, M0-60; its second
 ## Rate limits (per player, built-in ASP.NET Core limiter)
 A request over a limit is refused with 429 `RATE_LIMITED`, a `Retry-After` header in whole seconds (at least 1, at most the window's length: the
 time after which the player is sure to have a new budget) and the Problem Details body, before the body is read or a city is locked.
-Fixed windows, in memory, one process; the numbers are configuration (`RateLimits:*` in `docs/getting-started.md`), their defaults are:
+Fixed windows, in memory, one process; the numbers are configuration (`RateLimits:*` in `docs/reference/generated/configuration.md`), their defaults are:
 
 | Limit | Counted for | Default | Keys |
 |---|---|---|---|

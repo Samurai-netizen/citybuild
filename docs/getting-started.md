@@ -32,6 +32,7 @@ How to get from a clean machine to a running project. Every command here must wo
 | Build the handbook as CI does (fails on broken links, anchors, pages missing from the sidebar) | `bash scripts/dev/docs-site.sh build` (first run installs the pinned packages) | CR-0002-T1 |
 | Preview the handbook while editing (live reload) | `bash scripts/dev/docs-site.sh start` → http://localhost:3000/citybuild/ (published: https://samurai-netizen.github.io/citybuild/) | CR-0002-T1 |
 | Print a task spec | `bash scripts/dev/show-task.sh M0-01` | Day 0 |
+| Set up a cloud coding session (installs the .NET SDK of `global.json` if `dotnet` is missing, enables the hooks, restores the server packages) | paste or run `bash scripts/dev/cloud-setup.sh` as the session's setup step | repo (PR #83) |
 | Test the Claude Code Bash guard (after changing `.claude/hooks/guard-bash.sh`; `core-instructions/18-git-and-ci.md`) | `bash scripts/dev/test-guard-bash.sh` | KIT-AUDIT-FIXES |
 | Build server | `dotnet build server/CityBuilder.slnx` | M0-02 |
 | Fast tests | `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` | M0-02 |
@@ -81,8 +82,9 @@ Secrets come from user-secrets or the environment, never a committed file: the c
 
 ## Database
 PostgreSQL 18.6 runs in Docker (`docker-compose.yml` at the repo root; `core-instructions/06-data-model.md`). Once per clone:
-1. `cp .env.example .env` and set your own `POSTGRES_PASSWORD` in `.env` (gitignored; compose refuses to start without the three
-   `POSTGRES_*` values).
+1. `cp .env.example .env` and set your own `POSTGRES_PASSWORD` in `.env` (gitignored; compose refuses to start without
+   `POSTGRES_USER`, `POSTGRES_PASSWORD` and `POSTGRES_DB`). `POSTGRES_PORT` (optional, default 5432) is the port on this machine; if 5432 is
+   taken, pick another and use it in the connection string below.
 2. Give the API the same values (in one line):
    `dotnet user-secrets set ConnectionStrings:CityBuilder "Host=localhost;Port=5432;Database=citybuilder;Username=citybuilder;Password=<your password>" --project server/src/CityBuilder.Api`
    (with the user and database from your `.env`), and a signing key of your own for the access tokens:
