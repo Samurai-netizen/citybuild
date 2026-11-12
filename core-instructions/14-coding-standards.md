@@ -87,3 +87,6 @@ Handbook site (`website/`, Node.js 20 or newer): `@docusaurus/core`, `@docusauru
 ## Formatting and analysis (enforced)
 `.editorconfig` at the repo root plus `dotnet format --verify-no-changes` in CI. `TreatWarningsAsErrors` in `src/`.
 `AnalysisLevel=latest-recommended` and `EnforceCodeStyleInBuild=true`. A suppression needs a justification comment and a build log line.
+**Banned APIs:** `server/BannedSymbols.txt` (checked by `Microsoft.CodeAnalysis.BannedApiAnalyzers` in every `src/` project) bans `DateTime.Now`,
+`DateTime.UtcNow`, `DateTimeOffset.Now`, `DateTimeOffset.UtcNow` and `Thread.Sleep`: use `TimeProvider`. To ban another symbol, add its
+documentation-comment ID and a message to that file. Banned symbols are not suppressed to get a build through; ask the owner.

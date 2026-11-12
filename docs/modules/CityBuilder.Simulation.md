@@ -285,6 +285,9 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
   version), only sources and package metadata in the folder, no `bin/` or `obj/`, `#nullable enable` on the first line of every
   source, a `.meta` file for every file and folder, no orphaned `.meta` file, unique GUIDs. They find the repository by walking up to
   `global.json` (`RepositoryPaths`).
+- `Architecture/EngineShapeTests` (M0-65): by reflection, no engine type has a public or protected setter or a public mutable field (the
+  `Content.Data` JSON holders, filled by the loader, are the exception) and no field holds a float, double or decimal. The source scans
+  of the engine (no clock, no randomness, no content id strings, no era numbers) are in `CityBuilder.Repository.Tests` → `Architecture`.
 - `SimulationBuildProjectTests`: the csproj keeps `LangVersion 9.0`, warnings as errors, the XML doc file, the analysis settings, no
   warning suppression, the one `Compile` glob, no references, and the guard target.
 
@@ -305,4 +308,4 @@ too, but guards the Unity client's asmdefs and manifest, not the engine (see `do
   depend on `Dictionary` or `HashSet` order (`04` §9).
 - Content error messages are English text for content authors; only `ContentErrorCode` and `Path` are stable.
 
-Last updated: M0-63
+Last updated: M0-65

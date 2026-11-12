@@ -99,10 +99,18 @@ These cells of the dependency table in `03` are enforced by tests that read the 
 | The Unity assemblies keep the references of `09`; no server project; only Net sees Newtonsoft | `CityBuilder.Simulation.Tests` → `ClientAssemblyTests` |
 | Domain and Application reference no ASP.NET Core or EF Core | `DomainDependencyTests`, `ApplicationDependencyTests` |
 | Only the city transaction runner holds `ICityRepository`, and only `SettleCity` and `CommandPipeline` hold the runner | `CityBuilder.Application.Tests` → `ApplicationDependencyTests` |
-| Infrastructure doesn't reference Api | `CityBuilder.IntegrationTests` → `InfrastructureDependencyTests` |
+| Infrastructure doesn't reference Api, and references no ASP.NET Core assembly | `CityBuilder.IntegrationTests` → `InfrastructureDependencyTests` |
+| Api is the only production project whose project file uses the Web SDK or an ASP.NET Core package | `CityBuilder.Repository.Tests` → `Architecture/ProjectFileTests` |
+| No engine type has a public setter or mutable field (the `Content.Data` JSON holders excepted) and no field holds a float, double or decimal | `CityBuilder.Simulation.Tests` → `Architecture/EngineShapeTests` |
+| No engine source uses `float`, `double`, `decimal`, a clock, `Thread` or randomness, holds a content id as a string or compares an era with a number (other than the bounds 0 and 1) | `CityBuilder.Repository.Tests` → `Architecture/EngineSourceTests` (syntax scans of `shared/Simulation/Runtime/`) |
 
-**Not tested here:** that the Unity assemblies compile (`scripts/dev/test-unity.sh` checks it locally; Unity is not in CI),
-Infrastructure's "no ASP.NET endpoint types", and Api referencing only Application and Infrastructure. M0-65 extends the architecture tests.
+Banned APIs are not a test but a build error: every `server/src` project gets `Microsoft.CodeAnalysis.BannedApiAnalyzers` from
+`server/Directory.Build.props`, and `server/BannedSymbols.txt` bans `DateTime.Now`, `DateTime.UtcNow`, `DateTimeOffset.Now`,
+`DateTimeOffset.UtcNow` and `Thread.Sleep` (rule RS0030; use `TimeProvider`). The engine, outside `server/` and with no packages, is covered
+by the source scan above instead. `ProjectFileTests` checks that the analyzer and the list stay wired.
+
+**Not tested here:** that the Unity assemblies compile (`scripts/dev/test-unity.sh` checks it locally; Unity is not in CI) and Api
+referencing only Application and Infrastructure.
 
 ## Request lifecycle
 One command, from tap to snapshot, as implemented (the intended steps: `03` → Request lifecycle). Reads (`GET /city`) take the same
