@@ -12,7 +12,7 @@
 > headers) and the per-player rate limits (M0-34, tested in memory and on PostgreSQL); the client ↔ server boundary review: the inventory of what
 > the client sends and its test, the trace id the server's own, plain HTTP only in development builds (M0-60); the three road commands with
 > the same strict body and their tile lists refused before the lock (CR-0008-T1 part D, tested in memory and on PostgreSQL); `start-trip` with
-> the same strict body, its ids, item and amount refused before the lock and every building id resolved in the caller's city (part E). The
+> the same strict body, its ids, item and amount refused before the lock and every building id resolved in the caller's city (part E); `cancel-delivery` and `set-paused` the same way (CR-0008-T3). The
 > rest of the `Security_` tests are *(planned)*
 > (attack suite M0-74, report M0-78). A task that builds a part updates this line.
 
@@ -48,6 +48,8 @@ value fails it until this table changes.
 | `POST /commands/start-trip` (CR-0008-T1 part E) | `requestId`, `sourceId`, `targetId`, `itemId`, `amount` | Intent: from which to which of the caller's buildings, which good, how much as a rule (a preset, a percentage, an exact number); the quantity, the worker and the walk are the engine's |
 | `POST /commands/set-route` (CR-0008) | `requestId`, `stationId`, `slot`, `stops` (`buildingId`, `actions`: `kind`, `itemId`, `amount`) | Intent: a route; at most 16 stops and 8 actions per stop at the boundary, the content's limits in the engine |
 | `POST /commands/reenergize-couriers` (CR-0008) | `requestId` | Intent only: no stamina value is sent |
+| `POST /commands/cancel-delivery` (CR-0008-T3) | `requestId`, `stationId`, `slot`, `lineId` (or null for all) | Intent: which of the caller's queued loads to drop; ids below 1 refused before the lock; the station and line resolved in the caller's city |
+| `POST /commands/set-paused` (CR-0008-T3) | `requestId`, `buildingId`, `paused` | Intent: pause or resume one of the caller's buildings; an id below 1 or a flag that is no JSON boolean refused before the lock |
 | Header `Authorization` | the bearer token | The player id (its `sub`), nothing else |
 | Header `X-Client-Version` | a short version text | A log scope value only (`ClientVersionHeader`), `invalid` for anything else; it decides nothing |
 | Headers `Content-Type`, `Content-Length`, `Accept` | | JSON only (415), the body limit (400) |

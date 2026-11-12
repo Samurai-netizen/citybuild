@@ -1,6 +1,6 @@
 # CR-0008 — Logistics rework: goods stored in buildings, couriers, routes and roads
 
-- **Status:** In progress
+- **Status:** Done
 - **Type:** Design change
 - **Requested by:** owner · **Date:** 2026-11-02 (revised the same day after the owner's review: D1, D5, D10 and the task grouping)
 - **Milestone / era:** M0 / Era I (part of Era I's base set)
@@ -219,38 +219,38 @@ Ground: 5 s per tile; crossing a building: 25 s per tile. Trip carry limit: 10. 
 | D25 | A paused building's store and the storage gauge (amendment 2) | **Owner:** a paused building's store stays open: couriers and deliveries still take and put there. The building's status shows a store gauge instead of the cycle ring while its store is more than 75 % full (the fullest good, against its effective limit), drawn as a segmented ring, amber, red when a good is at its limit, with that good's icon inside. Display only | Close the store too |
 
 ## Acceptance criteria
-- [ ] Items other than coins exist only in building stores, on couriers and on trip workers; no store goes above its limit except by a
+- [x] Items other than coins exist only in building stores, on couriers and on trip workers; no store goes above its limit except by a
       refund or a returned load (engine property test).
-- [ ] A producer starts a cycle only with the inputs in its own store and room there for the outputs; otherwise its stall reason names
+- [x] A producer starts a cycle only with the inputs in its own store and room there for the outputs; otherwise its stall reason names
       that store's missing input or full output.
-- [ ] Coins are paid and received at once through the purse. No other cost is taken from a store: a construction site, an upgrade and a
+- [x] Coins are paid and received at once through the purse. No other cost is taken from a store: a construction site, an upgrade and a
       research wait until their goods are delivered, then their timers start; research needs the science building, one per city.
-- [ ] Level 1 of the science building and of the courier station costs coins only; the warehouse stores every Era I good up to its limits.
-- [ ] A manual trip needs a free worker; the worker is busy until it arrives and free afterwards; it moves the chosen amount and fills a
+- [x] Level 1 of the science building and of the courier station costs coins only; the warehouse stores every Era I good up to its limits.
+- [x] A manual trip needs a free worker; the worker is busy until it arrives and free afterwards; it moves the chosen amount and fills a
       waiting project first.
-- [ ] A courier station's workers are its couriers; each follows its route of 2 or more stops in a loop, taking and putting the chosen
+- [x] A courier station's workers are its couriers; each follows its route of 2 or more stops in a loop, taking and putting the chosen
       amounts within its carry limit, the source's stock and the target's room.
-- [ ] Era I offers All, Half and Quarter; any percentage after its research; an exact number is refused until an Era II research unlocks
+- [x] Era I offers All, Half and Quarter; any percentage after its research; an exact number is refused until an Era II research unlocks
       it (tested with test content).
-- [ ] Paths use only 4-direction steps through tile centres. A path crosses another building only when every path does, and then as few as
+- [x] Paths use only 4-direction steps through tile centres. A path crosses another building only when every path does, and then as few as
       possible, at 20 % of the base speed; among the paths with the fewest crossings it is the fastest (checked by brute force on small maps).
       Ground costs 5 s per tile and every road level is faster.
-- [ ] Roads can be placed on empty tiles, upgraded and removed, for coins only; a building can't be placed on a road.
-- [ ] Couriers spend stamina only after the absence start that the server derives from the player's last request; a courier without
+- [x] Roads can be placed on empty tiles, upgraded and removed, for coins only; a building can't be placed on a road.
+- [x] Couriers spend stamina only after the absence start that the server derives from the player's last request; a courier without
       stamina walks home and rests; re-energizing refills every courier.
-- [ ] There is no fixed offline production cap; the settlement report gives the couriers' working time and which couriers got tired, when.
-- [ ] The welcome-back report shows the courier summary and the re-energize button; the trip flow, road mode and route editor work on a
+- [x] There is no fixed offline production cap; the settlement report gives the couriers' working time and which couriers got tired, when.
+- [x] The welcome-back report shows the courier summary and the re-energize button; the trip flow, road mode and route editor work on a
       phone screen by the M0-59 rules: one scroll direction at most, the rest scaled to fit (OD-17), phones from the iPhone XR on (OD-18).
-- [ ] Golden scenario #1 (rewritten) and #2 (new) pass in the engine and over HTTP; determinism, split invariance (for one absence start),
+- [x] Golden scenario #1 (rewritten) and #2 (new) pass in the engine and over HTTP; determinism, split invariance (for one absence start),
       timer invariance, conservation and the new performance budget pass.
-- [ ] Every new command refuses values no city could make valid (ids below 1, negative coordinates, too many tiles, stops or actions, a
+- [x] Every new command refuses values no city could make valid (ids below 1, negative coordinates, too many tiles, stops or actions, a
       percentage outside 1–100) as `INVALID_ARGUMENT` before the city is locked (OD-13), with tests.
-- [ ] Every page in the impact table below is updated, `check-docs.sh` and the handbook build pass, and the CR is Done when every task is merged.
-- [ ] Amendment 1 (D14–D22): a delivery goes to a free station courier, or to a free worker only while no courier station is built; it is
+- [x] Every page in the impact table below is updated, `check-docs.sh` and the handbook build pass, and the CR is Done when every task is merged.
+- [x] Amendment 1 (D14–D22): a delivery goes to a free station courier, or to a free worker only while no courier station is built; it is
       split into lines of at most the carry limit, counted when sent; a courier runs its lines from its station and back; each line and
       "Cancel all" can be cancelled; routes need a built Scriptorium; a courier has a route or lines, never both; the building menu is
-      centred and larger, the Build and Research buttons fade while it is open, and everything in it fits (engine, server and client tests).
-- [ ] Amendment 2 (D23–D25): `set-paused` pauses and resumes a producer or a courier station; a paused producer finishes its cycle and
+      centred and larger, the Build and Research buttons are hidden while it is open (the owner's change in the T3 playtest, round 4), and everything in it fits (engine, server and client tests).
+- [x] Amendment 2 (D23–D25): `set-paused` pauses and resumes a producer or a courier station; a paused producer finishes its cycle and
       starts no new one; a paused station's couriers finish their stop, give their loads back and walk home, keeping routes and lines; a
       paused building's store stays open; the menu has the Pause button and the station's wait timer; a store over 75 % full shows the
       segmented gauge instead of the ring (engine, server and client tests).
@@ -325,7 +325,7 @@ T1 adds the tasks to the M0 board. Model: Opus = Opus 5.5, Sonnet = Sonnet 5.5.
 |---|---|---|---|---|
 | CR-0008-T1 | Opus | A–I: spec, engine and server | starting it; two permission prompts (the `22` edit at the start, the golden fixture after part B); merging | Done (PR #86) |
 | CR-0008-T2 | Sonnet | A–F: client and art | starting it; merging | Done (PR #87) |
-| CR-0008-T3 | Opus | close-out with a playtest `[MANUAL]` | about an hour of playing and looking; merging | In progress |
+| CR-0008-T3 | Opus | close-out with a playtest `[MANUAL]` | about an hour of playing and looking; merging | Done (this PR) |
 
 The owner's steps: `/model` Opus → `/start-task CR-0008-T1` → answer the `22` prompt → later, answer the golden fixture prompt → merge →
 `/model` Sonnet → `/start-task CR-0008-T2` → merge → `/model` Opus → `/start-task CR-0008-T3` → play → merge.

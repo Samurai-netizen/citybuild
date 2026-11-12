@@ -10,7 +10,7 @@
 > port, and the settle's steps shared with it, `CitySettler` (M0-26); the commands `PlaceBuildingCommand` (M0-29), `UpgradeBuildingCommand`
 > (M0-31), `AssignWorkersCommand` (M0-32) and `StartResearchCommand` (M0-33); the road commands `PlaceRoadsCommand`, `UpgradeRoadsCommand`
 > and `RemoveRoadsCommand` (CR-0008-T1 part D); `StartTripCommand` (part E), `SetRouteCommand` (part G); presence (`PresencePolicy`,
-> `CityAggregate.LastSeenUnixSec`) and `ReenergizeCouriersCommand` (part H).
+> `CityAggregate.LastSeenUnixSec`) and `ReenergizeCouriersCommand` (part H); `CancelDeliveryCommand` and `SetPausedCommand` (CR-0008-T3).
 
 ## Purpose
 The use cases (`SettleCity`, `DevLogin`, `PlaceBuilding`, `UpgradeBuilding`, `AssignWorkers`, `StartResearch`, the three road commands), the ports they
@@ -38,6 +38,8 @@ need (`ICityRepository`, `IUnitOfWork`, `IContentProvider`, `ICommandReceiptRepo
 | `Cities/SettlementTotals` | The item totals of one settlement the ledger needs (`Produced`, `Refunded`, `Consumed`, `Delivered`; CR-0008-T1 part E) |
 | `Commands/StartTrip/StartTripCommand` | `start-trip` (CR-0008-T1 part E): `RequestId`, `SourceId`, `TargetId`, `ItemId`, `Amount` (the API's text); `Apply` is `TripRules.StartTrip` with the parsed `Amount`; no ledger reasons (the goods stay in the city; a delivery is `SETTLEMENT_DELIVERED` in a later settle); `ValidateShape` refuses ids below 1, the same building twice, an item id that can't be a content id and an amount in none of the three forms (OD-13), so none of them locks the city. Its payload hash is pinned in a test |
 | `Cities/PresencePolicy` | When the player counts as away (`04` §2; CR-0008-T1 part H): `GraceSeconds` (0 or more; the Api makes it from `Simulation:PresenceGraceSeconds` times the clock's scale) and `AbsentFrom(city)`, the city-clock second `clock + max(0, lastSeen + grace − lastSettled)` that the settle passes to the advance. `CityAggregate.LastSeenUnixSec` (null in the constructor means the last settled second) and `MarkSeen` (never back) keep the last request |
+| `Commands/CancelDelivery/CancelDeliveryCommand` | `cancel-delivery` (CR-0008-T3, amendment 1): `RequestId`, `StationId`, `Slot`, `LineId` (null: every line and the route); `Apply` is `CourierRules.CancelDelivery`; no ledger reasons; `ValidateShape` refuses a station, slot or line id below 1 |
+| `Commands/SetPaused/SetPausedCommand` | `set-paused` (CR-0008-T3, amendment 2): `RequestId`, `BuildingId`, `Paused`; `Apply` is `CityRules.SetPaused`; no ledger reasons; `ValidateShape` refuses a building id below 1 |
 | `Commands/ReenergizeCouriers/ReenergizeCouriersCommand` | `reenergize-couriers` (part H): `RequestId` only, so any shape is fine; `Apply` is `CourierRules.ReenergizeCouriers`; no ledger reasons |
 | `Commands/SetRoute/SetRouteCommand`, `CommandRouteStop`, `CommandRouteAction` | `set-route` (CR-0008-T1 part G): `RequestId`, `StationId`, `Slot`, `Stops` (each a `BuildingId` and `Actions` of `Kind`, `ItemId`, `Amount` as the API's text); `Apply` is `CourierRules.SetRoute` with the engine's stops; no ledger reasons; `ValidateShape` refuses a station or slot below 1, a missing list or more than `MaxStops` (16), a missing stop, a building below 1, 0 or more than `MaxStopActions` (8) actions, a missing action, a kind other than `take`/`put`, an item id that can't be a content id and an amount of none of the three forms, naming the stop (decisions 53, 54); the content's own limits are the rule's `INVALID_ROUTE` |
 | `Commands/ICityCommand` | A command: `RequestId`, `CommandType` (stored in the receipt), `CostReason`, `RefundReason`, `ValidateShape()` (null or the `INVALID_ARGUMENT` detail) and `Apply(state, content)`, the mutation through `CityRules`. It never sees the transaction or a repository. Implement it as an immutable record whose properties are its data |
@@ -124,8 +126,8 @@ back in time, so a clock behind is a last settled second ahead of now. The conte
 ## Known limitations
 - No log lines here: Application has no logging package (`14`). Its results carry what the Api logs (the settlement, `ClockBehindSeconds`).
 - The four commands of M0 (PlaceBuilding, UpgradeBuilding, AssignWorkers, StartResearch), the three road commands, `start-trip` and
-  `set-route` and `reenergize-couriers` of CR-0008. The pipeline's own tests keep their test commands.
+  `set-route`, `reenergize-couriers`, `cancel-delivery` and `set-paused` of CR-0008 (the last two are tested over HTTP only, in the Api's contract and database tests). The pipeline's own tests keep their test commands.
 - `DevLogin` has no tests with fakes: what it does is all persistence (one transaction, a unique index, a race), so it is tested on
   PostgreSQL (`CityBuilder.IntegrationTests`, `Auth/DevLoginDatabaseTests`).
 
-Last updated: CR-0008-T1
+Last updated: CR-0008-T3
