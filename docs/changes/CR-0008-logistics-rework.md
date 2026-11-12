@@ -67,6 +67,15 @@ Then: walk "Shuttle, then home"; amount "When it's sent"; worker fallback "Yes, 
 > "pick at A, put at B", player should be able to cancel each trip individualy, so, for example, he can cancel 1 trip and have 30 items
 > delivered insread of 40. Also it should have a separate "Cancel all" option for cancelling ALL trips, even recurring ones
 
+**Amendment 2 (2026-11-12, the CR-0008-T3 playtest round 5, in chat; D23–D25):**
+> Now add the pause button to all buildings. That way I can, for example, upgrade building without canceling all courier routes. Also
+> make it that the progress bar shows the fullness of internal storages instead of production cycle, when the storage is more than 75%
+> full. New indicator should look different from the current one
+
+The answers to the follow-up questions: scope "Amend CR-0008, in T3"; a paused producer "Finish cycle, then stop"; a paused station
+"Finish stop, go home (with a timer in a couriers building shownig how much left to wait until everything stops)"; a paused building's
+store "Yes, store stays open".
+
 ## Problem / goal
 Today every item sits in one city-wide stock, so the map is only a place to put buildings: distance, layout and roads mean nothing (`22`).
 The owner wants moving goods to be part of the game from the first session. Buildings keep what they make; goods travel on foot, along
@@ -205,6 +214,9 @@ Ground: 5 s per tile; crossing a building: 25 s per tile. Trip carry limit: 10. 
 | D20 | Stamina on deliveries | A courier on deliveries spends stamina like one on a route (only while the player is away); a tired one walks home and rests, its lines wait, re-energizing lets it go on. A worker's delivery never tires (as trips before) | Deliveries never tire |
 | D21 | A worker's delivery (no courier station yet) | **Owner:** it shuttles too: one delivery per worker, lines of at most `tripCarryLimit`; the worker takes the first line at the source at once, walks to the target, back to the source for the next line, and is free after the last put | One load of at most the trip limit (the first version) |
 | D22 | The building menu (amendment 1, the owner's playtest points 4 and 5) | **Owner:** while a building's menu is open, the Build and Research buttons fade and can't be touched; the menu is larger and centred on the screen; every part of it fits and is readable and touchable, also the courier station's queue and routes; the map stays usable wherever a flow needs it (a tap outside the menu closes it; the route editor and the trip flow keep the map tappable) | — |
+| D23 | Pausing a building (amendment 2) | **Owner:** a pause button on every building that works (a producer or a courier station; houses, warehouses, the Scriptorium and the science building do no work to pause). A new command `SetPaused(building, paused)`, allowed in every phase but construction; the flag stays through an upgrade. A paused producer finishes its running cycle (output as usual), then starts no new one; its workers stay assigned. Its stall reason is `Paused` | Freeze the cycle; end it with a refund |
+| D24 | A paused courier station (amendment 2) | **Owner:** each courier finishes the stop it is walking to (a route stop's actions; a line's take or put, so a line whose put was done ends), then gives back what it carries (a returned load) and walks home; at home it waits. A courier at its station doesn't leave; routes and lines stay. Unpausing lets them leave again from the first stop (or the first line's source). The station's menu shows how long until the last courier is home | Freeze the couriers where they are; drop the stop at once |
+| D25 | A paused building's store and the storage gauge (amendment 2) | **Owner:** a paused building's store stays open: couriers and deliveries still take and put there. The building's status shows a store gauge instead of the cycle ring while its store is more than 75 % full (the fullest good, against its effective limit), drawn as a segmented ring, amber, red when a good is at its limit, with that good's icon inside. Display only | Close the store too |
 
 ## Acceptance criteria
 - [ ] Items other than coins exist only in building stores, on couriers and on trip workers; no store goes above its limit except by a
@@ -238,6 +250,10 @@ Ground: 5 s per tile; crossing a building: 25 s per tile. Trip carry limit: 10. 
       split into lines of at most the carry limit, counted when sent; a courier runs its lines from its station and back; each line and
       "Cancel all" can be cancelled; routes need a built Scriptorium; a courier has a route or lines, never both; the building menu is
       centred and larger, the Build and Research buttons fade while it is open, and everything in it fits (engine, server and client tests).
+- [ ] Amendment 2 (D23–D25): `set-paused` pauses and resumes a producer or a courier station; a paused producer finishes its cycle and
+      starts no new one; a paused station's couriers finish their stop, give their loads back and walk home, keeping routes and lines; a
+      paused building's store stays open; the menu has the Pause button and the station's wait timer; a store over 75 % full shows the
+      segmented gauge instead of the ring (engine, server and client tests).
 
 ## Out of scope
 - Era II content (it brings the research for exact amounts), carts, wagons and trucks, stone and paved roads.
@@ -516,6 +532,9 @@ Amendment 1 (2026-11-12, the owner's choice "Amend CR-0008, do it in T3") adds t
 content (`23`), the server (`start-trip` becomes a delivery, a new `cancel-delivery` command, the route gate in `set-route`, `05`, `06`
 with a migration) and the client (the trip bar, the courier station's delivery queue with Cancel and Cancel all, the route editor's
 reasons, the building menu layout), each rule with its tests, before the playtest goes on. The build log of T3 holds the plan.
+Amendment 2 (2026-11-12, the owner's choice "Amend CR-0008, in T3") adds D23–D25: the engine (`04` §4, §6, §8, §19: the flag, the
+`Paused` stall reason, `SetPaused`, the paused station's couriers), the server (`set-paused`, `paused` in the snapshot, `05`, `06` with a
+migration) and the client (the Pause button in the building menu, the station's wait timer, the store gauge), each rule with its tests.
 
 ## Owner approval
 - Approved on: 2026-11-02. The owner's words, in chat: "I approve the CR, go ahead with /start-task CR-0008-T1". The approval covers the
