@@ -52,16 +52,15 @@ function Add-Row([string]$Name, [string]$Result, [int]$Seconds, [string]$Note) {
     $script:rows += [pscustomobject]@{ Step = $Name; Result = $Result; Sec = $Seconds; Note = $Note }
 }
 
-# Runs one step: the script block returns the exit code of its last command (or $true / $false). Its output goes to the terminal.
+# Runs one step: the exit code of the last native command in the script block is the step's result. Its output goes to the terminal.
 function Invoke-Step([string]$Name, [string]$Title, [scriptblock]$Action) {
     if (-not (Test-Selected $Name)) { return }
     Write-Host ''
     Write-Host "== [$Name] $Title"
     $watch = [Diagnostics.Stopwatch]::StartNew()
     $global:LASTEXITCODE = 0
-    $outcome = & $Action
+    & $Action | Out-Host  # Out-Host: the output is shown as it comes and never captured
     $code = $global:LASTEXITCODE
-    if ($outcome -is [bool] -and -not $outcome) { $code = 1 }
     $seconds = [int]$watch.Elapsed.TotalSeconds
     if ($code -eq 0) { Add-Row $Name 'PASS' $seconds '' } else { Add-Row $Name 'FAIL' $seconds "exit code $code" }
 }
