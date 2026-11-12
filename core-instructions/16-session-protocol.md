@@ -75,7 +75,7 @@ This protocol is tool-agnostic. Claude Code has skills for each part (`/resume`,
    task touching the engine, persistence or security (exclude `.meta` and binary assets from diff reads). Fix blocking findings and log them. Don't start an agent for this on your own: it needs
    the owner's approval of a proposal (OD-9, `15`). The owner can also start a fresh session as the independent reviewer.
 5. Finalize:
-   - build log status `Done`, plus verification results and follow-ups;
+   - build log status `Done`, plus verification results and follow-ups, and the entry's line in `docs/build-log/README.md` set to `Done`;
    - resume point `IDLE`, with the last completed task and the next task;
    - plan board row `In review`;
    - one line in `CHANGELOG.md` under Unreleased;

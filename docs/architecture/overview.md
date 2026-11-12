@@ -1,39 +1,42 @@
 # Architecture Overview (as built)
 
-> This page describes the system **as it exists** after M0-23: the server solution that loads the game content at startup,
-> settles a city in its locked transaction (`SettleCity`) and stores it with EF Core in PostgreSQL, the shared engine (content model, city state, mutations, settlement and display helpers), and the
-> Unity client skeleton with its tests. Parts that are not built yet are marked *(planned, M0-NN)*. M0-63 completes the page.
+> This page describes the system **as it exists** at the end of M0-63: the Era I vertical slice with the logistics rework (CR-0008).
 > The intended architecture is `core-instructions/03-architecture.md`; the decisions behind it are in [ADRs](../adr/README.md).
+> Each project's own page (`docs/modules/`) names its key types. The references and packages of every project are on the generated
+> [project map](../reference/generated/project-map.md), the endpoints on [endpoints](../reference/generated/endpoints.md) and the tables
+> on [DB schema](../reference/generated/db-schema.md); this page doesn't repeat them.
 
 ## System
-Today the API host loads `server/content/mvp-content.json` at startup and refuses to start if it is invalid, then answers `GET /health` (and
-serves its OpenAPI document and the dev login, which creates a player and their starter city and returns an access token, in Development;
-every other `/api/v1` endpoint will require that token). The Unity client starts the `Bootstrap` scene, logs in as a dev player, loads and validates the content, fetches the city and shows "Connected" with the era and the coins (or why it could not). The engine holds its
-integer helpers, the content ids, the validated content model, the city state with its four mutations (`CityRules`), the settlement
-(`Simulator.Advance`) and the display helpers the client's screens will use (`Display/`, M0-17); the server's `SettleCity` settles a city (settle on access, [ADR-0005](../adr/ADR-0005-settle-on-access.md)): in the city's transaction
-it advances it to now, runs the closing zero-length advance and stores it with its ledger rows, only if anything changed (M0-23). The database exists: PostgreSQL 18.6 in Docker, its seven tables created by the migration
-`InitialCreate`, which the server applies at startup in Development (M0-19). Repositories map a city to its rows and back and stage the
-writes for one unit of work (M0-20); every city write runs in one transaction that row-locks the player's own city (`ICityTransactionRunner`,
-M0-22; [ADR-0009](../adr/ADR-0009-row-lock-own-city.md), with concurrent settles tested in M0-24). The game endpoints so far are `GET /api/v1/content` and `GET /api/v1/city` (M0-28) and the commands `POST /api/v1/commands/place-building` (M0-29), `upgrade-building` (M0-31), `assign-workers` (M0-32) and `start-research` (M0-33), the road commands `place-roads`, `upgrade-roads`, `remove-roads` (CR-0008-T1 part D), `start-trip` (part E) and `set-route` (part G).
-Dashed parts in the diagram are planned.
+- **Server** (`server/CityBuilder.slnx`, .NET 10): an ASP.NET Core minimal API. At startup it loads and validates
+  `server/content/mvp-content.json` (it refuses to start on bad content) and, in Development, applies the migrations. Every `/api/v1`
+  endpoint except the dev login needs an access token. There are two reads (`GET /content`, `GET /city`) and twelve commands under
+  `/api/v1/commands/` (`05`). Each request that touches a city settles it to now inside the city's locked transaction (settle on access,
+  [ADR-0005](../adr/ADR-0005-settle-on-access.md); one row lock on the player's own city, [ADR-0009](../adr/ADR-0009-row-lock-own-city.md)).
+- **Database:** PostgreSQL 18.6 in Docker (`docker compose up -d postgres`), fifteen tables from eight EF Core migrations (`06`).
+- **Engine** (`shared/Simulation/`): the deterministic, integer-only rules: content model, city state, mutations, settlement
+  (`Simulator.Advance`) and display helpers. The server and the Unity client compile the very same C# files
+  (decision 007, [ADR-0007](../adr/ADR-0007-shared-engine.md)).
+- **Client** (`client/CityBuilder/`, Unity 6000.3.25f1, URP): logs in as a dev player, loads the content through the engine's validating
+  factory, fetches the city, and from then on shows a local prediction made with the engine, snapping to every server snapshot (`09`).
+- **Tools:** `tools/DocTools` writes `docs/reference/generated/` from the code and content ([module](../modules/DocTools.md)).
 
 ```mermaid
 flowchart LR
-  subgraph clientside["client/CityBuilder - Unity 6000.3.25f1"]
-    PRES["Client.Presentation<br/>GameBootstrap, GameRoot"]
-    NET["Client.Net<br/>ApiClient, DTOs, ApiError"]
-    CORE["Client.Core<br/>AppInfo"]
+  subgraph clientside["client/CityBuilder - Unity"]
+    PRES["Client.Presentation<br/>GameRoot, screens, city view"]
+    NET["Client.Net<br/>ApiClient, CommandSender,<br/>ConnectionMonitor"]
+    CORE["Client.Core<br/>ClientCityStore, DisplayCity"]
   end
   subgraph sharedside["shared"]
-    SIM["CityBuilder.Simulation<br/>IntegerMath, content ids,<br/>GameContentFactory, GameContent,<br/>CityState, CityQueries, CityRules,<br/>Simulator, SettlementReport,<br/>SettlementWindow, Display helpers"]
+    SIM["CityBuilder.Simulation<br/>content, state, rules,<br/>settlement, display"]
   end
   subgraph serverside["server - CityBuilder.slnx"]
-    API["CityBuilder.Api<br/>health, OpenAPI and dev login in Development,<br/>access tokens, content and migrations at startup"]
-    INF["CityBuilder.Infrastructure<br/>ContentFileLoader, ContentProvider,<br/>CityBuilderDbContext, migrations,<br/>CityMapping, repositories, UnitOfWork"]
-    APP["CityBuilder.Application<br/>IContentProvider, ICityRepository,<br/>IPlayerRepository, IUnitOfWork,<br/>CityAggregate, Settlement, SettleCity,<br/>CommandPipeline, ICityCommand"]
+    API["CityBuilder.Api<br/>endpoints, auth, errors,<br/>startup checks"]
+    APP["CityBuilder.Application<br/>CommandPipeline, SettleCity,<br/>commands, ports"]
+    INF["CityBuilder.Infrastructure<br/>EF Core, repositories,<br/>content loader"]
     DOM["CityBuilder.Domain<br/>Player, LedgerEntry,<br/>CommandReceipt"]
   end
-  DB[("PostgreSQL 18.6<br/>docker compose")]
+  DB[("PostgreSQL 18.6")]
   FILE[/"server/content/mvp-content.json"/]
   PRES --> CORE
   PRES --> NET
@@ -46,81 +49,103 @@ flowchart LR
   APP --> DOM
   APP --> SIM
   DOM --> SIM
-  NET -.->|"HTTP JSON; the game calls it at start (M0-38)"| API
-  INF -->|"EF Core: migrations"| DB
+  NET -.->|"HTTP JSON"| API
+  INF -->|"EF Core"| DB
   INF -->|"reads at startup"| FILE
-  classDef planned stroke-dasharray: 4 4
 ```
-A solid arrow between projects means "references" (a project or assembly reference); the arrow to the content file means "reads". The engine has no references; Unity and the server compile the very
-same C# files of it (decision 007, [ADR-0007](../adr/ADR-0007-shared-engine.md)).
+A solid arrow means "references" (a project or assembly reference); the dashed one is the network. The engine references nothing but
+the base class library.
 
 ## Projects and assemblies
-Solution: `server/CityBuilder.slnx` (it also builds the shared engine project and the tools under `tools/`, whose `Directory.*.props` import the server's). Build settings for the server projects:
-`server/Directory.Build.props`; package versions: `server/Directory.Packages.props`; SDK: `global.json`. The engine project sits
-outside `server/`, so it repeats the settings it needs (decision 021). Which projects treat warnings as errors: decision 020 (checked by
-a probe build in M0-06, see its build log entry). Doc comments are required on every declaration of every C# file, and missing or broken
-ones fail the build of every server project and the engine (decision 037, `core-instructions/14-coding-standards.md` → Documentation in code).
+Build settings: `server/Directory.Build.props`, package versions: `server/Directory.Packages.props`, SDK: `global.json`. The solution
+also builds the engine project and `tools/`. Doc comments are required on every C# declaration (decision 037, `14` → Documentation in code).
 
-| Project | Path | References | Packages | Holds today | Doc |
-|---|---|---|---|---|---|
-| `CityBuilder.Api` | `server/src/` | Application, Infrastructure | `Microsoft.AspNetCore.Authentication.JwtBearer`, `Microsoft.AspNetCore.OpenApi`; `Microsoft.EntityFrameworkCore.Design` (design time only) | `Program.cs`: JSON console logs (each feature's `<Feature>Log`, the request's trace id in every line; `docs/api/logs-and-correlation.md`), ProblemDetails, health check, the server clock (`Time/`: `TimeProvider.System`, or in Development a fast clock with `Simulation:DevTimeScale`), OpenAPI in Development, access tokens (`Auth/`: `AuthOptions`, `AccessTokens`, `HttpCurrentPlayer`; the `/api/v1` group requires a token) and the dev login in Development (`Endpoints/AuthEndpoints`, `Contracts/`), the content loaded before any request (`Content:FilePath`, `ContentOptions`, `ContentLog`), the database settings (`ConnectionStrings:CityBuilder`, `DatabaseOptions`) and the startup migration in Development (`DatabaseLog`); the build copies `server/content/*.json` to `content/` | [module](../modules/CityBuilder.Api.md) |
-| `CityBuilder.Application` | `server/src/` | Domain, Simulation | — | `IContentProvider`; `Cities/`: `CityAggregate` (with research completion clocks and the player's last-seen second), `PresencePolicy` (when the player counts as away, CR-0008-T1 part H), `ICityRepository`, `ICityTransactionRunner` (M0-22), `SettleCity` and its `Settlement` (M0-23); `Players/IPlayerRepository`, `Persistence/IUnitOfWork` (M0-20); `Players/ICurrentPlayer`, `Players/DevLogin`, `Cities/INewCityRepository`, `Persistence/DuplicateKeyException` (M0-25); `Commands/`: `ICityCommand`, `CommandPayload`, `CommandPipeline`, `CommandResult`, `ICommandReceiptRepository`, and `Cities/CitySettler` (M0-26); `Commands/PlaceBuilding/PlaceBuildingCommand` (M0-29), `Commands/UpgradeBuilding/UpgradeBuildingCommand` (M0-31), `Commands/AssignWorkers/AssignWorkersCommand` (M0-32), `Commands/StartResearch/StartResearchCommand` (M0-33), `Commands/Roads/` (`PlaceRoadsCommand`, `UpgradeRoadsCommand`, `RemoveRoadsCommand`, `CommandTile`, `RoadTileList`; CR-0008-T1 part D), `Commands/StartTrip/StartTripCommand` and `Cities/SettlementTotals` (part E), `Commands/SetRoute/SetRouteCommand` (part G) | [module](../modules/CityBuilder.Application.md) |
-| `CityBuilder.Domain` | `server/src/` | Simulation | — | `Players/Player`, `Ledger/LedgerEntry`, `Ledger/LedgerReason`, `Commands/CommandReceipt` (M0-20) | [module](../modules/CityBuilder.Domain.md) |
-| `CityBuilder.Infrastructure` | `server/src/` | Application, Domain | `Npgsql.EntityFrameworkCore.PostgreSQL`, `Microsoft.EntityFrameworkCore.Relational` (EF Core 10) | the content loader: `ContentFileLoader`, `ContentLoadException`, `ContentProvider`; persistence (`Persistence/`): `CityBuilderDbContext`, row classes and configurations of the fourteen tables (`city_roads` from CR-0008-T1 part D; `city_stores`, `city_project_needs`, `city_research_needs` and `city_trips` in place of `city_inventory` from part E; `city_couriers`, `city_courier_loads` and `city_route_actions` from part G), `AddCityBuilderPersistence`, `DatabaseMigrator`, the migrations `InitialCreate`, `ReceiptResponseAsJson` (M0-26), `AddCityRoads` (CR-0008-T1 part D) and `LogisticsStoresTripsAndReset` (part E, D10), `AddCouriersAndRoutes` (part G); `Mapping/` (`CityMapping`, `LedgerMapping`) and `Repositories/` (`CityRepository`, `PlayerRepository`, `UnitOfWork`, M0-20; `CommandReceiptRepository`, M0-26) | [module](../modules/CityBuilder.Infrastructure.md) |
-| `CityBuilder.Simulation` | `shared/Simulation.Build/` (.NET) and `shared/Simulation/` (Unity package) | the base class library only | — | `IntegerMath` (`CeilDiv`, `ApplyPermilleReduction`, `FloorDiv`); `ItemId`, `BuildingTypeId`, `ResearchId`, `EraId`; the content model (`Content/`: `*Data` → `GameContentFactory` → `GameContent`, `04` §14); the city state (`State/`: `CityState`, `Building`, `CityFactory`, `CityQueries`, `StallReason`), the mutations (`Rules/`: `CityRules`, `MutationResult`, `04` §8) and the settlement (`Settlement/`: `Simulator.Advance`, `SettlementReport`, `04` §7; `SettlementWindow`, `04` §1); the display helpers (`Display/`: `ProductionDisplay`, `ProgressDisplay`, `04` §15) | [module](../modules/CityBuilder.Simulation.md) |
-| `CityBuilder.Domain.Tests` | `server/tests/` | Domain | xUnit v3 (`xunit.v3.mtp-off`, runner, test SDK; decision 019) | 21 tests: the dependency rule and the rules of the Domain types | the Domain module doc → Tests |
-| `CityBuilder.Application.Tests` | `server/tests/` | Application | the same, plus `Microsoft.Extensions.TimeProvider.Testing` (`FakeTimeProvider`) | 155 tests: the dependency rule, the one-city-transaction rule, the one-insert rule and the pipeline-only rule, `CityAggregate`, the city transaction runner, `SettleCity` with a fake clock and repository (window, cap, ledger rows, when it saves), the command pipeline on fakes (canonical payload and pinned hash, step order, replay, conflicts, another player, the receipt race, rejections, settle before mutation, ledger order), and `PlaceBuildingCommand`, `UpgradeBuildingCommand`, `AssignWorkersCommand` and `StartResearchCommand` (shape, pinned payload, ledger reasons, the rule, one pipeline run) | the Application module doc → Tests |
-| `CityBuilder.Simulation.Tests` | `server/tests/` | Simulation | the same | 872 tests: engine helpers, content ids, content model and validation, city state, queries, stall reasons, mutations, `Simulator.Advance`, the settlement window, a rule test per engine rule, golden scenario #1, the property tests, the performance budget, the display helpers, and the architecture tests below | the Simulation module doc → Tests |
-| `CityBuilder.IntegrationTests` | `server/tests/` | Api | the same, plus `Microsoft.AspNetCore.Mvc.Testing`, `Testcontainers.PostgreSql` and `Microsoft.Extensions.TimeProvider.Testing` | 553 in-memory tests (no Docker): the API host, the error catalogue, exception handler and rate limits (M0-34), the log lines and the dev time scale (M0-35), the attack review's `Security/` tests (body limit, duplicate properties, bad request ids, malformed JSON, type and research ids that can't be content ids, negative coordinates, negative worker counts and building ids below 1 refused before the lock, coordinates past the grid, a player named outside the token, content types, the dev login's body), the raw-JSON contract tests of `/content` and `/city` (names, types, nulls, sorting, an exact text on frozen content), of place-building, upgrade-building, assign-workers and start-research (the snapshot, replay, conflict, rule refusals, refused fields and shapes) and of the 401 answer, the command error mapping against `05`, the content loader, the content, database and authentication startup, the access token checks over HTTP, the dev login's refusals, the EF model against `06` and its migrations, the city mapping and the repositories' staged changes, a receipt's mapping; 167 in the `Integration` category on a `postgres:18.6` container (Docker; `docs/testing/README.md`): the fixture, the migrations on an empty database and over a stored receipt, the receipt lookup, the repositories through the server, the city transaction (rollback, version check, lock, lock timeout, one city, nothing staged after a rollback), the settle end to end (clock, research completion, the cap, ledger sums, no change at one instant, a host restart), concurrent settles (20 on one city end as one settle; other cities never wait; ADR-0009), values beyond 32 bits, the constraints, a unique violation as a duplicate key, the dev login (first login rows, the same name, the race), the command pipeline's idempotency with test commands (a retry writes nothing, also after a host restart; conflicts; another player's request id; ten identical requests apply once; the receipt race; a rejection commits only the settlement), `GET /city` over HTTP checked against the stored city and ledger, place-building over HTTP (success, every rule code, replay, conflict, concurrent retries, another player, settle before the mutation, auto-staffing) and upgrade-building over HTTP (from Idle and Producing with the refund above the cap, workers kept through the upgrade, a house's workers on completion, every rule code, another player's building, replay, conflict, concurrent requests) and assign-workers over HTTP (production starting in the same response, progress kept on reassignment, freeze and resume, every rule code, while upgrading, another player's building, the same count twice, two assignments at once) and start-research over HTTP (the cost and the research block, completion in a later settle applying each effect type, every rule code, replay, conflict, two starts at once) checked against the stored rows, the worker-moving property over HTTP (5 seeds: logs never more than the worker-seconds delivered), and the attack review's attacks on PostgreSQL (forbidden fields, wrong forms, a megabyte, coordinates, a replay storm, no token, the dev login) with nothing stored | the Api module doc → Tests |
-| `CityBuilder.Repository.Tests` | `server/tests/` | — (it reads the source files) | the same, plus `Microsoft.CodeAnalysis.CSharp` (syntax only, decision 037) | 22 tests: the documentation check over every C# file of the repository, and the tests of its rules and of its file search | `core-instructions/14-coding-standards.md` → Documentation in code |
-| `DocTools` | `tools/` | Api, Infrastructure, Simulation | — | the reference generator: `CommandLine` (`generate`, `check`), `ReferenceDocs`, `MarkdownPage`, `GeneratedDocsCheck`, `XmlDocs`, one `Pages/*Page` per page of `docs/reference/generated/` (M0-61) | [module](../modules/DocTools.md) |
-| `DocTools.Tests` | `tools/` | DocTools | xUnit v3 (as above) | 38 tests: deterministic output, the notice, the check finding a changed, missing and extra page, every page's coverage of its source, the committed pages current | the DocTools module doc → Tests |
+| Project | Path | Role | Doc |
+|---|---|---|---|
+| `CityBuilder.Api` | `server/src/CityBuilder.Api/` | composition root and HTTP: endpoints, DTOs (`Contracts/`), access tokens, the error catalogue and ProblemDetails, rate limits, logs, the server clock, startup checks | [module](../modules/CityBuilder.Api.md) |
+| `CityBuilder.Application` | `server/src/CityBuilder.Application/` | use cases: `CommandPipeline` and one `ICityCommand` per command, `SettleCity`, `CityAggregate`, the city transaction runner and the ports Infrastructure implements | [module](../modules/CityBuilder.Application.md) |
+| `CityBuilder.Domain` | `server/src/CityBuilder.Domain/` | server-only entities: players, ledger entries, command receipts | [module](../modules/CityBuilder.Domain.md) |
+| `CityBuilder.Infrastructure` | `server/src/CityBuilder.Infrastructure/` | persistence (`CityBuilderDbContext`, row classes, migrations, mapping, repositories, unit of work) and the content loader | [module](../modules/CityBuilder.Infrastructure.md) |
+| `CityBuilder.Simulation` | `shared/Simulation/` (Unity package) and `shared/Simulation.Build/` (.NET project) | the deterministic engine | [module](../modules/CityBuilder.Simulation.md) |
+| `DocTools` | `tools/DocTools/` | the generated reference pages (`generate`, `check`) | [module](../modules/DocTools.md) |
+| Test projects | `server/tests/`, `tools/DocTools.Tests/` | one per layer, plus `CityBuilder.IntegrationTests` (in-memory host and PostgreSQL in Docker) and `CityBuilder.Repository.Tests` (the documentation check) | each module doc → Tests; `docs/testing/README.md` |
 
 ### Unity client
-The Unity project is `client/CityBuilder/` (Unity 6000.3.25f1, URP; `client/README.md`). It consumes the engine as the local package
-`com.citybuilder.simulation` (`"file:../../../shared/Simulation"` in `Packages/manifest.json`), so the client runs the very same C# files as the
-server, for display only.
+The client uses the engine as the local package `com.citybuilder.simulation` (`Packages/manifest.json`). Assemblies live under
+`client/CityBuilder/Assets/_Project/`:
 
-| Assembly | Path under `client/CityBuilder/Assets/_Project/` | References | Holds today | Doc |
-|---|---|---|---|---|
-| `CityBuilder.Client.Core` | `Core/` | Simulation | `AppInfo` (the build version) | [module](../modules/CityBuilder.Client.Core.md) |
-| `CityBuilder.Client.Net` | `Net/` | Core, Simulation, Newtonsoft (precompiled DLL) | `ApiClient`, `IApiTransport` and `UnityWebRequestTransport`, the DTOs of `05`, `ApiError`, `ApiResult<T>`, `ApiResponseParser`, `ApiClientSettings` (M0-37); `AuthService`, the token stores, `ContentService` and `ContentMapper` (M0-38); `CommandSender` with `CommandIntent`, `CommandPolicy`, `PendingCommand` and `CommandOutcome` (M0-40); `ConnectionMonitor` (M0-41) | [module](../modules/CityBuilder.Client.Net.md) |
-| `CityBuilder.Client.Presentation` | `Presentation/` | Core, Net, Simulation, Input System | `GameBootstrap`, `GameRoot`, `StartupFlow`, `ConnectionStatusModel`, `ConnectionStatusView`, `HudView`, `HudModel`; UXML and USS in `Resources/UI/` | [module](../modules/CityBuilder.Client.Presentation.md) |
-| `CityBuilder.Client.Editor` | `Editor/` | none; Editor only | `ArtImportPostprocessor`: the import settings of the art under `Art/` and its one shared material (CR-0005-T2) | [module](../modules/CityBuilder.Client.Editor.md) |
-| `CityBuilder.Client.Tests.EditMode` / `.PlayMode` | `Tests/EditMode`, `Tests/PlayMode` | the four runtime assemblies, the test runner and NUnit | `AppInfoTests`, the `Net/` tests of the API client (M0-37), `SimulationInUnityTests`, `ContentInUnityTests`, `CityRulesInUnityTests`, `SimulatorInUnityTests` (EditMode), `BootstrapSceneTests` (PlayMode); run by `scripts/dev/test-unity.sh` (M0-05) | the Core and Presentation module docs → Tests |
+| Assembly | Folder | Role | Doc |
+|---|---|---|---|
+| `CityBuilder.Client.Core` | `Core/` | client state without Unity UI: the snapshot store, the display prediction and clock, poll scheduling, logging | [module](../modules/CityBuilder.Client.Core.md) |
+| `CityBuilder.Client.Net` | `Net/` | the HTTP client, DTOs, auth and token stores, content sync, `CommandSender`, `ConnectionMonitor` | [module](../modules/CityBuilder.Client.Net.md) |
+| `CityBuilder.Client.Presentation` | `Presentation/` | `GameBootstrap` and `GameRoot`, the city world and view, and one folder per screen (`Build`, `Hud`, `Inspector`, `Research`, `Roads`, `Routes`, `Trips`, `WelcomeBack`, `Feedback`, `Connection`, `Ui`); UXML and USS in `Resources/UI/` | [module](../modules/CityBuilder.Client.Presentation.md) |
+| `CityBuilder.Client.Editor` | `Editor/` | Editor only: the art import settings | [module](../modules/CityBuilder.Client.Editor.md) |
+| `CityBuilder.Client.Tests.EditMode` / `.PlayMode` | `Tests/` | view-model, store and network tests; the Bootstrap scene test; run by `scripts/dev/test-unity.sh` | the client module docs → Tests |
 
-The runtime scene is `Bootstrap`: the owner made it by hand ([MANUAL], `client/README.md`), it stays empty and is scene 0 of the build list
-(the template's `SampleScene` is unticked and would get no `GameRoot`). When the scene loads, `GameBootstrap` creates the
-`GameRoot` composition root. `GameRoot` creates `ConnectionStatusView`, a UI Toolkit status label (UXML and USS from `Assets/_Project/Resources/UI/`), and runs `StartupFlow`:
-restore or get a dev token, `GET /content` through the engine's validating factory, `GET /city`, then "Connected - <era> - Coins: <n>". Content the factory
-refuses ends on the fatal error screen. The snapshot goes into `ClientCityStore`, and `DisplayCity` predicts from it between snapshots with the shared engine (M0-39); `CityView` draws the buildings of the prediction (M0-44); the build menu reads it (M0-45: one card per building type, with its lock and hints), the top HUD reads it with the connection state (M0-49: item chips with stock, cap and net rate, workers, builders, the research ring, the era badge), and the other screens will *(planned)*. `GameRoot` also creates `CityWorld`: the camera, a light and, once the content is known, the 8 by 8 ground with pan, zoom and tile selection (M0-43), and `CityView` draws one placeholder building per building of the displayed city (M0-44). `GameRoot` also builds the `CommandSender`: one request id per intent, retried only for network errors, timeouts, 5xx and `CONCURRENCY_CONFLICT`, worker targets coalesced (M0-40); the placement flow (M0-46: `PlacementFlow`, `PlacementBar`, `PlacementGhosts`) is the first view to send one, `place-building`, with a translucent ghost on the tile while it is open and the building coming from the new snapshot. Every command result is shown as a toast (M0-47: `CommandSender.Completed` → `CommandFeedback` → `ToastQueue` → `ToastHost`), with the sentence `FeedbackMessages` has for its error code; the player never sees a code, the server's text or a stack. It also builds the `ConnectionMonitor`, which polls `GET /city` every 120 s in the foreground, on resume and when the network returns, and holds the connection state the screen shows (M0-41).
+The runtime scene is `Bootstrap` (scene 0, made by hand, `client/README.md`). `GameBootstrap` creates the `GameRoot` composition root,
+which runs the startup flow (token → content → city) and builds the world, the screens, the `CommandSender` and the `ConnectionMonitor`.
 
 ## Dependency rules and where they are tested
-These cells of the dependency table in `core-instructions/03-architecture.md` are enforced by tests that read the references of the
-compiled assemblies (plain reflection, no extra packages), each next to the layer it guards:
+These cells of the dependency table in `03` are enforced by tests that read the compiled assemblies, the asmdefs or the project files:
 
 | Rule | Test |
 |---|---|
-| Simulation references exactly `netstandard` (the base class library) and is built for `netstandard2.1` | `CityBuilder.Simulation.Tests` → `SimulationDependencyTests` |
-| Simulation's Unity side stays engine-free: asmdef without engine, other or platform references, `package.json`, only sources and package metadata in the package folder, no `bin/` or `obj/`, `#nullable enable` in every source | `CityBuilder.Simulation.Tests` → `SimulationPackageTests` |
-| The engine's build project keeps C# 9, warnings as errors, the XML doc file and no references (the build itself checks the evaluated values: `GuardUnityCompatibleBuild`) | `CityBuilder.Simulation.Tests` → `SimulationBuildProjectTests` |
-| The Unity client keeps the references of `09`: Core → Simulation, Net → Core, Presentation → Core, Net and the Input System; no server project or test assembly is referenced; only Net sees a precompiled DLL (Newtonsoft); the test assemblies are set up for the test runner; the manifest points at the shared package and names Newtonsoft and the Input System | `CityBuilder.Simulation.Tests` → `ClientAssemblyTests` (reads the asmdefs and `manifest.json`) |
-| Domain references no ASP.NET Core or EF Core | `CityBuilder.Domain.Tests` → `DomainDependencyTests` |
-| Application references no ASP.NET Core or EF Core | `CityBuilder.Application.Tests` → `ApplicationDependencyTests` |
-| Only the city transaction runner (and its `CityTransaction`) holds `ICityRepository` in Application, so every city write takes the row lock (`06`) | `CityBuilder.Application.Tests` → `ApplicationDependencyTests` |
-| Only `SettleCity` and `CommandPipeline` hold the runner, so every command goes through the pipeline's receipt check and settle (ADR-0004) | `CityBuilder.Application.Tests` → `ApplicationDependencyTests` |
+| Simulation references exactly `netstandard` and is built for `netstandard2.1` | `CityBuilder.Simulation.Tests` → `SimulationDependencyTests` |
+| Simulation's Unity side stays engine-free (asmdef, `package.json`, sources only, `#nullable enable`) | `CityBuilder.Simulation.Tests` → `SimulationPackageTests` |
+| The engine's build project keeps C# 9, warnings as errors, the XML doc file and no references | `CityBuilder.Simulation.Tests` → `SimulationBuildProjectTests` |
+| The Unity assemblies keep the references of `09`; no server project; only Net sees Newtonsoft | `CityBuilder.Simulation.Tests` → `ClientAssemblyTests` |
+| Domain and Application reference no ASP.NET Core or EF Core | `DomainDependencyTests`, `ApplicationDependencyTests` |
+| Only the city transaction runner holds `ICityRepository`, and only `SettleCity` and `CommandPipeline` hold the runner | `CityBuilder.Application.Tests` → `ApplicationDependencyTests` |
 | Infrastructure doesn't reference Api | `CityBuilder.IntegrationTests` → `InfrastructureDependencyTests` |
 
-**Not tested here:** that the Unity assemblies compile (the .NET tests cannot say; `scripts/dev/test-unity.sh` and the headless import in
-`client/README.md` check it locally, Unity is not in CI), Infrastructure's "no ASP.NET endpoint types", and Api referencing only Application and Infrastructure. M0-65
-extends the tests (hosting types only in Api, no float fields in the engine, and more). An assembly records a reference only when some
-code uses it, so these tests catch dependencies that code uses, not project references that nothing uses. Application and Infrastructure
-tests take the assembly from their first type (`IContentProvider`, `ContentFileLoader`); Domain has no type yet, so its test can only start
-to bite with the first one. The two M0-02 tests use a
-short deny-list of name prefixes (ASP.NET Core, EF Core); M0-65 can widen it.
+**Not tested here:** that the Unity assemblies compile (`scripts/dev/test-unity.sh` checks it locally; Unity is not in CI),
+Infrastructure's "no ASP.NET endpoint types", and Api referencing only Application and Infrastructure. M0-65 extends the architecture tests.
 
 ## Request lifecycle
-*(planned, M0-63)* A sequence diagram of one command, from tap to snapshot, as implemented (the pipeline exists since M0-26, `CommandPipeline`; the first command endpoint is place-building, M0-29). The
-intended steps are in `03` → Request lifecycle.
+One command, from tap to snapshot, as implemented (the intended steps: `03` → Request lifecycle). Reads (`GET /city`) take the same
+path through the runner via `SettleCity`, without the receipt and the mutation.
 
-Last updated: M0-33
+```mermaid
+sequenceDiagram
+  autonumber
+  participant UI as Client screen (view-model)
+  participant CS as CommandSender (Client.Net)
+  participant EP as CommandEndpoints (Api)
+  participant PL as CommandPipeline (Application)
+  participant TX as CityTransactionRunner
+  participant DB as PostgreSQL
+  participant EN as Engine (CitySettler, CityRules)
+  UI->>CS: CommandIntent
+  CS->>EP: POST /api/v1/commands/... (Bearer token, requestId)
+  EP->>EP: token → player id, body → ICityCommand
+  EP->>PL: ExecuteAsync(player, command)
+  PL->>PL: requestId and ValidateShape, payload hash
+  PL->>TX: RunAsync
+  TX->>DB: BEGIN, SELECT ... FOR UPDATE (own city), load rows
+  PL->>DB: receipt for (player, requestId)?
+  alt receipt found
+    PL-->>EP: stored response, or IDEMPOTENCY_CONFLICT
+  else new request
+    PL->>EN: settle to now (Simulator.Advance)
+    PL->>EN: command.Apply (engine rule)
+    alt rule refused
+      PL->>DB: save the settlement only (no receipt)
+      PL-->>EP: rule error code
+    else applied
+      PL->>EN: zero-length advance (canonical state)
+      PL->>DB: rows, ledger entries, receipt, StateVersion + 1
+      PL-->>EP: snapshot JSON
+    end
+  end
+  TX->>DB: COMMIT
+  EP-->>CS: 200 snapshot, or ProblemDetails with the error code
+  CS->>CS: retry only network errors, timeouts, 5xx, CONCURRENCY_CONFLICT (same requestId)
+  CS-->>UI: ClientCityStore takes the snapshot, toast for the outcome
+```
+- A duplicate request that loses the receipt race gets a unique violation on the receipt insert. Its transaction rolls back whole, and
+  the stored receipt answers (`CommandPipeline`; `06` → write transaction pattern).
+- A refused rule still commits the settlement, because time that has passed is never undone (decision 014). The next attempt needs a new
+  request id.
+- The client never sends costs, times or totals (`02` §2); the server reads its own clock (`TimeProvider`, whole seconds).
+
+Last updated: M0-63
