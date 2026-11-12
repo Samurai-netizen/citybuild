@@ -70,7 +70,7 @@ This protocol is tool-agnostic. Claude Code has skills for each part (`/resume`,
 2. Update the docs per the recipe and close every Docs impact row (`updated`, `new`, `deleted` or `no change: <why>`).
    Regenerate the generated docs once `tools/DocTools` exists (from M0-61).
 3. Run `bash scripts/dev/check-docs.sh --base origin/main`, `bash scripts/dev/docs-site.sh build >/tmp/docs-build.log 2>&1 && echo "docs-site: OK" || tail -40 /tmp/docs-build.log`
-   (the handbook: links, anchors, sidebar; quiet on success) and the quality script (once it exists), and fix everything.
+   (the handbook: links, anchors, sidebar; quiet on success) and the quality script (`bash scripts/dev/quality.sh`; it names the steps it skipped), and fix everything.
 4. Review your own branch against the task spec, the Definition of Done (`11-workflow.md`) and the recipe: line by line for `[O]` tasks and any
    task touching the engine, persistence or security (exclude `.meta` and binary assets from diff reads). Fix blocking findings and log them. Don't start an agent for this on your own: it needs
    the owner's approval of a proposal (OD-9, `15`). The owner can also start a fresh session as the independent reviewer.
