@@ -100,6 +100,9 @@ its rows in `CommandErrorMappingTests` and `ErrorCatalogueTests`, which fail unt
   settle before the mutation; what a later `GET /city` shows. Assert database state and ledger rows, not only status codes.
 - Add the path to `UnauthenticatedContractTests` (401 without a token), and the body's fields to `ClientInputInventoryTests` (the list of
   every client input and the endpoint count; it fails until the new endpoint is listed, CR-0008-T3).
+- Add the command to the ledger audit's random game (`CityBuilder.IntegrationTests/Audit/RandomHttpPlayer.cs`: `Commands`, `_weights` and
+  a body in `BodyOf` drawn from the last snapshot), so `LedgerAuditDatabaseTests` reaches its write path (M0-64). If it writes a new ledger
+  reason, add the reason to that test's `_reachedReasons`.
 - Mutate the code once (a wrong ledger reason, swapped coordinates) and see a test fail; restore it.
 
 **7. The client half.** (A new command also needs its success sentence in `FeedbackMessages.ForSuccess`, and a new error code its sentence in `FeedbackMessages`; `CommandFeedback` shows both, so no screen writes a toast of its own.) In `CityBuilder.Client.Net`: the request DTO (the server's member order, a round-trip test), the endpoint method on `ApiClient`, a
