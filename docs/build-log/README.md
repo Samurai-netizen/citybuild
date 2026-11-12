@@ -11,11 +11,12 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
-- [BL-20261112-02 · M0-62 · Quality script](2026/2026-11-12-02-M0-62.md) — In progress
-- [BL-20261112-01 · M0-61 · DocTools: generated reference docs](2026/2026-11-12-01-M0-61.md) — In progress
-- [BL-20261111-01 · CR-0008-T3 · Logistics rework: close-out and playtest](2026/2026-11-11-01-CR-0008-T3.md) — In progress
+- [BL-20261112-03 · M0-63 · Documentation completeness pass](2026/2026-11-12-03-M0-63.md) — Done
+- [BL-20261112-02 · M0-62 · Quality script](2026/2026-11-12-02-M0-62.md) — Done
+- [BL-20261112-01 · M0-61 · DocTools: generated reference docs](2026/2026-11-12-01-M0-61.md) — Done
+- [BL-20261111-01 · CR-0008-T3 · Logistics rework: close-out and playtest](2026/2026-11-11-01-CR-0008-T3.md) — Done
 - [BL-20261108-01 · CR-0008-T2 · Logistics rework: client and art](2026/2026-11-08-01-CR-0008-T2.md) — Done
-- [BL-20261102-07 · CR-0008-T1 · Logistics rework: spec, engine and server](2026/2026-11-02-07-CR-0008-T1.md) — In progress
+- [BL-20261102-07 · CR-0008-T1 · Logistics rework: spec, engine and server](2026/2026-11-02-07-CR-0008-T1.md) — Done
 - [BL-20261102-06 · M0-60 · Client ↔ server boundary review](2026/2026-11-02-06-M0-60.md) — Done
 - [BL-20261102-05 · M0-59 · Mobile-safe UI](2026/2026-11-02-05-M0-59.md) — Done
 - [BL-20261102-04 · repo · Cloud setup script](2026/2026-11-02-04-repo.md) — Done
@@ -29,11 +30,11 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 - [BL-20261101-10 · CR-0006-T1 · Server panel: goods on the test account](2026/2026-11-01-10-CR-0006-T1.md) — Done
 - [BL-20261101-09 · M0-53 · Welcome-back report](2026/2026-11-01-09-M0-53.md) — Done
 - [BL-20261101-08 · M0-52 · Research screen](2026/2026-11-01-08-M0-52.md) — Done
-- [BL-20261101-07 · M0-51 · Building inspector with worker stepper](2026/2026-11-01-07-M0-51.md) — In progress
-- [BL-20261101-06 · M0-50 · Building status visuals](2026/2026-11-01-06-M0-50.md) — In progress
+- [BL-20261101-07 · M0-51 · Building inspector with worker stepper](2026/2026-11-01-07-M0-51.md) — Done
+- [BL-20261101-06 · M0-50 · Building status visuals](2026/2026-11-01-06-M0-50.md) — Done
 - [BL-20261101-05 · CR-0005-T4 · UI icons in the HUD, the build menu and the research screen](2026/2026-11-01-05-CR-0005-T4.md) — Done
 - [BL-20261101-04 · CR-0005-T3 · All models by (typeId, era, level), construction site, ground tiles, anchors, fallback](2026/2026-11-01-04-CR-0005-T3.md) — Done
-- [BL-20261101-03 · CR-0005-T2 · Import one building end to end: editor import script, shared URP material, [MANUAL] Editor check](2026/2026-11-01-03-CR-0005-T2.md) — In progress
+- [BL-20261101-03 · CR-0005-T2 · Import one building end to end: editor import script, shared URP material, [MANUAL] Editor check](2026/2026-11-01-03-CR-0005-T2.md) — Done
 - [BL-20261101-02 · CR-0005-T1 · Adopt art/: move the folder, point the Blender build at Unity, README as a handbook page](2026/2026-11-01-02-CR-0005-T1.md) — Done
 - [BL-20261101-01 · M0-49 · HUD](2026/2026-11-01-01-M0-49.md) — Done
 - [BL-20261031-10 · M0-48 · Client review](2026/2026-10-31-10-M0-48.md) — Done
@@ -42,12 +43,12 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 - [BL-20261031-07 · M0-45 · Build menu](2026/2026-10-31-07-M0-45.md) — Done
 - [BL-20261031-06 · M0-44 · Building views from state](2026/2026-10-31-06-M0-44.md) — Done
 - [BL-20261031-05 · M0-43 · Grid and camera](2026/2026-10-31-05-M0-43.md) — Done
-- [BL-20261031-04 · M0-42 · End-to-end checkpoint](2026/2026-10-31-04-M0-42.md) — In progress
+- [BL-20261031-04 · M0-42 · End-to-end checkpoint](2026/2026-10-31-04-M0-42.md) — Done
 - [BL-20261031-03 · CR-0004-T1 · The fixes of the whole-code audit](2026/2026-10-31-03-CR-0004-T1.md) — Done
-- [BL-20261031-02 · M0-41 · Polling and lifecycle](2026/2026-10-31-02-M0-41.md) — In progress
-- [BL-20261031-01 · M0-40 · Command sender and retry policy](2026/2026-10-31-01-M0-40.md) — In progress
-- [BL-20261030-04 · M0-39 · Client city store and display prediction](2026/2026-10-30-04-M0-39.md) — In progress
-- [BL-20261030-03 · M0-38 · Auth and content on the client](2026/2026-10-30-03-M0-38.md) — In progress
+- [BL-20261031-02 · M0-41 · Polling and lifecycle](2026/2026-10-31-02-M0-41.md) — Done
+- [BL-20261031-01 · M0-40 · Command sender and retry policy](2026/2026-10-31-01-M0-40.md) — Done
+- [BL-20261030-04 · M0-39 · Client city store and display prediction](2026/2026-10-30-04-M0-39.md) — Done
+- [BL-20261030-03 · M0-38 · Auth and content on the client](2026/2026-10-30-03-M0-38.md) — Done
 - [BL-20261030-02 · M0-37 · API client and DTOs](2026/2026-10-30-02-M0-37.md) — Done
 - [BL-20261030-01 · M0-36 · Server golden E2E over HTTP](2026/2026-10-30-01-M0-36.md) — Done
 - [BL-20261029-03 · M0-35 · Logging, correlation, dev time scale](2026/2026-10-29-03-M0-35.md) — Done
@@ -65,7 +66,7 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 - [BL-20261027-01 · M0-23 · Settle use case end to end](2026/2026-10-27-01-M0-23.md) — Done
 - [BL-20261026-05 · M0-22 · Transaction boundary and locking](2026/2026-10-26-05-M0-22.md) — Done
 - [BL-20261026-04 · M0-21 · Testcontainers integration base](2026/2026-10-26-04-M0-21.md) — Done
-- [BL-20261026-03 · M0-20 · Repository and mapping](2026/2026-10-26-03-M0-20.md) — In progress
+- [BL-20261026-03 · M0-20 · Repository and mapping](2026/2026-10-26-03-M0-20.md) — Done
 - [BL-20261026-02 · M0-19 · EF Core model, migrations, Docker](2026/2026-10-26-02-M0-19.md) — Done
 - [BL-20261026-01 · DEP-PR28 · Handbook-site npm bump (react 19.3.1)](2026/2026-10-26-01-DEP-PR28.md) — Done
 - [BL-20261025-01 · CR-0003-T1 · Code documentation: every file and declaration](2026/2026-10-25-01-CR-0003-T1.md) — Done

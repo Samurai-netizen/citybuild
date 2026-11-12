@@ -1,8 +1,12 @@
 # Unity Client
 
-> **Built so far:** the project, its four assemblies and their tests, and the `Bootstrap` scene that shows "Not connected" (M0-04, M0-05;
-> `client/README.md`). The API client, the DTOs and the error parsing (`CityBuilder.Client.Net`, M0-37) and the start of the game (login, content through the engine's factory, the first `GET /city`, "Connected" or the fatal error screen: `AuthService`, `ContentService`, `StartupFlow`, `GameRoot`, M0-38) and the city store with its display prediction (`ClientCityStore`, `DisplayClock`, `DisplayCity`, M0-39) and the command sender with its retry policy (`CommandSender`, M0-40) and the polling with the connection state (`ConnectionMonitor`, `PollScheduler`, M0-41) are built and tested; the city's grid, ground and camera (`CityWorld`, `CityGrid`, `CityCameraModel`, `CityInputReader`, M0-43) and the building views (`BuildingLooks`, `BuildingViewFactory`, `CityView`, M0-44) are built and tested; the build menu (`BuildMenu`, `BuildMenuModel`, `BuildCardModel`, M0-45) and the placement flow (`PlacementFlow`, `PlacementFlowModel`, `PlacementBar`, `PlacementGhosts`, M0-46) are built and tested; the feedback for every result (`FeedbackMessages`, `ToastQueue`, `ToastHost`, `CommandFeedback`, M0-47) is built and tested; a review of all of it (M0-48) split the status screen out of `GameRoot` (`ConnectionStatusView`); the top HUD (`HudView`, `HudModel`, `ItemChipModel`, `ResearchRingModel`, `PerHourText`, M0-49) is built and tested; the Era I art is imported by an editor script (`ArtImportPostprocessor`, CR-0005-T2) and drawn by the city view: buildings and ground from the models, the construction site while a building is built or upgraded, ghosts from the models (`BuildingLooks`, `BuildingViewFactory`, `GroundTiles`, `PlacementGhosts`, CR-0005-T3); the status above each building (`BuildingStatusModel`, `BuildingStatusView`, `StatusArt`, `StalledTint`, M0-50) is built and tested; the building inspector with the worker stepper (`BuildingInspectorModel`, `BuildingInspector`, `InspectorFlow`, M0-51) is built and tested; the research screen (`ResearchScreenModel`, `ResearchNodeModel`, `ResearchScreen`, `ResearchFlow`, M0-52) is built and tested; the connection states (`CommandAvailability`, `ConnectionBannerModel`, `ConnectionBanner`, `ConnectionFlow`, M0-55) are built and tested; the client logging (`ClientLogger`, `ClientLog`, `LogLevel`, `ILogSink`, `UnityLogSink`, M0-57) is built and tested; the other screens *(planned)*. A task that builds a
-> part updates this line.
+> **Built so far:** every part this file describes for M0 is built and tested: the project, its four assemblies and the `Bootstrap` scene
+> (M0-04, M0-05); the network layer, startup, store and prediction, command sender and polling (M0-37 to M0-41); the city world and views,
+> build menu, placement and feedback (M0-43 to M0-48); the HUD, building status, inspector, research screen and welcome-back report
+> (M0-49 to M0-53); the connection states, logging, client version and mobile layout (M0-55, M0-57 to M0-59); the Era I art (CR-0005) and
+> the new UI look (CR-0007); the roads, trips, couriers, routes, deliveries and pause of the logistics rework (CR-0008). Which type does
+> what: the client module docs (`docs/modules/CityBuilder.Client.*.md`). Still to come: the first-session polish (M0-71) and the smoke
+> runs (M0-72, M0-76). A task that builds a part updates this line.
 
 The client renders the latest authoritative snapshot and makes waiting feel alive.
 It never decides outcomes.
@@ -143,8 +147,8 @@ open game is present) and sends intent; the server decides.
   moved and delivered, produced and consumed, coins, completed buildings and research; its main button **Re-energize couriers**
   (`reenergize-couriers`) when any courier spent stamina; a HUD notice while couriers rest. (The 8 h production-cap note went in T1 part
   H, with the cap; the client already reads `courierSeconds` and `tiredCouriers` into `SettlementSummary`.) **Built (CP-E step 1):** the report
-  (Moved, Delivered, Couriers sections and the Re-energize button) and the `reenergize-couriers` Net layer; the HUD notice and the inspector
-  button come next. The settlement carries no coins, so the report has no coins line.
+  (Moved, Delivered, Couriers sections and the Re-energize button) and the `reenergize-couriers` Net layer; then the HUD notice (`HudModel.RestingText`) and the inspector
+  button (`BuildingInspector`, `InspectorFlow`). The settlement carries no coins, so the report has no coins line.
 
 ## UX rules
 - **One menu at a time (owner directive OD-16, `15`).** The screens the player opens and closes (the build menu's sheet, the building inspector, the research screen, the welcome-back report, and every later one) are one `MenuGroup`: when one opens, the others close. A menu joins the group in `GameRoot` with the action that closes it, and tells the group when it goes from closed to open (an `Opened` event). Its close action must be safe when the menu is already closed, and must not drop state that belongs to another flow (the inspector closes by dropping the tile only while it is shown, because the placement flow owns the tile while it runs). The placement bar and the toasts are not menus: they belong to a flow or to a result.

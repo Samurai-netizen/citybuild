@@ -208,6 +208,7 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
 - UI icons (CR-0005-T4): the 15 icons of the Era I art live in `Resources/UI/Icons/` (one copy; `render_ui.py` writes there) and are found by content id through `UiIcons`; the HUD chips show the coin, log and plank pictures, workers, builders and the research ring have theirs, and every build menu card shows its building; the editor script gives the icons their import settings, and a test fails for an item, building type or research node with no icon.
 
 ### Changed
+- Documentation completeness pass: the architecture overview as built with the request-lifecycle diagram; every module doc checked against the code (`Last updated: M0-63`); the how-tos, `docs/getting-started.md` and specs `03`, `05`, `06`, `09`, `25` brought to the implementation; the build log index's status words fixed, the finish step now names them and `check-docs.sh` checks them; `AGENTS.md` lists `cloud-setup.sh` and `server-panel/` (M0-63).
 - `/finish-task` can be run by the AI coder itself once every planned step is done (owner directive OD-15; M0-36).
 - Handbook site: react and react-dom 19.2.9 → 19.3.1, scheduler 0.28.0 (Dependabot PR #28, DEP-PR28).
 

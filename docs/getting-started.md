@@ -32,6 +32,7 @@ How to get from a clean machine to a running project. Every command here must wo
 | Build the handbook as CI does (fails on broken links, anchors, pages missing from the sidebar) | `bash scripts/dev/docs-site.sh build` (first run installs the pinned packages) | CR-0002-T1 |
 | Preview the handbook while editing (live reload) | `bash scripts/dev/docs-site.sh start` → http://localhost:3000/citybuild/ (published: https://samurai-netizen.github.io/citybuild/) | CR-0002-T1 |
 | Print a task spec | `bash scripts/dev/show-task.sh M0-01` | Day 0 |
+| Set up a cloud coding session (installs the .NET SDK of `global.json` if `dotnet` is missing, enables the hooks, restores the server packages) | paste or run `bash scripts/dev/cloud-setup.sh` as the session's setup step | repo (PR #83) |
 | Test the Claude Code Bash guard (after changing `.claude/hooks/guard-bash.sh`; `core-instructions/18-git-and-ci.md`) | `bash scripts/dev/test-guard-bash.sh` | KIT-AUDIT-FIXES |
 | Build server | `dotnet build server/CityBuilder.slnx` | M0-02 |
 | Fast tests | `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` | M0-02 |
@@ -51,7 +52,7 @@ How to get from a clean machine to a running project. Every command here must wo
 | Start research (Development; after the login) | `curl http://localhost:8080/api/v1/commands/start-research -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d "{\"requestId\":\"$(uuidgen)\",\"researchId\":\"trade_charter\"}"`: the ids are in `GET /content` → `research`; answers with the snapshot (`research.activeId` and `endsAt`, the cost paid), or Problem Details such as `RESEARCH_LOCKED` or `RESEARCH_IN_PROGRESS`; it completes on its own in a later request at `endsAt` | M0-33 |
 | Try every endpoint by hand (Development; the API running) | open `docs/api/smoke.http` in a REST client (VS Code's REST Client: "Send Request" above each request): the login, the content, the city, golden scenario #1 command by command, a replay and refusals; its header says how to start from the starter city | M0-36 |
 | Run the API with another content file (a draft) | `dotnet run --project server/src/CityBuilder.Api -- --Content:FilePath=/path/to/draft.json` | M0-07b |
-| Run the client against the dev API (API running, Editor) | Press Play in `Bootstrap`: the client logs in as the dev player named in `client/CityBuilder/Assets/_Project/Resources/Config/ApiClientSettings.asset` (`devDisplayName`, default `dev1`) and shows "Connected - Early Middle Ages - Coins: 700" (`client/README.md`; the whole check, with the server stopped and started: `docs/testing/LOCAL-E2E.md`) | M0-38 |
+| Run the client against the dev API (API running, Editor) | Press Play in `Bootstrap`: the client logs in as the dev player named in `client/CityBuilder/Assets/_Project/Resources/Config/ApiClientSettings.asset` (`devDisplayName`, default `dev1`) and shows "Connected - Early Middle Ages - Coins: 800" (`client/README.md`; the whole check, with the server stopped and started: `docs/testing/LOCAL-E2E.md`) | M0-38 |
 | Open the Unity project | Unity Hub → Add → `client/CityBuilder` (editor 6000.3.25f1); details and the Bootstrap scene steps: `client/README.md` | M0-04 |
 | Does the Unity project compile? (Editor closed) | `<UNITY> -batchmode -quit -projectPath client/CityBuilder -logFile -`, exit code 0 and no `error CS` (`client/README.md`) | M0-04 |
 | Unity tests (Editor closed; set `UNITY_EDITOR` first, `client/README.md` → Run the tests) | `bash scripts/dev/test-unity.sh` (Windows: `pwsh scripts/dev/test-unity.ps1`) | M0-05 |
@@ -81,8 +82,9 @@ Secrets come from user-secrets or the environment, never a committed file: the c
 
 ## Database
 PostgreSQL 18.6 runs in Docker (`docker-compose.yml` at the repo root; `core-instructions/06-data-model.md`). Once per clone:
-1. `cp .env.example .env` and set your own `POSTGRES_PASSWORD` in `.env` (gitignored; compose refuses to start without the three
-   `POSTGRES_*` values).
+1. `cp .env.example .env` and set your own `POSTGRES_PASSWORD` in `.env` (gitignored; compose refuses to start without
+   `POSTGRES_USER`, `POSTGRES_PASSWORD` and `POSTGRES_DB`). `POSTGRES_PORT` (optional, default 5432) is the port on this machine; if 5432 is
+   taken, pick another and use it in the connection string below.
 2. Give the API the same values (in one line):
    `dotnet user-secrets set ConnectionStrings:CityBuilder "Host=localhost;Port=5432;Database=citybuilder;Username=citybuilder;Password=<your password>" --project server/src/CityBuilder.Api`
    (with the user and database from your `.env`), and a signing key of your own for the access tokens:

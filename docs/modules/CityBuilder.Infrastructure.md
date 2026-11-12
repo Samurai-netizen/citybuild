@@ -3,7 +3,7 @@
 **Path:** `server/src/CityBuilder.Infrastructure/` · **Kind:** .NET class library (`net10.0`) ·
 **References:** `CityBuilder.Application`, `CityBuilder.Domain` (`CityBuilder.Simulation` comes with them); packages
 `Npgsql.EntityFrameworkCore.PostgreSQL` 10.0.3 and `Microsoft.EntityFrameworkCore.Relational` 10.0.14 (EF Core 10) ·
-**Referenced by:** `CityBuilder.Api`
+**Referenced by:** `CityBuilder.Api`, `DocTools`
 
 > *Growing.* The content loader exists (M0-07b), the EF Core model with its first migration (M0-19), the mapping, repositories and
 > unit of work (M0-20), the row lock and the write transaction (M0-22), the insert of a new player's city (M0-25), and the receipt lookup
@@ -104,4 +104,4 @@ tile index, `quantity >= 0`, `assigned_workers >= 0` and the three checks of `ci
 - A deadlock (`40P01`) or a serialization failure isn't mapped to a conflict: with one row lock per transaction, taken first, neither can
   happen in M0. The market's lock ordering (M2, `06`) revisits it.
 
-Last updated: CR-0008-T3
+Last updated: M0-63

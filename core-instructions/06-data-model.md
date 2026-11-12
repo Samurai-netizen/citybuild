@@ -8,8 +8,9 @@
 > rows (CR-0008-T1 part D); `cities.purse` and `next_trip_id`, `city_stores`, `city_project_needs`, `city_research_needs` and `city_trips`
 > in place of `city_inventory`, with the reset migration `LogisticsStoresTripsAndReset` (D10), their mapping and the
 > `SETTLEMENT_DELIVERED` and `SETTLEMENT_REFUNDED` rows (part E); `city_couriers`, `city_courier_loads` and `city_route_actions` with
-> the migration `AddCouriersAndRoutes` and their mapping (part G); `cities.last_seen_unix` with the migration `AddLastSeen` (part H). A
-> task that builds a part updates this line.
+> the migration `AddCouriersAndRoutes` and their mapping (part G); `cities.last_seen_unix` with the migration `AddLastSeen` (part H);
+> `city_delivery_lines`, `cities.next_line_id` and the trips' `remaining` and `leg` with the migration `AddDeliveryLines` (CR-0008-T3,
+> amendment 1); `city_buildings.paused` with the migration `AddBuildingPaused` (amendment 2). A task that builds a part updates this line.
 >
 > **As built:** this file is the normative schema. The schema the EF Core model defines today, every table, column, key, index and check
 > constraint and the migrations in order, is generated in `docs/reference/generated/db-schema.md` and checked in CI (M0-61).
@@ -22,7 +23,7 @@ are `bigint` city-clock seconds and worker-seconds. Quantities are `bigint`. Ite
 | Table | Key columns | Constraints / notes |
 |---|---|---|
 | `players` | `id uuid pk`, `dev_name text`, `created_at` | `unique(dev_name)`; real accounts come in M1 |
-| `cities` | `id uuid pk`, `player_id uuid`, `era smallint`, `clock_seconds bigint`, `last_settled_unix bigint`, `last_seen_unix bigint`, `next_building_id int`, `purse bigint`, `next_trip_id int`, `research_id text null`, `research_started_at bigint null`, `research_ends_at bigint null`, `state_version bigint`, `content_version text`, `created_at`, `updated_at` | `unique(player_id)` (one city per player); checks: `era >= 1`, `purse >= 0` (the currency, `04` §16), `next_trip_id >= 1`; `state_version` is a concurrency token; `research_started_at` and `research_ends_at` are null while a running research waits for goods |
+| `cities` | `id uuid pk`, `player_id uuid`, `era smallint`, `clock_seconds bigint`, `last_settled_unix bigint`, `last_seen_unix bigint`, `next_building_id int`, `purse bigint`, `next_trip_id int`, `next_line_id int`, `research_id text null`, `research_started_at bigint null`, `research_ends_at bigint null`, `state_version bigint`, `content_version text`, `created_at`, `updated_at` | `unique(player_id)` (one city per player); checks: `era >= 1`, `purse >= 0` (the currency, `04` §16), `next_trip_id >= 1`, `next_line_id >= 1`; `state_version` is a concurrency token; `research_started_at` and `research_ends_at` are null while a running research waits for goods |
 | `city_stores` | `(city_id, building_id, item_id) pk`, `quantity bigint` | `check (quantity >= 0)`; FK to `city_buildings`, cascade; a row per good the store holds, kept at 0 (CR-0008) |
 | `city_project_needs` | `(city_id, building_id, item_id) pk`, `quantity bigint` | `check (quantity > 0)`; FK to `city_buildings`, cascade; the goods a construction site or a waiting upgrade still needs; no rows = no project waiting |
 | `city_research_needs` | `(city_id, item_id) pk`, `quantity bigint` | `check (quantity > 0)`; FK to `cities`, cascade; only while the running research waits at the science building |
@@ -55,7 +56,7 @@ labor, city totals, a building's project.
 | `city_roads` (built) | `(city_id, x, y) pk`, `x smallint`, `y smallint`, `level smallint` | `x, y >= 0`, `level >= 1`; never on a building's tile (the engine checks it on load); FK to `cities`, cascade; a removed road's row is deleted |
 | `city_couriers` (built) | `(city_id, station_id, slot) pk`, `state text`, `to_stop smallint`, `departed_at bigint null`, `arrives_at bigint null`, `stamina_seconds bigint` | `slot >= 1`, `to_stop >= 0`, `stamina_seconds >= 0`, a walk has both times (`departed_at >= 0`, `arrives_at > departed_at`) or neither; `state` is the API's spelling; the times are set exactly while walking or returning; FK `(city_id, station_id)` to `city_buildings`, cascade |
 | `city_courier_loads` (built) | `(city_id, station_id, slot, item_id, from_building_id) pk`, `quantity bigint` | `quantity > 0`; FK to `city_couriers`, cascade; `from_building_id` gets the goods back when the courier is stopped (no FK; the engine checks it names a building of the city) |
-| `city_delivery_lines` (built, amendment 1) | `(city_id, station_id, slot, line_id) pk`, `source_id int`, `target_id int`, `item_id text`, `quantity bigint` | `quantity > 0`, `source_id <> target_id`, `slot >= 1`; `line_id` is unique in the city; FK `(city_id, station_id, slot)` to `city_couriers`, cascade (the key's first columns, so no index of its own); a courier runs its lines in `line_id` order; the row goes when the line ends or is cancelled; `cities.next_line_id int` (default 1, `>= 1`) gives the ids (migration `AddDeliveryLines`) |
+| `city_delivery_lines` (built, amendment 1) | `(city_id, station_id, slot, line_id) pk`, `source_id int`, `target_id int`, `item_id text`, `quantity bigint` | `quantity > 0`, `source_id <> target_id`, `slot >= 1`; `line_id` is unique in the city (given out by `cities.next_line_id`; no index of its own checks it); FK `(city_id, station_id, slot)` to `city_couriers`, cascade (the key's first columns, so no index of its own); a courier runs its lines in `line_id` order; the row goes when the line ends or is cancelled; `cities.next_line_id int` (default 1, `>= 1`) gives the ids (migration `AddDeliveryLines`) |
 | `city_route_actions` (built) | `(city_id, station_id, slot, stop_index, action_index) pk`, `building_id int`, `kind text`, `item_id text`, `amount text` | `slot >= 1`, indices from 0, `kind in ('take', 'put')`; a route is its actions in order, its stops without a gap; every action of one stop names the same building (the mapping checks both on load); `amount` as the API writes it (`05`); FK `(city_id, station_id)` to `city_buildings`, cascade; a slot's route may outlive its courier |
 
 - **Ledger (CR-0008):** `balance_after` is the item's **city total** (`04` §16). Coins go through the purse: `COST_*` rows are coins only.
@@ -84,7 +85,8 @@ A column without `null` in the table is `NOT NULL`; `ledger_entries.ref_type` an
 reference). `players.id` and `cities.id` are set by the application; `ledger_entries.id` is the only identity.
 
 **Foreign keys:** `cities.player_id` → `players`; `city_buildings`, `city_research`, `city_research_needs`, `city_roads` and `city_trips` →
-`cities`, and `city_stores` and `city_project_needs` → `city_buildings`, with `ON DELETE CASCADE`
+`cities`, `city_stores`, `city_project_needs`, `city_couriers` and `city_route_actions` → `city_buildings`, `city_courier_loads` and
+`city_delivery_lines` → `city_couriers`, with `ON DELETE CASCADE`
 (the city owns its state); `ledger_entries.city_id` → `cities` and `command_receipts.player_id` → `players` with `ON DELETE RESTRICT` (the audit
 trail never disappears with what it belongs to), and `cities.player_id` is `RESTRICT` as well.
 

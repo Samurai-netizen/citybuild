@@ -30,8 +30,15 @@ public sealed record PlaceBuildingCommand(Guid RequestId, string BuildingTypeId,
     public string CommandType => Type;
     public LedgerReason? CostReason => LedgerReason.CostPlace; // the ledger reason of Spent
     public LedgerReason? RefundReason => null;               // the ledger reason of Refunded (an upgrade has REFUND_UPGRADE)
-    public string? ValidateShape() =>                        // text that can't be a content id never locks the city
-        ContentIds.IsValid(BuildingTypeId) ? null : "buildingTypeId must be a content id: " + ContentIds.FormatDescription + ".";
+    public string? ValidateShape()                           // what no city could take never locks the city (OD-13)
+    {
+        if (!ContentIds.IsValid(BuildingTypeId))
+        {
+            return "buildingTypeId must be a content id: " + ContentIds.FormatDescription + ".";
+        }
+
+        return X >= 0 && Y >= 0 ? null : "x and y must not be negative: the grid starts at 0.";
+    }
     public MutationResult Apply(CityState city, GameContent content) =>
         CityRules.PlaceBuilding(city, content, new BuildingTypeId(BuildingTypeId), X, Y);
 }
@@ -39,8 +46,8 @@ public sealed record PlaceBuildingCommand(Guid RequestId, string BuildingTypeId,
 A list in the body becomes a list of a small record with properties, as the road commands' tiles are `CommandTile(X, Y)` (CR-0008-T1
 part D): the payload serializes properties, so a value tuple's fields would hash every list alike. Its order is part of the payload.
 `ValidateShape` refuses only what no city state could make valid: an id that can't be a content id (`ContentIds`, the format the content
-loader enforces), checked before the lock (M0-30). Everything else is the rule's job: coordinates outside the
-grid are `OUT_OF_BOUNDS`, not a shape error. A renamed property or command type changes every stored hash, and an old request id then
+loader enforces; M0-30) and a negative coordinate (OD-13, M0-31), checked before the lock. Everything else is the rule's job: coordinates past
+the grid's width or height, which the content sets, are `OUT_OF_BOUNDS`, not a shape error. A renamed property or command type changes every stored hash, and an old request id then
 conflicts, so pin the payload in a test.
 
 `UpgradeBuildingCommand` (M0-31) is the same with `BuildingId` as its data, `COST_UPGRADE` and a refund reason, `REFUND_UPGRADE`, for a
@@ -101,7 +108,8 @@ repeats what is worth repeating (`CommandPolicy.IsRetryable`) and hands the snap
 test. A command that behaves like the worker stepper (many quick changes, only the last counts) needs its own lane in `CommandSender`; discuss it first.
 
 **8. Docs.** `05` (endpoint, body, errors), an example in `docs/api/smoke.http`, `07` (threat rows that name the `Security_` tests), `04` §8 if the rule changed, the module docs of
-Application and Api, `CHANGELOG.md`, and this guide if a step changed.
+Application and Api, `CHANGELOG.md`, and this guide if a step changed. Then regenerate the reference pages
+(`dotnet run --project tools/DocTools -- generate`): `endpoints.md` and `errors.md` change with a new command, and CI fails while they are stale.
 
 ## Common mistakes
 - **A write outside the pipeline.** An endpoint that loads, changes and saves a city itself skips the lock, the settle, the ledger and the

@@ -19,7 +19,7 @@ description: Complete the current task - Definition of Done, docs per change rec
    **Don't start an agent on your own** (owner directive OD-9, `core-instructions/15`): if you think one would help, ask the owner first with a
    proposal (no agents / small / big, why, how many, which model) and wait for the answer.
 6. Finalize:
-   - build log entry: status Done, verification table (commands + results), follow-ups;
+   - build log entry: status Done, verification table (commands + results), follow-ups; its line in `docs/build-log/README.md` says `Done` too;
    - resume point: state IDLE, last completed = this task, next task id;
    - plan board row: `In review`;
    - `CHANGELOG.md`: one line under Unreleased;

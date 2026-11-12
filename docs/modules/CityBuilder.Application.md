@@ -13,7 +13,7 @@
 > `CityAggregate.LastSeenUnixSec`) and `ReenergizeCouriersCommand` (part H); `CancelDeliveryCommand` and `SetPausedCommand` (CR-0008-T3).
 
 ## Purpose
-The use cases (`SettleCity`, `DevLogin`, `PlaceBuilding`, `UpgradeBuilding`, `AssignWorkers`, `StartResearch`, the three road commands), the ports they
+The use cases (`SettleCity`, `DevLogin`, `PlaceBuilding`, `UpgradeBuilding`, `AssignWorkers`, `StartResearch`, the three road commands, `StartTrip`, `SetRoute`, `ReenergizeCouriers`, `CancelDelivery`, `SetPaused`), the ports they
 need (`ICityRepository`, `IUnitOfWork`, `IContentProvider`, `ICommandReceiptRepository`) and the command pipeline, as described in
 `core-instructions/03-architecture.md`. It decides what happens; it doesn't know about HTTP or databases.
 
@@ -130,4 +130,4 @@ back in time, so a clock behind is a last settled second ahead of now. The conte
 - `DevLogin` has no tests with fakes: what it does is all persistence (one transaction, a unique index, a race), so it is tested on
   PostgreSQL (`CityBuilder.IntegrationTests`, `Auth/DevLoginDatabaseTests`).
 
-Last updated: CR-0008-T3
+Last updated: M0-63
