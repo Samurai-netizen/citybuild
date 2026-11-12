@@ -13,8 +13,9 @@ namespace CityBuilder.Simulation.Settlement
     /// (<c>04</c> section 2); at a stop a courier does the stop's actions in order, then walks to the next stop (after the last, the first), or
     /// home when its stamina reached 0; at home it stands at its station, or rests without stamina. A courier without a route runs its delivery
     /// lines instead (<c>04</c> sections 18 and 19, CR-0008 D16): stop 1 is the first line's source, stop 2 its target, and after the last line
-    /// it walks home. Their departures are the last part of step 5 (<see cref="StartWalks"/>): a courier at its station with a route or a line
-    /// and stamina, whose station is neither constructing nor upgrading, leaves for the first stop. The arrivals are an indexed heap keyed by station and slot (the station's building
+    /// it walks home. At a paused station (CR-0008 D24) a courier finishes the stop it walked to, gives its load back and walks home. Their
+    /// departures are the last part of step 5 (<see cref="StartWalks"/>): a courier at its station with a route or a line and stamina, whose
+    /// station is neither constructing, upgrading nor paused, leaves for the first stop. The arrivals are an indexed heap keyed by station and slot (the station's building
     /// index times the content's most courier slots, plus the slot), which stays valid while auto-staffing adds couriers during the advance
     /// and orders arrivals at one second by (station, slot); a courier stopped inside the advance (its station's upgrade started) leaves a
     /// stale entry, which is dropped when it comes up.
@@ -88,7 +89,8 @@ namespace CityBuilder.Simulation.Settlement
 
         /// <summary>
         /// The departures of step 5 at <paramref name="time"/> (<c>04</c> section 19), in ascending (station, slot): every courier at its station
-        /// with stamina, whose station is neither constructing nor upgrading, walks to its route's first stop, or to its first line's source.
+        /// with stamina, whose station is neither constructing, upgrading nor paused, walks to its route's first stop, or to its first line's
+        /// source.
         /// </summary>
         public void StartWalks(CityState city, long time)
         {
@@ -110,7 +112,7 @@ namespace CityBuilder.Simulation.Settlement
 
                 int station = city.IndexOfBuilding(courier.StationId);
                 BuildingPhase phase = city.Buildings[station].Phase;
-                if (phase == BuildingPhase.Constructing || phase == BuildingPhase.Upgrading)
+                if (phase == BuildingPhase.Constructing || phase == BuildingPhase.Upgrading || city.Buildings[station].Paused)
                 {
                     continue;
                 }
@@ -128,7 +130,7 @@ namespace CityBuilder.Simulation.Settlement
 
         /// <summary>
         /// What a courier does when it arrives at <paramref name="time"/>: it spends the walk's stamina, then at home stands or rests; at a stop it
-        /// acts and walks on, or home when it is tired.
+        /// acts and walks on, or home when it is tired or its station is paused (then without its load, D24).
         /// </summary>
         private void Arrive(CityState city, GameContent content, Courier courier, long time, SettlementReportBuilder report)
         {
@@ -165,6 +167,14 @@ namespace CityBuilder.Simulation.Settlement
             int building = city.IndexOfBuilding(stop.BuildingId);
             if (!RunActions(city, content, courier, stop, building, time, report))
             {
+                return;
+            }
+
+            if (IsStationPaused(city, courier))
+            {
+                // Paused: it did this stop and goes home empty (04 section 19, D24).
+                CourierRules.GiveLoadBack(city, courier);
+                WalkHome(city, courier, building, time);
                 return;
             }
 
@@ -215,7 +225,8 @@ namespace CityBuilder.Simulation.Settlement
         /// less what it already carries of the good, at most the stock and its free carry room, and walks to the target; carrying none, the line
         /// ends. At the target (stop 2) it puts all it carries of the good by the delivery rule, gives the rest of its load back to where it came
         /// from (a returned load), and the line ends. After a line ends it walks to its next line's source, or home. A tired courier walks home
-        /// instead, its lines waiting.
+        /// instead, its lines waiting. At a paused station (D24) it takes nothing at a source and walks home with its load given back, and after
+        /// a put it walks home, its other lines waiting.
         /// </summary>
         private void ArriveOnLine(CityState city, GameContent content, Courier courier, DeliveryLine line, long time, SettlementReportBuilder report)
         {
@@ -223,6 +234,13 @@ namespace CityBuilder.Simulation.Settlement
             Building building = city.Buildings[here];
             if (courier.ToStop == 1)
             {
+                if (IsStationPaused(city, courier))
+                {
+                    CourierRules.GiveLoadBack(city, courier);
+                    WalkHome(city, courier, here, time);
+                    return;
+                }
+
                 Building station = city.Buildings[city.IndexOfBuilding(courier.StationId)];
                 long carryLimit = CityQueries.DefinitionOf(content, station.TypeId).GetLevel(station.Level).CarryLimit;
                 long room = Math.Max(0, checked(carryLimit - courier.Carried));
@@ -261,7 +279,7 @@ namespace CityBuilder.Simulation.Settlement
 
             // The line ended: the next one, or home.
             city.RemoveLineAt(city.FirstLineIndex(courier.StationId, courier.Slot));
-            if (courier.Stamina >= 1 && city.TryGetFirstLine(courier.StationId, courier.Slot, out DeliveryLine? next))
+            if (courier.Stamina >= 1 && !IsStationPaused(city, courier) && city.TryGetFirstLine(courier.StationId, courier.Slot, out DeliveryLine? next))
             {
                 WalkTo(city, courier, here, next.SourceId, 1, time);
             }
@@ -270,6 +288,9 @@ namespace CityBuilder.Simulation.Settlement
                 WalkHome(city, courier, here, time);
             }
         }
+
+        /// <summary>Whether a courier's station is paused (CR-0008 D24).</summary>
+        private static bool IsStationPaused(CityState city, Courier courier) => city.Buildings[city.IndexOfBuilding(courier.StationId)].Paused;
 
         /// <summary>Sends a courier from the building at <paramref name="fromIndex"/> home to its station, from now.</summary>
         private void WalkHome(CityState city, Courier courier, int fromIndex, long time)

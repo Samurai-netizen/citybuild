@@ -51,7 +51,8 @@ full or its inputs run out (§6), and goods move only with walkers (§18, §19).
   `PhaseEndsAt = t + ceil(LaborRemaining / wNew)`, or `null` (frozen) if `wNew = 0`. This runs on every assignment to a producing
   building: the same count again starts a new segment but never moves the end.
 - **Auto-staffing:** when construction completes, a producer or courier station gets `min(free, MaxWorkers)` workers.
-  Nothing else is assigned automatically. Assigning 0 workers is how a player pauses a building.
+  Nothing else is assigned automatically. Assigning 0 workers freezes a cycle; **pausing** (`SetPaused`, §8, CR-0008 D23) lets a
+  producer finish its cycle and start no new one, with its workers still assigned.
 - Houses, warehouses and the science building have no recipe and take no workers. During an upgrade, workers stay assigned but do nothing.
 
 ## 4. Building phases
@@ -64,9 +65,13 @@ full or its inputs run out (§6), and goods move only with walkers (§18, §19).
 
 Fields a phase doesn't use are 0 (`PhaseEndsAt` null), and `Producing` keeps the cycle's start in `PhaseStartedAt`, so equal situations are
 equal field by field. An `Idle` or `Producing` building may also have an **upgrade waiting for goods** (§16): it keeps working.
+**Paused** is a flag beside the phase (CR-0008 D23), only on a producer or a courier station: a paused producer starts no cycle (§6), a
+paused station's couriers go home and stay there (§19). It changes nothing else: the store stays open to walkers (D25), timers run, and
+it stays through an upgrade.
 **Stall reason** (derived, never stored), shown to players. Constructing and upgrading buildings, cycles running with workers, idle
-producers that can start and courier stations with couriers have none. For every other building the first match wins:
-`NoRecipe` (houses, warehouses, the science building) · `NoWorkers` (idle producer or frozen cycle, courier station without couriers) ·
+producers that can start and unpaused courier stations with couriers have none. For every other building the first match wins:
+`NoRecipe` (houses, warehouses, the science building) · `NoWorkers` (a frozen cycle) · `Paused` (an idle paused producer, a paused
+courier station; D23) · `NoWorkers` (idle producer, courier station without couriers) ·
 `MissingInput:item` · `StorageFull:item`, both about the building's **own store** (§16). The item is the first in recipe order (ordinal ids).
 
 ## 5. Research
@@ -82,7 +87,7 @@ producers that can start and courier stations with couriers have none. For every
   moment. The M0 engine never changes `Era`, and the report's `eraChanged` is always false (decision 031).
 
 ## 6. Rules
-**Start rule:** a producer starts a cycle at time `t` if it is `Idle`, has `w ≥ 1`, its own store holds every input, and every output
+**Start rule:** a producer starts a cycle at time `t` if it is `Idle`, not paused (§8), has `w ≥ 1`, its own store holds every input, and every output
 that is not the currency fits its own store (`stock + qty ≤` the effective limit, §16; nothing is reserved while it is idle). On start:
 subtract the inputs from its store, reserve the outputs, `CycleLabor = LaborRemaining = effective labor`, `SegmentStartedAt = t`,
 `PhaseEndsAt = t + ceil(labor / w)`. A start touches only its own store, so one pass in ascending `Id` starts everything that can start.
@@ -129,6 +134,7 @@ once per advance and kept (§17).
 | StartTrip(source, target, item, amount) | both buildings exist (`BUILDING_NOT_FOUND`), item known (`UNKNOWN_ITEM`) and not the currency (`INVALID_ARGUMENT`), amount allowed (§19: `INVALID_ARGUMENT` for an unknown preset, `AMOUNT_MODE_LOCKED`), the target accepts the item (`ITEM_NOT_ACCEPTED`: its waiting project needs it or its store holds it); with a built courier station a free courier (`NO_FREE_COURIER`), else a free worker (`INSUFFICIENT_WORKERS`); the amount gives at least 1 (`NOTHING_TO_CARRY`); the courier's queue has room for the lines (`DELIVERY_QUEUE_FULL`) | a courier gets the delivery's lines, or a worker takes the first load and walks (§18) |
 | SetRoute(station, slot, stops) | station exists (`BUILDING_NOT_FOUND`) and is a courier station (`INVALID_ARGUMENT`), slot 1..MaxWorkers of its level, 0 or 2..`maxRouteStops` stops, 1..`maxStopActions` actions per stop, no two consecutive stops (last and first included) at one building (`INVALID_ROUTE`), every stop's building exists (`BUILDING_NOT_FOUND`), every item known (`UNKNOWN_ITEM`) and not the currency (`INVALID_ARGUMENT`), every amount allowed (as StartTrip); with 1 or more stops: a built `routeBuilding` (`ROUTES_LOCKED`) and no delivery lines on the slot's courier (`COURIER_BUSY`) | replace the slot's route (0 stops clears it); the slot's courier, if any, returns its load and starts again from its station (§19) |
 | CancelDelivery(station, slot, line or all) | station exists (`BUILDING_NOT_FOUND`) and is a courier station (`INVALID_ARGUMENT`), the slot has a courier (`INVALID_ARGUMENT`), the line is one of its lines (`DELIVERY_NOT_FOUND`); "all" always applies | remove the line, or every line and the route; a courier whose running line or route went returns its load and starts again from its station (§19) |
+| SetPaused(building, paused) | exists (`BUILDING_NOT_FOUND`), a producer or courier station (`INVALID_ARGUMENT`), not Constructing (`BUILDING_BUSY`) | set the flag (the same value again changes nothing); a running cycle runs on; a station's couriers act as §19 says |
 | ReenergizeCouriers | — | every courier's stamina is its station level's; resting couriers are at their station again, ready to leave (§19) |
 
 **Starting an upgrade** (at once, or when its last good arrives): a running cycle (frozen or not) ends without output and its inputs go back
@@ -166,6 +172,8 @@ frozen cycle counts as running (its inputs are refunded). Workers on a house, a 
 14. No stamina is spent before `absentFrom`; a load never exceeds its carry limit.
 15. A courier has a route or delivery lines, never both; at most `maxDeliveryLines` lines each; every line names its courier's station and
     slot, two different buildings and a quantity of 1..that station level's carry limit; a removed courier leaves no lines (§18).
+16. Only producers and courier stations are paused, never while constructing; a paused producer starts no cycle; a courier of a paused
+    station never leaves its station (D23, D24).
 
 ## 11. Settlement report
 Returned with every settled snapshot: `elapsedSeconds` (the simulated seconds, ≥ 0); `produced{item:qty}` (outputs of completed cycles, the
@@ -293,7 +301,12 @@ is sent or stored. All values are integers, rounded down: seconds, permille (0..
   delivery lines, never both (D19).
 - **Courier states:** `AtStation` (ready, or without work) · `Walking` to stop `i` (on lines: `1` = the first line's source, `2` = its
   target) · `Returning` home · `Resting` (no stamina). A courier `AtStation` with a route or a line and stamina > 0, whose station is
-  neither constructing nor upgrading, leaves in step (5) of §6 for stop 1.
+  neither constructing, upgrading nor paused, leaves in step (5) of §6 for stop 1.
+- **A paused station** (D24): a courier walking to a stop arrives and does that stop (a route stop's actions; on a line, a take at the
+  source takes nothing and a put at the target is done and ends the line), then gives back what it carries (a returned load) and walks
+  home; a `Returning` or `Resting` courier goes on as before. Its route and lines stay; once unpaused it leaves from its station for
+  stop 1 (or its first line's source). The last courier is home at `max` over its walking couriers of their arrival plus the walk from
+  that stop home, and over its returning ones of their arrival (display only).
 - **On lines** (D16): at the first line's source it takes `min(quantity − carried of the good, stock, free carry room)` and walks to the
   target; if it carries none of the good, the line ends there. At the target it puts all it carries of the good (§16), what doesn't fit
   goes back to the stores it came from at once (a returned load), and the line ends. After a line ends it walks to the next line's source,
@@ -303,7 +316,7 @@ is sent or stored. All values are integers, rounded down: seconds, permille (0..
 - **Take:** from the building's store, the amount of its stock, at most the stock and the free carry room. **Put:** the amount of what the
   courier carries of that good, delivered by §16; the rest stays on the courier. A courier never waits: it does what it can and walks on.
 - **Load:** every carried quantity remembers the building it came from. When a courier stops working (its worker is removed, its route is
-  replaced, its running line or route is cancelled, its station starts an upgrade), each quantity goes back into the store it came from at once, even above its limit (a returned
+  replaced, its running line or route is cancelled, its station starts an upgrade, it ends a stop at a paused station), each quantity goes back into the store it came from at once, even above its limit (a returned
   load), and the courier stands `AtStation` (one without stamina, resting or walking home tired, rests). Otherwise a resting courier
   keeps its load.
 - **Amounts:** a **preset** (content: All 100 %, Half 50 %, Quarter 25 %) is always allowed; **percent** (1..100) and **exact** (≥ 1) only

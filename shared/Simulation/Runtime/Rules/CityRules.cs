@@ -209,6 +209,44 @@ namespace CityBuilder.Simulation.Rules
         }
 
         /// <summary>
+        /// Pauses or resumes a producer or a courier station (<c>04</c> sections 4, 6, 8 and 19, CR-0008 D23 and D24). Only the flag changes: a
+        /// running cycle finishes and a paused producer starts no new one; a paused station's couriers finish the stop they walk to and go home,
+        /// keeping their routes and lines; a resumed one leaves again in the request's zero-length advance. Setting the value it already has is
+        /// Ok and changes nothing. Allowed while upgrading (the flag stays through it), not while constructing.
+        /// </summary>
+        /// <param name="city">The city, settled to now.</param>
+        /// <param name="content">The game content.</param>
+        /// <param name="buildingId">The building's id in the city.</param>
+        /// <param name="paused">True to pause, false to resume.</param>
+        /// <returns>
+        /// Ok, or the first failed check: <see cref="MutationErrorCode.BuildingNotFound"/>, <see cref="MutationErrorCode.InvalidArgument"/> (neither
+        /// a producer nor a courier station), <see cref="MutationErrorCode.BuildingBusy"/> (constructing).
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="city"/> or <paramref name="content"/> is null.</exception>
+        public static MutationResult SetPaused(CityState city, GameContent content, int buildingId, bool paused)
+        {
+            RequireArguments(city, content);
+            if (!city.TryGetBuilding(buildingId, out Building? building))
+            {
+                return MutationResult.Rejected(MutationErrorCode.BuildingNotFound);
+            }
+
+            BuildingKind kind = CityQueries.DefinitionOf(content, building.TypeId).Kind;
+            if (kind != BuildingKind.Producer && kind != BuildingKind.CourierStation)
+            {
+                return MutationResult.Rejected(MutationErrorCode.InvalidArgument);
+            }
+
+            if (building.Phase == BuildingPhase.Constructing)
+            {
+                return MutationResult.Rejected(MutationErrorCode.BuildingBusy);
+            }
+
+            building.SetPaused(paused);
+            return MutationResult.Ok;
+        }
+
+        /// <summary>
         /// Starts a research node at the city's science building: pays the coins of its cost and fills the research slot. Without goods in the
         /// cost its timer runs from the clock for the node's duration; otherwise it waits until its goods are delivered to the science building,
         /// and the timer runs from then (<c>04</c> sections 5 and 16). Research needs no workers; its effects apply when it completes.

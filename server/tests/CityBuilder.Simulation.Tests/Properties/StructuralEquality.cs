@@ -64,6 +64,7 @@ internal static class StructuralEquality
             fields.Add((prefix + "cycleLabor", Text(building.CycleLabor)));
             fields.Add((prefix + "laborRemaining", Text(building.LaborRemaining)));
             fields.Add((prefix + "segmentStartedAt", Text(building.SegmentStartedAt)));
+            fields.Add((prefix + "paused", building.Paused ? "true" : "false"));
             fields.AddRange(building.Store.Select(stock => ($"{prefix}store[{stock.Key}]", Text(stock.Value))));
             fields.AddRange(building.Needs.Select(need => ($"{prefix}needs[{need.Key}]", Text(need.Value))));
         }

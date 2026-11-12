@@ -62,5 +62,6 @@ internal static class CityCopy
         building.LaborRemaining,
         building.SegmentStartedAt,
         building.Store.ToArray(),
-        building.Needs.ToArray());
+        building.Needs.ToArray(),
+        building.Paused);
 }

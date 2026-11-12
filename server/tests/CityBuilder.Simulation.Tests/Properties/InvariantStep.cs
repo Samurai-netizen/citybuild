@@ -35,6 +35,9 @@ internal enum Invariant
 
     /// <summary>Delivery lines belong to a courier without a route, move 1 to its carry limit between two buildings, and fit its queue.</summary>
     DeliveryLines = 15,
+
+    /// <summary>Only producers and courier stations are paused, never while constructing; a paused producer starts no cycle; a paused station's couriers don't leave.</summary>
+    Paused = 16,
 }
 
 /// <summary>

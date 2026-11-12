@@ -24,7 +24,7 @@ internal static class CityDump
         {
             text.Append(CultureInfo.InvariantCulture, $"building {building.Id} {building.TypeId} ({building.X},{building.Y}) L{building.Level} ");
             text.Append(CultureInfo.InvariantCulture, $"w={building.AssignedWorkers} {building.Phase} {building.PhaseStartedAt}..{Time(building.PhaseEndsAt)} ");
-            text.Append(CultureInfo.InvariantCulture, $"target={building.TargetLevel} labor={building.CycleLabor}/{building.LaborRemaining}@{building.SegmentStartedAt}");
+            text.Append(CultureInfo.InvariantCulture, $"target={building.TargetLevel} labor={building.CycleLabor}/{building.LaborRemaining}@{building.SegmentStartedAt}{(building.Paused ? " paused" : string.Empty)}");
             text.Append(" store:").Append(Amounts(building.Store)).Append(" needs:").Append(Amounts(building.Needs)).Append('\n');
         }
 

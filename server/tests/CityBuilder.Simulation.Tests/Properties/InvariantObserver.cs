@@ -15,8 +15,10 @@ namespace CityBuilder.Simulation.Tests.Properties;
 /// with the advance's one <c>absentFrom</c>, so every start, completion, delivery and stamina spend falls on a step's end. Split invariance
 /// (property 2) makes this the same city as one advance;</item>
 /// <item>after some steps a <b>branch</b> leaves the history: on a copy, a random command (mostly an upgrade or a worker change on a running
-/// cycle, at whatever second the step ended), then a short stepped advance, checked with a fork of the checks. Branches never change the
-/// replayed city, so the history stays valid.</item>
+/// cycle, at whatever second the step ended), then a short stepped advance, checked with a fork of the checks; and from the same point a
+/// <b>pause branch</b> (CR-0008 D23, D24): a courier station with a courier out, else a producing building, is paused for the same advance,
+/// then resumed for as long again, with no random draw of its own. Branches never change the replayed city, so the history stays
+/// valid.</item>
 /// </list>
 /// After the history, a copy is advanced by a negative time. The observer throws when its steps don't add up to the generated reports and
 /// city: then it did not observe the history it was given.
@@ -145,6 +147,41 @@ internal sealed class InvariantObserver
         if (Command(branch, command, number, branchLine) is not null)
         {
             Stepped(branch, new CityOperation.Advance(gap), number, gap, absentFrom: null, branchLine);
+        }
+
+        PauseBranchFrom(city, number, line, gap);
+    }
+
+    /// <summary>
+    /// Leaves the history on a copy of the city to pause a building (CR-0008 D23, D24): the first courier station with a walking courier, else
+    /// the first producing building; then a stepped advance of <paramref name="gap"/>, a resume and another. It draws no random number, so the
+    /// other branches keep theirs. Nothing happens in a city with neither.
+    /// </summary>
+    private void PauseBranchFrom(CityState city, int number, Line line, long gap)
+    {
+        int stationId = city.Couriers.FirstOrDefault(courier => courier.State == CourierState.Walking)?.StationId ?? 0;
+        Building? target = stationId > 0
+            ? city.Buildings.First(building => building.Id == stationId)
+            : city.Buildings.FirstOrDefault(building => building.Phase == BuildingPhase.Producing);
+        if (target is null)
+        {
+            return;
+        }
+
+        CityState branch = CityCopy.Of(city);
+        var pause = new CityOperation.SetPaused(target.Id, true);
+        var pauseLine = new Line(
+            line.Checks.Fork(),
+            string.Create(CultureInfo.InvariantCulture, $"pause branch at clock {city.Clock}: {pause}, then Advance {gap}, resume, Advance {gap}"));
+        if (Command(branch, pause, number, pauseLine) is null)
+        {
+            return;
+        }
+
+        Stepped(branch, new CityOperation.Advance(gap), number, gap, absentFrom: null, pauseLine);
+        if (Command(branch, pause with { Paused = false }, number, pauseLine) is not null)
+        {
+            Stepped(branch, new CityOperation.Advance(gap), number, gap, absentFrom: null, pauseLine);
         }
     }
 

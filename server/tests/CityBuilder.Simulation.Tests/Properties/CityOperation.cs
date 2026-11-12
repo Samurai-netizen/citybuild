@@ -67,6 +67,18 @@ internal abstract record CityOperation
         public override string ToString() => string.Create(CultureInfo.InvariantCulture, $"AssignWorkers {BuildingId} {Workers}");
     }
 
+    /// <summary>Pauses or resumes the building (CR-0008 D23).</summary>
+    /// <param name="BuildingId">The id of the building.</param>
+    /// <param name="Paused">True to pause, false to resume.</param>
+    public sealed record SetPaused(int BuildingId, bool Paused) : Command
+    {
+        /// <inheritdoc/>
+        public override MutationResult Mutate(CityState city, GameContent content) => CityRules.SetPaused(city, content, BuildingId, Paused);
+
+        /// <summary>The text a failing property prints, for example <c>SetPaused 4 true</c>.</summary>
+        public override string ToString() => string.Create(CultureInfo.InvariantCulture, $"SetPaused {BuildingId} {(Paused ? "true" : "false")}");
+    }
+
     /// <summary>Starts researching the node.</summary>
     /// <param name="ResearchId">The research node's id.</param>
     public sealed record StartResearch(string ResearchId) : Command

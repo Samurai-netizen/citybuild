@@ -56,6 +56,46 @@ internal sealed class InvariantChecks
         Report(Invariant.UnlockAndPrerequisites, step, Unlocks(step));
         Report(Invariant.StaminaAndLoads, step, Stamina(step) ?? Loads(step));
         Report(Invariant.DeliveryLines, step, Lines(step.After));
+        Report(Invariant.Paused, step, Paused(step));
+    }
+
+    /// <summary>
+    /// Invariant 16 (CR-0008 D23, D24): every paused building is a producer or a courier station and not constructing; a building paused
+    /// before and after the step started no cycle in it; a courier at the station of such a station before the step didn't leave it.
+    /// </summary>
+    private string? Paused(InvariantStep step)
+    {
+        foreach (Building after in step.After.Buildings.Where(building => building.Paused))
+        {
+            _count("steps with a paused building");
+            BuildingKind kind = _content.Buildings.First(type => type.Id == after.TypeId).Kind;
+            if ((kind != BuildingKind.Producer && kind != BuildingKind.CourierStation) || after.Phase == BuildingPhase.Constructing)
+            {
+                return $"building {after.Id} ({after.TypeId}, {after.Phase}) is paused";
+            }
+
+            if (!step.Before.TryGetBuilding(after.Id, out Building? before) || !before.Paused)
+            {
+                continue;
+            }
+
+            if (after.Phase == BuildingPhase.Producing && (before.Phase != BuildingPhase.Producing || before.PhaseStartedAt != after.PhaseStartedAt))
+            {
+                return $"paused building {after.Id} started a cycle at {after.PhaseStartedAt}";
+            }
+
+            foreach (Courier courier in step.After.Couriers.Where(courier => courier.StationId == after.Id && courier.State == CourierState.Walking))
+            {
+                CountIf(courier.ArrivesAt > step.Before.Clock, "couriers walking at a paused station");
+                Courier? was = step.Before.Couriers.FirstOrDefault(other => other.StationId == courier.StationId && other.Slot == courier.Slot);
+                if (was is { State: CourierState.AtStation })
+                {
+                    return $"courier {courier.StationId}/{courier.Slot} left its paused station";
+                }
+            }
+        }
+
+        return null;
     }
 
     /// <summary>

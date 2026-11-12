@@ -72,6 +72,13 @@ public sealed class InvariantPropertyTests(ITestOutputHelper output)
     public void Observe_EveryStep_KeepsDeliveryLinesWithTheirCouriers(string contentName) =>
         Holds(contentName, Invariant.DeliveryLines);
 
+    /// <summary>Invariant 16: only producers and courier stations are paused; a paused producer starts no cycle; a paused station's couriers don't leave (CR-0008 D23, D24).</summary>
+    /// <param name="contentName">The content the seeds run with.</param>
+    [Theory]
+    [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
+    public void Observe_EveryStep_KeepsPausedBuildingsStill(string contentName) =>
+        Holds(contentName, Invariant.Paused);
+
     /// <summary>
     /// The seeds exercise every check: each counted case happened at least a floor number of times, so a check that never fires can't pass
     /// for one that holds. The counts are printed.
@@ -111,6 +118,8 @@ public sealed class InvariantPropertyTests(ITestOutputHelper output)
         observation.AssertAtLeast("steps with a courier arriving", 10_000);
         observation.AssertAtLeast("steps with a courier carrying", 10_000);
         observation.AssertAtLeast("couriers at their carry limit", 1000);
+        observation.AssertAtLeast("steps with a paused building", 1000);
+        observation.AssertAtLeast("couriers walking at a paused station", 100);
         if (contentName == "golden-v2")
         {
             // golden-v2 can't reach these cases in its seeds (BL-20261102-07 decision 38): its producers with inputs (sawmill, trading post)
