@@ -8,7 +8,7 @@
 - **State:** IDLE          <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** — (CR-0008-T3 is in review: PR open, the owner merges)
 - **Part / step:** —
-- **Last completed:** CR-0008-T3 · Logistics rework: close-out and playtest (PR open; build log `docs/build-log/2026/2026-11-11-01-CR-0008-T3.md`)
+- **Last completed:** CR-0008-T3 · Logistics rework: close-out and playtest (PR #88, in review; build log `docs/build-log/2026/2026-11-11-01-CR-0008-T3.md`)
 - **Next step:** the owner merges the CR-0008-T3 PR; then `/start-task M0-61` (DocTools).
 - **Open questions for the owner:** CR-0008-T3: the `22` edit (decision 27) and the Follow-ups in its build log. CR-0008-T1: 8 Dependabot alerts on `main` (build log Follow-ups). M0-58: the [MANUAL] content-change check (`client/README.md`; no automated test covers the `GameRoot` rebuild). CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-55: the [MANUAL] look at the connection states (`client/README.md`). CR-0007-T1: the [MANUAL] look at the new UI (`client/README.md`); the status label may be removed (build log follow-ups).
 - **Known broken / do not touch:** nothing.
@@ -34,7 +34,7 @@
 | Dev tooling (CR-0006) | done | goods for the `devtest` account (CR-0006-T1) |
 | Resilience (limits, retries, logging) | in progress | M0-34, M0-35, M0-57 to M0-59 (PR #46, #47, #81, #82, #84) |
 | Docs automation (DocTools) + docs completeness | in progress | CR-0002, CR-0003 done (PR #27, #29); DocTools is M0-61 |
-| Logistics (CR-0008) | done | T1, T2 (PR #86, #87); T3 in review |
+| Logistics (CR-0008) | done | T1 to T3 (PR #86, #87, #88) |
 | Balance simulator | not started | |
 | E2E / security / concurrency suites | in progress | M0-36, M0-56, M0-60 (PR #48, #80, #85); `docs/testing/KILL-SERVER-CHECK.md` |
 | Dev build + M0 close-out | not started | |
