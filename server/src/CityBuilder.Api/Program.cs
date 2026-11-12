@@ -9,6 +9,7 @@ using CityBuilder.Api.Http;
 using CityBuilder.Api.OpenApi;
 using CityBuilder.Api.Persistence;
 using CityBuilder.Api.Time;
+using CityBuilder.Application.Audit;
 using CityBuilder.Application.Cities;
 using CityBuilder.Application.Commands;
 using CityBuilder.Application.Content;
@@ -102,6 +103,9 @@ builder.Services.AddCityBuilderAuthentication(builder.Configuration, builder.Env
 builder.Services.AddScoped<SettleCity>();
 builder.Services.AddScoped<CommandPipeline>();
 builder.Services.AddScoped<DevLogin>();
+
+// The ledger audit (M0-64) has no endpoint: the integration tests resolve it in a scope of their own and run it.
+builder.Services.AddScoped<LedgerAuditor>();
 
 var app = builder.Build();
 

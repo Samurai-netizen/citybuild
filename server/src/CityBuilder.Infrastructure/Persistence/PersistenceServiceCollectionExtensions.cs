@@ -1,3 +1,4 @@
+using CityBuilder.Application.Audit;
 using CityBuilder.Application.Cities;
 using CityBuilder.Application.Commands;
 using CityBuilder.Application.Persistence;
@@ -16,7 +17,8 @@ public static class PersistenceServiceCollectionExtensions
     /// so the repositories and the unit of work of a request share its context: <see cref="ICityRepository"/>,
     /// <see cref="INewCityRepository"/> (both <see cref="CityRepository"/>), <see cref="IPlayerRepository"/>, <see cref="ICommandReceiptRepository"/>
     /// and <see cref="IUnitOfWork"/>;
-    /// and <see cref="ICityTransactionRunner"/>, scoped, the one entry point of every change of a stored city. The repositories need a <see cref="TimeProvider"/>, which the Api registers. The settings are read when they are first needed, so the Api
+    /// <see cref="ICityTransactionRunner"/>, scoped, the one entry point of every change of a stored city; and <see cref="ILedgerAuditSource"/>
+    /// (<see cref="LedgerAuditSource"/>), the ledger audit's read-only view (M0-64). The repositories need a <see cref="TimeProvider"/>, which the Api registers. The settings are read when they are first needed, so the Api
     /// can build them from its validated options.
     /// </summary>
     /// <param name="services">The service collection.</param>
@@ -36,6 +38,7 @@ public static class PersistenceServiceCollectionExtensions
         services.AddScoped<ICommandReceiptRepository, CommandReceiptRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<ICityTransactionRunner, CityTransactionRunner>();
+        services.AddScoped<ILedgerAuditSource, LedgerAuditSource>();
         return services;
     }
 }
