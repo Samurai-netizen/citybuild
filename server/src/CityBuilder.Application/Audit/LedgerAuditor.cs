@@ -8,7 +8,7 @@ namespace CityBuilder.Application.Audit;
 
 /// <summary>
 /// The ledger audit (M0-64; <c>core-instructions/02-principles.md</c> rule 11, <c>06-data-model.md</c> → Ledger): for each stored city, the
-/// ledger starts with the <c>STARTING_GRANT</c>, each row's <c>balance_after</c> runs on from the row before, and the sum of each item's
+/// ledger starts with the <c>STARTING_GRANT</c>, each row's <c>balance_after</c> is the sum of the item's deltas up to it, and the sum of each item's
 /// deltas equals the item's city total (<see cref="CityQueries.Totals"/>). It reads through <see cref="ILedgerAuditSource"/> and changes
 /// nothing. Run by the integration tests (<c>docs/testing/README.md</c>); there is no endpoint. One city at a time today; it becomes
 /// cross-player with the market in M2 (<c>26</c>).

@@ -8,8 +8,8 @@ using Microsoft.AspNetCore.Mvc.Testing;
 namespace CityBuilder.IntegrationTests.Audit;
 
 /// <summary>
-/// A player who plays at random over HTTP for the ledger audit (M0-64): each <see cref="StepAsync"/> sends one of every command the API
-/// has, or a settle (<c>GET /api/v1/city</c>), with arguments drawn from a seeded <see cref="Random"/> and the last snapshot (its buildings,
+/// A player who plays at random over HTTP for the ledger audit (M0-64): each <see cref="StepAsync"/> sends one of the API's twelve commands,
+/// or a settle (<c>GET /api/v1/city</c>), with arguments drawn from a seeded <see cref="Random"/> and the last snapshot (its buildings,
 /// roads and couriers), so most commands name things that exist and many succeed. A refusal of the game's rules (a 4xx with an error
 /// code) is part of the play; a server error, a missing code, or a refused login or rate limit fails the test with the seed and step.
 /// </summary>
@@ -34,7 +34,7 @@ internal sealed class RandomHttpPlayer : IDisposable
     ];
 
     /// <summary>How many times an opening step is sent before the opening moves on without it (the clock moves between tries).</summary>
-    private const int _maxOpeningTries = 8;
+    private const int _maxOpeningTries = 20;
 
     /// <summary>The 4xx codes that mean the test or the server is broken, not a move the rules refuse (one player sends one request at a time).</summary>
     private static readonly string[] _brokenCodes = ["AUTHENTICATION_REQUIRED", "RATE_LIMITED", "CONCURRENCY_CONFLICT"];
@@ -56,58 +56,11 @@ internal sealed class RandomHttpPlayer : IDisposable
     /// <summary>How many times the opening's current step was sent.</summary>
     private int _openingTries;
     /// <summary>
-    /// The opening the first steps play before the random ones, so the city has an economy to play with: a house (4 workers), a woodcutter
-    /// (id 2), a scriptorium (3), the research that unlocks the trading post, a sawmill (4) and a trading post (5), one worker each, with logs
-    /// and planks carried along the chain; the trading post turns planks into coins. Once they are earned, a courier station (6) whose route
-    /// runs the chain by itself. The ids hold when every placement succeeds; a command
-    /// the city can't do yet (still building, still locked, not enough coins) is sent again at the next step, up to <see cref="_maxOpeningTries"/> times.
+    /// The opening the first steps play before the random ones, so the city has an economy to play with (<see cref="Opening"/>). A command
+    /// the city can't do yet (still building, still locked, not enough coins) is sent again at the next step, up to
+    /// <see cref="_maxOpeningTries"/> times.
     /// </summary>
-    private readonly Queue<(string Command, Func<Guid, object> Body)> _opening = new(
-    [
-        Place("house", 0, 2),
-        Place("woodcutter", 0, 0),
-        Place("scriptorium", 4, 0),
-        Assign(2),
-        ("start-research", requestId => new { requestId, researchId = "trade_charter" }),
-        Assign(2),
-        Place("sawmill", 2, 0),
-        Trip(2, 4, "logs"),
-        Trip(2, 4, "logs"),
-        Assign(4),
-        Trip(2, 4, "logs"),
-        Place("trading_post", 2, 2),
-        Trip(4, 5, "planks"),
-        Assign(4),
-        Trip(2, 4, "logs"),
-        Assign(5),
-        Trip(4, 5, "planks"),
-        Place("trading_post", 2, 2),
-        Assign(5),
-        Trip(4, 5, "planks"),
-        Trip(2, 4, "logs"),
-        Place("courier_station", 3, 2),
-        Trip(4, 5, "planks"),
-        Trip(2, 4, "logs"),
-        Place("courier_station", 3, 2),
-        Assign(6),
-        ("set-route", requestId => new
-        {
-            requestId,
-            stationId = 6,
-            slot = 1,
-            stops = new object[]
-            {
-                new { buildingId = 2, actions = new[] { new { kind = "take", itemId = "logs", amount = "all" } } },
-                new
-                {
-                    buildingId = 4,
-                    actions = new[] { new { kind = "put", itemId = "logs", amount = "all" }, new { kind = "take", itemId = "planks", amount = "all" } },
-                },
-                new { buildingId = 5, actions = new[] { new { kind = "put", itemId = "planks", amount = "all" } } },
-            },
-        }),
-        Assign(6),
-    ]);
+    private readonly Queue<(string Command, Func<Guid, object> Body)> _opening = new(Opening());
 
     /// <summary>Wraps a logged-in client.</summary>
     /// <param name="client">The client, carrying the token.</param>
@@ -330,6 +283,59 @@ internal sealed class RandomHttpPlayer : IDisposable
             new { buildingId = BuildingId(), actions = new[] { new { kind = "put", itemId = item, amount = Amount() } } },
         };
         return new { requestId, stationId = StationId(), slot = Slot(), stops = _random.Next(3) == 0 ? [] : stops };
+    }
+
+    /// <summary>
+    /// The opening's steps: a house (id 1, 4 workers), a woodcutter (2), a scriptorium (3), the research that unlocks the trading post, a
+    /// sawmill (4) and a trading post (5) with one worker each, rounds of trips carrying logs to the sawmill and planks to the trading post
+    /// (first its site's planks, then planks it turns into coins), a courier station (6) whose route runs that chain by itself, and the
+    /// house's upgrade. The ids hold when every placement succeeds.
+    /// </summary>
+    /// <returns>The steps in order.</returns>
+    private static IEnumerable<(string Command, Func<Guid, object> Body)> Opening()
+    {
+        yield return Place("house", 0, 2);
+        yield return Place("woodcutter", 0, 0);
+        yield return Place("scriptorium", 4, 0);
+        yield return Assign(2);
+        yield return ("start-research", requestId => new { requestId, researchId = "trade_charter" });
+        yield return Place("sawmill", 2, 0);
+        yield return Trip(2, 4, "logs");
+        yield return Trip(2, 4, "logs");
+        yield return Assign(4);
+        yield return Place("trading_post", 2, 2);
+        for (int round = 0; round < 8; round++)
+        {
+            yield return Trip(2, 4, "logs");
+            yield return Trip(4, 5, "planks");
+        }
+
+        yield return Assign(5);
+        for (int round = 0; round < 6; round++)
+        {
+            yield return Trip(2, 4, "logs");
+            yield return Trip(4, 5, "planks");
+        }
+
+        yield return Place("courier_station", 3, 2);
+        yield return Assign(6);
+        yield return ("set-route", requestId => new
+        {
+            requestId,
+            stationId = 6,
+            slot = 1,
+            stops = new object[]
+            {
+                new { buildingId = 2, actions = new[] { new { kind = "take", itemId = "logs", amount = "all" } } },
+                new
+                {
+                    buildingId = 4,
+                    actions = new[] { new { kind = "put", itemId = "logs", amount = "all" }, new { kind = "take", itemId = "planks", amount = "all" } },
+                },
+                new { buildingId = 5, actions = new[] { new { kind = "put", itemId = "planks", amount = "all" } } },
+            },
+        });
+        yield return ("upgrade-building", requestId => new { requestId, buildingId = 1 });
     }
 
     /// <summary>An opening step that places a building.</summary>

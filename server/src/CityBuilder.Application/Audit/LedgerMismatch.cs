@@ -9,7 +9,10 @@ public enum LedgerMismatchKind
     /// <summary>The city's first ledger row is not <c>STARTING_GRANT</c>, or the city has no ledger row: its ledger doesn't start at the purse.</summary>
     MissingStartingGrant,
 
-    /// <summary>A row's <c>balance_after</c> is not the item's balance after the row before it (0 before the first) plus the row's delta.</summary>
+    /// <summary>
+    /// A row's <c>balance_after</c> is not the sum of the item's deltas up to and including the row (counted from the deltas, from 0, not
+    /// from the <c>balance_after</c> of the row before).
+    /// </summary>
     BalanceChainBroken,
 
     /// <summary>The sum of the item's deltas is not the item's city total (stores, walkers' loads and, for the currency, the purse).</summary>

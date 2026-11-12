@@ -70,7 +70,8 @@ public sealed class LedgerAuditDatabaseTests(PostgresServer server) : PostgresTe
             await using (var db = Database.CreateContext())
             {
                 string[] reasons = await db.LedgerEntries.Select(row => row.Reason).Distinct().ToArrayAsync(TestContext.Current.CancellationToken);
-                Assert.Empty(_reachedReasons.Except(reasons));
+                string[] missing = [.. _reachedReasons.Except(reasons)];
+                Assert.True(missing.Length == 0, $"The game wrote no {string.Join(", ", missing)} row.");
             }
 
             foreach (string command in RandomHttpPlayer.Commands)

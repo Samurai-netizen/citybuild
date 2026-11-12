@@ -63,8 +63,8 @@ labor, city totals, a building's project.
   New reasons (built, parts D and E): `COST_ROAD` (placing and upgrading roads, one row per item and command like every `COST_*`), `SETTLEMENT_DELIVERED` (goods walkers handed to projects, negative,
   per settlement and item) and `SETTLEMENT_REFUNDED` (inputs back when an upgrade started inside the advance). A move between two stores, a
   load and a returned load change no total and write no row. The starting grant is coins only.
-- **Reconciliation (audited, M0-64):** each city's ledger starts with its `STARTING_GRANT`; each row's `balance_after` is the item's
-  `balance_after` before it (0 before the first) plus its `delta`; and each item's sum of deltas is its city total. `LedgerAuditor` checks
+- **Reconciliation (audited, M0-64):** each city's ledger starts with its `STARTING_GRANT`; each row's `balance_after` is the sum of the
+  item's deltas up to and including it (the balance before plus its `delta`, from 0); and each item's sum of deltas is its city total. `LedgerAuditor` checks
   all three on the stored rows (no settle, no write; `docs/testing/README.md`). `DEV_ADJUST` rows count like any other.
 - **The reset migration (CR-0008 D10, built in part E as `LogisticsStoresTripsAndReset`):** it deletes every player and everything of theirs (cities and their rows, receipts,
   ledger rows) on the database it runs on, so each dev name logs in to a new starting city; the content numbers stay in the content file.
