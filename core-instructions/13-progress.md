@@ -6,7 +6,7 @@
 
 ## Resume point
 - **State:** IDLE          <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (M0-63 is in review: PR open, the owner merges)
+- **Task:** — (M0-63 is in review: PR #91, the owner merges)
 - **Part / step:** —
 - **Last completed:** M0-63 · Documentation completeness pass (in review; build log `docs/build-log/2026/2026-11-12-03-M0-63.md`)
 - **Next step:** the owner merges the M0-63 PR; then `/start-task M0-64` (ledger audit).
