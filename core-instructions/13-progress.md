@@ -5,11 +5,11 @@
 > This file is loaded into every session: Milestone-table notes are task ids and PR numbers only (≤ ~100 characters per row).
 
 ## Resume point
-- **State:** IDLE          <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (M0-62 is in review: PR open, the owner merges)
-- **Part / step:** —
-- **Last completed:** M0-62 · Quality script (in review; build log `docs/build-log/2026/2026-11-12-02-M0-62.md`)
-- **Next step:** the owner merges the M0-62 PR; then `/start-task M0-63` (documentation completeness pass).
+- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** M0-63 · Documentation completeness pass · branch `task/M0-63-docs-pass` · build log `docs/build-log/2026/2026-11-12-03-M0-63.md`
+- **Part / step:** steps 1–9 in the build log plan (checks → audit → module docs → overview → how-tos → getting started → specs 04/05/06/09 → build log → summary)
+- **Last completed:** M0-62 · Quality script (PR #90, merged)
+- **Next step:** step 1 (baseline checks), then the approved single `docs-auditor` (owner input in the build log).
 - **Open questions for the owner:** M0-61: the stashed Unity Editor settings (`git stash list`), apply or drop; Follow-ups in its build log. CR-0008-T3: the `22` edit (decision 27) and the Follow-ups in its build log. CR-0008-T1: 8 Dependabot alerts on `main` (build log Follow-ups). M0-58: the [MANUAL] content-change check (`client/README.md`; no automated test covers the `GameRoot` rebuild). CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-55: the [MANUAL] look at the connection states (`client/README.md`). CR-0007-T1: the [MANUAL] look at the new UI (`client/README.md`); the status label may be removed (build log follow-ups).
 - **Known broken / do not touch:** nothing.
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
@@ -17,7 +17,7 @@
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 64 / 88
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 66 / 88
 
 | Area | State | Notes |
 |---|---|---|
