@@ -38,11 +38,13 @@ The handbook site (§7) renders both kinds as one book, and every page says whic
 | The handbook's chapters and reading order | `website/sidebars.js` | §7; the files stay where they are |
 
 ## 3. Generated reference docs
-From M0-61, `tools/DocTools` generates `docs/reference/generated/*.md` from the code and content: items, buildings,
-research, error codes, endpoints (OpenAPI), configuration keys, DB schema, and the project dependency map.
+`tools/DocTools` (since M0-61; `docs/modules/DocTools.md`) generates `docs/reference/generated/*.md` from the code and content: items,
+buildings, research, error codes, endpoints (the OpenAPI document the API's build writes), configuration keys, DB schema, and the project
+dependency map.
 - Never edit generated files by hand (Claude Code denies it).
 - CI regenerates them and fails if the committed files differ ("docs out of date").
-- Until M0-61, the tables in `05`, `06` and `23` are the reference and are updated by hand.
+- `05`, `06` and `23` stay the normative specs; the generated pages show the system as built. A change to the code or content they show
+  runs `dotnet run --project tools/DocTools -- generate` and commits the changed pages in the same PR.
 - Generated files are handbook pages too (chapter "Development guide" → Reference): DocTools writes plain CommonMark (§7).
 
 ## 4. Build log and decisions

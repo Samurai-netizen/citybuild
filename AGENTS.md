@@ -79,7 +79,7 @@ dotnet ef migrations add <Name> --project server/src/CityBuilder.Infrastructure 
 bash scripts/dev/test-unity.sh                                         # needs UNITY_EDITOR; close the Unity Editor first
 blender -b --factory-startup --python art/blender/build_all.py         # rebuild the art; writes the FBX files into the Unity project (art/README.md)
 bash scripts/dev/quality.sh                                            # [M0-62] everything CI runs, locally
-dotnet run --project tools/DocTools -- generate                        # [M0-61] regenerate reference docs
+dotnet run --project tools/DocTools -- generate                        # regenerate docs/reference/generated (`check`: as CI)
 dotnet run --project tools/BalanceSim -- --help                        # [M0-67]
 ```
 

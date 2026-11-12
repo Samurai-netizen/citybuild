@@ -1,0 +1,14 @@
+<Project>
+  <!-- Build settings of the developer tools under tools/ (tools/README.md): the server's (../server/Directory.Build.props), so the tools
+       build like the server's code, plus warnings as errors for every tool and the doc-comment errors for their tests. -->
+  <Import Project="../server/Directory.Build.props" />
+
+  <!-- The server's file decides by its src/ and tests/ folders, which the tools don't have: a tool fails on any warning like src/, and
+       its tests fail on a missing or broken doc comment like tests/. -->
+  <PropertyGroup Condition="!$(MSBuildProjectName.EndsWith('.Tests'))">
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">
+    <WarningsAsErrors>$(WarningsAsErrors);CS1570;CS1571;CS1572;CS1573;CS1574;CS1580;CS1581;CS1584;CS1587;CS1589;CS1590;CS1591;CS1592;CS1658;CS1710;CS1711;CS1712;CS1723;CS1734;CS1735</WarningsAsErrors>
+  </PropertyGroup>
+</Project>

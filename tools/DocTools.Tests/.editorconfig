@@ -1,0 +1,5 @@
+# Analyzer settings for the DocTools tests only, as server/tests/.editorconfig sets them for the server's tests.
+
+[*.cs]
+# Test names are sentences joined by underscores, Method_Scenario_ExpectedResult (core-instructions/08-testing-strategy.md).
+dotnet_diagnostic.CA1707.severity = none

@@ -8,10 +8,12 @@ namespace CityBuilder.Api.Http;
 /// <param name="windowSeconds">The window's length in seconds.</param>
 public sealed class RateRule(int limit, int windowSeconds)
 {
-    /// <summary>The most requests one player (or address) may make in one window.</summary>
+    /// <summary>
+    /// The most requests one player (or address) may make in one window: 1 to <see cref="RateLimitOptions.MaxLimit"/>, or the start stops.
+    /// </summary>
     public int Limit { get; set; } = limit;
 
-    /// <summary>The window's length in seconds.</summary>
+    /// <summary>The window's length in seconds: 1 to <see cref="RateLimitOptions.MaxWindowSeconds"/>, or the start stops.</summary>
     public int WindowSeconds { get; set; } = windowSeconds;
 }
 

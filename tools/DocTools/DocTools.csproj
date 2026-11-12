@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Generates the reference pages in docs/reference/generated/ from the code and the content, and checks that the committed ones are
+       current (docs/modules/DocTools.md; core-instructions/17-documentation-system.md §3). It references the server's projects to read
+       what they define: the content loader, the error catalogue, the options classes and the EF Core model. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>CityBuilder.DocTools</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\server\src\CityBuilder.Api\CityBuilder.Api.csproj" />
+    <ProjectReference Include="..\..\server\src\CityBuilder.Infrastructure\CityBuilder.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\shared\Simulation.Build\CityBuilder.Simulation.csproj" />
+  </ItemGroup>
+
+</Project>

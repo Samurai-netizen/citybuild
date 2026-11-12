@@ -37,7 +37,7 @@ in chapters, with every backticked path and spec number as a link (`website/READ
 | `architecture/` | The system as built, with diagrams | AI, kept current |
 | `modules/` | One doc per project or assembly | AI, kept current (enforced) |
 | `how-to/` | Worked guides for common changes | AI, kept current |
-| `reference/` | Generated reference (from M0-61) | `tools/DocTools` |
+| `reference/` | Generated reference: content, endpoints, errors, configuration, DB schema, project map | `tools/DocTools` |
 | `api/` | Running the API: logs and correlation (`traceId` vs `requestId`, every event id), requests to try by hand (`smoke.http`) | AI, kept current |
 | `testing/` | How to run the test suites (integration tests need Docker), test checklists | AI, kept current |
 | `security/`, `balance/` *(planned: M0-78, M0-68)* | Security report, balance reports | AI, per task |

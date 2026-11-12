@@ -1,0 +1,5 @@
+<Project>
+  <!-- The tools use the server's pinned package versions (../server/Directory.Packages.props): one list for the whole .NET build, and a
+       package new to the tools goes there, through G-Dependency (core-instructions/15-change-control.md). -->
+  <Import Project="../server/Directory.Packages.props" />
+</Project>

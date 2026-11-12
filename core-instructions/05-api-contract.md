@@ -6,6 +6,10 @@
 > request limits below and the stricter bodies of the attack review (M0-30); `POST /api/v1/commands/upgrade-building` (M0-31);
 > `POST /api/v1/commands/assign-workers` (M0-32); `POST /api/v1/commands/start-research` (M0-33); the error catalogue, the global exception handler
 > and the rate limits below (M0-34). The rest of `/api/v1/` is *(planned)*. A task that builds a part updates this line.
+
+> **As built:** this file is the normative contract. What the server serves today is generated from the code: the endpoints and their
+> bodies in `docs/reference/generated/endpoints.md` (the OpenAPI document) and the error codes in `docs/reference/generated/errors.md`
+> (the catalogue), checked in CI (M0-61). Contract tests keep the two equal.
 > **CR-0008 (logistics)** changes this contract (G-Contract, approved with the CR): the six new commands, the changed bodies' effects, the
 > snapshot (stores, purse, totals, projects, roads, trips, couriers, routes), the settlement report and the content document. **Built:**
 > the walking rules and road levels in `GET /content` (part C); the three road commands, `city.roads` in the snapshot and the road check of

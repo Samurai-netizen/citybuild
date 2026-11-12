@@ -9,9 +9,17 @@
     <UserSecretsId>citybuilder-api</UserSecretsId>
   </PropertyGroup>
 
+  <!-- The build writes the OpenAPI document to obj/openapi/CityBuilder.Api.json (OpenApi/BuildTimeDocument.cs), outside git; tools/DocTools
+       reads it for docs/reference/generated/endpoints.md. -->
+  <PropertyGroup>
+    <OpenApiDocumentsDirectory>$(MSBuildProjectDirectory)/obj/openapi</OpenApiDocumentsDirectory>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <!-- Only at build time: writes the OpenAPI document to obj/openapi/ (OpenApiDocumentsDirectory above); nothing of it ships with the app. -->
+    <PackageReference Include="Microsoft.Extensions.ApiDescription.Server" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" />
     <!-- Only for dotnet-ef at design time (Api is its startup project); nothing of it ships with the app. -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
   </ItemGroup>

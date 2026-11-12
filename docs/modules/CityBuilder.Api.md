@@ -41,6 +41,7 @@ migrations at startup.
 | `Errors/ErrorLog` | The log message of an unexpected exception: "Unhandled exception in {Method} {Path}" with the exception, event id 3000 (3000–3999 for error and request messages). The framework logs nothing for an exception a handler answers, so this is the only record. Also 3001 (a rate-limit hit: class, method, path, player, `Retry-After`; never an address) and 3002 (a conflict the handler answered); 3000 names the player |
 | `Http/StatusCodeProblems` | `UseStatusCodeProblems()` (M0-34): the status code pages with the answers of the contract. An empty 404, 405 or 415 gets the catalogue's Problem Details (`NOT_FOUND`, `METHOD_NOT_ALLOWED`, `UNSUPPORTED_MEDIA_TYPE`). An empty 413, which is what the binding makes of a body Kestrel stops at the size limit (a chunked one; no exception reaches the handler), is rewritten to the 400 `INVALID_ARGUMENT` the `Content-Length` check gives, naming the limit |
 | `Http/RateLimitOptions` | Section `RateLimits` (M0-34): `Commands:Burst` (10 per 1 s), `Commands:Sustained` (120 per 60 s), `City` (30 per 60 s), `DevLogin` (10 per 60 s), each a `RateRule` of `Limit` (1 to 1 000 000) and `WindowSeconds` (1 to 3600); validated on start, one failure message per limit |
+| `OpenApi/BearerSecurity`, `OpenApi/BuildTimeDocument` | The OpenAPI document's bearer scheme and its per-operation security marks; the build-time document run and its placeholder settings (M0-61, Rules below) |
 | `Http/RateLimitClass` | `RateLimitClass` (`Commands`, `City`, `Content`, `DevLogin`) and `RateLimitMetadata`, the endpoint metadata that puts an endpoint in a class. `CommandEndpoints` marks its whole group, `CityEndpoints`, `ContentEndpoints` and the dev login their route. A test lists every `/api/v1` endpoint with its class |
 | `Http/RateLimits` | `AddRateLimits(configuration)`: the options and the framework's limiter as a chain of five fixed-window limiters (burst, sustained, city, content, dev login), each counting only the endpoints of its class and letting the others through, per player (the token's `sub`) or, for the dev login, per remote address (an IPv4-mapped IPv6 address counts as IPv4; none is `unknown`); no queue. A refusal is 429 with `Retry-After` (whole seconds, at least 1) and the Problem Details `RATE_LIMITED`, written before the body is read or a city is locked. `UseRateLimits()` adds it after the token check; `RequireRateLimit(class)` marks endpoints; a refusal is logged (event id 3001) |
 | `Http/ApiExceptionHandler` | The global `IExceptionHandler` (M0-34): `ConcurrencyConflictException` becomes 409 `CONCURRENCY_CONFLICT`, `CityNotFoundException` 401 `AUTHENTICATION_REQUIRED` with `WWW-Authenticate` (logged as a refused token, reason `NoCity`; CR-0004), a `BadHttpRequestException` with status 415 (a body with no `Content-Type`) 415 `UNSUPPORTED_MEDIA_TYPE`, a `BadHttpRequestException` (a body that doesn't bind, which the minimal API throws in every environment; Kestrel's 413 for a body past the limit) 400 `INVALID_ARGUMENT`, anything else 500 `INTERNAL_ERROR` and is logged. Never a stack trace in the response; the exception's type and message in `detail` in Development only. Replaces the developer exception page, which echoed the request headers, the token included. Logs a conflict as a warning (3002) and an unexpected exception (3000); a body that doesn't bind writes no line of ours |
@@ -104,7 +105,14 @@ an `NpgsqlException` (`docs/how-to/add-migration.md`). No other environment ever
   `ScaledTimeProvider`. Game code, the repositories' timestamps and the token times get time only through it
   (`core-instructions/02-principles.md`, rule 3; `04` §1); tests replace it with `FakeTimeProvider`. A scale other than 1 outside
   Development stops the start (`07`). The rate limiter and log durations use real time.
-- OpenAPI is mapped only in Development (`05`); a test checks that Production answers 404 (`07`).
+- OpenAPI is mapped only in Development (`05`); a test checks that Production answers 404 (`07`). `OpenApi/BearerSecurity` adds the bearer
+  scheme and marks every operation that needs the token (a test checks the marks).
+- Every build also writes the OpenAPI document to `obj/openapi/CityBuilder.Api.json` (`Microsoft.Extensions.ApiDescription.Server`, M0-61),
+  which `tools/DocTools` turns into `docs/reference/generated/endpoints.md`. The package's tool runs `Program.cs` up to `app.Run()` in
+  its own process and stops it there: no port, no request. `OpenApi/BuildTimeDocument` notices that run (the entry assembly
+  `GetDocument.Insider`) and starts it as Development with placeholder settings (a connection string to no server, no migrations, a
+  signing key that signs nothing), so the startup checks pass and the document includes the dev login. A server never takes them
+  (`Security_BuildTimeDocumentSettings_AreNotUsedByAServer`).
 - Every endpoint of the `/api/v1` group requires an access token unless it opts out with `AllowAnonymous()` (only the dev login). There is
   no fallback policy: it would also cover paths that match no endpoint, which would then answer 401 instead of 404.
 - The acting player comes only from `ICurrentPlayer` (the token's `sub`); no request type has a player id (`07`).
@@ -202,4 +210,4 @@ player, city and starting grant, the same name again, two names, the token, two 
 - The rate limits are in memory, per process, in fixed windows (`07` → Known limitations).
 - A failed start is reported by the runtime as an unhandled exception in plain text on stderr, not as a JSON log line.
 
-Last updated: CR-0008-T3
+Last updated: M0-61

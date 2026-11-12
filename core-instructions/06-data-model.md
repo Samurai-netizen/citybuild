@@ -10,6 +10,9 @@
 > `SETTLEMENT_DELIVERED` and `SETTLEMENT_REFUNDED` rows (part E); `city_couriers`, `city_courier_loads` and `city_route_actions` with
 > the migration `AddCouriersAndRoutes` and their mapping (part G); `cities.last_seen_unix` with the migration `AddLastSeen` (part H). A
 > task that builds a part updates this line.
+>
+> **As built:** this file is the normative schema. The schema the EF Core model defines today, every table, column, key, index and check
+> constraint and the migrations in order, is generated in `docs/reference/generated/db-schema.md` and checked in CI (M0-61).
 
 PostgreSQL is the only source of truth. Wall timestamps are `timestamptz` (UTC). Simulation times and labor
 are `bigint` city-clock seconds and worker-seconds. Quantities are `bigint`. Item, building, research and era ids are `text` from content.

@@ -56,6 +56,8 @@ How to get from a clean machine to a running project. Every command here must wo
 | Does the Unity project compile? (Editor closed) | `<UNITY> -batchmode -quit -projectPath client/CityBuilder -logFile -`, exit code 0 and no `error CS` (`client/README.md`) | M0-04 |
 | Unity tests (Editor closed; set `UNITY_EDITOR` first, `client/README.md` → Run the tests) | `bash scripts/dev/test-unity.sh` (Windows: `pwsh scripts/dev/test-unity.ps1`) | M0-05 |
 | Rebuild the Era I models, palette and previews (Blender 5.2; writes the FBX files into the Unity project) | `blender -b --factory-startup --python art/blender/build_all.py` from the repository root (`art/README.md`) | CR-0005-T1 |
+| Regenerate the reference pages in `docs/reference/generated/` (after a change to content, errors, endpoints, options, the EF model or the projects) | `dotnet run --project tools/DocTools -- generate` (`docs/modules/DocTools.md`) | M0-61 |
+| Are the committed reference pages current? (as CI) | `dotnet run --project tools/DocTools -- check`: exit 1 lists each page that differs | M0-61 |
 | Everything CI runs | `bash scripts/dev/quality.sh` | *(planned, M0-62)* |
 
 ## Configuration
@@ -64,24 +66,16 @@ The API reads `server/src/CityBuilder.Api/appsettings.json`, and `dotnet run` ap
 `docs/api/logs-and-correlation.md`.
 Any key can be overridden with an environment variable (`:` becomes `__`) or a command-line argument (`-- --Key=value` after `dotnet run`).
 
-| Key | Default | Meaning |
-|---|---|---|
-| `Content:FilePath` | `content/mvp-content.json` | The content file the server loads at startup, absolute or relative to the app's base directory (the build copies `server/content/*.json` to `content/` there). Required; a blank value or invalid content stops the start with every error listed (`docs/how-to/add-building-or-item.md`) |
-| `ConnectionStrings:CityBuilder` | none (required) | The PostgreSQL connection string. It holds a password, so it lives in user-secrets (Development) or the environment variable `ConnectionStrings__CityBuilder`, never in a committed file. Missing or blank stops the start |
-| `Database:ApplyMigrationsAtStartup` | `false`; `true` in `appsettings.Development.json` | Apply pending migrations before the server accepts requests. Allowed only in Development: `true` in another environment stops the start (`docs/how-to/add-migration.md`) |
-| `Database:LockTimeoutMilliseconds` | `3000` | How long a request waits for its city's row lock before it fails with `CONCURRENCY_CONFLICT` and the client retries (`core-instructions/06-data-model.md`). Between 1 and 60000, or the start stops |
-| `Auth:SigningKey` | none (required) | The secret the access tokens are signed and checked with (HMAC-SHA256), at least 32 bytes. Anyone who has it can act as any player, so it lives in user-secrets (Development) or the environment variable `Auth__SigningKey`, never in a committed file. Missing or shorter stops the start; changing it ends every token (`core-instructions/07-security-model.md`) |
-| `Auth:TokenLifetimeMinutes` | `720` | How long an access token is valid (12 h). Between 1 and 1440, or the start stops |
-| `Auth:DevLoginEnabled` | `false`; `true` in `appsettings.Development.json` | Map `POST /api/v1/auth/dev-login`, which logs anyone in by name alone. Allowed only in Development: `true` in another environment stops the start |
-| `RequestLimits:MaxBodyBytes` | `4096` | The largest request body the server reads, in bytes; a larger one is 400 `INVALID_ARGUMENT` before anything runs (`core-instructions/05-api-contract.md` → Request limits). Between 1024 and 1048576, or the start stops |
-| `RateLimits:Commands:Burst:Limit`, `:WindowSeconds` | `10`, `1` | The most commands one player may send in a window of that many seconds (all command endpoints together). A command must pass this and the next limit; a refused request is 429 `RATE_LIMITED` with `Retry-After` (`core-instructions/05-api-contract.md` → Rate limits). A limit is 1 to 1000000, a window 1 to 3600 seconds, or the start stops |
-| `RateLimits:Commands:Sustained:Limit`, `:WindowSeconds` | `120`, `60` | The long window of the commands, per player |
-| `RateLimits:City:Limit`, `:WindowSeconds` | `30`, `60` | `GET /city` per player |
-| `RateLimits:Content:Limit`, `:WindowSeconds` | `30`, `60` | `GET /content` per player, a budget apart from the city's |
-| `RateLimits:DevLogin:Limit`, `:WindowSeconds` | `10`, `60` | The dev login per remote address |
-| `Simulation:DevTimeScale` | `1`; `1` in `appsettings.Development.json` | Development only: how many seconds of server time pass per real second (60 = one hour per minute), for playing a long scenario by hand; `GET /content` reports it as `rules.timeScale` and the start logs a warning. 1 to 1000; anything but 1 outside Development stops the start (`core-instructions/04-simulation-model.md` §1). The clock is the same after a restart with the same scale, but **reset the dev database after changing the scale** (`docker compose down -v`, then start again): a higher scale jumps every city years ahead, a lower one leaves them all behind the clock, frozen. Access tokens age at the same speed (12 hours last 12 minutes at 60), so the client logs in more often |
-| `Simulation:PresenceGraceSeconds` | `300` | How long, in real seconds, the player still counts as present after a request: couriers spend stamina only after it (`core-instructions/04-simulation-model.md` §2). 0 to 86 400; the server multiplies it by `DevTimeScale` |
-| `Logging:LogLevel:*`, `AllowedHosts` | as in `appsettings.json` | ASP.NET Core's own keys |
+Every key with its type, default, the values in `appsettings.json` and `appsettings.Development.json`, its meaning and its allowed range
+is in the generated [configuration reference](reference/generated/configuration.md) (from the options classes and their doc comments;
+`docs/modules/DocTools.md`). The other generated pages: [content](reference/generated/content.md), [endpoints](reference/generated/endpoints.md),
+[error codes](reference/generated/errors.md), [database schema](reference/generated/db-schema.md) and the [project map](reference/generated/project-map.md).
+
+Two keys need care beyond their range:
+- `Simulation:DevTimeScale` (Development only): **reset the dev database after changing the scale** (`docker compose down -v`, then start
+  again). A higher scale jumps every city years ahead, a lower one leaves them all behind the clock, frozen. Access tokens age at the same
+  speed (12 hours last 12 minutes at 60), so the client logs in more often.
+- `Content:FilePath`: invalid content stops the start with every error listed (`docs/how-to/add-building-or-item.md`).
 
 Secrets come from user-secrets or the environment, never a committed file: the connection string and the signing key.
 
@@ -122,7 +116,7 @@ the purse, and it first deletes every player, city, receipt and ledger row of th
 `docs/changes/CR-0008-logistics-rework.md`. The first `dotnet run` of the API after it (Development applies pending migrations) leaves
 an empty dev database; the next dev login creates the player and a starter city of the new model (800 coins, no goods). Tasks that need a
 city of the old model can't get one back.
-From M0-61 this section links to the generated reference.
+The tables, columns, keys and constraints as built: the generated [database schema](reference/generated/db-schema.md).
 
 ## Troubleshooting
 Added whenever a setup problem is solved (the build log entry links here).

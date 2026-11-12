@@ -6,6 +6,7 @@ using CityBuilder.Api.Auth;
 using CityBuilder.Api.Content;
 using CityBuilder.Api.Endpoints;
 using CityBuilder.Api.Http;
+using CityBuilder.Api.OpenApi;
 using CityBuilder.Api.Persistence;
 using CityBuilder.Api.Time;
 using CityBuilder.Application.Cities;
@@ -21,7 +22,17 @@ using Microsoft.Extensions.Options;
 // instead of "+00:00", because the JSON writer would turn the "+" into a six-character Unicode escape.
 const string LogTimestampFormat = "yyyy-MM-dd'T'HH:mm:ss.fff'Z'";
 
-var builder = WebApplication.CreateBuilder(args);
+// The build-time OpenAPI document (BuildTimeDocument, M0-61) runs this file without secrets or a database, as Development: placeholder
+// settings get the startup checks past. A real start is never that run.
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+{
+    Args = args,
+    EnvironmentName = BuildTimeDocument.IsRunning ? Environments.Development : null,
+});
+if (BuildTimeDocument.IsRunning)
+{
+    builder.Configuration.AddInMemoryCollection(BuildTimeDocument.Settings);
+}
 
 builder.Logging.AddJsonConsole(options =>
 {
@@ -46,7 +57,7 @@ builder.Services.AddResponseHeaders();
 builder.Services.AddSingleton<DistributedContextPropagator>(new ServerTraceContext());
 builder.Services.AddRateLimits(builder.Configuration);
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.AllowDuplicateProperties = false);
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(BearerSecurity.AddTo);
 builder.Services.AddHealthChecks();
 
 // The server clock is the only clock that drives game progress (core-instructions/02-principles.md, rule 3): the system clock, or in
