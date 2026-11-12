@@ -2,8 +2,9 @@
   <!-- The building inspector that BuildingInspector shows (M0-51; visual v2, CR-0008-T2; centred and larger, CR-0008 D22): a parchment panel
        framed in wood in the middle of the screen. A header with the building's big picture, its name and level and a round close button;
        then a body that scrolls up and down only (OD-17) with three columns in landscape and one in portrait: a box with its status, timer,
-       store, recipe and rates and a box with the worker stepper (red minus, the count, green plus); the courier station's box with its
-       couriers, each courier's deliveries (a Cancel per line and Cancel all, made by BuildingInspector from the model) and the route buttons;
+       store, recipe and rates and a box with the worker stepper (red minus, the count, green plus; hidden with its box for a building that
+       takes no workers); the courier station's box with its couriers, the route buttons first (so they stay in view on a small screen), then
+       each courier's deliveries (a Cancel per line and Cancel all, made by BuildingInspector from the model);
        and a box with the upgrade and its button. The root lets presses through, so the map around the panel stays tappable. Hidden while no
        building is selected. Style: Common.uss and Inspector.uss. -->
   <Style src="Common.uss" />
@@ -31,7 +32,7 @@
               <ui:Label name="inspector-rates" class="t-small" />
               <ui:Button name="inspector-send-trip" class="inspector-action btn btn--secondary" text="Send delivery" />
             </ui:VisualElement>
-            <ui:VisualElement class="inspector-workers-box box box--light">
+            <ui:VisualElement name="inspector-workers-box" class="inspector-workers-box box box--light">
               <ui:VisualElement name="inspector-stepper" class="inspector-stepper">
                 <ui:Button name="inspector-minus" class="inspector-step btn btn--danger glyph glyph-minus" text="" />
                 <ui:Label name="inspector-workers" class="inspector-workers" />
@@ -45,10 +46,10 @@
             <ui:VisualElement class="inspector-courier-box box">
               <ui:Label class="t-heading" text="Couriers" />
               <ui:Label name="inspector-couriers" class="inspector-couriers t-small" />
-              <ui:VisualElement name="inspector-queues" class="inspector-queues" />
               <ui:Button name="inspector-edit-routes" class="inspector-action btn btn--secondary" text="Edit routes" />
               <ui:Label name="inspector-routes-note" class="inspector-routes-note t-note" />
               <ui:Button name="inspector-reenergize" class="inspector-action btn btn--secondary" text="Re-energize couriers" />
+              <ui:VisualElement name="inspector-queues" class="inspector-queues" />
             </ui:VisualElement>
           </ui:VisualElement>
           <ui:VisualElement class="inspector-column inspector-upgrade box">

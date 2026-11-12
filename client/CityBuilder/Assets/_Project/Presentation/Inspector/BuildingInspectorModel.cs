@@ -89,7 +89,10 @@ namespace CityBuilder.Client.Presentation.Inspector
         /// <summary>Whether the Send trip button works: <see cref="HasSendTrip"/> and commands are allowed (CR-0008).</summary>
         public bool CanSendTrip { get; private set; }
 
-        /// <summary>Whether the worker stepper is shown: a producer that is built (a house has no workers to set, a site cannot take any yet).</summary>
+        /// <summary>
+        /// Whether the worker stepper is shown: a producer or a courier station (its workers are its couriers) that is built. A house, a
+        /// scriptorium or a warehouse has no workers to set and a site cannot take any yet: their menus show no worker box (CR-0008-T3).
+        /// </summary>
         public bool HasStepper { get; private set; }
 
         /// <summary>The stepper's value, such as <c>3 / 3</c>: the pending target (or the assigned workers) over the level's most workers.</summary>
@@ -249,7 +252,7 @@ namespace CityBuilder.Client.Presentation.Inspector
         public override int GetHashCode() => HashCode.Combine(BuildingId, StatusText, TimeText, WorkersText, UpgradeNote);
 
         /// <summary>
-        /// Sets the stepper's members. A producer that is built has a stepper; its rates are shown at the assigned workers, and, when a
+        /// Sets the stepper's members. A producer or a courier station that is built has a stepper; a producer's rates are shown at the assigned workers, and, when a
         /// target is on its way, at that target too. While commands are not allowed both buttons are off and the note is the reason; the shown
         /// value, the pending target included, stays, because the sender is still on its way with it.
         /// </summary>
@@ -261,8 +264,9 @@ namespace CityBuilder.Client.Presentation.Inspector
             int? pendingTarget,
             CommandAvailability availability)
         {
-            HasStepper = level.Recipe != null && building.Phase != BuildingPhase.Constructing;
-            if (level.Recipe == null || building.Phase == BuildingPhase.Constructing)
+            bool station = content.TryGetBuilding(building.TypeId, out BuildingDefinition? definition) && definition!.Kind == BuildingKind.CourierStation;
+            HasStepper = (level.Recipe != null || (station && level.MaxWorkers > 0)) && building.Phase != BuildingPhase.Constructing;
+            if (!HasStepper)
             {
                 return;
             }
@@ -272,12 +276,23 @@ namespace CityBuilder.Client.Presentation.Inspector
             long free = CityQueries.FreeWorkers(city, content);
             WorkersTarget = target;
             WorkersText = Number(target) + " / " + Number(level.MaxWorkers);
-            RatesText = RatesTextAt(content, city, building, assigned);
+            if (station)
+            {
+                // A courier station's workers are its couriers (CR-0008 D3): the preview names them, it has no rates.
+                if (target != assigned)
+                {
+                    PreviewText = "With " + Number(target) + (target == 1 ? " courier" : " couriers");
+                }
+            }
+            else
+            {
+                RatesText = RatesTextAt(content, city, building, assigned);
+            }
             MinusEnabled = availability.IsAllowed && target > 0;
             // One more worker than now must fit the free ones: a target already above the assigned count has used some of them.
             bool plusFits = target < level.MaxWorkers && (long)target + 1 - assigned <= free;
             PlusEnabled = availability.IsAllowed && plusFits;
-            if (target != assigned)
+            if (!station && target != assigned)
             {
                 PreviewText = "With " + Number(target) + (target == 1 ? " worker: " : " workers: ") + RatesTextAt(content, city, building, target);
             }

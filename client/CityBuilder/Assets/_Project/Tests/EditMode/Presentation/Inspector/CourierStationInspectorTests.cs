@@ -200,6 +200,28 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Inspector
             Assert.That((with.CanEditRoutes, with.RoutesNote), Is.EqualTo((true, string.Empty)));
         }
 
+        /// <summary>
+        /// A built courier station has the worker stepper, because its workers are its couriers (CR-0008-T3, playtest round 3): no rates, and the
+        /// preview of a changed target names couriers. A scriptorium and a warehouse take no workers: no stepper.
+        /// </summary>
+        [Test]
+        public void Station_HasAWorkerStepperForItsCouriers_OtherNonProducersHaveNone()
+        {
+            Building station = Station(workers: 1, BuildingPhase.Idle);
+            Building scriptorium = new Building(2, new BuildingTypeId("scriptorium"), 2, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
+            var couriers = new[] { new Courier(1, 1, CourierState.AtStation, 0, null, null, 600) };
+            var city = new CityState(0, 1, 10, 700, new[] { station, scriptorium }, Array.Empty<ResearchId>(), null, null, null, 1, couriers, Array.Empty<Route>());
+            int most = _content.TryGetBuilding(station.TypeId, out BuildingDefinition? definition) ? definition!.GetLevel(1).MaxWorkers : 0;
+
+            BuildingInspectorModel shown = BuildingInspectorModel.Create(_content, city, station, Nothing, default)!;
+            BuildingInspectorModel pending = BuildingInspectorModel.Create(_content, city, station, new InspectorPending(2, false), default)!;
+            BuildingInspectorModel other = BuildingInspectorModel.Create(_content, city, scriptorium, Nothing, default)!;
+
+            Assert.That((shown.HasStepper, shown.WorkersText, shown.RatesText), Is.EqualTo((true, "1 / " + most, string.Empty)));
+            Assert.That(pending.PreviewText, Is.EqualTo("With 2 couriers"));
+            Assert.That(other.HasStepper, Is.False);
+        }
+
         /// <summary>A courier station with id 1 at level 1.</summary>
         private static Building Station(int workers, BuildingPhase phase)
         {

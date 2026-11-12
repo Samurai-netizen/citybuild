@@ -1,5 +1,5 @@
 /* The building inspector (M0-51; visual v2, CR-0008-T2; centred and larger, CR-0008 D22): a parchment panel framed in wood in the middle of
-   the screen, between the HUD and the dock, with boxes for the status and workers, the couriers and the upgrade: three columns side by side
+   the screen, from under the HUD down over the faded dock, with boxes for the status and workers, the couriers and the upgrade: three columns side by side
    in landscape, one column in portrait. The body scrolls up and down only (OD-17); every text wraps, so nothing overlaps. Colours and sizes
    come from Common.uss. */
 .inspector-root {
@@ -19,7 +19,7 @@
   max-width: 1080px;
   max-height: 100%;
   margin-top: var(--hud-height);
-  margin-bottom: var(--dock-lift);
+  margin-bottom: var(--sp-2); /* over the dock: its buttons are faded and off while a building's menu is open (CR-0008 D22) */
   flex-shrink: 1;
   flex-direction: column;
 }
@@ -207,7 +207,7 @@
   margin-top: var(--sp-2);
 }
 
-/* Portrait: the full width between the HUD and the dock, the boxes in one column. */
+/* Portrait: the full width under the HUD, the boxes in one column. */
 .portrait .inspector-panel {
   width: 100%;
 }

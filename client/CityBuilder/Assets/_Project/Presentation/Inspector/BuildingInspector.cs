@@ -102,6 +102,12 @@ namespace CityBuilder.Client.Presentation.Inspector
         /// <summary>The name of the row that holds the worker stepper.</summary>
         public const string StepperName = "inspector-stepper";
 
+        /// <summary>The name of the box around the stepper; hidden for a building that takes no workers (CR-0008-T3).</summary>
+        public const string WorkersBoxName = "inspector-workers-box";
+
+        /// <summary>The name of the scroll view around the body; it goes back to the top for another building.</summary>
+        public const string ScrollName = "inspector-scroll";
+
         /// <summary>The name of the stepper's − button.</summary>
         public const string MinusName = "inspector-minus";
 
@@ -146,6 +152,9 @@ namespace CityBuilder.Client.Presentation.Inspector
 
         /// <summary>What the screen shows now, or null for nothing.</summary>
         private BuildingInspectorModel? _model;
+
+        /// <summary>The id of the building the panel shows; 0 while hidden.</summary>
+        private int _shownBuildingId;
 
         /// <summary>The elements the inspector writes to; null until <c>Start</c> found them.</summary>
         private Elements? _elements;
@@ -386,6 +395,13 @@ namespace CityBuilder.Client.Presentation.Inspector
             }
 
             BuildingInspectorModel? model = _model;
+            if (model != null && (model.BuildingId != _shownBuildingId || e.Panel.ClassListContains(HiddenClass)))
+            {
+                // Another building, or the panel opening: its body starts at the top, so its first boxes and buttons are in view.
+                e.Scroll.scrollOffset = Vector2.zero;
+            }
+
+            _shownBuildingId = model?.BuildingId ?? 0;
             bool wasHidden = e.Panel.ClassListContains(HiddenClass);
             e.Panel.EnableInClassList(HiddenClass, model == null);
             if (model == null)
@@ -419,6 +435,7 @@ namespace CityBuilder.Client.Presentation.Inspector
             e.SendTrip.style.display = model.HasSendTrip ? DisplayStyle.Flex : DisplayStyle.None;
             e.SendTrip.SetEnabled(model.CanSendTrip);
             e.Stepper.style.display = model.HasStepper ? DisplayStyle.Flex : DisplayStyle.None;
+            e.WorkersBox.style.display = model.HasStepper ? DisplayStyle.Flex : DisplayStyle.None;
             e.Workers.text = model.WorkersText;
             e.Minus.SetEnabled(model.MinusEnabled);
             e.Plus.SetEnabled(model.PlusEnabled);
@@ -498,8 +515,11 @@ namespace CityBuilder.Client.Presentation.Inspector
             /// <summary>The element that holds the building's picture.</summary>
             public VisualElement Icon = null!;
 
-            /// <summary>The element that holds the worker stepper.</summary>
-            public VisualElement Stepper = null!;
+            /// <summary>The element that holds the worker stepper, and the box around it.</summary>
+            public VisualElement Stepper = null!, WorkersBox = null!;
+
+            /// <summary>The scroll view around the body.</summary>
+            public ScrollView Scroll = null!;
 
             /// <summary>The courier station's column, and the element that holds the couriers' deliveries.</summary>
             public VisualElement CourierColumn = null!, Queues = null!;
@@ -520,6 +540,8 @@ namespace CityBuilder.Client.Presentation.Inspector
                     Panel = root.Q<VisualElement>(PanelName),
                     Icon = root.Q<VisualElement>(IconName),
                     Stepper = root.Q<VisualElement>(StepperName),
+                    WorkersBox = root.Q<VisualElement>(WorkersBoxName),
+                    Scroll = root.Q<ScrollView>(ScrollName),
                     CourierColumn = root.Q<VisualElement>(CourierColumnName),
                     Queues = root.Q<VisualElement>(QueuesName),
                     RoutesNote = root.Q<Label>(RoutesNoteName),
@@ -555,7 +577,7 @@ namespace CityBuilder.Client.Presentation.Inspector
                     && found.UpgradeTitle != null && found.UpgradeCost != null && found.UpgradeTime != null && found.UpgradeGain != null
                     && found.UpgradeNote != null && found.Minus != null && found.Plus != null && found.Upgrade != null
                     && found.SendTrip != null && found.EditRoutes != null && found.Reenergize != null && found.Close != null
-                    && found.CourierColumn != null && found.Queues != null && found.RoutesNote != null;
+                    && found.CourierColumn != null && found.Queues != null && found.RoutesNote != null && found.WorkersBox != null && found.Scroll != null;
                 return complete ? found : null;
             }
         }

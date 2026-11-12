@@ -247,7 +247,7 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(_inspector.Root!.Q<VisualElement>(BuildingInspector.StepperName).style.display.value, Is.EqualTo(DisplayStyle.Flex));
         }
 
-        /// <summary>A tile with no building shows nothing; a cottage shows its inspector without the stepper.</summary>
+        /// <summary>A tile with no building shows nothing; a cottage shows its inspector without the stepper and without the stepper's box.</summary>
         [Test]
         public void AnEmptyTileShowsNothing_AndACottageHasNoStepper()
         {
@@ -260,6 +260,8 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(LabelOf(BuildingInspector.NameName).text, Is.EqualTo("Cottage"));
             Assert.That(LabelOf(BuildingInspector.RecipeName).text, Is.EqualTo("Provides 4 workers"));
             Assert.That(_inspector.Root!.Q<VisualElement>(BuildingInspector.StepperName).style.display.value, Is.EqualTo(DisplayStyle.None));
+                    // Not even the empty box of the stepper is left (CR-0008-T3, playtest round 3).
+            Assert.That(_inspector.Root!.Q<VisualElement>(BuildingInspector.WorkersBoxName).style.display.value, Is.EqualTo(DisplayStyle.None));
         }
 
         /// <summary>Tapping the same tile again, or pressing close, hides the inspector and drops the tile.</summary>

@@ -275,6 +275,65 @@ namespace CityBuilder.Client.Tests.PlayMode
             return _screen.Root!.Q<VisualElement>(RouteEditorScreen.PanelName);
         }
 
+        /// <summary>
+        /// A real press on the Edit routes button, a pointer down and up at its centre sent to the element the panel picks there, as a finger
+        /// does, opens the editor and closes the inspector (CR-0008-T3, playtest round 3: the other tests only call
+        /// <see cref="BuildingInspector.PressEditRoutes"/>). The button is the first thing of the couriers' box, so the panel's body shows it
+        /// without scrolling and nothing lies over it.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator EditRoutes_RealPointerPress_OpensTheEditor()
+        {
+            var menus = new MenuGroup();
+            _inspector.Opened += menus.Join(_inspectorFlow.Close).NotifyOpened;
+            _screen.Opened += menus.Join(_flow.Close).NotifyOpened;
+            TapTile(6, 0);
+            yield return null;
+            Button button = _inspector.Root!.Q<Button>(BuildingInspector.EditRoutesName);
+            Vector2 centre = button.worldBound.center;
+            VisualElement? picked = button.panel.Pick(centre);
+            Assert.That(picked, Is.SameAs(button), "something else takes the press on Edit routes");
+
+            using (PointerDownEvent down = PointerDownEvent.GetPooled(new Event { type = EventType.MouseDown, mousePosition = centre, button = 0, clickCount = 1 }))
+            {
+                down.target = button;
+                button.SendEvent(down);
+            }
+
+            using (PointerUpEvent up = PointerUpEvent.GetPooled(new Event { type = EventType.MouseUp, mousePosition = centre, button = 0, clickCount = 1 }))
+            {
+                up.target = button;
+                button.SendEvent(up);
+            }
+
+            yield return null;
+
+            Assert.That(_routes.Phase, Is.EqualTo(RouteEditorPhase.Editing));
+            Assert.That(_screen.IsOpen, Is.True);
+            Assert.That(_inspector.IsShown, Is.False);
+        }
+
+        /// <summary>
+        /// The courier station's menu has the worker stepper (its workers are its couriers; CR-0008-T3, playtest round 3): + sends
+        /// <c>assign-workers</c> with one courier more.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator Station_Plus_SendsAssignWorkers()
+        {
+            TapTile(6, 0);
+            Assert.That(_inspector.Root!.Q<VisualElement>(BuildingInspector.WorkersBoxName).style.display.value, Is.EqualTo(DisplayStyle.Flex));
+            Assert.That(_inspector.Root.Q<Button>(BuildingInspector.PlusName).enabledSelf, Is.True);
+
+            _inspector.PressPlus();
+            Assert.That(_sender.Pending.Count, Is.EqualTo(1));
+            Assert.That((_sender.Pending[0].Intent.Kind, _sender.Pending[0].Intent.BuildingId), Is.EqualTo((CommandKind.AssignWorkers, StationId)));
+            yield return new WaitForSeconds(0.8f);
+
+            Assert.That(_transport.Requests.Count, Is.EqualTo(1), "sent once the stepper's debounce has passed");
+            Assert.That(_transport.Requests[0].Url, Does.EndWith("/api/v1/commands/assign-workers"));
+            Assert.That(_transport.Requests[0].JsonBody, Does.Contain("\"workers\":2"));
+        }
+
         /// <summary>The player taps the tile (x, y) on the ground.</summary>
         private void TapTile(int x, int y)
         {
