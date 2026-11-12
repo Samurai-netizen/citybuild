@@ -6,7 +6,8 @@ namespace CityBuilder.Infrastructure.Persistence.Mapping;
 
 /// <summary>
 /// Maps the records a city change leaves, ledger entries and command receipts, to their rows (<c>core-instructions/06-data-model.md</c>),
-/// explicitly. They are only ever inserted; only a receipt is read back (<see cref="ToReceipt"/>), when a command is retried.
+/// explicitly. They are only ever inserted; a receipt is read back (<see cref="ToReceipt"/>) when a command is retried, and ledger reasons
+/// (<see cref="ReasonOf"/>) by the ledger audit.
 /// </summary>
 public static class LedgerMapping
 {
@@ -80,4 +81,23 @@ public static class LedgerMapping
         LedgerReason.SettlementRefunded => "SETTLEMENT_REFUNDED",
         _ => throw new ArgumentOutOfRangeException(nameof(reason), reason, "Not a defined ledger reason."),
     };
+
+    /// <summary>
+    /// The ledger reason of a stored <c>reason</c> text: the way back of <see cref="ReasonText"/>, for the ledger audit (M0-64), which reads rows
+    /// back.
+    /// </summary>
+    /// <param name="text">The stored text.</param>
+    /// <returns>The reason, or <see langword="null"/> for a text the server never writes (<c>DEV_ADJUST</c> of the server panel, CR-0006).</returns>
+    public static LedgerReason? ReasonOf(string text)
+    {
+        foreach (LedgerReason reason in Enum.GetValues<LedgerReason>())
+        {
+            if (string.Equals(ReasonText(reason), text, StringComparison.Ordinal))
+            {
+                return reason;
+            }
+        }
+
+        return null;
+    }
 }

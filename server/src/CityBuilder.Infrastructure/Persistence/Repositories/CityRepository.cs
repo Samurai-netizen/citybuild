@@ -40,20 +40,7 @@ public sealed class CityRepository(CityBuilderDbContext db, TimeProvider timePro
         }
 
         CityRow city = await LockAsync(playerId, cancellationToken) ?? throw new CityNotFoundException($"Player {playerId} has no city.");
-        List<CityBuildingRow> buildings = await _db.CityBuildings.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
-        List<CityStoreRow> stores = await _db.CityStores.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
-        List<CityProjectNeedRow> projectNeeds = await _db.CityProjectNeeds.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
-        List<CityResearchRow> research = await _db.CityResearch.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
-        List<CityResearchNeedRow> researchNeeds = await _db.CityResearchNeeds.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
-        List<CityRoadRow> roads = await _db.CityRoads.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
-        List<CityTripRow> trips = await _db.CityTrips.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
-        List<CityCourierRow> couriers = await _db.CityCouriers.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
-        List<CityCourierLoadRow> courierLoads = await _db.CityCourierLoads.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
-        List<CityRouteActionRow> routeActions = await _db.CityRouteActions.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
-        List<CityDeliveryLineRow> deliveryLines = await _db.CityDeliveryLines.Where(row => row.CityId == city.Id).ToListAsync(cancellationToken);
-
-        return CityMapping.ToAggregate(
-            new CityRows(city, buildings, stores, projectNeeds, research, researchNeeds, roads, trips, couriers, courierLoads, routeActions, deliveryLines));
+        return CityMapping.ToAggregate(await CityRowsLoader.LoadAsync(_db, city, tracked: true, cancellationToken));
     }
 
     /// <summary>

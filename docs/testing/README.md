@@ -111,6 +111,12 @@ flowchart LR
   clock through the actions and the table's rows and checks each row's snapshot (as one line of text, so a failure names the row), the
   stored city against the replay (`SampleCities.Describe`), and the ledger against the city's totals. If a row fails there but the engine's golden
   test passes, the difference is in the server. The same requests by hand: `docs/api/smoke.http`.
+- The ledger audit (`Audit/`, M0-64): `LedgerAuditDatabaseTests` has three players play a long random game over HTTP (`RandomHttpPlayer`:
+  a fixed opening, then every command and settles drawn from a seeded `Random` and the last snapshot, the clock moved by the test), then runs
+  the server's `LedgerAuditor` over every city: zero mismatches, every command succeeded once, eight ledger reasons written. A refusal with
+  a rule's code is play; anything else fails with the seed and the step. To audit by hand, run the class:
+  `dotnet test server/CityBuilder.slnx --filter "FullyQualifiedName~LedgerAuditDatabaseTests"`. A new command joins the random game
+  (`docs/how-to/add-command.md`). The auditor has no endpoint.
 - A lost response (`Commands/LostResponseDatabaseTests`, M0-56): the command, a poll that moves the city past it, then the same body again; the client hanging up while its request waits for the city's lock (`DatabaseLocks`). The client's side: `Tests/EditMode/Net/LostResponseTests`, with a wire of its own that keeps receipts, so a retry with a new id would count as a second application.
 - Examples: `Persistence/CityRepositoryDatabaseTests` (repositories through the server), `Persistence/CityTransactionDatabaseTests`
   (the runner: rollback, version check, two transactions on one city, lock timeout), `Persistence/SettleCityDatabaseTests` (a use case

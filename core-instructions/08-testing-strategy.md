@@ -40,6 +40,10 @@ Mark integration tests with `[Trait("Category", "Integration")]` so the fast sui
   invariance for one absence start and any lengths, and stamina spent exactly after the absence start (invariant 14, part H). The path
   rule (invariant 12) is checked against a brute force on small maps (part C).
   From a failing seed to a rule test: `docs/how-to/debug-determinism-failure.md`.
+- **Ledger audit** (Integration layer, M0-64): seeded players play a long random game of every command and settles over HTTP with
+  `FakeTimeProvider`; then `LedgerAuditor` audits every stored city: zero mismatches (grant first, an unbroken `balance_after` chain, each
+  item's sum equal to its city total). The game must reach each command's write path and the ledger reasons it can write; a failure names
+  the seed and step. How to run it: `docs/testing/README.md`.
 - **Performance budget:** the worst-case city stays within budget, with the event count asserted: 64 producers over 8 hours and over 7
   days after them, until their stores stop them (part H); from CR-0008 part I the worst case of `04` §12 (couriers on the shortest walks
   for their whole stamina).
