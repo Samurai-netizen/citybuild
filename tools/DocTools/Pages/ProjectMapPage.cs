@@ -63,8 +63,8 @@ public static class ProjectMapPage
         foreach (IGrouping<string, (string Name, string Group, IReadOnlyList<string> References)> group in
                  all.GroupBy(node => node.Group).OrderBy(group => group.Key, StringComparer.Ordinal))
         {
-            lines.Add($"  subgraph {NodeId(group.Key)}[\"{group.Key}\"]");
-            lines.AddRange(group.Select(node => $"    {NodeId(node.Name)}[\"{node.Name}\"]"));
+            lines.Add($"  subgraph {NodeId(group.Key)}[{MarkdownPage.MermaidLabel(group.Key)}]");
+            lines.AddRange(group.Select(node => $"    {NodeId(node.Name)}[{MarkdownPage.MermaidLabel(node.Name)}]"));
             lines.Add("  end");
         }
 

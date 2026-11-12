@@ -103,6 +103,11 @@ public sealed class MarkdownPage
     public static string Code(string? text) =>
         string.IsNullOrEmpty(text) ? string.Empty : "`" + text.Replace("|", "\\|", StringComparison.Ordinal) + "`";
 
+    /// <summary>A Mermaid node label in double quotes; a double quote inside it becomes Mermaid's <c>#quot;</c>.</summary>
+    /// <param name="text">The label's text.</param>
+    /// <returns>The quoted label, for example <c>"Frame Saw"</c>.</returns>
+    public static string MermaidLabel(string text) => "\"" + text.Replace("\"", "#quot;", StringComparison.Ordinal) + "\"";
+
     /// <summary>Appends one line (an empty one by default) and its line end.</summary>
     /// <param name="line">The line's text.</param>
     /// <returns>This page.</returns>
