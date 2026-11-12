@@ -49,7 +49,7 @@ flowchart LR
 
 | Project | Path | Kind | Project references | Packages |
 |---|---|---|---|---|
-| `CityBuilder.Api` | `server/src/CityBuilder.Api/CityBuilder.Api.csproj` | web app | `CityBuilder.Application`, `CityBuilder.Infrastructure` | `Microsoft.AspNetCore.Authentication.JwtBearer`, `Microsoft.AspNetCore.OpenApi`, `Microsoft.EntityFrameworkCore.Design` |
+| `CityBuilder.Api` | `server/src/CityBuilder.Api/CityBuilder.Api.csproj` | web app | `CityBuilder.Application`, `CityBuilder.Infrastructure` | `Microsoft.AspNetCore.Authentication.JwtBearer`, `Microsoft.AspNetCore.OpenApi`, `Microsoft.EntityFrameworkCore.Design`, `Microsoft.Extensions.ApiDescription.Server` |
 | `CityBuilder.Application` | `server/src/CityBuilder.Application/CityBuilder.Application.csproj` | library | `CityBuilder.Domain`, `CityBuilder.Simulation` | — |
 | `CityBuilder.Domain` | `server/src/CityBuilder.Domain/CityBuilder.Domain.csproj` | library | `CityBuilder.Simulation` | — |
 | `CityBuilder.Infrastructure` | `server/src/CityBuilder.Infrastructure/CityBuilder.Infrastructure.csproj` | library | `CityBuilder.Application`, `CityBuilder.Domain` | `Microsoft.EntityFrameworkCore.Relational`, `Npgsql.EntityFrameworkCore.PostgreSQL` |

@@ -7,9 +7,9 @@
 ## Resume point
 - **State:** IN PROGRESS          <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M0-61 · DocTools: generated reference docs · branch `task/M0-61-doctools` · build log `docs/build-log/2026/2026-11-12-01-M0-61.md`
-- **Part / step:** plan approved 2026-11-12 (Q1 build-time openapi.json, Q2 AGENTS.md line); steps 1 to 3 of 6 done (skeleton, project map, check; content, errors; db schema, configuration)
+- **Part / step:** plan approved 2026-11-12 (Q1 build-time openapi.json, Q2 AGENTS.md line); steps 1 to 4 of 6 done (all six pages; check; build-time OpenAPI)
 - **Last completed:** CR-0008-T3 · Logistics rework: close-out and playtest (PR #88, merged)
-- **Next step:** step 4: `endpoints.md` from a build-time `openapi.json` (`Microsoft.Extensions.ApiDescription.Server`, owner Q1).
+- **Next step:** step 5/6: CI check is live once pushed; docs (getting-started Configuration → links, 05/06/23 notes, 17, 19, 03, overview, AGENTS line, tools/README, CHANGELOG).
 - **Open questions for the owner:** CR-0008-T3: the `22` edit (decision 27) and the Follow-ups in its build log. CR-0008-T1: 8 Dependabot alerts on `main` (build log Follow-ups). M0-58: the [MANUAL] content-change check (`client/README.md`; no automated test covers the `GameRoot` rebuild). CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-55: the [MANUAL] look at the connection states (`client/README.md`). CR-0007-T1: the [MANUAL] look at the new UI (`client/README.md`); the status label may be removed (build log follow-ups).
 - **Known broken / do not touch:** nothing.
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)

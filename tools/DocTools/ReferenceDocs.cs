@@ -21,7 +21,7 @@ public static class ReferenceDocs
     /// <param name="root">The repository root, which the generators read from.</param>
     /// <returns>The pages, in ordinal order of their file names.</returns>
     public static IReadOnlyList<GeneratedPage> Generate(string root) =>
-        [.. new[] { ConfigurationPage.Generate(root), ContentPage.Generate(root), DbSchemaPage.Generate(), ErrorsPage.Generate(), ProjectMapPage.Generate(root) }.OrderBy(page => page.FileName, StringComparer.Ordinal)];
+        [.. new[] { ConfigurationPage.Generate(root), ContentPage.Generate(root), DbSchemaPage.Generate(), EndpointsPage.Generate(root), ErrorsPage.Generate(), ProjectMapPage.Generate(root) }.OrderBy(page => page.FileName, StringComparer.Ordinal)];
 
     /// <summary>
     /// Generates every page into <paramref name="folder"/> and deletes the <c>*.md</c> files there that no generator makes any more, so the

@@ -75,6 +75,32 @@ public sealed class PagesTests
     public void ConfigurationPage_ConstantReferences_ShowTheirValues() =>
         Assert.Contains("between 1 and 60000", ConfigurationPage.Generate(TestRepository.Root).Text, StringComparison.Ordinal);
 
+    /// <summary>
+    /// The endpoints page has a row for every operation of the build-time OpenAPI document, with its auth: the game endpoints need the bearer
+    /// token, the dev login doesn't.
+    /// </summary>
+    /// <param name="row">The start of an operation's row.</param>
+    [Theory]
+    [InlineData("| GET | `/api/v1/city` | Bearer |")]
+    [InlineData("| GET | `/api/v1/content` | Bearer |")]
+    [InlineData("| POST | `/api/v1/commands/place-building` | Bearer |")]
+    [InlineData("| POST | `/api/v1/auth/dev-login` | none |")]
+    public void EndpointsPage_Operations_AreListedWithTheirAuth(string row) =>
+        Assert.Contains(row, EndpointsPage.Generate(TestRepository.Root).Text, StringComparison.Ordinal);
+
+    /// <summary>Every schema a row or a property links to has its own section, so no link on the page is broken.</summary>
+    [Fact]
+    public void EndpointsPage_SchemaLinks_PointToSections()
+    {
+        string text = EndpointsPage.Generate(TestRepository.Root).Text;
+
+        IEnumerable<string> targets = System.Text.RegularExpressions.Regex.Matches(text, @"\]\(#([a-z0-9]+)\)").Select(match => match.Groups[1].Value);
+        IEnumerable<string> sections = System.Text.RegularExpressions.Regex.Matches(text, @"^### (\S+)$", System.Text.RegularExpressions.RegexOptions.Multiline)
+            .Select(match => match.Groups[1].Value.ToLowerInvariant());
+
+        Assert.Empty(targets.Except(sections));
+    }
+
     /// <summary>Thousandths are written with at most three decimals and no trailing zeros.</summary>
     /// <param name="milli">The value in thousandths.</param>
     /// <param name="expected">The text.</param>
