@@ -5,12 +5,12 @@
 > This file is loaded into every session: Milestone-table notes are task ids and PR numbers only (≤ ~100 characters per row).
 
 ## Resume point
-- **State:** IN PROGRESS          <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** M0-64 · Ledger audit · branch `task/M0-64-ledger-audit` · build log `docs/build-log/2026/2026-11-12-04-M0-64.md`
-- **Part / step:** step 4 of 4 (auditor + port; EF source; HTTP random-sequence test; docs), plan in the build log
-- **Last completed:** M0-63 · Documentation completeness pass (PR #91, merged)
-- **Next step:** step 4: docs (module docs Application and Infrastructure, `docs/testing/README.md`, `add-command.md`, `06`, `08`, CHANGELOG), then `/finish-task`.
-- **Open questions for the owner:** M0-61: the stashed Unity Editor settings (`git stash list`), apply or drop; Follow-ups in its build log. CR-0008-T3: the `22` edit (decision 27) and the Follow-ups in its build log. CR-0008-T1: 8 Dependabot alerts on `main` (build log Follow-ups). M0-58: the [MANUAL] content-change check (`client/README.md`; no automated test covers the `GameRoot` rebuild). CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-55: the [MANUAL] look at the connection states (`client/README.md`). CR-0007-T1: the [MANUAL] look at the new UI (`client/README.md`); the status label may be removed (build log follow-ups).
+- **State:** IDLE          <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** — (M0-64 is in review: the owner merges)
+- **Part / step:** —
+- **Last completed:** M0-64 · Ledger audit (in review; build log `docs/build-log/2026/2026-11-12-04-M0-64.md`)
+- **Next step:** the owner merges the M0-64 PR; then `/start-task M0-65` (banned APIs and architecture tests).
+- **Open questions for the owner:** M0-64: the two Follow-ups in its build log (refund reasons, a CLI). M0-61: the stashed Unity Editor settings (`git stash list`), apply or drop; Follow-ups in its build log. CR-0008-T3: the `22` edit (decision 27) and the Follow-ups in its build log. CR-0008-T1: 8 Dependabot alerts on `main` (build log Follow-ups). M0-58: the [MANUAL] content-change check (`client/README.md`; no automated test covers the `GameRoot` rebuild). CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-55: the [MANUAL] look at the connection states (`client/README.md`). CR-0007-T1: the [MANUAL] look at the new UI (`client/README.md`); the status label may be removed (build log follow-ups).
 - **Known broken / do not touch:** nothing.
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
 - **Verify with:** `bash scripts/dev/check-docs.sh --base origin/main` (as CI) · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
@@ -36,7 +36,7 @@
 | Docs automation (DocTools) + docs completeness | in progress | CR-0002, CR-0003 (PR #27, #29); M0-61 (PR #89); M0-63 (PR #91) |
 | Logistics (CR-0008) | done | T1 to T3 (PR #86, #87, #88) |
 | Balance simulator | not started | |
-| E2E / security / concurrency suites | in progress | M0-36, M0-56, M0-60 (PR #48, #80, #85); `docs/testing/KILL-SERVER-CHECK.md` |
+| E2E / security / concurrency suites | in progress | M0-36, M0-56, M0-60 (PR #48, #80, #85); M0-64 in review |
 | Dev build + M0 close-out | not started | |
 
 Per-task detail (what each PR added): `docs/plan/M0-PLAN.md`, `docs/build-log/`, `git log`.
