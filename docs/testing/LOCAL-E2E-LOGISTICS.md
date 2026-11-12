@@ -49,8 +49,9 @@ logs; send them from the Woodcutter like in step 2 (two loads of 10 when you sen
 3. Let the Warehouse or the Woodcutter fill above three quarters: the ring above it becomes the amber, segmented store gauge with the
    good's icon (red when full).
 
-**7. An absence and re-energize.** Click another program and leave Unity in the background for at least 6 minutes (6 city hours). Click the
-Game view: the welcome-back report lists Moved, Delivered and Couriers, says which courier rested since when, and offers
+**7. An absence and re-energize.** Click another program and leave Unity in the background for at least 10 minutes. The presence grace is
+real time (`PresencePolicy`: `Simulation:PresenceGraceSeconds` times the scale), so couriers start to spend stamina 5 real minutes after
+your last request and are tired 4 real minutes later. Click the Game view: the welcome-back report lists Moved, Delivered and Couriers, says which courier rested since when, and offers
 **Re-energize couriers**. The HUD says `1 courier resting` (or more). Press it: the couriers walk again.
 
 **8. Back to normal.** Stop the game and the API, then reset the database (`docker compose down -v`, `docker compose up -d postgres`):
