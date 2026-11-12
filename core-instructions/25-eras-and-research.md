@@ -52,8 +52,8 @@ CR-0008): players have it from the start. Only its minor parts come by research:
 | `UnlockBuilding(type)` | Trade Charter → Trading Post | yes |
 | `LaborReduction(type, ‰)` | Sharpened Axes → Woodcutter −200 ‰ | yes |
 | `StorageCapBonus(item, +n)` | Storehouses → a higher limit for logs and planks in every building's store | yes |
-| `UnlockAmountMode(mode)` | Tally Sticks → any percentage in courier actions (Era I); an Era II node → exact numbers | planned (CR-0008-T1) |
-| `WalkSpeedBonus(‰)` | Sturdy Boots → walkers 20 % faster | planned (CR-0008-T1) |
+| `UnlockAmountMode(mode)` | Tally Sticks → any percentage in courier actions (Era I); an Era II node → exact numbers | yes (CR-0008-T1) |
+| `WalkSpeedBonus(‰)` | Sturdy Boots → walkers 20 % faster | yes (CR-0008-T1) |
 | `MaxLevelBonus(type, +n)` | Timber Framing → Cottage max level 3 | later |
 | `LandExpansion(+rows, +cols)` | Land Survey I → grid 10 × 10 | later |
 | `BuilderSlots(+n)`, `ResearchSlots(+n)` | Guild of Masons → +1 builder | later |
