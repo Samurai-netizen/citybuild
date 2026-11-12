@@ -1,7 +1,9 @@
 using CityBuilder.Api.Errors;
 using CityBuilder.DocTools.Pages;
 using CityBuilder.Infrastructure.Content;
+using CityBuilder.Infrastructure.Persistence;
 using CityBuilder.Simulation.Content;
+using Microsoft.EntityFrameworkCore;
 
 namespace CityBuilder.DocTools.Tests;
 
@@ -43,6 +45,35 @@ public sealed class PagesTests
 
         Assert.All(projects, project => Assert.Contains($"| `{project}` |", text, StringComparison.Ordinal));
     }
+
+    /// <summary>The schema page has a section for every table of the EF Core model.</summary>
+    [Fact]
+    public void DbSchemaPage_EveryTableOfTheModel_HasASection()
+    {
+        string text = DbSchemaPage.Generate().Text;
+        using CityBuilderDbContext context = new CityBuilderDbContextDesignTimeFactory().CreateDbContext([]);
+
+        Assert.All(context.Model.GetEntityTypes().Select(entity => entity.GetTableName()),
+            table => Assert.Contains($"\n## {table}\n", text, StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// The configuration page has the keys the server reads: a plain one, the connection string under <c>ConnectionStrings:</c>, and a nested
+    /// rate limit. A reference to a constant in a doc comment shows the constant's value.
+    /// </summary>
+    /// <param name="key">A key the page must have.</param>
+    [Theory]
+    [InlineData("Auth:SigningKey")]
+    [InlineData("ConnectionStrings:CityBuilder")]
+    [InlineData("RateLimits:Commands:Burst:Limit")]
+    [InlineData("Simulation:PresenceGraceSeconds")]
+    public void ConfigurationPage_ServerKeys_AreListed(string key) =>
+        Assert.Contains($"| `{key}` |", ConfigurationPage.Generate(TestRepository.Root).Text, StringComparison.Ordinal);
+
+    /// <summary>A doc comment's reference to a constant shows the value: the lock timeout's range reads "between 1 and 60000".</summary>
+    [Fact]
+    public void ConfigurationPage_ConstantReferences_ShowTheirValues() =>
+        Assert.Contains("between 1 and 60000", ConfigurationPage.Generate(TestRepository.Root).Text, StringComparison.Ordinal);
 
     /// <summary>Thousandths are written with at most three decimals and no trailing zeros.</summary>
     /// <param name="milli">The value in thousandths.</param>
