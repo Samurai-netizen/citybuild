@@ -82,6 +82,21 @@ namespace CityBuilder.Client.Net
         /// <summary>422: a route's slot, stops or actions break the route rules (CR-0008).</summary>
         public const string InvalidRoute = "INVALID_ROUTE";
 
+        /// <summary>422: a built courier station, but every courier has a route (CR-0008 D14).</summary>
+        public const string NoFreeCourier = "NO_FREE_COURIER";
+
+        /// <summary>422: the delivery's lines don't fit in the courier's queue (CR-0008 D17).</summary>
+        public const string DeliveryQueueFull = "DELIVERY_QUEUE_FULL";
+
+        /// <summary>422: a route before the city has built the route building, the Scriptorium (CR-0008 D15).</summary>
+        public const string RoutesLocked = "ROUTES_LOCKED";
+
+        /// <summary>422: a route for a courier that still has delivery lines (CR-0008 D19).</summary>
+        public const string CourierBusy = "COURIER_BUSY";
+
+        /// <summary>422: the delivery line to cancel is not that courier's any more (CR-0008 D18).</summary>
+        public const string DeliveryNotFound = "DELIVERY_NOT_FOUND";
+
         /// <summary>409: the same request id was sent with a different command.</summary>
         public const string IdempotencyConflict = "IDEMPOTENCY_CONFLICT";
 

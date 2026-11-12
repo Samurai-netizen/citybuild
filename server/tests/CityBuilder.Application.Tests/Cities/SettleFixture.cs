@@ -202,6 +202,7 @@ internal static class SettleFixture
                 TripCarryLimit = 1000,
                 MaxRouteStops = 4,
                 MaxStopActions = 2,
+                MaxDeliveryLines = 20,
             },
             AmountPresets = [new AmountPresetData { Id = "all", Name = "All", Percent = 100 }],
             Roads = [new RoadLevelData { Level = 1, Name = "Path", TileMillis = 2500, Cost = new() { ["coins"] = 5 } }],

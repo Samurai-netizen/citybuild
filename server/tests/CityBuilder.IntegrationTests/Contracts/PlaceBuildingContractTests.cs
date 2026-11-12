@@ -57,7 +57,7 @@ public sealed class PlaceBuildingContractTests(ApiFactory factory) : IClassFixtu
         Assert.Equal(
             """[{"id":1,"typeId":"woodcutter","x":2,"y":3,"level":1,"assignedWorkers":0,"maxWorkers":2,"phase":"Constructing",""" +
             """ "phaseStartedAt":0,"phaseEndsAt":60,"cycleLabor":0,"laborRemaining":0,"segmentStartedAt":0,"stallReason":null,""".TrimStart() +
-            """ "store":{},"storeLimits":{"logs":40},"needs":{},"project":null}]""".TrimStart(),
+            """ "store":{},"storeLimits":{"logs":40},"needs":{},"project":null,"paused":false}]""".TrimStart(),
             snapshot["city"]!["buildings"]!.ToJsonString());
 
         Assert.Equal(1, store.SaveCount);

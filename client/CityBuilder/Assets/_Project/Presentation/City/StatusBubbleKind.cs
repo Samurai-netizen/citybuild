@@ -16,5 +16,8 @@ namespace CityBuilder.Client.Presentation.City
 
         /// <summary>The building waits because the city has no room for an output item.</summary>
         StorageFull,
+
+        /// <summary>The player paused the building (CR-0008 D23): a paused producer that finished its cycle, or a paused courier station.</summary>
+        Paused,
     }
 }

@@ -16,10 +16,12 @@ using CityBuilder.Simulation.State;
 namespace CityBuilder.Client.Presentation.Trips
 {
     /// <summary>
-    /// The state of the manual trip flow (CR-0008): which source building the player started from, which target building they tapped on the map,
-    /// which item and amount (<c>all</c>, <c>half</c>, <c>quarter</c>, or a percentage once unlocked) to send, the shortest path across the city
-    /// via <see cref="PathFinder"/>, and the words and enable rules of the Send button. The disable reasons follow <see cref="TripRules.StartTrip"/>
-    /// in the server's order (<c>Target does not need or store this item</c>, <c>No free workers</c>, <c>Nothing to carry</c>) after the connection's
+    /// The state of the delivery flow (CR-0008, amendment 1): which source building the player started from, which target building they tapped
+    /// on the map, which item and amount (<c>all</c>, <c>half</c>, <c>quarter</c>, or a percentage once unlocked) to send, who carries it (the
+    /// courier the engine would pick, <see cref="CourierRules.PickFreeCourier"/>, or a worker while no courier station is built), in how many
+    /// loads, the shortest path across the city via <see cref="PathFinder"/>, and the words and enable rules of the Send button. The disable
+    /// reasons follow <see cref="TripRules.StartTrip"/> in the server's order (<c>Target does not need or store this item</c>, <c>No free
+    /// courier</c> or <c>No free workers</c>, <c>Nothing to carry</c>, <c>Courier queue full</c>) after the connection's
     /// <see cref="CommandAvailability"/>. Pure C# with no Unity objects, so EditMode tests check every transition and refusal reason.
     /// </summary>
     public sealed class TripFlowModel
@@ -27,8 +29,14 @@ namespace CityBuilder.Client.Presentation.Trips
         /// <summary>The reason shown when the target building neither needs the item for a project nor stores it.</summary>
         public const string TargetDoesNotAcceptReason = "Target does not need or store this item";
 
-        /// <summary>The reason shown when the city has no free worker for a trip.</summary>
+        /// <summary>The reason shown when no courier station is built and the city has no free worker for a delivery.</summary>
         public const string NoFreeWorkersReason = "No free workers";
+
+        /// <summary>The reason shown when a courier station is built but every courier has a route (CR-0008 D14).</summary>
+        public const string NoFreeCourierReason = "No free courier: every courier has a route";
+
+        /// <summary>The reason shown when the delivery's loads don't fit in the chosen courier's queue (CR-0008 D17).</summary>
+        public const string QueueFullReason = "That courier's queue is full";
 
         /// <summary>The reason shown when the resolved carry quantity at the source store is zero.</summary>
         public const string NothingToCarryReason = "Nothing to carry";
@@ -94,8 +102,20 @@ namespace CityBuilder.Client.Presentation.Trips
         /// <summary>The walk duration in city seconds along <see cref="Path"/>; 0 until a target is picked.</summary>
         public long WalkSeconds { get; private set; }
 
-        /// <summary>How many units the worker will carry on this trip.</summary>
+        /// <summary>How many units the delivery moves in all, counted from the source's stock now (CR-0008 D16).</summary>
         public long CarryQuantity { get; private set; }
+
+        /// <summary>The most one load carries: the chosen courier's station level, or the content's trip carry limit for a worker.</summary>
+        public long LoadLimit { get; private set; }
+
+        /// <summary>In how many loads the delivery goes: <see cref="CarryQuantity"/> over <see cref="LoadLimit"/>, rounded up; 0 with nothing to carry.</summary>
+        public long LoadCount { get; private set; }
+
+        /// <summary>Who carries it, such as <c>Courier 1 of Courier Station</c> or <c>a worker</c>; empty when no one can.</summary>
+        public string CarrierText { get; private set; } = string.Empty;
+
+        /// <summary>The courier the engine would pick, or null (a worker carries it, or no courier is free).</summary>
+        private Courier? _courier;
 
         /// <summary>The main line of the trip bar.</summary>
         public string PromptText { get; private set; } = string.Empty;
@@ -300,6 +320,10 @@ namespace CityBuilder.Client.Presentation.Trips
             Path = Array.Empty<(int X, int Y)>();
             WalkSeconds = 0;
             CarryQuantity = 0;
+            LoadLimit = 0;
+            LoadCount = 0;
+            CarrierText = string.Empty;
+            _courier = null;
             PromptText = string.Empty;
             DetailText = string.Empty;
             ItemButtonText = string.Empty;
@@ -363,8 +387,10 @@ namespace CityBuilder.Client.Presentation.Trips
             }
 
             long stock = source!.GetStock(Item);
-            long wanted = ResolveAmount(Amount, stock);
-            CarryQuantity = Math.Min(Math.Min(wanted, stock), _content.Rules.TripCarryLimit);
+            CarryQuantity = Math.Min(ResolveAmount(Amount, stock), stock);
+            _finder.Load(_city);
+            PickCarrier(source);
+            LoadCount = CarryQuantity < 1 || LoadLimit < 1 ? 0 : IntegerMath.CeilDiv(CarryQuantity, LoadLimit);
             string itemName = ItemText.ItemName(_content, Item);
             string sourceName = BuildingNameOf(source);
             string amountLabel = FormatAmountLabel(Amount);
@@ -375,31 +401,73 @@ namespace CityBuilder.Client.Presentation.Trips
                 Path = Array.Empty<(int X, int Y)>();
                 WalkSeconds = 0;
                 PromptText = "Send from " + sourceName + " — tap a target building";
-                DetailText = itemName + " · " + amountLabel + " (" + CarryQuantity.ToString(CultureInfo.InvariantCulture) + ")";
+                DetailText = itemName + " · " + amountLabel + " (" + CarryQuantity.ToString(CultureInfo.InvariantCulture) + ")" + LoadsText();
                 HintText = string.Empty;
                 CanConfirm = false;
                 return;
             }
 
-            _finder.Load(_city);
             Path = _finder.Route(source.X, source.Y, target.X, target.Y);
             WalkSeconds = _finder.Measure(source.X, source.Y, target.X, target.Y)
                 .Seconds(CityQueries.WalkBonusPermille(_city, _content));
             string targetName = BuildingNameOf(target);
+            string detail = (LoadCount > 0 ? LoadsText().Substring(3) + " · " : string.Empty)
+                + (CarrierText.Length > 0 ? CarrierText + " · " : string.Empty)
+                + "walk " + DurationText.Format(WalkSeconds) + " · " + amountLabel;
 
             if (Phase == TripPhase.Sending)
             {
                 PromptText = "Sending " + CarryQuantity.ToString(CultureInfo.InvariantCulture) + " " + itemName + " to " + targetName + "…";
-                DetailText = "Takes " + DurationText.Format(WalkSeconds) + " · " + amountLabel;
+                DetailText = detail;
                 HintText = string.Empty;
                 CanConfirm = false;
                 return;
             }
 
             PromptText = "Send " + CarryQuantity.ToString(CultureInfo.InvariantCulture) + " " + itemName + " to " + targetName;
-            DetailText = "Takes " + DurationText.Format(WalkSeconds) + " · " + amountLabel;
+            DetailText = detail;
             HintText = DisableReasonFor(target);
             CanConfirm = HintText.Length == 0;
+        }
+
+        /// <summary>
+        /// Who would carry the delivery, as <see cref="TripRules.StartTrip"/> decides: with a built courier station the courier
+        /// <see cref="CourierRules.PickFreeCourier"/> picks (its station level's carry limit per load), otherwise a worker (the content's trip
+        /// carry limit). Sets <see cref="LoadLimit"/>, <see cref="CarrierText"/> and the picked courier; the path finder is loaded.
+        /// </summary>
+        private void PickCarrier(Building source)
+        {
+            _courier = null;
+            if (!CityQueries.HasBuiltCourierStation(_city!, _content))
+            {
+                LoadLimit = _content.Rules.TripCarryLimit;
+                CarrierText = "a worker";
+                return;
+            }
+
+            _courier = CourierRules.PickFreeCourier(_city!, _content, _finder, source);
+            if (_courier == null || !_city!.TryGetBuilding(_courier.StationId, out Building? station))
+            {
+                LoadLimit = 0;
+                CarrierText = string.Empty;
+                return;
+            }
+
+            LoadLimit = _content.TryGetBuilding(station!.TypeId, out BuildingDefinition? definition) ? definition!.GetLevel(station.Level).CarryLimit : 0;
+            CarrierText = "Courier " + _courier.Slot.ToString(CultureInfo.InvariantCulture) + " of " + BuildingNameOf(station);
+        }
+
+        /// <summary>The loads in words after a separator, such as <c> · 4 loads of 10</c> or <c> · 1 load</c>; empty with nothing to carry.</summary>
+        private string LoadsText()
+        {
+            if (LoadCount < 1)
+            {
+                return string.Empty;
+            }
+
+            return LoadCount == 1
+                ? " · 1 load"
+                : " · " + LoadCount.ToString(CultureInfo.InvariantCulture) + " loads of " + LoadLimit.ToString(CultureInfo.InvariantCulture);
         }
 
         /// <summary>The first reason the Send button is disabled in <see cref="TripRules.StartTrip"/> order, or empty when allowed.</summary>
@@ -420,7 +488,13 @@ namespace CityBuilder.Client.Presentation.Trips
                 return TargetDoesNotAcceptReason;
             }
 
-            if (CityQueries.FreeWorkers(_city!, _content) < 1)
+            bool couriers = CityQueries.HasBuiltCourierStation(_city!, _content);
+            if (couriers && _courier == null)
+            {
+                return NoFreeCourierReason;
+            }
+
+            if (!couriers && CityQueries.FreeWorkers(_city!, _content) < 1)
             {
                 return NoFreeWorkersReason;
             }
@@ -428,6 +502,11 @@ namespace CityBuilder.Client.Presentation.Trips
             if (CarryQuantity < 1)
             {
                 return NothingToCarryReason;
+            }
+
+            if (_courier != null && _city!.CountLines(_courier.StationId, _courier.Slot) + LoadCount > _content.Rules.MaxDeliveryLines)
+            {
+                return QueueFullReason;
             }
 
             return string.Empty;

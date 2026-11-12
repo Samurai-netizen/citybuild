@@ -1,9 +1,10 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
-  <!-- The courier route editor that RouteEditorScreen shows (CR-0008-T2 part C): a parchment sheet above the dock that stays low so the map
-       stays tappable (tapping a building adds it as a stop). From the top: the title with the courier slot button and the close button, the
-       summary (stops and the lap time), the last refused edit, one row of stop cards that scrolls sideways only (RouteStop.uxml is one stop;
-       RouteAction.uxml is one action in it; RouteEditorScreen makes them from RouteEditorModel and scales the row down until it fits, OD-17),
-       and the footer with the note on locked amounts, the reason Save is off, Revert and Save. Style: Common.uss and RouteEditor.uss. -->
+  <!-- The courier route editor that RouteEditorScreen shows (CR-0008-T2 part C; a side panel since CR-0008-T3, the owner's playtest round 4):
+       a narrow parchment panel down the left side in landscape (a short sheet at the bottom in portrait), so most of the map stays free and a
+       tap on a building there adds it as a stop. From the top: the title with the courier slot button and the close button, the summary
+       (stops and the lap time), the last refused edit, the list of stop cards that scrolls up and down only (RouteStop.uxml is one stop;
+       RouteAction.uxml is one action in it; RouteEditorScreen makes them from RouteEditorModel, OD-17), and the footer with the note on locked
+       amounts, the reason Save is off, Revert and Save. Style: Common.uss and RouteEditor.uss. -->
   <Style src="Common.uss" />
   <Style src="RouteEditor.uss" />
   <ui:VisualElement name="route-root" class="route-root" picking-mode="Ignore">
@@ -15,7 +16,7 @@
       </ui:VisualElement>
       <ui:Label name="route-summary" class="route-summary t-body" />
       <ui:Label name="route-note" class="route-note t-note" />
-      <ui:ScrollView name="route-scroll" class="route-scroll themed-scroll" mode="Horizontal">
+      <ui:ScrollView name="route-scroll" class="route-scroll themed-scroll" mode="Vertical" horizontal-scroller-visibility="Hidden">
         <ui:VisualElement name="route-stops" class="route-stops" />
       </ui:ScrollView>
       <ui:Label name="route-amount-note" class="route-amount-note t-note" />

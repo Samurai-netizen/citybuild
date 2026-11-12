@@ -15,6 +15,8 @@ namespace CityBuilder.Api.Contracts;
 /// <param name="Trips">The manual trips under way, JSON <c>trips</c>, by id (CR-0008).</param>
 /// <param name="Couriers">The couriers, JSON <c>couriers</c>, by station id, then slot (CR-0008).</param>
 /// <param name="Routes">The courier stations' routes, JSON <c>routes</c>, by station id, then slot (CR-0008).</param>
+/// <param name="DeliveryLines">The couriers' delivery queues, JSON <c>deliveryLines</c>, by station id, slot, then line id: each courier's
+/// first line is the one it runs now (CR-0008 amendment 1).</param>
 public sealed record SnapshotCity(
     long Clock,
     int Era,
@@ -27,4 +29,5 @@ public sealed record SnapshotCity(
     IReadOnlyList<SnapshotRoad> Roads,
     IReadOnlyList<SnapshotTrip> Trips,
     IReadOnlyList<SnapshotCourier> Couriers,
-    IReadOnlyList<SnapshotRoute> Routes);
+    IReadOnlyList<SnapshotRoute> Routes,
+    IReadOnlyList<SnapshotDeliveryLine> DeliveryLines);

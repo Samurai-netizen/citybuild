@@ -133,6 +133,7 @@ namespace CityBuilder.Client.Presentation.Roads
                 _world.ShowHints(null);
             }
 
+            _world.ShowRoadPreview(null);
             if (_trips == null || _trips.Phase == TripPhase.Idle)
             {
                 _world.ShowPath(null);
@@ -285,9 +286,12 @@ namespace CityBuilder.Client.Presentation.Roads
                 _world.ShowHints(_model.ShowsHints ? _model.Hints : null);
             }
 
+            // New roads show as see-through roads; existing roads picked for an upgrade or a removal keep the path markers.
+            bool open = _model.Phase != RoadPhase.Idle;
+            _world.ShowRoadPreview(open && _model.IsBuildMode ? _model.PreviewSteps : null);
             if (_trips == null || _trips.Phase == TripPhase.Idle)
             {
-                _world.ShowPath(_model.Phase == RoadPhase.Idle ? null : _model.PreviewSteps);
+                _world.ShowPath(open && !_model.IsBuildMode ? _model.PreviewSteps : null);
             }
         }
     }

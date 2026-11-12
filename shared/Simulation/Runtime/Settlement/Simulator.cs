@@ -58,8 +58,9 @@ namespace CityBuilder.Simulation.Settlement
             // building completions by id, then trip arrivals by trip id, then courier arrivals by (station, slot); the mailbox deliveries of 04
             // section 13 will go before the buildings.
             BuildingTimerQueue timers = BuildingTimerQueue.Of(city);
-            var couriers = new CourierArrivalSource(city, content, timers, new WalkTimes(city, content), absentFrom);
-            IEventSource[] sources = { new ResearchTimerSource(), new BuildingTimerSource(timers), new TripArrivalSource(city, timers), couriers };
+            var walks = new WalkTimes(city, content);
+            var couriers = new CourierArrivalSource(city, content, timers, walks, absentFrom);
+            IEventSource[] sources = { new ResearchTimerSource(), new BuildingTimerSource(timers), new TripArrivalSource(city, timers, walks), couriers };
             long? firstDueAt = NextDueAt(sources, city);
             if (firstDueAt < start)
             {
@@ -97,7 +98,7 @@ namespace CityBuilder.Simulation.Settlement
         }
 
         /// <summary>
-        /// The start rule (<c>04</c> section 6), one pass in ascending id order: an idle producer with at least 1 worker, every input in its own
+        /// The start rule (<c>04</c> section 6), one pass in ascending id order: an idle producer, not paused (CR-0008 D23), with at least 1 worker, every input in its own
         /// store and room there for every output that is not the currency (<c>stock + quantity ≤</c> the effective limit; an idle building
         /// reserves nothing) takes its inputs from its store and starts a cycle with the labor of now (research reductions included). A start
         /// touches only its own store, so a start never helps or hinders another building, and one pass starts everything that can start
@@ -110,7 +111,7 @@ namespace CityBuilder.Simulation.Settlement
             for (int index = 0; index < buildings.Count; index++)
             {
                 Building building = buildings[index];
-                if (building.Phase != BuildingPhase.Idle || building.AssignedWorkers < 1)
+                if (building.Phase != BuildingPhase.Idle || building.Paused || building.AssignedWorkers < 1)
                 {
                     continue;
                 }

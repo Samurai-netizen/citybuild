@@ -580,6 +580,8 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                     _routeScreen = routeScreen;
                     _routeFlow = new RouteEditorFlow(routes, _world, _commandSender, routeScreen, _inspector, destroyCancellationToken);
                     routeScreen.Opened += _menus.Join(_routeFlow.Close).NotifyOpened;
+                    routeScreen.Opened += RefreshDock;
+                    routes.Changed += RefreshDock;
                 }
 
                 if (_buildMenu != null)
@@ -609,7 +611,20 @@ namespace CityBuilder.Client.Presentation.Bootstrap
 
             var flow = _inspectorFlow = new InspectorFlow(content, _world, _commandSender, _inspector, _placement?.Model, destroyCancellationToken, _trips, _roads, _routes);
             _inspector.Opened += _menus.Join(flow.Close).NotifyOpened;
+            _inspector.Opened += RefreshDock;
+            _inspector.Closed += RefreshDock;
             _world.IsPointerOverUi = IsOverUi;
+        }
+
+        /// <summary>
+        /// Hides the dock's Build and Research buttons while a building's menu is open (the inspector or the route editor) and brings them back
+        /// when none is (CR-0008 D22, the owner's playtest point 4; gone, not faded, since playtest round 4).
+        /// </summary>
+        private void RefreshDock()
+        {
+            bool hidden = (_inspector != null && _inspector.IsShown) || (_routeScreen != null && _routeScreen.IsOpen);
+            _buildMenu?.SetDockHidden(hidden);
+            _researchScreen?.SetDockHidden(hidden);
         }
 
         /// <summary>

@@ -61,6 +61,54 @@ namespace CityBuilder.Simulation.State
         public static long FreeWorkers(CityState city, GameContent content) =>
             checked(WorkersProvided(city, content) - WorkersAssigned(city) - city.Trips.Count);
 
+        /// <summary>
+        /// Whether the city has a courier station that is not a construction site: then its couriers carry the deliveries the player sends, and
+        /// workers no longer do (<c>04</c> section 18, CR-0008 D14).
+        /// </summary>
+        /// <param name="city">The city.</param>
+        /// <param name="content">The game content.</param>
+        /// <returns>True when a courier station is built.</returns>
+        public static bool HasBuiltCourierStation(CityState city, GameContent content)
+        {
+            IReadOnlyList<Building> buildings = city.Buildings;
+            for (int index = 0; index < buildings.Count; index++)
+            {
+                if (buildings[index].Phase != BuildingPhase.Constructing && DefinitionOf(content, buildings[index].TypeId).Kind == BuildingKind.CourierStation)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Whether couriers may get routes: the content names no route building, or the city has one of that type that is not a construction
+        /// site (<c>04</c> section 19, CR-0008 D15).
+        /// </summary>
+        /// <param name="city">The city.</param>
+        /// <param name="content">The game content.</param>
+        /// <returns>True when a route may be saved.</returns>
+        public static bool AreRoutesUnlocked(CityState city, GameContent content)
+        {
+            BuildingTypeId? needed = content.Rules.RouteBuilding;
+            if (!needed.HasValue)
+            {
+                return true;
+            }
+
+            IReadOnlyList<Building> buildings = city.Buildings;
+            for (int index = 0; index < buildings.Count; index++)
+            {
+                if (buildings[index].TypeId == needed.Value && buildings[index].Phase != BuildingPhase.Constructing)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         /// <summary>The builder slots in use: one per building that is constructing (a construction site too) or upgrading, or whose upgrade waits for goods (<c>04</c> section 8).</summary>
         /// <param name="city">The city.</param>
         /// <returns>The number of busy builders.</returns>

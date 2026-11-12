@@ -179,6 +179,36 @@ Content-Type: application/json
 
 { "requestId": "{{$guid}}" }
 
+### Deliveries (CR-0008-T3, amendment 1): with a built courier station a trip goes to a free courier as lines of at most its carry limit;
+# `city.deliveryLines` lists them (nothing leaves the hut yet). Every courier on a route: 422 `NO_FREE_COURIER`
+POST {{baseUrl}}/api/v1/commands/start-trip
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}", "sourceId": 2, "targetId": 4, "itemId": "logs", "amount": "all" }
+
+### Deliveries: cancel every line of slot 1 (and its route); `"lineId": 1` cancels one line. A carried load goes back to its source
+POST {{baseUrl}}/api/v1/commands/cancel-delivery
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}", "stationId": 7, "slot": 1, "lineId": null }
+
+### Pause (amendment 2): the hut finishes its cycle and starts no new one (`paused` true, stall reason `Paused`); its store stays open.
+# A paused station's couriers finish their stop, give their loads back and walk home. A house: 400 `INVALID_ARGUMENT`; a site: 409 `BUILDING_BUSY`
+POST {{baseUrl}}/api/v1/commands/set-paused
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}", "buildingId": 2, "paused": true }
+
+### Pause: resume the hut
+POST {{baseUrl}}/api/v1/commands/set-paused
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "requestId": "{{$guid}}", "buildingId": 2, "paused": false }
+
 ### Replay: send this twice. The second answer is the first one, byte for byte (a fixed requestId; change it for a new command)
 POST {{baseUrl}}/api/v1/commands/assign-workers
 Authorization: Bearer {{token}}

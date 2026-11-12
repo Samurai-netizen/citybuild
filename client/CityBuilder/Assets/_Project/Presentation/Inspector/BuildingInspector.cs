@@ -11,8 +11,10 @@ namespace CityBuilder.Client.Presentation.Inspector
     /// <summary>
     /// The building inspector on the screen (M0-51): a thin component over a <see cref="BuildingInspectorModel"/>. It loads <c>UI/Inspector</c>
     /// from <c>Resources</c>, writes the model's words into the elements by name, enables the stepper's two buttons and the upgrade button by
-    /// what the model allows, and shows the panel while there is a model (<see cref="Show"/> with null hides it). A press on a button only
-    /// raises <see cref="MinusRequested"/>, <see cref="PlusRequested"/>, <see cref="UpgradeRequested"/> or <see cref="CloseRequested"/>: what
+    /// what the model allows, builds a courier station's deliveries with their Cancel buttons, and shows the panel while there is a model
+    /// (<see cref="Show"/> with null hides it; <see cref="Opened"/> and <see cref="Closed"/> say when that changes). A press on a button only
+    /// raises <see cref="MinusRequested"/>, <see cref="PlusRequested"/>, <see cref="UpgradeRequested"/>, <see cref="CancelLineRequested"/>,
+    /// <see cref="CancelAllRequested"/> or <see cref="CloseRequested"/>: what
     /// they send, and when, is the flow's, and nothing here decides or calls the server. <c>GameRoot</c> creates it once the start has connected,
     /// with <see cref="Create"/>.
     /// </summary>
@@ -70,17 +72,47 @@ namespace CityBuilder.Client.Presentation.Inspector
         /// <summary>The name of the courier lines label of a courier station (CR-0008).</summary>
         public const string CouriersName = "inspector-couriers";
 
+        /// <summary>The name of the column of a courier station's couriers, shown only on a courier station (CR-0008 D22).</summary>
+        public const string CourierColumnName = "inspector-courier-column";
+
+        /// <summary>The name of the element that holds each courier's deliveries with their Cancel buttons (CR-0008 amendment 1).</summary>
+        public const string QueuesName = "inspector-queues";
+
+        /// <summary>The name of the note under Edit routes: why it is off (CR-0008 D15).</summary>
+        public const string RoutesNoteName = "inspector-routes-note";
+
+        /// <summary>The USS class of one courier's deliveries.</summary>
+        public const string QueueClass = "inspector-queue";
+
+        /// <summary>The USS class of a delivery line's Cancel button.</summary>
+        public const string QueueCancelClass = "inspector-queue-cancel";
+
+        /// <summary>The USS class of a courier's Cancel all button.</summary>
+        public const string QueueCancelAllClass = "inspector-queue-cancel-all";
+
         /// <summary>The name of the Edit routes button of a courier station (CR-0008).</summary>
         public const string EditRoutesName = "inspector-edit-routes";
 
         /// <summary>The name of the Re-energize couriers button.</summary>
         public const string ReenergizeName = "inspector-reenergize";
 
+        /// <summary>The name of the Pause / Resume button (CR-0008 D23).</summary>
+        public const string PauseName = "inspector-pause";
+
+        /// <summary>The name of the label under it: what the pause does now (CR-0008 D24).</summary>
+        public const string PauseNoteName = "inspector-pause-note";
+
         /// <summary>The name of the Send trip button (CR-0008).</summary>
         public const string SendTripName = "inspector-send-trip";
 
         /// <summary>The name of the row that holds the worker stepper.</summary>
         public const string StepperName = "inspector-stepper";
+
+        /// <summary>The name of the box around the stepper; hidden for a building that takes no workers (CR-0008-T3).</summary>
+        public const string WorkersBoxName = "inspector-workers-box";
+
+        /// <summary>The name of the scroll view around the body; it goes back to the top for another building.</summary>
+        public const string ScrollName = "inspector-scroll";
 
         /// <summary>The name of the stepper's − button.</summary>
         public const string MinusName = "inspector-minus";
@@ -127,6 +159,9 @@ namespace CityBuilder.Client.Presentation.Inspector
         /// <summary>What the screen shows now, or null for nothing.</summary>
         private BuildingInspectorModel? _model;
 
+        /// <summary>The id of the building the panel shows; 0 while hidden.</summary>
+        private int _shownBuildingId;
+
         /// <summary>The elements the inspector writes to; null until <c>Start</c> found them.</summary>
         private Elements? _elements;
 
@@ -145,6 +180,15 @@ namespace CityBuilder.Client.Presentation.Inspector
         /// <summary>Raised when the player presses Edit routes (only on a courier station with couriers; CR-0008).</summary>
         public event Action? EditRoutesRequested;
 
+        /// <summary>Raised when the player presses Cancel on a delivery line: the courier's slot and the line's id (CR-0008 D18).</summary>
+        public event Action<int, int>? CancelLineRequested;
+
+        /// <summary>Raised when the player presses Cancel all on a courier: its slot (CR-0008 D18).</summary>
+        public event Action<int>? CancelAllRequested;
+
+        /// <summary>Raised when the player presses Pause or Resume: true to pause, false to resume (CR-0008 D23).</summary>
+        public event Action<bool>? PauseRequested;
+
         /// <summary>Raised when the player presses Re-energize couriers (CR-0008-T2 part E).</summary>
         public event Action? ReenergizeRequested;
 
@@ -153,6 +197,9 @@ namespace CityBuilder.Client.Presentation.Inspector
 
         /// <summary>Raised when the panel goes from hidden to shown (not when a shown panel gets another model), so the other menus can close (<see cref="MenuGroup"/>).</summary>
         public event Action? Opened;
+
+        /// <summary>Raised when the panel goes from shown to hidden, so the dock's buttons come back (CR-0008 D22).</summary>
+        public event Action? Closed;
 
         /// <summary>The root of the inspector's element tree; null when the layout was not loaded.</summary>
         public VisualElement? Root => _document == null ? null : _document.rootVisualElement;
@@ -247,12 +294,65 @@ namespace CityBuilder.Client.Presentation.Inspector
             }
         }
 
-        /// <summary>The player pressed Edit routes: what a finger on the button does, as a call. Does nothing unless the model shows it (CR-0008).</summary>
+        /// <summary>The player pressed Edit routes: what a finger on the button does, as a call. Does nothing unless the model allows it (CR-0008).</summary>
         public void PressEditRoutes()
         {
-            if (_model != null && _model.HasRouteEditor)
+            if (_model != null && _model.CanEditRoutes)
             {
                 EditRoutesRequested?.Invoke();
+            }
+        }
+
+        /// <summary>The player pressed Cancel on line <paramref name="lineId"/> of courier <paramref name="slot"/>: what a finger does, as a call. Does nothing for a line the model doesn't show.</summary>
+        public void PressCancelLine(int slot, int lineId)
+        {
+            if (_model == null)
+            {
+                return;
+            }
+
+            foreach (CourierQueueModel queue in _model.Queues)
+            {
+                if (queue.Slot != slot)
+                {
+                    continue;
+                }
+
+                foreach (CourierQueueLine line in queue.Lines)
+                {
+                    if (line.LineId == lineId)
+                    {
+                        CancelLineRequested?.Invoke(slot, lineId);
+                        return;
+                    }
+                }
+            }
+        }
+
+        /// <summary>The player pressed Cancel all on courier <paramref name="slot"/>: what a finger does, as a call. Does nothing for a courier the model doesn't show.</summary>
+        public void PressCancelAll(int slot)
+        {
+            if (_model == null)
+            {
+                return;
+            }
+
+            foreach (CourierQueueModel queue in _model.Queues)
+            {
+                if (queue.Slot == slot)
+                {
+                    CancelAllRequested?.Invoke(slot);
+                    return;
+                }
+            }
+        }
+
+        /// <summary>The player pressed Pause or Resume: what a finger on the button does, as a call. Does nothing unless the model allows it.</summary>
+        public void PressPause()
+        {
+            if (_model != null && _model.HasPause && _model.CanPause)
+            {
+                PauseRequested?.Invoke(!_model.IsPaused);
             }
         }
 
@@ -298,6 +398,7 @@ namespace CityBuilder.Client.Presentation.Inspector
             elements.SendTrip.clicked += PressSendTrip;
             elements.EditRoutes.clicked += PressEditRoutes;
             elements.Reenergize.clicked += PressReenergize;
+            elements.Pause.clicked += PressPause;
             elements.Close.clicked += PressClose;
             root.RegisterCallback<GeometryChangedEvent>(_ => UiRoot.PadBySafeArea(root, BasePadding));
             Refresh();
@@ -313,10 +414,22 @@ namespace CityBuilder.Client.Presentation.Inspector
             }
 
             BuildingInspectorModel? model = _model;
+            if (model != null && (model.BuildingId != _shownBuildingId || e.Panel.ClassListContains(HiddenClass)))
+            {
+                // Another building, or the panel opening: its body starts at the top, so its first boxes and buttons are in view.
+                e.Scroll.scrollOffset = Vector2.zero;
+            }
+
+            _shownBuildingId = model?.BuildingId ?? 0;
             bool wasHidden = e.Panel.ClassListContains(HiddenClass);
             e.Panel.EnableInClassList(HiddenClass, model == null);
             if (model == null)
             {
+                if (!wasHidden)
+                {
+                    Closed?.Invoke();
+                }
+
                 return;
             }
 
@@ -331,11 +444,21 @@ namespace CityBuilder.Client.Presentation.Inspector
             SetLine(e.Needs, model.NeedsText);
             SetLine(e.Trips, model.TripsText);
             SetLine(e.Couriers, model.CouriersText);
+            bool station = model.CouriersText.Length > 0 || model.HasRouteEditor || model.HasReenergize || model.Queues.Count > 0;
+            e.CourierColumn.style.display = station ? DisplayStyle.Flex : DisplayStyle.None;
+            FillQueues(e.Queues, model);
             e.EditRoutes.style.display = model.HasRouteEditor ? DisplayStyle.Flex : DisplayStyle.None;
+            e.EditRoutes.SetEnabled(model.CanEditRoutes);
+            SetLine(e.RoutesNote, model.RoutesNote);
             e.Reenergize.style.display = model.HasReenergize ? DisplayStyle.Flex : DisplayStyle.None;
+            e.Pause.style.display = model.HasPause ? DisplayStyle.Flex : DisplayStyle.None;
+            e.Pause.text = model.PauseText;
+            e.Pause.SetEnabled(model.CanPause);
+            SetLine(e.PauseNote, model.PauseNote);
             e.SendTrip.style.display = model.HasSendTrip ? DisplayStyle.Flex : DisplayStyle.None;
             e.SendTrip.SetEnabled(model.CanSendTrip);
             e.Stepper.style.display = model.HasStepper ? DisplayStyle.Flex : DisplayStyle.None;
+            e.WorkersBox.style.display = model.HasStepper ? DisplayStyle.Flex : DisplayStyle.None;
             e.Workers.text = model.WorkersText;
             e.Minus.SetEnabled(model.MinusEnabled);
             e.Plus.SetEnabled(model.PlusEnabled);
@@ -355,6 +478,50 @@ namespace CityBuilder.Client.Presentation.Inspector
             }
         }
 
+        /// <summary>
+        /// Rebuilds the couriers' deliveries: per courier with work a light box with its heading, one row per delivery line (its words and a
+        /// Cancel button) and a Cancel all button (CR-0008 D18). The buttons call <see cref="PressCancelLine"/> and <see cref="PressCancelAll"/>.
+        /// </summary>
+        private void FillQueues(VisualElement holder, BuildingInspectorModel model)
+        {
+            holder.Clear();
+            foreach (CourierQueueModel queue in model.Queues)
+            {
+                int slot = queue.Slot;
+                var box = new VisualElement();
+                box.AddToClassList(QueueClass);
+                box.AddToClassList("box");
+                box.AddToClassList("box--light");
+                var title = new Label(queue.Title);
+                title.AddToClassList("inspector-queue-title");
+                title.AddToClassList("t-small");
+                box.Add(title);
+                foreach (CourierQueueLine line in queue.Lines)
+                {
+                    int lineId = line.LineId;
+                    var row = new VisualElement();
+                    row.AddToClassList("inspector-queue-row");
+                    var text = new Label(line.Text);
+                    text.AddToClassList("inspector-queue-text");
+                    text.AddToClassList("t-small");
+                    row.Add(text);
+                    var cancel = new Button(() => PressCancelLine(slot, lineId)) { text = "Cancel" };
+                    cancel.AddToClassList("btn");
+                    cancel.AddToClassList("btn--quiet");
+                    cancel.AddToClassList(QueueCancelClass);
+                    row.Add(cancel);
+                    box.Add(row);
+                }
+
+                var cancelAll = new Button(() => PressCancelAll(slot)) { text = queue.Lines.Count == 0 ? "Clear route" : "Cancel all" };
+                cancelAll.AddToClassList("btn");
+                cancelAll.AddToClassList("btn--danger");
+                cancelAll.AddToClassList(QueueCancelAllClass);
+                box.Add(cancelAll);
+                holder.Add(box);
+            }
+        }
+
         /// <summary>Sets a label's text and hides the label when the text is empty, so an empty line takes no room.</summary>
         private static void SetLine(Label label, string text)
         {
@@ -371,16 +538,22 @@ namespace CityBuilder.Client.Presentation.Inspector
             /// <summary>The element that holds the building's picture.</summary>
             public VisualElement Icon = null!;
 
-            /// <summary>The element that holds the worker stepper.</summary>
-            public VisualElement Stepper = null!;
+            /// <summary>The element that holds the worker stepper, and the box around it.</summary>
+            public VisualElement Stepper = null!, WorkersBox = null!;
+
+            /// <summary>The scroll view around the body.</summary>
+            public ScrollView Scroll = null!;
+
+            /// <summary>The courier station's column, and the element that holds the couriers' deliveries.</summary>
+            public VisualElement CourierColumn = null!, Queues = null!;
 
             /// <summary>The labels the inspector writes.</summary>
             public Label Name = null!, Level = null!, Status = null!, Time = null!, Recipe = null!, Rates = null!, Store = null!, Needs = null!,
-                Trips = null!, Couriers = null!, Workers = null!, Preview = null!, StepperNote = null!, UpgradeTitle = null!, UpgradeCost = null!, UpgradeTime = null!,
-                UpgradeGain = null!, UpgradeNote = null!;
+                Trips = null!, Couriers = null!, RoutesNote = null!, Workers = null!, Preview = null!, StepperNote = null!, UpgradeTitle = null!, UpgradeCost = null!, UpgradeTime = null!,
+                UpgradeGain = null!, UpgradeNote = null!, PauseNote = null!;
 
             /// <summary>The buttons.</summary>
-            public Button Minus = null!, Plus = null!, Upgrade = null!, SendTrip = null!, EditRoutes = null!, Reenergize = null!, Close = null!;
+            public Button Minus = null!, Plus = null!, Upgrade = null!, SendTrip = null!, EditRoutes = null!, Reenergize = null!, Pause = null!, Close = null!;
 
             /// <summary>Finds every element in <paramref name="root"/>; null when one is missing.</summary>
             public static Elements? Find(VisualElement root)
@@ -390,6 +563,11 @@ namespace CityBuilder.Client.Presentation.Inspector
                     Panel = root.Q<VisualElement>(PanelName),
                     Icon = root.Q<VisualElement>(IconName),
                     Stepper = root.Q<VisualElement>(StepperName),
+                    WorkersBox = root.Q<VisualElement>(WorkersBoxName),
+                    Scroll = root.Q<ScrollView>(ScrollName),
+                    CourierColumn = root.Q<VisualElement>(CourierColumnName),
+                    Queues = root.Q<VisualElement>(QueuesName),
+                    RoutesNote = root.Q<Label>(RoutesNoteName),
                     Name = root.Q<Label>(NameName),
                     Level = root.Q<Label>(LevelName),
                     Status = root.Q<Label>(StatusName),
@@ -414,6 +592,8 @@ namespace CityBuilder.Client.Presentation.Inspector
                     SendTrip = root.Q<Button>(SendTripName),
                     EditRoutes = root.Q<Button>(EditRoutesName),
                     Reenergize = root.Q<Button>(ReenergizeName),
+                    Pause = root.Q<Button>(PauseName),
+                    PauseNote = root.Q<Label>(PauseNoteName),
                     Close = root.Q<Button>(CloseName),
                 };
                 bool complete = found.Panel != null && found.Icon != null && found.Stepper != null && found.Name != null && found.Level != null
@@ -421,7 +601,8 @@ namespace CityBuilder.Client.Presentation.Inspector
                     && found.Needs != null && found.Trips != null && found.Couriers != null && found.Workers != null && found.Preview != null && found.StepperNote != null
                     && found.UpgradeTitle != null && found.UpgradeCost != null && found.UpgradeTime != null && found.UpgradeGain != null
                     && found.UpgradeNote != null && found.Minus != null && found.Plus != null && found.Upgrade != null
-                    && found.SendTrip != null && found.EditRoutes != null && found.Reenergize != null && found.Close != null;
+                    && found.SendTrip != null && found.EditRoutes != null && found.Reenergize != null && found.Pause != null && found.PauseNote != null && found.Close != null
+                    && found.CourierColumn != null && found.Queues != null && found.RoutesNote != null && found.WorkersBox != null && found.Scroll != null;
                 return complete ? found : null;
             }
         }

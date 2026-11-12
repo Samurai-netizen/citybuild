@@ -26,6 +26,15 @@ namespace CityBuilder.Client.Presentation.City
         /// <summary>The height of a marker block, which sits on the ground.</summary>
         private const float MarkerThickness = 0.02f;
 
+        /// <summary>
+        /// How far the path markers and the road preview float above the ground plane: just over the tallest grass detail of visual v2
+        /// (0.084 above the plane), so the tiles never hide them (CR-0008-T3). Display only.
+        /// </summary>
+        public const float OverlayLift = 0.09f;
+
+        /// <summary>How opaque a road of the road preview is: the real road model at 75 % transparency (the owner, CR-0008-T3).</summary>
+        public const float RoadPreviewAlpha = 0.25f;
+
         /// <summary>How much of a tile's width a marker fills: a little more than a tile block, so it frames it.</summary>
         private const float MarkerFill = 1f;
 
@@ -67,6 +76,15 @@ namespace CityBuilder.Client.Presentation.City
 
         /// <summary>The path steps shown now; empty when no path is shown (CR-0008).</summary>
         private IReadOnlyList<(int X, int Y)> _shownPath = Array.Empty<(int X, int Y)>();
+
+        /// <summary>Pooled see-through roads of the road preview, made when first needed (CR-0008-T3).</summary>
+        private readonly List<GameObject> _roadGhosts = new List<GameObject>();
+
+        /// <summary>The tiles the road preview shows now, inside the grid; empty when it shows none.</summary>
+        private readonly List<(int X, int Y)> _shownRoadPreview = new List<(int X, int Y)>();
+
+        /// <summary>The depth-only and the see-through copy of the road model's material that the road preview uses; made with the first ghost.</summary>
+        private Material[]? _roadGhostMaterials;
 
         /// <summary>The material each tile shows when it has no hint, row by row: the art's shared material, or a chessboard green.</summary>
         private readonly Material[] _groundMaterials;
@@ -381,7 +399,7 @@ namespace CityBuilder.Client.Presentation.City
                     "Path step " + _pathMarkers.Count,
                     PathMarkerFill,
                     MarkerThickness,
-                    MarkerThickness * 1.5f,
+                    OverlayLift + MarkerThickness * 0.5f,
                     Vector3.zero);
                 marker.GetComponent<Renderer>().sharedMaterial = _materials[6]!;
                 _pathMarkers.Add(marker);
@@ -408,6 +426,109 @@ namespace CityBuilder.Client.Presentation.City
                 marker.transform.localPosition = new Vector3(center.x, marker.transform.localPosition.y, center.z);
                 marker.SetActive(true);
             }
+        }
+
+        /// <summary>The tiles the road preview shows now; empty when it shows none (CR-0008-T3).</summary>
+        public IReadOnlyList<(int X, int Y)> ShownRoadPreview => _shownRoadPreview;
+
+        /// <summary>The pooled roads of the road preview, shown or hidden; for tests (CR-0008-T3).</summary>
+        public IReadOnlyList<GameObject> RoadPreviewObjects => _roadGhosts;
+
+        /// <summary>
+        /// Shows the roads the player is about to build (CR-0008-T3): on each of <paramref name="tiles"/> inside the grid, the level 1 road model
+        /// in a see-through copy of its material (<see cref="RoadPreviewAlpha"/>), floating <see cref="OverlayLift"/> above the ground so no grass
+        /// hides it, with its arms toward the other previewed tiles and the roads already built. Null or empty hides them. Without a road model
+        /// (tests of the cube fallback) a tile gets a path marker instead. The roads are pooled: after the first calls, it creates nothing.
+        /// </summary>
+        /// <param name="tiles">The tiles to preview, or null to clear.</param>
+        public void ShowRoadPreview(IReadOnlyList<(int X, int Y)>? tiles)
+        {
+            _shownRoadPreview.Clear();
+            if (tiles != null)
+            {
+                for (int i = 0; i < tiles.Count; i++)
+                {
+                    if (_grid.Contains(new GridCoordinate(tiles[i].X, tiles[i].Y)))
+                    {
+                        _shownRoadPreview.Add(tiles[i]);
+                    }
+                }
+            }
+
+            int count = _shownRoadPreview.Count;
+            GameObject? model = _roadGhosts.Count < count ? Resources.Load<GameObject>(RoadArms.PathOf(1)) : null;
+            while (_roadGhosts.Count < count)
+            {
+                _roadGhosts.Add(CreateRoadGhost(model));
+            }
+
+            for (int i = 0; i < _roadGhosts.Count; i++)
+            {
+                GameObject ghost = _roadGhosts[i];
+                if (i >= count)
+                {
+                    ghost.SetActive(false);
+                    continue;
+                }
+
+                (int x, int y) = _shownRoadPreview[i];
+                Vector3 center = _grid.ToWorldCenter(new GridCoordinate(x, y));
+                ghost.transform.localPosition = new Vector3(center.x, ghost.transform.localPosition.y, center.z);
+                RoadArms.Show(ghost.transform, JoinsPreview(x + 1, y), JoinsPreview(x - 1, y), JoinsPreview(x, y + 1), JoinsPreview(x, y - 1));
+                ghost.SetActive(true);
+            }
+        }
+
+        /// <summary>Whether a previewed road at a neighbouring tile joins (<paramref name="x"/>, <paramref name="y"/>): it is previewed too, or a built road.</summary>
+        private bool JoinsPreview(int x, int y)
+        {
+            if (HasRoad(x, y))
+            {
+                return true;
+            }
+
+            for (int i = 0; i < _shownRoadPreview.Count; i++)
+            {
+                if (_shownRoadPreview[i].X == x && _shownRoadPreview[i].Y == y)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>Makes one hidden road of the road preview from <paramref name="model"/>, or a path marker when there is no model.</summary>
+        private GameObject CreateRoadGhost(GameObject? model)
+        {
+            string name = "Road preview " + _roadGhosts.Count;
+            if (model == null)
+            {
+                GameObject marker = CreateBlock(name, PathMarkerFill, MarkerThickness, OverlayLift + MarkerThickness * 0.5f, Vector3.zero);
+                marker.GetComponent<Renderer>().sharedMaterial = _materials[6]!;
+                marker.SetActive(false);
+                return marker;
+            }
+
+            GameObject ghost = Object.Instantiate(model, Root.transform, false);
+            ghost.name = name;
+            ghost.transform.localPosition = new Vector3(0f, OverlayLift, 0f);
+            Renderer[] renderers = ghost.GetComponentsInChildren<Renderer>(true);
+            if (_roadGhostMaterials == null && renderers.Length > 0)
+            {
+                _roadGhostMaterials = PlaceholderArt.CreateGhostMaterials(renderers[0].sharedMaterial, RoadPreviewAlpha);
+            }
+
+            if (_roadGhostMaterials != null)
+            {
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    renderers[i].sharedMaterials = _roadGhostMaterials;
+                }
+            }
+
+            ghost.SetActive(false);
+            return ghost;
         }
 
         /// <summary>The grass variants of visual v2 by <see cref="GroundVariants.For"/>, each loaded from <c>Resources</c>; a missing one is null.</summary>
@@ -437,6 +558,16 @@ namespace CityBuilder.Client.Presentation.City
             foreach (Material? material in _materials)
             {
                 PlaceholderArt.Destroy(material);
+            }
+
+            if (_roadGhostMaterials != null)
+            {
+                foreach (Material material in _roadGhostMaterials)
+                {
+                    PlaceholderArt.Destroy(material);
+                }
+
+                _roadGhostMaterials = null;
             }
         }
 

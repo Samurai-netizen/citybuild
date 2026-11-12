@@ -1,5 +1,7 @@
-/* The courier route editor (CR-0008-T2 part C): a parchment sheet above the dock, as low as its cards so the map stays tappable, with one
-   row of stop cards that scrolls sideways only. Colours and sizes come from Common.uss. */
+/* The courier route editor (CR-0008-T2 part C; a side panel since CR-0008-T3, the owner's playtest round 4): a narrow parchment panel down
+   the left side from under the HUD to the bottom in landscape, a short sheet at the bottom in portrait, so most of the map stays free for the
+   taps that add stops. The stop cards stack in a list that scrolls up and down only. The dock's buttons are hidden while it is open, so it
+   reaches the bottom. Colours and sizes come from Common.uss. */
 .route-root {
   position: absolute;
   left: 0;
@@ -7,19 +9,26 @@
   right: 0;
   bottom: 0;
   padding: var(--sp-2); /* replaced by the safe area in code */
-  flex-direction: column;
-  justify-content: flex-end;
+  flex-direction: row;
+  align-items: stretch;
 }
 
 .route-panel {
-  align-self: stretch;
+  width: 40%;
+  min-width: 240px; /* at most half of the narrowest landscape screen (480 units), so the map keeps at least half */
+  max-width: 440px;
+  margin-top: var(--hud-height);
   flex-shrink: 1;
-  max-height: 64%;
-  margin-bottom: var(--dock-lift);
+  flex-direction: column;
 }
 
 .route-panel--hidden {
   display: none;
+}
+
+/* Every text of the editor wraps inside its card instead of running into the next one (CR-0008 D22). */
+.route-panel .unity-label {
+  white-space: normal;
 }
 
 .route-header {
@@ -48,27 +57,17 @@
 .route-scroll {
   flex-grow: 1;
   flex-shrink: 1;
-  min-height: 150px;
+  min-height: 0;
   margin-top: var(--sp-2);
 }
 
-.route-scroll .unity-scroll-view__horizontal-scroller {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  margin-top: 0;
-}
-
 .route-stops {
-  flex-direction: row;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: stretch;
 }
 
 .route-stop {
-  width: 260px;
-  max-width: 100%;
-  margin-right: var(--sp-2);
+  margin-bottom: var(--sp-2);
 }
 
 .route-stop-walk {
@@ -84,7 +83,10 @@
 .route-action-button {
   flex-grow: 1;
   flex-basis: 0;
+  min-width: 0;
   margin-right: var(--sp-1);
+  padding: 0 var(--sp-1);
+  font-size: var(--font-sm);
 }
 
 .route-stop-tools {
@@ -105,9 +107,24 @@
 .route-footer {
   flex-direction: row;
   justify-content: flex-end;
+  flex-shrink: 0;
   margin-top: var(--sp-2);
 }
 
 .route-footer-button {
   margin-left: var(--sp-2);
+}
+
+/* Portrait: a sheet across the bottom, at most 45% of the screen high, so the map above it stays free. */
+.portrait .route-root {
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.portrait .route-panel {
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  max-height: 45%;
+  margin-top: 0;
 }

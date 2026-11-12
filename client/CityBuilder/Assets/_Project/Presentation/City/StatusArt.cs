@@ -8,7 +8,8 @@ namespace CityBuilder.Client.Presentation.City
 {
     /// <summary>
     /// The pictures every building's status shares (M0-50), made once for a <see cref="CityView"/> and destroyed with it: one ring mesh for each
-    /// fill step (so showing a different progress swaps a reference and allocates nothing), the materials of the ring and the pips, a plain and
+    /// fill step (so showing a different progress swaps a reference and allocates nothing), one store gauge mesh for each filled segment
+    /// (CR-0008 D25), the materials of the ring and the pips, a plain and
     /// an outlined disc, a one-pixel square, and one sprite for each icon texture that a bubble has shown. Everything is drawn with the render
     /// pipeline's default sprite material, so no shader is looked up by name (a lookup could be stripped from a device build). Display only.
     /// </summary>
@@ -22,6 +23,21 @@ namespace CityBuilder.Client.Presentation.City
 
         /// <summary>The inner radius of the ring.</summary>
         public const float RingInnerRadius = 0.22f;
+
+        /// <summary>How many separate segments the store gauge has (CR-0008 D25); a fullness is shown to the nearest lower segment.</summary>
+        public const int GaugeSegments = 10;
+
+        /// <summary>The outer radius of the store gauge: wider than the ring, so the two read differently.</summary>
+        public const float GaugeOuterRadius = 0.34f;
+
+        /// <summary>The inner radius of the store gauge: a thicker band than the ring's.</summary>
+        public const float GaugeInnerRadius = 0.20f;
+
+        /// <summary>The gap between two gauge segments, as a share of one segment's angle.</summary>
+        private const float GaugeGap = 0.22f;
+
+        /// <summary>How many quads each gauge segment is drawn with, so its edge follows the circle.</summary>
+        private const int GaugeSegmentQuads = 4;
 
         /// <summary>The side of the square that a bubble's icon is drawn in.</summary>
         public const float IconSize = 0.30f;
@@ -41,6 +57,15 @@ namespace CityBuilder.Client.Presentation.City
         /// <summary>The colour of the ring while a building produces.</summary>
         public static readonly Color ProducingColor = new Color(0.46f, 0.82f, 0.36f);
 
+        /// <summary>The colour of the store gauge while the store is filling up (more than 75 % full).</summary>
+        public static readonly Color GaugeColor = new Color(0.98f, 0.60f, 0.10f);
+
+        /// <summary>The colour of the store gauge once a good is at its limit.</summary>
+        public static readonly Color GaugeFullColor = new Color(0.88f, 0.22f, 0.18f);
+
+        /// <summary>The colour of the bars inside the bubble of a paused building.</summary>
+        public static readonly Color PauseBarColor = new Color(0.22f, 0.24f, 0.30f);
+
         /// <summary>The light inside a bubble, behind its icon.</summary>
         public static readonly Color BubbleFaceColor = new Color(0.98f, 0.95f, 0.86f);
 
@@ -52,6 +77,9 @@ namespace CityBuilder.Client.Presentation.City
 
         /// <summary>The ring meshes, one for each fill step from 0 (nothing) to <see cref="RingSteps"/> (the whole ring).</summary>
         private readonly Mesh[] _ringMeshes = new Mesh[RingSteps + 1];
+
+        /// <summary>The store gauge meshes, one for each number of filled segments from 0 to <see cref="GaugeSegments"/>.</summary>
+        private readonly Mesh[] _gaugeMeshes = new Mesh[GaugeSegments + 1];
 
         /// <summary>The materials made here, destroyed with the art.</summary>
         private readonly List<Material> _materials = new List<Material>();
@@ -66,7 +94,7 @@ namespace CityBuilder.Client.Presentation.City
         private readonly Dictionary<Texture2D, Sprite> _iconSprites = new Dictionary<Texture2D, Sprite>();
 
         /// <summary>The fill materials by ring kind, in the order of <see cref="StatusRingKind"/> (the first is unused).</summary>
-        private readonly Material[] _fillMaterials = new Material[4];
+        private readonly Material[] _fillMaterials = new Material[5];
 
         /// <summary>Whether <see cref="Destroy"/> has run.</summary>
         private bool _destroyed;
@@ -79,11 +107,17 @@ namespace CityBuilder.Client.Presentation.City
             _fillMaterials[(int)StatusRingKind.Constructing] = Tint(ConstructingColor);
             _fillMaterials[(int)StatusRingKind.Upgrading] = Tint(UpgradingColor);
             _fillMaterials[(int)StatusRingKind.Producing] = Tint(ProducingColor);
+            _fillMaterials[(int)StatusRingKind.Storage] = Tint(GaugeColor);
+            GaugeFullMaterial = Tint(GaugeFullColor);
             MakeRingMeshes();
+            MakeGaugeMeshes();
             Disc = MakeDisc(false);
             OutlinedDisc = MakeDisc(true);
             Square = MakeSquare();
         }
+
+        /// <summary>The material of the store gauge's filled segments once a good is at its limit.</summary>
+        public Material GaugeFullMaterial { get; }
 
         /// <summary>The material of the ring's track (the part not done yet).</summary>
         public Material TrackMaterial { get; }
@@ -105,6 +139,18 @@ namespace CityBuilder.Client.Presentation.City
             return Math.Max(0, Math.Min(RingSteps, (int)((long)Math.Max(0, progressPermille) * RingSteps / 1000)));
         }
 
+        /// <summary>How many gauge segments a fullness fills: its permille scaled to <see cref="GaugeSegments"/>, rounded down.</summary>
+        /// <param name="permille">The fullness, 0 to 1000; values outside are brought into it.</param>
+        /// <returns>0 to <see cref="GaugeSegments"/>.</returns>
+        public static int GaugeStepOf(int permille)
+        {
+            return Math.Max(0, Math.Min(GaugeSegments, (int)((long)Math.Max(0, permille) * GaugeSegments / 1000)));
+        }
+
+        /// <summary>The mesh of the store gauge with its first <paramref name="filled"/> segments, clockwise from the top.</summary>
+        /// <param name="filled">0 to <see cref="GaugeSegments"/>.</param>
+        public Mesh GaugeMesh(int filled) => _gaugeMeshes[filled];
+
         /// <summary>The mesh of a ring filled to <paramref name="step"/> steps, clockwise from the top.</summary>
         /// <param name="step">0 (empty) to <see cref="RingSteps"/> (whole).</param>
         public Mesh RingMesh(int step) => _ringMeshes[step];
@@ -125,6 +171,8 @@ namespace CityBuilder.Client.Presentation.City
                     return new Color(0.86f, 0.24f, 0.20f);
                 case StatusBubbleKind.StorageFull:
                     return new Color(0.26f, 0.52f, 0.88f);
+                case StatusBubbleKind.Paused:
+                    return new Color(0.56f, 0.60f, 0.68f);
                 default:
                     return Color.clear;
             }
@@ -165,6 +213,11 @@ namespace CityBuilder.Client.Presentation.City
 
             _destroyed = true;
             foreach (Mesh mesh in _ringMeshes)
+            {
+                PlaceholderArt.Destroy(mesh);
+            }
+
+            foreach (Mesh mesh in _gaugeMeshes)
             {
                 PlaceholderArt.Destroy(mesh);
             }
@@ -238,6 +291,57 @@ namespace CityBuilder.Client.Presentation.City
                 var mesh = new Mesh { name = "Status ring " + step, vertices = vertices, uv = uvs, triangles = triangles };
                 mesh.RecalculateBounds();
                 _ringMeshes[step] = mesh;
+            }
+        }
+
+        /// <summary>
+        /// Makes the <see cref="GaugeSegments"/> + 1 gauge meshes: separate thick segments around the circle with a gap between each two, the
+        /// same vertices in each, and the triangles of the first <c>filled</c> segments.
+        /// </summary>
+        private void MakeGaugeMeshes()
+        {
+            int perSegment = 2 * (GaugeSegmentQuads + 1);
+            var vertices = new Vector3[GaugeSegments * perSegment];
+            var uvs = new Vector2[vertices.Length];
+            float segmentAngle = 2f * Mathf.PI / GaugeSegments;
+            for (int segment = 0; segment < GaugeSegments; segment++)
+            {
+                // Clockwise from the top, each segment shortened by half the gap at both ends.
+                float start = Mathf.PI / 2f - segmentAngle * (segment + GaugeGap / 2f);
+                float sweep = segmentAngle * (1f - GaugeGap);
+                for (int k = 0; k <= GaugeSegmentQuads; k++)
+                {
+                    float angle = start - sweep * k / GaugeSegmentQuads;
+                    var direction = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
+                    int v = segment * perSegment + 2 * k;
+                    vertices[v] = direction * GaugeOuterRadius;
+                    vertices[v + 1] = direction * GaugeInnerRadius;
+                    uvs[v] = new Vector2(0.5f, 0.5f);
+                    uvs[v + 1] = new Vector2(0.5f, 0.5f);
+                }
+            }
+
+            for (int filled = 0; filled <= GaugeSegments; filled++)
+            {
+                var triangles = new int[6 * GaugeSegmentQuads * filled];
+                int t = 0;
+                for (int segment = 0; segment < filled; segment++)
+                {
+                    for (int k = 0; k < GaugeSegmentQuads; k++)
+                    {
+                        int a = segment * perSegment + 2 * k;
+                        triangles[t++] = a;
+                        triangles[t++] = a + 2;
+                        triangles[t++] = a + 1;
+                        triangles[t++] = a + 1;
+                        triangles[t++] = a + 2;
+                        triangles[t++] = a + 3;
+                    }
+                }
+
+                var mesh = new Mesh { name = "Store gauge " + filled, vertices = vertices, uv = uvs, triangles = triangles };
+                mesh.RecalculateBounds();
+                _gaugeMeshes[filled] = mesh;
             }
         }
 

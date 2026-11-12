@@ -15,6 +15,12 @@ namespace CityBuilder.Simulation.State
         MissingInput,
 
         /// <summary>
+        /// The player paused the building (CR-0008 D23): an idle paused producer, or a paused courier station. Checked after a frozen cycle's
+        /// <see cref="NoWorkers"/> and before the others.
+        /// </summary>
+        Paused,
+
+        /// <summary>
         /// An idle producer with workers and its inputs, but an output doesn't fit the storage cap (stock + reserved + the cycle's quantity);
         /// <see cref="StallReason.Item"/> names it.
         /// </summary>

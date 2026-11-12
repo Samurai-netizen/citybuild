@@ -107,6 +107,43 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(status.BubbleStruck, Is.True);
         }
 
+        /// <summary>
+        /// A woodcutter whose store holds 32 of its 40 logs shows the store gauge (8 of 10 amber segments, the logs icon inside) instead of the
+        /// cycle ring; at 40 the gauge is full and red (CR-0008 D25).
+        /// </summary>
+        [Test]
+        public void Gauge_OfANearlyFullStore_ReplacesTheRing()
+        {
+            Show(15, 0, WithStore(Producer(1, "woodcutter", 2), 32));
+            BuildingStatusView status = StatusOf(1)!;
+
+            Assert.That(status.RingStep, Is.EqualTo(-1), "no cycle ring");
+            Assert.That(status.GaugeStep, Is.EqualTo(8));
+            Assert.That(status.GaugeFull, Is.False);
+            Assert.That(status.GaugeIcon, Is.Not.Null, "the logs icon");
+
+            Show(15, 0, WithStore(Producer(1, "woodcutter", 2), 40));
+            Assert.That(status.GaugeStep, Is.EqualTo(StatusArt.GaugeSegments));
+            Assert.That(status.GaugeFull, Is.True);
+
+            Show(15, 0, WithStore(Producer(1, "woodcutter", 2), 10));
+            Assert.That(status.GaugeStep, Is.EqualTo(-1), "back to the ring below 75 %");
+            Assert.That(status.RingStep, Is.EqualTo(StatusArt.StepOf(500)));
+        }
+
+        /// <summary>A paused idle woodcutter shows the grey bubble with the two pause bars and no picture (CR-0008 D23).</summary>
+        [Test]
+        public void Bubble_OfAPausedBuilding_HasThePauseBars()
+        {
+            Show(0, 0, new Building(1, new BuildingTypeId("woodcutter"), 1, 1, 1, 1, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, null, null, paused: true));
+
+            BuildingStatusView status = StatusOf(1)!;
+            Assert.That(status.BubbleVisible, Is.True);
+            Assert.That(status.BubbleColor, Is.EqualTo(StatusArt.BubbleColor(StatusBubbleKind.Paused)));
+            Assert.That(status.BubblePaused, Is.True);
+            Assert.That(status.BubbleIcon, Is.Null);
+        }
+
         /// <summary>A woodcutter without workers shows the amber bubble with the workers picture and no strike.</summary>
         [Test]
         public void Bubble_OfNoWorkers_IsAmberWithTheWorkersPicture()
@@ -301,6 +338,14 @@ namespace CityBuilder.Client.Tests.PlayMode
         private static Building Idle(int id, string typeId, int workers)
         {
             return new Building(id, new BuildingTypeId(typeId), 1, 1, 1, workers, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
+        }
+
+        /// <summary>The same building with <paramref name="logs"/> logs in its store.</summary>
+        private static Building WithStore(Building b, long logs)
+        {
+            return new Building(
+                b.Id, b.TypeId, b.X, b.Y, b.Level, b.AssignedWorkers, b.Phase, b.PhaseStartedAt, b.PhaseEndsAt, b.TargetLevel, b.CycleLabor,
+                b.LaborRemaining, b.SegmentStartedAt, new[] { new KeyValuePair<ItemId, long>(new ItemId("logs"), logs) });
         }
 
         /// <summary>A building of <paramref name="typeId"/> running its first cycle of 60 worker-seconds, started at second 0, with <paramref name="workers"/> workers.</summary>

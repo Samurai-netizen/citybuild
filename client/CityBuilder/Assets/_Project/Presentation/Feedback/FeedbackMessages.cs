@@ -124,6 +124,21 @@ namespace CityBuilder.Client.Presentation.Feedback
                 case ApiErrorCodes.InvalidRoute:
                     message = "That route doesn't work. Check its stops";
                     return true;
+                case ApiErrorCodes.NoFreeCourier:
+                    message = "Every courier has a route. Add a courier or clear a route";
+                    return true;
+                case ApiErrorCodes.DeliveryQueueFull:
+                    message = "That courier's queue is full. Cancel some deliveries";
+                    return true;
+                case ApiErrorCodes.RoutesLocked:
+                    message = "Build a Scriptorium first for repeating routes";
+                    return true;
+                case ApiErrorCodes.CourierBusy:
+                    message = "That courier still has deliveries. Cancel them first";
+                    return true;
+                case ApiErrorCodes.DeliveryNotFound:
+                    message = "That delivery is already done";
+                    return true;
                 case ApiErrorCodes.IdempotencyConflict:
                     message = "That command was already used. Try again";
                     return true;
@@ -175,7 +190,7 @@ namespace CityBuilder.Client.Presentation.Feedback
                 case CommandKind.StartResearch:
                     return "Research started";
                 case CommandKind.StartTrip:
-                    return "Trip started";
+                    return "Delivery sent";
                 case CommandKind.PlaceRoads:
                     return "Road built";
                 case CommandKind.UpgradeRoads:
@@ -186,6 +201,10 @@ namespace CityBuilder.Client.Presentation.Feedback
                     return "Route saved";
                 case CommandKind.ReenergizeCouriers:
                     return "Couriers re-energized";
+                case CommandKind.CancelDelivery:
+                    return "Delivery cancelled";
+                case CommandKind.SetPaused:
+                    return "Pause changed";
                 default:
                     return "Done";
             }

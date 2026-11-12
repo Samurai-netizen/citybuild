@@ -57,10 +57,13 @@ public static class CitySnapshotMapper
                 state.Roads.OrderBy(road => road.X).ThenBy(road => road.Y).Select(road => new SnapshotRoad(road.X, road.Y, road.Level)).ToArray(),
                 state.Trips.OrderBy(trip => trip.Id)
                     .Select(trip => new SnapshotTrip(
-                        trip.Id, trip.SourceId, trip.TargetId, trip.Item.Value, trip.Quantity, trip.DepartedAt, trip.ArrivesAt))
+                        trip.Id, trip.SourceId, trip.TargetId, trip.Item.Value, trip.Quantity, trip.DepartedAt, trip.ArrivesAt, trip.Remaining, trip.Leg.ToString()))
                     .ToArray(),
                 state.Couriers.OrderBy(courier => courier.StationId).ThenBy(courier => courier.Slot).Select(ToCourier).ToArray(),
-                state.Routes.OrderBy(route => route.StationId).ThenBy(route => route.Slot).Select(ToRoute).ToArray()),
+                state.Routes.OrderBy(route => route.StationId).ThenBy(route => route.Slot).Select(ToRoute).ToArray(),
+                state.DeliveryLines.OrderBy(line => line.StationId).ThenBy(line => line.Slot).ThenBy(line => line.Id)
+                    .Select(line => new SnapshotDeliveryLine(line.Id, line.StationId, line.Slot, line.SourceId, line.TargetId, line.Item.Value, line.Quantity))
+                    .ToArray()),
             new SnapshotSettlement(
                 settlement.ElapsedSeconds,
                 ToAmounts(settlement.Produced),
@@ -153,7 +156,8 @@ public static class CitySnapshotMapper
             ToAmounts(building.Store),
             ToStoreLimits(state, content, definition.GetLevel(building.Level), building),
             ToAmounts(building.Needs),
-            building.IsConstructionSite ? "Construction" : building.HasUpgradeWaiting ? "Upgrade" : null);
+            building.IsConstructionSite ? "Construction" : building.HasUpgradeWaiting ? "Upgrade" : null,
+            building.Paused);
     }
 
     /// <summary>Every item's city total (<see cref="CityQueries.Totals"/>), by item id, 0 included.</summary>

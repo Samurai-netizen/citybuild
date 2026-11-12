@@ -7,7 +7,8 @@ using UnityEngine;
 namespace CityBuilder.Client.Presentation.City
 {
     /// <summary>
-    /// The status of one building drawn above it (M0-50): a progress ring, a bubble that names why the building makes no progress, and a row of
+    /// The status of one building drawn above it (M0-50): a progress ring, or instead the store gauge (separate amber segments, red at the
+    /// limit, with the fullest good's icon inside; CR-0008 D25), a bubble that names why the building makes no progress (two bars when paused), and a row of
     /// worker pips, on an object under the <see cref="BuildingView"/> that stands at the model's <c>Anchor_Status</c> (or at a fixed height over
     /// a building drawn from primitives) and faces the camera. A thin component: <see cref="BuildingStatusModel"/> decides what to show,
     /// <see cref="StatusArt"/> owns the pictures, and this only places them. <see cref="Apply"/> draws only what differs from the last call and
@@ -67,6 +68,24 @@ namespace CityBuilder.Client.Presentation.City
         /// <summary>Draws the filled part of the ring.</summary>
         private MeshRenderer? _fillRenderer;
 
+        /// <summary>The object that holds the store gauge's parts, or null before a gauge is first needed.</summary>
+        private GameObject? _gaugeGroup;
+
+        /// <summary>The filled segments of the gauge.</summary>
+        private MeshFilter? _gaugeFillFilter;
+
+        /// <summary>Draws the filled segments of the gauge.</summary>
+        private MeshRenderer? _gaugeFillRenderer;
+
+        /// <summary>The fullest good's picture in the middle of the gauge.</summary>
+        private SpriteRenderer? _gaugeIcon;
+
+        /// <summary>The two bars inside the bubble of a paused building.</summary>
+        private SpriteRenderer? _pauseLeft;
+
+        /// <summary>The second of the two pause bars.</summary>
+        private SpriteRenderer? _pauseRight;
+
         /// <summary>The object that holds the bubble's parts, or null before a bubble is first needed.</summary>
         private GameObject? _bubbleGroup;
 
@@ -87,6 +106,18 @@ namespace CityBuilder.Client.Presentation.City
 
         /// <summary>The step the ring is filled to, 0 to <see cref="StatusArt.RingSteps"/>, or −1 when no ring is shown.</summary>
         public int RingStep { get; private set; } = -1;
+
+        /// <summary>The number of filled store gauge segments, 0 to <see cref="StatusArt.GaugeSegments"/>, or −1 when no gauge is shown.</summary>
+        public int GaugeStep { get; private set; } = -1;
+
+        /// <summary>Whether the shown gauge is drawn in the colour of a store at its limit.</summary>
+        public bool GaugeFull { get; private set; }
+
+        /// <summary>The good's picture in the shown gauge, or null when there is none (no gauge, or no icon for the good).</summary>
+        public Sprite? GaugeIcon => _gaugeGroup != null && _gaugeGroup.activeSelf && _gaugeIcon != null && _gaugeIcon.enabled ? _gaugeIcon.sprite : null;
+
+        /// <summary>Whether the shown bubble has the two bars of a paused building.</summary>
+        public bool BubblePaused => BubbleVisible && _pauseLeft != null && _pauseLeft.enabled;
 
         /// <summary>Whether a bubble is shown.</summary>
         public bool BubbleVisible => _bubbleGroup != null && _bubbleGroup.activeSelf;
@@ -174,10 +205,11 @@ namespace CityBuilder.Client.Presentation.City
             }
         }
 
-        /// <summary>Shows the ring of <paramref name="status"/>, or hides it.</summary>
+        /// <summary>Shows the ring of <paramref name="status"/>, or the store gauge instead, or hides both.</summary>
         private void ShowRing(BuildingStatus status)
         {
-            if (status.Ring == StatusRingKind.None)
+            ShowGauge(status);
+            if (status.Ring == StatusRingKind.None || status.Ring == StatusRingKind.Storage)
             {
                 if (_ringGroup != null)
                 {
@@ -197,6 +229,34 @@ namespace CityBuilder.Client.Presentation.City
             RingStep = step;
         }
 
+        /// <summary>Shows the store gauge of a <see cref="StatusRingKind.Storage"/> status: its filled segments, amber or red at the limit, and the good's icon; hides it for any other ring.</summary>
+        private void ShowGauge(BuildingStatus status)
+        {
+            if (status.Ring != StatusRingKind.Storage)
+            {
+                if (_gaugeGroup != null)
+                {
+                    _gaugeGroup.SetActive(false);
+                }
+
+                GaugeStep = -1;
+                GaugeFull = false;
+                return;
+            }
+
+            MakeGauge();
+            _gaugeGroup!.SetActive(true);
+            int step = StatusArt.GaugeStepOf(status.ProgressPermille);
+            GaugeFull = status.ProgressPermille >= 1000;
+            _gaugeFillFilter!.sharedMesh = _art.GaugeMesh(step);
+            _gaugeFillRenderer!.sharedMaterial = GaugeFull ? _art.GaugeFullMaterial : _art.FillMaterial(StatusRingKind.Storage);
+            _gaugeFillRenderer.enabled = step > 0;
+            Texture2D? icon = UiIcons.ForItem(status.RingItem);
+            _gaugeIcon!.sprite = icon == null ? null : _art.IconSprite(icon);
+            _gaugeIcon.enabled = icon != null;
+            GaugeStep = step;
+        }
+
         /// <summary>Shows the bubble of <paramref name="status"/> with its rim colour and picture, or hides it.</summary>
         private void ShowBubble(BuildingStatus status)
         {
@@ -213,10 +273,13 @@ namespace CityBuilder.Client.Presentation.City
             MakeBubble();
             _bubbleGroup!.SetActive(true);
             _rim!.color = StatusArt.BubbleColor(status.Bubble);
-            Texture2D? icon = status.Bubble == StatusBubbleKind.NoWorkers ? UiIcons.Workers : UiIcons.ForItem(status.BubbleItem);
+            bool paused = status.Bubble == StatusBubbleKind.Paused;
+            Texture2D? icon = paused ? null : status.Bubble == StatusBubbleKind.NoWorkers ? UiIcons.Workers : UiIcons.ForItem(status.BubbleItem);
             _icon!.sprite = icon == null ? null : _art.IconSprite(icon);
             _icon.enabled = icon != null;
             _strike!.enabled = status.Bubble == StatusBubbleKind.MissingInput;
+            _pauseLeft!.enabled = paused;
+            _pauseRight!.enabled = paused;
         }
 
         /// <summary>Shows <paramref name="count"/> pips in a centred row under the ring and hides the rest.</summary>
@@ -273,6 +336,27 @@ namespace CityBuilder.Client.Presentation.City
             _strike = AddSprite(_bubbleGroup.transform, "Strike", _art.Square, StatusArt.BubbleColor(StatusBubbleKind.MissingInput), 1f, 5, -0.006f);
             _strike.transform.localScale = new Vector3(BubbleSize * 0.85f, 0.045f, 1f);
             _strike.transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+            _pauseLeft = AddSprite(_bubbleGroup.transform, "Pause left", _art.Square, StatusArt.PauseBarColor, 1f, 4, -0.004f);
+            _pauseLeft.transform.localScale = new Vector3(BubbleSize * 0.13f, BubbleSize * 0.42f, 1f);
+            _pauseLeft.transform.localPosition = new Vector3(-BubbleSize * 0.12f, 0f, -0.004f);
+            _pauseRight = AddSprite(_bubbleGroup.transform, "Pause right", _art.Square, StatusArt.PauseBarColor, 1f, 4, -0.004f);
+            _pauseRight.transform.localScale = new Vector3(BubbleSize * 0.13f, BubbleSize * 0.42f, 1f);
+            _pauseRight.transform.localPosition = new Vector3(BubbleSize * 0.12f, 0f, -0.004f);
+        }
+
+        /// <summary>Makes the track, the filled segments and the icon of the store gauge, once.</summary>
+        private void MakeGauge()
+        {
+            if (_gaugeGroup != null)
+            {
+                return;
+            }
+
+            _gaugeGroup = new GameObject("Store gauge");
+            _gaugeGroup.transform.SetParent(transform, false);
+            AddMesh(_gaugeGroup.transform, "Track", _art.GaugeMesh(StatusArt.GaugeSegments), _art.TrackMaterial, 0, 0f, out _);
+            _gaugeFillRenderer = AddMesh(_gaugeGroup.transform, "Fill", _art.GaugeMesh(0), _art.FillMaterial(StatusRingKind.Storage), 1, -0.002f, out _gaugeFillFilter);
+            _gaugeIcon = AddSprite(_gaugeGroup.transform, "Icon", null, Color.white, 0.75f, 2, -0.004f);
         }
 
         /// <summary>Makes pip number <paramref name="index"/>, hidden.</summary>

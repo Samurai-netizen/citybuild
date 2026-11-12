@@ -30,6 +30,7 @@ public sealed class ContentShapeTests
         ["rules.tripCarryLimit"] = data => RulesOf(data).TripCarryLimit = null,
         ["rules.maxRouteStops"] = data => RulesOf(data).MaxRouteStops = null,
         ["rules.maxStopActions"] = data => RulesOf(data).MaxStopActions = null,
+        ["rules.maxDeliveryLines"] = data => RulesOf(data).MaxDeliveryLines = null,
         ["startingCity.era"] = data => data.StartingCity!.Era = null,
         ["startingCity.purse"] = data => data.StartingCity!.Purse = null,
         ["amountPresets[#1]"] = data => data.AmountPresets![1] = null,
@@ -78,6 +79,7 @@ public sealed class ContentShapeTests
     private static readonly Dictionary<string, Action<GameContentData>> _invalidIds = new()
     {
         ["items[Wood].id"] = data => Item(data, "wood").Id = "Wood",
+        ["rules.routeBuilding"] = data => data.Rules!.RouteBuilding = "School",
         ["items[1wood].id"] = data => Item(data, "wood").Id = "1wood",
         ["items[_wood].id"] = data => Item(data, "wood").Id = "_wood",
         ["items[wo od].id"] = data => Item(data, "wood").Id = "wo od",

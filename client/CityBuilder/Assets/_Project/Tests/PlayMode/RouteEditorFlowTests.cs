@@ -9,6 +9,7 @@ using CityBuilder.Client.Net;
 using CityBuilder.Client.Presentation.City;
 using CityBuilder.Client.Presentation.Inspector;
 using CityBuilder.Client.Presentation.Routes;
+using CityBuilder.Client.Presentation.Ui;
 using CityBuilder.Simulation.Content;
 using NUnit.Framework;
 using UnityEngine;
@@ -108,6 +109,41 @@ namespace CityBuilder.Client.Tests.PlayMode
             Object.DestroyImmediate(_host);
         }
 
+        /// <summary>
+        /// With the inspector and the editor in one menu group, as <c>GameRoot</c> joins them, tapping a building opens the inspector and it stays
+        /// open: the closed editor's <see cref="RouteEditorFlow.Close"/> must not drop the tile (CR-0008-T3, playtest issue 2).
+        /// </summary>
+        [UnityTest]
+        public IEnumerator TapBuilding_WithTheMenusJoined_KeepsTheInspectorOpen()
+        {
+            var menus = new MenuGroup();
+            _inspector.Opened += menus.Join(_inspectorFlow.Close).NotifyOpened;
+            _screen.Opened += menus.Join(_flow.Close).NotifyOpened;
+
+            TapTile(2, 0);
+            yield return null;
+
+            Assert.That(_inspector.IsShown, Is.True);
+            Assert.That(_world.Selection!.Selected, Is.EqualTo(new GridCoordinate(2, 0)));
+        }
+
+        /// <summary>Opening the editor from the inspector, with the menus joined, still closes the inspector and keeps the editor open (CR-0008-T3).</summary>
+        [UnityTest]
+        public IEnumerator EditRoutes_WithTheMenusJoined_OpensTheEditor_AndClosesTheInspector()
+        {
+            var menus = new MenuGroup();
+            _inspector.Opened += menus.Join(_inspectorFlow.Close).NotifyOpened;
+            _screen.Opened += menus.Join(_flow.Close).NotifyOpened;
+            TapTile(6, 0);
+            Assert.That(_inspector.IsShown, Is.True);
+
+            _inspector.PressEditRoutes();
+            yield return null;
+
+            Assert.That(_routes.Phase, Is.EqualTo(RouteEditorPhase.Editing));
+            Assert.That(_inspector.IsShown, Is.False);
+        }
+
         /// <summary>The courier station's Re-energize button shows for a courier below full stamina and sends <c>reenergize-couriers</c>.</summary>
         [UnityTest]
         public IEnumerator Inspector_Reenergize_SendsTheCommand()
@@ -121,6 +157,23 @@ namespace CityBuilder.Client.Tests.PlayMode
 
             Assert.That(_transport.Requests, Has.Count.EqualTo(1));
             Assert.That(_transport.Requests[0].Url, Does.EndWith("/commands/reenergize-couriers"));
+        }
+
+        /// <summary>The courier station's Pause button reads Pause and sends <c>set-paused</c> for the station with <c>paused</c> true (CR-0008 D23).</summary>
+        [UnityTest]
+        public IEnumerator Inspector_Pause_SendsSetPaused()
+        {
+            TapTile(6, 0);
+            Button button = _inspector.Root!.Q<Button>(BuildingInspector.PauseName);
+            Assert.That(button.style.display.value, Is.EqualTo(DisplayStyle.Flex));
+            Assert.That(button.text, Is.EqualTo("Pause"));
+
+            _inspector.PressPause();
+            yield return null;
+
+            Assert.That(_transport.Requests, Has.Count.EqualTo(1));
+            Assert.That(_transport.Requests[0].Url, Does.EndWith("/commands/set-paused"));
+            Assert.That(_transport.Requests[0].JsonBody, Does.Contain("\"buildingId\":" + StationId).And.Contain("\"paused\":true"));
         }
 
         /// <summary>
@@ -169,6 +222,35 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(_world.Ground.ShownPath, Is.Empty);
         }
 
+        /// <summary>
+        /// Once the courier has a route, the station's inspector shows that courier's queue with a Clear route button (Cancel all, CR-0008 D18);
+        /// pressing it sends one <c>cancel-delivery</c> for slot 1 with <c>lineId</c> null.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator Inspector_CancelAll_OnACourierWithARoute_SendsCancelDelivery()
+        {
+            TapTile(6, 0);
+            _inspector.PressEditRoutes();
+            TapTile(2, 0);
+            TapTile(4, 0);
+            _screen.PressConfirm();
+            yield return WaitUntil(() => _transport.OpenCount == 1);
+            _transport.Respond(200, RouteCity(11, withRoute: true));
+            yield return WaitUntil(() => _sender.Pending.Count == 0);
+
+            TapTile(6, 0);
+            yield return null;
+            List<Button> cancelAll = _inspector.Root!.Query<Button>(className: BuildingInspector.QueueCancelAllClass).ToList();
+            Assert.That(cancelAll, Has.Count.EqualTo(1));
+            Assert.That(cancelAll[0].text, Is.EqualTo("Clear route"));
+
+            _inspector.PressCancelAll(1);
+            yield return WaitUntil(() => _transport.OpenCount == 1);
+
+            Assert.That(_transport.Requests[1].Url, Does.EndWith("/api/v1/commands/cancel-delivery"));
+            Assert.That(_transport.Requests[1].JsonBody, Does.Contain("\"slot\":1").And.Contain("\"lineId\":null"));
+        }
+
         /// <summary>Removing a stop and pressing the close button leave nothing sent; closing clears the path and hides the sheet.</summary>
         [Test]
         public void Close_AfterEdits_SendsNothingAndClearsThePath()
@@ -210,6 +292,89 @@ namespace CityBuilder.Client.Tests.PlayMode
             return _screen.Root!.Q<VisualElement>(RouteEditorScreen.PanelName);
         }
 
+        /// <summary>
+        /// A real press on the Edit routes button, a pointer down and up at its centre sent to the element the panel picks there, as a finger
+        /// does, opens the editor and closes the inspector (CR-0008-T3, playtest round 3: the other tests only call
+        /// <see cref="BuildingInspector.PressEditRoutes"/>). The button is the first thing of the couriers' box, so the panel's body shows it
+        /// without scrolling and nothing lies over it.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator EditRoutes_RealPointerPress_OpensTheEditor()
+        {
+            var menus = new MenuGroup();
+            _inspector.Opened += menus.Join(_inspectorFlow.Close).NotifyOpened;
+            _screen.Opened += menus.Join(_flow.Close).NotifyOpened;
+            TapTile(6, 0);
+            yield return null;
+            Button button = _inspector.Root!.Q<Button>(BuildingInspector.EditRoutesName);
+            Vector2 centre = button.worldBound.center;
+            VisualElement? picked = button.panel.Pick(centre);
+            Assert.That(picked, Is.SameAs(button), "something else takes the press on Edit routes");
+
+            using (PointerDownEvent down = PointerDownEvent.GetPooled(new Event { type = EventType.MouseDown, mousePosition = centre, button = 0, clickCount = 1 }))
+            {
+                down.target = button;
+                button.SendEvent(down);
+            }
+
+            using (PointerUpEvent up = PointerUpEvent.GetPooled(new Event { type = EventType.MouseUp, mousePosition = centre, button = 0, clickCount = 1 }))
+            {
+                up.target = button;
+                button.SendEvent(up);
+            }
+
+            yield return null;
+
+            Assert.That(_routes.Phase, Is.EqualTo(RouteEditorPhase.Editing));
+            Assert.That(_screen.IsOpen, Is.True);
+            Assert.That(_inspector.IsShown, Is.False);
+        }
+
+        /// <summary>
+        /// The open editor leaves most of the map free for the taps that add stops (CR-0008-T3, playtest round 4: the sheet covered the map, so
+        /// no building could be tapped): in landscape the panel is at most half the screen wide, and the upper right of the screen is not over it.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator EditRoutes_Open_LeavesTheMapFreeForTaps()
+        {
+            TapTile(6, 0);
+            _inspector.PressEditRoutes();
+            yield return null;
+            yield return null;
+
+            VisualElement panel = PanelOf();
+            VisualElement root = _screen.Root!;
+            Assert.That(panel.layout.width, Is.GreaterThan(0f), "the panel is laid out");
+            Assert.That(panel.panel.Pick(panel.worldBound.center), Is.Not.Null, "the panel itself takes presses");
+            if (root.layout.width > root.layout.height)
+            {
+                Assert.That(panel.worldBound.width, Is.LessThanOrEqualTo(root.layout.width * 0.5f));
+            }
+
+            Assert.That(_screen.IsOverUi(new Vector2(Screen.width * 0.75f, Screen.height * 0.7f)), Is.False, "a tap there reaches the map");
+        }
+
+        /// <summary>
+        /// The courier station's menu has the worker stepper (its workers are its couriers; CR-0008-T3, playtest round 3): + sends
+        /// <c>assign-workers</c> with one courier more.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator Station_Plus_SendsAssignWorkers()
+        {
+            TapTile(6, 0);
+            Assert.That(_inspector.Root!.Q<VisualElement>(BuildingInspector.WorkersBoxName).style.display.value, Is.EqualTo(DisplayStyle.Flex));
+            Assert.That(_inspector.Root.Q<Button>(BuildingInspector.PlusName).enabledSelf, Is.True);
+
+            _inspector.PressPlus();
+            Assert.That(_sender.Pending.Count, Is.EqualTo(1));
+            Assert.That((_sender.Pending[0].Intent.Kind, _sender.Pending[0].Intent.BuildingId), Is.EqualTo((CommandKind.AssignWorkers, StationId)));
+            yield return new WaitForSeconds(0.8f);
+
+            Assert.That(_transport.Requests.Count, Is.EqualTo(1), "sent once the stepper's debounce has passed");
+            Assert.That(_transport.Requests[0].Url, Does.EndWith("/api/v1/commands/assign-workers"));
+            Assert.That(_transport.Requests[0].JsonBody, Does.Contain("\"workers\":2"));
+        }
+
         /// <summary>The player taps the tile (x, y) on the ground.</summary>
         private void TapTile(int x, int y)
         {
@@ -235,7 +400,8 @@ namespace CityBuilder.Client.Tests.PlayMode
 
         /// <summary>
         /// The test city as an answer's JSON: the real producing answer's clock, era and content with two cottages (tiles 0 and 1), a sawmill
-        /// (tile 2), a woodcutter (tile 4) and the courier station <see cref="StationId"/> on tile 6 with one courier at the station; when
+        /// (tile 2), a woodcutter (tile 4), the courier station <see cref="StationId"/> on tile 6 with one courier at the station and a built
+        /// Scriptorium at (7, 7), which routes need (CR-0008 D15); when
         /// <paramref name="withRoute"/> is set, slot 1 holds a route sawmill → woodcutter.
         /// </summary>
         private static string RouteCity(long stateVersion, bool withRoute)
@@ -255,6 +421,7 @@ namespace CityBuilder.Client.Tests.PlayMode
                     4, "woodcutter", 4, 0, 1, 2, 2, BuildingPhaseDto.Producing, 183, 213, 60, 60, 183, null, none,
                     new Dictionary<string, long> { ["logs"] = 40 }, none, null),
                 new SnapshotBuildingDto(StationId, "courier_station", 6, 0, 1, 1, 2, BuildingPhaseDto.Idle, 0, null, 0, 0, 0, "NoRecipe", none, none, none, null),
+                new SnapshotBuildingDto(9, "scriptorium", 7, 7, 1, 0, 0, BuildingPhaseDto.Idle, 0, null, 0, 0, 0, "NoRecipe", none, none, none, null),
             };
             var couriers = new List<SnapshotCourierDto>
             {
@@ -282,7 +449,8 @@ namespace CityBuilder.Client.Tests.PlayMode
                 new List<SnapshotRoadDto>(),
                 new List<SnapshotTripDto>(),
                 couriers,
-                routes);
+                routes,
+                new List<SnapshotDeliveryLineDto>());
             return json.Serialize(new CitySnapshotDto(real.RequestId, stateVersion, real.ServerTimeUtc, real.ContentVersion, cityDto, real.Settlement));
         }
     }

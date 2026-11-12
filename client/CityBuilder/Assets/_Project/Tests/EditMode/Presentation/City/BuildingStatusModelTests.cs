@@ -196,5 +196,46 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.City
             Assert.That(a, Is.Not.EqualTo(new BuildingStatus(StatusRingKind.Producing, 500, StatusBubbleKind.MissingInput, logs, 3)));
             Assert.That(a == new BuildingStatus(StatusRingKind.Producing, 500, StatusBubbleKind.MissingInput, logs, 2), Is.True);
         }
+
+        /// <summary>
+        /// A woodcutter's store holds 40 logs: at 31 (775 ‰, more than 75 %) the store gauge replaces the ring with the logs' fullness; at 30
+        /// (exactly 75 %) it does not (CR-0008 D25).
+        /// </summary>
+        [Test]
+        public void Describe_StoreMoreThanThreeQuartersFull_ShowsTheStoreGauge()
+        {
+            BuildingStatus full = Describe(Idle("woodcutter", 1, logs: 31));
+            BuildingStatus threeQuarters = Describe(Idle("woodcutter", 1, logs: 30));
+
+            Assert.That(full.Ring, Is.EqualTo(StatusRingKind.Storage));
+            Assert.That(full.ProgressPermille, Is.EqualTo(775));
+            Assert.That(full.RingItem, Is.EqualTo(new ItemId("logs")));
+            Assert.That(threeQuarters.Ring, Is.EqualTo(StatusRingKind.None));
+        }
+
+        /// <summary>A producing building with a nearly full store shows the gauge instead of its cycle; an upgrade keeps its own ring (CR-0008 D25).</summary>
+        [Test]
+        public void Describe_StoreGauge_ReplacesTheCycleButNotTheUpgrade()
+        {
+            var store = new[] { new KeyValuePair<ItemId, long>(new ItemId("logs"), 40) };
+            var producing = new Building(1, new BuildingTypeId("woodcutter"), 0, 0, 1, 2, BuildingPhase.Producing, 0, 30, 0, 60, 60, 0, store);
+            var upgrading = new Building(1, new BuildingTypeId("woodcutter"), 0, 0, 1, 2, BuildingPhase.Upgrading, 0, 200, 2, 0, 0, 0, store);
+
+            Assert.That(Describe(producing, clock: 15).Ring, Is.EqualTo(StatusRingKind.Storage));
+            Assert.That(Describe(producing, clock: 15).ProgressPermille, Is.EqualTo(1000));
+            Assert.That(Describe(upgrading, clock: 100).Ring, Is.EqualTo(StatusRingKind.Upgrading));
+        }
+
+        /// <summary>A paused idle producer shows the paused bubble and looks stalled (CR-0008 D23).</summary>
+        [Test]
+        public void Describe_PausedIdleProducer_HasThePausedBubble()
+        {
+            var building = new Building(1, new BuildingTypeId("woodcutter"), 0, 0, 1, 1, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, null, null, paused: true);
+
+            BuildingStatus status = Describe(building);
+
+            Assert.That(status.Bubble, Is.EqualTo(StatusBubbleKind.Paused));
+            Assert.That(status.Stalled, Is.True);
+        }
     }
 }

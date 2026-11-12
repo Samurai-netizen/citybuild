@@ -30,6 +30,18 @@ namespace CityBuilder.Client.Presentation.Ui
             return root.panel.Pick(RuntimePanelUtils.ScreenToPanel(root.panel, topLeft)) != null;
         }
 
+        /// <summary>
+        /// Hides <paramref name="button"/> completely and stops it taking presses, or brings it back (CR-0008 D22, changed by the owner in playtest
+        /// round 4 from faded to gone). It keeps its place in the dock, so nothing else moves, and it is disabled, so it can't be pressed.
+        /// </summary>
+        /// <param name="button">The button.</param>
+        /// <param name="hidden">Whether to hide it.</param>
+        public static void HideInDock(Button button, bool hidden)
+        {
+            button.style.visibility = hidden ? new StyleEnum<Visibility>(Visibility.Hidden) : new StyleEnum<Visibility>(StyleKeyword.Null);
+            button.SetEnabled(!hidden);
+        }
+
         /// <summary>The class a root gets while its panel is taller than wide (M0-59): a screen's USS uses it to rearrange for the 400 unit width.</summary>
         public const string PortraitClass = "portrait";
 

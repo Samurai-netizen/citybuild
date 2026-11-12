@@ -42,7 +42,7 @@ public sealed class ContentContractTests(ApiFactory factory) : IClassFixture<Api
             content["rules"],
             "gridWidth:int gridHeight:int builderSlots:int researchSlots:int " +
             "minCycleSeconds:int maxLaborReductionPermille:int groundTileMillis:int crossingSpeedPermille:int minWalkSeconds:int " +
-            "maxWalkBonusPermille:int tripCarryLimit:int maxRouteStops:int maxStopActions:int timeScale:int",
+            "maxWalkBonusPermille:int tripCarryLimit:int maxRouteStops:int maxStopActions:int maxDeliveryLines:int routeBuilding:string? timeScale:int",
             "$.rules");
         JsonShape.AssertObject(content["startingCity"], "era:int purse:int", "$.startingCity");
         AssertEach(content["eras"], "number:int id:string name:string", "$.eras");

@@ -32,6 +32,12 @@ internal enum Invariant
 
     /// <summary>No stamina is spent before <c>absentFrom</c>, a walk spends exactly its absent seconds, and a load never exceeds its carry limit.</summary>
     StaminaAndLoads = 14,
+
+    /// <summary>Delivery lines belong to a courier without a route, move 1 to its carry limit between two buildings, and fit its queue.</summary>
+    DeliveryLines = 15,
+
+    /// <summary>Only producers and courier stations are paused, never while constructing; a paused producer starts no cycle; a paused station's couriers don't leave.</summary>
+    Paused = 16,
 }
 
 /// <summary>

@@ -103,7 +103,7 @@ build menu (locked cards name the research that unlocks them; built, M0-45) · b
 stepper − / +** with a live rate preview, upgrade section; built, M0-51) · research screen (Era I tree: nodes with cost,
 time, effect, status; finance button; built, M0-52) · welcome-back report (built, M0-53) · toasts (built, M0-47). Market and guild screens come in M2.
 
-## Logistics screens and flows (CR-0008, *planned*: built in CR-0008-T2)
+## Logistics screens and flows (CR-0008, built in CR-0008-T2 and T3)
 CR-0008-T1 part E kept the client compiling and its tests green on the new answers: the DTOs and mappers read the purse, totals, stores,
 needs, projects, a waiting research and trips into the engine's city; the HUD chips show city totals; the build card, the inspector's
 upgrade and the research node judge only the coins (goods are delivered later); a waiting research reads "Waiting for goods"; the six new
@@ -119,12 +119,21 @@ open game is present) and sends intent; the server decides.
 - **Trip flow (T2 part A, built):** from the inspector (`Send trip`), pick the target on the map (a building or a project), the good and All,
   Half or Quarter (a percentage once researched); the path is drawn by the shared engine (`04` §17, `GroundTiles.ShowPath`); the button is off
   with its reason (no free worker, nothing to carry, nothing needed there); it sends `start-trip`. A running trip shows on both ends with its
-  countdown (`TripsText`).
-- **Road mode (T2 part B, built):** from the build menu (`build-roads`) or by tapping a road tile, select empty tiles to place roads (`place-roads`) or existing road tiles to upgrade (`upgrade-roads`) or remove (`remove-roads`), with total coin cost, speed (`2.5s / tile` → `1.5s / tile`) and the disable reason in `RoadRules` order (`RoadFlowModel`, `RoadBar`, `RoadFlow`). The ground draws roads by level using `RoadArms` (`GroundTiles.ShowRoads`), and `PlacementFlowModel` marks road tiles occupied.
-- **Courier station and route editor (T2 part C, built):** the station's inspector lists its couriers (the worker stepper), each one's state,
-  stamina and route summary, and an **Edit routes** button (the **Re-energize** button is part E). The route editor (a menu, a low sheet so the map stays tappable) adds stops by tapping buildings, gives each stop take
+  countdown (`TripsText`). Since T3 (amendment 1) the bar sends the whole amount as a delivery: it names the carrier (`Courier 1 of Courier
+  Station`, or a worker while no courier station stands) and the loads (`2 loads of 10`), and gives the server's reason when it is off.
+- **Road mode (T2 part B, built):** from the build menu (`build-roads`) or by tapping a road tile, select empty tiles to place roads (`place-roads`) or existing road tiles to upgrade (`upgrade-roads`) or remove (`remove-roads`), with total coin cost, speed (`2.5s / tile` → `1.5s / tile`) and the disable reason in `RoadRules` order (`RoadFlowModel`, `RoadBar`, `RoadFlow`). The ground draws roads by level using `RoadArms` (`GroundTiles.ShowRoads`), and `PlacementFlowModel` marks road tiles occupied. Picked new roads show as the real level 1 road at 75 % transparency, over the grass (`GroundTiles.ShowRoadPreview`, CR-0008-T3).
+- **Courier station and route editor (T2 part C, built; T3):** the station's inspector lists its couriers (the worker stepper sets how many),
+  each one's state, stamina and route summary, its delivery lines with **Cancel** and **Cancel all** (T3), and an **Edit routes** button, off
+  with a note until a Scriptorium is built (T3, amendment 1). The route editor (a menu; since T3 a panel down the left side in landscape, at
+  most 40 % wide, and a sheet at most 45 % high in portrait, so the map stays tappable; its stops a vertical list with Up and Down) adds stops by tapping buildings, gives each stop take
   and put actions (good and amount: presets; a percentage once researched; exact shown locked with the research that unlocks it), reorders
   and removes stops, draws the path and each walk's time, and sends `set-route`. A long route scrolls in one direction only.
+- **Building menu (T3):** the inspector is centred and larger (90 % wide, at most 1080, three columns in landscape, one in portrait, its body
+  a vertical scroll), and the dock's Build and Research buttons are hidden while it or the route editor is open (`UiRoot.HideInDock`). A
+  producer or a courier station has **Pause** / **Resume** (`set-paused`, amendment 2) with a note: `Stops after this batch`, or for a
+  station `Couriers home in 0:42` until `All couriers are home`; a paused building shows the grey `Paused` bubble.
+- **Store gauge (T3):** while a building is idle or producing and its fullest good is above 75 % of its limit, the cycle ring gives way to a
+  segmented gauge (10 segments in a wider band, amber, red at the limit, the good's icon in the middle).
 - **Walkers (T2 part D):** couriers and trip workers walk tile centre to tile centre with 90° turns, slowly across a building, from the
   snapshot's walk (`departedAt`, `arrivesAt`) and the path the shared engine computes on the current map (a map change after the walk
   started may draw a different path that still ends on time); resting couriers stand at their station; a load shows on the walker's back.

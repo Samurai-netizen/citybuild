@@ -376,7 +376,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
                 dto.ContentVersion,
                 new SnapshotCityDto(
                     city.Clock, city.Era, city.Purse, city.Totals, city.Workers, city.Builders, research, city.Buildings, city.Roads, city.Trips,
-                    city.Couriers, city.Routes),
+                    city.Couriers, city.Routes, city.DeliveryLines),
                 dto.Settlement);
         }
 

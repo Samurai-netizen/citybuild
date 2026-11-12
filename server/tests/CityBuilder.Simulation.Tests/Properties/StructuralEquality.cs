@@ -64,6 +64,7 @@ internal static class StructuralEquality
             fields.Add((prefix + "cycleLabor", Text(building.CycleLabor)));
             fields.Add((prefix + "laborRemaining", Text(building.LaborRemaining)));
             fields.Add((prefix + "segmentStartedAt", Text(building.SegmentStartedAt)));
+            fields.Add((prefix + "paused", building.Paused ? "true" : "false"));
             fields.AddRange(building.Store.Select(stock => ($"{prefix}store[{stock.Key}]", Text(stock.Value))));
             fields.AddRange(building.Needs.Select(need => ($"{prefix}needs[{need.Key}]", Text(need.Value))));
         }
@@ -79,7 +80,11 @@ internal static class StructuralEquality
         fields.Add(("nextTripId", Text(city.NextTripId)));
         fields.AddRange(city.Trips.Select(trip => (
             $"trip {Text(trip.Id)}",
-            $"{Text(trip.SourceId)}->{Text(trip.TargetId)} {trip.Item}={Text(trip.Quantity)} {Text(trip.DepartedAt)}..{Text(trip.ArrivesAt)}")));
+            $"{Text(trip.SourceId)}->{Text(trip.TargetId)} {trip.Item}={Text(trip.Quantity)} rest={Text(trip.Remaining)} {trip.Leg} {Text(trip.DepartedAt)}..{Text(trip.ArrivesAt)}")));
+        fields.Add(("nextLineId", Text(city.NextLineId)));
+        fields.AddRange(city.DeliveryLines.Select(line => (
+            $"line {Text(line.Id)}",
+            $"{Text(line.StationId)}/{Text(line.Slot)} {Text(line.SourceId)}->{Text(line.TargetId)} {line.Item}={Text(line.Quantity)}")));
         fields.AddRange(city.Routes.Select(route => (
             $"route {Text(route.StationId)}/{Text(route.Slot)}",
             string.Join(" ", route.Stops.Select(stop => Text(stop.BuildingId) + "[" + string.Join(";", stop.Actions.Select(action => $"{action.Kind} {action.Item} {action.Amount}")) + "]")))));

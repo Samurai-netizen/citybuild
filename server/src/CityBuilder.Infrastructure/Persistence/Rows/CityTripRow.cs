@@ -1,8 +1,8 @@
 namespace CityBuilder.Infrastructure.Persistence.Rows;
 
 /// <summary>
-/// A row of <c>city_trips</c> (core-instructions/06-data-model.md, CR-0008): a manual trip under way (<c>04</c> section 18). The row goes
-/// when the trip arrives.
+/// A row of <c>city_trips</c> (core-instructions/06-data-model.md, CR-0008): a worker's delivery under way (<c>04</c> section 18), on its way
+/// to the target with a load or back to the source for the next one. The row goes when the trip ends.
 /// </summary>
 public sealed class CityTripRow
 {
@@ -21,12 +21,18 @@ public sealed class CityTripRow
     /// <summary><c>item_id</c>: the good's content id.</summary>
     public string ItemId { get; set; } = string.Empty;
 
-    /// <summary><c>quantity</c>: the load, above 0.</summary>
+    /// <summary><c>quantity</c>: the load, above 0 on the way to the target, 0 on the way back.</summary>
     public long Quantity { get; set; }
 
-    /// <summary><c>departed_at</c>: the city-clock second the worker left.</summary>
+    /// <summary><c>departed_at</c>: the city-clock second the worker began the current leg.</summary>
     public long DepartedAt { get; set; }
 
-    /// <summary><c>arrives_at</c>: the city-clock second the worker arrives, after <see cref="DepartedAt"/>.</summary>
+    /// <summary><c>arrives_at</c>: the city-clock second the current leg ends, after <see cref="DepartedAt"/>.</summary>
     public long ArrivesAt { get; set; }
+
+    /// <summary><c>remaining</c>: how many of the delivery are still to be fetched from the source by later loads, at least 0 (CR-0008 D21).</summary>
+    public long Remaining { get; set; }
+
+    /// <summary><c>leg</c>: <c>ToTarget</c> or <c>ToSource</c>, as the API spells it.</summary>
+    public string Leg { get; set; } = "ToTarget";
 }

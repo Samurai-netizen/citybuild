@@ -19,7 +19,9 @@ namespace CityBuilder.Simulation.Content
             int maxWalkBonusPermille,
             long tripCarryLimit,
             int maxRouteStops,
-            int maxStopActions)
+            int maxStopActions,
+            int maxDeliveryLines,
+            BuildingTypeId? routeBuilding)
         {
             GridWidth = gridWidth;
             GridHeight = gridHeight;
@@ -34,6 +36,8 @@ namespace CityBuilder.Simulation.Content
             TripCarryLimit = tripCarryLimit;
             MaxRouteStops = maxRouteStops;
             MaxStopActions = maxStopActions;
+            MaxDeliveryLines = maxDeliveryLines;
+            RouteBuilding = routeBuilding;
         }
 
         /// <summary>The grid's width in tiles: x runs from 0 to <c>GridWidth − 1</c>.</summary>
@@ -80,5 +84,14 @@ namespace CityBuilder.Simulation.Content
 
         /// <summary>The most actions one stop of a route may have, 1 to 8 (<c>04</c> section 19).</summary>
         public int MaxStopActions { get; }
+
+        /// <summary>The most delivery lines one courier may have queued, 1 to 100 (<c>04</c> section 18, CR-0008 D17).</summary>
+        public int MaxDeliveryLines { get; }
+
+        /// <summary>
+        /// The building type a city must have built before a courier may get a route (<c>04</c> section 19, CR-0008 D15), or null when routes need
+        /// no building.
+        /// </summary>
+        public BuildingTypeId? RouteBuilding { get; }
     }
 }

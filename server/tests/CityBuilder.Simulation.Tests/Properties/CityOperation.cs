@@ -67,6 +67,18 @@ internal abstract record CityOperation
         public override string ToString() => string.Create(CultureInfo.InvariantCulture, $"AssignWorkers {BuildingId} {Workers}");
     }
 
+    /// <summary>Pauses or resumes the building (CR-0008 D23).</summary>
+    /// <param name="BuildingId">The id of the building.</param>
+    /// <param name="Paused">True to pause, false to resume.</param>
+    public sealed record SetPaused(int BuildingId, bool Paused) : Command
+    {
+        /// <inheritdoc/>
+        public override MutationResult Mutate(CityState city, GameContent content) => CityRules.SetPaused(city, content, BuildingId, Paused);
+
+        /// <summary>The text a failing property prints, for example <c>SetPaused 4 true</c>.</summary>
+        public override string ToString() => string.Create(CultureInfo.InvariantCulture, $"SetPaused {BuildingId} {(Paused ? "true" : "false")}");
+    }
+
     /// <summary>Starts researching the node.</summary>
     /// <param name="ResearchId">The research node's id.</param>
     public sealed record StartResearch(string ResearchId) : Command
@@ -137,6 +149,21 @@ internal abstract record CityOperation
         public override string ToString() => AbsentAfter is { } after
             ? string.Create(CultureInfo.InvariantCulture, $"Advance {Seconds} absent after {after}")
             : string.Create(CultureInfo.InvariantCulture, $"Advance {Seconds}");
+    }
+
+    /// <summary>Cancels one delivery line of a courier, or all its lines and its route (<c>04</c> section 8, CR-0008 D18).</summary>
+    /// <param name="StationId">The courier station's id.</param>
+    /// <param name="Slot">The courier's slot.</param>
+    /// <param name="LineId">The line to cancel, or null for all.</param>
+    public sealed record CancelDelivery(int StationId, int Slot, int? LineId) : Command
+    {
+        /// <inheritdoc/>
+        public override MutationResult Mutate(CityState city, GameContent content) => CourierRules.CancelDelivery(city, content, StationId, Slot, LineId);
+
+        /// <summary>The text a failing property prints, for example <c>CancelDelivery 4/1 line 7</c> or <c>CancelDelivery 4/1 all</c>.</summary>
+        public override string ToString() => LineId is { } line
+            ? string.Create(CultureInfo.InvariantCulture, $"CancelDelivery {StationId}/{Slot} line {line}")
+            : string.Create(CultureInfo.InvariantCulture, $"CancelDelivery {StationId}/{Slot} all");
     }
 
     /// <summary>Re-energizes every courier of the city (<c>04</c> section 8).</summary>

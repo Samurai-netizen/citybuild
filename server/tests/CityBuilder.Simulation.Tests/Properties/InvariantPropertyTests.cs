@@ -66,6 +66,19 @@ public sealed class InvariantPropertyTests(ITestOutputHelper output)
     public void Observe_EveryStep_SpendsStaminaOnlyWhenAbsentAndKeepsLoadsWithinTheirLimits(string contentName) =>
         Holds(contentName, Invariant.StaminaAndLoads);
 
+    /// <summary>Invariant 15: every delivery line belongs to a courier without a route, fits its carry limit and its queue (<c>04</c> section 18).</summary>
+    [Theory]
+    [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
+    public void Observe_EveryStep_KeepsDeliveryLinesWithTheirCouriers(string contentName) =>
+        Holds(contentName, Invariant.DeliveryLines);
+
+    /// <summary>Invariant 16: only producers and courier stations are paused; a paused producer starts no cycle; a paused station's couriers don't leave (CR-0008 D23, D24).</summary>
+    /// <param name="contentName">The content the seeds run with.</param>
+    [Theory]
+    [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
+    public void Observe_EveryStep_KeepsPausedBuildingsStill(string contentName) =>
+        Holds(contentName, Invariant.Paused);
+
     /// <summary>
     /// The seeds exercise every check: each counted case happened at least a floor number of times, so a check that never fires can't pass
     /// for one that holds. The counts are printed.
@@ -92,6 +105,9 @@ public sealed class InvariantPropertyTests(ITestOutputHelper output)
         observation.AssertAtLeast("cycles started with a labor reduction", 100);
         observation.AssertAtLeast("research starts with prerequisites", 20);
         observation.AssertAtLeast("trips started", 1000);
+        observation.AssertAtLeast("steps with delivery lines", 1000);
+        observation.AssertAtLeast("couriers with several lines", 100);
+        observation.AssertAtLeast("deliveries cancelled", 10);
         observation.AssertAtLeast("trips at the carry limit", 100);
         observation.AssertAtLeast("steps with a trip arriving", 1000);
         observation.AssertAtLeast("steps with workers on trips", 1000);
@@ -102,6 +118,8 @@ public sealed class InvariantPropertyTests(ITestOutputHelper output)
         observation.AssertAtLeast("steps with a courier arriving", 10_000);
         observation.AssertAtLeast("steps with a courier carrying", 10_000);
         observation.AssertAtLeast("couriers at their carry limit", 1000);
+        observation.AssertAtLeast("steps with a paused building", 1000);
+        observation.AssertAtLeast("couriers walking at a paused station", 100);
         if (contentName == "golden-v2")
         {
             // golden-v2 can't reach these cases in its seeds (BL-20261102-07 decision 38): its producers with inputs (sawmill, trading post)
@@ -116,7 +134,9 @@ public sealed class InvariantPropertyTests(ITestOutputHelper output)
         observation.AssertAtLeast("cycles ended by an upgrade", 10);
         observation.AssertAtLeast("placements of a type locked at the start", 20);
         observation.AssertAtLeast("trips with a percentage or exact amount", 5);
-        observation.AssertAtLeast("route actions with a percentage or exact amount", 5);
+        // 1, not 5 (CR-0008-T3 decision 9): a courier without a route soon gets delivery lines (D19), so the seeds rarely reach a free courier
+        // after the percentage research; SetRouteTests covers the locked amount by rule.
+        observation.AssertAtLeast("route actions with a percentage or exact amount", 1);
     }
 
     /// <summary>Fails with the first failure of the invariant on the content, if any seed had one.</summary>

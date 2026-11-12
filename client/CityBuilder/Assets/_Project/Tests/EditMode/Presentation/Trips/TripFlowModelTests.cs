@@ -72,7 +72,10 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Trips
             return new CityState(100, 1, 10, 500, new[] { sawmill, warehouse, cottage }, completed, null);
         }
 
-        /// <summary>Starting from a stocked building enters PickingTarget, selects its first stocked good and All, and caps by tripCarryLimit.</summary>
+        /// <summary>
+        /// Starting from a stocked building enters PickingTarget and selects its first stocked good and All: all 12 logs, as 2 loads of a worker's
+        /// 10 (no courier station yet; CR-0008 D16, D21: the delivery is no longer capped at one load).
+        /// </summary>
         [Test]
         public void StartFrom_StockedBuilding_EntersPickingTarget()
         {
@@ -84,7 +87,8 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Trips
             Assert.That(model.SourceId, Is.EqualTo(1));
             Assert.That(model.Item, Is.EqualTo(new ItemId("logs")));
             Assert.That(model.Amount, Is.EqualTo(Amount.Preset(new AmountPresetId("all"))));
-            Assert.That(model.CarryQuantity, Is.EqualTo(10), "capped by tripCarryLimit (10 in mvp-content)");
+            Assert.That(model.CarryQuantity, Is.EqualTo(12), "all of the stock, counted at the send");
+            Assert.That((model.LoadLimit, model.LoadCount, model.CarrierText), Is.EqualTo((10L, 2L, "a worker")), "a worker carries tripCarryLimit (10) a load");
             Assert.That(model.PromptText, Is.EqualTo("Send from Sawmill — tap a target building"));
             Assert.That(model.CanConfirm, Is.False);
         }
@@ -104,7 +108,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Trips
             Assert.That(model.Path.Count, Is.EqualTo(4), "tiles (0,0), (1,0), (2,0), (3,0)");
             Assert.That(model.WalkSeconds, Is.GreaterThan(0));
             Assert.That(model.PromptText, Is.EqualTo("Send 3 Logs to Warehouse"));
-            Assert.That(model.DetailText, Does.StartWith("Takes "));
+            Assert.That(model.DetailText, Does.StartWith("1 load · a worker · walk "));
             Assert.That(model.CanConfirm, Is.True);
             Assert.That(model.HintText, Is.Empty);
         }
@@ -163,6 +167,66 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Trips
             model.SetItem(new ItemId("logs"));
             Assert.That(model.CanConfirm, Is.False);
             Assert.That(model.HintText, Is.EqualTo(TripFlowModel.NothingToCarryReason));
+        }
+
+        /// <summary>
+        /// With a built courier station the free courier carries the delivery (CR-0008 D14): its station level's carry limit (10) a load, so 12 logs
+        /// are 2 loads of 10, and the bar names the courier.
+        /// </summary>
+        [Test]
+        public void CourierStation_TheFreeCourierCarriesItInLoads()
+        {
+            var model = new TripFlowModel(_content, _grid);
+            model.Update(StationCity(withRoute: false));
+            model.StartFrom(1);
+
+            model.SelectTile(new GridCoordinate(3, 0));
+
+            Assert.That((model.CarryQuantity, model.LoadLimit, model.LoadCount), Is.EqualTo((12L, 10L, 2L)));
+            Assert.That(model.CarrierText, Is.EqualTo("Courier 1 of Courier Station"));
+            Assert.That(model.DetailText, Does.StartWith("2 loads of 10 · Courier 1 of Courier Station · walk "));
+            Assert.That(model.CanConfirm, Is.True);
+        }
+
+        /// <summary>With a built courier station whose only courier has a route, no courier is free, and workers don't take over (CR-0008 D14).</summary>
+        [Test]
+        public void CourierStation_EveryCourierOnARoute_SaysNoFreeCourier()
+        {
+            var model = new TripFlowModel(_content, _grid);
+            model.Update(StationCity(withRoute: true));
+            model.StartFrom(1);
+
+            model.SelectTile(new GridCoordinate(3, 0));
+
+            Assert.That(model.CanConfirm, Is.False);
+            Assert.That(model.HintText, Is.EqualTo(TripFlowModel.NoFreeCourierReason));
+        }
+
+        /// <summary>
+        /// The test city with a built courier station at (5, 5) that has one courier at the station (slot 1), with a route warehouse → cottage
+        /// when <paramref name="withRoute"/> is set.
+        /// </summary>
+        private static CityState StationCity(bool withRoute)
+        {
+            CityState plain = TestCity(sawmillLogs: 12, sawmillPlanks: 0);
+            var buildings = new List<Building>(plain.Buildings)
+            {
+                new Building(4, new BuildingTypeId("courier_station"), 5, 5, 1, 1, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
+            };
+            var all = Amount.Preset(new AmountPresetId("all"));
+            Route[] routes = withRoute
+                ? new[]
+                {
+                    new Route(4, 1, new[]
+                    {
+                        new RouteStop(2, new[] { new RouteAction(RouteActionKind.Take, new ItemId("logs"), all) }),
+                        new RouteStop(3, new[] { new RouteAction(RouteActionKind.Put, new ItemId("logs"), all) }),
+                    }),
+                }
+                : Array.Empty<Route>();
+            return new CityState(
+                plain.Clock, 1, 10, 500, buildings, new List<ResearchId>(), null,
+                couriers: new[] { new Courier(4, 1, CourierState.AtStation, 0, null, null, 14400) }, routes: routes);
         }
 
         /// <summary>TryConfirm produces a StartTrip intent and enters Sending; FinishCommand closes on success and returns to Confirming on failure.</summary>

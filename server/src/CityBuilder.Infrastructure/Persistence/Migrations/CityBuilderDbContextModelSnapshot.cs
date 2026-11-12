@@ -48,6 +48,10 @@ namespace CityBuilder.Infrastructure.Persistence.Migrations
                         .HasColumnType("smallint")
                         .HasColumnName("level");
 
+                    b.Property<bool>("Paused")
+                        .HasColumnType("boolean")
+                        .HasColumnName("paused");
+
                     b.Property<string>("Phase")
                         .IsRequired()
                         .HasColumnType("text")
@@ -96,6 +100,8 @@ namespace CityBuilder.Infrastructure.Persistence.Migrations
                             t.HasCheckConstraint("ck_city_buildings_labor_remaining", "labor_remaining >= 0");
 
                             t.HasCheckConstraint("ck_city_buildings_level", "level >= 1");
+
+                            t.HasCheckConstraint("ck_city_buildings_paused", "NOT paused OR phase <> 'Constructing'");
 
                             t.HasCheckConstraint("ck_city_buildings_x", "x >= 0");
 
@@ -185,6 +191,54 @@ namespace CityBuilder.Infrastructure.Persistence.Migrations
                             t.HasCheckConstraint("ck_city_couriers_to_stop", "to_stop >= 0");
 
                             t.HasCheckConstraint("ck_city_couriers_walk", "(departed_at is null and arrives_at is null) or (departed_at is not null and arrives_at is not null and departed_at >= 0 and arrives_at > departed_at)");
+                        });
+                });
+
+            modelBuilder.Entity("CityBuilder.Infrastructure.Persistence.Rows.CityDeliveryLineRow", b =>
+                {
+                    b.Property<Guid>("CityId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("city_id");
+
+                    b.Property<int>("StationId")
+                        .HasColumnType("integer")
+                        .HasColumnName("station_id");
+
+                    b.Property<short>("Slot")
+                        .HasColumnType("smallint")
+                        .HasColumnName("slot");
+
+                    b.Property<int>("LineId")
+                        .HasColumnType("integer")
+                        .HasColumnName("line_id");
+
+                    b.Property<string>("ItemId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("item_id");
+
+                    b.Property<long>("Quantity")
+                        .HasColumnType("bigint")
+                        .HasColumnName("quantity");
+
+                    b.Property<int>("SourceId")
+                        .HasColumnType("integer")
+                        .HasColumnName("source_id");
+
+                    b.Property<int>("TargetId")
+                        .HasColumnType("integer")
+                        .HasColumnName("target_id");
+
+                    b.HasKey("CityId", "StationId", "Slot", "LineId")
+                        .HasName("pk_city_delivery_lines");
+
+                    b.ToTable("city_delivery_lines", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_city_delivery_lines_buildings", "source_id <> target_id");
+
+                            t.HasCheckConstraint("ck_city_delivery_lines_quantity", "quantity > 0");
+
+                            t.HasCheckConstraint("ck_city_delivery_lines_slot", "slot >= 1");
                         });
                 });
 
@@ -380,6 +434,10 @@ namespace CityBuilder.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("next_building_id");
 
+                    b.Property<int>("NextLineId")
+                        .HasColumnType("integer")
+                        .HasColumnName("next_line_id");
+
                     b.Property<int>("NextTripId")
                         .HasColumnType("integer")
                         .HasColumnName("next_trip_id");
@@ -423,6 +481,8 @@ namespace CityBuilder.Infrastructure.Persistence.Migrations
                     b.ToTable("cities", null, t =>
                         {
                             t.HasCheckConstraint("ck_cities_era", "era >= 1");
+
+                            t.HasCheckConstraint("ck_cities_next_line_id", "next_line_id >= 1");
 
                             t.HasCheckConstraint("ck_cities_next_trip_id", "next_trip_id >= 1");
 
@@ -480,9 +540,18 @@ namespace CityBuilder.Infrastructure.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("item_id");
 
+                    b.Property<string>("Leg")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("leg");
+
                     b.Property<long>("Quantity")
                         .HasColumnType("bigint")
                         .HasColumnName("quantity");
+
+                    b.Property<long>("Remaining")
+                        .HasColumnType("bigint")
+                        .HasColumnName("remaining");
 
                     b.Property<int>("SourceId")
                         .HasColumnType("integer")
@@ -499,7 +568,9 @@ namespace CityBuilder.Infrastructure.Persistence.Migrations
                         {
                             t.HasCheckConstraint("ck_city_trips_arrives_at", "arrives_at > departed_at");
 
-                            t.HasCheckConstraint("ck_city_trips_quantity", "quantity > 0");
+                            t.HasCheckConstraint("ck_city_trips_quantity", "(leg = 'ToTarget' and quantity > 0) or (leg = 'ToSource' and quantity = 0 and remaining > 0)");
+
+                            t.HasCheckConstraint("ck_city_trips_remaining", "remaining >= 0");
                         });
                 });
 
@@ -643,6 +714,16 @@ namespace CityBuilder.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_city_couriers_city_buildings_station_id");
+                });
+
+            modelBuilder.Entity("CityBuilder.Infrastructure.Persistence.Rows.CityDeliveryLineRow", b =>
+                {
+                    b.HasOne("CityBuilder.Infrastructure.Persistence.Rows.CityCourierRow", null)
+                        .WithMany()
+                        .HasForeignKey("CityId", "StationId", "Slot")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_city_delivery_lines_city_couriers");
                 });
 
             modelBuilder.Entity("CityBuilder.Infrastructure.Persistence.Rows.CityProjectNeedRow", b =>

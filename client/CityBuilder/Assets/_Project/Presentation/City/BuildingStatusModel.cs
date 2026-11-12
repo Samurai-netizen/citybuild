@@ -11,11 +11,18 @@ namespace CityBuilder.Client.Presentation.City
     /// <summary>
     /// Works out what a building's status shows (M0-50) from the displayed city and the content, with the engine's own helpers: the ring from
     /// the building's phase and <see cref="ProgressDisplay.ProgressPermille"/> at the displayed city's clock (the same clock as the
-    /// <c>DisplayClock</c> gives, since <c>DisplayCity</c> advanced the city to it), the bubble and the stalled look from
+    /// <c>DisplayClock</c> gives, since <c>DisplayCity</c> advanced the city to it), or the store gauge when an idle or producing building's
+    /// store is more than <see cref="StoreGaugePermille"/> full (<see cref="StoreDisplay.FullestPermille"/>, CR-0008 D25), the bubble and the stalled look from
     /// <see cref="StallReason"/>, the pips from the assigned workers. Pure code with no Unity objects; it decides nothing and sends nothing.
     /// </summary>
     public static class BuildingStatusModel
     {
+        /// <summary>
+        /// The fullness, in permille, above which the store gauge replaces the cycle ring (the owner's "more than 75%", CR-0008 D25): a display
+        /// rule, not a game number.
+        /// </summary>
+        public const int StoreGaugePermille = 750;
+
         /// <summary>
         /// The status of one building of <paramref name="city"/>. A building whose type or level the content does not know has its ring and its
         /// pips but no bubble, never an exception: the display city already shows such a city as it is, and this runs every second.
@@ -44,6 +51,16 @@ namespace CityBuilder.Client.Presentation.City
 
             StatusRingKind ring = RingOf(building.Phase);
             int progress = ring == StatusRingKind.None ? 0 : ProgressDisplay.ProgressPermille(building, city.Clock);
+            ItemId fullest = default;
+            if (building.Phase == BuildingPhase.Idle || building.Phase == BuildingPhase.Producing)
+            {
+                int fullness = StoreDisplay.FullestPermille(city, content, building, out fullest);
+                if (fullness > StoreGaugePermille)
+                {
+                    ring = StatusRingKind.Storage;
+                    progress = fullness;
+                }
+            }
 
             StatusBubbleKind bubble = StatusBubbleKind.None;
             ItemId item = default;
@@ -57,7 +74,7 @@ namespace CityBuilder.Client.Presentation.City
                 }
             }
 
-            return new BuildingStatus(ring, progress, bubble, item, building.AssignedWorkers);
+            return new BuildingStatus(ring, progress, bubble, item, building.AssignedWorkers, fullest);
         }
 
         /// <summary>The ring a phase gets: only a timed job has one.</summary>
@@ -87,6 +104,8 @@ namespace CityBuilder.Client.Presentation.City
                     return StatusBubbleKind.MissingInput;
                 case StallKind.StorageFull:
                     return StatusBubbleKind.StorageFull;
+                case StallKind.Paused:
+                    return StatusBubbleKind.Paused;
                 default:
                     return StatusBubbleKind.None;
             }

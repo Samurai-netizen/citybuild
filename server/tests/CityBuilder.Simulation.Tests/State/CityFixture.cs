@@ -61,7 +61,8 @@ internal static class CityFixture
 
     /// <summary>
     /// A city at <paramref name="clock"/> (default 1000) in era 1. The next building id defaults to one above the highest id, the next trip id
-    /// to one above the highest trip's; the purse to 0; the roads, trips, couriers and routes to nothing. Goods live in the buildings' stores
+    /// to one above the highest trip's, the next line id to one above the highest line's; the purse to 0; the roads, trips, couriers, routes
+    /// and delivery lines to nothing. Goods live in the buildings' stores
     /// (the building helpers' <c>store</c>), on trips and with couriers.
     /// </summary>
     public static CityState City(
@@ -76,10 +77,12 @@ internal static class CityFixture
         Trip[]? trips = null,
         int? nextTripId = null,
         Courier[]? couriers = null,
-        Route[]? routes = null)
+        Route[]? routes = null,
+        DeliveryLine[]? lines = null)
     {
         buildings ??= [];
         trips ??= [];
+        lines ??= [];
         int nextId = nextBuildingId ?? (buildings.Length == 0 ? 1 : buildings.Max(building => building.Id) + 1);
         return new CityState(
             clock,
@@ -93,8 +96,14 @@ internal static class CityFixture
             trips,
             nextTripId ?? (trips.Length == 0 ? 1 : trips.Max(trip => trip.Id) + 1),
             couriers,
-            routes);
+            routes,
+            lines,
+            lines.Length == 0 ? 1 : lines.Max(line => line.Id) + 1);
     }
+
+    /// <summary>A delivery line of courier <paramref name="stationId"/>/<paramref name="slot"/>: up to <paramref name="quantity"/> of a good from one building to another.</summary>
+    public static DeliveryLine Line(int id, int stationId, int slot, int sourceId, int targetId, string item, long quantity) =>
+        new(id, stationId, slot, sourceId, targetId, new ItemId(item), quantity);
 
     /// <summary>A courier at its station with <paramref name="stamina"/> and the given load parts (good, the building it came from, quantity).</summary>
     public static Courier AtStation(int stationId, int slot, long stamina = 600, params (string Item, int FromId, long Quantity)[] load) =>

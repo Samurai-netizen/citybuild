@@ -68,6 +68,8 @@ namespace CityBuilder.Client.Net
                 TripCarryLimit = rules.TripCarryLimit,
                 MaxRouteStops = rules.MaxRouteStops,
                 MaxStopActions = rules.MaxStopActions,
+                MaxDeliveryLines = rules.MaxDeliveryLines,
+                RouteBuilding = rules.RouteBuilding,
             };
         }
 

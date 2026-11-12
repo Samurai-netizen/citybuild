@@ -49,6 +49,10 @@ namespace CityBuilder.Simulation.State
         /// The goods the project still needs, each at most once, none below 0 (0 is left out); null for none. Needs are allowed on a construction
         /// site (constructing with no start and no end) and on an idle or producing building (its upgrade waits for them), nowhere else.
         /// </param>
+        /// <param name="paused">
+        /// Whether the player paused the building (CR-0008 D23); never while constructing. That only producers and courier stations are paused
+        /// is the caller's business, like the level.
+        /// </param>
         /// <exception cref="ArgumentException">The values don't form a valid building; the message says which rule they break.</exception>
         public Building(
             int id,
@@ -65,7 +69,8 @@ namespace CityBuilder.Simulation.State
             long laborRemaining,
             long segmentStartedAt,
             IEnumerable<KeyValuePair<ItemId, long>>? store = null,
-            IEnumerable<KeyValuePair<ItemId, long>>? needs = null)
+            IEnumerable<KeyValuePair<ItemId, long>>? needs = null,
+            bool paused = false)
         {
             Id = id;
             TypeId = typeId;
@@ -80,6 +85,7 @@ namespace CityBuilder.Simulation.State
             CycleLabor = cycleLabor;
             LaborRemaining = laborRemaining;
             SegmentStartedAt = segmentStartedAt;
+            Paused = paused;
             Store = _store;
             Needs = _needs;
 
@@ -134,6 +140,12 @@ namespace CityBuilder.Simulation.State
 
         /// <summary>When the running cycle's current labor segment (a stretch with one worker count) started; 0 unless producing.</summary>
         public long SegmentStartedAt { get; private set; }
+
+        /// <summary>
+        /// Whether the player paused the building (<c>04</c> sections 4, 6 and 19, CR-0008 D23 and D24): a paused producer starts no cycle (a
+        /// running one finishes), a paused courier station's couriers go home and stay there. Its store stays open; it stays through an upgrade.
+        /// </summary>
+        public bool Paused { get; private set; }
 
         /// <summary>
         /// The goods in the building's store (<c>04</c> section 16), by item id; a good it holds none of is absent. The level's
@@ -315,6 +327,17 @@ namespace CityBuilder.Simulation.State
             PhaseEndsAt = checked(startedAt + IntegerMath.CeilDiv(labor, AssignedWorkers));
         }
 
+        /// <summary>Pauses or resumes the building (<c>04</c> section 8, <c>SetPaused</c>). The caller checks that it is not constructing.</summary>
+        internal void SetPaused(bool paused)
+        {
+            if (paused && Phase == BuildingPhase.Constructing)
+            {
+                throw new InvalidOperationException(FormattableString.Invariant($"Building {Id}: a building under construction is never paused."));
+            }
+
+            Paused = paused;
+        }
+
         /// <summary>Ends construction: the building is idle with <paramref name="workers"/> assigned (auto-staffing, <c>04</c> section 3).</summary>
         internal void CompleteConstruction(int workers)
         {
@@ -385,10 +408,10 @@ namespace CityBuilder.Simulation.State
                     bool timerOrSite = _needs.Count == 0
                         ? PhaseEndsAt >= PhaseStartedAt
                         : PhaseStartedAt == 0 && PhaseEndsAt == null;
-                    return timerOrSite && AssignedWorkers == 0 && TargetLevel == 0 && HasNoCycle()
+                    return timerOrSite && AssignedWorkers == 0 && TargetLevel == 0 && HasNoCycle() && !Paused
                         ? null
-                        : "a constructing building has no workers, no target level or cycle, and either an end not before its start, or (a "
-                          + "construction site) needs and no start or end.";
+                        : "a constructing building has no workers, no target level or cycle, is not paused, and either an end not before its "
+                          + "start, or (a construction site) needs and no start or end.";
                 case BuildingPhase.Upgrading:
                     return PhaseEndsAt >= PhaseStartedAt && TargetLevel == (long)Level + 1 && HasNoCycle() && _needs.Count == 0
                         ? null

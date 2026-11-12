@@ -206,6 +206,23 @@ namespace CityBuilder.Client.Presentation.Build
         }
 
         /// <summary>
+        /// Hides the dock's Build button while a building's menu is open (CR-0008 D22, the owner's playtest point 4; gone, not
+        /// faded, since playtest round 4): it can't be pressed; false brings it back.
+        /// </summary>
+        /// <param name="hidden">Whether a building's menu is open.</param>
+        public void SetDockHidden(bool hidden)
+        {
+            IsDockHidden = hidden;
+            if (_toggle != null)
+            {
+                UiRoot.HideInDock(_toggle, hidden);
+            }
+        }
+
+        /// <summary>Whether the Build button is hidden because a building's menu is open (<see cref="SetDockHidden"/>).</summary>
+        public bool IsDockHidden { get; private set; }
+
+        /// <summary>
         /// Whether a screen position (pixels, origin bottom left) is over the menu or any other element that takes the pointer: the build
         /// button, the open sheet. The ground ignores a press there. False before the UI exists.
         /// </summary>
@@ -247,6 +264,7 @@ namespace CityBuilder.Client.Presentation.Build
             }
 
             _toggle.clicked += () => SetOpen(!IsOpen);
+            UiRoot.HideInDock(_toggle, IsDockHidden);
             if (_roads != null)
             {
                 _roads.clicked += PressRoads;

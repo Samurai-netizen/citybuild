@@ -215,6 +215,23 @@ namespace CityBuilder.Client.Presentation.Research
             }
         }
 
+        /// <summary>
+        /// Hides the dock's Research button while a building's menu is open (CR-0008 D22, the owner's playtest point 4; gone, not
+        /// faded, since playtest round 4): it can't be pressed; false brings it back.
+        /// </summary>
+        /// <param name="hidden">Whether a building's menu is open.</param>
+        public void SetDockHidden(bool hidden)
+        {
+            IsDockHidden = hidden;
+            if (_elements != null)
+            {
+                UiRoot.HideInDock(_elements.Toggle, hidden);
+            }
+        }
+
+        /// <summary>Whether the Research button is hidden because a building's menu is open (<see cref="SetDockHidden"/>).</summary>
+        public bool IsDockHidden { get; private set; }
+
         /// <summary>The player pressed Finance on the node <paramref name="id"/>: what a finger on the button does, as a call. Does nothing unless the model allows it.</summary>
         /// <returns>True when <see cref="FinanceRequested"/> was raised.</returns>
         public bool PressFinance(string id)
@@ -265,6 +282,7 @@ namespace CityBuilder.Client.Presentation.Research
 
             _elements = elements;
             elements.Toggle.clicked += () => SetOpen(!IsOpen);
+            UiRoot.HideInDock(elements.Toggle, IsDockHidden);
             elements.Close.clicked += () => SetOpen(false);
             root.RegisterCallback<GeometryChangedEvent>(_ => UiRoot.PadBySafeArea(root, BasePadding));
             elements.Scroll.RegisterCallback<GeometryChangedEvent>(_ => FitCards(elements));

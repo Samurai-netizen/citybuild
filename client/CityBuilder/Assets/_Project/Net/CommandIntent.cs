@@ -32,7 +32,8 @@ namespace CityBuilder.Client.Net
             string? amount = null,
             IReadOnlyList<RoadTileRequestDto>? tiles = null,
             int slot = 0,
-            IReadOnlyList<RouteStopRequestDto>? stops = null)
+            IReadOnlyList<RouteStopRequestDto>? stops = null,
+            int lineId = 0)
         {
             Kind = kind;
             ContentId = contentId;
@@ -45,6 +46,7 @@ namespace CityBuilder.Client.Net
             Tiles = tiles ?? EmptyTiles;
             Slot = slot;
             Stops = stops ?? EmptyStops;
+            LineId = lineId;
         }
 
         /// <summary>Which command it is.</summary>
@@ -62,7 +64,7 @@ namespace CityBuilder.Client.Net
         /// <summary>The building of an upgrade or assign-workers intent, or the source building of a start-trip intent; 0 for the others.</summary>
         public int BuildingId { get; }
 
-        /// <summary>The absolute worker target of an assign-workers intent; 0 for the others.</summary>
+        /// <summary>The absolute worker target of an assign-workers intent, 1 or 0 for a set-paused one (<see cref="Paused"/>); 0 for the others.</summary>
         public int Workers { get; }
 
         /// <summary>The target building of a start-trip intent; 0 for the others.</summary>
@@ -74,7 +76,10 @@ namespace CityBuilder.Client.Net
         /// <summary>The tiles of a <c>place-roads</c>, <c>upgrade-roads</c> or <c>remove-roads</c> intent; empty for the others.</summary>
         public IReadOnlyList<RoadTileRequestDto> Tiles { get; }
 
-        /// <summary>The courier slot of a set-route intent; 0 for the others.</summary>
+        /// <summary>The delivery line of a cancel-delivery intent, or 0 to cancel all of the courier's lines and its route; 0 for the others.</summary>
+        public int LineId { get; }
+
+        /// <summary>The courier slot of a set-route or cancel-delivery intent; 0 for the others.</summary>
         public int Slot { get; }
 
         /// <summary>The stops of a set-route intent (empty clears the route); empty for the others.</summary>
@@ -149,6 +154,27 @@ namespace CityBuilder.Client.Net
             return new CommandIntent(CommandKind.SetRoute, null, 0, 0, stationId, 0, slot: slot, stops: RequireStops(stops, nameof(stops)));
         }
 
+        /// <summary>
+        /// Cancel delivery line <paramref name="lineId"/> of courier <paramref name="slot"/> at station <paramref name="stationId"/>, or with 0 all of
+        /// its lines and its route (CR-0008 amendment 1).
+        /// </summary>
+        public static CommandIntent CancelDelivery(int stationId, int slot, int lineId)
+        {
+            return new CommandIntent(CommandKind.CancelDelivery, null, 0, 0, stationId, 0, slot: slot, lineId: lineId);
+        }
+
+        /// <summary>
+        /// Pause (<paramref name="paused"/> true) or resume building <paramref name="buildingId"/> (CR-0008 amendment 2). The flag is kept in
+        /// <see cref="Workers"/> as 1 or 0, so a pause and a resume of one building are different intents.
+        /// </summary>
+        public static CommandIntent SetPaused(int buildingId, bool paused)
+        {
+            return new CommandIntent(CommandKind.SetPaused, null, 0, 0, buildingId, paused ? 1 : 0);
+        }
+
+        /// <summary>Whether a set-paused intent pauses (true) or resumes (false); false for the other kinds.</summary>
+        public bool Paused => Kind == CommandKind.SetPaused && Workers != 0;
+
         /// <summary>Give every courier its full stamina again (CR-0008); it has no argument.</summary>
         public static CommandIntent ReenergizeCouriers()
         {
@@ -160,7 +186,7 @@ namespace CityBuilder.Client.Net
         {
             return other != null && Kind == other.Kind && ContentId == other.ContentId && X == other.X && Y == other.Y
                 && BuildingId == other.BuildingId && Workers == other.Workers && TargetId == other.TargetId && Amount == other.Amount
-                && SameTiles(Tiles, other.Tiles) && Slot == other.Slot && SameStops(Stops, other.Stops);
+                && SameTiles(Tiles, other.Tiles) && Slot == other.Slot && SameStops(Stops, other.Stops) && LineId == other.LineId;
         }
 
         /// <inheritdoc/>
@@ -178,7 +204,7 @@ namespace CityBuilder.Client.Net
                 tilesHash = HashCode.Combine(tilesHash, Tiles[i]);
             }
 
-            return HashCode.Combine(Kind, ContentId, X, Y, BuildingId, Workers, TargetId, HashCode.Combine(Amount, tilesHash, Slot, Stops.Count));
+            return HashCode.Combine(Kind, ContentId, X, Y, BuildingId, Workers, TargetId, HashCode.Combine(Amount, tilesHash, Slot, Stops.Count, LineId));
         }
 
         /// <summary>A one-line form for logs, for example <c>AssignWorkers(building 3, workers 2)</c>.</summary>
@@ -204,6 +230,10 @@ namespace CityBuilder.Client.Net
                     return "SetRoute(station " + BuildingId + ", slot " + Slot + ", " + Stops.Count + " stops)";
                 case CommandKind.ReenergizeCouriers:
                     return "ReenergizeCouriers()";
+                case CommandKind.CancelDelivery:
+                    return "CancelDelivery(station " + BuildingId + ", slot " + Slot + ", " + (LineId == 0 ? "all" : "line " + LineId) + ")";
+                case CommandKind.SetPaused:
+                    return "SetPaused(building " + BuildingId + ", " + (Paused ? "pause" : "resume") + ")";
                 default:
                     return "StartResearch(" + ContentId + ")";
             }
@@ -232,6 +262,11 @@ namespace CityBuilder.Client.Net
                     return api.SetRouteAsync(new SetRouteRequestDto(requestId, BuildingId, Slot, Stops), cancellationToken);
                 case CommandKind.ReenergizeCouriers:
                     return api.ReenergizeCouriersAsync(new ReenergizeCouriersRequestDto(requestId), cancellationToken);
+                case CommandKind.CancelDelivery:
+                    return api.CancelDeliveryAsync(
+                        new CancelDeliveryRequestDto(requestId, BuildingId, Slot, LineId == 0 ? (int?)null : LineId), cancellationToken);
+                case CommandKind.SetPaused:
+                    return api.SetPausedAsync(new SetPausedRequestDto(requestId, BuildingId, Paused), cancellationToken);
                 default:
                     return api.StartResearchAsync(new StartResearchRequestDto(requestId, ContentId!), cancellationToken);
             }

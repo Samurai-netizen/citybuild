@@ -1,6 +1,5 @@
 #nullable enable
 using System;
-using System.Collections.Generic;
 using System.Text;
 using CityBuilder.Client.Core;
 using CityBuilder.Client.Presentation.Ui;
@@ -10,11 +9,12 @@ using UnityEngine.UIElements;
 namespace CityBuilder.Client.Presentation.Routes
 {
     /// <summary>
-    /// The courier route editor sheet (CR-0008-T2 part C): a parchment sheet above the dock with the courier's title and slot button, the
-    /// summary, one row of stop cards (<c>UI/RouteStop</c>, each with its action rows from <c>UI/RouteAction</c>) that scrolls sideways only and
-    /// is scaled down until it fits (OD-17), the reason Save is off, Revert and Save. It writes what <see cref="RouteEditorModel"/> says and
+    /// The courier route editor (CR-0008-T2 part C; a side panel since CR-0008-T3, the owner's playtest round 4): a narrow parchment panel down
+    /// the left side in landscape (a short sheet at the bottom in portrait) with the courier's title and slot button, the summary, a list of stop
+    /// cards (<c>UI/RouteStop</c>, each with its action rows from <c>UI/RouteAction</c>) that scrolls up and down only (OD-17), the reason Save
+    /// is off, Revert and Save. It writes what <see cref="RouteEditorModel"/> says and
     /// raises one event per button; <see cref="RouteEditorFlow"/> turns the events into model calls. The cards are made again only when
-    /// the words change, so the periodic city updates do not reset the scroll position. The sheet stays low so the map stays tappable.
+    /// the words change, so the periodic city updates do not reset the scroll position. The panel leaves most of the map free, so a tap on a building adds a stop.
     /// </summary>
     public sealed class RouteEditorScreen : MonoBehaviour
     {
@@ -60,7 +60,7 @@ namespace CityBuilder.Client.Presentation.Routes
         /// <summary>The name of the sideways scroll view.</summary>
         public const string ScrollName = "route-scroll";
 
-        /// <summary>The name of the row that holds the stop cards.</summary>
+        /// <summary>The name of the list that holds the stop cards.</summary>
         public const string StopsName = "route-stops";
 
         /// <summary>The name of the label with the note on locked amounts.</summary>
@@ -90,11 +90,11 @@ namespace CityBuilder.Client.Presentation.Routes
         /// <summary>The name of a stop card's add-action button.</summary>
         public const string StopAddActionName = "route-stop-add-action";
 
-        /// <summary>The name of a stop card's move-earlier button.</summary>
-        public const string StopLeftName = "route-stop-left";
+        /// <summary>The name of a stop card's move-up (earlier) button.</summary>
+        public const string StopUpName = "route-stop-up";
 
-        /// <summary>The name of a stop card's move-later button.</summary>
-        public const string StopRightName = "route-stop-right";
+        /// <summary>The name of a stop card's move-down (later) button.</summary>
+        public const string StopDownName = "route-stop-down";
 
         /// <summary>The name of a stop card's remove button.</summary>
         public const string StopRemoveName = "route-stop-remove";
@@ -131,9 +131,6 @@ namespace CityBuilder.Client.Presentation.Routes
 
         /// <summary>The elements the screen writes to; null until <c>Start</c> found them.</summary>
         private Elements? _elements;
-
-        /// <summary>The stop cards, in the order of the model's lines.</summary>
-        private readonly List<VisualElement> _cards = new List<VisualElement>();
 
         /// <summary>What the cards show now; they are made again when it changes.</summary>
         private string _signature = string.Empty;
@@ -307,39 +304,18 @@ namespace CityBuilder.Client.Presentation.Routes
             elements.Confirm.clicked += PressConfirm;
             elements.Close.clicked += PressClose;
             root.RegisterCallback<GeometryChangedEvent>(_ => UiRoot.PadBySafeArea(root, BasePadding));
-            elements.Scroll.RegisterCallback<GeometryChangedEvent>(_ => FitCards(elements));
-            elements.Stops.RegisterCallback<GeometryChangedEvent>(_ => FitCards(elements));
             elements.Panel.EnableInClassList(HiddenClass, !IsOpen);
             Refresh();
-        }
-
-        /// <summary>Scales the row of cards down until the tallest card fits the scroll view's height (OD-17).</summary>
-        private void FitCards(Elements e)
-        {
-            float needed = 0f;
-            for (int index = 0; index < _cards.Count; index++)
-            {
-                VisualElement card = _cards[index];
-                float bottom = card.layout.yMax + (card.parent == null ? 0f : card.parent.layout.y);
-                if (bottom > needed)
-                {
-                    needed = bottom;
-                }
-            }
-
-            ScaleToFit.Height(e.Stops, new Vector2(e.Stops.layout.width, needed), e.Scroll.contentViewport.layout.height);
         }
 
         /// <summary>Makes the stop cards again from the model's lines.</summary>
         private void BuildCards(Elements e, RouteEditorModel model)
         {
             e.Stops.Clear();
-            _cards.Clear();
             for (int index = 0; index < model.Lines.Count; index++)
             {
                 VisualElement card = MakeCard(index, model.Lines[index]);
                 e.Stops.Add(card);
-                _cards.Add(card);
             }
         }
 
@@ -357,8 +333,8 @@ namespace CityBuilder.Client.Presentation.Routes
             }
 
             clone.Q<Button>(StopAddActionName).clicked += () => ActionAddRequested?.Invoke(stop);
-            clone.Q<Button>(StopLeftName).clicked += () => StopMoveRequested?.Invoke(stop, -1);
-            clone.Q<Button>(StopRightName).clicked += () => StopMoveRequested?.Invoke(stop, 1);
+            clone.Q<Button>(StopUpName).clicked += () => StopMoveRequested?.Invoke(stop, -1);
+            clone.Q<Button>(StopDownName).clicked += () => StopMoveRequested?.Invoke(stop, 1);
             clone.Q<Button>(StopRemoveName).clicked += () => StopRemoveRequested?.Invoke(stop);
             return card;
         }
@@ -410,10 +386,10 @@ namespace CityBuilder.Client.Presentation.Routes
         /// <summary>The elements the screen writes to.</summary>
         private sealed class Elements
         {
-            /// <summary>The sheet and the row of cards.</summary>
+            /// <summary>The panel and the list of cards.</summary>
             public VisualElement Panel = null!, Stops = null!;
 
-            /// <summary>The sideways scroll view.</summary>
+            /// <summary>The scroll view of the stop list (up and down only).</summary>
             public ScrollView Scroll = null!;
 
             /// <summary>The labels.</summary>

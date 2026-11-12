@@ -32,8 +32,9 @@ public sealed class StartTripDatabaseTests(PostgresServer server) : PostgresTest
     /// <summary>
     /// A trip from the warehouse (1,3) to a sawmill's construction site (1,2) next door: the trip row is stored with its load and its 5 s walk,
     /// the warehouse row holds 10 logs less, the next trip id is 2, and nothing goes to the ledger; the receipt holds the response. At second 5
-    /// the request's settle delivers the 10 logs to the site, whose need row goes and whose build timer starts (120 s), deletes the trip row,
-    /// and writes one <c>SETTLEMENT_DELIVERED</c> row of −10 logs with the city's total after it.
+    /// the request's settle delivers the 10 logs to the site, whose need row goes and whose build timer starts (120 s), and writes one
+    /// <c>SETTLEMENT_DELIVERED</c> row of −10 logs with the city's total after it; the trip row stays, its worker walking back for the 20 logs
+    /// still to fetch (CR-0008 D21: <c>leg</c> <c>ToSource</c>, <c>quantity</c> 0, <c>remaining</c> 20, from 5 to 10).
     /// </summary>
     [Fact]
     public async Task Post_TripToASite_StoresTheTripThenDeliversAndStartsTheBuild()
@@ -62,7 +63,8 @@ public sealed class StartTripDatabaseTests(PostgresServer server) : PostgresTest
         Assert.Equal("2 sawmill L1 Constructing 5-125 target 0 workers 0", await BuildingAsync(Database, city, 2));
         await using (CityBuilderDbContext db = Database.CreateContext())
         {
-            Assert.False(await db.CityTrips.AnyAsync(TestContext.Current.CancellationToken));
+            CityTripRow back = await db.CityTrips.AsNoTracking().SingleAsync(TestContext.Current.CancellationToken);
+            Assert.Equal(("ToSource", 0L, 20L, 5L, 10L), (back.Leg, back.Quantity, back.Remaining, back.DepartedAt, back.ArrivesAt));
             Assert.False(await db.CityProjectNeeds.AnyAsync(TestContext.Current.CancellationToken));
         }
 

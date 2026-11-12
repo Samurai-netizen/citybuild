@@ -71,13 +71,28 @@ namespace CityBuilder.Client.Presentation.Inspector
         /// <summary>Whether the Edit routes button shows: a built courier station with at least one courier (CR-0008).</summary>
         public bool HasRouteEditor { get; private set; }
 
+        /// <summary>Whether the Edit routes button works: it shows and the city has built the route building (CR-0008 D15).</summary>
+        public bool CanEditRoutes { get; private set; }
+
+        /// <summary>Why Edit routes is off, such as <c>Repeating routes need a Scriptorium</c>; empty when it works or doesn't show.</summary>
+        public string RoutesNote { get; private set; } = string.Empty;
+
+        /// <summary>
+        /// The work of each courier of a courier station that has some, by slot: its delivery lines with their Cancel buttons, or its route, and
+        /// Cancel all (CR-0008 amendment 1); empty for other buildings and for couriers without work.
+        /// </summary>
+        public IReadOnlyList<CourierQueueModel> Queues { get; private set; } = Array.Empty<CourierQueueModel>();
+
         /// <summary>Whether the Re-energize couriers button shows: a built courier station with a courier that rests or has less stamina than its level gives (CR-0008-T2 part E).</summary>
         public bool HasReenergize { get; private set; }
 
         /// <summary>Whether the Send trip button works: <see cref="HasSendTrip"/> and commands are allowed (CR-0008).</summary>
         public bool CanSendTrip { get; private set; }
 
-        /// <summary>Whether the worker stepper is shown: a producer that is built (a house has no workers to set, a site cannot take any yet).</summary>
+        /// <summary>
+        /// Whether the worker stepper is shown: a producer or a courier station (its workers are its couriers) that is built. A house, a
+        /// scriptorium or a warehouse has no workers to set and a site cannot take any yet: their menus show no worker box (CR-0008-T3).
+        /// </summary>
         public bool HasStepper { get; private set; }
 
         /// <summary>The stepper's value, such as <c>3 / 3</c>: the pending target (or the assigned workers) over the level's most workers.</summary>
@@ -100,6 +115,25 @@ namespace CityBuilder.Client.Presentation.Inspector
 
         /// <summary>Whether a worker target is on its way to the server.</summary>
         public bool IsWorkersPending { get; private set; }
+
+        /// <summary>Whether the building has the Pause / Resume button: a built producer or courier station (CR-0008 D23).</summary>
+        public bool HasPause { get; private set; }
+
+        /// <summary>Whether the building is paused, or will be once the pause on its way arrives: the button then reads Resume.</summary>
+        public bool IsPaused { get; private set; }
+
+        /// <summary>The button's text: <c>Pause</c> or <c>Resume</c>.</summary>
+        public string PauseText { get; private set; } = string.Empty;
+
+        /// <summary>Whether the Pause / Resume button can be pressed: commands are allowed and none of its own is on its way.</summary>
+        public bool CanPause { get; private set; }
+
+        /// <summary>
+        /// What the pause does now (D23, D24): a paused station's wait, <c>Couriers home in 0:42</c> or <c>All couriers are home</c>; a paused
+        /// producer still running its cycle, <c>Stops after this batch</c>; <c>Pausing…</c> or <c>Resuming…</c> while the command is on its way;
+        /// otherwise empty.
+        /// </summary>
+        public string PauseNote { get; private set; } = string.Empty;
 
         /// <summary>The upgrade section's title, such as <c>Upgrade to level 2</c>, or <c>Highest level reached</c>.</summary>
         public string UpgradeTitle { get; private set; } = string.Empty;
@@ -175,12 +209,17 @@ namespace CityBuilder.Client.Presentation.Inspector
                 CouriersText = CouriersTextFor(content, city, building, level),
                 HasRouteEditor = definition.Kind == BuildingKind.CourierStation && building.Phase != BuildingPhase.Constructing
                     && building.AssignedWorkers > 0,
+                Queues = QueuesFor(content, city, building),
                 HasReenergize = NeedsReenergize(content, city, building, level),
                 HasSendTrip = hasGoods,
                 CanSendTrip = hasGoods && availability.IsAllowed,
                 IsWorkersPending = pendingTarget.HasValue,
                 IsUpgradePending = upgradePending,
             };
+            bool routesUnlocked = CityQueries.AreRoutesUnlocked(city, content);
+            model.CanEditRoutes = model.HasRouteEditor && routesUnlocked;
+            model.RoutesNote = model.HasRouteEditor && !routesUnlocked ? RoutesLockedNote(content) : string.Empty;
+            model.FillPause(content, city, building, definition, pending.Pause, availability);
             model.FillStepper(content, city, building, level, pendingTarget, availability);
             model.FillUpgrade(content, city, building, definition, upgradePending, availability);
             return model;
@@ -203,6 +242,9 @@ namespace CityBuilder.Client.Presentation.Inspector
                 && TripsText == other.TripsText
                 && CouriersText == other.CouriersText
                 && HasRouteEditor == other.HasRouteEditor
+                && CanEditRoutes == other.CanEditRoutes
+                && RoutesNote == other.RoutesNote
+                && SameQueues(Queues, other.Queues)
                 && HasReenergize == other.HasReenergize
                 && HasSendTrip == other.HasSendTrip
                 && CanSendTrip == other.CanSendTrip
@@ -220,7 +262,12 @@ namespace CityBuilder.Client.Presentation.Inspector
                 && UpgradeGainText == other.UpgradeGainText
                 && CanUpgrade == other.CanUpgrade
                 && UpgradeNote == other.UpgradeNote
-                && IsUpgradePending == other.IsUpgradePending;
+                && IsUpgradePending == other.IsUpgradePending
+                && HasPause == other.HasPause
+                && IsPaused == other.IsPaused
+                && PauseText == other.PauseText
+                && CanPause == other.CanPause
+                && PauseNote == other.PauseNote;
         }
 
         /// <summary>See <see cref="Equals(BuildingInspectorModel?)"/>.</summary>
@@ -230,7 +277,42 @@ namespace CityBuilder.Client.Presentation.Inspector
         public override int GetHashCode() => HashCode.Combine(BuildingId, StatusText, TimeText, WorkersText, UpgradeNote);
 
         /// <summary>
-        /// Sets the stepper's members. A producer that is built has a stepper; its rates are shown at the assigned workers, and, when a
+        /// Sets the Pause / Resume members (CR-0008 D23, D24): a built producer or courier station has the button; it shows the state a pause
+        /// on its way will give, and its note says what the pause does now, a paused station's wait counted by
+        /// <see cref="PauseDisplay.LastCourierHomeAt"/> at the displayed clock.
+        /// </summary>
+        private void FillPause(
+            GameContent content, CityState city, Building building, BuildingDefinition definition, bool? pendingPause, CommandAvailability availability)
+        {
+            bool station = definition.Kind == BuildingKind.CourierStation;
+            HasPause = (station || definition.Kind == BuildingKind.Producer) && building.Phase != BuildingPhase.Constructing;
+            if (!HasPause)
+            {
+                return;
+            }
+
+            IsPaused = pendingPause ?? building.Paused;
+            PauseText = IsPaused ? "Resume" : "Pause";
+            CanPause = availability.IsAllowed && !pendingPause.HasValue;
+            if (pendingPause.HasValue)
+            {
+                PauseNote = pendingPause.Value ? "Pausing…" : "Resuming…";
+            }
+            else if (building.Paused && station)
+            {
+                long? home = PauseDisplay.LastCourierHomeAt(city, content, building.Id);
+                PauseNote = home.HasValue && home.Value > city.Clock
+                    ? "Couriers home in " + DurationText.Format(home.Value - city.Clock)
+                    : "All couriers are home";
+            }
+            else if (building.Paused && building.Phase == BuildingPhase.Producing)
+            {
+                PauseNote = "Stops after this batch";
+            }
+        }
+
+        /// <summary>
+        /// Sets the stepper's members. A producer or a courier station that is built has a stepper; a producer's rates are shown at the assigned workers, and, when a
         /// target is on its way, at that target too. While commands are not allowed both buttons are off and the note is the reason; the shown
         /// value, the pending target included, stays, because the sender is still on its way with it.
         /// </summary>
@@ -242,8 +324,9 @@ namespace CityBuilder.Client.Presentation.Inspector
             int? pendingTarget,
             CommandAvailability availability)
         {
-            HasStepper = level.Recipe != null && building.Phase != BuildingPhase.Constructing;
-            if (level.Recipe == null || building.Phase == BuildingPhase.Constructing)
+            bool station = content.TryGetBuilding(building.TypeId, out BuildingDefinition? definition) && definition!.Kind == BuildingKind.CourierStation;
+            HasStepper = (level.Recipe != null || (station && level.MaxWorkers > 0)) && building.Phase != BuildingPhase.Constructing;
+            if (!HasStepper)
             {
                 return;
             }
@@ -253,12 +336,23 @@ namespace CityBuilder.Client.Presentation.Inspector
             long free = CityQueries.FreeWorkers(city, content);
             WorkersTarget = target;
             WorkersText = Number(target) + " / " + Number(level.MaxWorkers);
-            RatesText = RatesTextAt(content, city, building, assigned);
+            if (station)
+            {
+                // A courier station's workers are its couriers (CR-0008 D3): the preview names them, it has no rates.
+                if (target != assigned)
+                {
+                    PreviewText = "With " + Number(target) + (target == 1 ? " courier" : " couriers");
+                }
+            }
+            else
+            {
+                RatesText = RatesTextAt(content, city, building, assigned);
+            }
             MinusEnabled = availability.IsAllowed && target > 0;
             // One more worker than now must fit the free ones: a target already above the assigned count has used some of them.
             bool plusFits = target < level.MaxWorkers && (long)target + 1 - assigned <= free;
             PlusEnabled = availability.IsAllowed && plusFits;
-            if (target != assigned)
+            if (!station && target != assigned)
             {
                 PreviewText = "With " + Number(target) + (target == 1 ? " worker: " : " workers: ") + RatesTextAt(content, city, building, target);
             }
@@ -391,6 +485,8 @@ namespace CityBuilder.Client.Presentation.Inspector
                     return "Waiting for " + ItemText.ItemName(content, reason.Item);
                 case StallKind.StorageFull:
                     return ItemText.ItemName(content, reason.Item) + " storage is full";
+                case StallKind.Paused:
+                    return "Paused";
                 default:
                     return "Ready";
             }
@@ -550,14 +646,98 @@ namespace CityBuilder.Client.Presentation.Inspector
             for (int i = 0; i < mine.Count; i++)
             {
                 Courier courier = mine[i];
+                int queued = city.CountLines(station.Id, courier.Slot);
                 string route = city.TryGetRoute(station.Id, courier.Slot, out Route? found)
                     ? "Route: " + RouteSummary(content, city, found!)
-                    : "No route";
+                    : queued > 0 ? Deliveries(queued) : "No route";
                 lines.Add("Courier " + Number(courier.Slot) + " · " + CourierStateText(courier.State) + " · Stamina "
                     + DurationText.Format(courier.Stamina) + " of " + DurationText.Format(level.StaminaSeconds) + " · " + route);
             }
 
             return string.Join("\n", lines);
+        }
+
+        /// <summary>
+        /// The work of each courier of a built courier station that has some (CR-0008 amendment 1): its delivery lines in the order it runs them
+        /// (the first marked <c>now</c> while it walks), or its route; empty for other buildings.
+        /// </summary>
+        private static IReadOnlyList<CourierQueueModel> QueuesFor(GameContent content, CityState city, Building station)
+        {
+            if (station.Phase == BuildingPhase.Constructing || !content.TryGetBuilding(station.TypeId, out BuildingDefinition? definition)
+                || definition!.Kind != BuildingKind.CourierStation)
+            {
+                return Array.Empty<CourierQueueModel>();
+            }
+
+            var queues = new List<CourierQueueModel>();
+            for (int i = 0; i < city.Couriers.Count; i++)
+            {
+                Courier courier = city.Couriers[i];
+                if (courier.StationId != station.Id)
+                {
+                    continue;
+                }
+
+                if (city.TryGetRoute(station.Id, courier.Slot, out Route? route))
+                {
+                    queues.Add(new CourierQueueModel(
+                        courier.Slot, "Courier " + Number(courier.Slot) + " · Route: " + RouteSummary(content, city, route!), Array.Empty<CourierQueueLine>()));
+                    continue;
+                }
+
+                var lines = new List<CourierQueueLine>();
+                for (int j = 0; j < city.DeliveryLines.Count; j++)
+                {
+                    DeliveryLine line = city.DeliveryLines[j];
+                    if (line.StationId != station.Id || line.Slot != courier.Slot)
+                    {
+                        continue;
+                    }
+
+                    bool now = lines.Count == 0 && courier.State == CourierState.Walking;
+                    lines.Add(new CourierQueueLine(
+                        line.Id,
+                        Number(line.Quantity) + " " + ItemText.ItemName(content, line.Item) + " · " + BuildingNameOf(content, city, line.SourceId) + " → "
+                        + BuildingNameOf(content, city, line.TargetId) + (now ? " · now" : string.Empty)));
+                }
+
+                if (lines.Count > 0)
+                {
+                    queues.Add(new CourierQueueModel(courier.Slot, "Courier " + Number(courier.Slot) + " · " + Deliveries(lines.Count), lines));
+                }
+            }
+
+            return queues;
+        }
+
+        /// <summary>The number of deliveries in words: <c>1 delivery</c> or <c>3 deliveries</c>.</summary>
+        private static string Deliveries(int count) => Number(count) + (count == 1 ? " delivery" : " deliveries");
+
+        /// <summary>The note under Edit routes while routes are locked: the route building's name (CR-0008 D15).</summary>
+        private static string RoutesLockedNote(GameContent content)
+        {
+            BuildingTypeId? needed = content.Rules.RouteBuilding;
+            string name = needed.HasValue && content.TryGetBuilding(needed.Value, out BuildingDefinition? definition) ? definition!.Name : "another building";
+            return "Repeating routes need a " + name + ". Until then couriers make one-time deliveries";
+        }
+
+        /// <summary>Whether two lists of queues say the same, in the same order.</summary>
+        private static bool SameQueues(IReadOnlyList<CourierQueueModel> left, IReadOnlyList<CourierQueueModel> right)
+        {
+            if (left.Count != right.Count)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < left.Count; i++)
+            {
+                if (!left[i].Equals(right[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         /// <summary>Whether a built courier station has a courier that rests or whose stamina is below the level's full stamina.</summary>

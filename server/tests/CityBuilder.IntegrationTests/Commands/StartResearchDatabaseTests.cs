@@ -117,9 +117,10 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
 
     /// <summary>
     /// Once a prerequisite is completed its follower can start: Storehouses after Trade Charter (600 s) pays its 300 coins as one
-    /// <c>COST_RESEARCH</c> row with the request id as reference and waits at the scriptorium for its 50 logs (no start or end yet). Five trips
-    /// bring them from the warehouse next door (10 each, 5 s), the last arriving at 610, so the research runs from 610 to 3310 (CR-0008); when it
-    /// completes the warehouse's limits of logs and planks rise from 100 to 140.
+    /// <c>COST_RESEARCH</c> row with the request id as reference and waits at the scriptorium for its 50 logs (no start or end yet). The four
+    /// workers bring them from the warehouse next door, 5 s away, 10 a load (CR-0008 D21): 40 at 605, and the first worker's second load of
+    /// the last 10 at 615, so the research runs from 615 to 3315 (CR-0008); when it completes the warehouse's limits of logs and planks rise
+    /// from 100 to 140.
     /// </summary>
     [Fact]
     public async Task Post_AfterItsPrerequisite_WaitsForItsGoodsAndRaisesTheLimitsWhenItCompletes()
@@ -134,9 +135,7 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
             await TripAsync(player, 3, 2, "logs");
         }
 
-        Factory.Clock.Advance(TimeSpan.FromSeconds(5));
-        await TripAsync(player, 3, 2, "logs");
-        Factory.Clock.Advance(TimeSpan.FromSeconds(5));
+        Factory.Clock.Advance(TimeSpan.FromSeconds(15));
         JsonNode running = (await ApiClient.GetAsync(Factory, "/api/v1/city", player)).Json();
 
         Assert.Equal(HttpStatusCode.OK, response.Status);
@@ -144,7 +143,7 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
             """{"activeId":"storehouses","startedAt":null,"endsAt":null,"needs":{"logs":50},"completed":["trade_charter"]}""",
             response.Json()["city"]!["research"]!.ToJsonString());
         Assert.Equal(
-            """{"activeId":"storehouses","startedAt":610,"endsAt":3310,"needs":{},"completed":["trade_charter"]}""",
+            """{"activeId":"storehouses","startedAt":615,"endsAt":3315,"needs":{},"completed":["trade_charter"]}""",
             running["city"]!["research"]!.ToJsonString());
         Assert.Equal(
             ["coins -300 550 COST_RESEARCH command " + _requestId],
@@ -156,7 +155,7 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
         Factory.Clock.Advance(TimeSpan.FromSeconds(2700));
         JsonNode completed = (await ApiClient.GetAsync(Factory, "/api/v1/city", player)).Json();
         Assert.Equal("""{"logs":140,"planks":140}""", completed["city"]!["buildings"]![2]!["storeLimits"]!.ToJsonString());
-        Assert.Equal("none, completed: storehouses 3310, trade_charter 600", await ResearchAsync(city));
+        Assert.Equal("none, completed: storehouses 3315, trade_charter 600", await ResearchAsync(city));
     }
 
     /// <summary>Without a completed science building research can't start: <c>NO_SCIENCE_BUILDING</c> (422), and nothing is stored (CR-0008 D11).</summary>

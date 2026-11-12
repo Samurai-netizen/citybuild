@@ -55,6 +55,82 @@ internal sealed class InvariantChecks
         Report(Invariant.LaborAccounting, step, _labor.Check(step, _count));
         Report(Invariant.UnlockAndPrerequisites, step, Unlocks(step));
         Report(Invariant.StaminaAndLoads, step, Stamina(step) ?? Loads(step));
+        Report(Invariant.DeliveryLines, step, Lines(step.After));
+        Report(Invariant.Paused, step, Paused(step));
+    }
+
+    /// <summary>
+    /// Invariant 16 (CR-0008 D23, D24): every paused building is a producer or a courier station and not constructing; a building paused
+    /// before and after the step started no cycle in it; a courier at the station of such a station before the step didn't leave it.
+    /// </summary>
+    private string? Paused(InvariantStep step)
+    {
+        foreach (Building after in step.After.Buildings.Where(building => building.Paused))
+        {
+            _count("steps with a paused building");
+            BuildingKind kind = _content.Buildings.First(type => type.Id == after.TypeId).Kind;
+            if ((kind != BuildingKind.Producer && kind != BuildingKind.CourierStation) || after.Phase == BuildingPhase.Constructing)
+            {
+                return $"building {after.Id} ({after.TypeId}, {after.Phase}) is paused";
+            }
+
+            if (!step.Before.TryGetBuilding(after.Id, out Building? before) || !before.Paused)
+            {
+                continue;
+            }
+
+            if (after.Phase == BuildingPhase.Producing && (before.Phase != BuildingPhase.Producing || before.PhaseStartedAt != after.PhaseStartedAt))
+            {
+                return $"paused building {after.Id} started a cycle at {after.PhaseStartedAt}";
+            }
+
+            foreach (Courier courier in step.After.Couriers.Where(courier => courier.StationId == after.Id && courier.State == CourierState.Walking))
+            {
+                CountIf(courier.ArrivesAt > step.Before.Clock, "couriers walking at a paused station");
+                Courier? was = step.Before.Couriers.FirstOrDefault(other => other.StationId == courier.StationId && other.Slot == courier.Slot);
+                if (was is { State: CourierState.AtStation })
+                {
+                    return $"courier {courier.StationId}/{courier.Slot} left its paused station";
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Invariant 15 (CR-0008 D16–D19): every delivery line names a courier of the city, which has no route, two different buildings and a
+    /// quantity of 1 to its station level's carry limit; no courier has more lines than the content allows.
+    /// </summary>
+    private string? Lines(CityState city)
+    {
+        CountIf(city.DeliveryLines.Count > 0, "steps with delivery lines");
+        foreach (DeliveryLine line in city.DeliveryLines)
+        {
+            Courier? courier = city.Couriers.FirstOrDefault(other => other.StationId == line.StationId && other.Slot == line.Slot);
+            if (courier is null || city.TryGetRoute(line.StationId, line.Slot, out _))
+            {
+                return $"line {line.Id} belongs to courier {line.StationId}/{line.Slot}, which is gone or has a route";
+            }
+
+            city.TryGetBuilding(line.StationId, out Building? station);
+            if (line.SourceId == line.TargetId || line.Quantity < 1 || line.Quantity > Level(station!).CarryLimit)
+            {
+                return $"line {line.Id} moves {line.Quantity} from {line.SourceId} to {line.TargetId}, the station's carry limit is {Level(station!).CarryLimit}";
+            }
+        }
+
+        foreach (Courier courier in city.Couriers)
+        {
+            int lines = city.DeliveryLines.Count(line => line.StationId == courier.StationId && line.Slot == courier.Slot);
+            CountIf(lines > 1, "couriers with several lines");
+            if (lines > _content.Rules.MaxDeliveryLines)
+            {
+                return $"courier {courier.StationId}/{courier.Slot} has {lines} lines, the most is {_content.Rules.MaxDeliveryLines}";
+            }
+        }
+
+        return null;
     }
 
     /// <summary>Hands a failure, if there is one, to the callback, prefixed with where the step is.</summary>
@@ -119,8 +195,9 @@ internal sealed class InvariantChecks
             }
         }
 
-        Trip? empty = city.Trips.FirstOrDefault(trip => trip.Quantity < 1);
-        return empty is null ? null : $"trip {empty.Id} carries {empty.Quantity}";
+        // A worker carries a load of at least 1 to the target and nothing on the way back for the next one (04 section 18).
+        Trip? wrong = city.Trips.FirstOrDefault(trip => trip.Remaining < 0 || (trip.Leg == TripLeg.ToTarget ? trip.Quantity < 1 : trip.Quantity != 0));
+        return wrong is null ? null : $"trip {wrong.Id} carries {wrong.Quantity} on its way {wrong.Leg} with {wrong.Remaining} to fetch";
     }
 
     /// <summary>
@@ -149,8 +226,9 @@ internal sealed class InvariantChecks
                     refunded += Level(before).Recipe!.Inputs.Where(line => line.Item == item).Sum(line => line.Quantity);
                 }
 
+                // A load whose leg to the target ended in the step (the trip ended, or turned back for the next load) may come back whole.
                 long returned = step.Before.Trips
-                    .Where(trip => trip.SourceId == after.Id && trip.Item == item && !step.After.Trips.Any(other => other.Id == trip.Id))
+                    .Where(trip => trip.SourceId == after.Id && trip.Item == item && trip.Leg == TripLeg.ToTarget && LegEnded(step, trip))
                     .Sum(trip => trip.Quantity);
                 refunded += returned + Math.Max(0, CarriedFrom(step.Before, after.Id, item) - CarriedFrom(step.After, after.Id, item));
                 CountIf(afterHeld == limit, "stores ending with a good exactly at its limit");
@@ -164,6 +242,13 @@ internal sealed class InvariantChecks
         }
 
         return null;
+    }
+
+    /// <summary>Whether the leg <paramref name="trip"/> walked before the step ended in it: the trip is gone, or walks a leg that began later.</summary>
+    private static bool LegEnded(InvariantStep step, Trip trip)
+    {
+        Trip? now = step.After.Trips.FirstOrDefault(other => other.Id == trip.Id);
+        return now is null || now.DepartedAt != trip.DepartedAt;
     }
 
     /// <summary>What every courier of the city carries of <paramref name="item"/> that came from building <paramref name="buildingId"/>.</summary>
@@ -329,6 +414,7 @@ internal sealed class InvariantChecks
             }
         }
 
+        CountIf(step.Mutation is not null && step.Operation is CityOperation.CancelDelivery, "deliveries cancelled");
         if (step.Mutation is not null && step.Operation is CityOperation.SetRoute route)
         {
             _count("routes set");

@@ -230,10 +230,12 @@
   background-image: url("Icons/research.png");
 }
 
-/* The Fund button covers the card: see-through, so the card is the target; it darkens a little while pressed. */
+/* The Fund button covers the card: see-through, so the card is the target; it darkens a little while pressed. It stays see-through while
+   it is off too, or the shared .btn:disabled grey would cover the card until the pointer is over it (CR-0008-T3). */
 .research-node-finance,
 .research-node-finance:hover,
-.research-node-finance:active {
+.research-node-finance:active,
+.research-node-finance:disabled {
   position: absolute;
   left: 0;
   top: 0;

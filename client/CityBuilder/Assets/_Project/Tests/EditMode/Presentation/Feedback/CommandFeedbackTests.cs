@@ -81,7 +81,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Feedback
             Assert.That(_queue.Visible[2].Kind, Is.EqualTo(ToastKind.Success));
 
             await _sender.SendAsync(CommandIntent.StartTrip(2, 5, "logs", "all"), CancellationToken.None);
-            Assert.That(_queue.Visible[2].Text, Is.EqualTo("Trip started"));
+            Assert.That(_queue.Visible[2].Text, Is.EqualTo("Delivery sent"));
 
             var tiles = new[] { new RoadTileRequestDto(1, 2) };
             await _sender.SendAsync(CommandIntent.PlaceRoads(tiles), CancellationToken.None);

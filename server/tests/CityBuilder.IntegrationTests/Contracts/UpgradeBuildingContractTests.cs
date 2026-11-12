@@ -61,7 +61,7 @@ public sealed class UpgradeBuildingContractTests(ApiFactory factory) : IClassFix
         Assert.Equal(
             """{"id":1,"typeId":"house","x":0,"y":0,"level":1,"assignedWorkers":0,"maxWorkers":0,"phase":"Idle",""" +
             """ "phaseStartedAt":0,"phaseEndsAt":null,"cycleLabor":0,"laborRemaining":0,"segmentStartedAt":0,"stallReason":"NoRecipe",""".TrimStart() +
-            """ "store":{},"storeLimits":{},"needs":{"logs":30},"project":"Upgrade"}""".TrimStart(),
+            """ "store":{},"storeLimits":{},"needs":{"logs":30},"project":"Upgrade","paused":false}""".TrimStart(),
             snapshot["city"]!["buildings"]![0]!.ToJsonString());
 
         Assert.Equal(1, store.SaveCount);

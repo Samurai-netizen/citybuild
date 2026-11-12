@@ -1,6 +1,7 @@
 #nullable enable
 
 using System;
+using System.Linq;
 using CityBuilder.Client.Presentation.Inspector;
 using CityBuilder.Client.Presentation.Ui;
 using CityBuilder.Client.Tests.EditMode.Presentation.Hud;
@@ -128,6 +129,99 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Inspector
             Assert.That(Model(station, new[] { station }, below, Array.Empty<Route>()).HasReenergize, Is.True);
         }
 
+        /// <summary>
+        /// Each courier with deliveries shows them in the order it runs them, the first marked <c>now</c> while it walks, with their line ids for
+        /// the Cancel buttons; a courier without work has no queue, and the courier lines count the deliveries (CR-0008 D18).
+        /// </summary>
+        [Test]
+        public void Station_ListsEachCouriersDeliveriesWithTheirLines()
+        {
+            Building station = Station(workers: 2, BuildingPhase.Idle);
+            Building sawmill = new Building(2, new BuildingTypeId("sawmill"), 1, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
+            Building house = HudTestData.House(3, 2);
+            var couriers = new[]
+            {
+                new Courier(1, 1, CourierState.Walking, 1, 0, 30, 600),
+                new Courier(1, 2, CourierState.AtStation, 0, null, null, 600),
+            };
+            var lines = new[]
+            {
+                new DeliveryLine(4, 1, 1, 2, 3, new ItemId("logs"), 10),
+                new DeliveryLine(5, 1, 1, 2, 3, new ItemId("logs"), 6),
+            };
+
+            BuildingInspectorModel model = Model(station, new[] { station, sawmill, house }, couriers, Array.Empty<Route>(), lines);
+
+            CourierQueueModel queue = model.Queues.Single();
+            Assert.That((queue.Slot, queue.Title), Is.EqualTo((1, "Courier 1 · 2 deliveries")));
+            Assert.That(queue.Lines.Select(line => line.LineId), Is.EqualTo(new[] { 4, 5 }));
+            Assert.That(queue.Lines[0].Text, Is.EqualTo("10 Logs · " + NameOf("sawmill") + " → " + NameOf("house") + " · now"));
+            Assert.That(queue.Lines[1].Text, Does.Not.EndWith("now"));
+            Assert.That(model.CouriersText.Split('\n')[0], Does.EndWith("2 deliveries"));
+        }
+
+        /// <summary>A courier on a route has a queue without lines, whose Cancel all clears the route (CR-0008 D18).</summary>
+        [Test]
+        public void Station_CourierOnARoute_HasAQueueToClearIt()
+        {
+            Building station = Station(workers: 1, BuildingPhase.Idle);
+            Building sawmill = new Building(2, new BuildingTypeId("sawmill"), 1, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
+            Building house = HudTestData.House(3, 2);
+            var route = new Route(1, 1, new[]
+            {
+                new RouteStop(2, new[] { new RouteAction(RouteActionKind.Take, new ItemId("logs"), Amount.Preset(new AmountPresetId("all"))) }),
+                new RouteStop(3, new[] { new RouteAction(RouteActionKind.Put, new ItemId("logs"), Amount.Preset(new AmountPresetId("all"))) }),
+            });
+
+            BuildingInspectorModel model = Model(
+                station, new[] { station, sawmill, house }, new[] { new Courier(1, 1, CourierState.AtStation, 0, null, null, 600) }, new[] { route });
+
+            CourierQueueModel queue = model.Queues.Single();
+            Assert.That(queue.Title, Does.StartWith("Courier 1 · Route: "));
+            Assert.That(queue.Lines, Is.Empty);
+        }
+
+        /// <summary>
+        /// Edit routes shows on a station with couriers but works only once the content's route building, the Scriptorium, is built; until then
+        /// the note says why (CR-0008 D15).
+        /// </summary>
+        [Test]
+        public void Station_EditRoutes_NeedsABuiltScriptorium()
+        {
+            Building station = Station(workers: 1, BuildingPhase.Idle);
+            Building scriptorium = new Building(2, new BuildingTypeId("scriptorium"), 2, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
+            var couriers = new[] { new Courier(1, 1, CourierState.AtStation, 0, null, null, 600) };
+
+            BuildingInspectorModel without = Model(station, new[] { station }, couriers, Array.Empty<Route>());
+            BuildingInspectorModel with = Model(station, new[] { station, scriptorium }, couriers, Array.Empty<Route>());
+
+            Assert.That((without.HasRouteEditor, without.CanEditRoutes), Is.EqualTo((true, false)));
+            Assert.That(without.RoutesNote, Does.Contain(NameOf("scriptorium")));
+            Assert.That((with.CanEditRoutes, with.RoutesNote), Is.EqualTo((true, string.Empty)));
+        }
+
+        /// <summary>
+        /// A built courier station has the worker stepper, because its workers are its couriers (CR-0008-T3, playtest round 3): no rates, and the
+        /// preview of a changed target names couriers. A scriptorium and a warehouse take no workers: no stepper.
+        /// </summary>
+        [Test]
+        public void Station_HasAWorkerStepperForItsCouriers_OtherNonProducersHaveNone()
+        {
+            Building station = Station(workers: 1, BuildingPhase.Idle);
+            Building scriptorium = new Building(2, new BuildingTypeId("scriptorium"), 2, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
+            var couriers = new[] { new Courier(1, 1, CourierState.AtStation, 0, null, null, 600) };
+            var city = new CityState(0, 1, 10, 700, new[] { station, scriptorium }, Array.Empty<ResearchId>(), null, null, null, 1, couriers, Array.Empty<Route>());
+            int most = _content.TryGetBuilding(station.TypeId, out BuildingDefinition? definition) ? definition!.GetLevel(1).MaxWorkers : 0;
+
+            BuildingInspectorModel shown = BuildingInspectorModel.Create(_content, city, station, Nothing, default)!;
+            BuildingInspectorModel pending = BuildingInspectorModel.Create(_content, city, station, new InspectorPending(2, false), default)!;
+            BuildingInspectorModel other = BuildingInspectorModel.Create(_content, city, scriptorium, Nothing, default)!;
+
+            Assert.That((shown.HasStepper, shown.WorkersText, shown.RatesText), Is.EqualTo((true, "1 / " + most, string.Empty)));
+            Assert.That(pending.PreviewText, Is.EqualTo("With 2 couriers"));
+            Assert.That(other.HasStepper, Is.False);
+        }
+
         /// <summary>A courier station with id 1 at level 1.</summary>
         private static Building Station(int workers, BuildingPhase phase)
         {
@@ -141,11 +235,11 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Inspector
             return definition!.Name;
         }
 
-        /// <summary>The model of <paramref name="building"/> in a city of <paramref name="buildings"/> with the couriers and routes.</summary>
-        private BuildingInspectorModel Model(Building building, Building[] buildings, Courier[] couriers, Route[] routes)
+        /// <summary>The model of <paramref name="building"/> in a city of <paramref name="buildings"/> with the couriers, routes and delivery lines.</summary>
+        private BuildingInspectorModel Model(Building building, Building[] buildings, Courier[] couriers, Route[] routes, DeliveryLine[]? lines = null)
         {
             var city = new CityState(
-                0, 1, 10, 700, buildings, Array.Empty<ResearchId>(), null, null, null, 1, couriers, routes);
+                0, 1, 10, 700, buildings, Array.Empty<ResearchId>(), null, null, null, 1, couriers, routes, lines, lines == null || lines.Length == 0 ? 1 : 10);
             BuildingInspectorModel? model = BuildingInspectorModel.Create(_content, city, building, Nothing, default);
             Assert.That(model, Is.Not.Null);
             return model!;

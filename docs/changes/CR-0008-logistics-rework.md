@@ -1,6 +1,6 @@
 # CR-0008 — Logistics rework: goods stored in buildings, couriers, routes and roads
 
-- **Status:** In progress
+- **Status:** Done
 - **Type:** Design change
 - **Requested by:** owner · **Date:** 2026-11-02 (revised the same day after the owner's review: D1, D5, D10 and the task grouping)
 - **Milestone / era:** M0 / Era I (part of Era I's base set)
@@ -47,6 +47,34 @@
 >
 > Also group CR tasks (WITHOUT LOOSING ANY QUALITY OF PROMPTS OR QUALITY OF WORK). Group it by the AI model needed. That way my presence
 > behind the laptop is needed only to change model and merge PRs. I want no decrease in quality of work, just longer work sessions
+
+**Amendment 1 (2026-11-12, the CR-0008-T3 playtest, in chat; D14–D22):**
+> 1. I'm unable to make new routes from courier building.
+> 2. Without scriptorium, player should be able to make only one-time manual courier trips. With scriptorium built, player shoul be able
+> to make cycling routes.
+> 2. Workers attended to couriers building are used to make a delivery, so the game should look only to the amount of free workers
+> attended to the couriers building, and not to a total amount of workers.
+> 3. Buttons to choose the amount of resources for delivery (All / half / quarter) don't work. Game sends 10pcs anyways. Fix it.
+
+The answers to the follow-up questions: who carries a trip, "Station couriers, else any"; routes, "Yes, need Scriptorium"; scope, "Amend
+CR-0008, do it in T3"; on the 10 per trip:
+> In case when requested amount of goods is more than courier's inner capacity, the courier should make multiple trips between buildings
+> until all the goods delivered. Each courier should have a list of future actions, each trip is an action (like with a real-world printer
+> queue). Also courier should always start and end his trip from the couriers building.
+
+Then: walk "Shuttle, then home"; amount "When it's sent"; worker fallback "Yes, shuttle too"; and on cancelling:
+> Each line in his delivery plan should be cancelable. For example, if there is a singular 40 items request, which transformed into 4 lines
+> "pick at A, put at B", player should be able to cancel each trip individualy, so, for example, he can cancel 1 trip and have 30 items
+> delivered insread of 40. Also it should have a separate "Cancel all" option for cancelling ALL trips, even recurring ones
+
+**Amendment 2 (2026-11-12, the CR-0008-T3 playtest round 5, in chat; D23–D25):**
+> Now add the pause button to all buildings. That way I can, for example, upgrade building without canceling all courier routes. Also
+> make it that the progress bar shows the fullness of internal storages instead of production cycle, when the storage is more than 75%
+> full. New indicator should look different from the current one
+
+The answers to the follow-up questions: scope "Amend CR-0008, in T3"; a paused producer "Finish cycle, then stop"; a paused station
+"Finish stop, go home (with a timer in a couriers building shownig how much left to wait until everything stops)"; a paused building's
+store "Yes, store stays open".
 
 ## Problem / goal
 Today every item sits in one city-wide stock, so the map is only a place to put buildings: distance, layout and roads mean nothing (`22`).
@@ -177,35 +205,55 @@ Ground: 5 s per tile; crossing a building: 25 s per tile. Trip carry limit: 10. 
 | D11 | The science building | Every research needs it (it is where research happens); one per city; it builds in about 30 s, so the first research still starts in the first minutes; M0 has level 1 only | Only research with goods needs it |
 | D12 | What waits for goods? | A construction site keeps its builder while it waits; an upgrade keeps producing until its goods are in, then stops and runs; a research keeps the research slot; a delivery fills the waiting project first | Upgrades stop production when ordered |
 | D13 | The warehouse (named by the owner in D1) | A new building, available from the start, that stores every Era I good up to a limit per item | One total limit for all goods together |
+| D14 | Who carries a one-time delivery? (amendment 1, replaces D7's "free worker") | **Owner:** a free courier (one without a route) of a built courier station; only while the city has no built courier station, any free city worker. A station that is still a construction site doesn't count | Any free worker always (the first version) |
+| D15 | When can a courier get a route? (amendment 1) | **Owner:** only once the city has a built Scriptorium (content names the building); until then couriers do one-time deliveries only; a saved route keeps running | Routes from the first station |
+| D16 | A delivery larger than one load (amendment 1, replaces "at most the trip limit") | **Owner:** the amount (All, Half, Quarter, a percentage) is counted from the source's stock when the player sends it and split into **lines** of at most the carrier's carry limit (the station level's `carryLimit`, a worker's `tripCarryLimit`); each line is "take at A, put at B". The goods stay in A's store until a line picks them up: a line takes what is there, up to its quantity (none: it ends empty). The courier leaves its station, runs its lines in order (each from the line's source to its target), and walks home after the last. What doesn't fit at the target goes back to the source's store at once (D7) | Carry it back on foot; take every line's goods at the send |
+| D17 | Which courier gets a delivery? (amendment 1) | A free courier is picked by the engine: the fewest lines queued, then the shortest walk from its station to the source, then the lowest station id and slot. One send goes to one courier; its lines must fit in that courier's queue (content `maxDeliveryLines`, 20), else it is refused | The player picks the courier; split one send over several couriers |
+| D18 | Cancelling (amendment 1) | **Owner:** every line can be cancelled on its own, and "Cancel all" cancels all of a courier's lines and its route. Cancelling the running line gives its load back to its source at once (a returned load) and the courier walks on to its next line, or home. A worker's delivery is not cancelled in M0 | No cancelling; cancel the whole delivery only |
+| D19 | Routes and deliveries on one courier | A courier has a route or delivery lines, never both: a courier with a route gets no deliveries, and saving a route on a courier with lines is refused until they are done or cancelled | Lines first, then the route |
+| D20 | Stamina on deliveries | A courier on deliveries spends stamina like one on a route (only while the player is away); a tired one walks home and rests, its lines wait, re-energizing lets it go on. A worker's delivery never tires (as trips before) | Deliveries never tire |
+| D21 | A worker's delivery (no courier station yet) | **Owner:** it shuttles too: one delivery per worker, lines of at most `tripCarryLimit`; the worker takes the first line at the source at once, walks to the target, back to the source for the next line, and is free after the last put | One load of at most the trip limit (the first version) |
+| D22 | The building menu (amendment 1, the owner's playtest points 4 and 5) | **Owner:** while a building's menu is open, the Build and Research buttons fade and can't be touched; the menu is larger and centred on the screen; every part of it fits and is readable and touchable, also the courier station's queue and routes; the map stays usable wherever a flow needs it (a tap outside the menu closes it; the route editor and the trip flow keep the map tappable) | — |
+| D23 | Pausing a building (amendment 2) | **Owner:** a pause button on every building that works (a producer or a courier station; houses, warehouses, the Scriptorium and the science building do no work to pause). A new command `SetPaused(building, paused)`, allowed in every phase but construction; the flag stays through an upgrade. A paused producer finishes its running cycle (output as usual), then starts no new one; its workers stay assigned. Its stall reason is `Paused` | Freeze the cycle; end it with a refund |
+| D24 | A paused courier station (amendment 2) | **Owner:** each courier finishes the stop it is walking to (a route stop's actions; a line's take or put, so a line whose put was done ends), then gives back what it carries (a returned load) and walks home; at home it waits. A courier at its station doesn't leave; routes and lines stay. Unpausing lets them leave again from the first stop (or the first line's source). The station's menu shows how long until the last courier is home | Freeze the couriers where they are; drop the stop at once |
+| D25 | A paused building's store and the storage gauge (amendment 2) | **Owner:** a paused building's store stays open: couriers and deliveries still take and put there. The building's status shows a store gauge instead of the cycle ring while its store is more than 75 % full (the fullest good, against its effective limit), drawn as a segmented ring, amber, red when a good is at its limit, with that good's icon inside. Display only | Close the store too |
 
 ## Acceptance criteria
-- [ ] Items other than coins exist only in building stores, on couriers and on trip workers; no store goes above its limit except by a
+- [x] Items other than coins exist only in building stores, on couriers and on trip workers; no store goes above its limit except by a
       refund or a returned load (engine property test).
-- [ ] A producer starts a cycle only with the inputs in its own store and room there for the outputs; otherwise its stall reason names
+- [x] A producer starts a cycle only with the inputs in its own store and room there for the outputs; otherwise its stall reason names
       that store's missing input or full output.
-- [ ] Coins are paid and received at once through the purse. No other cost is taken from a store: a construction site, an upgrade and a
+- [x] Coins are paid and received at once through the purse. No other cost is taken from a store: a construction site, an upgrade and a
       research wait until their goods are delivered, then their timers start; research needs the science building, one per city.
-- [ ] Level 1 of the science building and of the courier station costs coins only; the warehouse stores every Era I good up to its limits.
-- [ ] A manual trip needs a free worker; the worker is busy until it arrives and free afterwards; it moves the chosen amount and fills a
+- [x] Level 1 of the science building and of the courier station costs coins only; the warehouse stores every Era I good up to its limits.
+- [x] A manual trip needs a free worker; the worker is busy until it arrives and free afterwards; it moves the chosen amount and fills a
       waiting project first.
-- [ ] A courier station's workers are its couriers; each follows its route of 2 or more stops in a loop, taking and putting the chosen
+- [x] A courier station's workers are its couriers; each follows its route of 2 or more stops in a loop, taking and putting the chosen
       amounts within its carry limit, the source's stock and the target's room.
-- [ ] Era I offers All, Half and Quarter; any percentage after its research; an exact number is refused until an Era II research unlocks
+- [x] Era I offers All, Half and Quarter; any percentage after its research; an exact number is refused until an Era II research unlocks
       it (tested with test content).
-- [ ] Paths use only 4-direction steps through tile centres. A path crosses another building only when every path does, and then as few as
+- [x] Paths use only 4-direction steps through tile centres. A path crosses another building only when every path does, and then as few as
       possible, at 20 % of the base speed; among the paths with the fewest crossings it is the fastest (checked by brute force on small maps).
       Ground costs 5 s per tile and every road level is faster.
-- [ ] Roads can be placed on empty tiles, upgraded and removed, for coins only; a building can't be placed on a road.
-- [ ] Couriers spend stamina only after the absence start that the server derives from the player's last request; a courier without
+- [x] Roads can be placed on empty tiles, upgraded and removed, for coins only; a building can't be placed on a road.
+- [x] Couriers spend stamina only after the absence start that the server derives from the player's last request; a courier without
       stamina walks home and rests; re-energizing refills every courier.
-- [ ] There is no fixed offline production cap; the settlement report gives the couriers' working time and which couriers got tired, when.
-- [ ] The welcome-back report shows the courier summary and the re-energize button; the trip flow, road mode and route editor work on a
+- [x] There is no fixed offline production cap; the settlement report gives the couriers' working time and which couriers got tired, when.
+- [x] The welcome-back report shows the courier summary and the re-energize button; the trip flow, road mode and route editor work on a
       phone screen by the M0-59 rules: one scroll direction at most, the rest scaled to fit (OD-17), phones from the iPhone XR on (OD-18).
-- [ ] Golden scenario #1 (rewritten) and #2 (new) pass in the engine and over HTTP; determinism, split invariance (for one absence start),
+- [x] Golden scenario #1 (rewritten) and #2 (new) pass in the engine and over HTTP; determinism, split invariance (for one absence start),
       timer invariance, conservation and the new performance budget pass.
-- [ ] Every new command refuses values no city could make valid (ids below 1, negative coordinates, too many tiles, stops or actions, a
+- [x] Every new command refuses values no city could make valid (ids below 1, negative coordinates, too many tiles, stops or actions, a
       percentage outside 1–100) as `INVALID_ARGUMENT` before the city is locked (OD-13), with tests.
-- [ ] Every page in the impact table below is updated, `check-docs.sh` and the handbook build pass, and the CR is Done when every task is merged.
+- [x] Every page in the impact table below is updated, `check-docs.sh` and the handbook build pass, and the CR is Done when every task is merged.
+- [x] Amendment 1 (D14–D22): a delivery goes to a free station courier, or to a free worker only while no courier station is built; it is
+      split into lines of at most the carry limit, counted when sent; a courier runs its lines from its station and back; each line and
+      "Cancel all" can be cancelled; routes need a built Scriptorium; a courier has a route or lines, never both; the building menu is
+      centred and larger, the Build and Research buttons are hidden while it is open (the owner's change in the T3 playtest, round 4), and everything in it fits (engine, server and client tests).
+- [x] Amendment 2 (D23–D25): `set-paused` pauses and resumes a producer or a courier station; a paused producer finishes its cycle and
+      starts no new one; a paused station's couriers finish their stop, give their loads back and walk home, keeping routes and lines; a
+      paused building's store stays open; the menu has the Pause button and the station's wait timer; a store over 75 % full shows the
+      segmented gauge instead of the ring (engine, server and client tests).
 
 ## Out of scope
 - Era II content (it brings the research for exact amounts), carts, wagons and trucks, stone and paved roads.
@@ -276,8 +324,8 @@ T1 adds the tasks to the M0 board. Model: Opus = Opus 5.5, Sonnet = Sonnet 5.5.
 | ID | Model | Parts | The owner is needed for | Status |
 |---|---|---|---|---|
 | CR-0008-T1 | Opus | A–I: spec, engine and server | starting it; two permission prompts (the `22` edit at the start, the golden fixture after part B); merging | Done (PR #86) |
-| CR-0008-T2 | Sonnet | A–F: client and art | starting it; merging | In review (PR #87) |
-| CR-0008-T3 | Opus | close-out with a playtest `[MANUAL]` | about an hour of playing and looking; merging | Todo |
+| CR-0008-T2 | Sonnet | A–F: client and art | starting it; merging | Done (PR #87) |
+| CR-0008-T3 | Opus | close-out with a playtest `[MANUAL]` | about an hour of playing and looking; merging | Done (this PR) |
 
 The owner's steps: `/model` Opus → `/start-task CR-0008-T1` → answer the `22` prompt → later, answer the golden fixture prompt → merge →
 `/model` Sonnet → `/start-task CR-0008-T2` → merge → `/model` Opus → `/start-task CR-0008-T3` → play → merge.
@@ -480,6 +528,13 @@ Then list every [MANUAL] look of parts A-F (what to open, what to check) in the 
   road, an absence with DevTimeScale, re-energize).
 - This CR's status becomes Done; the M0 board and 13 are updated.
 ```
+Amendment 1 (2026-11-12, the owner's choice "Amend CR-0008, do it in T3") adds to T3: D14–D22 in the engine (`04` §18 and §19), the
+content (`23`), the server (`start-trip` becomes a delivery, a new `cancel-delivery` command, the route gate in `set-route`, `05`, `06`
+with a migration) and the client (the trip bar, the courier station's delivery queue with Cancel and Cancel all, the route editor's
+reasons, the building menu layout), each rule with its tests, before the playtest goes on. The build log of T3 holds the plan.
+Amendment 2 (2026-11-12, the owner's choice "Amend CR-0008, in T3") adds D23–D25: the engine (`04` §4, §6, §8, §19: the flag, the
+`Paused` stall reason, `SetPaused`, the paused station's couriers), the server (`set-paused`, `paused` in the snapshot, `05`, `06` with a
+migration) and the client (the Pause button in the building menu, the station's wait timer, the store gauge), each rule with its tests.
 
 ## Owner approval
 - Approved on: 2026-11-02. The owner's words, in chat: "I approve the CR, go ahead with /start-task CR-0008-T1". The approval covers the

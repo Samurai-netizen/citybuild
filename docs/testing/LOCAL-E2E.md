@@ -2,7 +2,7 @@
 
 The steps that prove the Unity client and the real server work together on one machine: the client logs in, loads the content and the city,
 shows "Connected", goes offline when the server stops, and reconnects when it comes back. Run them after a change to the start of the game,
-the connection or the wire. They take about 10 minutes, most of it waiting for polls. Pressing Play is a manual step, because an AI coder can't
+the connection or the wire. They take about 10 minutes, most of it waiting for polls. The logistics rules (stores, deliveries, couriers, roads, pausing) have their own run, `LOCAL-E2E-LOGISTICS.md`. Pressing Play is a manual step, because an AI coder can't
 use the Editor (`core-instructions/09-unity-client.md`).
 
 ## What you need
@@ -34,7 +34,7 @@ In a second terminal, run `curl http://localhost:8080/health`. It answers `Healt
 
 > Connected - Early Middle Ages - Coins: 800
 
-Behind the label the Game view is dark blue-grey, and a green chessboard of 8 by 8 tiles shows in a diamond (the city's ground, M0-43). With the server running, a dark HUD across the top shows a chip for Coins, Logs and Planks (stock, cap and rate such as `0/h`), workers `4 / 4` and builders `0 / 2` (each with its picture), `No research`, the era `Early Middle Ages` and a green dot with `Online` (M0-49). The Console has no red messages. Try the controls: hold the left mouse button and drag to move the view (it stops at the edge of the grid), turn the mouse wheel to zoom, move the pointer to mark a tile in yellow, and click a tile to mark it in orange (click it again to clear it).
+Behind the label the Game view is dark blue-grey, and a green chessboard of 8 by 8 tiles shows in a diamond (the city's ground, M0-43). With the server running, a dark HUD across the top shows a chip for Coins, Logs and Planks (the city's total over every store and load, and the rate such as `0/h`; CR-0008), workers `4 / 4` and builders `0 / 2` (each with its picture), `No research`, the era `Early Middle Ages` and a green dot with `Online` (M0-49). The Console has no red messages. Try the controls: hold the left mouse button and drag to move the view (it stops at the edge of the grid), turn the mouse wheel to zoom, move the pointer to mark a tile in yellow, and click a tile to mark it in orange (click it again to clear it).
 
 A new city has no buildings, so the ground is empty. To see the building views (M0-44), place a Cottage from the build menu (the placement flow below, M0-46), or, to test the views alone, with the command line (do it before pressing Play, or press Play again afterwards: the client asks for the city every 120 s, so a wait of up to two minutes shows it too):
 ```
@@ -73,23 +73,23 @@ docker compose down -v
 docker compose up -d postgres
 dotnet run --project server/src/CityBuilder.Api -- --Simulation:DevTimeScale=60
 ```
-The API logs a warning about the time scale. Press **Play** in Unity and keep the Game view in front. The game stops running when the Editor loses focus. The HUD shows Coins 700, Logs 40, Planks 10.
+The API logs a warning about the time scale. Press **Play** in Unity and keep the Game view in front. The game stops running when the Editor loses focus. The HUD shows Coins 800 and no goods (CR-0008: goods live in building stores).
 
-**2. Golden scenario #1.** Act quickly; the exact moments cannot be hit at this speed, so look at the behaviour, not at exact numbers after the first line.
-1. Research **Trade Charter** and build two **Cottages**. Coins read 450 once the answers are in.
-2. Build a **Woodcutter's Hut** and a **Sawmill** when the Cottages stand. Coins 220, Logs 10. Each gets its workers by itself when it is built (pips under the ring: 2 and 3), and Workers reads 3 / 8.
-3. The research ring fills in about 10 seconds and then reads `No research`. Open the research screen: Trade Charter is done.
-4. When Planks reach 20, build a **Trading Post**. Coins 20, Planks 0.
-5. Watch for a minute: Coins rise by 10 about every 2 seconds, and the Trading Post switches between working and the bubble for missing Planks.
+**2. Golden scenario #1** (`core-instructions/23-mvp-content.md`). Act quickly; the exact moments cannot be hit at this speed, so look at the behaviour, not at exact numbers after the first line.
+1. Build a **Cottage** and a **Woodcutter's Hut**. Coins read 670 once the answers are in.
+2. Build a **Scriptorium**, then research **Trade Charter** and build a **Sawmill** and a second **Cottage**. Coins 220. The Woodcutter gets its 2 workers by itself; the Sawmill's site waits for 10 Logs.
+3. Send the Woodcutter's logs to the Sawmill by hand (**Send trip**, `LOCAL-E2E-LOGISTICS.md` step 2): the site builds, then the Sawmill gets 3 workers and waits for logs in its own store. Keep feeding it.
+4. The research ring takes about 10 seconds and then reads `No research`. Build a **Trading Post** and send it 10 Planks from the Sawmill. Coins 20.
+5. Feed the Trading Post planks: Coins rise by 10 per batch, and it shows the bubble for missing Planks when its store is empty.
 
 **3. Continue: research, workers, upgrade.**
 1. When Coins reach 250 (about a minute, or add them: `bash server-panel/panel.sh goods add coins 500`), research **Sharpened Axes**. The ring takes 30 seconds, then reads `No research`. Open the Woodcutter's inspector: it now says `Makes 150 Logs/h` at 2 workers (120 before).
 2. Open the **Sawmill**. Press − once: the stepper reads 2 / 3 at once, `Updating workers…` shows briefly, and the ring goes on from where it was. Press − twice quickly, then + once: the value moves with each press and settles without jumping back.
 3. Set the Sawmill to 0: its ring stops where it is, the no-workers bubble shows, and `Next batch in` disappears. Set it back to 3: the ring goes on from the same place.
 4. Set the **Trading Post** to 1 worker. Workers goes up by one.
-5. Let the Logs reach 30, with Coins at 120 or more. Open a **Cottage** and press **Upgrade**. The building site shows for about 2 seconds, then the Cottage returns at level 2 and Workers provided goes from 8 to 10.
+5. With Coins at 120 or more, open a **Cottage** and press **Upgrade** (coins only at once). Its site waits for 30 Logs: send them from the Woodcutter. The site then shows for about 2 seconds, and the Cottage returns at level 2 with Workers provided 2 higher.
 
-**4. Welcome-back.** Click another program and leave Unity in the background for at least 6 minutes. Click the Game view: the report opens once, with about 6 h away and what was made. Press Continue. It must not open again while you play. A second time, stay away for at least 9 minutes: the report also says `Production paused after 8 h`.
+**4. Welcome-back.** Click another program and leave Unity in the background for at least 6 minutes. Click the Game view: the report opens once, with about 6 h away and what was made. Press Continue. It must not open again while you play. There is no 8 h production cap since CR-0008; couriers rest instead (`LOCAL-E2E-LOGISTICS.md` step 7).
 
 **5. A token that runs out.** Tokens last 12 real minutes at this speed. If a command then shows the toast `Session expired. Try again in a moment`, the next try a moment later must work, with no `Signed out` staying on the HUD.
 
@@ -119,7 +119,7 @@ Coming back to the app also asks at once, so the label can change as soon as you
 | The API stops with "Auth:SigningKey must hold the token signing key" | The secret isn't set | Set it (What you need) |
 | The API stops with "ConnectionStrings:CityBuilder must hold…" or an `NpgsqlException` | The secret is missing, or the database isn't running or doesn't match `.env` | `docs/getting-started.md` → Database and Troubleshooting |
 | "Not connected: Cannot reach the server (CLIENT_NETWORK_ERROR)" after Play | The API wasn't running when you pressed Play. A failed start doesn't retry | Start the API, then press Play twice: stop, then start |
-| The coins aren't 700 | The dev player `dev1` has played. Its city carries over from run to run | Reset the city (below) |
+| The coins aren't 800 | The dev player `dev1` has played. Its city carries over from run to run | Reset the city (below) |
 | The label doesn't change after 2 minutes | The Editor didn't have focus, or the game is paused | Click the Game view and check that the Pause button isn't on |
 | A red message in the Console, or another label | Not a known state | Copy the label and the first red message into the chat with the AI coder |
 

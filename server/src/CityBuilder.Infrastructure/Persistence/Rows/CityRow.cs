@@ -33,6 +33,9 @@ public sealed class CityRow
     /// <summary><c>next_trip_id</c>: the id the next trip gets (CR-0008), 1 or more.</summary>
     public int NextTripId { get; set; } = 1;
 
+    /// <summary><c>next_line_id</c>: the id the next delivery line gets (CR-0008 amendment 1), 1 or more.</summary>
+    public int NextLineId { get; set; } = 1;
+
     /// <summary><c>research_id</c>: the research being done, or <see langword="null"/> when none is active.</summary>
     public string? ResearchId { get; set; }
 

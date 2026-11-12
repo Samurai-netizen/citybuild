@@ -68,7 +68,7 @@ namespace CityBuilder.Client.Tests.PlayMode
             _store = new ClientCityStore();
             string startWithScriptorium = Fixture("snapshot-city-start.json").Replace(
                 "\"buildings\":[]",
-                "\"buildings\":[{\"id\":3,\"typeId\":\"scriptorium\",\"x\":2,\"y\":0,\"level\":1,\"assignedWorkers\":0,\"maxWorkers\":0,\"phase\":\"Idle\",\"phaseStartedAt\":0,\"phaseEndsAt\":null,\"cycleLabor\":0,\"laborRemaining\":0,\"segmentStartedAt\":0,\"stallReason\":\"NoRecipe\",\"store\":{},\"storeLimits\":{},\"needs\":{},\"project\":null}]");
+                "\"buildings\":[{\"id\":3,\"typeId\":\"scriptorium\",\"x\":2,\"y\":0,\"level\":1,\"assignedWorkers\":0,\"maxWorkers\":0,\"phase\":\"Idle\",\"phaseStartedAt\":0,\"phaseEndsAt\":null,\"cycleLabor\":0,\"laborRemaining\":0,\"segmentStartedAt\":0,\"stallReason\":\"NoRecipe\",\"store\":{},\"storeLimits\":{},\"needs\":{},\"project\":null,\"paused\":false}]");
             var snapshotDto = new ApiJson().Deserialize<CitySnapshotDto>(startWithScriptorium)!;
             Assert.That(_store.Apply(SnapshotMapper.ToSnapshot(snapshotDto).Value!), Is.True);
             _display = new DisplayCity(_store, new DisplayClock(_store, 1), content);
@@ -185,6 +185,27 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(In(nodes[3], ResearchScreen.NodeStatusName).text, Is.EqualTo("Requires: Sharpened Axes"));
             Assert.That(In(nodes[3], ResearchScreen.NodeNoteName).text, Is.EqualTo("Requires: Sharpened Axes"));
             Assert.That(nodes[3].ClassListContains("research-node--locked"), Is.True);
+        }
+
+        /// <summary>
+        /// A card whose Fund button is off shows its picture and words without a pointer over it: the button laid over the card stays see-through
+        /// and its "Fund" text unseen, as on a card that can be funded (CR-0008-T3, playtest issue 3: the shared <c>.btn:disabled</c> grey covered the card).
+        /// </summary>
+        [UnityTest]
+        public IEnumerator ACardWhoseButtonIsOff_IsNotCoveredByTheButton()
+        {
+            _screen.SetOpen(true);
+            yield return null;
+
+            foreach (string id in new[] { "frame_saw", "trade_charter" })
+            {
+                Button finance = _screen.FinanceButton(id)!;
+                Assert.That(finance.resolvedStyle.backgroundColor.a, Is.EqualTo(0f), id + ": the button's background");
+                Assert.That(finance.resolvedStyle.color.a, Is.EqualTo(0f), id + ": the button's text");
+                Assert.That(finance.resolvedStyle.backgroundImage.texture, Is.Null, id + ": no picture over the card");
+            }
+
+            Assert.That(_screen.FinanceButton("frame_saw")!.enabledSelf, Is.False, "the case that broke: a button that is off");
         }
 
         /// <summary>A press on a button that is off sends nothing.</summary>

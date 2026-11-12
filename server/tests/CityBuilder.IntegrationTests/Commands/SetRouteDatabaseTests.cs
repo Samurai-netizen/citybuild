@@ -141,7 +141,8 @@ public sealed class SetRouteDatabaseTests(PostgresServer server) : PostgresTest(
     private async Task<(Guid Player, Guid City)> StaffedCityAsync(string name)
     {
         (Guid player, Guid city) = await StoreCityAsync(
-            Factory, name, 1000, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0, logs: 30), Warehouse(3, logs: 0, planks: 0), CourierStation(4));
+            Factory, name, 1000, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0, logs: 30), Warehouse(3, logs: 0, planks: 0), CourierStation(4),
+            Scriptorium(5, x: 6));
         ApiResponse staffed = await ApiClient.PostAsync(
             Factory, "/api/v1/commands/assign-workers", player, """{"requestId":"1de9e700-0000-4000-8000-0000000004b0","buildingId":4,"workers":1}""");
         Assert.Equal(HttpStatusCode.OK, staffed.Status);

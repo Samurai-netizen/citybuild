@@ -23,8 +23,8 @@ are `bigint` city-clock seconds and worker-seconds. Quantities are `bigint`. Ite
 | `city_stores` | `(city_id, building_id, item_id) pk`, `quantity bigint` | `check (quantity >= 0)`; FK to `city_buildings`, cascade; a row per good the store holds, kept at 0 (CR-0008) |
 | `city_project_needs` | `(city_id, building_id, item_id) pk`, `quantity bigint` | `check (quantity > 0)`; FK to `city_buildings`, cascade; the goods a construction site or a waiting upgrade still needs; no rows = no project waiting |
 | `city_research_needs` | `(city_id, item_id) pk`, `quantity bigint` | `check (quantity > 0)`; FK to `cities`, cascade; only while the running research waits at the science building |
-| `city_trips` | `(city_id, trip_id) pk`, `source_id int`, `target_id int`, `item_id text`, `quantity bigint`, `departed_at bigint`, `arrives_at bigint` | checks: `quantity > 0`, `arrives_at > departed_at`; FK to `cities`, cascade; the row goes when the trip arrives |
-| `city_buildings` | `(city_id, building_id) pk`, `type_id`, `x smallint`, `y smallint`, `level smallint`, `assigned_workers smallint`, `phase text`, `phase_started_at bigint null`, `phase_ends_at bigint null`, `target_level smallint null`, `cycle_labor bigint null`, `labor_remaining bigint null`, `segment_started_at bigint null` | `unique(city_id, x, y)`; checks: `x, y >= 0`, `level >= 1`, `assigned_workers >= 0`, `labor_remaining >= 0` |
+| `city_trips` | `(city_id, trip_id) pk`, `source_id int`, `target_id int`, `item_id text`, `quantity bigint`, `departed_at bigint`, `arrives_at bigint`, `remaining bigint` (default 0), `leg text` (default `ToTarget`) | checks: `quantity > 0` on a `ToTarget` leg, `quantity = 0 and remaining > 0` on a `ToSource` leg, `remaining >= 0`, `arrives_at > departed_at`; FK to `cities`, cascade; the row changes at each end of a leg and goes when the trip ends (amendment 1, migration `AddDeliveryLines`) |
+| `city_buildings` | `(city_id, building_id) pk`, `type_id`, `x smallint`, `y smallint`, `level smallint`, `assigned_workers smallint`, `phase text`, `phase_started_at bigint null`, `phase_ends_at bigint null`, `target_level smallint null`, `cycle_labor bigint null`, `labor_remaining bigint null`, `segment_started_at bigint null`, `paused boolean` (default false; CR-0008 D23, migration `AddBuildingPaused`) | `unique(city_id, x, y)`; checks: `x, y >= 0`, `level >= 1`, `assigned_workers >= 0`, `labor_remaining >= 0`, `NOT paused OR phase <> 'Constructing'` |
 | `city_research` | `(city_id, research_id) pk`, `completed_at bigint` | completed nodes only |
 | `command_receipts` | `(player_id, request_id) pk`, `command_type`, `payload_hash bytea`, `response_json json`, `created_at` | Successful commands only; `json`, not `jsonb`, keeps the response text as written (decision 041); cleanup job later |
 | `ledger_entries` | `id bigint identity pk`, `city_id`, `item_id`, `delta bigint`, `balance_after bigint`, `reason text`, `ref_type text`, `ref_id text`, `created_at` | `index (city_id, created_at)` |
@@ -52,6 +52,7 @@ labor, city totals, a building's project.
 | `city_roads` (built) | `(city_id, x, y) pk`, `x smallint`, `y smallint`, `level smallint` | `x, y >= 0`, `level >= 1`; never on a building's tile (the engine checks it on load); FK to `cities`, cascade; a removed road's row is deleted |
 | `city_couriers` (built) | `(city_id, station_id, slot) pk`, `state text`, `to_stop smallint`, `departed_at bigint null`, `arrives_at bigint null`, `stamina_seconds bigint` | `slot >= 1`, `to_stop >= 0`, `stamina_seconds >= 0`, a walk has both times (`departed_at >= 0`, `arrives_at > departed_at`) or neither; `state` is the API's spelling; the times are set exactly while walking or returning; FK `(city_id, station_id)` to `city_buildings`, cascade |
 | `city_courier_loads` (built) | `(city_id, station_id, slot, item_id, from_building_id) pk`, `quantity bigint` | `quantity > 0`; FK to `city_couriers`, cascade; `from_building_id` gets the goods back when the courier is stopped (no FK; the engine checks it names a building of the city) |
+| `city_delivery_lines` (built, amendment 1) | `(city_id, station_id, slot, line_id) pk`, `source_id int`, `target_id int`, `item_id text`, `quantity bigint` | `quantity > 0`, `source_id <> target_id`, `slot >= 1`; `line_id` is unique in the city; FK `(city_id, station_id, slot)` to `city_couriers`, cascade (the key's first columns, so no index of its own); a courier runs its lines in `line_id` order; the row goes when the line ends or is cancelled; `cities.next_line_id int` (default 1, `>= 1`) gives the ids (migration `AddDeliveryLines`) |
 | `city_route_actions` (built) | `(city_id, station_id, slot, stop_index, action_index) pk`, `building_id int`, `kind text`, `item_id text`, `amount text` | `slot >= 1`, indices from 0, `kind in ('take', 'put')`; a route is its actions in order, its stops without a gap; every action of one stop names the same building (the mapping checks both on load); `amount` as the API writes it (`05`); FK `(city_id, station_id)` to `city_buildings`, cascade; a slot's route may outlive its courier |
 
 - **Ledger (CR-0008):** `balance_after` is the item's **city total** (`04` §16). Coins go through the purse: `COST_*` rows are coins only.
@@ -73,7 +74,7 @@ labor, city totals, a building's project.
 - `city_research.completed_at` is the city-clock second the research completed: its `research_ends_at`. The engine keeps only the ids;
   the server's city aggregate keeps the clocks and records each one when an advance completes the research.
 - `city_stores`: a store row stays at 0 when its goods are taken (an upsert); a good the level no longer holds keeps its row until it is
-  empty. `city_project_needs`, `city_research_needs` and `city_trips` rows are deleted when a need is filled or a trip arrives.
+  empty. `city_project_needs`, `city_research_needs` and `city_trips` rows are deleted when a need is filled or a trip ends; `city_delivery_lines` rows when a line ends or is cancelled.
 - A row that breaks these rules or the engine's fails the load; a broken city is never settled and saved over.
 
 A column without `null` in the table is `NOT NULL`; `ledger_entries.ref_type` and `ref_id` are nullable too (a `STARTING_GRANT` has no
@@ -93,7 +94,8 @@ trail never disappears with what it belongs to), and `cities.player_id` is `REST
 BEGIN
   SELECT * FROM cities WHERE player_id = @p FOR UPDATE      -- serializes all writes to this city
   (command) SELECT receipt → replay or conflict, then ROLLBACK
-  load city_buildings, city_stores, city_project_needs, city_research, city_research_needs, city_roads, city_trips
+  load city_buildings, city_stores, city_project_needs, city_research, city_research_needs, city_roads, city_trips,
+       city_couriers, city_courier_loads, city_route_actions, city_delivery_lines
   settle → mutate (if command) → zero-length advance
   UPDATE cities SET …, state_version = state_version + 1 WHERE id = @c AND state_version = @v
   upsert buildings, upsert stores, merge needs, research needs, roads and trips (insert, update, delete), insert research completions,

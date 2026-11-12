@@ -29,7 +29,9 @@ and outputs land when it ends.
 - Cottages (houses) provide workers. Workers are a city-wide pool, not an item.
 - The player assigns workers to each production building, from 0 up to the building's level limit.
   **Production speed is proportional to workers** (labor ÷ workers). Moving workers keeps the progress already made.
-- 0 workers pauses a building, so there is no separate pause button. A newly built building takes free workers automatically.
+- 0 workers freezes a building's cycle. A producer or a Courier Station also has a **pause** that keeps its workers: a paused producer
+  finishes its cycle and starts no new one; a paused station's couriers finish their stop, give back their loads and walk home, keeping
+  their routes; a paused building's store stays open (CR-0008 amendment 2). A newly built building takes free workers automatically.
 - Workers also carry goods: a free worker can make a one-time **trip**, and the workers assigned to a Courier Station are its
   **couriers** (Logistics below).
 - The core tension: grid space goes either to houses (more workers) or to producers (more output per worker), and each worker either
@@ -45,11 +47,13 @@ and outputs land when it ends.
 - Goods move only when someone carries them. **Walkers** (couriers and workers on a trip) step from tile centre to tile centre in four
   directions, so every turn is 90°: 5 s per tile on open ground, faster on roads. They go around other buildings and cross one, slowly,
   only when there is no way around. Among the ways they could take, they pick the fastest, so they use roads when roads save time.
-- **Trips:** from a building, the player sends one free worker with goods to another building or a construction site. The worker is free
-  again when it arrives. Trips are always available, before and after the first Courier Station.
+- **Trips:** from a building, the player sends goods to another building or a construction site, any amount. Before the first Courier
+  Station a free worker carries them, load after load, and is free again after the last; once a station stands, a free courier gets them as
+  a queue of loads the player can cancel (CR-0008 amendment 1).
 - **Courier Station:** its workers are its couriers. Each courier follows its **route**, a loop of stops; at each stop it takes goods from
   the building or puts goods into it, an item and an amount per action. Era I offers All, Half and Quarter; any percentage comes with an
-  Era I research, an exact number with an Era II research. The station's level sets how many couriers it has, how much each carries and
+  Era I research, an exact number with an Era II research. Routes need a Scriptorium, and a courier has a route or a queue of loads,
+  never both. The station's level sets how many couriers it has, how much each carries and
   how long they keep working while the player is away.
 - **Roads** are built on empty tiles, for coins, in a line the player drags. Each road level makes walking faster.
 - Building work and research get their goods by delivery; only coins are paid at once. A delivery fills what a waiting construction,

@@ -79,6 +79,7 @@ namespace CityBuilder.Client.Tests.EditMode
                     TripCarryLimit = 5,
                     MaxRouteStops = 4,
                     MaxStopActions = 2,
+                    MaxDeliveryLines = 20,
                 },
                 Roads = new List<RoadLevelData?> { new RoadLevelData { Level = 1, Name = "Path", TileMillis = 1500, Cost = new Dictionary<string, long?> { ["gold"] = 1 } } },
                 StartingCity = new StartingCityData { Era = 1, Purse = 20 },
