@@ -17,6 +17,7 @@ public sealed class CityBuildingConfiguration : IEntityTypeConfiguration<CityBui
             table.HasCheckConstraint("ck_city_buildings_level", "level >= 1");
             table.HasCheckConstraint("ck_city_buildings_assigned_workers", "assigned_workers >= 0");
             table.HasCheckConstraint("ck_city_buildings_labor_remaining", "labor_remaining >= 0");
+            table.HasCheckConstraint("ck_city_buildings_paused", "NOT paused OR phase <> 'Constructing'");
         });
 
         builder.HasKey(b => new { b.CityId, b.BuildingId }).HasName("pk_city_buildings");
@@ -34,6 +35,7 @@ public sealed class CityBuildingConfiguration : IEntityTypeConfiguration<CityBui
         builder.Property(b => b.CycleLabor).HasColumnName("cycle_labor");
         builder.Property(b => b.LaborRemaining).HasColumnName("labor_remaining");
         builder.Property(b => b.SegmentStartedAt).HasColumnName("segment_started_at");
+        builder.Property(b => b.Paused).HasColumnName("paused");
 
         // No two buildings of a city on one cell.
         builder.HasIndex(b => new { b.CityId, b.X, b.Y }).IsUnique().HasDatabaseName("ux_city_buildings_city_id_x_y");

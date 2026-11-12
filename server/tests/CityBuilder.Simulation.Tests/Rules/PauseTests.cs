@@ -1,4 +1,3 @@
-using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.Display;
 using CityBuilder.Simulation.Rules;
 using CityBuilder.Simulation.Settlement;

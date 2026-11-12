@@ -24,7 +24,7 @@ public sealed class CityBuildingRow
     /// <summary><c>level</c>: the building level, 1 or more.</summary>
     public short Level { get; set; }
 
-    /// <summary><c>assigned_workers</c>: the workers the player assigned, 0 or more (0 = paused).</summary>
+    /// <summary><c>assigned_workers</c>: the workers the player assigned, 0 or more (0 freezes a running cycle).</summary>
     public short AssignedWorkers { get; set; }
 
     /// <summary><c>phase</c>: the building's phase (the engine's <c>BuildingPhase</c>) as text.</summary>
@@ -47,4 +47,7 @@ public sealed class CityBuildingRow
 
     /// <summary><c>segment_started_at</c>: the city clock second the current labor segment started, or <see langword="null"/>.</summary>
     public long? SegmentStartedAt { get; set; }
+
+    /// <summary><c>paused</c>: whether the player paused the building (CR-0008 D23); never while constructing.</summary>
+    public bool Paused { get; set; }
 }

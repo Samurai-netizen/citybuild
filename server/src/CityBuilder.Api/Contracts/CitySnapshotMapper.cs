@@ -156,7 +156,8 @@ public static class CitySnapshotMapper
             ToAmounts(building.Store),
             ToStoreLimits(state, content, definition.GetLevel(building.Level), building),
             ToAmounts(building.Needs),
-            building.IsConstructionSite ? "Construction" : building.HasUpgradeWaiting ? "Upgrade" : null);
+            building.IsConstructionSite ? "Construction" : building.HasUpgradeWaiting ? "Upgrade" : null,
+            building.Paused);
     }
 
     /// <summary>Every item's city total (<see cref="CityQueries.Totals"/>), by item id, 0 included.</summary>

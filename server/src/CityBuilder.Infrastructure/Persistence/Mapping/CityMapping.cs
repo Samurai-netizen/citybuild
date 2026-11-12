@@ -247,6 +247,7 @@ public static class CityMapping
             CycleLabor = producing ? building.CycleLabor : null,
             LaborRemaining = producing ? building.LaborRemaining : null,
             SegmentStartedAt = producing ? building.SegmentStartedAt : null,
+            Paused = building.Paused,
         };
     }
 
@@ -294,7 +295,8 @@ public static class CityMapping
             row.LaborRemaining ?? 0,
             row.SegmentStartedAt ?? 0,
             store.Where(stock => stock.Quantity > 0).Select(stock => new KeyValuePair<ItemId, long>(new ItemId(stock.ItemId), stock.Quantity)),
-            needs.Select(need => new KeyValuePair<ItemId, long>(new ItemId(need.ItemId), need.Quantity)));
+            needs.Select(need => new KeyValuePair<ItemId, long>(new ItemId(need.ItemId), need.Quantity)),
+            row.Paused);
     }
 
     /// <summary>

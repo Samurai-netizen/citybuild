@@ -20,13 +20,15 @@ namespace CityBuilder.Api.Contracts;
 /// <param name="LaborRemaining">The labor left at <see cref="SegmentStartedAt"/>, JSON <c>laborRemaining</c>; 0 unless producing.</param>
 /// <param name="SegmentStartedAt">When the worker count last changed in the running cycle, JSON <c>segmentStartedAt</c>; 0 unless producing.</param>
 /// <param name="StallReason">Why the building makes no progress, JSON <c>stallReason</c>: <see langword="null"/>, <c>NoRecipe</c>, <c>NoWorkers</c>,
-/// <c>MissingInput:&lt;item&gt;</c> or <c>StorageFull:&lt;item&gt;</c>, about its own store.</param>
+/// <c>Paused</c>, <c>MissingInput:&lt;item&gt;</c> or <c>StorageFull:&lt;item&gt;</c>, about its own store.</param>
 /// <param name="Store">The goods in its store, JSON <c>store</c>: item id to quantity, by item id; only goods it holds (CR-0008).</param>
 /// <param name="StoreLimits">The limit of every good its level's store holds, JSON <c>storeLimits</c>: item id to effective limit (the level's
 /// limit plus completed research), by item id; empty for a building without a store (CR-0008).</param>
 /// <param name="Needs">What its waiting project still needs, JSON <c>needs</c>: item id to quantity, by item id; empty without one (CR-0008).</param>
 /// <param name="Project">The project waiting for goods, JSON <c>project</c>: <c>Construction</c> (a construction site), <c>Upgrade</c> (an upgrade
 /// waiting while the building keeps working) or <see langword="null"/> (CR-0008).</param>
+/// <param name="Paused">Whether the player paused it, JSON <c>paused</c> (CR-0008 D23): a paused producer starts no new cycle, a paused courier
+/// station's couriers go home and wait; always <see langword="false"/> for other buildings and while constructing.</param>
 public sealed record SnapshotBuilding(
     int Id,
     string TypeId,
@@ -45,4 +47,5 @@ public sealed record SnapshotBuilding(
     IReadOnlyDictionary<string, long> Store,
     IReadOnlyDictionary<string, long> StoreLimits,
     IReadOnlyDictionary<string, long> Needs,
-    string? Project);
+    string? Project,
+    bool Paused);

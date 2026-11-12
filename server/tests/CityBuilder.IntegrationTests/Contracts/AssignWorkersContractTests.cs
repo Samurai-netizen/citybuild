@@ -58,7 +58,7 @@ public sealed class AssignWorkersContractTests(ApiFactory factory) : IClassFixtu
         Assert.Equal(
             """{"id":3,"typeId":"woodcutter","x":2,"y":0,"level":1,"assignedWorkers":2,"maxWorkers":2,"phase":"Producing",""" +
             """ "phaseStartedAt":0,"phaseEndsAt":30,"cycleLabor":60,"laborRemaining":60,"segmentStartedAt":0,"stallReason":null,""".TrimStart() +
-            """ "store":{},"storeLimits":{"logs":40},"needs":{},"project":null}""".TrimStart(),
+            """ "store":{},"storeLimits":{"logs":40},"needs":{},"project":null,"paused":false}""".TrimStart(),
             snapshot["city"]!["buildings"]![2]!.ToJsonString());
 
         Assert.Equal(1, store.SaveCount);

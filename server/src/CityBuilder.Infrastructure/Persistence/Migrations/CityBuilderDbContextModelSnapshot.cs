@@ -48,6 +48,10 @@ namespace CityBuilder.Infrastructure.Persistence.Migrations
                         .HasColumnType("smallint")
                         .HasColumnName("level");
 
+                    b.Property<bool>("Paused")
+                        .HasColumnType("boolean")
+                        .HasColumnName("paused");
+
                     b.Property<string>("Phase")
                         .IsRequired()
                         .HasColumnType("text")
@@ -96,6 +100,8 @@ namespace CityBuilder.Infrastructure.Persistence.Migrations
                             t.HasCheckConstraint("ck_city_buildings_labor_remaining", "labor_remaining >= 0");
 
                             t.HasCheckConstraint("ck_city_buildings_level", "level >= 1");
+
+                            t.HasCheckConstraint("ck_city_buildings_paused", "NOT paused OR phase <> 'Constructing'");
 
                             t.HasCheckConstraint("ck_city_buildings_x", "x >= 0");
 

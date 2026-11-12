@@ -51,6 +51,7 @@ public sealed partial class PersistenceModelTests
             ("y", "smallint", false), ("level", "smallint", false), ("assigned_workers", "smallint", false), ("phase", "text", false),
             ("phase_started_at", "bigint", true), ("phase_ends_at", "bigint", true), ("target_level", "smallint", true),
             ("cycle_labor", "bigint", true), ("labor_remaining", "bigint", true), ("segment_started_at", "bigint", true),
+            ("paused", "boolean", false),
         ],
         ["city_research"] = [("city_id", "uuid", false), ("research_id", "text", false), ("completed_at", "bigint", false)],
         ["city_couriers"] =
@@ -189,6 +190,7 @@ public sealed partial class PersistenceModelTests
                 ("city_buildings", "ck_city_buildings_assigned_workers", "assigned_workers >= 0"),
                 ("city_buildings", "ck_city_buildings_labor_remaining", "labor_remaining >= 0"),
                 ("city_buildings", "ck_city_buildings_level", "level >= 1"),
+                ("city_buildings", "ck_city_buildings_paused", "NOT paused OR phase <> 'Constructing'"),
                 ("city_buildings", "ck_city_buildings_x", "x >= 0"),
                 ("city_buildings", "ck_city_buildings_y", "y >= 0"),
                 ("city_courier_loads", "ck_city_courier_loads_quantity", "quantity > 0"),
