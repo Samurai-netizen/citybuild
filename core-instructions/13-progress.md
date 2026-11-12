@@ -6,7 +6,7 @@
 
 ## Resume point
 - **State:** IDLE          <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (M0-64 is in review: the owner merges)
+- **Task:** — (M0-64 is in review: PR #92, the owner merges)
 - **Part / step:** —
 - **Last completed:** M0-64 · Ledger audit (in review; build log `docs/build-log/2026/2026-11-12-04-M0-64.md`)
 - **Next step:** the owner merges the M0-64 PR; then `/start-task M0-65` (banned APIs and architecture tests).
@@ -36,7 +36,7 @@
 | Docs automation (DocTools) + docs completeness | in progress | CR-0002, CR-0003 (PR #27, #29); M0-61 (PR #89); M0-63 (PR #91) |
 | Logistics (CR-0008) | done | T1 to T3 (PR #86, #87, #88) |
 | Balance simulator | not started | |
-| E2E / security / concurrency suites | in progress | M0-36, M0-56, M0-60 (PR #48, #80, #85); M0-64 in review |
+| E2E / security / concurrency suites | in progress | M0-36, M0-56, M0-60 (PR #48, #80, #85); M0-64 in review (PR #92) |
 | Dev build + M0 close-out | not started | |
 
 Per-task detail (what each PR added): `docs/plan/M0-PLAN.md`, `docs/build-log/`, `git log`.
