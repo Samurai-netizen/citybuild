@@ -23,4 +23,14 @@ public sealed class InfrastructureDependencyTests
         Assert.NotEmpty(names);
         Assert.DoesNotContain("CityBuilder.Api", names);
     }
+
+    /// <summary>The Infrastructure assembly references no ASP.NET Core assembly: hosting and endpoint types belong to Api alone.</summary>
+    [Fact]
+    public void GetReferencedAssemblies_OfInfrastructure_DoNotIncludeAspNetCore()
+    {
+        string[] names = typeof(ContentFileLoader).Assembly.GetReferencedAssemblies().Select(reference => reference.Name ?? string.Empty).ToArray();
+
+        Assert.NotEmpty(names);
+        Assert.DoesNotContain(names, name => name.StartsWith("Microsoft.AspNetCore", StringComparison.Ordinal));
+    }
 }

@@ -7,9 +7,9 @@
 ## Resume point
 - **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M0-65 · Banned APIs and architecture tests · branch `task/M0-65-banned-apis-arch-tests` · log `docs/build-log/2026/2026-11-12-05-M0-65.md`
-- **Part / step:** plan steps 1 to 4 (analyzer, architecture tests, tests of the tests, docs); step 1 done (analyzer in), step 2 next
+- **Part / step:** plan steps 1 to 4 (analyzer, architecture tests, tests of the tests, docs); steps 1 to 3 done (analyzer, architecture tests, tests of the tests); step 4 (docs) next
 - **Last completed:** M0-64 · Ledger audit (PR #92, merged)
-- **Next step:** step 2: architecture tests (Repository.Tests engine/project-file scans, Simulation.Tests reflection, Infrastructure refs).
+- **Next step:** step 4: docs per the Docs impact table, then `/finish-task`.
 - **Open questions for the owner:** M0-64: the two Follow-ups in its build log (refund reasons, a CLI). M0-61: the stashed Unity Editor settings (`git stash list`), apply or drop; Follow-ups in its build log. CR-0008-T3: the `22` edit (decision 27) and the Follow-ups in its build log. CR-0008-T1: 8 Dependabot alerts on `main` (build log Follow-ups). M0-58: the [MANUAL] content-change check (`client/README.md`; no automated test covers the `GameRoot` rebuild). CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-55: the [MANUAL] look at the connection states (`client/README.md`). CR-0007-T1: the [MANUAL] look at the new UI (`client/README.md`); the status label may be removed (build log follow-ups).
 - **Known broken / do not touch:** nothing.
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
