@@ -356,26 +356,6 @@
   -unity-text-align: middle-left;
 }
 
-/* A dock button while a building's menu is open (CR-0008 D22): its own colours, faded, not pressable (UiRoot.Dim also disables it). Two
-   classes and the pseudo class, so it wins over .btn:disabled. */
-.btn.btn--dimmed:disabled {
-  opacity: 0.35;
-}
-
-.btn--primary.btn--dimmed:disabled {
-  border-color: var(--c-go-edge);
-  background-color: var(--c-go);
-  color: var(--c-white);
-  -unity-background-image-tint-color: var(--c-white);
-}
-
-.btn--gold.btn--dimmed:disabled {
-  border-color: var(--c-gold-edge);
-  background-color: var(--c-gold);
-  color: var(--c-ink);
-  -unity-background-image-tint-color: var(--c-white);
-}
-
 /* A label has no margin or padding of its own in this game: a screen sets what it needs. */
 .unity-label {
   margin: 0;

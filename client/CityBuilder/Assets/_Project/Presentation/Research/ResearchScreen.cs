@@ -216,21 +216,21 @@ namespace CityBuilder.Client.Presentation.Research
         }
 
         /// <summary>
-        /// Dims the dock's Research button while a building's menu is open (CR-0008 D22, the owner's playtest point 4): it fades to
-        /// <see cref="UiRoot.DimmedClass"/> and can't be pressed; false brings it back.
+        /// Hides the dock's Research button while a building's menu is open (CR-0008 D22, the owner's playtest point 4; gone, not
+        /// faded, since playtest round 4): it can't be pressed; false brings it back.
         /// </summary>
-        /// <param name="dimmed">Whether a building's menu is open.</param>
-        public void SetDockDimmed(bool dimmed)
+        /// <param name="hidden">Whether a building's menu is open.</param>
+        public void SetDockHidden(bool hidden)
         {
-            IsDockDimmed = dimmed;
+            IsDockHidden = hidden;
             if (_elements != null)
             {
-                UiRoot.Dim(_elements.Toggle, dimmed);
+                UiRoot.HideInDock(_elements.Toggle, hidden);
             }
         }
 
-        /// <summary>Whether the Research button is dimmed because a building's menu is open (<see cref="SetDockDimmed"/>).</summary>
-        public bool IsDockDimmed { get; private set; }
+        /// <summary>Whether the Research button is hidden because a building's menu is open (<see cref="SetDockHidden"/>).</summary>
+        public bool IsDockHidden { get; private set; }
 
         /// <summary>The player pressed Finance on the node <paramref name="id"/>: what a finger on the button does, as a call. Does nothing unless the model allows it.</summary>
         /// <returns>True when <see cref="FinanceRequested"/> was raised.</returns>
@@ -282,7 +282,7 @@ namespace CityBuilder.Client.Presentation.Research
 
             _elements = elements;
             elements.Toggle.clicked += () => SetOpen(!IsOpen);
-            UiRoot.Dim(elements.Toggle, IsDockDimmed);
+            UiRoot.HideInDock(elements.Toggle, IsDockHidden);
             elements.Close.clicked += () => SetOpen(false);
             root.RegisterCallback<GeometryChangedEvent>(_ => UiRoot.PadBySafeArea(root, BasePadding));
             elements.Scroll.RegisterCallback<GeometryChangedEvent>(_ => FitCards(elements));

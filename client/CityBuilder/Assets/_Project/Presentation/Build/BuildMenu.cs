@@ -206,21 +206,21 @@ namespace CityBuilder.Client.Presentation.Build
         }
 
         /// <summary>
-        /// Dims the dock's Build button while a building's menu is open (CR-0008 D22, the owner's playtest point 4): it fades to
-        /// <see cref="UiRoot.DimmedClass"/> and can't be pressed; false brings it back.
+        /// Hides the dock's Build button while a building's menu is open (CR-0008 D22, the owner's playtest point 4; gone, not
+        /// faded, since playtest round 4): it can't be pressed; false brings it back.
         /// </summary>
-        /// <param name="dimmed">Whether a building's menu is open.</param>
-        public void SetDockDimmed(bool dimmed)
+        /// <param name="hidden">Whether a building's menu is open.</param>
+        public void SetDockHidden(bool hidden)
         {
-            IsDockDimmed = dimmed;
+            IsDockHidden = hidden;
             if (_toggle != null)
             {
-                UiRoot.Dim(_toggle, dimmed);
+                UiRoot.HideInDock(_toggle, hidden);
             }
         }
 
-        /// <summary>Whether the Build button is dimmed because a building's menu is open (<see cref="SetDockDimmed"/>).</summary>
-        public bool IsDockDimmed { get; private set; }
+        /// <summary>Whether the Build button is hidden because a building's menu is open (<see cref="SetDockHidden"/>).</summary>
+        public bool IsDockHidden { get; private set; }
 
         /// <summary>
         /// Whether a screen position (pixels, origin bottom left) is over the menu or any other element that takes the pointer: the build
@@ -264,7 +264,7 @@ namespace CityBuilder.Client.Presentation.Build
             }
 
             _toggle.clicked += () => SetOpen(!IsOpen);
-            UiRoot.Dim(_toggle, IsDockDimmed);
+            UiRoot.HideInDock(_toggle, IsDockHidden);
             if (_roads != null)
             {
                 _roads.clicked += PressRoads;

@@ -314,6 +314,30 @@ namespace CityBuilder.Client.Tests.PlayMode
         }
 
         /// <summary>
+        /// The open editor leaves most of the map free for the taps that add stops (CR-0008-T3, playtest round 4: the sheet covered the map, so
+        /// no building could be tapped): in landscape the panel is at most half the screen wide, and the upper right of the screen is not over it.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator EditRoutes_Open_LeavesTheMapFreeForTaps()
+        {
+            TapTile(6, 0);
+            _inspector.PressEditRoutes();
+            yield return null;
+            yield return null;
+
+            VisualElement panel = PanelOf();
+            VisualElement root = _screen.Root!;
+            Assert.That(panel.layout.width, Is.GreaterThan(0f), "the panel is laid out");
+            Assert.That(panel.panel.Pick(panel.worldBound.center), Is.Not.Null, "the panel itself takes presses");
+            if (root.layout.width > root.layout.height)
+            {
+                Assert.That(panel.worldBound.width, Is.LessThanOrEqualTo(root.layout.width * 0.5f));
+            }
+
+            Assert.That(_screen.IsOverUi(new Vector2(Screen.width * 0.75f, Screen.height * 0.7f)), Is.False, "a tap there reaches the map");
+        }
+
+        /// <summary>
         /// The courier station's menu has the worker stepper (its workers are its couriers; CR-0008-T3, playtest round 3): + sends
         /// <c>assign-workers</c> with one courier more.
         /// </summary>

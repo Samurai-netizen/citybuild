@@ -617,14 +617,14 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         }
 
         /// <summary>
-        /// Fades the dock's Build and Research buttons while a building's menu is open (the inspector or the route editor) and brings them back
-        /// when none is (CR-0008 D22, the owner's playtest point 4).
+        /// Hides the dock's Build and Research buttons while a building's menu is open (the inspector or the route editor) and brings them back
+        /// when none is (CR-0008 D22, the owner's playtest point 4; gone, not faded, since playtest round 4).
         /// </summary>
         private void RefreshDock()
         {
-            bool dimmed = (_inspector != null && _inspector.IsShown) || (_routeScreen != null && _routeScreen.IsOpen);
-            _buildMenu?.SetDockDimmed(dimmed);
-            _researchScreen?.SetDockDimmed(dimmed);
+            bool hidden = (_inspector != null && _inspector.IsShown) || (_routeScreen != null && _routeScreen.IsOpen);
+            _buildMenu?.SetDockHidden(hidden);
+            _researchScreen?.SetDockHidden(hidden);
         }
 
         /// <summary>
