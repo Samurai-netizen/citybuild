@@ -19,6 +19,14 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
+  <!-- Banned APIs (core-instructions/14-coding-standards.md): every production project gets the analyzer and the one list of banned symbols
+       next to this file. Time comes from TimeProvider, never DateTime.Now (core-instructions/02-principles.md, rule 3). A violation is an
+       RS0030 error because warnings fail the build in src/. Tests are not checked: a test may sleep or read the clock when it must. -->
+  <ItemGroup Condition="$(ServerProjectFolder.StartsWith('src'))">
+    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" PrivateAssets="all" />
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)BannedSymbols.txt" />
+  </ItemGroup>
+
   <!-- Every project writes its XML doc file: only then does the compiler report IDE0005 (unnecessary usings) on build
        (https://github.com/dotnet/roslyn/issues/41640). -->
   <PropertyGroup>

@@ -6,6 +6,12 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
 
+  <!-- Bans the APIs listed in server/BannedSymbols.txt (DateTime.Now, Thread.Sleep, ...) in every src/ project at build time; build-time only
+       (PrivateAssets="all"). On the approved list in 14; the task is M0-65. -->
+  <ItemGroup Label="Analyzers">
+    <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="3.3.4" />
+  </ItemGroup>
+
   <ItemGroup Label="Api">
     <!-- Validates the access tokens (core-instructions/07-security-model.md); the same patch as the ASP.NET Core runtime. -->
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.12" />
