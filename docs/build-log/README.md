@@ -11,6 +11,7 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
+- [BL-20261112-04 · M0-64 · Ledger audit](2026/2026-11-12-04-M0-64.md) — In progress
 - [BL-20261112-03 · M0-63 · Documentation completeness pass](2026/2026-11-12-03-M0-63.md) — Done
 - [BL-20261112-02 · M0-62 · Quality script](2026/2026-11-12-02-M0-62.md) — Done
 - [BL-20261112-01 · M0-61 · DocTools: generated reference docs](2026/2026-11-12-01-M0-61.md) — Done
