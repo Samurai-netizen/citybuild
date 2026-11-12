@@ -30,7 +30,7 @@ architecture, decisions, build log, how-tos, reference). Setup: [docs/getting-st
 | `shared/Simulation/` | The deterministic game engine (used by server and client); built by `shared/Simulation.Build/` |
 | `server/` | ASP.NET Core API, application, domain, infrastructure, tests |
 | `client/CityBuilder/` | Unity project |
-| `tools/` | DocTools (generated docs), BalanceSim (economy simulator) *(from M0-61, M0-67)* |
+| `tools/` | DocTools (generated reference docs, M0-61), BalanceSim (economy simulator) *(planned, M0-67)* |
 | `website/` | The handbook site (Docusaurus) over `core-instructions/` and `docs/` |
 | `scripts/dev/` | Developer and process scripts |
 | `.claude/`, `.githooks/`, `.github/` | AI tool config, git hooks, CI and PR template |

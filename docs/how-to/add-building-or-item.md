@@ -11,7 +11,7 @@ A new effect type or a new rule needs engine code instead: recipe "New engine ru
 | The content version | `contentVersion` in the same file: every change gets a new one (`mvp-1` → `mvp-2`), so clients refetch `GET /content` (`05`) |
 | The design numbers (during M0) | `core-instructions/23-mvp-content.md`, in the same commit: the JSON is the source of truth, `23` describes it |
 | History | one line in `CHANGELOG.md`; a balance note in the build log entry |
-| Generated reference | `docs/reference/generated/content.md`, regenerated *(planned, M0-61)* |
+| Generated reference | `docs/reference/generated/content.md`: `dotnet run --project tools/DocTools -- generate`, commit the page (CI fails when it is stale) |
 | Balance check | the balance simulator, `run-balance-simulator.md` *(planned, M0-67)* |
 
 Golden scenario tests use a frozen copy of the content (`server/tests/CityBuilder.Simulation.Tests/Fixtures/content-golden-v2.json`), so

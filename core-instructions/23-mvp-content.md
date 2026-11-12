@@ -8,6 +8,9 @@
 > **CR-0008 (logistics)** sets the numbers below for content version `mvp-2` (`04` §16–§19). The JSON is `mvp-2` from CR-0008-T1 part C
 > with the walking rules and road levels; the rest arrives in part E (until then its items, buildings, research and starting city are the
 > M0 numbers, git history of this file), and the 8 h cap goes in part H.
+>
+> **As built:** the JSON's numbers, every item, building level, recipe with its per-hour rate at full staffing, and research node, are
+> generated in `docs/reference/generated/content.md` and checked in CI (M0-61). This file keeps the design copy and the golden scenario.
 
 ## Global rules
 

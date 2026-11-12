@@ -49,7 +49,7 @@ AI coders must never bypass hooks or set `ALLOW_MAIN_COMMIT`.
 |---|---|---|
 | `docs` | `check-docs.sh` (+ PR checks against the base branch) → commit subjects (PRs) → the handbook builds (`docs-site.sh build`: links, anchors, sidebar) | Day 0; the site build CR-0002 |
 | `server` | restore (locked) → `dotnet format --verify-no-changes` → build → fast tests → integration tests (Docker) | M0-02 (skips until `server/CityBuilder.slnx` exists) |
-| `server` (last step) | generated docs are current: `dotnet run --project tools/DocTools -- check` | M0-61 (skips until DocTools exists) |
+| `server` (last step) | generated docs are current: `dotnet run --project tools/DocTools -- check` (fails with a summary of each page that differs) | M0-61 |
 The workflow `.github/workflows/docs-site.yml` ("Handbook site") builds the handbook again on every push to `main` and publishes it to
 GitHub Pages (https://samurai-netizen.github.io/citybuild/); it has a `workflow_dispatch` trigger for a manual rerun.
 Unity tests are not in CI (they need a Unity license on the runner). They run locally via `scripts/dev/test-unity.sh`

@@ -13,7 +13,8 @@ Paths are the M0 layout (`03`). "Module doc" means `docs/modules/<Project>.md`.
 - Code: `shared/Simulation/Runtime/` (rules, effect type, content validation), plus content JSON if it's used.
 - Tests: rule test written first; property tests still green; golden scenario unchanged or a new scenario added.
 - Docs: `04` (spec section and invariants), `25` if it's an effect type, `.claude/rules/simulation.md` if a new constraint appears,
-  module doc `CityBuilder.Simulation.md`, how-to `docs/how-to/add-research-effect.md` (for effect types), decision row if project-wide.
+  module doc `CityBuilder.Simulation.md`, how-to `docs/how-to/add-research-effect.md` (for effect types), a sentence for a new effect type in
+  `ContentPage.Effect` (`tools/DocTools`; the generation stops until it has one), decision row if project-wide.
 
 ## New command (player action)
 - Code:
@@ -26,22 +27,23 @@ Paths are the M0 layout (`03`). "Module doc" means `docs/modules/<Project>.md`.
 - Tests: mutation rule tests (every error code); application tests with fakes; integration tests (success, every error,
   replay, conflict, other player, concurrency); a `Security_` test per threat; client view-model tests.
 - Docs: `05` (endpoint, body, error codes), `07` (threat rows), `04` §8, module docs of each touched project,
-  generated API/error reference, how-to `docs/how-to/add-command.md` stays valid, `CHANGELOG`.
+  regenerated `endpoints.md` and `errors.md` in `docs/reference/generated/`, how-to `docs/how-to/add-command.md` stays valid, `CHANGELOG`.
 
 ## New error code
 - Code: the error catalogue (one place), ProblemDetails mapping, the client message table (`FeedbackMessages` in `Presentation/Feedback/`; the client constant in `ApiErrorCodes`).
 - Tests: the mapping table test, `ClientErrorCodesTests` and the client "every code has a message" test (`FeedbackMessagesTests.EveryErrorCode_HasAMessage`).
-- Docs: `05` error table (until generated), `07` if security-related.
+- Docs: `05` error table, regenerated `docs/reference/generated/errors.md`, `07` if security-related.
 
 ## Database change
 - Code: persistence model and configuration in `Infrastructure/Persistence/`, a **new** migration (never edit an applied one), mapping.
 - Tests: mapping round-trip, migration from empty and from the previous migration, constraint tests.
-- Docs: `06`, generated schema doc, module doc `CityBuilder.Infrastructure.md`, decision row if the change breaks the contract.
+- Docs: `06`, regenerated `docs/reference/generated/db-schema.md`, module doc `CityBuilder.Infrastructure.md`, decision row if the change breaks the contract.
 
 ## New configuration key
 - Code: options class + validation; `appsettings.Development.json` default; never a secret in a committed file.
 - Tests: validation fails on bad values.
-- Docs: generated configuration reference (until M0-61: `docs/getting-started.md` → Configuration).
+- Docs: the option's doc comment states its meaning, default and allowed range (the generated `docs/reference/generated/configuration.md`
+  shows it); regenerate it.
 
 ## New client screen or view
 - Code: `client/CityBuilder/Assets/_Project/Presentation/<Feature>/` (view-model class + thin MonoBehaviour); its UXML and USS go to
@@ -51,7 +53,8 @@ Paths are the M0 layout (`03`). "Module doc" means `docs/modules/<Project>.md`.
 
 ## New project, assembly or folder area
 - Code: project + references respecting `03`, the project file starting with a comment that says what it is for; architecture tests updated.
-- Docs: `03` (dependency table and layout), `docs/architecture/overview.md`, a new module doc (check-docs enforces this), `AGENTS.md` map.
+- Docs: `03` (dependency table and layout), `docs/architecture/overview.md`, a new module doc (check-docs enforces this), `AGENTS.md` map,
+  regenerated `docs/reference/generated/project-map.md`.
 - Gate: G-Contract if it changes dependency direction; otherwise a decision row.
 
 ## New script or command
