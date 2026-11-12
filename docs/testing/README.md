@@ -18,6 +18,7 @@ CI runs both, the fast suite first (`.github/workflows/ci.yml`). Unity's tests: 
 3. Nothing to clean up: the container is removed when the run ends.
 
 You don't need the compose database (`docker compose up -d postgres`) for the tests, and the tests never touch it.
+`bash scripts/dev/quality.sh` runs the whole CI set and skips this step with a message when `docker info` fails.
 Without Docker, every integration test fails with Testcontainers' `DockerUnavailableException` ("Docker is either not running or
 misconfigured"); the fast suite doesn't need Docker. One test class: add `--filter "FullyQualifiedName~CityRepositoryDatabaseTests"`
 (a class name) instead of the category filter.

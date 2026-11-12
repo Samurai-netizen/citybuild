@@ -13,7 +13,7 @@ description: Complete the current task - Definition of Done, docs per change rec
    `no change: <why>`). Set `Last updated: <ID>` in the module docs you touched.
 3. Once `tools/DocTools` exists, run `dotnet run --project tools/DocTools -- generate`.
 4. Run `bash scripts/dev/check-docs.sh --base origin/main`, `bash scripts/dev/docs-site.sh build >/tmp/docs-build.log 2>&1 && echo "docs-site: OK" || tail -40 /tmp/docs-build.log` (the handbook: links, anchors,
-   sidebar; quiet on success to save tokens) and the quality script (`bash scripts/dev/quality.sh` once it exists). Fix everything they report.
+   sidebar; quiet on success to save tokens) and the quality script (`bash scripts/dev/quality.sh`, everything CI runs; name any step it skipped in the report). Fix everything they report.
 5. **Review:** review your own branch diff against the task spec, the Definition of Done and the recipe, line by line for `[O]` tasks and for any
    task touching the engine, persistence or security (scope diff reads by area and exclude `.meta` and binary files: `git diff origin/main...HEAD -- <path> ':!*.meta'`). Fix blocking findings, and log them and the fixes in the build log.
    **Don't start an agent on your own** (owner directive OD-9, `core-instructions/15`): if you think one would help, ask the owner first with a

@@ -82,7 +82,7 @@ CityBuilder/
 ├── website/                     # the handbook: Docusaurus site over core-instructions/ and docs/ (CR-0002)
 ├── client/CityBuilder/          # Unity project: Assets/_Project/{Core,Net,Presentation,Editor,Art,Resources/UI,Tests}
 ├── docker-compose.yml · .env.example   # PostgreSQL for development; .env (gitignored) holds its credentials (M0-19)
-└── scripts/dev/                 # check-docs, docs-site, show-task, new-log-entry, setup-hooks, test-guard-bash, test-unity; quality (M0-62)
+└── scripts/dev/                 # check-docs, docs-site, show-task, new-log-entry, setup-hooks, test-guard-bash, test-unity, quality
 ```
 
 Why the split under `shared/`: Unity imports every file inside a package folder, including `bin/` and `obj/`.

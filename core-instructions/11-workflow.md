@@ -56,6 +56,7 @@ Roles:
   module docs show `Last updated: <ID>`.
 - [ ] `scripts/dev/check-docs.sh --base origin/main` passes; the handbook builds (`bash scripts/dev/docs-site.sh build`); generated docs
   are current (from M0-61).
+- [ ] `bash scripts/dev/quality.sh` passes (everything CI runs); the report names every step it skipped (no Docker, no Node.js, no `UNITY_EDITOR`).
 - [ ] Build log entry complete: sessions, every decision, owner input, verification, follow-ups.
 - [ ] Resume point `IDLE`, plan board row updated, `CHANGELOG` line added, decision rows and ADRs added if needed.
 - [ ] Self-review done (line by line for `[O]` tasks and for engine, persistence or security changes), with blocking findings fixed; any agent used was

@@ -7,9 +7,9 @@
 ## Resume point
 - **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M0-62 · Quality script · branch `task/M0-62-quality-script` · log `docs/build-log/2026/2026-11-12-02-M0-62.md`
-- **Part / step:** plan step 1 of 4 (quality.sh; then quality.ps1, check both, docs and marks)
+- **Part / step:** all 4 plan steps done; `/finish-task` next (self-review, PR)
 - **Last completed:** M0-61 · DocTools: generated reference docs (PR #89, merged)
-- **Next step:** write `scripts/dev/quality.sh` (steps in the build log plan).
+- **Next step:** `/finish-task` for M0-62 (quality.ps1 is unrun: no pwsh here; build log Follow-ups).
 - **Open questions for the owner:** M0-61: the stashed Unity Editor settings (`git stash list`), apply or drop; Follow-ups in its build log. CR-0008-T3: the `22` edit (decision 27) and the Follow-ups in its build log. CR-0008-T1: 8 Dependabot alerts on `main` (build log Follow-ups). M0-58: the [MANUAL] content-change check (`client/README.md`; no automated test covers the `GameRoot` rebuild). CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-55: the [MANUAL] look at the connection states (`client/README.md`). CR-0007-T1: the [MANUAL] look at the new UI (`client/README.md`); the status label may be removed (build log follow-ups).
 - **Known broken / do not touch:** nothing.
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
@@ -45,7 +45,7 @@ States: `not started` · `in progress` · `done` · `blocked (reason)`
 
 ## Commands
 The command list is in `AGENTS.md` → Commands (marks `[Mx-NN]` = not real yet); the "since" task for each is in `docs/getting-started.md` → Run.
-Not yet: `quality.sh` (M0-62), BalanceSim (M0-67).
+Not yet: BalanceSim (M0-67).
 
 ## Open issues / tech debt
 - Audit item A18 (Unity 6.6 installed, the stack pins 6.3) is closed: the project is 6000.3.25f1 (M0-04).
