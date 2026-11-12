@@ -93,9 +93,12 @@ internal static class SettleFixture
     /// (2,0) is producing (2 logs into 1 plank per 120 labor, its cycle from 120 to 240) with <see cref="SawmillLogs"/> logs left in its store.
     /// Settled then, at <see cref="LastSettled"/>; 70 coins in the purse.
     /// </summary>
-    public static InMemoryCityRepository SawmillRepository()
-    {
-        var state = new CityState(
+    public static InMemoryCityRepository SawmillRepository() => RepositoryWith(SawmillState());
+
+    /// <summary>The state of <see cref="SawmillRepository"/>'s city: 70 coins, 1 + 482 logs in two stores, no planks.</summary>
+    /// <returns>A new state each call.</returns>
+    public static CityState SawmillState() =>
+        new CityState(
             2 * StartClock,
             1,
             4,
@@ -107,8 +110,6 @@ internal static class SettleFixture
             ],
             [],
             activeResearch: null);
-        return RepositoryWith(state);
-    }
 
     /// <summary>A store's contents as the engine's pairs.</summary>
     /// <param name="goods">The goods and their quantities.</param>

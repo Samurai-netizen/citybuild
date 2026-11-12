@@ -7,9 +7,9 @@
 ## Resume point
 - **State:** IN PROGRESS          <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M0-64 · Ledger audit · branch `task/M0-64-ledger-audit` · build log `docs/build-log/2026/2026-11-12-04-M0-64.md`
-- **Part / step:** step 1 of 4 (auditor + port; EF source; HTTP random-sequence test; docs), plan in the build log
+- **Part / step:** step 2 of 4 (auditor + port; EF source; HTTP random-sequence test; docs), plan in the build log
 - **Last completed:** M0-63 · Documentation completeness pass (PR #91, merged)
-- **Next step:** step 1: `LedgerAuditor` and `ILedgerAuditSource` in `Application/Audit/` with unit tests.
+- **Next step:** step 2: `LedgerAuditSource` (EF, repeatable read) in Infrastructure; share the city row loading with `CityRepository`.
 - **Open questions for the owner:** M0-61: the stashed Unity Editor settings (`git stash list`), apply or drop; Follow-ups in its build log. CR-0008-T3: the `22` edit (decision 27) and the Follow-ups in its build log. CR-0008-T1: 8 Dependabot alerts on `main` (build log Follow-ups). M0-58: the [MANUAL] content-change check (`client/README.md`; no automated test covers the `GameRoot` rebuild). CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-55: the [MANUAL] look at the connection states (`client/README.md`). CR-0007-T1: the [MANUAL] look at the new UI (`client/README.md`); the status label may be removed (build log follow-ups).
 - **Known broken / do not touch:** nothing.
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
