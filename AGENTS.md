@@ -68,6 +68,7 @@ bash scripts/dev/new-log-entry.sh M0-15 "Title" "Claude Code / claude-opus-5-5"
 bash scripts/dev/check-docs.sh [--base origin/main]   # docs and process checks (also in pre-commit and CI)
 bash scripts/dev/docs-site.sh build             # the handbook site, as CI builds it (Node.js 20+); `start` = live preview
 bash scripts/dev/test-guard-bash.sh             # after changing .claude/hooks/guard-bash.sh
+bash scripts/dev/cloud-setup.sh                 # setup step of a cloud session: .NET SDK if missing, hooks, packages
 dotnet build server/CityBuilder.slnx
 dotnet format server/CityBuilder.slnx --verify-no-changes   # as CI; part of Done
 dotnet test  server/CityBuilder.slnx --filter "Category!=Integration"  # fast suite
@@ -87,7 +88,7 @@ dotnet run --project tools/BalanceSim -- --help                        # [M0-67]
 `core-instructions/` rules and design (normative) · `docs/` the system as built, the plan, the build log, ADRs, CRs ·
 `website/` the handbook site over both (https://samurai-netizen.github.io/citybuild/) ·
 `shared/Simulation/` engine · `server/` API and tests · `client/CityBuilder/` Unity · `art/` Era I art sources (Blender scripts, UI icons) ·
-`tools/` DocTools, BalanceSim ·
+`tools/` DocTools, BalanceSim · `server-panel/` a menu for the local database and API (`server-panel/README.md`) ·
 `scripts/dev/` helpers · `.githooks/` git hooks · `.github/` CI and PR template · `.claude/` Claude Code config.
 
 ## Finishing every task

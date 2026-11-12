@@ -108,6 +108,12 @@ if [ -f "$index" ]; then
     [ -f "$entry" ] || continue
     rel="${entry#docs/build-log/}"
     grep -qF "($rel)" "$index" || fail "Build log entry not listed in $index: $entry"
+    # The index line ends with the entry's status word(s); the finish step updates both (16 §E).
+    status="$(sed -n 's/^- \*\*Status:\*\* \([A-Za-z][A-Za-z ]*[A-Za-z]\).*/\1/p' "$entry" | head -1)"
+    listed="$(grep -F "($rel)" "$index" | head -1 | sed -n 's/.*) — \(.*[^ ]\) *$/\1/p')"
+    if [ -n "$status" ] && [ -n "$listed" ] && [ "$status" != "$listed" ]; then
+      fail "Build log index says '$listed' for $entry, the entry says '$status'"
+    fi
     for section in '## Decisions' '## Verification' '- **Status:**'; do
       grep -qF -- "$section" "$entry" || fail "Build log entry $entry lacks '$section'"
     done

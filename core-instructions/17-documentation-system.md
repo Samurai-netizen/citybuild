@@ -69,7 +69,7 @@ Every task keeps the docs current (owner directive OD-11, `15`), in this order:
 2. **Do it with the code.** A step that changes behaviour, a contract, a command or a file name changes its pages in the same commit.
 3. **Close it.** At the finish every row has a result, and the Definition of Done (`11`) checks it.
 4. **Checks** (`scripts/dev/check-docs.sh`; the pre-commit hook runs the static part, CI the rest):
-   - required files exist; relative links resolve; the build log index is complete and entries have the required sections;
+   - required files exist; relative links resolve; the build log index is complete, each index line's status word matches its entry's, and entries have the required sections;
    - CR and ADR status lines are valid; every project or assembly has a module doc; the always-loaded files stay small;
    - every file that isn't C# and can hold a comment starts with one that says what it is for, and every shell, PowerShell and
      JavaScript function has a comment above it (`14` → Documentation in code; C# files are checked by `CityBuilder.Repository.Tests`
