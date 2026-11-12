@@ -11,11 +11,11 @@ Modules are added by the tasks that create them (M0-02, M0-03, M0-04, M0-61, M0-
 | Module | Kind | Doc |
 |---|---|---|
 | `CityBuilder.Api` | .NET project, `server/src/` (ASP.NET Core host, composition root) | [CityBuilder.Api.md](CityBuilder.Api.md) |
-| `CityBuilder.Application` | .NET project, `server/src/` (use cases, ports; skeleton) | [CityBuilder.Application.md](CityBuilder.Application.md) |
-| `CityBuilder.Domain` | .NET project, `server/src/` (server-only concepts; skeleton) | [CityBuilder.Domain.md](CityBuilder.Domain.md) |
-| `CityBuilder.Infrastructure` | .NET project, `server/src/` (port implementations; skeleton) | [CityBuilder.Infrastructure.md](CityBuilder.Infrastructure.md) |
+| `CityBuilder.Application` | .NET project, `server/src/` (use cases, ports) | [CityBuilder.Application.md](CityBuilder.Application.md) |
+| `CityBuilder.Domain` | .NET project, `server/src/` (server-only concepts) | [CityBuilder.Domain.md](CityBuilder.Domain.md) |
+| `CityBuilder.Infrastructure` | .NET project, `server/src/` (port implementations) | [CityBuilder.Infrastructure.md](CityBuilder.Infrastructure.md) |
 | `CityBuilder.Simulation` | Unity package `shared/Simulation/` + .NET project `shared/Simulation.Build/` (the deterministic engine: content, city state, mutations, settlement) | [CityBuilder.Simulation.md](CityBuilder.Simulation.md) |
-| `CityBuilder.Client.Core` | Unity assembly, `client/CityBuilder/Assets/_Project/Core/` (client state and display prediction; skeleton) | [CityBuilder.Client.Core.md](CityBuilder.Client.Core.md) |
+| `CityBuilder.Client.Core` | Unity assembly, `client/CityBuilder/Assets/_Project/Core/` (client state and display prediction) | [CityBuilder.Client.Core.md](CityBuilder.Client.Core.md) |
 | `CityBuilder.Client.Net` | Unity assembly, `client/CityBuilder/Assets/_Project/Net/` (API client, DTOs, error parsing) | [CityBuilder.Client.Net.md](CityBuilder.Client.Net.md) |
 | `CityBuilder.Client.Editor` | Unity assembly, Editor only, `client/CityBuilder/Assets/_Project/Editor/` (the art's import settings and shared material) | [CityBuilder.Client.Editor.md](CityBuilder.Client.Editor.md) |
 | `CityBuilder.Client.Presentation` | Unity assembly, `client/CityBuilder/Assets/_Project/Presentation/` (composition root, UI Toolkit screens, input) | [CityBuilder.Client.Presentation.md](CityBuilder.Client.Presentation.md) |

@@ -18,7 +18,8 @@
   (decision 007, [ADR-0007](../adr/ADR-0007-shared-engine.md)).
 - **Client** (`client/CityBuilder/`, Unity 6000.3.25f1, URP): logs in as a dev player, loads the content through the engine's validating
   factory, fetches the city, and from then on shows a local prediction made with the engine, snapping to every server snapshot (`09`).
-- **Tools:** `tools/DocTools` writes `docs/reference/generated/` from the code and content ([module](../modules/DocTools.md)).
+- **Tools:** `tools/DocTools` writes `docs/reference/generated/` from the code and content ([module](../modules/DocTools.md)); it
+  references Api, Infrastructure and Simulation and is left out of the diagram.
 
 ```mermaid
 flowchart LR
@@ -41,6 +42,8 @@ flowchart LR
   PRES --> CORE
   PRES --> NET
   NET --> CORE
+  NET --> SIM
+  PRES --> SIM
   CORE --> SIM
   API --> APP
   API --> INF
@@ -119,7 +122,7 @@ sequenceDiagram
   CS->>EP: POST /api/v1/commands/... (Bearer token, requestId)
   EP->>EP: token → player id, body → ICityCommand
   EP->>PL: ExecuteAsync(player, command)
-  PL->>PL: requestId and ValidateShape, payload hash
+  PL->>PL: requestId and ValidateShape (INVALID_ARGUMENT before any lock), payload hash
   PL->>TX: RunAsync
   TX->>DB: BEGIN, SELECT ... FOR UPDATE (own city), load rows
   PL->>DB: receipt for (player, requestId)?
@@ -129,7 +132,7 @@ sequenceDiagram
     PL->>EN: settle to now (Simulator.Advance)
     PL->>EN: command.Apply (engine rule)
     alt rule refused
-      PL->>DB: save the settlement only (no receipt)
+      PL->>DB: save the settlement only, if it changed anything (no receipt)
       PL-->>EP: rule error code
     else applied
       PL->>EN: zero-length advance (canonical state)

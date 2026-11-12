@@ -33,7 +33,10 @@ Both commands accept `--root` and a folder (the repository root). By default the
 | `GeneratedDocsCheck` | Compares committed and fresh pages (`PageDifference`) and runs the `check` command |
 | `RepositoryFiles`, `RepositoryRoot` | Find the repository's own files in ordinal order, and the root |
 | `XmlDocs` | Reads a project's XML doc file; a reference to a constant shows its value |
+| `GeneratedPage` | One generated page: its file name in `docs/reference/generated/` and its full text |
 | `Pages/*Page` | One generator per page |
+| `Pages/PageFormat` | How the pages write numbers, durations and lists of goods (invariant culture, the same text on every machine) |
+| `Program` | The entry point: hands the arguments to `CommandLine` |
 
 ## Rules and invariants
 - **Deterministic:** the same repository gives the same bytes on every machine. Lines end in `\n`, files are UTF-8 without a BOM,
@@ -42,7 +45,7 @@ Both commands accept `--root` and a folder (the repository root). By default the
   escapes pipes and angle brackets.
 
 ## How to extend
-A new page is a new `Pages/<Name>Page.cs` with a `Generate(root)` method, plus one entry in `ReferenceDocs.Generate`. Run `generate`,
+A new page is a new `Pages/<Name>Page.cs` with a `Generate` method (taking the repository root when it reads files), plus one entry in `ReferenceDocs.Generate`. Run `generate`,
 commit the page, and add a row to the page table above. A change to code or content that a page shows: run `generate` and commit
 the changed pages in the same PR (recipes in `core-instructions/19-change-recipes.md`).
 
@@ -60,4 +63,4 @@ committed pages are current.
 - The browser tab of a generated page shows its file name: Docusaurus takes the tab title only from an H1 at the very top, and the
   notice comes first (build log M0-61, decision 5). The sidebar label is the H1.
 
-Last updated: M0-61
+Last updated: M0-63

@@ -4,8 +4,8 @@
 **References:** `CityBuilder.Simulation` ·
 **Referenced by:** `CityBuilder.Application`, `CityBuilder.Infrastructure`, `CityBuilder.Domain.Tests`
 
-> *Growing.* The player, the ledger entry and the command receipt exist (M0-20); the settlement record and the M2 concepts follow
-> *(planned)*. Their database rows are Infrastructure's row classes (M0-19), mapped explicitly (M0-20).
+> The player, the ledger entry and the command receipt exist (M0-20); the M2 concepts (market, guilds) follow *(planned, M2)*. The
+> settlement record is Application's `Cities/Settlement` (M0-23), not a Domain type. Their database rows are Infrastructure's row classes (M0-19), mapped explicitly (M0-20).
 
 ## Purpose
 Server-only concepts that the shared engine doesn't have: player, ledger entry, command receipt, settlement record
@@ -36,6 +36,6 @@ Add one public type per file, named after it, with XML docs (`14`). Its database
 Run: `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`.
 
 ## Known limitations
-- No settlement record yet; the settle use case reports through the engine's `SettlementReport` (M0-23 decides).
+- The settlement record lives in Application (`Cities/Settlement`, M0-23), because only the settle use case builds and reads it.
 
-Last updated: CR-0008-T1
+Last updated: M0-63

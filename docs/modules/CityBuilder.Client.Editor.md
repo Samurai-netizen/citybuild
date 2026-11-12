@@ -33,4 +33,4 @@ on its first import. Run with `scripts/dev/test-unity.sh` (`client/README.md` â†
 ## Known limitations
 - One palette only: the source material name and the material path are constants for Era I. Era II changes this.
 
-Last updated: CR-0008-T2
+Last updated: M0-63
