@@ -11,6 +11,7 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
+- [BL-20261112-02 · M0-62 · Quality script](2026/2026-11-12-02-M0-62.md) — In progress
 - [BL-20261112-01 · M0-61 · DocTools: generated reference docs](2026/2026-11-12-01-M0-61.md) — In progress
 - [BL-20261111-01 · CR-0008-T3 · Logistics rework: close-out and playtest](2026/2026-11-11-01-CR-0008-T3.md) — In progress
 - [BL-20261108-01 · CR-0008-T2 · Logistics rework: client and art](2026/2026-11-08-01-CR-0008-T2.md) — Done
