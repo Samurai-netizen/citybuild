@@ -203,6 +203,8 @@ namespace CityBuilder.Client.Presentation.Feedback
                     return "Couriers re-energized";
                 case CommandKind.CancelDelivery:
                     return "Delivery cancelled";
+                case CommandKind.SetPaused:
+                    return "Pause changed";
                 default:
                     return "Done";
             }

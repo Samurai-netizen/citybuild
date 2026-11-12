@@ -198,7 +198,7 @@ namespace CityBuilder.Client.Core
         {
             string ends = building.PhaseEndsAt.HasValue ? Invariant($"{building.PhaseEndsAt.Value}") : "null";
             return Invariant(
-                $"{{\"id\":{building.Id},\"typeId\":\"{building.TypeId.Value}\",\"x\":{building.X},\"y\":{building.Y},\"level\":{building.Level},\"assignedWorkers\":{building.AssignedWorkers},\"phase\":\"{building.Phase}\",\"phaseStartedAt\":{building.PhaseStartedAt},\"phaseEndsAt\":{ends},\"targetLevel\":{building.TargetLevel},\"cycleLabor\":{building.CycleLabor},\"laborRemaining\":{building.LaborRemaining},\"segmentStartedAt\":{building.SegmentStartedAt},\"store\":{Amounts(building.Store)},\"needs\":{Amounts(building.Needs)}}}");
+                $"{{\"id\":{building.Id},\"typeId\":\"{building.TypeId.Value}\",\"x\":{building.X},\"y\":{building.Y},\"level\":{building.Level},\"assignedWorkers\":{building.AssignedWorkers},\"phase\":\"{building.Phase}\",\"phaseStartedAt\":{building.PhaseStartedAt},\"phaseEndsAt\":{ends},\"targetLevel\":{building.TargetLevel},\"cycleLabor\":{building.CycleLabor},\"laborRemaining\":{building.LaborRemaining},\"segmentStartedAt\":{building.SegmentStartedAt},\"store\":{Amounts(building.Store)},\"needs\":{Amounts(building.Needs)},\"paused\":{(building.Paused ? "true" : "false")}}}");
         }
 
         /// <summary>A text with plain digits, never in the machine's culture.</summary>

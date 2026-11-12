@@ -77,7 +77,8 @@ namespace CityBuilder.Client.Core
                     building.LaborRemaining,
                     building.SegmentStartedAt,
                     new List<KeyValuePair<ItemId, long>>(building.Store),
-                    new List<KeyValuePair<ItemId, long>>(building.Needs)));
+                    new List<KeyValuePair<ItemId, long>>(building.Needs),
+                    building.Paused));
             }
 
             // The research changes in place when a delivery fills its needs or starts its timer (CR-0008), so it is copied too; so are trips,

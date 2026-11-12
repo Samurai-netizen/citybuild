@@ -6,7 +6,8 @@ using CityBuilder.Simulation;
 namespace CityBuilder.Client.Presentation.City
 {
     /// <summary>
-    /// What one building's status shows on the screen (M0-50): the progress ring (which job and how far, in permille), the status bubble (the
+    /// What one building's status shows on the screen (M0-50): the progress ring (which job and how far, in permille; for the store gauge the
+    /// good it shows), the status bubble (the
     /// reason it makes no progress and the item it names), whether the building looks stalled, and how many worker pips it carries. A plain value made by
     /// <see cref="BuildingStatusModel.Describe"/> from the displayed city; two equal values draw the same picture, so a view redraws only when
     /// the value differs. Display only.
@@ -22,8 +23,10 @@ namespace CityBuilder.Client.Presentation.City
         /// <param name="bubble">The bubble to show.</param>
         /// <param name="bubbleItem">The item the bubble names, or the empty id.</param>
         /// <param name="pips">The workers assigned; at most <see cref="MaxPips"/> are kept.</param>
-        public BuildingStatus(StatusRingKind ring, int progressPermille, StatusBubbleKind bubble, ItemId bubbleItem, int pips)
+        /// <param name="ringItem">The fullest good of a <see cref="StatusRingKind.Storage"/> ring; ignored for the others.</param>
+        public BuildingStatus(StatusRingKind ring, int progressPermille, StatusBubbleKind bubble, ItemId bubbleItem, int pips, ItemId ringItem = default)
         {
+            RingItem = ring == StatusRingKind.Storage ? ringItem : default;
             Ring = ring;
             ProgressPermille = ring == StatusRingKind.None ? 0 : Math.Max(0, Math.Min(1000, progressPermille));
             Bubble = bubble;
@@ -36,6 +39,9 @@ namespace CityBuilder.Client.Presentation.City
 
         /// <summary>How far the job is in thousandths (<c>ProgressDisplay.ProgressPermille</c>), 0 without a ring.</summary>
         public int ProgressPermille { get; }
+
+        /// <summary>The good whose icon a <see cref="StatusRingKind.Storage"/> ring shows (the fullest one); the empty id for the other rings.</summary>
+        public ItemId RingItem { get; }
 
         /// <summary>The status bubble.</summary>
         public StatusBubbleKind Bubble { get; }
@@ -52,7 +58,7 @@ namespace CityBuilder.Client.Presentation.City
         /// <inheritdoc />
         public bool Equals(BuildingStatus other)
         {
-            return Ring == other.Ring && ProgressPermille == other.ProgressPermille && Bubble == other.Bubble
+            return Ring == other.Ring && ProgressPermille == other.ProgressPermille && RingItem == other.RingItem && Bubble == other.Bubble
                 && BubbleItem == other.BubbleItem && Pips == other.Pips;
         }
 
@@ -60,7 +66,7 @@ namespace CityBuilder.Client.Presentation.City
         public override bool Equals(object? obj) => obj is BuildingStatus other && Equals(other);
 
         /// <inheritdoc />
-        public override int GetHashCode() => HashCode.Combine((int)Ring, ProgressPermille, (int)Bubble, BubbleItem, Pips);
+        public override int GetHashCode() => HashCode.Combine((int)Ring, ProgressPermille, RingItem, (int)Bubble, BubbleItem, Pips);
 
         /// <summary>Whether two statuses draw the same picture.</summary>
         public static bool operator ==(BuildingStatus left, BuildingStatus right) => left.Equals(right);
@@ -71,7 +77,7 @@ namespace CityBuilder.Client.Presentation.City
         /// <summary>The status as words for a test failure: <c>Producing 500, MissingInput logs, 2 pips</c>.</summary>
         public override string ToString()
         {
-            return Ring + " " + ProgressPermille + ", " + Bubble + (BubbleItem == default ? string.Empty : " " + BubbleItem.Value) + ", " + Pips + " pips";
+            return Ring + " " + ProgressPermille + (RingItem == default ? string.Empty : " " + RingItem.Value) + ", " + Bubble + (BubbleItem == default ? string.Empty : " " + BubbleItem.Value) + ", " + Pips + " pips";
         }
     }
 }

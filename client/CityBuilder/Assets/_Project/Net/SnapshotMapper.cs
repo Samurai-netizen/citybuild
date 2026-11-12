@@ -271,7 +271,8 @@ namespace CityBuilder.Client.Net
                 building.LaborRemaining,
                 building.SegmentStartedAt,
                 ToQuantities(building.Store),
-                ToQuantities(building.Needs));
+                ToQuantities(building.Needs),
+                building.Paused);
         }
 
         /// <summary>The engine's phase of an answer's phase.</summary>

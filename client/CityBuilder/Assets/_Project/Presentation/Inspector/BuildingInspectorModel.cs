@@ -116,6 +116,25 @@ namespace CityBuilder.Client.Presentation.Inspector
         /// <summary>Whether a worker target is on its way to the server.</summary>
         public bool IsWorkersPending { get; private set; }
 
+        /// <summary>Whether the building has the Pause / Resume button: a built producer or courier station (CR-0008 D23).</summary>
+        public bool HasPause { get; private set; }
+
+        /// <summary>Whether the building is paused, or will be once the pause on its way arrives: the button then reads Resume.</summary>
+        public bool IsPaused { get; private set; }
+
+        /// <summary>The button's text: <c>Pause</c> or <c>Resume</c>.</summary>
+        public string PauseText { get; private set; } = string.Empty;
+
+        /// <summary>Whether the Pause / Resume button can be pressed: commands are allowed and none of its own is on its way.</summary>
+        public bool CanPause { get; private set; }
+
+        /// <summary>
+        /// What the pause does now (D23, D24): a paused station's wait, <c>Couriers home in 0:42</c> or <c>All couriers are home</c>; a paused
+        /// producer still running its cycle, <c>Stops after this batch</c>; <c>Pausing…</c> or <c>Resuming…</c> while the command is on its way;
+        /// otherwise empty.
+        /// </summary>
+        public string PauseNote { get; private set; } = string.Empty;
+
         /// <summary>The upgrade section's title, such as <c>Upgrade to level 2</c>, or <c>Highest level reached</c>.</summary>
         public string UpgradeTitle { get; private set; } = string.Empty;
 
@@ -200,6 +219,7 @@ namespace CityBuilder.Client.Presentation.Inspector
             bool routesUnlocked = CityQueries.AreRoutesUnlocked(city, content);
             model.CanEditRoutes = model.HasRouteEditor && routesUnlocked;
             model.RoutesNote = model.HasRouteEditor && !routesUnlocked ? RoutesLockedNote(content) : string.Empty;
+            model.FillPause(content, city, building, definition, pending.Pause, availability);
             model.FillStepper(content, city, building, level, pendingTarget, availability);
             model.FillUpgrade(content, city, building, definition, upgradePending, availability);
             return model;
@@ -242,7 +262,12 @@ namespace CityBuilder.Client.Presentation.Inspector
                 && UpgradeGainText == other.UpgradeGainText
                 && CanUpgrade == other.CanUpgrade
                 && UpgradeNote == other.UpgradeNote
-                && IsUpgradePending == other.IsUpgradePending;
+                && IsUpgradePending == other.IsUpgradePending
+                && HasPause == other.HasPause
+                && IsPaused == other.IsPaused
+                && PauseText == other.PauseText
+                && CanPause == other.CanPause
+                && PauseNote == other.PauseNote;
         }
 
         /// <summary>See <see cref="Equals(BuildingInspectorModel?)"/>.</summary>
@@ -250,6 +275,41 @@ namespace CityBuilder.Client.Presentation.Inspector
 
         /// <summary>A hash of the building and the texts that change most, which goes with <see cref="Equals(BuildingInspectorModel?)"/>.</summary>
         public override int GetHashCode() => HashCode.Combine(BuildingId, StatusText, TimeText, WorkersText, UpgradeNote);
+
+        /// <summary>
+        /// Sets the Pause / Resume members (CR-0008 D23, D24): a built producer or courier station has the button; it shows the state a pause
+        /// on its way will give, and its note says what the pause does now, a paused station's wait counted by
+        /// <see cref="PauseDisplay.LastCourierHomeAt"/> at the displayed clock.
+        /// </summary>
+        private void FillPause(
+            GameContent content, CityState city, Building building, BuildingDefinition definition, bool? pendingPause, CommandAvailability availability)
+        {
+            bool station = definition.Kind == BuildingKind.CourierStation;
+            HasPause = (station || definition.Kind == BuildingKind.Producer) && building.Phase != BuildingPhase.Constructing;
+            if (!HasPause)
+            {
+                return;
+            }
+
+            IsPaused = pendingPause ?? building.Paused;
+            PauseText = IsPaused ? "Resume" : "Pause";
+            CanPause = availability.IsAllowed && !pendingPause.HasValue;
+            if (pendingPause.HasValue)
+            {
+                PauseNote = pendingPause.Value ? "Pausing…" : "Resuming…";
+            }
+            else if (building.Paused && station)
+            {
+                long? home = PauseDisplay.LastCourierHomeAt(city, content, building.Id);
+                PauseNote = home.HasValue && home.Value > city.Clock
+                    ? "Couriers home in " + DurationText.Format(home.Value - city.Clock)
+                    : "All couriers are home";
+            }
+            else if (building.Paused && building.Phase == BuildingPhase.Producing)
+            {
+                PauseNote = "Stops after this batch";
+            }
+        }
 
         /// <summary>
         /// Sets the stepper's members. A producer or a courier station that is built has a stepper; a producer's rates are shown at the assigned workers, and, when a
@@ -425,6 +485,8 @@ namespace CityBuilder.Client.Presentation.Inspector
                     return "Waiting for " + ItemText.ItemName(content, reason.Item);
                 case StallKind.StorageFull:
                     return ItemText.ItemName(content, reason.Item) + " storage is full";
+                case StallKind.Paused:
+                    return "Paused";
                 default:
                     return "Ready";
             }

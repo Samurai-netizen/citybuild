@@ -8,7 +8,7 @@ namespace CityBuilder.Client.Presentation.Inspector
 {
     /// <summary>
     /// What is still on its way to the server for one building, as far as the inspector shows it (M0-51): the worker target the stepper
-    /// sent and the upgrade it asked for. Read from <see cref="CommandSender.Pending"/> and never stored, so the sender stays the one place
+    /// sent, the upgrade it asked for and a pause or resume (CR-0008 D23). Read from <see cref="CommandSender.Pending"/> and never stored, so the sender stays the one place
     /// that knows what is pending.
     /// </summary>
     public readonly struct InspectorPending
@@ -16,10 +16,12 @@ namespace CityBuilder.Client.Presentation.Inspector
         /// <summary>Makes the value from its parts.</summary>
         /// <param name="workers">The worker target on its way, or null when none is.</param>
         /// <param name="upgrade">Whether an upgrade is on its way.</param>
-        public InspectorPending(int? workers, bool upgrade)
+        /// <param name="pause">The pause (true) or resume (false) on its way, or null when none is.</param>
+        public InspectorPending(int? workers, bool upgrade, bool? pause = null)
         {
             Workers = workers;
             Upgrade = upgrade;
+            Pause = pause;
         }
 
         /// <summary>The worker target on its way, or null when none is.</summary>
@@ -27,6 +29,9 @@ namespace CityBuilder.Client.Presentation.Inspector
 
         /// <summary>Whether an upgrade of the building is on its way.</summary>
         public bool Upgrade { get; }
+
+        /// <summary>The pause (true) or resume (false) of the building on its way, the newest one; null when none is.</summary>
+        public bool? Pause { get; }
 
         /// <summary>
         /// Reads the pending state of one building from the sender's list. A worker target on its way is listed before the one waiting after
@@ -44,6 +49,7 @@ namespace CityBuilder.Client.Presentation.Inspector
 
             int? workers = null;
             bool upgrade = false;
+            bool? pause = null;
             for (int index = 0; index < pending.Count; index++)
             {
                 CommandIntent intent = pending[index].Intent;
@@ -60,9 +66,13 @@ namespace CityBuilder.Client.Presentation.Inspector
                 {
                     upgrade = true;
                 }
+                else if (intent.Kind == CommandKind.SetPaused)
+                {
+                    pause = intent.Paused;
+                }
             }
 
-            return new InspectorPending(workers, upgrade);
+            return new InspectorPending(workers, upgrade, pause);
         }
     }
 }

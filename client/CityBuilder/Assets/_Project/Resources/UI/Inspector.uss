@@ -110,6 +110,12 @@
   margin-top: var(--sp-2);
 }
 
+/* What the pause does now: a paused courier station's wait, a producer finishing its batch (CR-0008 D23, D24). */
+.inspector-pause-note {
+  margin-top: var(--sp-1);
+  color: var(--c-stop-ink);
+}
+
 .inspector-routes-note {
   margin-top: var(--sp-1);
   color: var(--c-stop-ink);

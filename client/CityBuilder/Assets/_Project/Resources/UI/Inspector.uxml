@@ -2,7 +2,7 @@
   <!-- The building inspector that BuildingInspector shows (M0-51; visual v2, CR-0008-T2; centred and larger, CR-0008 D22): a parchment panel
        framed in wood in the middle of the screen. A header with the building's big picture, its name and level and a round close button;
        then a body that scrolls up and down only (OD-17) with three columns in landscape and one in portrait: a box with its status, timer,
-       store, recipe and rates and a box with the worker stepper (red minus, the count, green plus; hidden with its box for a building that
+       the Pause / Resume button and its note (a paused courier station's wait, CR-0008 D23 and D24), store, recipe and rates and a box with the worker stepper (red minus, the count, green plus; hidden with its box for a building that
        takes no workers); the courier station's box with its couriers, the route buttons first (so they stay in view on a small screen), then
        each courier's deliveries (a Cancel per line and Cancel all, made by BuildingInspector from the model);
        and a box with the upgrade and its button. The root lets presses through, so the map around the panel stays tappable. Hidden while no
@@ -25,6 +25,8 @@
             <ui:VisualElement class="inspector-status-box box">
               <ui:Label name="inspector-status" class="inspector-status t-heading" />
               <ui:Label name="inspector-time" class="t-body" />
+              <ui:Button name="inspector-pause" class="inspector-action btn btn--secondary" text="Pause" />
+              <ui:Label name="inspector-pause-note" class="inspector-pause-note t-note" />
               <ui:Label name="inspector-needs" class="inspector-needs t-small" />
               <ui:Label name="inspector-store" class="inspector-store t-small" />
               <ui:Label name="inspector-trips" class="inspector-trips t-small" />

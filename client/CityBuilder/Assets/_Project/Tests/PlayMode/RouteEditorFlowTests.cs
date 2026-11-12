@@ -159,6 +159,23 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(_transport.Requests[0].Url, Does.EndWith("/commands/reenergize-couriers"));
         }
 
+        /// <summary>The courier station's Pause button reads Pause and sends <c>set-paused</c> for the station with <c>paused</c> true (CR-0008 D23).</summary>
+        [UnityTest]
+        public IEnumerator Inspector_Pause_SendsSetPaused()
+        {
+            TapTile(6, 0);
+            Button button = _inspector.Root!.Q<Button>(BuildingInspector.PauseName);
+            Assert.That(button.style.display.value, Is.EqualTo(DisplayStyle.Flex));
+            Assert.That(button.text, Is.EqualTo("Pause"));
+
+            _inspector.PressPause();
+            yield return null;
+
+            Assert.That(_transport.Requests, Has.Count.EqualTo(1));
+            Assert.That(_transport.Requests[0].Url, Does.EndWith("/commands/set-paused"));
+            Assert.That(_transport.Requests[0].JsonBody, Does.Contain("\"buildingId\":" + StationId).And.Contain("\"paused\":true"));
+        }
+
         /// <summary>
         /// Tapping the station shows its courier line and Edit routes; pressing it opens the editor and hides the inspector; tapping two buildings
         /// adds them as stops and draws the lap; Save sends one <c>set-route</c>; the server's answer closes the sheet and clears the path.

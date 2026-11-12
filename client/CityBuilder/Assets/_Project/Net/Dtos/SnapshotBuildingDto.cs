@@ -11,7 +11,7 @@ namespace CityBuilder.Client.Net
     {
         /// <summary>Creates the DTO. Newtonsoft calls this constructor with the JSON members of the same names, so the object is never half filled.</summary>
         [JsonConstructor]
-        public SnapshotBuildingDto(int id, string typeId, int x, int y, int level, int assignedWorkers, int maxWorkers, BuildingPhaseDto phase, long phaseStartedAt, long? phaseEndsAt, long cycleLabor, long laborRemaining, long segmentStartedAt, string? stallReason, Dictionary<string, long> store, Dictionary<string, long> storeLimits, Dictionary<string, long> needs, string? project)
+        public SnapshotBuildingDto(int id, string typeId, int x, int y, int level, int assignedWorkers, int maxWorkers, BuildingPhaseDto phase, long phaseStartedAt, long? phaseEndsAt, long cycleLabor, long laborRemaining, long segmentStartedAt, string? stallReason, Dictionary<string, long> store, Dictionary<string, long> storeLimits, Dictionary<string, long> needs, string? project, bool paused = false)
         {
             Id = id;
             TypeId = typeId;
@@ -31,6 +31,7 @@ namespace CityBuilder.Client.Net
             StoreLimits = storeLimits;
             Needs = needs;
             Project = project;
+            Paused = paused;
         }
 
         /// <summary>The building's id, counted from 1 in this city.</summary>
@@ -73,7 +74,7 @@ namespace CityBuilder.Client.Net
         /// <summary>When the current constant-workers segment of the cycle began (<c>04</c> section 3).</summary>
         public long SegmentStartedAt { get; }
 
-        /// <summary>Why the cycle is not running: <c>NoRecipe</c>, <c>NoWorkers</c>, <c>MissingInput:&lt;item&gt;</c> or <c>StorageFull:&lt;item&gt;</c>; <c>null</c> when it is not stalled.</summary>
+        /// <summary>Why the cycle is not running: <c>NoRecipe</c>, <c>NoWorkers</c>, <c>Paused</c>, <c>MissingInput:&lt;item&gt;</c> or <c>StorageFull:&lt;item&gt;</c>; <c>null</c> when it is not stalled.</summary>
         [JsonProperty(Required = Required.AllowNull)]
         public string? StallReason { get; }
 
@@ -89,5 +90,8 @@ namespace CityBuilder.Client.Net
         /// <summary>The project waiting for goods: <c>Construction</c>, <c>Upgrade</c> or <c>null</c> (CR-0008).</summary>
         [JsonProperty(Required = Required.AllowNull)]
         public string? Project { get; }
+
+        /// <summary>Whether the player paused the building (CR-0008 amendment 2, D23); false for every building that can't be paused.</summary>
+        public bool Paused { get; }
     }
 }

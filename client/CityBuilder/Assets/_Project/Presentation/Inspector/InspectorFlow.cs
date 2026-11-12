@@ -130,6 +130,7 @@ namespace CityBuilder.Client.Presentation.Inspector
             _inspector.PlusRequested += OnPlus;
             _inspector.UpgradeRequested += OnUpgrade;
             _inspector.ReenergizeRequested += OnReenergize;
+            _inspector.PauseRequested += OnPause;
             _inspector.CancelLineRequested += OnCancelLine;
             _inspector.CancelAllRequested += OnCancelAll;
             _inspector.CloseRequested += OnClose;
@@ -210,6 +211,7 @@ namespace CityBuilder.Client.Presentation.Inspector
                 _inspector.PlusRequested -= OnPlus;
                 _inspector.UpgradeRequested -= OnUpgrade;
                 _inspector.ReenergizeRequested -= OnReenergize;
+                _inspector.PauseRequested -= OnPause;
                 _inspector.CancelLineRequested -= OnCancelLine;
                 _inspector.CancelAllRequested -= OnCancelAll;
                 _inspector.CloseRequested -= OnClose;
@@ -295,6 +297,16 @@ namespace CityBuilder.Client.Presentation.Inspector
             if (_inspector.Model != null && _availability.IsAllowed)
             {
                 Send(CommandIntent.ReenergizeCouriers());
+            }
+        }
+
+        /// <summary>Pause or Resume was pressed: <paramref name="paused"/> true pauses the shown building, false resumes it (CR-0008 D23).</summary>
+        private void OnPause(bool paused)
+        {
+            BuildingInspectorModel? model = _inspector.Model;
+            if (model != null && _availability.IsAllowed)
+            {
+                Send(CommandIntent.SetPaused(model.BuildingId, paused));
             }
         }
 

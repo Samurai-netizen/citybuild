@@ -64,7 +64,7 @@ namespace CityBuilder.Client.Net
         /// <summary>The building of an upgrade or assign-workers intent, or the source building of a start-trip intent; 0 for the others.</summary>
         public int BuildingId { get; }
 
-        /// <summary>The absolute worker target of an assign-workers intent; 0 for the others.</summary>
+        /// <summary>The absolute worker target of an assign-workers intent, 1 or 0 for a set-paused one (<see cref="Paused"/>); 0 for the others.</summary>
         public int Workers { get; }
 
         /// <summary>The target building of a start-trip intent; 0 for the others.</summary>
@@ -163,6 +163,18 @@ namespace CityBuilder.Client.Net
             return new CommandIntent(CommandKind.CancelDelivery, null, 0, 0, stationId, 0, slot: slot, lineId: lineId);
         }
 
+        /// <summary>
+        /// Pause (<paramref name="paused"/> true) or resume building <paramref name="buildingId"/> (CR-0008 amendment 2). The flag is kept in
+        /// <see cref="Workers"/> as 1 or 0, so a pause and a resume of one building are different intents.
+        /// </summary>
+        public static CommandIntent SetPaused(int buildingId, bool paused)
+        {
+            return new CommandIntent(CommandKind.SetPaused, null, 0, 0, buildingId, paused ? 1 : 0);
+        }
+
+        /// <summary>Whether a set-paused intent pauses (true) or resumes (false); false for the other kinds.</summary>
+        public bool Paused => Kind == CommandKind.SetPaused && Workers != 0;
+
         /// <summary>Give every courier its full stamina again (CR-0008); it has no argument.</summary>
         public static CommandIntent ReenergizeCouriers()
         {
@@ -220,6 +232,8 @@ namespace CityBuilder.Client.Net
                     return "ReenergizeCouriers()";
                 case CommandKind.CancelDelivery:
                     return "CancelDelivery(station " + BuildingId + ", slot " + Slot + ", " + (LineId == 0 ? "all" : "line " + LineId) + ")";
+                case CommandKind.SetPaused:
+                    return "SetPaused(building " + BuildingId + ", " + (Paused ? "pause" : "resume") + ")";
                 default:
                     return "StartResearch(" + ContentId + ")";
             }
@@ -251,6 +265,8 @@ namespace CityBuilder.Client.Net
                 case CommandKind.CancelDelivery:
                     return api.CancelDeliveryAsync(
                         new CancelDeliveryRequestDto(requestId, BuildingId, Slot, LineId == 0 ? (int?)null : LineId), cancellationToken);
+                case CommandKind.SetPaused:
+                    return api.SetPausedAsync(new SetPausedRequestDto(requestId, BuildingId, Paused), cancellationToken);
                 default:
                     return api.StartResearchAsync(new StartResearchRequestDto(requestId, ContentId!), cancellationToken);
             }

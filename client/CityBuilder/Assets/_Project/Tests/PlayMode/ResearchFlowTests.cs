@@ -68,7 +68,7 @@ namespace CityBuilder.Client.Tests.PlayMode
             _store = new ClientCityStore();
             string startWithScriptorium = Fixture("snapshot-city-start.json").Replace(
                 "\"buildings\":[]",
-                "\"buildings\":[{\"id\":3,\"typeId\":\"scriptorium\",\"x\":2,\"y\":0,\"level\":1,\"assignedWorkers\":0,\"maxWorkers\":0,\"phase\":\"Idle\",\"phaseStartedAt\":0,\"phaseEndsAt\":null,\"cycleLabor\":0,\"laborRemaining\":0,\"segmentStartedAt\":0,\"stallReason\":\"NoRecipe\",\"store\":{},\"storeLimits\":{},\"needs\":{},\"project\":null}]");
+                "\"buildings\":[{\"id\":3,\"typeId\":\"scriptorium\",\"x\":2,\"y\":0,\"level\":1,\"assignedWorkers\":0,\"maxWorkers\":0,\"phase\":\"Idle\",\"phaseStartedAt\":0,\"phaseEndsAt\":null,\"cycleLabor\":0,\"laborRemaining\":0,\"segmentStartedAt\":0,\"stallReason\":\"NoRecipe\",\"store\":{},\"storeLimits\":{},\"needs\":{},\"project\":null,\"paused\":false}]");
             var snapshotDto = new ApiJson().Deserialize<CitySnapshotDto>(startWithScriptorium)!;
             Assert.That(_store.Apply(SnapshotMapper.ToSnapshot(snapshotDto).Value!), Is.True);
             _display = new DisplayCity(_store, new DisplayClock(_store, 1), content);

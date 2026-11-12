@@ -96,6 +96,12 @@ namespace CityBuilder.Client.Presentation.Inspector
         /// <summary>The name of the Re-energize couriers button.</summary>
         public const string ReenergizeName = "inspector-reenergize";
 
+        /// <summary>The name of the Pause / Resume button (CR-0008 D23).</summary>
+        public const string PauseName = "inspector-pause";
+
+        /// <summary>The name of the label under it: what the pause does now (CR-0008 D24).</summary>
+        public const string PauseNoteName = "inspector-pause-note";
+
         /// <summary>The name of the Send trip button (CR-0008).</summary>
         public const string SendTripName = "inspector-send-trip";
 
@@ -179,6 +185,9 @@ namespace CityBuilder.Client.Presentation.Inspector
 
         /// <summary>Raised when the player presses Cancel all on a courier: its slot (CR-0008 D18).</summary>
         public event Action<int>? CancelAllRequested;
+
+        /// <summary>Raised when the player presses Pause or Resume: true to pause, false to resume (CR-0008 D23).</summary>
+        public event Action<bool>? PauseRequested;
 
         /// <summary>Raised when the player presses Re-energize couriers (CR-0008-T2 part E).</summary>
         public event Action? ReenergizeRequested;
@@ -338,6 +347,15 @@ namespace CityBuilder.Client.Presentation.Inspector
             }
         }
 
+        /// <summary>The player pressed Pause or Resume: what a finger on the button does, as a call. Does nothing unless the model allows it.</summary>
+        public void PressPause()
+        {
+            if (_model != null && _model.HasPause && _model.CanPause)
+            {
+                PauseRequested?.Invoke(!_model.IsPaused);
+            }
+        }
+
         /// <summary>The player pressed Re-energize couriers: what a finger on the button does, as a call. Does nothing unless the model shows it.</summary>
         public void PressReenergize()
         {
@@ -380,6 +398,7 @@ namespace CityBuilder.Client.Presentation.Inspector
             elements.SendTrip.clicked += PressSendTrip;
             elements.EditRoutes.clicked += PressEditRoutes;
             elements.Reenergize.clicked += PressReenergize;
+            elements.Pause.clicked += PressPause;
             elements.Close.clicked += PressClose;
             root.RegisterCallback<GeometryChangedEvent>(_ => UiRoot.PadBySafeArea(root, BasePadding));
             Refresh();
@@ -432,6 +451,10 @@ namespace CityBuilder.Client.Presentation.Inspector
             e.EditRoutes.SetEnabled(model.CanEditRoutes);
             SetLine(e.RoutesNote, model.RoutesNote);
             e.Reenergize.style.display = model.HasReenergize ? DisplayStyle.Flex : DisplayStyle.None;
+            e.Pause.style.display = model.HasPause ? DisplayStyle.Flex : DisplayStyle.None;
+            e.Pause.text = model.PauseText;
+            e.Pause.SetEnabled(model.CanPause);
+            SetLine(e.PauseNote, model.PauseNote);
             e.SendTrip.style.display = model.HasSendTrip ? DisplayStyle.Flex : DisplayStyle.None;
             e.SendTrip.SetEnabled(model.CanSendTrip);
             e.Stepper.style.display = model.HasStepper ? DisplayStyle.Flex : DisplayStyle.None;
@@ -527,10 +550,10 @@ namespace CityBuilder.Client.Presentation.Inspector
             /// <summary>The labels the inspector writes.</summary>
             public Label Name = null!, Level = null!, Status = null!, Time = null!, Recipe = null!, Rates = null!, Store = null!, Needs = null!,
                 Trips = null!, Couriers = null!, RoutesNote = null!, Workers = null!, Preview = null!, StepperNote = null!, UpgradeTitle = null!, UpgradeCost = null!, UpgradeTime = null!,
-                UpgradeGain = null!, UpgradeNote = null!;
+                UpgradeGain = null!, UpgradeNote = null!, PauseNote = null!;
 
             /// <summary>The buttons.</summary>
-            public Button Minus = null!, Plus = null!, Upgrade = null!, SendTrip = null!, EditRoutes = null!, Reenergize = null!, Close = null!;
+            public Button Minus = null!, Plus = null!, Upgrade = null!, SendTrip = null!, EditRoutes = null!, Reenergize = null!, Pause = null!, Close = null!;
 
             /// <summary>Finds every element in <paramref name="root"/>; null when one is missing.</summary>
             public static Elements? Find(VisualElement root)
@@ -569,6 +592,8 @@ namespace CityBuilder.Client.Presentation.Inspector
                     SendTrip = root.Q<Button>(SendTripName),
                     EditRoutes = root.Q<Button>(EditRoutesName),
                     Reenergize = root.Q<Button>(ReenergizeName),
+                    Pause = root.Q<Button>(PauseName),
+                    PauseNote = root.Q<Label>(PauseNoteName),
                     Close = root.Q<Button>(CloseName),
                 };
                 bool complete = found.Panel != null && found.Icon != null && found.Stepper != null && found.Name != null && found.Level != null
@@ -576,7 +601,7 @@ namespace CityBuilder.Client.Presentation.Inspector
                     && found.Needs != null && found.Trips != null && found.Couriers != null && found.Workers != null && found.Preview != null && found.StepperNote != null
                     && found.UpgradeTitle != null && found.UpgradeCost != null && found.UpgradeTime != null && found.UpgradeGain != null
                     && found.UpgradeNote != null && found.Minus != null && found.Plus != null && found.Upgrade != null
-                    && found.SendTrip != null && found.EditRoutes != null && found.Reenergize != null && found.Close != null
+                    && found.SendTrip != null && found.EditRoutes != null && found.Reenergize != null && found.Pause != null && found.PauseNote != null && found.Close != null
                     && found.CourierColumn != null && found.Queues != null && found.RoutesNote != null && found.WorkersBox != null && found.Scroll != null;
                 return complete ? found : null;
             }
