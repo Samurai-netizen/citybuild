@@ -12,8 +12,8 @@ the worked example. It was written in M0-01.
 - **A person:** follow the steps below by hand.
 
 ## Step 1: Read where things stand
-1. Open `core-instructions/13-progress.md` → **Resume point**. Note the state, task, branch, build log entry,
-   done steps, next step, open questions and anything marked "Known broken".
+1. Open `core-instructions/13-progress.md` → **Resume point**. Note the state, the task (with its branch
+   and build log entry), the part or step, the next step, the open questions and anything marked "Known broken".
 2. If the state is **IN PROGRESS**, open the build log entry named there and read its **last** `### Session N` section
    and the Decisions table. The decisions tell you *why* the code looks the way it does.
 3. Print the task spec: `bash scripts/dev/show-task.sh <ID>`.
@@ -49,12 +49,12 @@ Then continue the normal loop: small green steps and a checkpoint (`/checkpoint`
 **1. The resume point says:**
 ```text
 - State: IN PROGRESS
-- Task: M0-15 · Invariant properties
-- Branch: task/M0-15-invariant-properties
-- Build log entry: docs/build-log/2026/2026-10-12-01-M0-15.md
-- Done steps: 1 conservation, 2 non-negative stock
+- Task: M0-15 · Invariant properties · branch task/M0-15-invariant-properties · build log docs/build-log/2026/2026-10-12-01-M0-15.md
+- Part / step: steps 1-4 in the build log plan; done: 1 conservation, 2 non-negative stock
+- Last completed: M0-14 · Determinism properties
 - Next step: 3 storage-cap invariant (stock + reserved ≤ cap)
-- Known broken: —
+- Open questions for the owner: —
+- Known broken / do not touch: nothing.
 ```
 
 **2. Git shows unexplained changes:**

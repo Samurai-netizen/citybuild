@@ -80,7 +80,7 @@ which changes the report and ledger contract (`05`, `06`): that needs approval l
 
 **6. Content, server and client.** Use the type in `server/content/mvp-content.json` only when the content design (`23`) does, with a new
 `contentVersion`. `GET /content` carries research effects to the client (M0-28; the client reads them since M0-38): the mapper (`ContentResponseMapper`) switches on the effect type, so a new type needs a wire shape there, and an unknown type throws; the client needs the type in `ResearchEffectTypeDto` and in `ContentMapper.EffectTypeText` (`CityBuilder.Client.Net`), or its read of the answer fails and the start ends on "Not connected", and the research screen describes each
-type *(planned, M0-52)*: both get the new type.
+type (`ResearchEffectText` in `CityBuilder.Client.Presentation`, M0-52): both get the new type.
 
 ## Tests
 | What | Where (`server/tests/CityBuilder.Simulation.Tests/`) |
@@ -92,7 +92,7 @@ type *(planned, M0-52)*: both get the new type.
 | The effect counts from the completion second, mid-advance; what already runs keeps its value | `Settlement/AdvanceProductionTests` or a new class under `Settlement/` |
 | Mutations that read the new value | `Rules/` (here `PlaceBuildingTests` and `UpgradeBuildingTests`: a third builder after the node completes) |
 
-The invariant and property suites (`04` §10; *planned, M0-14 and M0-15*) must stay green. A new kind of runtime code (not just one more `case`)
+The invariant and property suites (`04` §10; `server/tests/CityBuilder.Simulation.Tests/Properties/`, M0-14 and M0-15) must stay green. A new kind of runtime code (not just one more `case`)
 gets an EditMode test on Unity's runtime (`client/CityBuilder/Assets/_Project/Tests/EditMode`).
 
 ## Docs in the same PR

@@ -44,28 +44,28 @@ A method: what it does, its units and edge cases, what it returns, what it throw
 /// </exception>
 public static long CeilDiv(long dividend, long divisor)
 ```
-A private field, a constant, an enum member: one line is enough, as long as it says what the code doesn't (`Reservations.cs` and
-`server/tests/CityBuilder.Simulation.Tests/ClientAssemblyTests.cs`).
+A private field, a constant, an enum member: one line is enough, as long as it says what the code doesn't
+(`shared/Simulation/Runtime/Settlement/SettlementReportBuilder.cs` and `server/tests/CityBuilder.Simulation.Tests/ClientAssemblyTests.cs`).
 ```csharp
-/// <summary>The reserved quantity per item, sorted by item id; reading and changing it allocates nothing.</summary>
-private readonly ItemTotals _reserved = new ItemTotals();
+/// <summary>The inputs of every cycle started during the advance, per item.</summary>
+private readonly ItemTotals _consumed = new ItemTotals();
 
 /// <summary>The only precompiled DLL a client assembly may list: Newtonsoft, and only <c>CityBuilder.Client.Net</c> uses it (<c>09</c>).</summary>
 private const string _newtonsoftDll = "Newtonsoft.Json.dll";
 ```
-A primary constructor: describe each parameter on the type (`server/src/CityBuilder.Application/Cities/SettleCity.cs`).
+A primary constructor: describe each parameter on the type (`server/src/CityBuilder.Application/Cities/SettleCity.cs`, shortened).
 ```csharp
 /// <summary>
-/// Settles a player's city to now (<c>core-instructions/04-simulation-model.md</c>, sections 1 and 2): the server clock, floored to whole
-/// seconds, gives the window from the last settled second, and the engine advances the city by it. Timers run for the whole window.
-/// A skeleton: M0-23 adds the closing
-/// zero-length advance, the ledger rows and the transaction (M0-22).
+/// Settles a player's city to now (<c>core-instructions/04-simulation-model.md</c>, sections 1, 2 and 7; <c>03</c>, request lifecycle): in
+/// the city's transaction (<see cref="ICityTransactionRunner"/>) the server clock, floored to whole seconds, gives the window from the last
+/// settled second; the engine advances the city by it, and the closing zero-length advance leaves it canonical. …
 /// </summary>
-/// <param name="cities">The stored cities.</param>
+/// <param name="transactions">Runs the settle in the transaction that holds the city's row lock.</param>
 /// <param name="content">The game content.</param>
 /// <param name="timeProvider">The server clock, the only clock that drives progress.</param>
+/// <param name="presence">When the player counts as away, for the couriers' stamina (<c>04</c> section 2).</param>
 /// <exception cref="ArgumentNullException">A parameter is null.</exception>
-public sealed class SettleCity(ICityRepository cities, IContentProvider content, TimeProvider timeProvider)
+public sealed class SettleCity(ICityTransactionRunner transactions, IContentProvider content, TimeProvider timeProvider, PresencePolicy presence)
 ```
 An override or an interface implementation that adds nothing: `/// <inheritdoc/>`. It takes the description of what it overrides or
 implements; anywhere else there is nothing to take, and the check reports it (name the source with `<inheritdoc cref="…"/>` instead).

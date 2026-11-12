@@ -65,7 +65,8 @@ then drop `city_inventory` and add the stores; `MigrationDatabaseTests` has a te
 before such a migration migrates only up to the one before it.
 
 **6. Docs.** Update the table in `06`, the module doc `docs/modules/CityBuilder.Infrastructure.md` if a table is new, and the build log's Docs
-impact table. A column that changes what the engine stores also changes the mapping (M0-20) and its round-trip tests.
+impact table. Regenerate `docs/reference/generated/db-schema.md` (`dotnet run --project tools/DocTools -- generate`); CI fails while it is
+stale. A column that changes what the engine stores also changes the mapping (M0-20) and its round-trip tests.
 
 ## Check it
 - `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`: the model tests and `MigrationTests` pass.
