@@ -15,7 +15,8 @@ paths:
 - A transaction row-locks **only the acting player's city**. Never load-for-update or write another player's
   city; cross-player effects (market, guilds; M2) go to a mailbox. Lock order: own city → shared aggregate → rows by id.
 - Time: inject `TimeProvider`; never call `DateTime.UtcNow`/`DateTimeOffset.UtcNow` in Application,
-  Domain or Infrastructure code. Tests use `FakeTimeProvider`.
+  Domain or Infrastructure code. Tests use `FakeTimeProvider`. The build enforces it: `server/BannedSymbols.txt` (RS0030) also bans
+  `DateTime.Now`, `DateTimeOffset.Now` and `Thread.Sleep` in every `src/` project.
 - Errors: return `Results.Problem` with an extension `code` from the catalogue in
   `core-instructions/05-api-contract.md`. Never expose exception messages outside Development.
 - Configuration via options classes validated at startup (`ValidateOnStart`). Signing keys come from

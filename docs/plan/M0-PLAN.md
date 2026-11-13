@@ -332,8 +332,8 @@ The AI coder updates its row at start (`In progress`) and finish (`In review`). 
 | M0-61 | 11 | DocTools: generated reference docs | O PLAN | Done |
 | M0-62 | 11 | Quality script | S | Done |
 | M0-63 | 11 | Documentation completeness pass | O | Done |
-| M0-64 | 11 | Ledger audit | O | In review |
-| M0-65 | 11 | Banned APIs and architecture tests | S | Todo |
+| M0-64 | 11 | Ledger audit | O | Done |
+| M0-65 | 11 | Banned APIs and architecture tests | S | In review |
 | M0-66 | 11 | Architecture fitness and dependency review | O | Todo |
 | M0-67 | 12 | Balance simulator | O PLAN | Todo |
 | M0-68 | 12 | Strategy runs and findings | O | Todo |

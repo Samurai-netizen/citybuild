@@ -50,7 +50,8 @@ Mark integration tests with `[Trait("Category", "Integration")]` so the fast sui
 
 ## Time
 Server code takes `TimeProvider`. Tests use `FakeTimeProvider` and advance it explicitly.
-No test may call `Thread.Sleep` or depend on the real clock.
+No test may call `Thread.Sleep` or depend on the real clock. Production code is held to it by the build: `server/BannedSymbols.txt` bans the clock
+properties and `Thread.Sleep` in every `src/` project (`14`).
 
 ## Required negative tests for every command
 Unauthenticated · malformed body · unknown ids · out-of-bounds or out-of-range values · each business-rule error code ·

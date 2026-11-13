@@ -1,0 +1,9 @@
+# Symbols that production code under server/src must not use (Microsoft.CodeAnalysis.BannedApiAnalyzers, rule RS0030).
+# Format: one documentation-comment ID per line, then ";" and the message shown with the error. Lines starting with # are comments.
+# Why: server time is the only clock, and it comes from TimeProvider so tests can fake it (core-instructions/02-principles.md, rule 3).
+P:System.DateTime.Now;Use TimeProvider.GetUtcNow(); server time is the only clock (rule 3 in core-instructions/02-principles.md)
+P:System.DateTime.UtcNow;Use TimeProvider.GetUtcNow(); server time is the only clock (rule 3 in core-instructions/02-principles.md)
+P:System.DateTimeOffset.Now;Use TimeProvider.GetUtcNow(); server time is the only clock (rule 3 in core-instructions/02-principles.md)
+P:System.DateTimeOffset.UtcNow;Use TimeProvider.GetUtcNow(); server time is the only clock (rule 3 in core-instructions/02-principles.md)
+M:System.Threading.Thread.Sleep(System.Int32);Blocks a thread; await Task.Delay(delay, timeProvider, token) instead
+M:System.Threading.Thread.Sleep(System.TimeSpan);Blocks a thread; await Task.Delay(delay, timeProvider, token) instead
