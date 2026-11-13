@@ -101,6 +101,7 @@ These cells of the dependency table in `03` are enforced by tests that read the 
 | Only the city transaction runner holds `ICityRepository`, and only `SettleCity` and `CommandPipeline` hold the runner | `CityBuilder.Application.Tests` → `ApplicationDependencyTests` |
 | Infrastructure doesn't reference Api, and references no ASP.NET Core assembly | `CityBuilder.IntegrationTests` → `InfrastructureDependencyTests` |
 | Api is the only production project whose project file uses the Web SDK or an ASP.NET Core package | `CityBuilder.Repository.Tests` → `Architecture/ProjectFileTests` |
+| Each `server/src` project's project references stay in its "May reference" cell (Api: Application and Infrastructure only) | `CityBuilder.Repository.Tests` → `Architecture/ProjectFileTests` |
 | No engine type has a public setter or mutable field (the `Content.Data` JSON holders excepted) and no field holds a float, double or decimal | `CityBuilder.Simulation.Tests` → `Architecture/EngineShapeTests` |
 | No engine source uses `float`, `double`, `decimal`, a clock, `Thread` or randomness, holds a content id as a string or compares an era with a number (other than the bounds 0 and 1) | `CityBuilder.Repository.Tests` → `Architecture/EngineSourceTests` (syntax scans of `shared/Simulation/Runtime/`) |
 
@@ -109,8 +110,7 @@ Banned APIs are not a test but a build error: every `server/src` project gets `M
 `DateTimeOffset.UtcNow` and `Thread.Sleep` (rule RS0030; use `TimeProvider`). The engine, outside `server/` and with no packages, is covered
 by the source scan above instead. `ProjectFileTests` checks that the analyzer and the list stay wired.
 
-**Not tested here:** that the Unity assemblies compile (`scripts/dev/test-unity.sh` checks it locally; Unity is not in CI) and Api
-referencing only Application and Infrastructure.
+**Not tested here:** that the Unity assemblies compile (`scripts/dev/test-unity.sh` checks it locally; Unity is not in CI).
 
 ## Request lifecycle
 One command, from tap to snapshot, as implemented (the intended steps: `03` → Request lifecycle). Reads (`GET /city`) take the same
@@ -159,4 +159,4 @@ sequenceDiagram
   request id.
 - The client never sends costs, times or totals (`02` §2); the server reads its own clock (`TimeProvider`, whole seconds).
 
-Last updated: M0-63
+Last updated: M0-66
