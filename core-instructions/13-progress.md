@@ -5,12 +5,12 @@
 > This file is loaded into every session: Milestone-table notes are task ids and PR numbers only (≤ ~100 characters per row).
 
 ## Resume point
-- **State:** IN PROGRESS   <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** M0-66 · Architecture fitness and dependency review · branch `task/M0-66-architecture-fitness-review` · log `docs/build-log/2026/2026-11-13-01-M0-66.md`
-- **Part / step:** plan steps 1 to 6; steps 1 to 5 done (packages removed, Api reference test, `03` drift fixed); step 6 next
-- **Last completed:** M0-65 · Banned APIs and architecture tests (PR #93, merged)
-- **Next step:** write `docs/ARCHITECTURE-FITNESS-REVIEW.md` from the build log, link it (`docs/README.md`, `website/sidebars.js`), `/finish-task`.
-- **Open questions for the owner:** M0-64: the two Follow-ups in its build log (refund reasons, a CLI). M0-61: the stashed Unity Editor settings (`git stash list`), apply or drop; Follow-ups in its build log. CR-0008-T3: the `22` edit (decision 27) and the Follow-ups in its build log. CR-0008-T1: 8 Dependabot alerts on `main` (build log Follow-ups). M0-58: the [MANUAL] content-change check (`client/README.md`; no automated test covers the `GameRoot` rebuild). CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-55: the [MANUAL] look at the connection states (`client/README.md`). CR-0007-T1: the [MANUAL] look at the new UI (`client/README.md`); the status label may be removed (build log follow-ups).
+- **State:** IDLE          <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** — (M0-66 is in review: the owner merges)
+- **Part / step:** —
+- **Last completed:** M0-66 · Architecture fitness and dependency review (in review; build log `docs/build-log/2026/2026-11-13-01-M0-66.md`)
+- **Next step:** the owner merges the M0-66 PR; then `/start-task M0-67` ([PLAN]: balance simulator).
+- **Open questions for the owner:** M0-66: "For the owner" in `docs/ARCHITECTURE-FITNESS-REVIEW.md` (approve URP, uGUI, IDE packages; npm alerts; Unity in CI). M0-64: the two Follow-ups in its build log (refund reasons, a CLI). M0-61: the stashed Unity Editor settings (`git stash list`), apply or drop; Follow-ups in its build log. CR-0008-T3: the `22` edit (decision 27) and the Follow-ups in its build log. CR-0008-T1: 8 Dependabot alerts on `main` (build log Follow-ups). M0-58: the [MANUAL] content-change check (`client/README.md`; no automated test covers the `GameRoot` rebuild). CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-55: the [MANUAL] look at the connection states (`client/README.md`). CR-0007-T1: the [MANUAL] look at the new UI (`client/README.md`); the status label may be removed (build log follow-ups).
 - **Known broken / do not touch:** nothing.
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
 - **Verify with:** `bash scripts/dev/check-docs.sh --base origin/main` (as CI) · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
@@ -49,7 +49,6 @@ Not yet: BalanceSim (M0-67).
 
 ## Open issues / tech debt
 - Audit item A18 (Unity 6.6 installed, the stack pins 6.3) is closed: the project is 6000.3.25f1 (M0-04).
-- Unity manifest pins below the editor's minimum or overridden in the lock (URP, test framework, navigation, timeline, ...): M0-66 audit.
 - Other kit wording items with their owner tasks: M0-01 build log → Follow-ups.
 
 ## Deviations from the plan
