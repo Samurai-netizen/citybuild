@@ -51,6 +51,7 @@ const handbook = [
   chapter('Architecture', [
     spec('03'),
     page('docs/architecture/overview.md', 'Overview (as built)'),
+    page('docs/ARCHITECTURE-FITNESS-REVIEW.md', 'Architecture fitness review'),
     spec('04'),
     page('shared/README.md', 'shared/ folder'),
     folder('Modules', 'docs/modules'),
