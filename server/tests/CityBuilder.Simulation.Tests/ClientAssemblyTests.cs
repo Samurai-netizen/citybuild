@@ -225,6 +225,19 @@ public sealed class ClientAssemblyTests
         Assert.Null(ReadManifestDependencies()[package]);
     }
 
+    /// <summary>The four template packages that M0-66's dependency audit removed as unused stay out of the manifest.</summary>
+    [Theory]
+    [InlineData("com.unity.ai.navigation")]
+    [InlineData("com.unity.collab-proxy")]
+    [InlineData("com.unity.timeline")]
+    [InlineData("com.unity.visualscripting")]
+    public void Manifest_RemovedTemplatePackages_AreAbsent(string package)
+    {
+        // The Universal 3D template brought them; no client code, scene or asset used them (docs/ARCHITECTURE-FITNESS-REVIEW.md, dependency
+        // table). They are not on the approved list in core-instructions/14, so bringing one back needs the owner's yes (G-Dependency).
+        Assert.Null(ReadManifestDependencies()[package]);
+    }
+
     // ----- helpers -----
 
     /// <summary>Reads the asmdef of the assembly in a folder of <see cref="_allAssemblies"/>.</summary>
