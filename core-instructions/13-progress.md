@@ -7,7 +7,7 @@
 ## Resume point
 - **State:** IN PROGRESS          <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M0-67 · Balance simulator · branch `task/M0-67-balance-simulator` · build log `docs/build-log/2026/2026-11-15-01-M0-67.md`
-- **Part / step:** steps 1–5 done (tool, strategies, output, 37 tests, docs); plan approved by the owner
+- **Part / step:** step 6 (finish): self-review fix done (decision 15); quality script and PR remaining
 - **Last completed:** M0-66 · Architecture fitness and dependency review (PR #94, merged)
 - **Next step:** step 6, `/finish-task` (handbook build, full checks, self-review, PR).
 - **Open questions for the owner:** M0-66: "For the owner" in `docs/ARCHITECTURE-FITNESS-REVIEW.md` (approve URP, uGUI, IDE packages; npm alerts; Unity in CI). M0-64: the two Follow-ups in its build log (refund reasons, a CLI). M0-61: the stashed Unity Editor settings (`git stash list`), apply or drop; Follow-ups in its build log. CR-0008-T3: the `22` edit (decision 27) and the Follow-ups in its build log. CR-0008-T1: 8 Dependabot alerts on `main` (build log Follow-ups). M0-58: the [MANUAL] content-change check (`client/README.md`; no automated test covers the `GameRoot` rebuild). CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-55: the [MANUAL] look at the connection states (`client/README.md`). CR-0007-T1: the [MANUAL] look at the new UI (`client/README.md`); the status label may be removed (build log follow-ups).

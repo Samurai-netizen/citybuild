@@ -93,7 +93,7 @@ public static class SummaryMarkdown
         Line(text);
         Table(text, ["Logistics", "Value"],
         [
-            ["Courier seconds walked while absent", Format.Number(recorder.CourierSeconds)],
+            ["Courier stamina spent (seconds walked while absent, all couriers)", Format.Number(recorder.StaminaSpent)],
             ["Times a courier ran out of stamina", Format.Number(recorder.TiredCouriers)],
             ["Couriers at the end", Format.Number(result.City.Couriers.Count)],
             ["Routes at the end", Format.Number(result.City.Routes.Count)],

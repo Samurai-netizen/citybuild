@@ -4,8 +4,9 @@ using CityBuilder.Simulation.State;
 namespace CityBuilder.BalanceSim.Strategies;
 
 /// <summary>
-/// Balanced: research and growth together. Research: every node, cheapest first. Builds: the basic city, then new chain buildings and upgrades
-/// in turn (after a placement it upgrades if it can); while the research slot is free it keeps back the coins of the cheapest node.
+/// Balanced: research and growth together. Research: every node, cheapest first. Builds: the basic city, a station upgrade when the routes
+/// are full, then new chain buildings and upgrades in turn (after a placement it upgrades if it can); while the research slot is free it
+/// keeps back the coins of the cheapest node.
 /// </summary>
 public sealed class BalancedStrategy : Strategy
 {

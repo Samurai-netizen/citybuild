@@ -17,8 +17,8 @@ public enum StrategyKind
 
 /// <summary>
 /// A simple, documented player (core-instructions/24-economy-design.md → Balance simulator). On every decision step of a check-in, in this
-/// order: research (<see cref="ChooseResearch"/>, above the basic reserve of <see cref="Construction.BasicReserve"/>), builds and upgrades (<see cref="Build"/>), worker assignment (<see cref="Workforce"/>,
-/// shared) and logistics (<see cref="Logistics"/>, shared). It uses only the engine's rules through <see cref="CityActions"/>.
+/// order: research (<see cref="ChooseResearch"/>, above the basic reserve of <see cref="Construction.BasicReserve"/>), builds and upgrades
+/// (<see cref="Build"/>), worker assignment (<see cref="Workforce"/>, shared) and logistics (<see cref="Logistics"/>, shared). It uses only the engine's rules through <see cref="CityActions"/>.
 /// </summary>
 public abstract class Strategy
 {

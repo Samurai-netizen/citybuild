@@ -89,8 +89,11 @@ public sealed class RunRecorder
     /// <summary>The second the first coins arrived, at the run's step resolution; null before.</summary>
     public long? FirstCoinsAt { get; private set; }
 
-    /// <summary>The courier seconds of every settlement (<see cref="SettlementReport.CourierSeconds"/>).</summary>
-    public long CourierSeconds { get; private set; }
+    /// <summary>
+    /// The stamina every courier spent, summed: the seconds couriers walked while the player was absent (04 §2). Measured per advance as each
+    /// courier's stamina drop, because <see cref="SettlementReport.CourierSeconds"/> is only the most one courier spent.
+    /// </summary>
+    public long StaminaSpent { get; private set; }
 
     /// <summary>How many times a courier ran out of stamina.</summary>
     public int TiredCouriers { get; private set; }
@@ -187,8 +190,17 @@ public sealed class RunRecorder
             }
         }
 
+        var stamina = city.Couriers.ToDictionary(courier => (courier.StationId, courier.Slot), courier => courier.Stamina);
         SettlementReport report = Simulator.Advance(city, _content, elapsedSeconds, absentFrom);
         Settled(report, city.Clock);
+        foreach (Courier courier in city.Couriers)
+        {
+            if (stamina.TryGetValue((courier.StationId, courier.Slot), out long before) && before > courier.Stamina)
+            {
+                StaminaSpent = checked(StaminaSpent + (before - courier.Stamina));
+            }
+        }
+
         foreach (ResearchId done in report.CompletedResearch)
         {
             _researchDone.Add((done, done == running && researchEnds.HasValue ? researchEnds.Value : city.Clock));
@@ -292,7 +304,6 @@ public sealed class RunRecorder
             Add(_moved, pair.Key, pair.Value);
         }
 
-        CourierSeconds = checked(CourierSeconds + report.CourierSeconds);
         TiredCouriers += report.TiredCouriers.Count;
     }
 
