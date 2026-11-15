@@ -1,9 +1,12 @@
+using System.Xml.Linq;
+
 namespace CityBuilder.Repository.Tests.Architecture;
 
 /// <summary>
-/// Guards two rules about the project files themselves: <c>CityBuilder.Api</c> is the only production project that uses ASP.NET Core
-/// hosting (<c>core-instructions/03-architecture.md</c>, dependency table), and every production project under <c>server/src</c> is checked
-/// for banned APIs (<c>core-instructions/14-coding-standards.md</c>). The assembly-reference tests see only what the code uses; these read
+/// Guards three rules about the project files themselves: <c>CityBuilder.Api</c> is the only production project that uses ASP.NET Core
+/// hosting (<c>core-instructions/03-architecture.md</c>, dependency table), each <c>server/src</c> project references only the projects that
+/// table allows (M0-66), and every production project under <c>server/src</c> is checked for banned APIs
+/// (<c>core-instructions/14-coding-standards.md</c>). The assembly-reference tests see only what the code uses; these read
 /// what the project files ask for.
 /// </summary>
 public sealed class ProjectFileTests
@@ -13,6 +16,18 @@ public sealed class ProjectFileTests
 
     /// <summary>The folders whose project files are production code, relative to the repository root.</summary>
     private static readonly string[] _productionFolders = ["server/src", "shared", "tools"];
+
+    /// <summary>
+    /// The "May reference" column of the dependency table in <c>core-instructions/03-architecture.md</c>, for the projects under
+    /// <c>server/src</c>: each project's name and the project names it may reference (by file name, without <c>.csproj</c>).
+    /// </summary>
+    public static readonly TheoryData<string, string[]> AllowedServerReferences = new()
+    {
+        { "CityBuilder.Domain", ["CityBuilder.Simulation"] },
+        { "CityBuilder.Application", ["CityBuilder.Domain", "CityBuilder.Simulation"] },
+        { "CityBuilder.Infrastructure", ["CityBuilder.Application", "CityBuilder.Domain", "CityBuilder.Simulation"] },
+        { "CityBuilder.Api", ["CityBuilder.Application", "CityBuilder.Infrastructure"] },
+    };
 
     /// <summary>The symbols the task M0-65 bans in production code, as documentation-comment IDs.</summary>
     private static readonly string[] _bannedSymbols =
@@ -48,6 +63,34 @@ public sealed class ProjectFileTests
         Assert.True(UsesAspNetCore(File.ReadAllText(Path.Combine(root, _apiProject))));
     }
 
+    /// <summary>A <c>server/src</c> project's project references are all in its "May reference" cell of the dependency table.</summary>
+    /// <param name="project">The project's name.</param>
+    /// <param name="allowed">The project names it may reference.</param>
+    [Theory]
+    [MemberData(nameof(AllowedServerReferences))]
+    public void ServerProjectReferences_StayInsideTheDependencyTable(string project, string[] allowed)
+    {
+        string[] references = ProjectReferences(Path.Combine(RepositoryPaths.Root, "server/src", project, project + ".csproj"));
+
+        string[] extra = references.Except(allowed, StringComparer.Ordinal).ToArray();
+        Assert.True(extra.Length == 0, $"{project} references {string.Join(", ", extra)}, which core-instructions/03 does not allow.");
+    }
+
+    /// <summary>The table above names every <c>server/src</c> project, and the reader sees real references (the Api's two), so the check can't pass on nothing.</summary>
+    [Fact]
+    public void AllowedServerReferences_CoverEverySrcProject()
+    {
+        string root = RepositoryPaths.Root;
+        string[] projects = Directory.GetFiles(Path.Combine(root, "server/src"), "*.csproj", SearchOption.AllDirectories)
+            .Select(path => Path.GetFileNameWithoutExtension(path))
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+        string[] named = AllowedServerReferences.Select(row => row.Data.Item1).Order(StringComparer.Ordinal).ToArray();
+
+        Assert.Equal(named, projects);
+        Assert.Equal(["CityBuilder.Application", "CityBuilder.Infrastructure"], ProjectReferences(Path.Combine(root, _apiProject)));
+    }
+
     /// <summary><c>server/Directory.Build.props</c> gives every <c>src/</c> project the banned-API analyzer and the symbol list.</summary>
     [Fact]
     public void DirectoryBuildProps_GivesEverySrcProjectTheBannedApiAnalyzer()
@@ -81,6 +124,14 @@ public sealed class ProjectFileTests
             .Where(path => !path.Contains("/bin/", StringComparison.Ordinal) && !path.Contains("/obj/", StringComparison.Ordinal))
             .Where(path => !Path.GetFileNameWithoutExtension(path).EndsWith(".Tests", StringComparison.Ordinal))
             .Order(StringComparer.Ordinal);
+
+    /// <summary>The project names a project file references with <c>ProjectReference</c>, by file name without <c>.csproj</c>, in ordinal order.</summary>
+    private static string[] ProjectReferences(string projectFile) =>
+        XDocument.Load(projectFile)
+            .Descendants("ProjectReference")
+            .Select(reference => Path.GetFileNameWithoutExtension(((string?)reference.Attribute("Include") ?? string.Empty).Replace('\\', '/')))
+            .Order(StringComparer.Ordinal)
+            .ToArray();
 
     /// <summary>True when the project text uses the Web SDK, the ASP.NET Core shared framework or any <c>Microsoft.AspNetCore</c> package.</summary>
     private static bool UsesAspNetCore(string projectText) =>

@@ -44,10 +44,11 @@ and every 2 minutes in the foreground. Every command response carries the full a
 | Unity `CityBuilder.Client.*` | Simulation package; Newtonsoft (`Client.Net` only); Input System (`Client.Presentation` only); the test runner (test assemblies only). `Client.Editor` runs only in the Editor and references none of them. Per assembly: `09` | server projects |
 
 - **Simulation:** content definitions (items, buildings, recipes, research, eras), city state, the `Simulator`, and pure mutation rules.
-- **Domain:** server-only concepts — player, ledger entry, command receipt, settlement record (later: market order, mailbox delivery).
-- **Application:** use cases (`SettleCity`, `PlaceBuilding`, `UpgradeBuilding`, `AssignWorkers`, `StartResearch`),
-  ports (`ICityRepository`, `IPlayerRepository`, `IUnitOfWork`, `IContentProvider`), the city transaction (`ICityTransactionRunner`, which
-  alone uses `ICityRepository`), and the command pipeline.
+- **Domain:** server-only concepts — player, ledger entry, command receipt (later: market order, mailbox delivery).
+- **Application:** use cases (`SettleCity`, `DevLogin`, one command per player action in `Commands/`, the `LedgerAuditor`), the settlement
+  record (`Cities/Settlement`), ports (`ICityRepository`, `INewCityRepository`, `IPlayerRepository`, `ICommandReceiptRepository`, `IUnitOfWork`,
+  `IContentProvider`, `ILedgerAuditSource`), the city transaction (`ICityTransactionRunner`, which alone uses `ICityRepository`), and the
+  command pipeline.
 - Architecture tests enforce this table by inspecting assembly references. Which cells are tested, and where, is listed in
   `docs/architecture/overview.md`.
 

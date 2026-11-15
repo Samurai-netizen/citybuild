@@ -11,6 +11,7 @@ in chapters, with every backticked path and spec number as a link (`website/READ
 | see where the project stands right now | `core-instructions/13-progress.md` (resume point), `docs/plan/M0-PLAN.md` (task board) |
 | set up and run the project | [getting-started.md](getting-started.md) |
 | understand the architecture as built | [architecture/overview.md](architecture/overview.md), [modules/](modules/README.md) |
+| see how well the architecture holds up, and every package with why it exists | [ARCHITECTURE-FITNESS-REVIEW.md](ARCHITECTURE-FITNESS-REVIEW.md) (M0-66) |
 | understand the intended architecture and rules | `core-instructions/README.md` (index of all specs) |
 | know why something is the way it is | [build-log/](build-log/README.md) (every decision), [adr/](adr/README.md), `core-instructions/12-decisions.md` |
 | propose a new feature | [changes/](changes/README.md) (change requests) |
