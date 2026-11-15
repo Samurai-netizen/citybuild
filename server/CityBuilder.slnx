@@ -18,6 +18,8 @@
     <Project Path="tests/CityBuilder.Simulation.Tests/CityBuilder.Simulation.Tests.csproj" />
   </Folder>
   <Folder Name="/tools/">
+    <Project Path="../tools/BalanceSim.Tests/BalanceSim.Tests.csproj" />
+    <Project Path="../tools/BalanceSim/BalanceSim.csproj" />
     <Project Path="../tools/DocTools.Tests/DocTools.Tests.csproj" />
     <Project Path="../tools/DocTools/DocTools.csproj" />
   </Folder>
