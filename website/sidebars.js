@@ -93,6 +93,7 @@ const handbook = [
   chapter('Plan and scope', [
     spec('10'),
     page('docs/plan/M0-PLAN.md', 'M0 plan and task board'),
+    page('docs/plan/CR-0009-T1-PLAN.md', 'CR-0009-T1 implementation plan (player metrics)'),
     spec('30'),
     folder('Change requests', 'docs/changes'),
   ]),

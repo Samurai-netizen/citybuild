@@ -24,4 +24,4 @@ as a CR. That's how the owner keeps control over what gets built (`core-instruct
 | [CR-0006](CR-0006-server-panel-goods.md) | Server panel: add or remove goods on the test account | Feature | Approved |
 | [CR-0007](CR-0007-ui-visual-pass.md) | UI visual pass: smaller, tidy, consistent | Design change | Approved |
 | [CR-0008](CR-0008-logistics-rework.md) | Logistics rework: goods stored in buildings, couriers, routes and roads | Design change | In progress |
-| [CR-0009](CR-0009-player-metrics.md) | Player metrics: what players did, how many reached each checkpoint, where they stop | Feature | In progress |
+| [CR-0009](CR-0009-player-metrics.md) | Player metrics: what players did, how many reached each checkpoint, where they stop | Feature | Approved |
