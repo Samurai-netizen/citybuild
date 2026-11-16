@@ -16,6 +16,7 @@ in chapters, with every backticked path and spec number as a link (`website/READ
 | know why something is the way it is | [build-log/](build-log/README.md) (every decision), [adr/](adr/README.md), `core-instructions/12-decisions.md` |
 | propose a new feature | [changes/](changes/README.md) (change requests) |
 | make a common change | `core-instructions/19-change-recipes.md`, [how-to/](how-to/README.md) |
+| check what a content change does to the economy | [how-to/run-balance-simulator.md](how-to/run-balance-simulator.md), [modules/BalanceSim.md](modules/BalanceSim.md) |
 | look up API, errors, content, config, schema | [reference/](reference/README.md) |
 | find a request in the logs, or what a log line means | [api/](api/README.md) |
 | try the API by hand, request by request | `docs/api/smoke.http` |

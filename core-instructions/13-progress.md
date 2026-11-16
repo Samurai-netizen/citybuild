@@ -17,7 +17,7 @@
   `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 69 / 88
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 70 / 88
 
 | Area | State | Notes |
 |---|---|---|
@@ -35,7 +35,7 @@
 | Resilience (limits, retries, logging) | in progress | M0-34, M0-35, M0-57 to M0-59 (PR #46, #47, #81, #82, #84) |
 | Docs automation (DocTools) + docs completeness | in progress | CR-0002, CR-0003 (PR #27, #29); M0-61 (PR #89); M0-63 (PR #91) |
 | Logistics (CR-0008) | done | T1 to T3 (PR #86, #87, #88) |
-| Balance simulator | not started | |
+| Balance simulator | in progress | M0-67 (in review) |
 | E2E / security / concurrency suites | in progress | M0-36, M0-56, M0-60 (PR #48, #80, #85); M0-64, M0-65 (PR #92, #93) |
 | Dev build + M0 close-out | not started | |
 
@@ -45,7 +45,7 @@ States: `not started` · `in progress` · `done` · `blocked (reason)`
 
 ## Commands
 The command list is in `AGENTS.md` → Commands (marks `[Mx-NN]` = not real yet); the "since" task for each is in `docs/getting-started.md` → Run.
-Not yet: BalanceSim (M0-67).
+All commands exist.
 
 ## Open issues / tech debt
 - Audit item A18 (Unity 6.6 installed, the stack pins 6.3) is closed: the project is 6000.3.25f1 (M0-04).

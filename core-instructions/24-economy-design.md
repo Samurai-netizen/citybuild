@@ -63,9 +63,10 @@ So a check-in a few times a day keeps a city running, and a weekend away costs o
 - Coins spent per category (build, upgrade, research), which shows where the economy pulls.
 
 ## Balance simulator (`tools/BalanceSim`, Day 12)
-A headless console app that reuses `CityBuilder.Simulation` and the real content JSON.
-- Strategies decide builds, upgrades, **worker assignment**, **research order** and **logistics** (manual trips, courier stations, routes,
-  roads), e.g. GreedyCoins, ResearchRush, Balanced.
+A headless console app that reuses `CityBuilder.Simulation` and the real content JSON (built in M0-67: `docs/modules/BalanceSim.md`, how to
+run it: `docs/how-to/run-balance-simulator.md`).
+- Strategies decide builds, upgrades, **worker assignment**, **research order** and **logistics** (manual trips, courier stations, routes;
+  roads *(planned)*), e.g. GreedyCoins, ResearchRush, Balanced.
 - Session patterns: e.g. "08:00, 13:00, 20:00 daily", "every 4 h", "once a day".
 - Output: a markdown summary and a CSV timeline of stores and city totals, buildings, workers, couriers, research, stalls and the metrics above.
 - Run it before every content change. A change that breaks goal 1 or 3 needs a recorded reason.

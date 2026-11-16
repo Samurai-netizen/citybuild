@@ -27,6 +27,8 @@ flowchart LR
     n_CityBuilder_Simulation["CityBuilder.Simulation"]
   end
   subgraph n_tools["tools"]
+    n_BalanceSim_Tests["BalanceSim.Tests"]
+    n_BalanceSim["BalanceSim"]
     n_DocTools_Tests["DocTools.Tests"]
     n_DocTools["DocTools"]
   end
@@ -41,6 +43,9 @@ flowchart LR
   n_CityBuilder_Domain_Tests --> n_CityBuilder_Domain
   n_CityBuilder_IntegrationTests --> n_CityBuilder_Api
   n_CityBuilder_Simulation_Tests --> n_CityBuilder_Simulation
+  n_BalanceSim_Tests --> n_BalanceSim
+  n_BalanceSim --> n_CityBuilder_Infrastructure
+  n_BalanceSim --> n_CityBuilder_Simulation
   n_DocTools_Tests --> n_DocTools
   n_DocTools --> n_CityBuilder_Api
   n_DocTools --> n_CityBuilder_Infrastructure
@@ -59,6 +64,8 @@ flowchart LR
 | `CityBuilder.Repository.Tests` | `server/tests/CityBuilder.Repository.Tests/CityBuilder.Repository.Tests.csproj` | tests | — | `Microsoft.CodeAnalysis.CSharp`, `Microsoft.NET.Test.Sdk`, `xunit.runner.visualstudio`, `xunit.v3.mtp-off` |
 | `CityBuilder.Simulation.Tests` | `server/tests/CityBuilder.Simulation.Tests/CityBuilder.Simulation.Tests.csproj` | tests | `CityBuilder.Simulation` | `Microsoft.NET.Test.Sdk`, `xunit.runner.visualstudio`, `xunit.v3.mtp-off` |
 | `CityBuilder.Simulation` | `shared/Simulation.Build/CityBuilder.Simulation.csproj` | library (netstandard2.1) | — | — |
+| `BalanceSim.Tests` | `tools/BalanceSim.Tests/BalanceSim.Tests.csproj` | tests | `BalanceSim` | `Microsoft.NET.Test.Sdk`, `xunit.runner.visualstudio`, `xunit.v3.mtp-off` |
+| `BalanceSim` | `tools/BalanceSim/BalanceSim.csproj` | console | `CityBuilder.Infrastructure`, `CityBuilder.Simulation` | — |
 | `DocTools.Tests` | `tools/DocTools.Tests/DocTools.Tests.csproj` | tests | `DocTools` | `Microsoft.NET.Test.Sdk`, `xunit.runner.visualstudio`, `xunit.v3.mtp-off` |
 | `DocTools` | `tools/DocTools/DocTools.csproj` | console | `CityBuilder.Api`, `CityBuilder.Infrastructure`, `CityBuilder.Simulation` | — |
 

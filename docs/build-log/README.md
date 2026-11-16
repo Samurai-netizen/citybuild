@@ -12,6 +12,7 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 ## Entries
 <!-- entries: newest first -->
 - [BL-20261116-01 · CR-0009-T1 · Player metrics: recording](2026/2026-11-16-01-CR-0009-T1.md) — Partial
+- [BL-20261115-01 · M0-67 · Balance simulator](2026/2026-11-15-01-M0-67.md) — Done
 - [BL-20261113-01 · M0-66 · Architecture fitness and dependency review](2026/2026-11-13-01-M0-66.md) — Done
 - [BL-20261112-05 · M0-65 · Banned APIs and architecture tests](2026/2026-11-12-05-M0-65.md) — Done
 - [BL-20261112-04 · M0-64 · Ledger audit](2026/2026-11-12-04-M0-64.md) — Done
