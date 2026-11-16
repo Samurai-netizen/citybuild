@@ -19,7 +19,9 @@
 - **Client** (`client/CityBuilder/`, Unity 6000.3.25f1, URP): logs in as a dev player, loads the content through the engine's validating
   factory, fetches the city, and from then on shows a local prediction made with the engine, snapping to every server snapshot (`09`).
 - **Tools:** `tools/DocTools` writes `docs/reference/generated/` from the code and content ([module](../modules/DocTools.md)); it
-  references Api, Infrastructure and Simulation and is left out of the diagram.
+  references Api, Infrastructure and Simulation. `tools/BalanceSim` plays the content on the engine with simple strategies and reports
+  the economy ([module](../modules/BalanceSim.md)); it references Simulation and Infrastructure (the content loader). Both are left out
+  of the diagram.
 
 ```mermaid
 flowchart LR
@@ -71,7 +73,8 @@ also builds the engine project and `tools/`. Doc comments are required on every 
 | `CityBuilder.Infrastructure` | `server/src/CityBuilder.Infrastructure/` | persistence (`CityBuilderDbContext`, row classes, migrations, mapping, repositories, unit of work) and the content loader | [module](../modules/CityBuilder.Infrastructure.md) |
 | `CityBuilder.Simulation` | `shared/Simulation/` (Unity package) and `shared/Simulation.Build/` (.NET project) | the deterministic engine | [module](../modules/CityBuilder.Simulation.md) |
 | `DocTools` | `tools/DocTools/` | the generated reference pages (`generate`, `check`) | [module](../modules/DocTools.md) |
-| Test projects | `server/tests/`, `tools/DocTools.Tests/` | one per layer, plus `CityBuilder.IntegrationTests` (in-memory host and PostgreSQL in Docker) and `CityBuilder.Repository.Tests` (the documentation check) | each module doc → Tests; `docs/testing/README.md` |
+| `BalanceSim` | `tools/BalanceSim/` | the balance simulator: strategies × check-in patterns, a summary and a timeline per run | [module](../modules/BalanceSim.md) |
+| Test projects | `server/tests/`, `tools/DocTools.Tests/`, `tools/BalanceSim.Tests/` | one per layer, plus `CityBuilder.IntegrationTests` (in-memory host and PostgreSQL in Docker) and `CityBuilder.Repository.Tests` (the documentation check) | each module doc → Tests; `docs/testing/README.md` |
 
 ### Unity client
 The client uses the engine as the local package `com.citybuilder.simulation` (`Packages/manifest.json`). Assemblies live under

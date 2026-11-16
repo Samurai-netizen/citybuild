@@ -81,7 +81,7 @@ bash scripts/dev/test-unity.sh                                         # needs U
 blender -b --factory-startup --python art/blender/build_all.py         # rebuild the art; writes the FBX files into the Unity project (art/README.md)
 bash scripts/dev/quality.sh                                            # everything CI runs, locally (skips are named)
 dotnet run --project tools/DocTools -- generate                        # regenerate docs/reference/generated (`check`: as CI)
-dotnet run --project tools/BalanceSim -- --help                        # [M0-67]
+dotnet run --project tools/BalanceSim -- --help                        # balance simulator; no options = all strategies × patterns, 72 h
 ```
 
 ## Repository map

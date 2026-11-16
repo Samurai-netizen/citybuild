@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The balance simulator (docs/modules/BalanceSim.md; core-instructions/24-economy-design.md → Balance simulator): a headless console app
+       that plays the real content with simple strategies and check-in patterns on the shared engine, and writes a markdown summary and a CSV
+       timeline per run. It references the engine to play and the Infrastructure project only for its strict content loader
+       (ContentFileLoader). Never deployed. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>CityBuilder.BalanceSim</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\server\src\CityBuilder.Infrastructure\CityBuilder.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\shared\Simulation.Build\CityBuilder.Simulation.csproj" />
+  </ItemGroup>
+
+</Project>
