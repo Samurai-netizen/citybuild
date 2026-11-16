@@ -151,8 +151,8 @@ namespace CityBuilder.Simulation.Content
         RecipeWorse,
 
         /// <summary>
-        /// An upgrade costs less of the currency, or fewer goods in all, than the step below it (the build cost for level 2, the upgrade to the
-        /// level below otherwise; rule 15).
+        /// An upgrade costs less of the currency, or fewer goods in all, than the upgrade to the level below it (from level 3; the build cost is
+        /// not an upgrade; rule 15).
         /// </summary>
         UpgradeCostDecrease,
 

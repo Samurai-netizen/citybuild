@@ -105,6 +105,16 @@
       "effects": [
         { "type": "storageCapBonus", "item": "ore", "amount": 1 }
       ]
+    },
+    {
+      "id": "smithing",
+      "name": "Smithing",
+      "era": 1,
+      "cost": { "coins": 100, "ingots": 1 },
+      "durationSeconds": 3600,
+      "effects": [
+        { "type": "storageCapBonus", "item": "ingots", "amount": 1 }
+      ]
     }
   ]
 }

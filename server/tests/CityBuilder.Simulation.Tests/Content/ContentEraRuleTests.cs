@@ -53,11 +53,32 @@ public sealed class ContentEraRuleTests
             (ContentErrorCode.ItemInLaterEra, $"buildings[{building}].levels[1].recipe.{side}.iron"));
     }
 
-    /// <summary>An era-2 research node may cost the era-2 item.</summary>
+    /// <summary>An era-2 research node may cost the era-2 item (made by an era-2 forge, so the graph rules can reach it).</summary>
     [Fact]
     public void Create_ItemUsedInItsOwnEra_IsAccepted()
     {
-        ContentAssert.Valid(WithIron(data => Research(data, "warehouses").Cost!["iron"] = 1));
+        ContentAssert.Valid(WithIron(data =>
+        {
+            Research(data, "warehouses").Cost!["iron"] = 1;
+            data.Buildings!.Add(new BuildingData
+            {
+                Id = "forge",
+                Name = "Forge",
+                Kind = "producer",
+                Era = 2,
+                AvailableAtStart = true,
+                Cost = new() { ["gold"] = 10 },
+                BuildSeconds = 5,
+                Levels =
+                [
+                    new BuildingLevelData
+                    {
+                        Level = 1, MaxWorkers = 1, Recipe = new RecipeData { Outputs = new() { ["iron"] = 1 }, Labor = 40 },
+                        Storage = new() { ["iron"] = 10 },
+                    },
+                ],
+            });
+        }));
     }
 
     /// <summary>A later era may keep using earlier goods: warehouses (era 2) costs gold (era 1).</summary>

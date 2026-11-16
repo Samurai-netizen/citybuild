@@ -6,7 +6,7 @@ namespace CityBuilder.Simulation.Tests.Content;
 
 /// <summary>
 /// The graph rules (M0-70, <c>04</c> §14 rules 14 to 17): every good that is used is made by some recipe (the currency may come from the
-/// starting purse instead); every good is used somewhere; a level's recipe is never worse than the one below and upgrade costs never fall;
+/// starting purse instead); every good is used somewhere; a level's recipe is never worse than the one below and, from level 3, an upgrade never costs less than the one below;
 /// and, playing each era from the start, every building type, level and research node of the era can be reached. They run only when no
 /// other rule found an error. In the fixture, wood comes from the lumber camp, boards from the workshop (locked behind carpentry), the
 /// hut provides the workers, the school runs the research; boards pay for better_saws and the post's level 2.
@@ -103,13 +103,23 @@ public sealed class ContentGraphRuleTests
         ContentAssert.Valid(data);
     }
 
-    /// <summary>An upgrade that costs less of the currency than the build gives <see cref="ContentErrorCode.UpgradeCostDecrease"/>.</summary>
+    /// <summary>An upgrade that costs less of the currency than the upgrade below gives <see cref="ContentErrorCode.UpgradeCostDecrease"/>.</summary>
     [Fact]
-    public void Create_UpgradeCheaperThanTheBuild_ReportsUpgradeCostDecrease()
+    public void Create_UpgradeWithLessCurrencyThanTheOneBelow_ReportsUpgradeCostDecrease()
+    {
+        GameContentData data = ValidWith(data => Building(data, "hut").Levels!.Add(
+            new BuildingLevelData { Level = 3, WorkersProvided = 6, UpgradeCost = new() { ["gold"] = 15, ["wood"] = 5 }, UpgradeSeconds = 9 }));
+
+        ContentAssert.SingleError(data, ContentErrorCode.UpgradeCostDecrease, "buildings[hut].levels[3].upgradeCost");
+    }
+
+    /// <summary>The build cost is not an upgrade: level 2 may cost less than the build (here 5 gold against 10).</summary>
+    [Fact]
+    public void Create_LevelTwoCheaperThanTheBuild_IsAccepted()
     {
         GameContentData data = ValidWith(data => Level(data, "hut", 2).UpgradeCost!["gold"] = 5);
 
-        ContentAssert.SingleError(data, ContentErrorCode.UpgradeCostDecrease, "buildings[hut].levels[2].upgradeCost");
+        ContentAssert.Valid(data);
     }
 
     /// <summary>An upgrade with fewer goods than the upgrade below gives <see cref="ContentErrorCode.UpgradeCostDecrease"/>.</summary>
@@ -118,7 +128,12 @@ public sealed class ContentGraphRuleTests
     {
         GameContentData data = ValidWith(data => Building(data, "post").Levels!.Add(new BuildingLevelData
         {
-            Level = 3, MaxWorkers = 3, CarryLimit = 8, StaminaSeconds = 1200, UpgradeCost = new() { ["gold"] = 40, ["boards"] = 2 }, UpgradeSeconds = 12,
+            Level = 3,
+            MaxWorkers = 3,
+            CarryLimit = 8,
+            StaminaSeconds = 1200,
+            UpgradeCost = new() { ["gold"] = 40, ["boards"] = 2 },
+            UpgradeSeconds = 12,
         }));
 
         ContentAssert.SingleError(data, ContentErrorCode.UpgradeCostDecrease, "buildings[post].levels[3].upgradeCost");
@@ -214,7 +229,10 @@ public sealed class ContentGraphRuleTests
     /// <summary>A level 2 of the workshop with the given recipe; everything else stays at least level 1's.</summary>
     private static BuildingLevelData WorkshopLevel2(long inputWood, long outputBoards, long labor) => new()
     {
-        Level = 2, MaxWorkers = 2, UpgradeCost = new() { ["gold"] = 50, ["wood"] = 10 }, UpgradeSeconds = 10,
+        Level = 2,
+        MaxWorkers = 2,
+        UpgradeCost = new() { ["gold"] = 50, ["wood"] = 10 },
+        UpgradeSeconds = 10,
         Recipe = new RecipeData { Inputs = new() { ["wood"] = inputWood }, Outputs = new() { ["boards"] = outputBoards }, Labor = labor },
         Storage = new() { ["wood"] = 20, ["boards"] = 80 },
     };

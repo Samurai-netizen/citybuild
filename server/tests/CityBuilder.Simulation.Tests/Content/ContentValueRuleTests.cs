@@ -134,7 +134,10 @@ public sealed class ContentValueRuleTests
         ContentAssert.Valid(ValidWith(data => data.AmountPresets = [.. Enumerable.Range(1, 8).Select(PresetOf)]));
     }
 
-    /// <summary>Zero costs, an empty purse and a limit of 1000 ‰ are allowed.</summary>
+    /// <summary>
+    /// Zero costs, an empty purse and a limit of 1000 ‰ are allowed values. With a purse of 0 and no recipe that makes gold, only the graph
+    /// rule 14 objects (the gold costs could never be paid), no value rule; with a purse of 1 the content is valid.
+    /// </summary>
     [Fact]
     public void Create_ZeroCostsAndStock_AreAccepted()
     {
@@ -145,6 +148,8 @@ public sealed class ContentValueRuleTests
         data.StartingCity!.Purse = 0;
         RulesOf(data).MaxLaborReductionPermille = 1000;
 
+        ContentAssert.SingleError(data, ContentErrorCode.ItemNeverProduced, "items[gold]");
+        data.StartingCity.Purse = 1;
         ContentAssert.Valid(data);
     }
 
