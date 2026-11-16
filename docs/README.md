@@ -44,4 +44,5 @@ in chapters, with every backticked path and spec number as a link (`website/READ
 | `reference/` | Generated reference: content, endpoints, errors, configuration, DB schema, project map | `tools/DocTools` |
 | `api/` | Running the API: logs and correlation (`traceId` vs `requestId`, every event id), requests to try by hand (`smoke.http`) | AI, kept current |
 | `testing/` | How to run the test suites (integration tests need Docker), test checklists | AI, kept current |
-| `security/`, `balance/` *(planned: M0-78, M0-68)* | Security report, balance reports | AI, per task |
+| `balance/` | Balance reports: simulator runs against the economy goals, proposed number changes (`balance/README.md`) | AI, per task |
+| `security/` *(planned: M0-78)* | Security report | AI, per task |
