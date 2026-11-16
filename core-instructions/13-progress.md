@@ -5,11 +5,11 @@
 > This file is loaded into every session: Milestone-table notes are task ids and PR numbers only (≤ ~100 characters per row).
 
 ## Resume point
-- **State:** AWAITING OWNER <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (CR-0010-T1, workflow v2 with the M1 plan, is in review; CR-0009-T1 and T2, player metrics, are parked: `docs/plan/CR-0009-T1-PLAN.md`, `CR-0009-T2-PLAN.md`)
-- **Part / step:** —
-- **Last completed:** CR-0010-T1 · Workflow v2 in the kit, rebased on `main`, the M1 CR renumbered CR-0011 (build log `docs/build-log/2026/2026-11-16-02-CR-0010-T1.md`). Before it: M0-67 (merged, PR #95)
-- **Next step:** the owner merges the CR-0010-T1 PR. Then `/start-task M0-A` without M0-67 (done): M0-68, M0-70, M0-69 (`docs/plan/M1-PLAN.md` §3, approved 2026-11-17), under workflow v2 (`16`). CR-0009-T1 and T2 when the owner says so.
+- **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** M0-A · Balance: strategy runs, content validation, approved number changes (M0-68, M0-70, M0-69; M0-67 done) · branch `task/M0-A-balance` · build log `docs/build-log/2026/2026-11-16-03-M0-A.md`. Its PR also lands workflow v2 and the M1 plan (CR-0010-T1; PR #97 closed). CR-0009-T1 and T2 (player metrics) are parked.
+- **Part / step:** part 0 done; part A (M0-68) next
+- **Last completed:** M0-A part 0: the rebased CR-0010-T1 work, the commit id pattern takes `M0-A`. Before it: M0-67 (merged, PR #95)
+- **Next step:** part A: run `dotnet run --project tools/BalanceSim` (all strategies × patterns, 72 h), compare with `24`'s goals, write `docs/balance/REPORT-mvp-1.md`. Then part B (M0-70) while the owner reads the report; part C (M0-69) after the owner's picks.
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md` (the newest: the §4 decisions of the M1 plan, CR-0011; confirm the decision-log rule, CR-0010).
 - **Known broken / do not touch:** nothing.
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
@@ -34,7 +34,7 @@
 | Dev tooling (CR-0006) | done | goods for the `devtest` account (CR-0006-T1) |
 | Resilience (limits, retries, logging) | in progress | M0-34, M0-35, M0-57 to M0-59 (PR #46, #47, #81, #82, #84) |
 | Docs automation (DocTools) + docs completeness | in progress | CR-0002, CR-0003 (PR #27, #29); M0-61 (PR #89); M0-63 (PR #91) |
-| Workflow v2 (CR-0010) | in review | CR-0010-T1: tests first, `test.sh`, token budget, asset requests (`27`) |
+| Workflow v2 (CR-0010) | in progress | CR-0010-T1, lands with M0-A: tests first, `test.sh`, token budget, asset requests (`27`) |
 | Logistics (CR-0008) | done | T1 to T3 (PR #86, #87, #88) |
 | Balance simulator | in progress | M0-67 (PR #95); M0-68 to M0-70 in M0-A |
 | E2E / security / concurrency suites | in progress | M0-36, M0-56, M0-60 (PR #48, #80, #85); M0-64 to M0-66 (PR #92 to #94) |

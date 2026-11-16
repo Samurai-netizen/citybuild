@@ -92,7 +92,7 @@ skip_step() {
 
 # The commit subject format of the CI job `docs` (core-instructions/18) for every commit of this branch since $base.
 check_commit_subjects() {
-  local pattern='^(feat|fix|test|docs|refactor|perf|build|ci|chore|wip)\((M[0-9]+-[0-9]{2}[a-z]?|CR-[0-9]{4}(-T[0-9]+)?|repo|kit)\)!?: .{3,}$'
+  local pattern='^(feat|fix|test|docs|refactor|perf|build|ci|chore|wip)\((M[0-9]+-([0-9]{2}[a-z]?|[A-Z])|CR-[0-9]{4}(-T[0-9]+)?|repo|kit)\)!?: .{3,}$'
   local bad=0 subject
   if ! git rev-parse --verify -q "$base" >/dev/null; then
     echo "quality: the base '$base' does not exist here (git fetch origin)." >&2
