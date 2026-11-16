@@ -183,10 +183,10 @@ Filters as arguments: a date range, and `--exclude <dev names>` so test accounts
 | ID | Title | Model | Status |
 |---|---|---|---|
 | CR-0009-T1 | Recording: `player_events` and its migration, `IPlayerEventRecorder`, the command, settlement and session events, in the city's transaction; tests; `06`, `07`, `10`, `30`, the modules, the plan board; implementation plan: `docs/plan/CR-0009-T1-PLAN.md` | O PLAN | Todo |
-| CR-0009-T2 | The report: `checkpoints.json` and its validation, `tools/MetricsReport` (overview, checkpoint explorer, funnels, actions, friction, return, one player), `panel.sh metrics`, `docs/how-to/add-checkpoint.md` | O | Todo |
+| CR-0009-T2 | The report: `checkpoints.json` and its validation, `tools/MetricsReport` (overview, checkpoint explorer, funnels, actions, friction, return, one player), `panel.sh metrics`, `docs/how-to/add-checkpoint.md`; implementation plan: `docs/plan/CR-0009-T2-PLAN.md` | O | Todo |
 
 T1 is planned in `docs/plan/CR-0009-T1-PLAN.md` (2026-11-16) and parked for a later date at the owner's wish; its section 2 holds four
-points that differ from this CR and wait for the owner's answer. T1 is [PLAN] (G-Plan): it changes the write pattern of `06` in one point and adds a table, so the owner sees its plan before code.
+points that differ from this CR and wait for the owner's answer. T2 is planned the same way in `docs/plan/CR-0009-T2-PLAN.md`; its section 2 holds three questions for the owner. T1 is [PLAN] (G-Plan): it changes the write pattern of `06` in one point and adds a table, so the owner sees its plan before code.
 T2 needs T1 merged. Each is one PR.
 
 ## Owner approval
