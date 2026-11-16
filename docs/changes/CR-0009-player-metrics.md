@@ -1,4 +1,4 @@
-# CR-0009 — Player metrics: what players did, how many reached each step, where they stop
+# CR-0009 — Player metrics: what players did, how many reached each checkpoint, where they stop
 
 - **Status:** Proposed
 - **Type:** Feature (analytics and dev tooling)
@@ -16,6 +16,10 @@
 The owner's words: "I want to know which actions my players did in their playthroughs, how much % of them did this or that task, i need a
 summary to investigate which parts of the game are stopping players to continue playing. Make a handy pattern to implement these
 checkpoints throughout the game. In the end, statistics should be shown on a local webpage."
+
+Added by the owner the same day (amendment 1): "Also make a system, that do not rely on a chain of checkpoints. I want to be able to see
+and sort by each individual checkpoint (like an advanced view). I want to use this to determine what is stopping gamers to continue
+playing this game." So a checkpoint stands on its own; an ordered funnel is only one optional way to look at some of them.
 
 Today the server keeps the result of play (the city, the ledger, the receipts of successful commands) but not the story of it: a refused
 command, a session, or a screen the player opened leaves a log line at most. Nothing answers "how many players ever started a research?"
@@ -43,7 +47,8 @@ A row holds a player id and ids from the content, **never** a display name, an a
 - Events never feed back into the game. No rule, cost or unlock reads them (no XP by another name, `02` rule 23).
 
 ### 2. Checkpoints (the handy pattern)
-The funnel is **not** in code. One file, `server/analytics/checkpoints.json`, lists the checkpoints in order; each one matches events:
+Checkpoints are **not** in code. One file, `server/analytics/checkpoints.json`, lists them; each one matches events. They are a **set,
+not a chain**: no checkpoint depends on another, and their order in the file means nothing (amendment 1).
 
 ```
 { "id": "first_woodcutter",  "title": "Placed a woodcutter",     "event": "command.place-building", "detail": "woodcutter", "outcome": "accepted" }
@@ -52,6 +57,12 @@ The funnel is **not** in code. One file, `server/analytics/checkpoints.json`, li
 { "id": "came_back",         "title": "Came back a second time", "event": "session.start", "atLeast": 2 }
 ```
 
+- **Funnels are optional and separate:** the same file may name funnels, each an ordered list of checkpoint ids
+  (`"funnels": [{ "name": "First hour", "steps": ["first_woodcutter", "first_research", "research_done"] }]`). A checkpoint can be in
+  several funnels or in none; every checkpoint is in the checkpoint explorer (part 4) either way.
+- **Every recorded event is a checkpoint by itself:** each `event_type` + `detail` + `outcome` that occurs in the data gets a row in the
+  explorer without being listed in the file (for example `command.upgrade-building` refused with `INSUFFICIENT_RESOURCE`). The file is
+  for giving a checkpoint a title, an `atLeast`, or a place in a funnel.
 - A player **reached** a checkpoint when they have at least `atLeast` (default 1) matching events. The report computes this when it
   runs, over the stored events. So a checkpoint added today also counts the play of last week, with no migration and no server release.
 - Adding a checkpoint is one line in that file. Only a fact the server does not record yet needs code, and then one line of it (the table above).
@@ -68,13 +79,24 @@ fire-and-forget: a failure is dropped and never shown. Its own task, and the own
 `tools/MetricsReport`, a console tool like DocTools: it reads the database and the checkpoint file and writes **one self-contained HTML
 file** (`.run/metrics/report.html`, git-ignored: it holds player data), then prints its path. `bash server-panel/panel.sh metrics`
 runs it against the local database and opens the page. No web server, no endpoint, no JavaScript library: tables and bars are plain HTML
-and inline SVG. The page shows:
+and inline SVG, and one small script written in the page sorts and filters the tables. A player counts as **left** when not seen for N
+days (default 3, an argument; `cities.last_seen_unix`). The page shows:
 
 1. **Overview:** players, players seen in the last 1 / 7 / 30 days, events recorded, the period.
-2. **Funnel:** each checkpoint in order: players who reached it, % of all players, % of the step before, the drop, and the median time
-   from the step before (real time and city clock).
-3. **Where players stopped:** for the players not seen for N days (default 3, an argument), the last checkpoint each one reached, as a
-   bar per checkpoint. This is the "what stops them" view.
+2. **Checkpoint explorer (the advanced view, amendment 1):** one table, one row per checkpoint (the named ones and every recorded
+   event), independent of any order. A click on a column header sorts by it; a text box filters the rows; a switch hides the unnamed
+   ones. Columns:
+   - players who reached it (count and % of all), and the times it happened in total and per player (median);
+   - median time from the player's creation to the first reach (real time and city clock);
+   - **left after reaching it:** of the players who reached it, the % who left;
+   - **left without it:** of the players who never reached it, the % who left; and the **difference** between the two (a large positive
+     difference: players who get here leave more often; a large negative one: players who never get here leave more often);
+   - **last stop:** the players for whom this was the last checkpoint before they left (count and % of all who left);
+   - median play after the first reach (real time and sessions) for those who reached it.
+   A row with fewer players than a minimum (default 5, an argument) is marked "small sample". A click on a row opens its detail: the
+   most common next events after it, the last events of the players who left after it, and the other checkpoints those players reached.
+3. **Funnels (optional):** for each funnel of the file, its steps in order: players who reached each, % of all players, % of the step
+   before, the drop, and the median time from the step before.
 4. **Actions:** every event type and detail: players who did it at least once (count and %), times in total, median per player.
 5. **Friction:** refused commands by command and error code: players hit (%), times; and the last ten events before the last visit of
    the players who left, grouped (for example "8 of 20 left right after `INSUFFICIENT_RESOURCE` on `upgrade-building`").
@@ -84,8 +106,8 @@ and inline SVG. The page shows:
 Filters as arguments: a date range, and `--exclude <dev names>` so test accounts (`devtest`, OD-14) don't count.
 
 ### Proposed split (the task table is filled in after approval)
-T1 [PLAN]: the table, the recorder, command, settlement and session events, tests. T2: the checkpoint file, `tools/MetricsReport`, the
-panel command, the how-to. T3 (optional): `POST /events` and the client's `Checkpoints.Reach`. Each is one PR.
+T1 [PLAN]: the table, the recorder, command, settlement and session events, tests. T2: the checkpoint file, `tools/MetricsReport` with the
+checkpoint explorer and the funnels, the panel command, the how-to. T3 (optional): `POST /events` and the client's `Checkpoints.Reach`. Each is one PR.
 
 ## Acceptance criteria
 - [ ] Every accepted and every refused command writes exactly one `player_events` row, in the command's transaction; a replay, a
@@ -97,10 +119,15 @@ panel command, the how-to. T3 (optional): `POST /events` and the client's `Check
 - [ ] No event row or report line holds a display name, a token, an address or a request body; a test pins the columns.
 - [ ] Recording changes no engine result: the golden and determinism tests pass unchanged, and the performance budget (`04` §12) holds.
 - [ ] A checkpoint added to `checkpoints.json` appears in the report with the players who reached it **before** it was added.
+- [ ] The report works with an empty `checkpoints.json` and with no funnel: the explorer then lists every recorded event.
+- [ ] The explorer has one row per checkpoint with the columns of part 4; every column sorts both ways by a click, offline; a checkpoint
+      in no funnel has the same columns as one in a funnel; a row under the minimum sample is marked.
+- [ ] "Left after reaching", "left without it" and "last stop" are tested on PostgreSQL against seeded players with known answers,
+      including a checkpoint nobody reached and one everybody reached (no division by zero, shown as "—").
 - [ ] A broken checkpoint file (a duplicate id, an unknown event type or content id) stops the report with a message naming the line.
-- [ ] `panel.sh metrics` writes the HTML file with the seven sections above from the local database; the file opens offline (no
+- [ ] `panel.sh metrics` writes the HTML file with the sections of part 4 from the local database; the file opens offline (no
       network request) and the tool only reads (a read-only transaction).
-- [ ] The funnel numbers are tested on PostgreSQL against a seeded set of players with known answers (percentages, the "stopped at"
+- [ ] The funnels' numbers are tested on PostgreSQL against a seeded set of players with known answers (percentages, the "stopped at"
       checkpoint, the medians).
 - [ ] (T3) `POST /api/v1/events` accepts only catalogue ids, is rate limited, writes one row and changes no city state
       (`state_version` unchanged); the client never blocks or shows an error because of it.
@@ -131,6 +158,9 @@ panel command, the how-to. T3 (optional): `POST /events` and the client's `Check
 - **Who the numbers are about.** M0 has the dev login only, so until real accounts (M1) and a soft launch (M3) "players" are the owner,
   the test accounts and whoever gets a development build (M0-82). The percentages are small-sample until then. What M0 gains: the pattern
   is in place before more commands and screens are added, and the playtest (M0-72) is measured.
+- **Reading the explorer:** its "left" columns show what goes together with leaving, not what causes it: a late checkpoint is reached
+  only by players who stayed long, an early one by almost everyone. The page says so above the table, shows counts next to every
+  percentage and marks small samples. The detail of a row (what the players who left did last) is the evidence to read before a design change.
 - **Timing.** Options: (a) T1 and T2 now, before M0-67 (recommended: recording starts early, the report serves the playtest);
   (b) after M0-84; (c) with M3 as `10` says. The board grows from 88 to 91 tasks with (a).
 - **Table growth:** one row per command and per fact, about the ledger's rate. Fine for M0 to M2; a cleanup or a daily summary table
@@ -145,7 +175,7 @@ panel command, the how-to. T3 (optional): `POST /events` and the client's `Check
   binary; a local tool that reads the database exposes nothing.
 - **Alternative C, no new table, report from receipts, ledger and city rows:** works today for accepted commands only; no refusals, no
   sessions, no UI steps, no order of events inside a settlement. Refusals are the best friction signal, so it is not enough.
-- **Alternative D, fixed checkpoints in code** (`Checkpoint.FirstSawmill` written when reached): simpler to query, but every new
+- **Alternative D, fixed checkpoints in code, or checkpoints only as a chain** (`Checkpoint.FirstSawmill` written when reached): simpler to query, but every new
   checkpoint needs a release and starts counting from zero. Raw events with checkpoints defined at read time avoid both.
 - **Protected files:** `AGENTS.md` (the command list) needs the owner's OK; nothing under `scripts/dev/` or the workflows is planned.
 
