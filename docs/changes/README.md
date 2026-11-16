@@ -27,4 +27,4 @@ as a CR. That's how the owner keeps control over what gets built (`core-instruct
 | [CR-0009](CR-0009-player-metrics.md) | Player metrics: what players did, how many reached each checkpoint, where they stop | Feature | Approved |
 | [CR-0010](CR-0010-workflow-v2.md) | Workflow v2: tests first, focused test runs, a token budget, asset requests | Process | In progress |
 | [CR-0011](CR-0011-m1-real-game.md) | M1: from a tech demo to a game (direction and plan, `docs/plan/M1-PLAN.md`) | Design change | Proposed |
-| [CR-0012](CR-0012-courier-stamina-research.md) | Courier stamina as a research (balance report 1, P3) | Design change | Proposed |
+| [CR-0012](CR-0012-courier-stamina-research.md) | Courier stamina as a research (balance report 1, P3) | Design change | Approved |

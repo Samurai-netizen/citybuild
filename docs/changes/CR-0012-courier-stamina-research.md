@@ -1,9 +1,9 @@
 # CR-0012 — Courier stamina as a research
 
-- **Status:** Proposed
+- **Status:** Approved
 - **Type:** Design change
 - **Requested by:** owner · **Date:** 2026-11-17
-- **Milestone / era:** M1 or later / Era I (owner, 2026-11-17)
+- **Milestone / era:** after all M0 tasks (after M0-D, M0-84) / Era I (owner, 2026-11-17)
 - **Conflicts with pillars (`22`) or the era rule (`25`):** none. A research effect, not a new mechanic.
 
 <!-- Status values: Proposed | Approved | In progress | Done | Rejected | Superseded.
@@ -64,7 +64,11 @@ level 3".
 ## Tasks (filled in after approval)
 | ID | Title | Model | Status |
 |---|---|---|---|
-| CR-0012-T1 | | O/S | Todo |
+| CR-0012-T1 | Engine and loader: the `staminaBonus` effect, the building-level prerequisite, their error codes and tests (`04` §4, §6, §14) | O | Todo |
+| CR-0012-T2 | Content: Courier Station level 3, the costly Era I node, a new content version (golden fixture, protected), balance report with before/after; writes the asset request of T3 | O | Todo |
+| CR-0012-T3 | Client: the station's stamina with the bonus, the building-level lock on the research card, the level-3 station (placeholder until its model arrives) · [ASSETS] | S | Todo |
+
+Order: T1 → T2 → T3, one PR each, after M0-D (M0-84), the owner's placement.
 
 ## Owner approval
-- Approved on: —
+- Approved on: 2026-11-17, the owner: "I approve. Put it after all M0 tasks".

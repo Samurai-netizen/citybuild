@@ -77,6 +77,9 @@ one PR; its specs stay in `docs/plan/M0-PLAN.md`, whose board rows keep each M0 
 
 M1-01 (design, no code) may run in parallel with M0-A … M0-D: it touches only design files. Every other M1 task waits for M0-84.
 
+CR-0012 (courier stamina as a research, approved 2026-11-17) runs after all M0 tasks, after M0-D (M0-84): its tasks T1 to T3 are in
+the CR. The owner's placement.
+
 The group specs below are what `bash scripts/dev/show-task.sh M0-A` prints. Each part is one M0 task: read its spec with
 `show-task.sh M0-NN`, and set its board row in `docs/plan/M0-PLAN.md` when the group's PR merges.
 
