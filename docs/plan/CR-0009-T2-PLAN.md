@@ -9,7 +9,7 @@
 1. **T1 must be merged** (`player_events` exists). Read what it built: `core-instructions/06-data-model.md` (the table), its build log
    entry `docs/build-log/2026/2026-11-16-01-CR-0009-T1.md` (decisions, and the owner's answers to T1's four points), and
    `server/src/CityBuilder.Domain/Metrics/PlayerEventTypes.cs` (the event names). Section 3 below assumes T1's plan with every point "yes".
-2. **Owner questions:** section 2. T2 is not `[PLAN]`, but ask them at the start and record the answers (build log, the CR).
+2. **Owner questions: answered** (section 2, all yes, 2026-11-16). Copy the answer into T2's build log entry under Owner input.
 3. **Start:** `/start-task CR-0009-T2`. No build log entry exists for T2: `new-log-entry.sh` creates it as usual.
 4. **Read first:** `02`, `15`, `16`, `14` (every declaration documented, OD-12), `07` → Logging policy, `19` → New project, New script
    or command, New documentation page; `tools/README.md`, `docs/modules/DocTools.md` and `tools/DocTools/` (the pattern for a tool:
@@ -25,7 +25,10 @@ Not in this task: any change to the API, the client, the engine, the events T1 r
 (G-Dependency): EF Core and Npgsql come through the reference to `CityBuilder.Infrastructure`, as DocTools has it; JSON and HTML
 encoding are in the base library; the page uses no JavaScript or CSS library and loads nothing from the network.
 
-## 2. Questions for the owner (the plan assumes "yes")
+## 2. Questions for the owner — **all three answered yes, 2026-11-16**
+Owner: "All questions in each file - i say YES, approve". So: A sorting is checked by hand, B `AGENTS.md` may get the `MetricsReport` command line and map entry (this
+approval covers exactly that edit, G-Rules), C the starter list of 3.2 is used. The last column is history.
+
 | # | Point | If no |
 |---|---|---|
 | A | **Sorting by click is checked by hand.** A test checks the page's structure (every header has a sort key, every cell a sort value); that a click really sorts is a [MANUAL] line in `tools/README.md`. A browser test would need a new dependency | G-Dependency for a browser test tool (Playwright), then an automated test |
@@ -157,7 +160,7 @@ stderr, nothing written); 2 the database could not be read. The tool prints the 
 - [ ] A broken file stops the run with a message naming the line; nothing is written.
 - [ ] `panel.sh metrics` writes the page from the local database; it opens offline; the tool only reads.
 - [ ] Ids only: no dev name in the output. No client, API, engine or schema change.
-- [ ] Sorting: structure tested; the click checked by hand (point A) or by a browser test.
+- [ ] Sorting: structure tested; the click checked by hand (point A, approved).
 - [ ] Docs, the how-to, the module doc; `check-docs.sh`, the handbook build and `quality.sh` pass.
 
 ## 6. Traps

@@ -30,14 +30,14 @@ Three parts: the server records **events**, a file names the **checkpoints** of 
 
 ### 1. Events (recorded by the server, first-party)
 A new append-only table `player_events`: `id bigint identity pk`, `player_id uuid`, `event_type text`, `detail text null`,
-`outcome text null`, `city_clock bigint`, `created_at timestamptz`; `index (player_id, created_at)` and `index (event_type, detail)`.
+`outcome text null`, `value bigint null`, `city_clock bigint`, `created_at timestamptz`; `index (player_id, created_at)` and `index (event_type, detail)`.
 A row holds a player id and ids from the content, **never** a display name, an address, a device or a request body (`07` → Logging policy, OD-7).
 
 | Source | Events | Code a new feature needs |
 |---|---|---|
 | The command pipeline, for every command | `command.<type>` with `outcome` = `accepted` or the error code (`INSUFFICIENT_RESOURCE`, …), `detail` = the content id the command names (a building type, a research id), when it has one | **none**: a new command is recorded by itself; it only says what its `detail` is (one property on `ICityCommand`) |
-| The settlement | `research.completed`, `building.completed` (construction and upgrade, `detail` = the type and level), `production.first` (the first output of an item) | none for new content; one line in the settlement recorder for a new kind of fact |
-| The login and the presence rule | `player.created`, `session.start` (the first settling request after the player was away, `PresencePolicy`) | none |
+| The settlement | `research.completed`, `building.completed` (construction and upgrade, `detail` = the type, `value` = the level). The first production of an item is not an event: the report reads it from the ledger | none for new content; one line in the settlement recorder for a new kind of fact |
+| The login and the session gap | `player.created`, `session.start` (the first login, and the first settling request more than `Metrics:SessionGapSeconds`, default 1800, after the last one) | none |
 
 - An event is written **in the same transaction** as the city's save, so it exists exactly when the action was committed, and an
   idempotent replay records nothing (`02` rules 9 and 10). A refused command writes its event with the settlement it already commits.
@@ -76,7 +76,7 @@ nothing" checkpoints. A refused command and a session with no command after it a
 
 ### 4. The report (a local webpage)
 `tools/MetricsReport`, a console tool like DocTools: it reads the database and the checkpoint file and writes **one self-contained HTML
-file** (`.run/metrics/report.html`, git-ignored: it holds player data), then prints its path. `bash server-panel/panel.sh metrics`
+file** (`server-panel/.run/metrics/report.html`, git-ignored: it holds player data), then prints its path. `bash server-panel/panel.sh metrics`
 runs it against the local database and opens the page. No web server, no endpoint, no JavaScript library: tables and bars are plain HTML
 and inline SVG, and one small script written in the page sorts and filters the tables. A player counts as **left** when not seen for N
 days (default 3, an argument; `cities.last_seen_unix`). The page shows:
@@ -105,17 +105,18 @@ days (default 3, an argument; `cities.last_seen_unix`). The page shows:
 Filters as arguments: a date range, and `--exclude <dev names>` so test accounts (`devtest`, OD-14) don't count.
 
 ## Acceptance criteria
-- [ ] Every accepted and every refused command writes exactly one `player_events` row, in the command's transaction; a replay, a
-      conflict and a rolled-back command write none.
+- [ ] Every command applied or refused by a game rule writes exactly one `player_events` row, in the command's transaction; a replay, a
+      shape refusal before the lock (OD-13), a conflict and a rolled-back command write none.
 - [ ] A command added later by the recipe (`docs/how-to/add-command.md`) is recorded with no metrics code; a test over all
       `ICityCommand` types proves it.
-- [ ] A completed research, a completed construction or upgrade and the first production of an item are recorded once each, also when
-      they happen inside a long offline settlement; `session.start` follows the presence rule.
+- [ ] A completed research and a completed construction or upgrade are recorded once each (the first production of an item comes
+      from the ledger), also when
+      they happen inside a long offline settlement; `session.start` follows the session gap.
 - [ ] No event row or report line holds a display name, a token, an address or a request body; a test pins the columns.
 - [ ] Recording changes no engine result: the golden and determinism tests pass unchanged, and the performance budget (`04` §12) holds.
 - [ ] A checkpoint added to `checkpoints.json` appears in the report with the players who reached it **before** it was added.
 - [ ] The report works with an empty `checkpoints.json` and with no funnel: the explorer then lists every recorded event.
-- [ ] The explorer has one row per checkpoint with the columns of part 4; every column sorts both ways by a click, offline; a checkpoint
+- [ ] The explorer has one row per checkpoint with the columns of part 4; every column sorts both ways by a click, offline (the click is checked by hand, the structure by a test); a checkpoint
       in no funnel has the same columns as one in a funnel; a row under the minimum sample is marked.
 - [ ] "Left after reaching", "left without it" and "last stop" are tested on PostgreSQL against seeded players with known answers,
       including a checkpoint nobody reached and one everybody reached (no division by zero, shown as "—").
@@ -186,9 +187,13 @@ Filters as arguments: a date range, and `--exclude <dev names>` so test accounts
 | CR-0009-T2 | The report: `checkpoints.json` and its validation, `tools/MetricsReport` (overview, checkpoint explorer, funnels, actions, friction, return, one player), `panel.sh metrics`, `docs/how-to/add-checkpoint.md`; implementation plan: `docs/plan/CR-0009-T2-PLAN.md` | O | Todo |
 
 T1 is planned in `docs/plan/CR-0009-T1-PLAN.md` (2026-11-16) and parked for a later date at the owner's wish; its section 2 holds four
-points that differ from this CR and wait for the owner's answer. T2 is planned the same way in `docs/plan/CR-0009-T2-PLAN.md`; its section 2 holds three questions for the owner. T1 is [PLAN] (G-Plan): it changes the write pattern of `06` in one point and adds a table, so the owner sees its plan before code.
+points that differ from this CR; the owner approved all four (below), and this CR's text now says what they say. T2 is planned the same way in `docs/plan/CR-0009-T2-PLAN.md`; its section 2 holds three questions, all answered yes (below). T1 is [PLAN] (G-Plan): it changes the write pattern of `06` in one point and adds a table, so the owner sees its plan before code.
 T2 needs T1 merged. Each is one PR.
 
 ## Owner approval
 - Approved on: 2026-11-16. Owner's words: "1. I approve. 2. Client should not know this thing exists. 3. ids only" (the answers to
   the three questions above, after amendment 1).
+- 2026-11-16, the two implementation plans (`docs/plan/CR-0009-T1-PLAN.md`, `CR-0009-T2-PLAN.md`): "All questions in each file - i say YES, approve". That approves
+  T1's plan (G-Plan) with its four points (no `production.first` event; a session gap of its own, 30 minutes; shape refusals not
+  recorded; the `value` column) and T2's three (sorting checked by hand; the `AGENTS.md` edit for the report command; the starter
+  checkpoint list).

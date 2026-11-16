@@ -6,8 +6,9 @@
 > This file is a plan, not a rule: where the code has moved since, follow the code and log the difference as a decision.
 
 ## 0. Before you start
-1. **Owner decisions.** Section 2 lists four points where this plan differs from the approved CR. The task is `[PLAN]` (G-Plan): show the
-   owner this file, get a yes or no on each point, record the words in the build log (Owner input) and in the CR. **No code before that.**
+1. **Owner decisions: done.** The owner approved this plan and all four points of section 2 on 2026-11-16 ("All questions in each file - i say YES, approve",
+   recorded in the build log and the CR). The `[PLAN]` gate (G-Plan) is passed: do not ask again. A change to the plan that is more
+   than a detail (another table shape, another event, a new file area) is a new question for the owner.
 2. **Start:** `/start-task CR-0009-T1`. The build log entry **already exists**: `docs/build-log/2026/2026-11-16-01-CR-0009-T1.md`
    (status Partial). Do **not** run `new-log-entry.sh` again; append "Session 2", set the status to In progress, and reuse its Decisions
    (1 to 5) and its Docs impact table. Decision 1 there (the branch name) belonged to the planning session's tool; use
@@ -34,7 +35,9 @@ Events of this task:
 
 Every row also has `player_id`, `city_clock` (the city clock when it was recorded) and `created_at` (server time).
 
-## 2. Points that differ from the CR (the owner decides each; the plan assumes "yes")
+## 2. Points that differ from the CR — **all four approved by the owner, 2026-11-16**
+Owner: "All questions in each file - i say YES, approve". Build A to D as written; the last column is history.
+
 | # | Point | If the owner says no |
 |---|---|---|
 | A | **No `production.first` event.** `ledger_entries` already has a `SETTLEMENT_PRODUCED` row per city, item and settlement; T2 reads the first one. An event would cost a lookup in every producing settlement. Changes one acceptance criterion of the CR | add a step: a partial unique index on `(player_id, detail) WHERE event_type = 'production.first'` and an insert with `ON CONFLICT DO NOTHING` per produced item |
@@ -42,7 +45,7 @@ Every row also has `player_id`, `city_clock` (the city clock when it was recorde
 | C | **A shape refusal is not recorded** (`INVALID_ARGUMENT` before the lock): OD-13 says such a request stores nothing, and tests pin it. Neither are a replay, an `IDEMPOTENCY_CONFLICT`, a `CONCURRENCY_CONFLICT` or a rate-limit refusal | stop and ask: recording them contradicts OD-13 |
 | D | **A column `value bigint null`** next to the CR's columns: the level of `building.completed`, so `detail` stays a plain content id that a checkpoint can match | put the level into `detail` as `<type>:<level>` |
 
-After the answers, edit the CR's events table, schema line and acceptance criteria to match (it is `In progress`, not merged history).
+The CR's events table, schema line and acceptance criteria already say this (edited at the approval).
 
 ## 3. Design (the parts that need care)
 - **One transaction.** An event is inserted in the city's transaction and committed with it. A rollback drops it. (`02` rules 9, 10.)
