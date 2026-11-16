@@ -104,6 +104,10 @@ For the owner to pick from (M0-69 applies the picks). Each one is a content-only
 once a day and the night absence to keep earning (it is the only lever that moves them). Once a day still fails goal 3 with all three:
 the second research waits for the next day's check-in. Whether that is acceptable is a design question for `24` (owner).
 
+## Owner's picks
+2026-11-17: "I approve P1 and P2, and P3 should be a research for later". M0-69 (M0-A part C) applies P1 and P2. P3 is CR-0012
+(Proposed): a research that raises courier stamina, instead of new content numbers. The once-a-day question stays open (owner queue).
+
 ## Simulator findings
 - **Fixed in M0-A (regression test `ConstructionTests`, commit `87bcfe9`):** with spare coins, Balanced ordered an upgrade with goods before
   the basic city stood. First it was the only Woodcutter's Hut, whose planks come from the Sawmill, whose logs come from that hut, and a
