@@ -12,8 +12,8 @@
 ## Problem / goal
 Balance report 1 (`docs/balance/REPORT-mvp-1.md`, P3) found that the 11–12 h night absence and once-a-day play run out of courier stamina
 (4 h at Courier Station level 1, 8 h at level 2). Doubling the stamina was the only lever that moved them (once a day: 35 → 68 coins/h).
-On M0-68's report the owner said: "P3 should be a research for later". So the longer stamina is earned by research, and the content
-numbers don't change.
+On M0-68's report the owner said: "P3 should be a research for later". So the longer stamina is earned by research, and the stamina
+numbers of levels 1 and 2 don't change.
 
 ## Proposal
 The owner's requirements (2026-11-17): "It should be era 1 research and it should be costly, also it should require courier station to be
