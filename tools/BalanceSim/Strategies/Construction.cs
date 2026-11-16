@@ -149,7 +149,10 @@ public static class Construction
         return turn.Actions.Place(type.Id, tile.X, tile.Y);
     }
 
-    /// <summary>Upgrades a building, when a builder is free and the purse covers the upgrade's coins above a reserve; a cost with goods waits as in <see cref="TryPlace"/>.</summary>
+    /// <summary>
+    /// Upgrades a building, when a builder is free and the purse covers the upgrade's coins above a reserve; a cost with goods waits as in
+    /// <see cref="TryPlace"/>, and also while a chain type is still missing, so the basic city gets the goods as well as the coins (M0-A).
+    /// </summary>
     /// <param name="turn">The turn.</param>
     /// <param name="building">The building.</param>
     /// <param name="reserve">Coins the strategy keeps back.</param>
@@ -157,8 +160,9 @@ public static class Construction
     public static bool TryUpgrade(Turn turn, Building building, long reserve)
     {
         BuildingLevelDefinition next = turn.DefinitionOf(building).GetLevel(building.Level + 1);
+        bool needsGoods = HasGoods(turn, next.UpgradeCost);
         if (!turn.HasFreeBuilder() || turn.City.Purse - reserve < turn.CoinsOf(next.UpgradeCost)
-            || (HasGoods(turn, next.UpgradeCost) && IsAnyProjectWaiting(turn)))
+            || (needsGoods && (IsAnyProjectWaiting(turn) || turn.Chain.ChainTypes.Any(type => Count(turn, type) == 0))))
         {
             return false;
         }
@@ -270,10 +274,43 @@ public static class Construction
             return false;
         }
 
-        // A building can't deliver to itself: every good of the upgrade needs another building that makes it or holds it.
-        return definition.GetLevel(building.Level + 1).UpgradeCost.Where(part => part.Item != turn.Content.Currency).All(part =>
-            turn.City.Buildings.Any(other => other.Id != building.Id
-                && (other.GetStock(part.Item) > 0 || ContentChain.Outputs(turn.DefinitionOf(other)).Contains(part.Item))));
+        // A building can't deliver to itself, and while it waits it gets no workers: every good of the upgrade must be able to reach it
+        // without this building (M0-A: the hut's planks come from the Sawmill, whose logs come from the hut).
+        return definition.GetLevel(building.Level + 1).UpgradeCost.Where(part => part.Item != turn.Content.Currency)
+            .All(part => CanSupplyWithout(turn, part.Item, part.Quantity, building.Id, []));
+    }
+
+    /// <summary>
+    /// Whether an amount of a good can reach a project without one building: what the other buildings hold, plus what one of them makes
+    /// from inputs that can each be supplied the same way (its level-1 recipe, whole cycles). A good already being followed counts as no
+    /// supply, so a cycle in the chain ends the search.
+    /// </summary>
+    /// <param name="turn">The turn.</param>
+    /// <param name="item">The good.</param>
+    /// <param name="amount">How many are needed.</param>
+    /// <param name="excluded">The building id left out (the one that would wait for the good).</param>
+    /// <param name="following">The goods on the current path.</param>
+    /// <returns>True when the amount can come from elsewhere.</returns>
+    private static bool CanSupplyWithout(Turn turn, ItemId item, long amount, int excluded, HashSet<ItemId> following)
+    {
+        Building[] others = [.. turn.City.Buildings.Where(other => other.Id != excluded)];
+        long missing = amount - others.Sum(other => other.GetStock(item));
+        if (missing <= 0)
+        {
+            return true;
+        }
+
+        if (!following.Add(item))
+        {
+            return false;
+        }
+
+        bool supplied = others.Any(other => turn.DefinitionOf(other).GetLevel(1).Recipe is { } recipe
+            && recipe.Outputs.FirstOrDefault(output => output.Item == item) is { } made
+            && recipe.Inputs.All(input => CanSupplyWithout(
+                turn, input.Item, checked(IntegerMath.CeilDiv(missing, made.Quantity) * input.Quantity), excluded, following)));
+        following.Remove(item);
+        return supplied;
     }
 
     /// <summary>Whether the city may place a type now (its era and research).</summary>
