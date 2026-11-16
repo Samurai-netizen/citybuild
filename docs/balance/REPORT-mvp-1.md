@@ -106,7 +106,7 @@ the second research waits for the next day's check-in. Whether that is acceptabl
 
 ## Owner's picks
 2026-11-17: "I approve P1 and P2, and P3 should be a research for later". M0-69 (M0-A part C) applies P1 and P2. P3 is CR-0012
-(Proposed): a research that raises courier stamina, instead of new content numbers. The once-a-day question stays open (owner queue).
+(Proposed): a research that raises courier stamina, instead of new content numbers. Once a day may miss goal 3 ("yes", 2026-11-17; now in `24`).
 
 ## Simulator findings
 - **Fixed in M0-A (regression test `ConstructionTests`, commit `87bcfe9`):** with spare coins, Balanced ordered an upgrade with goods before

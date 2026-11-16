@@ -10,7 +10,7 @@
 - **Part / step:** parts 0 and A done; part B (M0-70) next
 - **Last completed:** M0-A part A: `docs/balance/REPORT-mvp-1.md` (proposals P1–P3) and a BalanceSim upgrade-rule fix (`87bcfe9`)
 - **Next step:** part B (M0-70, content validation graph checks: `bash scripts/dev/show-task.sh M0-70`), then part C (M0-69): apply the owner's P1 (purse 1000) and P2 (Trading Post 5 planks), rerun, before/after in the report.
-- **Open questions for the owner:** 14 rows in `docs/owner-queue.md` (the newest: once a day and goal 3; CR-0012).
+- **Open questions for the owner:** 14 rows in `docs/owner-queue.md` (the newest: approve CR-0012).
 - **Known broken / do not touch:** nothing.
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
 - **Verify with:** in the loop `bash scripts/dev/test.sh <area> [filter]`, at a checkpoint `bash scripts/dev/test.sh changed`, at the finish

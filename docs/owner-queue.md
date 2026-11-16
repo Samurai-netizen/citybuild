@@ -20,4 +20,4 @@ Things only the owner can answer or do, that outlived the task that raised them.
 | 11 | CR-0011 | Approve or change the M1 plan (`docs/plan/M1-PLAN.md`): its 16 decisions in §4 (§3, the M0 regrouping, approved 2026-11-17) |
 | 12 | CR-0010 | Workflow v2 narrows what counts as a logged decision (`17` §4; CR-0010 → "What changes for earlier owner directives"): confirm, or say that every small one should be logged again |
 | 13 | CR-0010 | `AGENTS.md`, `CLAUDE.md`, `02`, `15` and `scripts/dev/test.sh` (protected files) were changed by this CR on your request: read their diff in the PR |
-| 14 | M0-68 (M0-A) | Once a day misses goal 3 (the next research within one or two absences) even with P1 + P2 (`docs/balance/REPORT-mvp-1.md`): acceptable, or a design change for `24`? Also approve or change CR-0012 (stamina research) |
+| 14 | M0-68 (M0-A) | Approve or change CR-0012 (courier stamina as a research, `docs/changes/CR-0012-courier-stamina-research.md`) |
