@@ -8,7 +8,8 @@ The files above are loaded at session start. `AGENTS.md` is the shared entry poi
 This section only adds what's specific to Claude Code.
 
 ## Skills
-`/resume` `/start-task <ID>` `/checkpoint` `/finish-task` `/change-request <idea>` `/docs-sync` (descriptions are in the skill list).
+`/resume` `/start-task <ID>` `/checkpoint` `/finish-task` `/asset-request <ID>` `/change-request <idea>` `/docs-sync` (descriptions are
+in the skill list).
 
 ## Subagents and Workflows (owner directive OD-9, `15`)
 - **Never start one on your own:** no `Agent` tool, no `Workflow`, also when a session setting (for example "ultracode") asks for one.
@@ -23,7 +24,7 @@ This section only adds what's specific to Claude Code.
   - session start prints the repo state;
   - the Bash guard blocks `--no-verify`, commits on `main` and pushes to `main`;
   - the Stop hook blocks ending a turn while code changes aren't checkpointed.
-  If the Stop hook blocks you, checkpoint (`/checkpoint`). Don't argue with it.
+  If the Stop hook blocks you, save (commit and push the step) or checkpoint (`/checkpoint`). Don't argue with it.
 - **Permissions:**
   - deny force-push, push to `main`, hand edits of generated docs, and reading `.env`;
   - ask before destructive git commands and edits to protected files (`15`).
@@ -32,6 +33,11 @@ This section only adds what's specific to Claude Code.
 - `[O]` tasks: `/model` → Opus 5.5. `[S]` tasks: Sonnet 5.5. Name the model in the build log session header.
 - `[PLAN]` tasks: do the write-ahead (`16` §B.4), then present the plan and wait for the owner's approval before any other change.
   Plan Mode forbids the write-ahead's file writes, so don't use it for these tasks.
+
+## Context (workflow v2, `16` §H)
+- One part per context: after each `/checkpoint`, run `/compact` (or `/clear`, then `/resume`) before the next part.
+- Tests through `bash scripts/dev/test.sh` (one line per area, only failures shown). No file dumps in chat; a checkpoint is one line.
+- Never generate an asset with any tool of the session: write the asset request (`/asset-request`).
 
 ## Memory
 Don't rely on auto memory or on earlier conversations. Other AI tools will continue this work.

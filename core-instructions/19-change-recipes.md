@@ -73,6 +73,14 @@ Paths are the M0 layout (`03`). "Module doc" means `docs/modules/<Project>.md`.
 - Renaming or deleting a page: change every living doc that names it (check-docs fails otherwise). Build log entries are never renamed.
 - Check: `bash scripts/dev/docs-site.sh build`.
 
+## A task needs a model, picture, sound or font
+- Code: none for the asset itself: AI coders make no assets (`27`). The code that shows or plays it loads it by id and falls back to
+  a placeholder made in code.
+- Request: a row in `docs/assets/requests/AR-<TASK-ID>.md` (`/asset-request`), written one task ahead; on delivery, check the row
+  against its spec, mark it `accepted` or `rejected: <reason>`, and list the file in `docs/assets/LICENSES.md`.
+- Tests: the asset resolves by id; the placeholder shows when it is missing; the pending list (`27` → Placeholders).
+- Docs: the request file; `art/README.md` when a model set or a contract changes; the build log entry's Assets section.
+
 ## New dependency
 G-Dependency first. Then: `Directory.Packages.props` / Unity manifest / `website/package.json` (with `npm install` in `website/`, which updates
 `package-lock.json`), the approved list in `14`, and a decision row with the alternatives considered.
@@ -81,6 +89,8 @@ G-Dependency first. Then: `Directory.Packages.props` / Unity manifest / `website
 Failing regression test first, then the fix. Build log: root cause in one paragraph. Docs: whatever describes the corrected behaviour.
 
 ## Every change, always
+Tests first: each behaviour the recipe names is tested before its code, and only the focused test runs in the loop (`08` → Test-first
+loop, Test tiers).
 A doc comment on every declaration the change adds or changes, a header comment in every new file, and comments that the change made
 untrue fixed with it (`14` → Documentation in code; worked guide `docs/how-to/document-code.md`).
 Build log entry (decisions, and a Docs impact row for every page the recipe above names: `updated` or `no change: <why>`), the resume

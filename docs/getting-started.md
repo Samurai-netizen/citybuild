@@ -59,6 +59,7 @@ How to get from a clean machine to a running project. Every command here must wo
 | Rebuild the Era I models, palette and previews (Blender 5.2; writes the FBX files into the Unity project) | `blender -b --factory-startup --python art/blender/build_all.py` from the repository root (`art/README.md`) | CR-0005-T1 |
 | Regenerate the reference pages in `docs/reference/generated/` (after a change to content, errors, endpoints, options, the EF model or the projects) | `dotnet run --project tools/DocTools -- generate` (`docs/modules/DocTools.md`) | M0-61 |
 | Are the committed reference pages current? (as CI) | `dotnet run --project tools/DocTools -- check`: exit 1 lists each page that differs | M0-61 |
+| Tests while working: one area or one class, quiet (one line per area, only failures shown; `core-instructions/08-testing-strategy.md` → Test tiers) | `bash scripts/dev/test.sh sim CourierRouteTests` · `bash scripts/dev/test.sh changed` (the areas of the files you changed) · `bash scripts/dev/test.sh fast` | CR-0010 |
 | Everything CI runs, locally (docs checks, commit subjects, handbook, format, build, fast and integration tests, DocTools check, Unity tests); a step that cannot run here is skipped with a message and named in the summary (no Docker, no Node.js, `UNITY_EDITOR` unset) | `bash scripts/dev/quality.sh` (PowerShell: `pwsh scripts/dev/quality.ps1`); a quick run: `--only format,build` or `--skip integration,unity` (`-Only` / `-Skip` in PowerShell); exit 1 = a step failed | M0-62 |
 
 ## Configuration

@@ -68,6 +68,8 @@ const handbook = [
     page('client/README.md', 'Unity project (client/)'),
     page('art/README.md', 'Art (art/)'),
     page('art/MOTIONS.md', 'Motions, store fill and roads'),
+    spec('27'),
+    folder('Assets and asset requests', 'docs/assets'),
   ]),
   chapter('Development guide', [
     spec('19'),
@@ -93,6 +95,8 @@ const handbook = [
   chapter('Plan and scope', [
     spec('10'),
     page('docs/plan/M0-PLAN.md', 'M0 plan and task board'),
+    page('docs/plan/M1-PLAN.md', 'M1 plan and task board (proposed)'),
+    page('docs/owner-queue.md', 'Owner queue (open questions)'),
     spec('30'),
     folder('Change requests', 'docs/changes'),
   ]),

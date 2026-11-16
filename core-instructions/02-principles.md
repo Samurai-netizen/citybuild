@@ -24,13 +24,15 @@ These rules apply to every task and every AI coder. If a request conflicts with 
 12. Inspect before you change; keep each change inside the current task.
 13. Simple, explicit code (`14`). Add an abstraction only when it removes real duplication or crosses a layer boundary.
 14. Dependency direction is fixed (`03`); architecture tests enforce it.
-15. New rule → new test; bug fix → regression test. Never weaken, skip or delete a test to get green (G-Tests).
+15. **Tests first:** new behaviour → its failing test, then the code; bug fix → regression test. Never weaken, skip or delete a test to
+    get green (G-Tests). Run the smallest test set that can fail; the full suite at the finish (`08`).
 16. A task with failing build or tests is not done. Never commit secrets.
 
 ## Process (the repo is the only memory)
 17. Work only on a task from `docs/plan/` or an **approved** CR (`15`). New ideas become CRs, not code.
-18. Follow the session protocol (`16`): write ahead, small green steps, **checkpoint and push after every step**.
-19. **Log every decision** in the task's build log entry when you make it; escalate project-wide ones (`17` §4).
+18. Follow the session protocol (`16`): write ahead, small green steps, **commit and push after every step, checkpoint after every part**.
+19. **Log every decision** in the task's build log entry when you make it, one row each (`17` §4 says what counts); escalate
+    project-wide ones.
 20. **Docs change in the same PR as the code**, following the change recipe (`19`). Undocumented work is unfinished work.
 21. Owner instructions given in chat are written into the repo in the same session (build log; standing ones in `15`).
 22. Never work on or push to `main`, never bypass hooks (`--no-verify`), never force-push, never merge your own PR.
@@ -46,3 +48,8 @@ These rules apply to every task and every AI coder. If a request conflicts with 
 ## Agents
 27. **Agents only with the owner's approval, every time.** Default: none. Before starting any agent or Workflow, send the owner a proposal with
     options (no agents / small / big …: why, how many and why, which model) and wait for the answer. Owner directive OD-9, details in `15`.
+
+## Assets and tokens
+28. **AI coders make no game assets** (models, pictures, audio, fonts). A task asks for them in an asset request, one task ahead, and
+    runs on placeholders until they arrive (`27`, OD-22).
+29. **Spend tokens on code and tests:** read by section, run quietly, write short logs, one part per context (`16` §H, OD-19).

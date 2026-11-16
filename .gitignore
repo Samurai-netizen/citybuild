@@ -51,3 +51,4 @@ art/previews/motion/*
 art/ui/city_phone.png
 art/ui/preview/shots/
 __pycache__/
+.test-logs/
