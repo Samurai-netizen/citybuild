@@ -70,7 +70,7 @@ anyone (owner directive OD-12). Worked examples for each kind: `docs/how-to/docu
 - UI in UXML/USS. Element names are kebab-case and are queried once and cached.
 
 ## Tests
-`08` and `.claude/rules/tests.md` are binding. New behaviour needs new tests in the same step. Engine rules are written test-first.
+`08` and `.claude/rules/tests.md` are binding. Every behaviour is written test-first: its test is seen failing before its code (`08` → Test-first loop).
 
 ## Approved dependencies (anything else needs G-Dependency)
 Server: ASP.NET Core and EF Core 10 (Microsoft, incl. `Microsoft.AspNetCore.OpenApi`, `Microsoft.Extensions.ApiDescription.Server` (build time only, the

@@ -50,8 +50,12 @@ dependency map.
 ## 4. Build log and decisions
 - **One entry per task**, at `docs/build-log/<YYYY>/<YYYY-MM-DD>-<NN>-<TASK>.md`, created with `scripts/dev/new-log-entry.sh`
   from `docs/build-log/TEMPLATE.md`. Each session working on the task appends a "Session N" section.
-- **Every decision goes into the entry's Decisions table** when it's made: what was chosen, the alternatives, why,
-  and its scope. Small, local decisions count too. That's the point.
+- **Every decision goes into the entry's Decisions table** when it's made, one row: what was chosen, the alternative, why, its scope.
+  A **decision** is a choice the next coder or the owner could have made differently and would need to know: it changes behaviour, a
+  contract, a number, a name other files use; it picks between real alternatives; or it reads an unclear spec one way. Small ones count
+  when they fit that. What the code already shows (a local name, the order of two lines, formatting) is not a decision: don't log it.
+- **Entries are short** (OD-19): a part is at most five lines of "what was done"; nothing the commits or the diff already say is
+  repeated; test output is a count, not a paste. An entry that passes about 150 lines for a task of one to three days is narrating.
 - **Escalation:**
   - project-wide decisions (affecting other tasks, conventions or contracts) also get a row in `12-decisions.md`;
   - architectural or hard-to-reverse decisions also get an ADR in `docs/adr/` (from the template).

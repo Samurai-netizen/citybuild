@@ -11,6 +11,7 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
+- [BL-20261116-02 · CR-0010-T1 · Workflow v2 in the kit, and the M1 plan proposal](2026/2026-11-16-02-CR-0010-T1.md) — Done
 - [BL-20261116-01 · CR-0009-T1 · Player metrics: recording](2026/2026-11-16-01-CR-0009-T1.md) — Partial
 - [BL-20261115-01 · M0-67 · Balance simulator](2026/2026-11-15-01-M0-67.md) — Done
 - [BL-20261113-01 · M0-66 · Architecture fitness and dependency review](2026/2026-11-13-01-M0-66.md) — Done

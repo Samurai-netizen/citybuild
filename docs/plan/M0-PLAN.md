@@ -335,11 +335,11 @@ The AI coder updates its row at start (`In progress`) and finish (`In review`). 
 | M0-64 | 11 | Ledger audit | O | Done |
 | M0-65 | 11 | Banned APIs and architecture tests | S | Done |
 | M0-66 | 11 | Architecture fitness and dependency review | O | Done |
-| M0-67 | 12 | Balance simulator | O PLAN | In review |
+| M0-67 | 12 | Balance simulator | O PLAN | Done |
 | M0-68 | 12 | Strategy runs and findings | O | Todo |
 | M0-69 | 12 | Apply approved content changes | S MANUAL decision | Todo |
 | M0-70 | 12 | Content validation hardening | S | Todo |
-| M0-71 | 12 | First-session polish | S | Todo |
+| M0-71 | 12 | First-session polish | S | Skipped |
 | M0-72 | 12 | Playtest and smoke checklist | O MANUAL | Todo |
 | M0-73 | 13 | HTTP end-to-end suite | O | Todo |
 | M0-74 | 13 | Attack suite | O | Todo |
