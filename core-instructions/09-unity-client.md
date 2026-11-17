@@ -175,5 +175,9 @@ The Editor must be closed for that project (project lock). `scripts/dev/test-uni
 Unity program from `UNITY_EDITOR`, prints a summary and exits non-zero on a failure or when no test ran (`client/README.md` → Run the tests).
 
 ## Device testing
-Android device → server on your PC: use the PC's LAN IP or `adb reverse tcp:8080 tcp:8080`.
-IL2CPP may strip DTO members used only via reflection: add a `link.xml` preserving the DTO assembly.
+Steps: `docs/BUILD.md` (M0-82). Players are **development builds** (`DevBuild`, `scripts/dev/build-client.sh`): only they allow plain http
+and keep the dev token. Build scenes: `Bootstrap` only. Android and iOS use IL2CPP; `Assets/_Project/Net/link.xml` keeps the whole
+`CityBuilder.Client.Net` assembly (the DTOs Newtonsoft reads through reflection) from stripping (`BuildSettingsTests`).
+The server address is the settings asset's, or the player's `-server-url <address>` option (`ServerAddress`): one build, any server.
+Android device → server on your PC: `adb reverse tcp:8080 tcp:8080` (then `localhost` works), or the PC's LAN IP in the asset with the
+server on `--urls http://0.0.0.0:8080`.

@@ -3,7 +3,7 @@
 Durations assume one developer with Claude Code, about 4–6 focused hours a day. They are estimates,
 not commitments; each milestone ends only when its exit criteria pass.
 
-## M0 — Technical vertical slice of Era I (14 days, realistically 16–20) ← current
+## M0 — Technical vertical slice of Era I (14 days, realistically 16–20) ← done (M0-84)
 Prove the spine: server-authoritative, deterministic, real-time production with workers and research.
 - Content: 3 items, 4 buildings (levels 1–2), 4 research nodes (`23-mvp-content.md`), plus the logistics base set of CR-0008: the
   Courier Station, the science building, the Warehouse, road levels 1–2 and two more research nodes.
@@ -26,7 +26,11 @@ Prove the spine: server-authoritative, deterministic, real-time production with 
 - clean-clone setup is documented;
 - every project has a current module doc, every task has a build log entry, and CI is green on `main`.
 
-## M1 — Era I complete (≈ 4–5 weeks)
+**Exit checked (M0-84):** met; the evidence for each line is `docs/MVP-AUDIT.md` → Definition of Done, the handoff is
+`docs/HANDOFF-M0.md`. Golden #1 on a dev build is met only in part: the macOS player reached the city over HTTP (M0-82), and #1 passes over HTTP in the
+tests; playing #1 through in a player on a screen or a phone is the owner's check (`docs/BUILD.md`).
+
+## M1 — Era I complete (≈ 4–5 weeks) ← next
 Make the first 3–5 days worth playing.
 - Full Era I content: ~8 items (wood, stone, grain/flour/bread chains), ~10 buildings, ~12 research nodes in
   3–4 branches, building levels up to 3–4, Land Survey expansions, more builder slots via research.

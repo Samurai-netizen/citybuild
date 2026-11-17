@@ -82,28 +82,30 @@ Also:
 ## 1. Goal and Definition of Done
 
 After 14 days (realistically 16–20) you have a clean, tested, extensible spine — **not** a full game:
+Evidence for each box: `docs/MVP-AUDIT.md` → Definition of Done (M0-83). The Process box was ticked by M0-84 (`docs/HANDOFF-M0.md`): M0-71
+is Skipped (M1-PLAN §3, M1-10 replaces it), M0-80 … M0-84 are `In review` in their PR and `Done` at its merge.
 
-- [ ] Unity opens without errors; the server builds with zero warnings in `src/`; `docker compose up` works.
-- [ ] Dev login creates a player and an Era I starter city on the server.
-- [ ] Unity shows the 8×8 grid, a build menu (locked cards name their research), and a HUD with each item's city total and
+- [x] Unity opens without errors; the server builds with zero warnings in `src/`; `docker compose up` works.
+- [x] Dev login creates a player and an Era I starter city on the server.
+- [x] Unity shows the 8×8 grid, a build menu (locked cards name their research), and a HUD with each item's city total and
       net rate per hour, coins, free workers, builders, a research ring and an era badge.
-- [ ] Cottages provide workers; producers are auto-staffed when built; the **worker stepper** changes speed live.
-- [ ] Woodcutter → Sawmill → Trading Post runs in real time; each building keeps its goods in its own store; full stores and missing
+- [x] Cottages provide workers; producers are auto-staffed when built; the **worker stepper** changes speed live.
+- [x] Woodcutter → Sawmill → Trading Post runs in real time; each building keeps its goods in its own store; full stores and missing
       inputs stall buildings visibly.
-- [ ] Goods move only with walkers: manual trips by free workers and couriers of a Courier Station on routes (All, Half, Quarter; any
+- [x] Goods move only with walkers: manual trips by free workers and couriers of a Courier Station on routes (All, Half, Quarter; any
       percentage after its research), along 4-direction paths that avoid buildings and use roads when they are faster; roads can be built,
       upgraded and removed for coins.
-- [ ] Constructions, upgrades and research pay coins at once and get their goods by delivery (research at the science building).
-- [ ] Research: financing Trade Charter unlocks the Trading Post; Sharpened Axes and Frame Saw speed up production.
-- [ ] Upgrades (L1 → L2) raise worker limits and refund an interrupted cycle.
-- [ ] Coming back after hours shows a welcome-back report with what the couriers did and a Re-energize button. Research finishes on
+- [x] Constructions, upgrades and research pay coins at once and get their goods by delivery (research at the science building).
+- [x] Research: financing Trade Charter unlocks the Trading Post; Sharpened Axes and Frame Saw speed up production.
+- [x] Upgrades (L1 → L2) raise worker limits and refund an interrupted cycle.
+- [x] Coming back after hours shows a welcome-back report with what the couriers did and a Re-energize button. Research finishes on
       time; there is no fixed 8 h cap: couriers work while the player is away only as long as their stamina lasts.
-- [ ] Invalid, locked, unaffordable, over-assigned, replayed, conflicting and concurrent requests are rejected correctly.
-- [ ] State survives server restarts, and the ledger reconciles with the stores, the loads and the purse.
-- [ ] Golden scenarios #1 and #2 (`23-mvp-content.md`) pass in the engine and over HTTP.
-- [ ] Determinism, split invariance, timer invariance, conservation, attack and concurrency suites pass.
-- [ ] A clean clone can be set up from the README, and a development build reaches the city screen.
-- [ ] **Process:** every task has a build log entry with its decisions; every project or assembly has a current module doc;
+- [x] Invalid, locked, unaffordable, over-assigned, replayed, conflicting and concurrent requests are rejected correctly.
+- [x] State survives server restarts, and the ledger reconciles with the stores, the loads and the purse.
+- [x] Golden scenarios #1 and #2 (`23-mvp-content.md`) pass in the engine and over HTTP.
+- [x] Determinism, split invariance, timer invariance, conservation, attack and concurrency suites pass.
+- [x] A clean clone can be set up from the README, and a development build reaches the city screen.
+- [x] **Process:** every task has a build log entry with its decisions; every project or assembly has a current module doc;
       generated reference docs are current; CI is green on `main`; the board shows all 88 tasks (85 plan tasks and CR-0008's three) `Done` or
       `Skipped` (with a reason).
 
@@ -340,19 +342,19 @@ The AI coder updates its row at start (`In progress`) and finish (`In review`). 
 | M0-69 | 12 | Apply approved content changes | S MANUAL decision | Done |
 | M0-70 | 12 | Content validation hardening | S | Done |
 | M0-71 | 12 | First-session polish | S | Skipped |
-| M0-72 | 12 | Playtest and smoke checklist | O MANUAL | In review |
+| M0-72 | 12 | Playtest and smoke checklist | O MANUAL | Done |
 | M0-73 | 13 | HTTP end-to-end suite | O | Done |
 | M0-74 | 13 | Attack suite | O | Done |
 | M0-75 | 13 | Concurrency suite | O | Done |
-| M0-76 | 13 | Unity smoke run | S MANUAL | In review |
+| M0-76 | 13 | Unity smoke run | S MANUAL | Done |
 | M0-77 | 13 | Clean-clone test | S | Done |
 | M0-78 | 13 | Security boundaries report | O | Done |
-| M0-79 | 14 | Bug triage | O | In review |
-| M0-80 | 14 | Code-freeze review | O | Todo |
-| M0-81 | 14 | Invariant gap analysis | O | In review |
-| M0-82 | 14 | Development build | S MANUAL | Todo |
-| M0-83 | 14 | Final MVP audit | O | Todo |
-| M0-84 | 14 | M0 close-out | S | Todo |
+| M0-79 | 14 | Bug triage | O | Done |
+| M0-80 | 14 | Code-freeze review | O | In review |
+| M0-81 | 14 | Invariant gap analysis | O | Done |
+| M0-82 | 14 | Development build | S MANUAL | In review |
+| M0-83 | 14 | Final MVP audit | O | In review |
+| M0-84 | 14 | M0 close-out | S | In review |
 
 ---
 

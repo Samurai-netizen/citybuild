@@ -14,6 +14,8 @@
 # Player builds
 /Build/
 /Builds/
+# Android build scratch (Unity 6.3 writes it at the project root)
+/.utmp/
 *.apk
 *.aab
 *.unitypackage
