@@ -113,7 +113,33 @@ internal static class DatabaseCommands
             string.Create(CultureInfo.InvariantCulture, $"event {row.EventType} {row.Detail} {row.Outcome} {row.Value} {row.CityClock}"));
         IEnumerable<string> receipts = (await ReceiptsAsync(database, playerId))
             .Select(row => ReceiptLine(row.RequestId, row.CommandType, row.PayloadHash, row.ResponseJson));
-        return string.Join("\n", [$"version {city.StateVersion}", StateOf(city), .. ledger, .. events, .. receipts]);
+        return string.Join("\n", [$"version {city.StateVersion}", StateOf(city), .. ledger, .. receipts, .. events]);
+    }
+
+    /// <summary>
+    /// Asserts what a rule's refusal at an unchanged instant stores (CR-0009): the city, its ledger and its receipts exactly as
+    /// <paramref name="before"/>, and after them one player event per refusal, in order, each a <c>command.&lt;type&gt;</c> row with that error
+    /// code as its outcome and no value. Nothing else.
+    /// </summary>
+    /// <param name="factory">The server.</param>
+    /// <param name="database">The test's database.</param>
+    /// <param name="playerId">The refused player.</param>
+    /// <param name="cityId">Their city.</param>
+    /// <param name="before">What <see cref="StoredAsync"/> gave before the refused requests.</param>
+    /// <param name="codes">The error code of each refusal, in the order they were sent.</param>
+    /// <returns>A task that completes when the assertion has run.</returns>
+    public static async Task AssertStoredWithRefusalsAsync(
+        WebApplicationFactory<Program> factory, TestDatabase database, Guid playerId, Guid cityId, string before, params string[] codes)
+    {
+        string after = await StoredAsync(factory, database, playerId, cityId);
+
+        Assert.StartsWith(before + "\n", after, StringComparison.Ordinal);
+        string[] added = after[(before.Length + 1)..].Split('\n');
+        Assert.Equal(codes.Length, added.Length);
+        for (int i = 0; i < codes.Length; i++)
+        {
+            Assert.Matches($"^event command\\.[a-z-]+ [a-z0-9_]* {codes[i]}  [0-9]+$", added[i]);
+        }
     }
 
     /// <summary>The line <see cref="StoredAsync"/> writes for one receipt, so a test can name the receipt it expects there.</summary>

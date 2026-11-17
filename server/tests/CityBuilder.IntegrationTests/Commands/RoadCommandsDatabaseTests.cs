@@ -105,10 +105,10 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
 
     /// <summary>
     /// A building can't be placed on a road (<c>04</c> §8, CR-0008): <c>place-building</c> on the Dirt path at (2,2) is <c>TILE_OCCUPIED</c>
-    /// (409), and nothing is stored.
+    /// (409), and only its player event is stored (CR-0009).
     /// </summary>
     [Fact]
-    public async Task Post_PlaceBuildingOnARoad_Is409TileOccupiedAndStoresNothing()
+    public async Task Post_PlaceBuildingOnARoad_Is409TileOccupiedAndStoresOnlyItsEvent()
     {
         (Guid player, Guid city) = await StoreCityWithRoadsAsync(Factory, "builder", 1000, _twoRoads, House(1));
         string stored = await StoredAsync(Factory, Database, player, city);
@@ -117,12 +117,12 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
             Factory, "/api/v1/commands/place-building", player, $$"""{"requestId":"{{_requestId}}","buildingTypeId":"house","x":2,"y":2}""");
 
         Assert.Equal((HttpStatusCode.Conflict, "TILE_OCCUPIED"), (response.Status, (string)response.Json()["code"]!));
-        Assert.Equal(stored, await StoredAsync(Factory, Database, player, city));
+        await AssertStoredWithRefusalsAsync(Factory, Database, player, city, stored, "TILE_OCCUPIED");
     }
 
     /// <summary>
     /// Every rule's refusal on the real server: the code, the status and the request id, and the city stored exactly as before (no time has
-    /// elapsed, so not even a settlement is written). A house or a road in the way, a tile past the grid's edge (also after a free one), 15
+    /// elapsed, so not even a settlement is written; only the refusal's player event, CR-0009). A house or a road in the way, a tile past the grid's edge (also after a free one), 15
     /// coins for three tiles with 14, a tile without a road, a road at its last level, 15 coins for an upgrade with 14, and a remove list with a
     /// tile without a road.
     /// </summary>
@@ -140,7 +140,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
     [InlineData(_upgrade, """[{"x":4,"y":2}]""", 1000, (HttpStatusCode)422, "MAX_LEVEL")]
     [InlineData(_upgrade, """[{"x":2,"y":2}]""", 14, (HttpStatusCode)422, "INSUFFICIENT_RESOURCE")]
     [InlineData(_remove, """[{"x":2,"y":2},{"x":5,"y":5}]""", 1000, HttpStatusCode.NotFound, "ROAD_NOT_FOUND")]
-    public async Task Post_RuleRefuses_IsProblemAndStoresNothing(string path, string tiles, long coins, HttpStatusCode status, string code)
+    public async Task Post_RuleRefuses_IsProblemAndStoresOnlyItsEvent(string path, string tiles, long coins, HttpStatusCode status, string code)
     {
         (Guid player, Guid city) = await StoreCityWithRoadsAsync(
             Factory, "builder", coins, _twoRoads, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
@@ -151,7 +151,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
         Assert.Equal(status, response.Status);
         JsonNode problem = response.Json();
         Assert.Equal((code, _requestId.ToString()), ((string)problem["code"]!, (string)problem["requestId"]!));
-        Assert.Equal(stored, await StoredAsync(Factory, Database, player, city));
+        await AssertStoredWithRefusalsAsync(Factory, Database, player, city, stored, code);
     }
 
     /// <summary>

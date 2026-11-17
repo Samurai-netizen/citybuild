@@ -159,12 +159,12 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
         Assert.Equal("1 house L2 Idle - target 0 workers 0", await BuildingAsync(Database, city, 1));
     }
 
-    /// <summary>An id of 1 or more the city doesn't have is <c>BUILDING_NOT_FOUND</c> (404) and stores nothing.</summary>
+    /// <summary>An id of 1 or more the city doesn't have is <c>BUILDING_NOT_FOUND</c> (404) and stores only its player event (CR-0009).</summary>
     /// <param name="buildingId">The id sent.</param>
     [Theory]
     [InlineData(3)]
     [InlineData(int.MaxValue)]
-    public async Task Post_IdNotInTheCity_Is404AndStoresNothing(int buildingId)
+    public async Task Post_IdNotInTheCity_Is404AndStoresOnlyItsEvent(int buildingId)
     {
         (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
 
@@ -234,9 +234,9 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
         Assert.Equal("""{"planks":20}""", response.Json()["city"]!["buildings"]![1]!["needs"]!.ToJsonString());
     }
 
-    /// <summary>A building that is already upgrading is <c>BUILDING_BUSY</c> (409) for a second upgrade, which stores nothing.</summary>
+    /// <summary>A building that is already upgrading is <c>BUILDING_BUSY</c> (409) for a second upgrade, which stores only its player event (CR-0009).</summary>
     [Fact]
-    public async Task Post_WhileUpgrading_Is409BuildingBusyAndStoresNothing()
+    public async Task Post_WhileUpgrading_Is409BuildingBusyAndStoresOnlyItsEvent()
     {
         (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, House(1));
         Assert.Equal(HttpStatusCode.OK, (await UpgradeAsync(player, Guid.CreateVersion7(), 1)).Status);
@@ -244,18 +244,18 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
         await AssertRefusedAsync(player, city, 1, HttpStatusCode.Conflict, "BUILDING_BUSY");
     }
 
-    /// <summary>A building at its type's max level (a level-2 house) is <c>MAX_LEVEL</c> (422) and stores nothing.</summary>
+    /// <summary>A building at its type's max level (a level-2 house) is <c>MAX_LEVEL</c> (422) and stores only its player event (CR-0009).</summary>
     [Fact]
-    public async Task Post_AtMaxLevel_Is422MaxLevelAndStoresNothing()
+    public async Task Post_AtMaxLevel_Is422MaxLevelAndStoresOnlyItsEvent()
     {
         (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, House(1, level: 2));
 
         await AssertRefusedAsync(player, city, 1, HttpStatusCode.UnprocessableEntity, "MAX_LEVEL");
     }
 
-    /// <summary>With both builders on constructions, an upgrade of the idle house is <c>NO_FREE_BUILDER</c> (409) and stores nothing.</summary>
+    /// <summary>With both builders on constructions, an upgrade of the idle house is <c>NO_FREE_BUILDER</c> (409) and stores only its player event (CR-0009).</summary>
     [Fact]
-    public async Task Post_EveryBuilderBusy_Is409NoFreeBuilderAndStoresNothing()
+    public async Task Post_EveryBuilderBusy_Is409NoFreeBuilderAndStoresOnlyItsEvent()
     {
         (Guid player, Guid city) = await StoreCityAsync(
             Factory, "upgrader", 1000, House(1), Woodcutter(2, BuildingPhase.Constructing, workers: 0), Woodcutter(3, BuildingPhase.Constructing, workers: 0, x: 2));
@@ -264,11 +264,11 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     }
 
     /// <summary>
-    /// Coins the purse doesn't cover are <c>INSUFFICIENT_RESOURCE</c> (422): 399 coins for a trading post's 400; nothing is stored and the
-    /// cycle keeps running.
+    /// Coins the purse doesn't cover are <c>INSUFFICIENT_RESOURCE</c> (422): 399 coins for a trading post's 400; only its player event is stored (CR-0009)
+    /// and the cycle keeps running.
     /// </summary>
     [Fact]
-    public async Task Post_CoinsShort_Is422InsufficientResourceAndStoresNothing()
+    public async Task Post_CoinsShort_Is422InsufficientResourceAndStoresOnlyItsEvent()
     {
         (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 399, House(1), TradingPost(2));
 
@@ -385,7 +385,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
 
     /// <summary>
     /// Sends an upgrade and asserts the refusal: the status, the code and the request id, and the city stored exactly as before (no time
-    /// has elapsed, so not even a settlement is written).
+    /// has elapsed, so not even a settlement is written): only the refusal's player event is added (CR-0009).
     /// </summary>
     /// <param name="player">The acting player.</param>
     /// <param name="city">Their city.</param>
@@ -401,7 +401,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
         Assert.Equal(status, response.Status);
         JsonNode problem = response.Json();
         Assert.Equal((code, _requestId.ToString()), ((string)problem["code"]!, (string)problem["requestId"]!));
-        Assert.Equal(stored, await StoredAsync(Factory, Database, player, city));
+        await AssertStoredWithRefusalsAsync(Factory, Database, player, city, stored, code);
     }
 
     /// <summary>Sends a trip of all of a good from one building's store to another over HTTP and returns the snapshot; it must succeed.</summary>

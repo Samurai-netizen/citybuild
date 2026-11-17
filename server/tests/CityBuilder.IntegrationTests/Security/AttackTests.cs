@@ -100,7 +100,8 @@ public sealed class AttackTests(PostgresServer server) : PostgresTest(server)
 
         Assert.Equal(_buildingCommands.Select(pair => $"{pair.Command} 404 BUILDING_NOT_FOUND"), answers);
         Assert.Equal(ownerStored, await StoredAsync(api, Database, owner.PlayerId, ownerCity));
-        Assert.Equal(attackerStored, await StoredAsync(api, Database, attacker.PlayerId, attackerCity));
+        await AssertStoredWithRefusalsAsync(
+            api, Database, attacker.PlayerId, attackerCity, attackerStored, [.. _buildingCommands.Select(_ => "BUILDING_NOT_FOUND")]);
     }
 
     /// <summary>

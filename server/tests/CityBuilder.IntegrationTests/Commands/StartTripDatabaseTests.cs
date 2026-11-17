@@ -109,7 +109,7 @@ public sealed class StartTripDatabaseTests(PostgresServer server) : PostgresTest
 
         Assert.Equal((HttpStatusCode.NotFound, "BUILDING_NOT_FOUND"), (response.Status, (string)response.Json()["code"]!));
         Assert.Equal(ownerStored, await StoredAsync(Factory, Database, owner, ownerCity));
-        Assert.Equal(attackerStored, await StoredAsync(Factory, Database, attacker, attackerCity));
+        await AssertStoredWithRefusalsAsync(Factory, Database, attacker, attackerCity, attackerStored, "BUILDING_NOT_FOUND");
     }
 
     /// <summary>Sends a trip of all of a good over HTTP with the player's token.</summary>

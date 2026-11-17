@@ -1,8 +1,10 @@
 using CityBuilder.Application.Cities;
 using CityBuilder.Application.Content;
+using CityBuilder.Application.Metrics;
 using CityBuilder.Application.Persistence;
 using CityBuilder.Domain.Commands;
 using CityBuilder.Domain.Ledger;
+using CityBuilder.Domain.Metrics;
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.Rules;
 
@@ -13,7 +15,8 @@ namespace CityBuilder.Application.Commands;
 /// <c>06</c>, write transaction pattern; ADR-0004). In order: the shape check (before the database); the city's transaction with its row
 /// lock (<see cref="ICityTransactionRunner"/>); the receipt of <c>(playerId, requestId)</c>: the same payload hash returns the stored response
 /// and another hash <c>IDEMPOTENCY_CONFLICT</c>, both before the settle and writing nothing; the settle; the mutation (<see cref="ICityCommand.Apply"/>);
-/// on a rule error the closing advance and the settlement only, without a receipt; otherwise the closing advance and one save of the city,
+/// the command's player event (CR-0009), on a rule error and on success, in the same transaction; on a rule error the closing advance and
+/// the settlement only, without a receipt (and when nothing was settled, only the event); otherwise the closing advance and one save of the city,
 /// its ledger rows (settlement, then refunds and costs, then the closing advance) and the receipt with the response. A unique violation on the
 /// receipt (an identical request committed first) rolls back, and the stored receipt answers. Scoped, one per request.
 /// </summary>
@@ -109,11 +112,15 @@ public sealed class CommandPipeline(
         GameContent content = _content.Content;
         DateTimeOffset now = _timeProvider.GetUtcNow();
         CitySettler settler = CitySettler.Begin(city, content, now, _presence);
+
+        // The metrics' detail is read on the settled city before the mutation (an upgraded or placed building is named as it was asked for).
+        string? detail = command.EventDetail(city.State, content);
         MutationResult mutation = command.Apply(city.State, content);
         if (mutation.ErrorCode is { } errorCode)
         {
             // Time passed is never undone (decision 014): the settlement is committed, but no receipt, so a new attempt needs a new id.
             Settlement rejectedAfter = settler.Close();
+            transaction.Record(CommandEvent(city, command, detail, CommandEvents.Outcome(errorCode), now));
             if (settler.Changed)
             {
                 await transaction.SaveAsync(settler.LedgerEntries(), receipt: null, cancellationToken);
@@ -128,9 +135,23 @@ public sealed class CommandPipeline(
         string response = writeResponse(new CommandSuccess(command.RequestId, city, settlement, checked(city.StateVersion + 1), now));
 
         // A successful command always saves, also when it changed nothing: its receipt describes the saved state.
+        transaction.Record(CommandEvent(city, command, detail, PlayerEventTypes.OutcomeAccepted, now));
         await transaction.SaveAsync(ledger, new CommandReceipt(command.RequestId, command.CommandType, payloadHash, response), cancellationToken);
         return CommandResult.Succeeded(response, settlement);
     }
+
+    /// <summary>
+    /// The command's player event (CR-0009): <c>command.&lt;type&gt;</c> with its detail and outcome, at the settled city clock and the
+    /// command's server second. Recorded on the transaction, so it is written exactly when the command's transaction commits.
+    /// </summary>
+    /// <param name="city">The acting player's city, settled and closed.</param>
+    /// <param name="command">The command.</param>
+    /// <param name="detail">The content id it is about, or <see langword="null"/>.</param>
+    /// <param name="outcome"><c>accepted</c> or the error code.</param>
+    /// <param name="now">The server time of the command.</param>
+    /// <returns>The event.</returns>
+    private static PlayerEvent CommandEvent(CityAggregate city, ICityCommand command, string? detail, string outcome, DateTimeOffset now) =>
+        new(city.PlayerId, PlayerEventTypes.ForCommand(command.CommandType), detail, outcome, value: null, city.State.Clock, now);
 
     /// <summary>The answer of a stored receipt: its response for the same payload, a conflict for another.</summary>
     /// <param name="stored">The receipt of the request id.</param>
