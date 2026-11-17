@@ -113,6 +113,29 @@ internal sealed class GoldenHttpPlayer : IDisposable
     /// <summary>Disposes the client.</summary>
     public void Dispose() => _client.Dispose();
 
+    /// <summary>
+    /// Sends a command body as JSON to <c>/api/v1/commands/</c><paramref name="command"/> and returns the answer whatever its status, for a
+    /// request that may be refused (M0-73).
+    /// </summary>
+    /// <param name="command">The command's path segment, such as <c>place-building</c>.</param>
+    /// <param name="body">The body, serialized as JSON.</param>
+    /// <returns>The status and the body (a snapshot, or a problem with its <c>code</c>; null when empty).</returns>
+    public async Task<(HttpStatusCode Status, JsonNode? Body)> SendAsync(string command, object body)
+    {
+        using HttpResponseMessage response = await _client.PostAsJsonAsync(
+            new Uri("/api/v1/commands/" + command, UriKind.Relative), body, TestContext.Current.CancellationToken);
+        string text = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        return (response.StatusCode, text.Length == 0 ? null : JsonNode.Parse(text));
+    }
+
+    /// <summary>The status of <c>GET /api/v1/city</c> with this player's token, for a token that may have expired (M0-73).</summary>
+    /// <returns>The status.</returns>
+    public async Task<HttpStatusCode> GetCityStatusAsync()
+    {
+        using HttpResponseMessage response = await _client.GetAsync(new Uri("/api/v1/city", UriKind.Relative), TestContext.Current.CancellationToken);
+        return response.StatusCode;
+    }
+
     /// <summary>Sends a command body as JSON to <c>/api/v1/commands/</c><paramref name="command"/>.</summary>
     /// <param name="command">The command's path segment.</param>
     /// <param name="body">The body, serialized in camelCase like every request.</param>
