@@ -38,7 +38,8 @@ docker compose down -v
 docker compose up -d postgres
 dotnet run --project server/src/CityBuilder.Api -- --Simulation:DevTimeScale=60
 ```
-Expected: the API logs a warning about the time scale; `curl http://localhost:8080/health` answers `Healthy`.
+Expected: the API logs a warning about the time scale; `curl http://localhost:8080/health` answers `Healthy`. Two red EF lines
+about `__EFMigrationsHistory` on the first start are expected: EF looks for its history table before it creates it.
 
 **S2. Login.** Open `Assets/Scenes/Bootstrap.unity`, press **Play**.
 Expected: within a few seconds the HUD shows Coins 800, workers `4 / 4`, builders `0 / 2`, `No research`, `Early Middle Ages` and a

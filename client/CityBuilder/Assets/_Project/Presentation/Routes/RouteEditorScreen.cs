@@ -57,7 +57,7 @@ namespace CityBuilder.Client.Presentation.Routes
         /// <summary>The name of the label with the last refused edit.</summary>
         public const string NoteName = "route-note";
 
-        /// <summary>The name of the sideways scroll view.</summary>
+        /// <summary>The name of the scroll view of the stop list (up and down only).</summary>
         public const string ScrollName = "route-scroll";
 
         /// <summary>The name of the list that holds the stop cards.</summary>

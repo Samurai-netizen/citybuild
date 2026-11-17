@@ -15,7 +15,7 @@ const OUT = path.join(__dirname, 'shots');
 const TOWN = path.join(REPO, 'art', 'previews', 'town_closeup.jpg');
 
 // The screens in the order the game stacks them (later ones on top).
-const LAYERS = ['ConnectionStatus', 'Hud', 'Toasts', 'PlacementBar', 'BuildMenu', 'Research', 'Inspector', 'ConnectionBanner', 'WelcomeBack'];
+const LAYERS = ['ConnectionStatus', 'Hud', 'Toasts', 'PlacementBar', 'BuildMenu', 'Research', 'Inspector', 'RouteEditor', 'ConnectionBanner', 'WelcomeBack'];
 
 // The file URL of an icon by name.
 function icon(name) {
@@ -133,6 +133,21 @@ window.fillBanner = () => {
   $('connection-banner').classList.remove('connection-banner--hidden');
   text('connection-message', 'No connection: your town may be out of date'); text('connection-synced', 'Last synced 2 min ago');
 };
+window.fillRoute = (T) => {
+  $('route-panel').classList.remove('route-panel--hidden');
+  text('route-title', 'Courier 1 of Courier Station'); text('route-summary', '3 stops · a lap takes 4 m 20 s');
+  text('route-note', ''); text('route-amount-note', 'Half and Quarter need Tally Sticks'); text('route-hint', '');
+  const list = $('route-stops');
+  [["1. Woodcutter's Hut", 'Next stop in 1 m 10 s', [['Take', 'Logs', 'All']]],
+   ['2. Sawmill', 'Next stop in 50 s', [['Put', 'Logs', 'All'], ['Take', 'Planks', 'All']]],
+   ['3. Trading Post', 'Next stop in 2 m 20 s', [['Put', 'Planks', 'Half']]]]
+    .forEach(([title, walk, acts]) => {
+      const c = add(list, T.stop);
+      text('route-stop-title', title, c); text('route-stop-walk', walk, c);
+      acts.forEach(([k, i, a]) => { const r = add($('route-stop-actions', c), T.action);
+        text('route-action-kind', k, r); text('route-action-item', i, r); text('route-action-amount', a, r); });
+    });
+};
 window.finish = () => {
   document.querySelectorAll('.ve').forEach((e) => { if (getComputedStyle(e).getPropertyValue('--glyph').trim()) e.classList.add('glyphed'); });
 };
@@ -145,6 +160,7 @@ const SCENARIOS = {
   research: () => `fillHud(T, I); fillBuild(T, I, false); fillResearch(T, I, true);`,
   welcome: () => `fillHud(T, I); fillBuild(T, I, false); fillResearch(T, I, false); fillWelcome();`,
   placement: () => `fillHud(T, I); fillBuild(T, I, false); fillResearch(T, I, false); fillPlacement(); fillToasts([['No free workers: build a Cottage', 'error']]);`,
+  route: () => `fillHud(T, I); fillBuild(T, I, false); fillResearch(T, I, false); fillRoute(T);`,
   offline: () => `fillHud(T, I); fillBuild(T, I, false); fillResearch(T, I, false); fillBanner();`,
 };
 
@@ -162,7 +178,7 @@ async function main() {
       const tab = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
       await tab.goto('file://' + file);
       await tab.evaluate(FILL);
-      const templates = { chip: template('HudChip'), card: template('BuildCard'), node: template('ResearchNode') };
+      const templates = { chip: template('HudChip'), card: template('BuildCard'), node: template('ResearchNode'), stop: template('RouteStop'), action: template('RouteAction') };
       await tab.evaluate(({ portraitMode, templates: T, icons, body }) => {
         if (portraitMode) document.querySelectorAll('.doc').forEach((r) => r.classList.add('portrait'));
         // The CSS url() of an icon by name, as UiIcons finds it.
