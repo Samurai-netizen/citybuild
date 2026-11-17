@@ -60,6 +60,7 @@ const handbook = [
     spec('05'),
     spec('06'),
     spec('07'),
+    folder('Security reports', 'docs/security'),
     folder('API operations', 'docs/api'),
     page('server/README.md', 'server/ folder'),
   ]),

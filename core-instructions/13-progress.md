@@ -7,9 +7,9 @@
 ## Resume point
 - **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M0-B (M0-73, M0-74, M0-75, M0-77, M0-78) · branch `task/M0-B-security-suites` · log `docs/build-log/2026/2026-11-17-01-M0-B.md`
-- **Part / step:** A, B, C, D done (last green 023a7ac; D is docs only) · next E (M0-78 security report)
+- **Part / step:** A to E done (last green 023a7ac; D and E are docs only) · next `/finish-task`
 - **Last completed:** M0-A (PR #98, merged)
-- **Next step:** part E: write `docs/security/MVP-SECURITY-BOUNDARIES.md` (each `07` protection → its tests; test list in the log), `docs/security/README.md`, the `docs/README.md` row, `website/sidebars.js`, `docs/testing/README.md`; the link from `07` needs the owner's approval. Then `/finish-task`.
+- **Next step:** owner answer on adding a link to `docs/security/MVP-SECURITY-BOUNDARIES.md` in `07` (protected); then `/finish-task` (`quality.sh`, board rows M0-73…78, `CHANGELOG.md`, PR).
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. CR-0012 (approved) runs after M0-D.
 - **Known broken / do not touch:** nothing.
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
