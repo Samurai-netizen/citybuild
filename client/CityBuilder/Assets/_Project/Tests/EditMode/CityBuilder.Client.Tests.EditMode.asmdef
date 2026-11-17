@@ -7,7 +7,8 @@
     "CityBuilder.Simulation",
     "CityBuilder.Client.Core",
     "CityBuilder.Client.Net",
-    "CityBuilder.Client.Presentation"
+    "CityBuilder.Client.Presentation",
+    "CityBuilder.Client.Editor"
   ],
   "includePlatforms": [
     "Editor"
