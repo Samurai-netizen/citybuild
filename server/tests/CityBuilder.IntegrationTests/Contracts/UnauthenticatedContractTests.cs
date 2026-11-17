@@ -1,10 +1,10 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json.Nodes;
+using CityBuilder.IntegrationTests.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
-using CityBuilder.IntegrationTests.Auth;
 
 namespace CityBuilder.IntegrationTests.Contracts;
 
