@@ -107,6 +107,7 @@ These cells of the dependency table in `03` are enforced by tests that read the 
 | Each `server/src` project's project references stay in its "May reference" cell (Api: Application and Infrastructure only) | `CityBuilder.Repository.Tests` → `Architecture/ProjectFileTests` |
 | No engine type has a public setter or mutable field (the `Content.Data` JSON holders excepted) and no field holds a float, double or decimal | `CityBuilder.Simulation.Tests` → `Architecture/EngineShapeTests` |
 | No engine source uses `float`, `double`, `decimal`, a clock, `Thread` or randomness, holds a content id as a string or compares an era with a number (other than the bounds 0 and 1) | `CityBuilder.Repository.Tests` → `Architecture/EngineSourceTests` (syntax scans of `shared/Simulation/Runtime/`) |
+| Player events (CR-0009) are write-only for game code: `IPlayerEventRepository` has `Add` only; on the server only the context, the row, its configuration and `PlayerEventRepository` name the stored rows; no `shared/` or `client/` source names a player event | `CityBuilder.Application.Tests` → `Metrics/PlayerEventRepositoryShapeTests`; `CityBuilder.Repository.Tests` → `Architecture/MetricsSourceTests` |
 
 Banned APIs are not a test but a build error: every `server/src` project gets `Microsoft.CodeAnalysis.BannedApiAnalyzers` from
 `server/Directory.Build.props`, and `server/BannedSymbols.txt` bans `DateTime.Now`, `DateTime.UtcNow`, `DateTimeOffset.Now`,
@@ -162,4 +163,4 @@ sequenceDiagram
   request id.
 - The client never sends costs, times or totals (`02` §2); the server reads its own clock (`TimeProvider`, whole seconds).
 
-Last updated: M0-66
+Last updated: CR-0009-T1
