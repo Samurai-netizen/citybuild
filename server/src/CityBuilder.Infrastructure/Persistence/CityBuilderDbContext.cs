@@ -56,6 +56,9 @@ public sealed class CityBuilderDbContext(DbContextOptions<CityBuilderDbContext> 
     /// <summary>The <c>ledger_entries</c> table.</summary>
     public DbSet<LedgerEntryRow> LedgerEntries => Set<LedgerEntryRow>();
 
+    /// <summary>The <c>player_events</c> table (CR-0009): written by <c>PlayerEventRepository</c>, read only by the report tool.</summary>
+    public DbSet<PlayerEventRow> PlayerEvents => Set<PlayerEventRow>();
+
     /// <summary>Applies the configuration of every table, one by one, so the list of tables is visible here.</summary>
     /// <param name="modelBuilder">The builder of the model.</param>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
