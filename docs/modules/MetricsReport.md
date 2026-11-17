@@ -9,7 +9,7 @@ MetricsReport answers "what did the players do, how many reached each checkpoint
 ([CR-0009](../changes/CR-0009-player-metrics.md), part 4). It reads the player events that the server records (`player_events`,
 `core-instructions/06-data-model.md`) **read-only**, and the checkpoint file `server/analytics/checkpoints.json`, and writes one
 self-contained HTML page. It is a developer tool: never deployed, no endpoint, and nothing in the game reads what it computes.
-*(In progress, CR-0009-T2: the command line and the checkpoint file exist; the numbers and the page follow.)*
+*(In progress, CR-0009-T2: the command line, the checkpoint file and the analysis model exist; the numbers and the page follow.)*
 
 ## Key types
 | Type | Responsibility |
@@ -17,12 +17,17 @@ self-contained HTML page. It is a developer tool: never deployed, no endpoint, a
 | `CommandLine` | parses the options (`--help` lists them) and runs the report; exit codes 0 written, 1 bad input, 2 database |
 | `CheckpointFile` | reads and checks `checkpoints.json` with `Utf8JsonReader`, so each error names its line; gives `Checkpoint` and `Funnel` records |
 | `KnownEvents` | the event types a checkpoint may name: `command.` and every command's wire type (found by reflection), the recorded names, `production.first` |
+| `MetricsData` | the players (ids, creation, last seen) and their events as plain records, so every number is computed without a database |
+| `CheckpointMatcher`, `ReportCheckpoint` | which events match a checkpoint; the named checkpoints of the file plus one unnamed per distinct `(event_type, detail, outcome)` |
+| `PlayerTimeline` | one player's events in `(created_at, id)` order and the reach of a checkpoint: its `atLeast`-th match |
 
 ## Rules and invariants
 - Ids only: no dev name or other personal data is ever read into the page (owner's answer to the CR's question 3).
 - The tool only reads: one read-only transaction.
 - A broken checkpoint file stops the report with the first error and its line (exit code 1); a `detail` must be a building,
   research or item id of the content file. The `outcome` is not checked against the error codes (they live in the Api).
+- A named checkpoint's missing `detail` or `outcome` matches any; an unnamed checkpoint matches its exact triple, a missing part only
+  a missing one. Its title is `event_type / detail / outcome`, a missing outcome left out and a missing detail before an outcome shown as `—`.
 
 ## How to extend
 A new checkpoint is a line in `server/analytics/checkpoints.json`, no code.
