@@ -23,7 +23,7 @@ If a prompt seems to need any of these, stop and ask instead of building it.
 
 ## Business
 - Premium currency, speed-ups, IAP, ads, offers, subscriptions
-- Analytics SDKs, push notifications, remote config services
+- Analytics SDKs, push notifications, remote config services (first-party player events in our own PostgreSQL are in scope: CR-0009)
 
 ## Tech
 - Redis, message queues, background workers, microservices

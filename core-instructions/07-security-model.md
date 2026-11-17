@@ -100,6 +100,7 @@ On the client the same list is pinned by `RequestDtoTests` (each body's members)
 | Take the token from a release build's storage | Only the Editor and development players keep the token (`PlayerPrefs`, `AccessTokenStores.For(Debug.isDebugBuild)`); a release build keeps it in memory only and never writes it | `AccessTokenStoreTests.For_AReleaseBuild_KeepsNothing`, `For_ADevelopmentBuild_IsThePlayerPrefsStore` |
 | Probe server internals through `/health` (no auth) | The response is the status word only: no check details, versions or exception text | `GetHealth_AppRunning_Returns200WithStatusOnly` |
 | Read the full API description in production | OpenAPI (`/openapi/v1.json`) is mapped only in Development | `Security_OpenApiDocument_InProduction_IsNotServed` |
+| Learn about or influence the player metrics (CR-0009-T1) | The server records `player_events` from what it already sees (commands, settlement, logins); the client has no metrics code, the API no endpoint, field or header for them, and no response changes with recording. A row holds the player id, content ids, an outcome code, a number and the clocks, never a display name, token, address or request body. Game code can only add events (`IPlayerEventRepository.Add`), never read them, so no rule depends on them (`02` rule 23) | `PlayerEventPersistenceTests.PlayerEvents_Columns_AreExactlyThese`, `PlayerEventRepositoryShapeTests.IPlayerEventRepository_HasNoReadMember`, `MetricsSourceTests` (only the persistence files name the rows; `shared/` and `client/` never name an event), the unchanged contract tests and `ClientInputInventoryTests` |
 
 ## Future threats (design now, build with the market and guilds — see `26`)
 | Threat | Planned protection |
@@ -125,6 +126,10 @@ Never log: tokens, signing keys, full request bodies in production, personal dat
 - As built on the client (M0-57): every line goes through `ClientLog` (`LoggingPolicyTests` fails on a direct `Debug.Log*`). A request is logged by method,
   path, status and duration only, a failed one with its error code and the server's trace id; no token and no body, in any build, so a release
   build (level Warning) writes the failures and nothing of the traffic. Tests: `ApiClientLoggingTests`.
+
+- As built (CR-0009-T1): the `player_events` table is not a log but follows the same policy: ids only (player, content, error code),
+  no display name, token, address or body; the columns are pinned by `PlayerEvents_Columns_AreExactlyThese`. A player's events delete
+  with the player (cascade).
 
 - Reviewed (M0-60): every server log call and every client `ClientLog` call; none writes a token, a key, a body or a display name. A failed
   request's client line has the server's `code`, `detail` and `traceId`, and an answer that isn't Problem Details is never copied into it

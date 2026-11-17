@@ -183,7 +183,7 @@ Filters as arguments: a date range, and `--exclude <dev names>` so test accounts
 ## Tasks
 | ID | Title | Model | Status |
 |---|---|---|---|
-| CR-0009-T1 | Recording: `player_events` and its migration, `IPlayerEventRecorder`, the command, settlement and session events, in the city's transaction; tests; `06`, `07`, `10`, `30`, the modules, the plan board; implementation plan: `docs/plan/CR-0009-T1-PLAN.md` | O PLAN | In progress |
+| CR-0009-T1 | Recording: `player_events` and its migration, `IPlayerEventRecorder`, the command, settlement and session events, in the city's transaction; tests; `06`, `07`, `10`, `30`, the modules, the plan board; implementation plan: `docs/plan/CR-0009-T1-PLAN.md` | O PLAN | In review |
 | CR-0009-T2 | The report: `checkpoints.json` and its validation, `tools/MetricsReport` (overview, checkpoint explorer, funnels, actions, friction, return, one player), `panel.sh metrics`, `docs/how-to/add-checkpoint.md`; implementation plan: `docs/plan/CR-0009-T2-PLAN.md` | O | Todo |
 
 T1 is planned in `docs/plan/CR-0009-T1-PLAN.md` (2026-11-16) and parked for a later date at the owner's wish; its section 2 holds four

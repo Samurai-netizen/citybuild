@@ -7,9 +7,9 @@
 ## Resume point
 - **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** CR-0009-T1 (player metrics: recording) · branch `task/CR-0009-T1-recording` · log `docs/build-log/2026/2026-11-17-04-CR-0009-T1.md` · plan `docs/plan/CR-0009-T1-PLAN.md`
-- **Part / step:** H of A … H (domain type, table, recording, command events, settlement events, session events, guards, docs) · A … G done (`6937440`)
+- **Part / step:** H of A … H (domain type, table, recording, command events, settlement events, session events, guards, docs) · A … H done
 - **Last completed:** M0-D (#101 merged; M0-80 … M0-84 `Done`)
-- **Next step:** part H (plan file §4 step 8): close the build log's open Docs impact rows (`07`, `10`, `30`, `05` no change, `12`, `31`, the module docs Domain and Infrastructure, `db-schema.md`, `add-migration.md`, `testing/README`, the boards and `13`, the CR and its README, the build-log README, CHANGELOG), then `/finish-task`. After this task: CR-0009-T2 or CR-0012-T1 (owner). Owner, any time: the APK on a phone (`docs/BUILD.md`).
+- **Next step:** `/finish-task`: `quality.sh`, `check-docs.sh --base origin/main`, `docs-site.sh build`, the self-review (persistence and security), the PR, the task report. After this task: CR-0009-T2 or CR-0012-T1 (owner). Owner, any time: the APK on a phone (`docs/BUILD.md`).
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. M1 CRs (CR-0011) to approve.
 - **Known broken / do not touch:** nothing.
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
