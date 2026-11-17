@@ -1,7 +1,8 @@
-/* The courier route editor (CR-0008-T2 part C; a side panel since CR-0008-T3, the owner's playtest round 4): a narrow parchment panel down
-   the left side from under the HUD to the bottom in landscape, a short sheet at the bottom in portrait, so most of the map stays free for the
-   taps that add stops. The stop cards stack in a list that scrolls up and down only. The dock's buttons are hidden while it is open, so it
-   reaches the bottom. Colours and sizes come from Common.uss. */
+/* The courier route editor (CR-0008-T2 part C; a side panel since CR-0008-T3; compact since M0-C, smoke test S8): a parchment panel down
+   the left side from under the HUD to the bottom in landscape, a sheet at the bottom in portrait, so most of the map stays free for the
+   taps that add stops. The header, the summary line and the footer are as low as the touch floor allows, so the stop list (it scrolls up and
+   down only) gets the height left. Every button in the list is compact (.route-compact: 48 units, body-size words). The dock's buttons are
+   hidden while it is open, so it reaches the bottom. Colours and sizes come from Common.uss. */
 .route-root {
   position: absolute;
   left: 0;
@@ -13,11 +14,13 @@
   align-items: stretch;
 }
 
+/* Half of the landscape screen at most, so the map keeps the rest for the taps that add stops (also on a 4:3 tablet, about 533 units wide,
+   where an action row still fits: its three buttons share what the remove button leaves); never wider than 460 units. */
 .route-panel {
-  width: 40%;
-  min-width: 240px; /* at most half of the narrowest landscape screen (480 units), so the map keeps at least half */
-  max-width: 440px;
+  width: 50%;
+  max-width: 460px;
   margin-top: var(--hud-height);
+  padding: var(--sp-2) var(--sp-3) var(--sp-3);
   flex-shrink: 1;
   flex-direction: column;
 }
@@ -26,38 +29,64 @@
   display: none;
 }
 
-/* Every text of the editor wraps inside its card instead of running into the next one (CR-0008 D22). */
+/* Every text of the editor wraps inside its row instead of running into the next one (CR-0008 D22). */
 .route-panel .unity-label {
   white-space: normal;
+}
+
+/* A button of the stop list and of the footer: the touch floor, body-size words, little padding. */
+.route-compact {
+  min-width: 48px;
+  min-height: 48px;
+  height: 48px;
+  padding: 0 var(--sp-2);
+  border-bottom-width: 4px;
+  font-size: var(--font-md);
+}
+
+.route-compact.glyph {
+  width: 48px;
+  padding: 0;
 }
 
 .route-header {
   flex-direction: row;
   align-items: center;
+  flex-shrink: 0;
 }
 
-.route-title {
+/* The title takes one line; a long one ends in an ellipsis instead of running under the summary. */
+.route-panel .route-title {
   flex-grow: 1;
   flex-shrink: 1;
-}
-
-.route-slot {
+  min-width: 0;
   margin-right: var(--sp-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .route-summary {
-  margin-top: var(--sp-1);
+  flex-shrink: 0;
+}
+
+/* The courier slot button opens the footer row on the left; Revert and Save sit on the right. */
+.route-slot {
+  flex-shrink: 0;
+  margin-right: auto;
 }
 
 .route-note {
+  flex-shrink: 0;
   margin-top: var(--sp-1);
   color: var(--c-stop-ink);
 }
 
+/* The list takes every unit the header and the footer leave; it never collapses below one action row. */
 .route-scroll {
   flex-grow: 1;
   flex-shrink: 1;
-  min-height: 0;
+  min-height: 120px;
   margin-top: var(--sp-2);
 }
 
@@ -67,55 +96,108 @@
 }
 
 .route-stop {
-  margin-bottom: var(--sp-2);
+  flex-shrink: 0;
 }
 
-.route-stop-walk {
-  margin-bottom: var(--sp-1);
+.route-stop-card {
+  padding: var(--sp-2);
+  margin-right: var(--sp-1);
+}
+
+.route-stop-head {
+  flex-direction: row;
+  align-items: center;
+}
+
+.route-stop-title {
+  -unity-font-definition: url("Fonts/Fredoka-SemiBold.ttf");
+  flex-grow: 1;
+  flex-shrink: 1;
+  min-width: 0;
+  margin-right: var(--sp-1);
+}
+
+.route-stop-tool {
+  flex-shrink: 0;
+  margin-left: var(--sp-1);
+}
+
+.route-stop-actions {
+  flex-direction: column;
+  margin-top: var(--sp-1);
 }
 
 .route-action {
   flex-direction: row;
   align-items: center;
-  margin-bottom: var(--sp-1);
+  margin-top: var(--sp-1);
 }
 
 .route-action-button {
-  flex-grow: 1;
-  flex-basis: 0;
+  flex-shrink: 1;
   min-width: 0;
   margin-right: var(--sp-1);
-  padding: 0 var(--sp-1);
-  font-size: var(--font-sm);
 }
 
-.route-stop-tools {
-  flex-direction: row;
-  justify-content: space-between;
+.route-action-kind {
+  flex-grow: 2;
+  flex-basis: 0;
+}
+
+.route-action-item {
+  flex-grow: 3;
+  flex-basis: 0;
+}
+
+.route-action-amount {
+  flex-grow: 2;
+  flex-basis: 0;
+}
+
+.route-action-remove {
+  flex-shrink: 0;
+}
+
+.route-stop-add {
+  align-self: flex-start;
   margin-top: var(--sp-1);
 }
 
-.route-amount-note {
-  margin-top: var(--sp-1);
-}
-
-.route-hint {
-  margin-top: var(--sp-1);
-  color: var(--c-stop-ink);
+/* The walk to the next stop, between two cards: a small line where the courier walks. */
+.route-stop-walk {
+  margin: var(--sp-1) 0 var(--sp-2) var(--sp-3);
+  -unity-text-align: middle-left;
 }
 
 .route-footer {
-  flex-direction: row;
-  justify-content: flex-end;
   flex-shrink: 0;
   margin-top: var(--sp-2);
 }
 
+.route-amount-note {
+  margin-bottom: var(--sp-1);
+}
+
+.route-hint {
+  margin-bottom: var(--sp-1);
+  color: var(--c-stop-ink);
+}
+
+.route-footer-buttons {
+  flex-direction: row;
+  justify-content: flex-end;
+}
+
 .route-footer-button {
+  flex-shrink: 0;
   margin-left: var(--sp-2);
 }
 
-/* Portrait: a sheet across the bottom, at most 45% of the screen high, so the map above it stays free. */
+.route-footer-button--main {
+  padding: 0 var(--sp-3);
+}
+
+/* Portrait: a sheet across the bottom, at most 55% of the screen high, so the map above it stays free. */
 .portrait .route-root {
   flex-direction: column;
   justify-content: flex-end;
@@ -125,6 +207,6 @@
   width: auto;
   min-width: 0;
   max-width: none;
-  max-height: 45%;
+  max-height: 55%;
   margin-top: 0;
 }

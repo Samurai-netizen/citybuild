@@ -41,6 +41,9 @@ namespace CityBuilder.Client.Presentation.Trips
         /// <summary>Whether <see cref="Dispose"/> has been called.</summary>
         private bool _disposed;
 
+        /// <summary>Raised when the player presses Send and the courier that would carry it rests (<see cref="TripFlowModel.NeedsReenergize"/>, M0-C-5): nothing is sent.</summary>
+        public event Action? ReenergizeNeeded;
+
         /// <summary>Creates and connects the trip flow.</summary>
         /// <exception cref="ArgumentNullException">An argument is null.</exception>
         public TripFlow(
@@ -150,9 +153,15 @@ namespace CityBuilder.Client.Presentation.Trips
             _selection?.ClearSelection();
         }
 
-        /// <summary>Confirms the trip and sends <c>start-trip</c>.</summary>
+        /// <summary>Confirms the trip and sends <c>start-trip</c>, or asks for re-energize when its courier rests.</summary>
         private void OnConfirmRequested()
         {
+            if (!_disposed && _model.Phase == TripPhase.Confirming && _model.CanConfirm && _model.NeedsReenergize)
+            {
+                ReenergizeNeeded?.Invoke();
+                return;
+            }
+
             if (_disposed || !_model.TryConfirm(out CommandIntent? intent))
             {
                 return;

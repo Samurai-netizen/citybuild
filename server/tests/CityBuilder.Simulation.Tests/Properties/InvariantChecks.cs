@@ -195,20 +195,28 @@ internal sealed class InvariantChecks
             }
         }
 
-        // A worker carries a load of at least 1 to the target and nothing on the way back for the next one (04 section 18).
-        Trip? wrong = city.Trips.FirstOrDefault(trip => trip.Remaining < 0 || (trip.Leg == TripLeg.ToTarget ? trip.Quantity < 1 : trip.Quantity != 0));
+        // A worker carries a load of at least 1 to the target; on the way back nothing for the next load, or the goods the target didn't
+        // take with nothing left to fetch; and while waiting at the source at least 1 with nothing to fetch (04 section 18, M0-C-3).
+        Trip? wrong = city.Trips.FirstOrDefault(trip => trip.Remaining < 0 || !(trip.Leg switch
+        {
+            TripLeg.ToTarget => trip.Quantity >= 1,
+            TripLeg.ToSource => trip.Quantity == 0 || trip.Remaining == 0,
+            _ => trip.Quantity >= 1 && trip.Remaining == 0,
+        }));
         return wrong is null ? null : $"trip {wrong.Id} carries {wrong.Quantity} on its way {wrong.Leg} with {wrong.Remaining} to fetch";
     }
 
     /// <summary>
-    /// Invariant 6: production and walkers never push a store's <c>stock + reserved</c> above its effective limit (<c>04</c> section 16);
-    /// only a refund into that building's store (an upgrade command, or an upgrade a delivery started in the step) and a returned load (a trip
-    /// from it that arrived in the step, counted whole since part of it may have been delivered; or what couriers carried from it less what
-    /// they still carry from it, when a courier stopped working) may, on top of the limit or of what the store held before, and a store
-    /// already above its limit may only fall otherwise.
+    /// Invariant 6: nothing pushes a store's <c>stock + reserved</c> above its effective limit (<c>04</c> section 16; M0-C-3): production,
+    /// deliveries, refunds (a running cycle's inputs are reserved) and returned loads (what doesn't fit stays with the walker) all stop at
+    /// the limit, and a store already above its limit (a city saved before M0-C-3) may only fall. Also counts the steps that end with a
+    /// walker holding goods a store had no room for, so the seeds show that case.
     /// </summary>
     private string? StorageCap(InvariantStep step)
     {
+        CountIf(
+            step.After.Trips.Any(trip => trip.Leg == TripLeg.Waiting) || step.After.Couriers.Any(courier => courier.Loads.Count > 0 && courier.State != CourierState.Walking),
+            "walkers ending a step with goods back home");
         foreach (Building after in step.After.Buildings)
         {
             step.Before.TryGetBuilding(after.Id, out Building? before);
@@ -218,42 +226,16 @@ internal sealed class InvariantChecks
                 CityQueries.TryGetEffectiveLimit(step.After, _content, after, item, out long limit);
                 long afterHeld = after.GetStock(item) + CityQueries.Reserved(_content, after, item);
                 long beforeHeld = before is null ? 0 : before.GetStock(item) + CityQueries.Reserved(_content, before, item);
-                long refunded = step.Operation is CityOperation.UpgradeBuilding upgrade && upgrade.BuildingId == after.Id
-                    ? step.Mutation?.Refunded.Where(line => line.Item == item).Sum(line => line.Quantity) ?? 0
-                    : 0;
-                if (step.Mutation is null && before?.Phase == BuildingPhase.Producing && after.Phase == BuildingPhase.Upgrading)
-                {
-                    refunded += Level(before).Recipe!.Inputs.Where(line => line.Item == item).Sum(line => line.Quantity);
-                }
-
-                // A load whose leg to the target ended in the step (the trip ended, or turned back for the next load) may come back whole.
-                long returned = step.Before.Trips
-                    .Where(trip => trip.SourceId == after.Id && trip.Item == item && trip.Leg == TripLeg.ToTarget && LegEnded(step, trip))
-                    .Sum(trip => trip.Quantity);
-                refunded += returned + Math.Max(0, CarriedFrom(step.Before, after.Id, item) - CarriedFrom(step.After, after.Id, item));
                 CountIf(afterHeld == limit, "stores ending with a good exactly at its limit");
-                CountIf(afterHeld > limit, "stores ending with a good above its limit");
-                // Deliveries and starts fill a store only up to its limit; refunds and returned loads come on top, also in the same second.
-                if (afterHeld > Math.Max(limit, beforeHeld) + refunded)
+                if (afterHeld > Math.Max(limit, beforeHeld))
                 {
-                    return $"building {after.Id}, {item}: stock + reserved went from {beforeHeld} to {afterHeld} (refund and returned load {refunded}), the limit is {limit}";
+                    return $"building {after.Id}, {item}: stock + reserved went from {beforeHeld} to {afterHeld}, the limit is {limit}";
                 }
             }
         }
 
         return null;
     }
-
-    /// <summary>Whether the leg <paramref name="trip"/> walked before the step ended in it: the trip is gone, or walks a leg that began later.</summary>
-    private static bool LegEnded(InvariantStep step, Trip trip)
-    {
-        Trip? now = step.After.Trips.FirstOrDefault(other => other.Id == trip.Id);
-        return now is null || now.DepartedAt != trip.DepartedAt;
-    }
-
-    /// <summary>What every courier of the city carries of <paramref name="item"/> that came from building <paramref name="buildingId"/>.</summary>
-    private static long CarriedFrom(CityState city, int buildingId, ItemId item) =>
-        city.Couriers.SelectMany(courier => courier.Loads).Where(part => part.FromId == buildingId && part.Item == item).Sum(part => part.Quantity);
 
     /// <summary>Invariant 7: the clock moves by exactly the requested seconds (0 for a command or a negative request), and the report says the same.</summary>
     private string? Clock(InvariantStep step)

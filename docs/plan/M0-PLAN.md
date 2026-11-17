@@ -340,16 +340,16 @@ The AI coder updates its row at start (`In progress`) and finish (`In review`). 
 | M0-69 | 12 | Apply approved content changes | S MANUAL decision | Done |
 | M0-70 | 12 | Content validation hardening | S | Done |
 | M0-71 | 12 | First-session polish | S | Skipped |
-| M0-72 | 12 | Playtest and smoke checklist | O MANUAL | Todo |
-| M0-73 | 13 | HTTP end-to-end suite | O | In review |
-| M0-74 | 13 | Attack suite | O | In review |
-| M0-75 | 13 | Concurrency suite | O | In review |
-| M0-76 | 13 | Unity smoke run | S MANUAL | Todo |
-| M0-77 | 13 | Clean-clone test | S | In review |
-| M0-78 | 13 | Security boundaries report | O | In review |
-| M0-79 | 14 | Bug triage | O | Todo |
+| M0-72 | 12 | Playtest and smoke checklist | O MANUAL | In review |
+| M0-73 | 13 | HTTP end-to-end suite | O | Done |
+| M0-74 | 13 | Attack suite | O | Done |
+| M0-75 | 13 | Concurrency suite | O | Done |
+| M0-76 | 13 | Unity smoke run | S MANUAL | In review |
+| M0-77 | 13 | Clean-clone test | S | Done |
+| M0-78 | 13 | Security boundaries report | O | Done |
+| M0-79 | 14 | Bug triage | O | In review |
 | M0-80 | 14 | Code-freeze review | O | Todo |
-| M0-81 | 14 | Invariant gap analysis | O | Todo |
+| M0-81 | 14 | Invariant gap analysis | O | In review |
 | M0-82 | 14 | Development build | S MANUAL | Todo |
 | M0-83 | 14 | Final MVP audit | O | Todo |
 | M0-84 | 14 | M0 close-out | S | Todo |

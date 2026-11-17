@@ -32,7 +32,7 @@ public sealed class ConstraintDatabaseTests(PostgresServer server) : PostgresTes
         Assert.Equal(8, await db.CityBuildings.CountAsync(TestContext.Current.CancellationToken));
         Assert.Equal(3, await db.CityStores.CountAsync(TestContext.Current.CancellationToken));
         Assert.Equal(3, await db.CityRoads.CountAsync(TestContext.Current.CancellationToken));
-        Assert.Equal(1, await db.CityTrips.CountAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(2, await db.CityTrips.CountAsync(TestContext.Current.CancellationToken)); // one on its way, one waiting (M0-C-3)
         Assert.Equal(2, await db.CityCouriers.CountAsync(TestContext.Current.CancellationToken));
         Assert.Equal(3, await db.CityCourierLoads.CountAsync(TestContext.Current.CancellationToken));
         Assert.Equal(5, await db.CityRouteActions.CountAsync(TestContext.Current.CancellationToken));
@@ -77,6 +77,15 @@ public sealed class ConstraintDatabaseTests(PostgresServer server) : PostgresTes
         PostgresException error = await InsertFullCityFailsAsync(rows => rows.City.Purse = -1);
 
         Assert.Equal((_checkViolation, "ck_cities_purse"), (error.SqlState, error.ConstraintName));
+    }
+
+    /// <summary>A waiting trip with something still to fetch breaks <c>ck_city_trips_quantity</c>: it waits only with goods it carries back (M0-C-3).</summary>
+    [Fact]
+    public async Task SaveChangesAsync_WaitingTripWithSomethingToFetch_IsRefused()
+    {
+        PostgresException error = await InsertFullCityFailsAsync(rows => rows.Trips[1].Remaining = 1);
+
+        Assert.Equal((_checkViolation, "ck_city_trips_quantity"), (error.SqlState, error.ConstraintName));
     }
 
     /// <summary>A trip that arrives when it leaves breaks <c>arrives_at &gt; departed_at</c> (CR-0008).</summary>

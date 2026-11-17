@@ -41,6 +41,9 @@ namespace CityBuilder.Client.Presentation.Routes
         /// <summary>Whether <see cref="Dispose"/> ran.</summary>
         private bool _disposed;
 
+        /// <summary>Raised when the player presses Save and the slot's courier rests (<see cref="RouteEditorModel.NeedsReenergize"/>, M0-C-5): nothing is sent.</summary>
+        public event Action? ReenergizeNeeded;
+
         /// <summary>Creates the flow and subscribes to the inspector, the screen and the model.</summary>
         /// <exception cref="ArgumentNullException">An argument is null.</exception>
         public RouteEditorFlow(
@@ -168,9 +171,15 @@ namespace CityBuilder.Client.Presentation.Routes
             _selection.ClearSelection();
         }
 
-        /// <summary>The player pressed Save: send the route and wait for the answer.</summary>
+        /// <summary>The player pressed Save: send the route and wait for the answer, or ask for re-energize when the courier rests.</summary>
         private void OnConfirmRequested()
         {
+            if (!_disposed && _model.Phase == RouteEditorPhase.Editing && _model.CanConfirm && _model.NeedsReenergize)
+            {
+                ReenergizeNeeded?.Invoke();
+                return;
+            }
+
             if (_disposed || !_model.TryConfirm(out CommandIntent? intent))
             {
                 return;

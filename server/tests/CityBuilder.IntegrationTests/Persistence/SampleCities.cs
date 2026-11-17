@@ -73,7 +73,11 @@ internal static class SampleCities
             [new ResearchId("masonry")],
             new ActiveResearch(new ResearchId("forestry"), 300, 86_700),
             [new RoadTile(4, 0, 1), new RoadTile(2, 1, 1), new RoadTile(3, 1, 2)],
-            [new Trip(1, ProducingId, IdleId, new ItemId("logs"), 2, 410, 430)],
+            [
+                new Trip(1, ProducingId, IdleId, new ItemId("logs"), 2, 410, 430),
+                // Waiting at its source with 3 logs its full store can't take yet (M0-C-3).
+                new Trip(2, ProducingId, IdleId, new ItemId("logs"), 3, 380, 400, remaining: 0, leg: TripLeg.Waiting),
+            ],
             nextTripId: 3,
             couriers:
             [

@@ -130,7 +130,8 @@ namespace CityBuilder.Simulation.State
 
         /// <summary>
         /// How much of a good a building has reserved: the output of its own running cycle (frozen ones included), which will enter its store
-        /// when the cycle completes (<c>04</c> section 16). Derived from the phase, never stored. An idle building reserves nothing.
+        /// when the cycle completes, plus that cycle's inputs, which come back into the store if an upgrade ends the cycle (<c>04</c> section 16;
+        /// M0-C-3: so the refund always fits). Derived from the phase, never stored. An idle building reserves nothing.
         /// </summary>
         /// <param name="content">The game content.</param>
         /// <param name="building">The building.</param>
@@ -143,17 +144,8 @@ namespace CityBuilder.Simulation.State
                 return 0;
             }
 
-            long reserved = 0;
-            IReadOnlyList<ItemQuantity> outputs = RecipeOf(content, building.TypeId, building.Level).Outputs;
-            for (int index = 0; index < outputs.Count; index++)
-            {
-                if (outputs[index].Item == item)
-                {
-                    reserved = checked(reserved + outputs[index].Quantity);
-                }
-            }
-
-            return reserved;
+            RecipeDefinition recipe = RecipeOf(content, building.TypeId, building.Level);
+            return checked(QuantityOf(recipe.Outputs, item) + QuantityOf(recipe.Inputs, item));
         }
 
         /// <summary>
@@ -190,8 +182,8 @@ namespace CityBuilder.Simulation.State
         }
 
         /// <summary>
-        /// How much more of a good a building's store takes (<c>04</c> section 16): effective limit − stock − reserved, at least 0 (a refund or a
-        /// returned load may have put the stock above the limit); 0 when the store doesn't hold the good.
+        /// How much more of a good a building's store takes (<c>04</c> section 16): effective limit − stock − reserved, at least 0 (a city
+        /// saved before M0-C-3 may hold a store above its limit); 0 when the store doesn't hold the good.
         /// </summary>
         /// <param name="city">The city.</param>
         /// <param name="content">The game content.</param>
@@ -513,6 +505,21 @@ namespace CityBuilder.Simulation.State
             // Content rule 9 makes a producer's store hold every good of its recipe; a store without the good has no room for it.
             return TryGetEffectiveLimit(city, content, building, output.Item, out long limit)
                 && checked(building.GetStock(output.Item) + Reserved(content, building, output.Item) + output.Quantity) <= limit;
+        }
+
+        /// <summary>The quantity of <paramref name="item"/> in a list of item quantities (a recipe's inputs or outputs), 0 when it has none.</summary>
+        private static long QuantityOf(IReadOnlyList<ItemQuantity> amounts, ItemId item)
+        {
+            long quantity = 0;
+            for (int index = 0; index < amounts.Count; index++)
+            {
+                if (amounts[index].Item == item)
+                {
+                    quantity = checked(quantity + amounts[index].Quantity);
+                }
+            }
+
+            return quantity;
         }
 
         /// <summary>The definition of a building type the city uses.</summary>

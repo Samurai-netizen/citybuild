@@ -10,7 +10,7 @@ namespace CityBuilder.Simulation.Tests.EngineRules;
 
 /// <summary>
 /// Trip arrivals and the delivery rule (<c>04</c> sections 6, 16 and 18): a walker's goods go to the building's waiting project first (used
-/// up: <c>delivered</c>), then into its store up to its room (<c>moved</c>), and the rest back to the trip's source, even above its limit; a
+/// up: <c>delivered</c>), then into its store up to its room (<c>moved</c>), and the worker carries the rest back to the trip's source (M0-C-3); a
 /// project whose last good arrives starts that second; arrivals come after building completions and in trip id order. Fixture numbers: a hut
 /// provides 3 workers; a workshop (2 wood → 1 boards, 90 labor; 180 at level 2) builds in 20 s, holds 20 wood at level 1 and upgrades in 15 s;
 /// a lumber camp and a depot hold 100 wood; better saws takes 200 s; the school has no store.
@@ -78,7 +78,7 @@ public sealed class DeliveryRuleTests
 
     /// <summary>
     /// The research waiting at the school takes its 5 boards and its timer runs from the arrival for 200 s; the school has no store, so the
-    /// sixth board goes back to the depot.
+    /// worker carries the sixth board back to the depot (8 s, still on the way at 1010).
     /// </summary>
     [Fact]
     public void Delivery_ResearchGoodsAtTheScienceBuilding_StartTheResearchTimer()
@@ -93,7 +93,8 @@ public sealed class DeliveryRuleTests
 
         ActiveResearch research = city.ActiveResearch!;
         Assert.Equal((false, (long?)1008, (long?)1208), (research.IsWaiting, research.StartedAt, research.EndsAt));
-        Assert.Equal(4, city.Buildings[1].GetStock(_boards));
+        Assert.Equal(3, city.Buildings[1].GetStock(_boards));
+        Assert.Equal((TripLeg.ToSource, 1L, 1016L), (city.Trips[0].Leg, city.Trips[0].Quantity, city.Trips[0].ArrivesAt));
         Assert.Equal(5, report.Delivered[_boards]);
         Assert.Empty(report.Moved);
     }
@@ -119,11 +120,11 @@ public sealed class DeliveryRuleTests
     }
 
     /// <summary>
-    /// A store with too little room takes what fits (2 of 6); the rest goes back into the source's store at that second, even above its
-    /// limit (a returned load: 100 + 4).
+    /// A store with too little room takes what fits (2 of 6); the sending ends and the worker carries the other 4 back to the camp, 20 s
+    /// (M0-C-3: never above the camp's limit; the trip's waiting at a full source is in <c>StoreLimitRuleTests</c>).
     /// </summary>
     [Fact]
-    public void Delivery_StoreWithoutRoom_ReturnsTheRestToTheSourceEvenAboveItsLimit()
+    public void Delivery_StoreWithoutRoom_TheWorkerCarriesTheRestBack()
     {
         CityState city = City(
             buildings: [Idle(1, "hut", 0, 4), Idle(2, "lumber_camp", 0, 0, store: [("wood", 100)]), Idle(3, "depot", 5, 0, store: [("wood", 98)])],
@@ -131,14 +132,15 @@ public sealed class DeliveryRuleTests
 
         SettlementReport report = Simulator.Advance(city, TestContent, 10);
 
-        Assert.Equal((104L, 100L), (city.Buildings[1].GetStock(_wood), city.Buildings[2].GetStock(_wood)));
+        Assert.Equal((100L, 100L), (city.Buildings[1].GetStock(_wood), city.Buildings[2].GetStock(_wood)));
+        Assert.Equal((TripLeg.ToSource, 4L, 0L, 1030L), (city.Trips[0].Leg, city.Trips[0].Quantity, city.Trips[0].Remaining, city.Trips[0].ArrivesAt));
         Assert.Equal(2, report.Moved[_wood]);
         Assert.Empty(report.Delivered);
     }
 
     /// <summary>
     /// Trips arriving in one second deliver in trip id order: trip 1 (from camp 3) gives 6 of the site's 8, trip 2 (from camp 2) the last 2,
-    /// and its other 4 go back to camp 2, since the site's store is full.
+    /// and its worker carries the other 4 back to camp 2, since the site's store is full.
     /// </summary>
     [Fact]
     public void Delivery_TripsArrivingTogether_DeliverInTripIdOrder()
@@ -153,7 +155,8 @@ public sealed class DeliveryRuleTests
 
         SettlementReport report = Simulator.Advance(city, TestContent, 10);
 
-        Assert.Equal((4L, 0L), (city.Buildings[1].GetStock(_wood), city.Buildings[2].GetStock(_wood)));
+        Assert.Equal((0L, 0L), (city.Buildings[1].GetStock(_wood), city.Buildings[2].GetStock(_wood)));
+        Assert.Equal([(2, 4L)], city.Trips.Select(trip => (trip.Id, trip.Quantity)));
         Assert.Equal(8, report.Delivered[_wood]);
         Assert.Equal("building 4 workshop (5,0) L1 w=0 Constructing 1010..1030 target=0 labor=0/0@0", CityDump.BuildingLine(city, 4));
     }

@@ -36,7 +36,7 @@ Every error is Problem Details with the code in its `code` extension (`core-inst
 | `NO_FREE_COURIER` | 422 | No free courier | Every courier has a route; assign another worker to a courier station or cancel a route. | `urn:citybuilder:error:no-free-courier` |
 | `DELIVERY_QUEUE_FULL` | 422 | Delivery queue full | The courier's delivery queue is full; wait for it to deliver or cancel some of its lines. | `urn:citybuilder:error:delivery-queue-full` |
 | `ROUTES_LOCKED` | 422 | Routes locked | Build a Scriptorium first; until then couriers make one-time deliveries. | `urn:citybuilder:error:routes-locked` |
-| `COURIER_BUSY` | 422 | Courier busy | This courier still has deliveries; cancel them or wait until they are done. | `urn:citybuilder:error:courier-busy` |
+| `COURIER_BUSY` | 422 | Courier busy | This courier is busy: it still has deliveries, or carries goods its store can't take back yet. | `urn:citybuilder:error:courier-busy` |
 | `DELIVERY_NOT_FOUND` | 422 | Delivery not found | This courier has no such delivery line any more. | `urn:citybuilder:error:delivery-not-found` |
 | `IDEMPOTENCY_CONFLICT` | 409 | Request id already used | This requestId was used before with another command or payload; a new command needs a new requestId. | `urn:citybuilder:error:idempotency-conflict` |
 | `RATE_LIMITED` | 429 | Too many requests | Too many requests; wait for the number of seconds in the Retry-After header and try again. | `urn:citybuilder:error:rate-limited` |

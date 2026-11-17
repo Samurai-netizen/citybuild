@@ -186,6 +186,27 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Trips
             Assert.That(model.CarrierText, Is.EqualTo("Courier 1 of Courier Station"));
             Assert.That(model.DetailText, Does.StartWith("2 loads of 10 · Courier 1 of Courier Station · walk "));
             Assert.That(model.CanConfirm, Is.True);
+            Assert.That(model.NeedsReenergize, Is.False);
+        }
+
+        /// <summary>
+        /// The courier the engine picks rests (no stamina): the bar says so, Send stays pressable, and pressing it sends nothing but asks for
+        /// re-energize (M0-C-5, the owner's playtest: a send to a resting courier said "Sent" and nothing moved).
+        /// </summary>
+        [Test]
+        public void CourierStation_ThePickedCourierRests_AsksToReenergizeInsteadOfSending()
+        {
+            var model = new TripFlowModel(_content, _grid);
+            model.Update(StationCity(withRoute: false, resting: true));
+            model.StartFrom(1);
+            model.SelectTile(new GridCoordinate(3, 0));
+
+            Assert.That(model.CarrierText, Is.EqualTo("Courier 1 of Courier Station (resting)"));
+            Assert.That(model.NeedsReenergize, Is.True);
+            Assert.That(model.CanConfirm, Is.True, model.HintText);
+            Assert.That(model.TryConfirm(out CommandIntent? intent), Is.False);
+            Assert.That(intent, Is.Null);
+            Assert.That(model.Phase, Is.EqualTo(TripPhase.Confirming));
         }
 
         /// <summary>With a built courier station whose only courier has a route, no courier is free, and workers don't take over (CR-0008 D14).</summary>
@@ -204,9 +225,9 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Trips
 
         /// <summary>
         /// The test city with a built courier station at (5, 5) that has one courier at the station (slot 1), with a route warehouse → cottage
-        /// when <paramref name="withRoute"/> is set.
+        /// when <paramref name="withRoute"/> is set; the courier rests with no stamina when <paramref name="resting"/> is set.
         /// </summary>
-        private static CityState StationCity(bool withRoute)
+        private static CityState StationCity(bool withRoute, bool resting = false)
         {
             CityState plain = TestCity(sawmillLogs: 12, sawmillPlanks: 0);
             var buildings = new List<Building>(plain.Buildings)
@@ -226,7 +247,8 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Trips
                 : Array.Empty<Route>();
             return new CityState(
                 plain.Clock, 1, 10, 500, buildings, new List<ResearchId>(), null,
-                couriers: new[] { new Courier(4, 1, CourierState.AtStation, 0, null, null, 14400) }, routes: routes);
+                couriers: new[] { resting ? new Courier(4, 1, CourierState.Resting, 0, null, null, 0) : new Courier(4, 1, CourierState.AtStation, 0, null, null, 14400) },
+                routes: routes);
         }
 
         /// <summary>TryConfirm produces a StartTrip intent and enters Sending; FinishCommand closes on success and returns to Confirming on failure.</summary>

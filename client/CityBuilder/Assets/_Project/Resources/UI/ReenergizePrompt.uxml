@@ -1,0 +1,18 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+  <!-- The re-energize popup that ReenergizePrompt shows (M0-C-5): when the player sends a delivery or saves a route that needs a resting
+       courier, a small parchment card in the middle of a dark scrim says so, with Re-energize couriers and Not now. The scrim takes the
+       pointer while it is shown, so the map and the bars under it wait; the delivery bar and the route editor stay as they were. Style:
+       Common.uss and ReenergizePrompt.uss. -->
+  <Style src="Common.uss" />
+  <Style src="ReenergizePrompt.uss" />
+  <ui:VisualElement name="reenergize-root" class="reenergize-root" picking-mode="Ignore">
+    <ui:VisualElement name="reenergize-scrim" class="reenergize-scrim scrim reenergize-scrim--hidden">
+      <ui:VisualElement name="reenergize-card" class="reenergize-card panel-parchment">
+        <ui:Label name="reenergize-title" class="reenergize-title ribbon" text="Couriers are resting" />
+        <ui:Label name="reenergize-message" class="reenergize-message t-body" />
+        <ui:Button name="reenergize-confirm" class="reenergize-button btn btn--primary" text="Re-energize couriers" />
+        <ui:Button name="reenergize-not-now" class="reenergize-button btn btn--quiet" text="Not now" />
+      </ui:VisualElement>
+    </ui:VisualElement>
+  </ui:VisualElement>
+</ui:UXML>

@@ -77,9 +77,12 @@ public sealed class CityQueriesTests
         Assert.Equal(5, CityQueries.BuildersBusy(city));
     }
 
-    /// <summary>A building reserves its own running cycle's outputs, a frozen one's too; an idle building reserves nothing (<c>04</c> section 16).</summary>
+    /// <summary>
+    /// A building reserves its own running cycle's outputs and inputs (the inputs since M0-C-3, so an upgrade's refund fits), a frozen
+    /// one's too; an idle building reserves nothing (<c>04</c> section 16).
+    /// </summary>
     [Fact]
-    public void Reserved_EachBuilding_IsItsOwnCyclesOutput()
+    public void Reserved_EachBuilding_IsItsOwnCyclesOutputsAndInputs()
     {
         CityState city = City(buildings:
         [
@@ -89,7 +92,7 @@ public sealed class CityQueriesTests
             Producing(4, "workshop", 3, 0, 1, workers: 1, cycleStartedAt: 990, cycleLabor: 90, laborRemaining: 90, segmentStartedAt: 990, endsAt: 1080),
         ]);
 
-        Assert.Equal([1L, 1L, 0L, 0L], city.Buildings.Select(building => CityQueries.Reserved(TestContent, building, _wood)));
+        Assert.Equal([1L, 1L, 0L, 2L], city.Buildings.Select(building => CityQueries.Reserved(TestContent, building, _wood)));
         Assert.Equal([0L, 0L, 0L, 1L], city.Buildings.Select(building => CityQueries.Reserved(TestContent, building, _boards)));
         Assert.Equal(0, CityQueries.Reserved(TestContent, city.Buildings[0], _gold));
     }

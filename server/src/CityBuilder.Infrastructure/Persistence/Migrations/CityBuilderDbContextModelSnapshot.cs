@@ -568,7 +568,7 @@ namespace CityBuilder.Infrastructure.Persistence.Migrations
                         {
                             t.HasCheckConstraint("ck_city_trips_arrives_at", "arrives_at > departed_at");
 
-                            t.HasCheckConstraint("ck_city_trips_quantity", "(leg = 'ToTarget' and quantity > 0) or (leg = 'ToSource' and quantity = 0 and remaining > 0)");
+                            t.HasCheckConstraint("ck_city_trips_quantity", "(leg = 'ToTarget' and quantity > 0) or (leg = 'ToSource' and ((quantity = 0 and remaining > 0) or (quantity > 0 and remaining = 0))) or (leg = 'Waiting' and quantity > 0 and remaining = 0)");
 
                             t.HasCheckConstraint("ck_city_trips_remaining", "remaining >= 0");
                         });

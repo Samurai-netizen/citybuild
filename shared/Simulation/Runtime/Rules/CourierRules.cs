@@ -18,7 +18,7 @@ namespace CityBuilder.Simulation.Rules
     {
         /// <summary>
         /// Sets the route of a station's slot (0 stops clears it). The slot's courier, if the slot has one, gives its load back to where each
-        /// part came from (a returned load, even above a limit) and stands at its station; a resting one keeps resting (<c>04</c> section 19).
+        /// part came from (a returned load, at most the room; the rest stays on the courier, M0-C-3) and stands at its station; a resting one keeps resting (<c>04</c> section 19).
         /// It leaves for the first stop in the request's zero-length advance. Goods only move, so the result spends and refunds nothing.
         /// </summary>
         /// <param name="city">The city, settled to now.</param>
@@ -98,10 +98,28 @@ namespace CityBuilder.Simulation.Rules
             int courier = city.FindCourier(stationId, slot);
             if (courier >= 0)
             {
-                StopWorking(city, city.Couriers[courier]);
+                StopWorking(city, content, city.Couriers[courier]);
             }
 
             return MutationResult.Ok;
+        }
+
+        /// <summary>
+        /// Whether the loads of the couriers that staffing <paramref name="station"/> with <paramref name="workers"/> removes (the slots above
+        /// it) all fit back into the stores they came from (<c>04</c> section 8, AssignWorkers; M0-C-3). Changes nothing.
+        /// </summary>
+        internal static bool RemovedLoadsFitBack(CityState city, GameContent content, Building station, int workers)
+        {
+            for (int slot = station.AssignedWorkers; slot > workers; slot--)
+            {
+                int index = city.FindCourier(station.Id, slot);
+                if (index >= 0 && !HeldLoads.FitsBack(city, content, city.Couriers[index]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -110,7 +128,7 @@ namespace CityBuilder.Simulation.Rules
         /// station with its level's full stamina, in the next slot; each removed one is the highest slot's courier, which gives its load back
         /// and leaves. Routes stay with their slots (CR-0008-T1 decision 48).
         /// </summary>
-        internal static void StaffStation(CityState city, BuildingLevelDefinition level, Building station, int before)
+        internal static void StaffStation(CityState city, GameContent content, BuildingLevelDefinition level, Building station, int before)
         {
             int after = station.AssignedWorkers;
             for (int slot = before + 1; slot <= after; slot++)
@@ -126,7 +144,7 @@ namespace CityBuilder.Simulation.Rules
                 int index = city.FindCourier(station.Id, slot);
                 if (index >= 0)
                 {
-                    GiveLoadBack(city, city.Couriers[index]);
+                    GiveLoadBack(city, content, city.Couriers[index]);
                     city.RemoveLinesOf(station.Id, slot);
                     city.RemoveCourierAt(index);
                 }
@@ -138,14 +156,14 @@ namespace CityBuilder.Simulation.Rules
         /// resting one keeps resting). Inside an advance a stopped courier's arrival stays in the advance's queue as a stale entry, which the
         /// arrival source skips.
         /// </summary>
-        internal static void StopCouriersOf(CityState city, int stationId)
+        internal static void StopCouriersOf(CityState city, GameContent content, int stationId)
         {
             IReadOnlyList<Courier> couriers = city.Couriers;
             for (int index = 0; index < couriers.Count; index++)
             {
                 if (couriers[index].StationId == stationId)
                 {
-                    StopWorking(city, couriers[index]);
+                    StopWorking(city, content, couriers[index]);
                 }
             }
         }
@@ -194,7 +212,7 @@ namespace CityBuilder.Simulation.Rules
             {
                 city.RemoveLinesOf(stationId, slot);
                 city.ClearRoute(stationId, slot);
-                StopWorking(city, courier);
+                StopWorking(city, content, courier);
                 return MutationResult.Ok;
             }
 
@@ -208,11 +226,11 @@ namespace CityBuilder.Simulation.Rules
             city.RemoveLineAt(index);
             if (first && courier.State == CourierState.Walking)
             {
-                StopWorking(city, courier);
+                StopWorking(city, content, courier);
             }
             else if (first)
             {
-                GiveLoadBack(city, courier);
+                GiveLoadBack(city, content, courier);
             }
 
             return MutationResult.Ok;
@@ -304,9 +322,9 @@ namespace CityBuilder.Simulation.Rules
         /// A courier stops working (<c>04</c> section 19): its load goes back, and it stands at its station, unless it has no stamina (resting,
         /// or walking home tired): then it rests there until it is re-energized.
         /// </summary>
-        internal static void StopWorking(CityState city, Courier courier)
+        internal static void StopWorking(CityState city, GameContent content, Courier courier)
         {
-            GiveLoadBack(city, courier);
+            GiveLoadBack(city, content, courier);
             if (courier.State == CourierState.Resting || courier.Stamina == 0)
             {
                 courier.Rest();
@@ -317,14 +335,11 @@ namespace CityBuilder.Simulation.Rules
             }
         }
 
-        /// <summary>Gives every part of a courier's load back to the store it came from, even above its limit (a returned load).</summary>
-        internal static void GiveLoadBack(CityState city, Courier courier)
-        {
-            foreach (CourierLoad part in courier.TakeAllLoads())
-            {
-                city.Buildings[city.IndexOfBuilding(part.FromId)].AddToStore(part.Item, part.Quantity);
-            }
-        }
+        /// <summary>
+        /// Gives each part of a courier's load back to the store it came from, at most its room (a returned load, M0-C-3); what doesn't fit
+        /// stays on the courier, which puts it back once it has no work and room appears (<see cref="HeldLoads.PutBackWhereRoom"/>).
+        /// </summary>
+        internal static void GiveLoadBack(CityState city, GameContent content, Courier courier) => HeldLoads.PutBack(city, content, courier);
 
         /// <summary>The <see cref="MutationErrorCode.InvalidRoute"/> checks (slot, stops, actions, neighbours), or null when they pass.</summary>
         private static MutationErrorCode? RouteShapeError(GameContent content, BuildingLevelDefinition level, int slot, IReadOnlyList<RouteStop> stops)

@@ -332,6 +332,34 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Routes
             Assert.That(_editor.HintText, Is.EqualTo(CommandAvailability.OfflineReason));
         }
 
+        /// <summary>A resting courier (no stamina) can't take a route until re-energized: Save sends nothing and asks for it (M0-C-5).</summary>
+        [Test]
+        public void TryConfirm_RestingCourier_AsksToReenergizeInsteadOfSaving()
+        {
+            _editor.Update(City(couriers: 1, resting: true));
+            _editor.Open(Station, 1);
+            _editor.AddStop(Sawmill);
+            _editor.AddStop(Cottage);
+
+            Assert.That(_editor.CanConfirm, Is.True, _editor.HintText);
+            Assert.That(_editor.NeedsReenergize, Is.True);
+            Assert.That(_editor.TryConfirm(out CommandIntent? intent), Is.False);
+            Assert.That(intent, Is.Null);
+        }
+
+        /// <summary>Clearing a resting courier's route needs no courier, so it is saved without re-energize.</summary>
+        [Test]
+        public void TryConfirm_ClearingARestingCouriersRoute_NeedsNoReenergize()
+        {
+            _editor.Update(City(couriers: 1, saved: SavedRoute(), resting: true));
+            _editor.Open(Station, 1);
+            _editor.RemoveStop(0);
+            _editor.RemoveStop(0);
+
+            Assert.That(_editor.NeedsReenergize, Is.False);
+            Assert.That(_editor.TryConfirm(out _), Is.True);
+        }
+
         /// <summary>Confirming builds a set-route intent with every stop and action; success closes the editor, failure returns to editing.</summary>
         [Test]
         public void TryConfirm_BuildsTheIntentAndFinishCommandClosesOrReturns()
@@ -416,9 +444,9 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Routes
         /// A city with the courier station (id 1, at (0,0)), a sawmill holding logs (id 2, at (4,0)), two cottages (ids 3 and 4, at (0,5) and
         /// (0,6)) and, unless <paramref name="scriptorium"/> is false, a built Scriptorium (id 5, at (6,7)), which routes need (CR-0008 D15);
         /// <paramref name="couriers"/> couriers at the station, when given <paramref name="saved"/> as slot 1's route, and the delivery
-        /// <paramref name="lines"/>.
+        /// <paramref name="lines"/>; with <paramref name="resting"/> every courier rests with no stamina.
         /// </summary>
-        private static CityState City(int couriers, Route? saved = null, bool scriptorium = true, DeliveryLine[]? lines = null)
+        private static CityState City(int couriers, Route? saved = null, bool scriptorium = true, DeliveryLine[]? lines = null, bool resting = false)
         {
             var buildings = new[]
             {
@@ -438,7 +466,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Routes
             var list = new List<Courier>();
             for (int slot = 1; slot <= couriers; slot++)
             {
-                list.Add(new Courier(Station, slot, CourierState.AtStation, 0, null, null, 600));
+                list.Add(resting ? new Courier(Station, slot, CourierState.Resting, 0, null, null, 0) : new Courier(Station, slot, CourierState.AtStation, 0, null, null, 600));
             }
 
             return new CityState(

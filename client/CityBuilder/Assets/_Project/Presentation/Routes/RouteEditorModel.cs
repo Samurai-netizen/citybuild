@@ -392,10 +392,37 @@ namespace CityBuilder.Client.Presentation.Routes
             Accept();
         }
 
-        /// <summary>Confirms the route and returns the <see cref="CommandIntent"/> to send when <see cref="CanConfirm"/> is true.</summary>
+        /// <summary>
+        /// Whether saving needs the couriers re-energized first (M0-C-5): the slot's courier rests (no stamina) and the route has stops, so it
+        /// would never walk it. Clearing a route needs no courier. Save stays pressable; <see cref="TryConfirm"/> sends nothing then, and the
+        /// flow asks the player to re-energize.
+        /// </summary>
+        public bool NeedsReenergize
+        {
+            get
+            {
+                if (Phase == RouteEditorPhase.Idle || _city == null || _stops.Count == 0)
+                {
+                    return false;
+                }
+
+                for (int i = 0; i < _city.Couriers.Count; i++)
+                {
+                    Courier courier = _city.Couriers[i];
+                    if (courier.StationId == StationId && courier.Slot == Slot)
+                    {
+                        return courier.State == CourierState.Resting;
+                    }
+                }
+
+                return false;
+            }
+        }
+
+        /// <summary>Confirms the route and returns the <see cref="CommandIntent"/> to send when <see cref="CanConfirm"/> is true and no re-energize is needed (<see cref="NeedsReenergize"/>).</summary>
         public bool TryConfirm(out CommandIntent? intent)
         {
-            if (Phase != RouteEditorPhase.Editing || !CanConfirm)
+            if (Phase != RouteEditorPhase.Editing || !CanConfirm || NeedsReenergize)
             {
                 intent = null;
                 return false;

@@ -93,7 +93,7 @@ public sealed class InvariantPropertyTests(ITestOutputHelper output)
         observation.AssertAtLeast("steps that spent", 1000);
         observation.AssertAtLeast("steps asked to go back in time", PropertyContent.Seeds);
         observation.AssertAtLeast("stores ending with a good exactly at its limit", 1000);
-        observation.AssertAtLeast("stores ending with a good above its limit", 20);
+        observation.AssertAtLeast("walkers ending a step with goods back home", 20);
         observation.AssertAtLeast("cycles completed", 10_000);
         observation.AssertAtLeast("cycles started when a construction or upgrade completed", 100);
         observation.AssertAtLeast("steps with every worker assigned or on a trip", 1000);

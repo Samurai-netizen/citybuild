@@ -583,7 +583,10 @@ namespace CityBuilder.Client.Presentation.Inspector
             return string.Empty;
         }
 
-        /// <summary>Running manual trips leaving from or arriving at <paramref name="buildingId"/> with their countdowns (CR-0008).</summary>
+        /// <summary>
+        /// Running manual trips leaving from or arriving at <paramref name="buildingId"/> with their countdowns (CR-0008); goods carried back
+        /// or waiting to go back show on the source only (M0-C-3).
+        /// </summary>
         private static string TripsTextFor(GameContent content, CityState city, int buildingId)
         {
             if (city.Trips.Count == 0)
@@ -602,7 +605,18 @@ namespace CityBuilder.Client.Presentation.Inspector
 
                 string item = Number(trip.Quantity) + " " + ItemText.ItemName(content, trip.Item);
                 string countdown = DurationText.Format(Math.Max(0, trip.ArrivesAt - city.Clock));
-                if (trip.SourceId == buildingId)
+                bool goingBack = trip.Leg == TripLeg.Waiting || (trip.Leg == TripLeg.ToSource && trip.Quantity > 0);
+                if (goingBack)
+                {
+                    // What the target didn't take comes back to the source; the target has nothing more to wait for (M0-C-3).
+                    if (trip.SourceId == buildingId)
+                    {
+                        lines.Add(trip.Leg == TripLeg.Waiting
+                            ? "Waiting to put back " + item + ": no room yet"
+                            : "Bringing back " + item + " from " + BuildingNameOf(content, city, trip.TargetId) + " · " + countdown);
+                    }
+                }
+                else if (trip.SourceId == buildingId)
                 {
                     lines.Add("Sending " + item + " to " + BuildingNameOf(content, city, trip.TargetId) + " · " + countdown);
                 }

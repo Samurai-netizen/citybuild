@@ -90,7 +90,7 @@ namespace CityBuilder.Simulation.Rules
         /// <summary>
         /// Orders the upgrade of a building to the next level: pays the coins of the next level's upgrade cost and takes a builder slot. Without
         /// goods in the cost the upgrade starts at once: a running cycle (frozen or not) ends without output, its inputs come back into the
-        /// building's store, even above its limit, and the upgrade runs from the clock for the next level's upgrade seconds. With goods the
+        /// building's store (they fit: they were reserved, M0-C-3), and the upgrade runs from the clock for the next level's upgrade seconds. With goods the
         /// building keeps working with an upgrade waiting for them, which starts the same way when the last one arrives (CR-0008 D12). The
         /// workers stay assigned and do nothing while it upgrades.
         /// </summary>
@@ -198,11 +198,17 @@ namespace CityBuilder.Simulation.Rules
                 return MutationResult.Rejected(MutationErrorCode.InsufficientWorkers);
             }
 
+            // A removed courier gives its load back; it must all fit, since the courier leaves (M0-C-3: never above a limit).
+            if (definition.Kind == BuildingKind.CourierStation && !CourierRules.RemovedLoadsFitBack(city, content, building, workers))
+            {
+                return MutationResult.Rejected(MutationErrorCode.CourierBusy);
+            }
+
             int before = building.AssignedWorkers;
             building.AssignWorkers(workers, city.Clock);
             if (definition.Kind == BuildingKind.CourierStation)
             {
-                CourierRules.StaffStation(city, level, building, before);
+                CourierRules.StaffStation(city, content, level, building, before);
             }
 
             return MutationResult.Ok;

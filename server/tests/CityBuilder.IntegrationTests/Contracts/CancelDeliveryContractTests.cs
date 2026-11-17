@@ -70,6 +70,61 @@ public sealed class CancelDeliveryContractTests(ApiFactory factory) : IClassFixt
         AssertProblem(await SendAll(server), (HttpStatusCode)422, "NO_FREE_COURIER", _tripRequestId);
     }
 
+    /// <summary>
+    /// A delivery whose lines don't fit in the courier's queue is <c>DELIVERY_QUEUE_FULL</c> and queues none of them (invariant 15, D17; only the
+    /// settle is saved, which sends the courier off on the lines it had): the 30 logs
+    /// make three lines, so they fit behind <c>maxDeliveryLines − 3</c> queued lines and not behind one more (M0-81).
+    /// </summary>
+    /// <param name="belowTheLimit">How many lines fewer than the content's maximum the courier has queued already.</param>
+    /// <param name="fits">Whether the three new lines fit.</param>
+    [Theory]
+    [InlineData(3, true)]
+    [InlineData(2, false)]
+    public async Task StartTrip_LinesBeyondTheQueue_IsDeliveryQueueFull(int belowTheLimit, bool fits)
+    {
+        GameContent content = ContentOf(factory);
+        int queued = content.Rules.MaxDeliveryLines - belowTheLimit;
+        var store = new FakeCityStore();
+        store.Add(City(content, withRoute: false, queuedLines: queued));
+        await using WebApplicationFactory<Program> server = store.Serve(factory, new FakeTimeProvider(_settledAt));
+
+        ApiResponse response = await SendAll(server);
+
+        if (fits)
+        {
+            Assert.Equal(HttpStatusCode.OK, response.Status);
+            Assert.Equal(content.Rules.MaxDeliveryLines, response.Json()["city"]!["deliveryLines"]!.AsArray().Count);
+            return;
+        }
+
+        AssertProblem(response, (HttpStatusCode)422, "DELIVERY_QUEUE_FULL", _tripRequestId);
+        Assert.Equal(queued, store.Stored(_playerId).State.DeliveryLines.Count);
+        Assert.Empty(store.Ledger);
+    }
+
+    /// <summary>
+    /// A route for a courier that still has delivery lines is <c>COURIER_BUSY</c> (invariant 15, D19): the lines stay, no route is stored, and
+    /// only the delivery was saved (M0-81).
+    /// </summary>
+    [Fact]
+    public async Task SetRoute_CourierWithDeliveryLines_IsCourierBusy()
+    {
+        (FakeCityStore store, WebApplicationFactory<Program> server) = Serve(new FakeTimeProvider(_settledAt));
+        await using WebApplicationFactory<Program> _ = server;
+        Assert.Equal(HttpStatusCode.OK, (await SendAll(server)).Status);
+
+        ApiResponse response = await ApiClient.PostAsync(
+            server,
+            "/api/v1/commands/set-route",
+            _playerId,
+            $$"""{"requestId":"{{_requestId}}","stationId":4,"slot":1,"stops":[{"buildingId":2,"actions":[{"kind":"take","itemId":"logs","amount":"all"}]},{"buildingId":3,"actions":[{"kind":"put","itemId":"logs","amount":"all"}]}]}""");
+
+        AssertProblem(response, (HttpStatusCode)422, "COURIER_BUSY", _requestId);
+        Assert.Equal(1, store.SaveCount);
+        CityState city = store.Stored(_playerId).State;
+        Assert.Equal((3, 0), (city.DeliveryLines.Count, city.Routes.Count));
+    }
+
     /// <summary>Cancelling the second of three queued lines leaves lines 1 and 3; the courier keeps walking its first line.</summary>
     [Fact]
     public async Task Post_OneLine_RemovesThatLine()
@@ -189,8 +244,9 @@ public sealed class CancelDeliveryContractTests(ApiFactory factory) : IClassFixt
     /// </summary>
     /// <param name="content">The server's content.</param>
     /// <param name="withRoute">Whether the courier has a route.</param>
+    /// <param name="queuedLines">How many lines of 1 log, woodcutter → warehouse, courier 4/1 has queued already.</param>
     /// <returns>The city at state version 0.</returns>
-    private static CityAggregate City(GameContent content, bool withRoute)
+    private static CityAggregate City(GameContent content, bool withRoute, int queuedLines = 0)
     {
         var logs = new ItemId("logs");
         Building[] buildings =
@@ -207,7 +263,9 @@ public sealed class CancelDeliveryContractTests(ApiFactory factory) : IClassFixt
             : [];
         var state = new CityState(
             0, era: 1, nextBuildingId: 6, purse: 100, buildings, [], activeResearch: null,
-            couriers: [new Courier(4, 1, CourierState.AtStation, 0, null, null, 14_400)], routes: routes);
+            couriers: [new Courier(4, 1, CourierState.AtStation, 0, null, null, 14_400)], routes: routes,
+            deliveryLines: Enumerable.Range(1, queuedLines).Select(id => new DeliveryLine(id, 4, 1, 2, 3, logs, 1)),
+            nextLineId: queuedLines + 1);
         return new CityAggregate(
             Guid.Parse("0199a1b2-c3d4-7e5f-8a9b-0c1d2e3f4c90"), _playerId, state, [], _settledAt.ToUnixTimeSeconds(), 0, content.ContentVersion);
     }

@@ -106,7 +106,7 @@ Advance(city, content, elapsedSeconds, absentFrom) -> SettlementReport
   t = T0
   loop:
     CompleteDue(city, t)     # research; buildings by Id; trip arrivals by id; courier arrivals by (station, slot)
-    StartEligible(city, t)   # cycles by Id; couriers at their station by (station, slot)
+    StartEligible(city, t)   # held loads back where room appeared (§19); cycles by Id; couriers at their station by (station, slot)
     next = min(next due time of every event source)
     if next is none or next > target: break
     t = next
@@ -126,7 +126,7 @@ once per advance and kept (§17).
 |---|---|---|
 | PlaceBuilding | type known (`UNKNOWN_BUILDING_TYPE`), of the city's era or earlier and unlocked (`BUILDING_LOCKED`), in bounds (`OUT_OF_BOUNDS`), tile free of buildings and roads (`TILE_OCCUPIED`), below the type's `maxPerCity` (`BUILDING_LIMIT`), free builder (`NO_FREE_BUILDER`), the cost's coins (`INSUFFICIENT_RESOURCE`) | pay the coins, `Id = NextBuildingId++`, `Constructing`; its project needs the cost's goods (§16); with none, the timer runs from now for the build seconds |
 | UpgradeBuilding | exists (`BUILDING_NOT_FOUND`), Idle/Producing without a waiting upgrade (`BUILDING_BUSY`), level < max (`MAX_LEVEL`), free builder (`NO_FREE_BUILDER`), the next level's coins (`INSUFFICIENT_RESOURCE`) | pay the coins; with no goods in the upgrade cost the upgrade starts now (below); otherwise the building keeps working with an upgrade waiting for those goods (§16) |
-| AssignWorkers | exists (`BUILDING_NOT_FOUND`), a producer or courier station (`INVALID_ARGUMENT`), not Constructing (`BUILDING_BUSY`), `0 ≤ n ≤ MaxWorkers` of the current level, also while upgrading (`WORKER_LIMIT`), the increase `n − assigned` ≤ free (`INSUFFICIENT_WORKERS`) | set `n`; a producer gets the labor segment update (§3); a station gains couriers at its station or loses its highest slots (§19) |
+| AssignWorkers | exists (`BUILDING_NOT_FOUND`), a producer or courier station (`INVALID_ARGUMENT`), not Constructing (`BUILDING_BUSY`), `0 ≤ n ≤ MaxWorkers` of the current level, also while upgrading (`WORKER_LIMIT`), the increase `n − assigned` ≤ free (`INSUFFICIENT_WORKERS`); a station's removed couriers' loads all fit back into their stores (`COURIER_BUSY`, M0-C-3) | set `n`; a producer gets the labor segment update (§3); a station gains couriers at its station or loses its highest slots (§19) |
 | StartResearch | known (`UNKNOWN_RESEARCH`), not done (`RESEARCH_COMPLETED`), slot free (`RESEARCH_IN_PROGRESS`), prerequisites + current era (`RESEARCH_LOCKED`), a completed science building (`NO_SCIENCE_BUILDING`), the coins (`INSUFFICIENT_RESOURCE`) | pay the coins, fill the slot; the goods are delivered to the science building, then the timer runs (§5) |
 | PlaceRoads(tiles) | every tile in bounds (`OUT_OF_BOUNDS`), without a building or road (`TILE_OCCUPIED`), the coins of level 1 for every tile (`INSUFFICIENT_RESOURCE`) | pay, a level-1 road on every tile (§17) |
 | UpgradeRoads(tiles) | every tile has a road (`ROAD_NOT_FOUND`) below the last road level (`MAX_LEVEL`), the coins of every next level (`INSUFFICIENT_RESOURCE`) | pay, every road one level up |
@@ -138,7 +138,7 @@ once per advance and kept (§17).
 | ReenergizeCouriers | — | every courier's stamina is its station level's; resting couriers are at their station again, ready to leave (§19) |
 
 **Starting an upgrade** (at once, or when its last good arrives): a running cycle (frozen or not) ends without output and its inputs go back
-into the building's store, even above its limit; the building is `Upgrading` to `TargetLevel = Level + 1` for that level's upgrade seconds; a
+into the building's store (they always fit: a running cycle's inputs are reserved, §16); the building is `Upgrading` to `TargetLevel = Level + 1` for that level's upgrade seconds; a
 courier station's couriers stop (§19). **Builders busy** = `Constructing` + `Upgrading` + upgrades waiting for goods.
 Checks run in the listed order; the first failure is returned and changes nothing; a list of tiles or stops is applied all or nothing. An
 applied mutation names what it paid and refunded (the ledger rows of `06`). "Current era" means the node's era equals the city's, and a
@@ -161,7 +161,8 @@ frozen cycle counts as running (its inputs are refunded). Workers on a house, a 
 4. Conservation per item: `final total = initial + produced − consumed − delivered + refunded − spent`, where a total counts every store,
    every load on a walker and, for the currency, the purse (§16).
 5. No negative quantity in a store, a load, a project's needs or the purse.
-6. Production and walkers never push a store's `stock + reserved` above its effective limit; only refunds and returned loads may.
+6. Nothing pushes a store's `stock + reserved` above its effective limit: production, deliveries, refunds and returned loads all stop there
+   (M0-C-3); goods that don't fit stay with their walker (§18, §19).
 7. The clock never decreases.
 8. Nothing is produced before construction completes, and nothing during an upgrade.
 9. `Σ assigned + workers on trips ≤ provided`, and `assigned ≤ MaxWorkers` for every building; a station has exactly one courier per worker.
@@ -174,6 +175,8 @@ frozen cycle counts as running (its inputs are refunded). Workers on a house, a 
     slot, two different buildings and a quantity of 1..that station level's carry limit; a removed courier leaves no lines (§18).
 16. Only producers and courier stations are paused, never while constructing; a paused producer starts no cycle; a courier of a paused
     station never leaves its station (D23, D24).
+
+Which tests hold each invariant, error code and threat: `docs/testing/COVERAGE-MATRIX.md` (M0-81).
 
 ## 11. Settlement report
 Returned with every settled snapshot: `elapsedSeconds` (the simulated seconds, ≥ 0); `produced{item:qty}` (outputs of completed cycles, the
@@ -260,7 +263,8 @@ is sent or stored. All values are integers, rounded down: seconds, permille (0..
   holds and a **limit** per good (`storage` in content): producers (their recipe's goods) and warehouses (every good of the era). Houses,
   courier stations and the science building have no store. A store exists from placement, also on a construction site and during an
   upgrade (the current level's limits). **Effective limit** = the level's limit + Σ `StorageCapBonus` of completed research for that good.
-  **Room** for a good = effective limit − stock − reserved, where reserved is the building's own running cycle's output of that good.
+  **Room** for a good = effective limit − stock − reserved, where reserved is the building's own running cycle's output and inputs of
+  that good (the inputs since M0-C-3: an upgrade that ends the cycle gives them back, and they must fit).
 - **The purse** holds the currency: in no building, uncapped. Every coin cost is paid from it at once; coins a cycle produces go into it.
   A **city total** of an item adds every store, every walker's load and, for the currency, the purse.
 - **Projects.** A coin cost is paid when ordered; the goods of a cost are never taken from a store. They are **needs** the building waits
@@ -269,7 +273,8 @@ is sent or stored. All values are integers, rounded down: seconds, permille (0..
   at `t`: the construction timer runs for the build seconds, the upgrade starts (§8), the research timer runs (§5).
 - **Deliveries** (§6): a walker arriving at a building hands each carried good first to the building's project (the research for the
   science building), at most what it still needs, used up at once (`delivered` in the report); then into the store, at most its room
-  (`moved`). Nothing else ever enters a store above its limit, except a refund (§8) and a returned load (§18, §19).
+  (`moved`). Nothing ever enters a store above its limit (§10 invariant 6): a returned load goes back at most the room, and the rest stays
+  with its walker (§18, §19).
   A science building that also has a project of its own (a construction site, an upgrade waiting for goods) fills that project first,
   then the waiting research, then its store: one fixed order keeps the engine deterministic (CR-0008-T1 decision 37; M0's science
   building has one level and costs only coins, so the case needs later content).
@@ -297,8 +302,10 @@ is sent or stored. All values are integers, rounded down: seconds, permille (0..
     `maxDeliveryLines`, are its queue; nothing leaves the store at the send.
   - **A worker**, only while no courier station is built: a free worker (§3) takes `min(Q, tripCarryLimit)` out of the store at once and
     walks to the target; the trip remembers the rest `Remaining = Q − taken` (D21) and gets the next trip id.
-- **A trip** (a worker's delivery) walks by §17 and never tires. At the target the load is delivered (§16); what doesn't fit goes back into
-  the source's store at that second, even above its limit (a **returned load**). With `Remaining > 0` the worker walks back to the source
+- **A trip** (a worker's delivery) walks by §17 and never tires. At the target the load is delivered (§16). What doesn't fit ends the
+  sending (M0-C-3): `Remaining` becomes 0 and the worker carries the rest back (`ToSource` with a load); at the source it puts back what
+  fits (a **returned load**), and with some left it **waits** there (`Waiting`, no walk) and puts the rest back in the start pass of the
+  first second the store has room (§7; it frees its worker when all is back). Otherwise, with `Remaining > 0` the worker walks back to the source
   (`ToSource`), takes `min(Remaining, stock, tripCarryLimit)` there (none: the trip ends), lowers `Remaining` and walks to the target again;
   after the last put the trip ends and the worker is free. A trip keeps its source, target and item; its load, rest, leg, departure and
   arrival change at each end of a leg. A trip can't be cancelled in M0 (D18).
@@ -322,16 +329,18 @@ is sent or stored. All values are integers, rounded down: seconds, permille (0..
   that stop home, and over its returning ones of their arrival (display only).
 - **On lines** (D16): at the first line's source it takes `min(quantity − carried of the good, stock, free carry room)` and walks to the
   target; if it carries none of the good, the line ends there. At the target it puts all it carries of the good (§16), what doesn't fit
-  goes back to the stores it came from at once (a returned load), and the line ends. After a line ends it walks to the next line's source,
+  stays on the courier (M0-C-3), and the line ends. After a line ends it walks to the next line's source,
   or home when none is left (`Returning`); arrivals spend stamina and a tired courier walks home as on a route, its lines waiting. At an
   arrival at stop `i` it spends stamina (§2), runs the stop's actions in order, then walks to stop `i+1` (after the last: stop 1); if its
   stamina reached 0 it walks home instead (`Returning`), and on arrival rests, or stands `AtStation` if it was re-energized meanwhile.
 - **Take:** from the building's store, the amount of its stock, at most the stock and the free carry room. **Put:** the amount of what the
   courier carries of that good, delivered by §16; the rest stays on the courier. A courier never waits: it does what it can and walks on.
 - **Load:** every carried quantity remembers the building it came from. When a courier stops working (its worker is removed, its route is
-  replaced, its running line or route is cancelled, its station starts an upgrade, it ends a stop at a paused station), each quantity goes back into the store it came from at once, even above its limit (a returned
-  load), and the courier stands `AtStation` (one without stamina, resting or walking home tired, rests). Otherwise a resting courier
-  keeps its load.
+  replaced, its running line or route is cancelled, its station starts an upgrade, it ends a stop at a paused station), each quantity goes back into the store it came from at once, at most
+  its room (a returned load); the rest stays on the courier, and the courier stands `AtStation` (one without stamina, resting or walking
+  home tired, rests). A courier at its station (`AtStation` or `Resting`) without a route and without lines puts what it carries back as
+  room appears: first in every start pass (§7), couriers by station and slot, then waiting trips by id (M0-C-3). A courier with a route
+  or lines keeps its load for that work (a resting one delivers it once re-energized).
 - **Amounts:** a **preset** (content: All 100 %, Half 50 %, Quarter 25 %) is always allowed; **percent** (1..100) and **exact** (≥ 1) only
   after a research with `UnlockAmountMode` (else `AMOUNT_MODE_LOCKED`). Of a base `b` (the stock for a take or a trip, the carried quantity
   for a put): a percentage gives `max(1, b × p / 100 rounded down)` when `b ≥ 1`, else 0; an exact number gives itself; then the limits above apply.

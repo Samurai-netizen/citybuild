@@ -47,7 +47,7 @@ namespace CityBuilder.Simulation.Settlement
 
         /// <summary>
         /// Completes one building's phase: a construction staffs the building with <c>min(free, MaxWorkers)</c> (decision 018), an upgrade
-        /// raises its level, and a cycle moves its outputs from reserved to stock, even above a cap (decision 013).
+        /// raises its level, and a cycle moves its outputs from reserved to stock (they were reserved, so they fit; decision 013, M0-C-3).
         /// </summary>
         private static void Complete(CityState city, GameContent content, Building building, SettlementReportBuilder report)
         {
@@ -61,7 +61,7 @@ namespace CityBuilder.Simulation.Settlement
                     building.CompleteConstruction((int)Math.Min(CityQueries.FreeWorkers(city, content), level.MaxWorkers));
                     if (definition.Kind == BuildingKind.CourierStation)
                     {
-                        CourierRules.StaffStation(city, level, building, 0);
+                        CourierRules.StaffStation(city, content, level, building, 0);
                     }
 
                     report.AddCompletedBuilding(building.Id);

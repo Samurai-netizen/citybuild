@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using CityBuilder.Simulation.Content;
+using CityBuilder.Simulation.Rules;
 using CityBuilder.Simulation.State;
 
 namespace CityBuilder.Simulation.Settlement
@@ -9,10 +10,11 @@ namespace CityBuilder.Simulation.Settlement
     /// <summary>
     /// The legs of workers' deliveries (<c>core-instructions/04-simulation-model.md</c>, sections 6 and 18, CR-0008 D21), step 3 of the order at
     /// one second, after building completions: trips whose leg ends at the same second do so in ascending trip id, each fully before the next.
-    /// At the target the load is delivered (<see cref="Deliveries"/>) and what is left goes back into the source's store at that second, even
-    /// above its limit (a returned load); with goods still to fetch the worker walks back to the source, otherwise the trip ends and its worker
-    /// is free. At the source the worker takes the next load, at most the rest, the stock and the trip carry limit, and walks to the target;
-    /// with none to take the trip ends. A leg lasts at least 1 s, so a trip never comes up twice at one second; the source keeps the next end
+    /// At the target the load is delivered (<see cref="Deliveries"/>); what is left ends the sending and the worker carries it back to the
+    /// source, puts back what fits and waits there with the rest (<see cref="TripLeg.Waiting"/>, M0-C-3); with nothing left and goods still to
+    /// fetch the worker walks back to the source, otherwise the trip ends and its worker is free. At the source the worker takes the next
+    /// load, at most the rest, the stock and the trip carry limit, and walks to the target; with none to take the trip ends. A waiting trip
+    /// has no leg to end: <see cref="Rules.HeldLoads"/> puts its goods back as room appears. A leg lasts at least 1 s, so a trip never comes up twice at one second; the source keeps the next end
     /// of a leg instead of scanning the trips at every event.
     /// </summary>
     internal sealed class TripArrivalSource : IEventSource
@@ -52,7 +54,7 @@ namespace CityBuilder.Simulation.Settlement
             while (index < trips.Count)
             {
                 Trip trip = trips[index];
-                if (trip.ArrivesAt == time && !EndLeg(city, content, trip, time, report))
+                if (trip.Leg != TripLeg.Waiting && trip.ArrivesAt == time && !EndLeg(city, content, trip, time, report))
                 {
                     city.RemoveTripAt(index);
                     continue;
@@ -74,7 +76,9 @@ namespace CityBuilder.Simulation.Settlement
                 long left = Deliveries.Deliver(city, content, target, trip.Item, trip.Quantity, time, report, _timers);
                 if (left > 0)
                 {
-                    city.Buildings[source].AddToStore(trip.Item, left);
+                    // The target is full: the sending ends and the worker carries the rest back (M0-C-3; never above the source's limit).
+                    trip.CarryBack(left, time, checked(time + _walks.Seconds(target, source)));
+                    return true;
                 }
 
                 if (trip.Remaining < 1)
@@ -83,6 +87,18 @@ namespace CityBuilder.Simulation.Settlement
                 }
 
                 trip.WalkBack(time, checked(time + _walks.Seconds(target, source)));
+                return true;
+            }
+
+            if (trip.Quantity > 0)
+            {
+                // Back with goods the target didn't take: what fits goes into the store; with some left the worker waits there.
+                if (HeldLoads.PutBack(city, content, trip))
+                {
+                    return false;
+                }
+
+                trip.Wait();
                 return true;
             }
 
@@ -105,7 +121,8 @@ namespace CityBuilder.Simulation.Settlement
             IReadOnlyList<Trip> trips = city.Trips;
             for (int index = 0; index < trips.Count; index++)
             {
-                if (!earliest.HasValue || trips[index].ArrivesAt < earliest.Value)
+                // A waiting trip walks nowhere: it puts its goods back in the start pass as room appears.
+                if (trips[index].Leg != TripLeg.Waiting && (!earliest.HasValue || trips[index].ArrivesAt < earliest.Value))
                 {
                     earliest = trips[index].ArrivesAt;
                 }

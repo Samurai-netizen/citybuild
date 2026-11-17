@@ -63,7 +63,7 @@ public sealed class CityRepositoryTests : IDisposable
         Assert.Single(Rows<CityResearchRow>(EntityState.Added));
         Assert.Empty(Rows<CityResearchNeedRow>(EntityState.Added));
         Assert.Equal(3, Rows<CityRoadRow>(EntityState.Added).Count);
-        Assert.Single(Rows<CityTripRow>(EntityState.Added));
+        Assert.Equal(2, Rows<CityTripRow>(EntityState.Added).Count()); // one on its way, one waiting (M0-C-3)
         Assert.Equal(2, Rows<CityCourierRow>(EntityState.Added).Count);
         Assert.Equal(3, Rows<CityCourierLoadRow>(EntityState.Added).Count);
         Assert.Equal(5, Rows<CityRouteActionRow>(EntityState.Added).Count);
@@ -110,7 +110,7 @@ public sealed class CityRepositoryTests : IDisposable
 
     /// <summary>
     /// Needs and trips: a need still missing is written, one filled (or of a deleted building) deleted, a waiting research's need inserted,
-    /// and an arrived trip deleted (CR-0008).
+    /// and the trips that ended deleted, the waiting one included (CR-0008, M0-C-3).
     /// </summary>
     [Fact]
     public void Save_LoadedCity_MergesTheNeedsAndTrips()
@@ -127,7 +127,9 @@ public sealed class CityRepositoryTests : IDisposable
         Assert.Equal(
             [("planks", 4L, EntityState.Added)],
             _db.ChangeTracker.Entries<CityResearchNeedRow>().Select(entry => (entry.Entity.ItemId, entry.Entity.Quantity, entry.State)));
-        Assert.Equal([(1, EntityState.Deleted)], _db.ChangeTracker.Entries<CityTripRow>().Select(entry => (entry.Entity.TripId, entry.State)));
+        Assert.Equal(
+            [(1, EntityState.Deleted), (2, EntityState.Deleted)],
+            _db.ChangeTracker.Entries<CityTripRow>().Select(entry => (entry.Entity.TripId, entry.State)).OrderBy(row => row.TripId));
     }
 
     /// <summary>

@@ -157,7 +157,7 @@ namespace CityBuilder.Simulation.Settlement
                 }
                 else
                 {
-                    CourierRules.StopWorking(city, courier);
+                    CourierRules.StopWorking(city, content, courier);
                 }
 
                 return;
@@ -173,7 +173,7 @@ namespace CityBuilder.Simulation.Settlement
             if (IsStationPaused(city, courier))
             {
                 // Paused: it did this stop and goes home empty (04 section 19, D24).
-                CourierRules.GiveLoadBack(city, courier);
+                CourierRules.GiveLoadBack(city, content, courier);
                 WalkHome(city, courier, building, time);
                 return;
             }
@@ -236,7 +236,7 @@ namespace CityBuilder.Simulation.Settlement
             {
                 if (IsStationPaused(city, courier))
                 {
-                    CourierRules.GiveLoadBack(city, courier);
+                    CourierRules.GiveLoadBack(city, content, courier);
                     WalkHome(city, courier, here, time);
                     return;
                 }
@@ -269,12 +269,12 @@ namespace CityBuilder.Simulation.Settlement
             else
             {
                 long carried = courier.CarriedOf(line.Item);
+                // What the target doesn't take stays on the courier (M0-C-3): it goes on with the next line, or home, where it puts it back
+                // as room appears.
                 if (carried > 0 && !Put(city, content, courier, line.Item, carried, here, time, report))
                 {
                     return;
                 }
-
-                CourierRules.GiveLoadBack(city, courier);
             }
 
             // The line ended: the next one, or home.
@@ -393,8 +393,8 @@ namespace CityBuilder.Simulation.Settlement
         /// <summary>
         /// Puts <paramref name="quantity"/> of a good from the courier into the building: it comes off the load first (lowest origin first), the
         /// building takes what it can, and what it leaves goes back onto the courier with its origin (the highest origins first, so the parts
-        /// delivered are the lowest; decision 47), or, when the delivery stopped the courier, back to the stores it came from. Returns whether
-        /// the courier still works.
+        /// delivered are the lowest; decision 47); when the delivery stopped the courier, it then gives its load back as far as it fits (M0-C-3).
+        /// Returns whether the courier still works.
         /// </summary>
         private bool Put(CityState city, GameContent content, Courier courier, ItemId item, long quantity, int buildingIndex, long time, SettlementReportBuilder report)
         {
@@ -406,14 +406,13 @@ namespace CityBuilder.Simulation.Settlement
             {
                 long back = Math.Min(left, _putParts[index].Quantity);
                 left -= back;
-                if (working)
-                {
-                    courier.Load(item, _putParts[index].FromId, back);
-                }
-                else
-                {
-                    city.Buildings[city.IndexOfBuilding(_putParts[index].FromId)].AddToStore(item, back);
-                }
+                courier.Load(item, _putParts[index].FromId, back);
+            }
+
+            if (!working)
+            {
+                // The delivery stopped the courier (its station's upgrade started): what it carries goes back as far as it fits.
+                HeldLoads.PutBack(city, content, courier);
             }
 
             return working;

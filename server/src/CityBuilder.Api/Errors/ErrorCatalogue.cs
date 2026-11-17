@@ -134,10 +134,13 @@ public static class ErrorCatalogue
     public static readonly ApiError RoutesLocked = new(
         "ROUTES_LOCKED", StatusCodes.Status422UnprocessableEntity, "Routes locked", "Build a Scriptorium first; until then couriers make one-time deliveries.");
 
-    /// <summary>A route for a courier that still has delivery lines (CR-0008 D19).</summary>
+    /// <summary>
+    /// A route for a courier that still has delivery lines (CR-0008 D19), or fewer station workers while a removed courier carries goods
+    /// their store has no room to take back (M0-C-3).
+    /// </summary>
     public static readonly ApiError CourierBusy = new(
         "COURIER_BUSY", StatusCodes.Status422UnprocessableEntity, "Courier busy",
-        "This courier still has deliveries; cancel them or wait until they are done.");
+        "This courier is busy: it still has deliveries, or carries goods its store can't take back yet.");
 
     /// <summary>The delivery line to cancel is not one of that courier's lines (CR-0008 D18).</summary>
     public static readonly ApiError DeliveryNotFound = new(

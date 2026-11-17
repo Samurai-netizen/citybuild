@@ -39,7 +39,7 @@ namespace CityBuilder.Simulation.Rules
         public IReadOnlyList<ItemQuantity> Spent { get; }
 
         /// <summary>
-        /// The items the mutation gave back to the stock, even above a storage cap: the inputs of a cycle an upgrade interrupted. Empty when it
+        /// The items the mutation gave back to the stock (they always fit, M0-C-3): the inputs of a cycle an upgrade interrupted. Empty when it
         /// gave nothing back or was rejected.
         /// </summary>
         public IReadOnlyList<ItemQuantity> Refunded { get; }

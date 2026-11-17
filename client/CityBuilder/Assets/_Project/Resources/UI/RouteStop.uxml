@@ -1,16 +1,19 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
-  <!-- One stop of the route editor (CR-0008-T2 part C): RouteEditorScreen clones it once per stop and writes the texts of RouteEditorModel
-       into the labels by name. A card, from the top: the stop's number and building, the walk to the next stop, its actions (RouteAction.uxml,
-       one row each), the add-action button, and the row of tools that move the stop up (earlier) or down (later) in the list or remove it. Style: RouteEditor.uss. -->
-  <ui:VisualElement name="route-stop" class="route-stop box">
-    <ui:Label name="route-stop-title" class="route-stop-title t-heading" />
-    <ui:Label name="route-stop-walk" class="route-stop-walk t-small" />
-    <ui:VisualElement name="route-stop-actions" class="route-stop-actions" />
-    <ui:Button name="route-stop-add-action" class="route-stop-add btn btn--quiet" text="Add action" />
-    <ui:VisualElement class="route-stop-tools">
-      <ui:Button name="route-stop-up" class="route-stop-tool btn btn--quiet" text="Up" />
-      <ui:Button name="route-stop-down" class="route-stop-tool btn btn--quiet" text="Down" />
-      <ui:Button name="route-stop-remove" class="route-stop-tool btn btn--danger glyph glyph-minus" text="" />
+  <!-- One stop of the route editor (CR-0008-T2 part C; compact since M0-C, smoke test S8): RouteEditorScreen clones it once per stop and
+       writes the texts of RouteEditorModel into the labels by name. A card, from the top: the stop's number and building with the tools that
+       move it up (earlier) or down (later) in the list and remove it; its actions (RouteAction.uxml, one row each); the add-action button.
+       Under the card, between it and the next one, the walk to the next stop. Style: RouteEditor.uss. -->
+  <ui:VisualElement name="route-stop" class="route-stop">
+    <ui:VisualElement class="route-stop-card box">
+      <ui:VisualElement class="route-stop-head">
+        <ui:Label name="route-stop-title" class="route-stop-title t-body" />
+        <ui:Button name="route-stop-up" class="route-stop-tool route-compact btn btn--quiet" text="Up" />
+        <ui:Button name="route-stop-down" class="route-stop-tool route-compact btn btn--quiet" text="Down" />
+        <ui:Button name="route-stop-remove" class="route-stop-tool route-compact btn btn--danger glyph glyph-close" text="" />
+      </ui:VisualElement>
+      <ui:VisualElement name="route-stop-actions" class="route-stop-actions" />
+      <ui:Button name="route-stop-add-action" class="route-stop-add route-compact btn btn--quiet" text="+ Add action" />
     </ui:VisualElement>
+    <ui:Label name="route-stop-walk" class="route-stop-walk t-small" />
   </ui:VisualElement>
 </ui:UXML>

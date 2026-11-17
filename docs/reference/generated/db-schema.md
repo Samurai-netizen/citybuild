@@ -265,7 +265,7 @@ Tables in alphabetical order. Each table's mapping is in `Persistence/Configurat
 | `pk_city_trips` | primary key | `city_id`, `trip_id` |
 | `fk_city_trips_cities_city_id` | foreign key | `city_id` → `cities` (`id`), on delete `Cascade` |
 | `ck_city_trips_arrives_at` | check | `arrives_at > departed_at` |
-| `ck_city_trips_quantity` | check | `(leg = 'ToTarget' and quantity > 0) or (leg = 'ToSource' and quantity = 0 and remaining > 0)` |
+| `ck_city_trips_quantity` | check | `(leg = 'ToTarget' and quantity > 0) or (leg = 'ToSource' and ((quantity = 0 and remaining > 0) or (quantity > 0 and remaining = 0))) or (leg = 'Waiting' and quantity > 0 and remaining = 0)` |
 | `ck_city_trips_remaining` | check | `remaining >= 0` |
 
 ## command_receipts
@@ -331,3 +331,4 @@ In the order they apply (`server/src/CityBuilder.Infrastructure/Persistence/Migr
 | 6 | `20261104234502_AddLastSeen` |
 | 7 | `20261111231311_AddDeliveryLines` |
 | 8 | `20261112012041_AddBuildingPaused` |
+| 9 | `20261117143301_TripWaitingLeg` |

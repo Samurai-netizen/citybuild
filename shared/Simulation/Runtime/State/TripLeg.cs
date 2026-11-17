@@ -10,5 +10,11 @@ namespace CityBuilder.Simulation.State
 
         /// <summary>Back from the target to the source for the next load, carrying nothing.</summary>
         ToSource,
+
+        /// <summary>
+        /// At the source with a load its full store can't take yet (<c>04</c> section 18, M0-C-3): the worker puts it back as room appears,
+        /// then the trip ends. No walk is under way; the departure and arrival stay those of the walk back.
+        /// </summary>
+        Waiting,
     }
 }
