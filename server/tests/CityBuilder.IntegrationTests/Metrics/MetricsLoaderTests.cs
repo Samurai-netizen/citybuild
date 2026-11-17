@@ -158,6 +158,69 @@ public sealed class MetricsLoaderTests(PostgresServer server) : PostgresTest(ser
         Assert.Equal(10, await check.PlayerEvents.CountAsync(cancellationToken));
     }
 
+    /// <summary>The command line writes the page, prints its path and exits 0; the page holds no dev name and, without <c>--player</c>, no id.</summary>
+    [Fact]
+    public async Task Run_WritesThePageAndPrintsItsPath()
+    {
+        await SeedAsync();
+        string page = PagePath();
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        int code = CommandLine.Run(["--out", page, "--exclude", "devtest"], output, error, Database.ConnectionString);
+
+        Assert.Equal(CommandLine.Success, code);
+        Assert.Equal(page, output.ToString().Trim());
+        Assert.Equal(string.Empty, error.ToString());
+        string html = await File.ReadAllTextAsync(page, TestContext.Current.CancellationToken);
+        foreach (string devName in new[] { "alice", "devtest", "bob", "carol" })
+        {
+            Assert.DoesNotContain(devName, html, StringComparison.Ordinal);
+        }
+
+        Assert.DoesNotContain(_alice.ToString(), html, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("<section id=\"return\">", html, StringComparison.Ordinal);
+    }
+
+    /// <summary><c>--player</c> adds that player's timeline with their id.</summary>
+    [Fact]
+    public async Task Run_WithPlayer_AddsTheTimeline()
+    {
+        await SeedAsync();
+        string page = PagePath();
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        int code = CommandLine.Run(["--out", page, "--player", _alice.ToString()], output, error, Database.ConnectionString);
+
+        Assert.Equal(CommandLine.Success, code);
+        string html = await File.ReadAllTextAsync(page, TestContext.Current.CancellationToken);
+        Assert.Contains("<section id=\"player\">", html, StringComparison.Ordinal);
+        Assert.Contains(_alice.ToString(), html, StringComparison.Ordinal);
+    }
+
+    /// <summary>A <c>--player</c> id outside the population is a bad argument: exit 1, a message, no page.</summary>
+    [Fact]
+    public async Task Run_UnknownPlayer_ReturnsOneAndWritesNothing()
+    {
+        await SeedAsync();
+        string page = PagePath();
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        int code = CommandLine.Run(
+            ["--out", page, "--exclude", "devtest", "--player", _devtest.ToString()], output, error, Database.ConnectionString);
+
+        Assert.Equal(CommandLine.BadInput, code);
+        Assert.Contains("--player", error.ToString(), StringComparison.Ordinal);
+        Assert.False(File.Exists(page));
+    }
+
+    /// <summary>A page path in a new folder under the temp folder (the tool makes the folder).</summary>
+    /// <returns>The path.</returns>
+    private static string PagePath() =>
+        Path.Combine(Path.GetTempPath(), $"metrics-{Guid.NewGuid():N}", "report.html");
+
     /// <summary>Loads the test database with the given filter.</summary>
     /// <param name="filter">The filter.</param>
     /// <param name="log">Where the context's log lines go, or none.</param>
