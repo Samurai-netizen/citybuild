@@ -71,6 +71,9 @@ public sealed class ContentGoldenTests(ApiFactory factory) : IClassFixture<ApiFa
             {"id": "post", "name": "Post", "kind": "CourierStation", "era": 1, "availableAtStart": true, "unlockedBy": null, "maxPerCity": null, "cost": {"coins": 35}, "buildSeconds": 25, "levels": [
               {"level": 1, "maxWorkers": 2, "workersProvided": 0, "recipe": null, "storage": null, "carryLimit": 6, "staminaSeconds": 900, "upgradeCost": null, "upgradeSeconds": null}
             ]},
+            {"id": "sawpit", "name": "Sawpit", "kind": "Producer", "era": 1, "availableAtStart": true, "unlockedBy": null, "maxPerCity": null, "cost": {"coins": 15}, "buildSeconds": 20, "levels": [
+              {"level": 1, "maxWorkers": 1, "workersProvided": 0, "recipe": {"inputs": {}, "outputs": {"logs": 1, "planks": 1}, "labor": 60}, "storage": {"logs": 10, "planks": 10}, "carryLimit": null, "staminaSeconds": null, "upgradeCost": null, "upgradeSeconds": null}
+            ]},
             {"id": "study", "name": "Study", "kind": "Science", "era": 1, "availableAtStart": true, "unlockedBy": null, "maxPerCity": 1, "cost": {"coins": 30}, "buildSeconds": 15, "levels": [
               {"level": 1, "maxWorkers": 0, "workersProvided": 0, "recipe": null, "storage": null, "carryLimit": null, "staminaSeconds": null, "upgradeCost": null, "upgradeSeconds": null}
             ]},

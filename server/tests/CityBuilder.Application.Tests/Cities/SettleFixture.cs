@@ -271,6 +271,13 @@ internal static class SettleFixture
                     Id = "forestry", Name = "Forestry", Era = 1, Cost = new() { ["coins"] = 10 }, DurationSeconds = ResearchSeconds,
                     Effects = [new ResearchEffectData { Type = "laborReduction", Building = "woodcutter", Permille = 100 }],
                 },
+
+                // Joinery is never started; it gives planks a use, which the content rules ask of every good (04 §14 rule 14).
+                new ResearchData
+                {
+                    Id = "joinery", Name = "Joinery", Era = 1, Cost = new() { ["coins"] = 10, ["planks"] = 5 }, DurationSeconds = ResearchSeconds,
+                    Effects = [new ResearchEffectData { Type = "laborReduction", Building = "sawmill", Permille = 100 }],
+                },
             ],
         };
 

@@ -121,8 +121,9 @@ namespace CityBuilder.Client.Tests.EditMode
                     },
                     new BuildingData
                     {
+                        // The study costs 1 wood too, so the camp's wood has a use (content rule 14, 04 §14).
                         Id = "study", Name = "Study", Kind = "science", Era = 1, AvailableAtStart = true, MaxPerCity = 1,
-                        Cost = new Dictionary<string, long?> { ["gold"] = 4 }, BuildSeconds = 2,
+                        Cost = new Dictionary<string, long?> { ["gold"] = 4, ["wood"] = 1 }, BuildSeconds = 2,
                         Levels = new List<BuildingLevelData?> { new BuildingLevelData { Level = 1 } },
                     },
                 },

@@ -7,9 +7,9 @@
 ## Resume point
 - **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M0-A · Balance: strategy runs, content validation, approved number changes (M0-68, M0-70, M0-69; M0-67 done) · branch `task/M0-A-balance` · build log `docs/build-log/2026/2026-11-16-03-M0-A.md`. Its PR also lands workflow v2 and the M1 plan (CR-0010-T1; PR #97 closed). CR-0009-T1 and T2 (player metrics) are parked.
-- **Part / step:** parts 0 and A done; part B (M0-70) next
-- **Last completed:** M0-A part A: `docs/balance/REPORT-mvp-1.md` (proposals P1–P3) and a BalanceSim upgrade-rule fix (`87bcfe9`)
-- **Next step:** part B (M0-70, content validation graph checks: `bash scripts/dev/show-task.sh M0-70`), then part C (M0-69): apply the owner's P1 (purse 1000) and P2 (Trading Post 5 planks), rerun, before/after in the report.
+- **Part / step:** parts 0, A and B done; part C (M0-69) next
+- **Last completed:** M0-A part B: content graph rules 14–16 (`GraphRules`, `ReachabilityRules`, `04` §14; green `c18b468`); part A: `docs/balance/REPORT-mvp-1.md`
+- **Next step:** part C (M0-69): apply the owner's P1 (purse 1000) and P2 (Trading Post 5 planks) in `mvp-content.json`, rerun BalanceSim, before/after in the report, `23`; then the finish (Unity EditMode fixtures changed in B: run `test-unity.sh`).
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. CR-0012 (approved) runs after M0-D.
 - **Known broken / do not touch:** nothing.
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
