@@ -9,7 +9,7 @@ MetricsReport answers "what did the players do, how many reached each checkpoint
 ([CR-0009](../changes/CR-0009-player-metrics.md), part 4). It reads the player events that the server records (`player_events`,
 `core-instructions/06-data-model.md`) **read-only**, and the checkpoint file `server/analytics/checkpoints.json`, and writes one
 self-contained HTML page. It is a developer tool: never deployed, no endpoint, and nothing in the game reads what it computes.
-*(In progress, CR-0009-T2: the command line, the checkpoint file, the analysis model, the checkpoint explorer, the funnels, actions, friction, return and one-player sections, and the loader exist; the page follows.)*
+*(In progress, CR-0009-T2: the command line, the checkpoint file, the analysis model, the checkpoint explorer, the funnels, actions, friction, return and one-player sections, the loader and the page exist; the panel command follows.)*
 
 ## Key types
 | Type | Responsibility |
@@ -24,6 +24,7 @@ self-contained HTML page. It is a developer tool: never deployed, no endpoint, a
 | `Explorer`, `ExplorerRow`, `ExplorerDetail` | the checkpoint explorer: one row per checkpoint with the columns of the plan §3.4, last stop descending, and the detail blocks |
 | `Funnels`, `Actions`, `Friction`, `Returns`, `OnePlayer` | the other sections of the plan §3.4, each from `ReportContext`: funnel steps in order, per event type, refusals and the leavers' last events and last sessions, return per creation day, one player's timeline (at most 5000 rows) |
 | `MetricsLoader`, `LoadFilter` | reads the population (period, `--exclude`), its events and per player and item the first `SETTLEMENT_PRODUCED` ledger row (a `GROUP BY`) as `production.first`, in one read-only, repeatable-read transaction with `AsNoTracking`; no `player_events` table: `MetricsDatabaseException`, exit code 2 |
+| `HtmlReport`, `HtmlBuilder`, `HtmlAssets` | the page: the seven sections in the plan's order (the last only with `--player`), every text from the data or the file HTML-encoded, table cells with a `data-sort` key, the style and the one sort-and-filter script inline; `CommandLine.Run` writes it (UTF-8, `\n` line ends) and prints its path |
 | `Rate`, `Stats` | percentages in tenths from whole counts (half up, away from zero), `—` over nobody, the small-sample mark; the lower median |
 
 ## Rules and invariants
@@ -44,12 +45,19 @@ self-contained HTML page. It is a developer tool: never deployed, no endpoint, a
   their last `session.start` (all events without one). Return: a `session.start` on exactly UTC day 1, 3 or 7 after the creation day;
   `—` while that day has not ended at "now".
 
+- The page loads nothing (no address, `src=`, `<link>` or CSS `url(`); its links stay in the page. A player id appears only in the
+  one-player section; the overview gives the number of excluded dev names, never the names. The same input gives the same bytes.
+- Its texts say what goes together with leaving, never what makes players leave. A row's detail opens from its title (`<details>`,
+  so it moves with the row when sorted and reads with scripts off); a row reached by fewer than the least sample says "small sample".
+- An unknown `--player` id (not in the population) is a bad argument: exit code 1, nothing written.
+
 ## How to extend
 A new checkpoint is a line in `server/analytics/checkpoints.json`, no code.
 
 ## Tests
 `tools/MetricsReport.Tests` (no database): `dotnet test tools/MetricsReport.Tests`. The loader on PostgreSQL:
-`CityBuilder.IntegrationTests/Metrics/` (`MetricsLoaderTests`, `MetricsReportDatabaseTests`; Docker), `bash scripts/dev/test.sh int Metrics`.
+`CityBuilder.IntegrationTests/Metrics/` (`MetricsLoaderTests`, also `Run` writing the page, and `MetricsReportDatabaseTests`; Docker),
+`bash scripts/dev/test.sh int-db Metrics`. The click that sorts is checked by hand (plan point A).
 
 ## Known limitations
 - Everything is loaded and computed in memory: fine for M0 to M2 sizes.
