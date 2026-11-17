@@ -2,7 +2,7 @@
 
 The steps that prove the Unity client and the real server work together on one machine: the client logs in, loads the content and the city,
 shows "Connected", goes offline when the server stops, and reconnects when it comes back. Run them after a change to the start of the game,
-the connection or the wire. They take about 10 minutes, most of it waiting for polls. The logistics rules (stores, deliveries, couriers, roads, pausing) have their own run, `LOCAL-E2E-LOGISTICS.md`. Pressing Play is a manual step, because an AI coder can't
+the connection or the wire. They take about 10 minutes, most of it waiting for polls. The logistics rules (stores, deliveries, couriers, roads, pausing) have their own run, `LOCAL-E2E-LOGISTICS.md`. The whole game, step by step, is the smoke checklist `UNITY-SMOKE-TEST.md` (M0-72). Pressing Play is a manual step, because an AI coder can't
 use the Editor (`core-instructions/09-unity-client.md`).
 
 ## What you need
