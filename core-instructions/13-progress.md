@@ -5,11 +5,11 @@
 > This file is loaded into every session: Milestone-table notes are task ids and PR numbers only (≤ ~100 characters per row).
 
 ## Resume point
-- **State:** IDLE <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** none · M0-A in review (PR #98, branch `task/M0-A-balance`; it also lands CR-0010-T1). CR-0009-T1 and T2 (player metrics) are parked.
-- **Part / step:** —
-- **Last completed:** M0-A (M0-68, M0-70, M0-69): balance report 1, content graph rules 14–16, content `mvp-3`
-- **Next step:** after the owner merges M0-A: `/start-task M0-B` (`docs/plan/M1-PLAN.md` §3).
+- **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** M0-B (M0-73, M0-74, M0-75, M0-77, M0-78) · branch `task/M0-B-security-suites` · log `docs/build-log/2026/2026-11-17-01-M0-B.md`
+- **Part / step:** A (M0-73 HTTP end-to-end suite) / red tests · parts B M0-74, C M0-75, D M0-77, E M0-78
+- **Last completed:** M0-A (PR #98, merged)
+- **Next step:** part A: write `Integration` tests of the full loop over HTTP (test list in the log entry), run them alone.
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. CR-0012 (approved) runs after M0-D.
 - **Known broken / do not touch:** nothing.
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
@@ -36,7 +36,7 @@
 | Docs automation (DocTools) + docs completeness | in progress | CR-0002, CR-0003 (PR #27, #29); M0-61 (PR #89); M0-63 (PR #91) |
 | Workflow v2 (CR-0010) | in progress | CR-0010-T1, lands with M0-A: tests first, `test.sh`, token budget, asset requests (`27`) |
 | Logistics (CR-0008) | done | T1 to T3 (PR #86, #87, #88) |
-| Balance simulator | done | M0-67 (PR #95); M0-68 to M0-70 in M0-A |
+| Balance simulator | done | M0-67 (PR #95); M0-68 to M0-70 (PR #98) |
 | E2E / security / concurrency suites | in progress | M0-36, M0-56, M0-60 (PR #48, #80, #85); M0-64 to M0-66 (PR #92 to #94) |
 | Dev build + M0 close-out | not started | |
 
