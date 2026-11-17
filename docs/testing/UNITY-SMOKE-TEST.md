@@ -97,4 +97,8 @@ The last run, filled in by M0-76. Issues are in the build log entry of the run.
 
 | Step | Result | Issue |
 |---|---|---|
-| S1 … S12 | not run yet | — |
+| S1 | pass | M0-C-2 (P3, expected EF lines) |
+| S2 | pass | — |
+| S3 … S12 | pass, owner's free play (not step by step) | M0-C-1, M0-C-3, M0-C-5 fixed in S8; M0-C-4 (P2) not seen again |
+
+Run of M0-C (2026-11-17), API at DevTimeScale 60. EditMode 1288/1288, PlayMode 189/189.
