@@ -5,11 +5,11 @@
 > This file is loaded into every session: Milestone-table notes are task ids and PR numbers only (≤ ~100 characters per row).
 
 ## Resume point
-- **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** M0-A · Balance: strategy runs, content validation, approved number changes (M0-68, M0-70, M0-69; M0-67 done) · branch `task/M0-A-balance` · build log `docs/build-log/2026/2026-11-16-03-M0-A.md`. Its PR also lands workflow v2 and the M1 plan (CR-0010-T1; PR #97 closed). CR-0009-T1 and T2 (player metrics) are parked.
-- **Part / step:** finish: full run done; 5 integration tests updated to mvp-3 numbers (decision 12), rerun and Unity tests running
-- **Last completed:** M0-A part C: content `mvp-3` (purse 1000, Trading Post 5 planks), before/after in `docs/balance/REPORT-mvp-1.md`; B: graph rules 14–16
-- **Next step:** the finish: `quality.sh`, `test-unity.sh` (Unity EditMode fixtures changed in B), Definition of Done (CHANGELOG, M0-PLAN rows), PR.
+- **State:** IDLE <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** none · M0-A in review (PR, branch `task/M0-A-balance`; it also lands CR-0010-T1). CR-0009-T1 and T2 (player metrics) are parked.
+- **Part / step:** —
+- **Last completed:** M0-A (M0-68, M0-70, M0-69): balance report 1, content graph rules 14–16, content `mvp-3`
+- **Next step:** after the owner merges M0-A: `/start-task M0-B` (`docs/plan/M1-PLAN.md` §3).
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. CR-0012 (approved) runs after M0-D.
 - **Known broken / do not touch:** nothing.
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
@@ -17,7 +17,7 @@
   `bash scripts/dev/quality.sh` (as CI; `08` → Test tiers) · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` (remaining tasks grouped in `docs/plan/M1-PLAN.md` §3) · tasks done: 71 / 88 · next milestone: `docs/plan/M1-PLAN.md` (Proposed, CR-0011)
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` (remaining tasks grouped in `docs/plan/M1-PLAN.md` §3) · tasks done: 74 / 88 · next milestone: `docs/plan/M1-PLAN.md` (Proposed, CR-0011)
 
 | Area | State | Notes |
 |---|---|---|
@@ -36,7 +36,7 @@
 | Docs automation (DocTools) + docs completeness | in progress | CR-0002, CR-0003 (PR #27, #29); M0-61 (PR #89); M0-63 (PR #91) |
 | Workflow v2 (CR-0010) | in progress | CR-0010-T1, lands with M0-A: tests first, `test.sh`, token budget, asset requests (`27`) |
 | Logistics (CR-0008) | done | T1 to T3 (PR #86, #87, #88) |
-| Balance simulator | in progress | M0-67 (PR #95); M0-68 to M0-70 in M0-A |
+| Balance simulator | done | M0-67 (PR #95); M0-68 to M0-70 in M0-A |
 | E2E / security / concurrency suites | in progress | M0-36, M0-56, M0-60 (PR #48, #80, #85); M0-64 to M0-66 (PR #92 to #94) |
 | Dev build + M0 close-out | not started | |
 
