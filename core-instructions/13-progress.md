@@ -7,9 +7,9 @@
 ## Resume point
 - **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M0-D (M0-80, M0-82, M0-83, M0-84) · branch `task/M0-D-freeze-build-audit-closeout` · log `docs/build-log/2026/2026-11-17-03-M0-D.md`
-- **Part / step:** C (M0-83 final MVP audit) · A, B done (B: `docs/BUILD.md`, macOS + Android built)
+- **Part / step:** D (M0-84 close-out) · A, B, C done (C: `docs/MVP-AUDIT.md`, plan §1 ticked but Process)
 - **Last completed:** M0-C (PR #100, merged)
-- **Next step:** part C: the chain audit, `docs/MVP-AUDIT.md`, plan §1 Definition of Done with evidence. Owner, any time: the APK on a phone (`docs/BUILD.md`).
+- **Next step:** part D: board (M0-C rows Done), CHANGELOG 0.1.0, `10-milestones` exit criteria, `docs/HANDOFF-M0.md`, `quality.sh`, then finish. Owner, any time: the APK on a phone (`docs/BUILD.md`).
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. CR-0012 (approved) runs after M0-D.
 - **Known broken / do not touch:** nothing.
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)

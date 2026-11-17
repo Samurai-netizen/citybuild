@@ -53,6 +53,7 @@ const handbook = [
     spec('03'),
     page('docs/architecture/overview.md', 'Overview (as built)'),
     page('docs/ARCHITECTURE-FITNESS-REVIEW.md', 'Architecture fitness review'),
+    page('docs/MVP-AUDIT.md', 'M0 final audit'),
     spec('04'),
     page('shared/README.md', 'shared/ folder'),
     folder('Modules', 'docs/modules'),
