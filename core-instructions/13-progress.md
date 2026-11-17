@@ -5,11 +5,11 @@
 > This file is loaded into every session: Milestone-table notes are task ids and PR numbers only (≤ ~100 characters per row).
 
 ## Resume point
-- **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** CR-0009-T1 (player metrics: recording) · branch `task/CR-0009-T1-recording` · log `docs/build-log/2026/2026-11-17-04-CR-0009-T1.md` · plan `docs/plan/CR-0009-T1-PLAN.md`
-- **Part / step:** H of A … H (domain type, table, recording, command events, settlement events, session events, guards, docs) · A … H done
-- **Last completed:** M0-D (#101 merged; M0-80 … M0-84 `Done`)
-- **Next step:** `/finish-task`: `quality.sh`, `check-docs.sh --base origin/main`, `docs-site.sh build`, the self-review (persistence and security), the PR, the task report. After this task: CR-0009-T2 or CR-0012-T1 (owner). Owner, any time: the APK on a phone (`docs/BUILD.md`).
+- **State:** IDLE <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** — (CR-0009-T1 in review: PR open, branch `task/CR-0009-T1-recording`)
+- **Part / step:** —
+- **Last completed:** CR-0009-T1 (player metrics: recording; `In review`)
+- **Next step:** the owner reviews and merges the CR-0009-T1 PR; then CR-0009-T2 (the report, needs T1 merged) or CR-0012-T1 (owner's call). Owner, any time: the APK on a phone (`docs/BUILD.md`).
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. M1 CRs (CR-0011) to approve.
 - **Known broken / do not touch:** nothing.
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
