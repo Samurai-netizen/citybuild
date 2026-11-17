@@ -14,7 +14,7 @@ public sealed class ReturnTests
     /// on days 1, 2 and 7, player 3 never; player 4 on its day 1.
     /// </summary>
     /// <returns>The rows.</returns>
-    private static IReadOnlyList<ReturnRow> Rows() => Return.Build(ReportContext.Create(
+    private static IReadOnlyList<ReturnRow> Rows() => Returns.Build(ReportContext.Create(
         new TestData()
             .Player(1, createdAtSecond: 36_000)
             .Player(2, createdAtSecond: 50)
@@ -40,7 +40,7 @@ public sealed class ReturnTests
 
         Assert.Equal([new DateOnly(2026, 11, 1), new DateOnly(2026, 11, 6)], rows.Select(r => r.Day));
         Assert.Equal([3, 1], rows.Select(r => r.Players));
-        Assert.Equal([1, 3, 7], Return.Days);
+        Assert.Equal([1, 3, 7], Returns.Days);
     }
 
     /// <summary>The share with a session start on exactly day 1, 3 and 7 after the creation day.</summary>
