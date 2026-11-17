@@ -102,6 +102,7 @@ public static class Explorer
         int reached = reachers.Length;
         int notReached = timelines.Count - reached;
         int leftWithout = context.LeftCount - leftReachers.Length;
+        // The event with which a player reached the row's checkpoint.
         MetricsEvent ReachOf(int player) => timelines[player].Events[reaches[index][player]];
 
         return new ExplorerRow(
