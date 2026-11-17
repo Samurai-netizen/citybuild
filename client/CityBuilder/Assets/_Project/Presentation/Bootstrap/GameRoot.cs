@@ -775,9 +775,12 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             ApiClient api;
             try
             {
-                // Plain http only in the Editor and development players (07, M0-60): a release build sends its token over https only.
+                // The asset's address, or the player's -server-url option (M0-82, docs/BUILD.md). Plain http only in the Editor and
+                // development players (07, M0-60): a release build sends its token over https only.
+                string baseUrl = ServerAddress.Resolve(Environment.GetCommandLineArgs(), settings.BaseUrl);
+                ClientLog.Info("GameRoot: server " + baseUrl);
                 api = _api = new ApiClient(
-                    settings.BaseUrl, settings.RequestTimeoutSeconds, new UnityWebRequestTransport(), allowInsecureHttp: Debug.isDebugBuild);
+                    baseUrl, settings.RequestTimeoutSeconds, new UnityWebRequestTransport(), allowInsecureHttp: Debug.isDebugBuild);
             }
             catch (ArgumentException exception)
             {
