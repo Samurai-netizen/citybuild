@@ -13,13 +13,10 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation
     /// <summary>
     /// The layouts <see cref="RouteEditorScreen"/> loads by name (<c>RouteEditor</c>, <c>RouteStop</c>, <c>RouteAction</c>) hold the elements it
     /// looks up, and keep the compact layout of the M0-C rework (smoke test S8, issue M0-C-1): the title alone on its row, a stop's tools on its
-    /// title row, the walk between the cards, list buttons that read at body size, and a panel wide enough for an action row.
+    /// title row, the walk between the cards, list buttons that read at body size, and a panel of half the landscape screen at most.
     /// </summary>
     public sealed class RouteEditorLayoutTests
     {
-        /// <summary>The narrowest the landscape panel may get: an action row (three buttons and remove) needs it to stay readable.</summary>
-        private const int MinPanelWidth = 320;
-
         /// <summary>The smallest a list button may be, the touch floor of the UI rules.</summary>
         private const int MinButtonSize = 48;
 
@@ -140,11 +137,19 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation
             Assert.That(Pixels(rule, "min-height"), Is.GreaterThanOrEqualTo(MinButtonSize));
         }
 
-        /// <summary>The landscape panel is wide enough for an action row, and the stop list takes the height the panel has left.</summary>
+        /// <summary>
+        /// The landscape panel is half the screen at most, with no fixed minimum that could push it over on a narrow screen (the map keeps the
+        /// rest for its taps; the PlayMode test <c>EditRoutes_Open_LeavesTheMapFreeForTaps</c> checks it laid out), and the stop list takes
+        /// the height the panel has left.
+        /// </summary>
         [Test]
-        public void Panel_IsWideEnough_AndTheListTakesTheRestOfTheHeight()
+        public void Panel_IsHalfTheScreenAtMost_AndTheListTakesTheRestOfTheHeight()
         {
-            Assert.That(Pixels(Rule(".route-panel"), "min-width"), Is.GreaterThanOrEqualTo(MinPanelWidth));
+            string panel = Rule(".route-panel");
+            Match width = Regex.Match(panel, @"(^|[;\s])width\s*:\s*(\d+)%");
+            Assert.That(width.Success, Is.True, "width in % in { " + panel + " }");
+            Assert.That(int.Parse(width.Groups[2].Value, CultureInfo.InvariantCulture), Is.LessThanOrEqualTo(50));
+            Assert.That(Regex.IsMatch(panel, @"(^|[;\s])min-width\s*:\s*[1-9]"), Is.False, "no fixed minimum width in { " + panel + " }");
             Assert.That(Rule(".route-scroll"), Does.Contain("flex-grow: 1"));
         }
 

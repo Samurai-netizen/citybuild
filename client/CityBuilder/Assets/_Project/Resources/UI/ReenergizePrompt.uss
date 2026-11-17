@@ -1,0 +1,53 @@
+/* The re-energize popup (M0-C-5): a small parchment card on a dark scrim, its title on a gold ribbon over the top edge like the welcome-back
+   report, the message in body words, and two full-width buttons. Colours and sizes come from Common.uss. */
+.reenergize-root {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.reenergize-scrim {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  padding: var(--sp-2) var(--sp-4); /* replaced by the safe area in code */
+  justify-content: center;
+  align-items: center;
+}
+
+.reenergize-scrim--hidden {
+  display: none;
+}
+
+.reenergize-card {
+  width: 400px;
+  max-width: 100%;
+  margin-top: var(--sp-4);
+  padding: var(--sp-2) var(--sp-3) var(--sp-3);
+  border-width: 4px;
+  border-bottom-width: 7px;
+}
+
+.reenergize-title {
+  flex-shrink: 0;
+  align-self: center;
+  margin: -24px 0 var(--sp-2) 0;
+  padding: var(--sp-1) var(--sp-4);
+  font-size: var(--font-xl);
+  letter-spacing: 0;
+}
+
+.reenergize-message {
+  margin: var(--sp-2) 0;
+  white-space: normal;
+  -unity-text-align: middle-center;
+}
+
+.reenergize-button {
+  flex-shrink: 0;
+  margin-top: var(--sp-2);
+}

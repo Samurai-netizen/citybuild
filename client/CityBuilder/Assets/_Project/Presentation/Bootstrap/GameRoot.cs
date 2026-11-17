@@ -137,6 +137,12 @@ namespace CityBuilder.Client.Presentation.Bootstrap
         /// <summary>Shows the welcome-back report for the snapshots the store takes; null until the start has connected, or when the panel is missing.</summary>
         private WelcomeBackFlow? _welcomeFlow;
 
+        /// <summary>The re-energize popup (M0-C-5); null until the start has connected, or when its assets are missing.</summary>
+        private ReenergizePrompt? _reenergizePrompt;
+
+        /// <summary>Opens the re-energize popup for the delivery and route flows and sends its command; null while the popup is missing.</summary>
+        private ReenergizePromptFlow? _reenergizeFlow;
+
         /// <summary>The connection banner and the blocking screen; null until the start has connected, or when its assets are missing.</summary>
         private ConnectionBanner? _connectionBanner;
 
@@ -341,6 +347,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             _inspectorFlow?.Dispose();
             _researchFlow?.Dispose();
             _welcomeFlow?.Dispose();
+            _reenergizeFlow?.Dispose();
             if (_displayCity != null)
             {
                 _displayCity.Changed -= ShowBuildings;
@@ -356,6 +363,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             DestroyView(_inspector);
             DestroyView(_researchScreen);
             DestroyView(_welcomePanel);
+            DestroyView(_reenergizePrompt);
             _placement = null;
             _trips = null;
             _tripBar = null;
@@ -369,6 +377,8 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             _inspectorFlow = null;
             _researchFlow = null;
             _welcomeFlow = null;
+            _reenergizePrompt = null;
+            _reenergizeFlow = null;
             _displayCity = null;
             _hud = null;
             _buildMenu = null;
@@ -415,6 +425,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
             _inspectorFlow?.Dispose();
             _researchFlow?.Dispose();
             _welcomeFlow?.Dispose();
+            _reenergizeFlow?.Dispose();
             _connectionFlow?.Dispose();
             _feedback?.Dispose();
             if (_displayCity != null)
@@ -558,6 +569,12 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                 return;
             }
 
+            _reenergizePrompt = ReenergizePrompt.Create(transform);
+            if (_reenergizePrompt != null)
+            {
+                _reenergizeFlow = new ReenergizePromptFlow(_reenergizePrompt, _commandSender, destroyCancellationToken);
+            }
+
             if (city != null)
             {
                 var trips = new TripFlowModel(content, _world.Grid);
@@ -568,6 +585,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                     _trips = trips;
                     _tripBar = tripBar;
                     _tripFlow = new TripFlow(trips, _world, _commandSender, tripBar, _inspector, destroyCancellationToken);
+                    _tripFlow.ReenergizeNeeded += AskReenergize;
                     _ = _menus.Join(trips.Cancel);
                 }
 
@@ -579,6 +597,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                     _routes = routes;
                     _routeScreen = routeScreen;
                     _routeFlow = new RouteEditorFlow(routes, _world, _commandSender, routeScreen, _inspector, destroyCancellationToken);
+                    _routeFlow.ReenergizeNeeded += AskReenergize;
                     routeScreen.Opened += _menus.Join(_routeFlow.Close).NotifyOpened;
                     routeScreen.Opened += RefreshDock;
                     routes.Changed += RefreshDock;
@@ -697,7 +716,14 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                 || (_inspector != null && _inspector.IsOverUi(screenPosition))
                 || (_researchScreen != null && _researchScreen.IsOverUi(screenPosition))
                 || (_welcomePanel != null && _welcomePanel.IsOverUi(screenPosition))
+                || (_reenergizePrompt != null && _reenergizePrompt.IsOverUi(screenPosition))
                 || (_connectionBanner != null && _connectionBanner.IsOverUi(screenPosition));
+        }
+
+        /// <summary>A delivery or a route needs a resting courier: opens the re-energize popup (M0-C-5).</summary>
+        private void AskReenergize()
+        {
+            _reenergizeFlow?.Ask();
         }
 
         /// <summary>A command ended: the monitor hears its error, because a refused token needs a new login.</summary>

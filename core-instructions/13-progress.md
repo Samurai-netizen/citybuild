@@ -51,7 +51,7 @@ All commands exist.
 ## Open issues / tech debt
 - M0-C-1 P1 route editor unreadable: fixed (layout rework), owner check in Unity pending. M0-C-2 P3 EF history-table error lines on an empty database.
 - M0-C-3 P1 a store above its limit (returned loads): fixed, stores never overflow (decision 2). M0-C-4 P2 401 on re-energize at 60×: to check.
-- M0-C-5 P2 send to a resting courier says "Sent" with no re-energize hint: to fix with M0-C-4.
+- M0-C-5 P2 send to a resting courier said "Sent", nothing moved: fixed, a popup asks to re-energize (decision 3).
 - Audit item A18 (Unity 6.6 installed, the stack pins 6.3) is closed: the project is 6000.3.25f1 (M0-04).
 - Other kit wording items with their owner tasks: M0-01 build log → Follow-ups.
 

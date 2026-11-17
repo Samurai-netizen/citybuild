@@ -117,6 +117,12 @@ namespace CityBuilder.Client.Presentation.Trips
         /// <summary>The courier the engine would pick, or null (a worker carries it, or no courier is free).</summary>
         private Courier? _courier;
 
+        /// <summary>
+        /// Whether the courier the engine would pick rests (no stamina): Send stays pressable, but <see cref="TryConfirm"/> sends nothing, and
+        /// the flow asks the player to re-energize the couriers first (M0-C-5). The engine would queue the delivery and nobody would walk.
+        /// </summary>
+        public bool NeedsReenergize => _courier != null && _courier.State == CourierState.Resting;
+
         /// <summary>The main line of the trip bar.</summary>
         public string PromptText { get; private set; } = string.Empty;
 
@@ -271,10 +277,10 @@ namespace CityBuilder.Client.Presentation.Trips
             SetAmount(Amount.Percent(next));
         }
 
-        /// <summary>Confirms the trip and returns the <see cref="CommandIntent"/> to send when <see cref="CanConfirm"/> is true.</summary>
+        /// <summary>Confirms the trip and returns the <see cref="CommandIntent"/> to send when <see cref="CanConfirm"/> is true and the courier doesn't rest (<see cref="NeedsReenergize"/>).</summary>
         public bool TryConfirm(out CommandIntent? intent)
         {
-            if (Phase != TripPhase.Confirming || !CanConfirm || !SourceId.HasValue || !TargetId.HasValue)
+            if (Phase != TripPhase.Confirming || !CanConfirm || NeedsReenergize || !SourceId.HasValue || !TargetId.HasValue)
             {
                 intent = null;
                 return false;
@@ -454,7 +460,8 @@ namespace CityBuilder.Client.Presentation.Trips
             }
 
             LoadLimit = _content.TryGetBuilding(station!.TypeId, out BuildingDefinition? definition) ? definition!.GetLevel(station.Level).CarryLimit : 0;
-            CarrierText = "Courier " + _courier.Slot.ToString(CultureInfo.InvariantCulture) + " of " + BuildingNameOf(station);
+            CarrierText = "Courier " + _courier.Slot.ToString(CultureInfo.InvariantCulture) + " of " + BuildingNameOf(station)
+                + (_courier.State == CourierState.Resting ? " (resting)" : string.Empty);
         }
 
         /// <summary>The loads in words after a separator, such as <c> · 4 loads of 10</c> or <c> · 1 load</c>; empty with nothing to carry.</summary>
