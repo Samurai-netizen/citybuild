@@ -6,7 +6,7 @@
 
 ## Resume point
 - **State:** IDLE <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** none · M0-A in review (PR, branch `task/M0-A-balance`; it also lands CR-0010-T1). CR-0009-T1 and T2 (player metrics) are parked.
+- **Task:** none · M0-A in review (PR #98, branch `task/M0-A-balance`; it also lands CR-0010-T1). CR-0009-T1 and T2 (player metrics) are parked.
 - **Part / step:** —
 - **Last completed:** M0-A (M0-68, M0-70, M0-69): balance report 1, content graph rules 14–16, content `mvp-3`
 - **Next step:** after the owner merges M0-A: `/start-task M0-B` (`docs/plan/M1-PLAN.md` §3).
