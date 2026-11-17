@@ -15,3 +15,4 @@ creates the capability, and every later change to that area keeps it valid. The 
 | [`run-balance-simulator.md`](run-balance-simulator.md): run the balance simulator and compare a content change | M0-67 | done |
 | [`resume-interrupted-session.md`](resume-interrupted-session.md): recover after an AI session ended mid-task | M0-01 | done |
 | [`document-code.md`](document-code.md): describe every file and declaration, and fix a failing documentation check | CR-0003-T1 | done |
+| [`add-checkpoint.md`](add-checkpoint.md): a player metrics checkpoint, a line in the file or a new recorded event | CR-0009-T2 | done |

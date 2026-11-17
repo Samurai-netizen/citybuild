@@ -82,7 +82,10 @@ Use these names in code, docs and UI text. Consistent words keep Claude and the 
 | Ledger entry | Audit row for one item change | `LedgerEntry` |
 | Player event | One append-only row of what a player did or reached (a command and its outcome, a completed research or building, a session start), written in the city's transaction, for the metrics only: game code never reads it (CR-0009) | `PlayerEvent`, `PlayerEventTypes`, `IPlayerEventRepository`, `player_events` |
 | Session (metrics) | A run of settling requests with no gap longer than `Metrics:SessionGapSeconds`; each start is a `session.start` event | `SessionPolicy` |
-| Metrics checkpoint | A named match over player events (type, detail, outcome, at least N times) that the report counts; defined in a file, not in code, and independent of other checkpoints *(planned, CR-0009-T2)*. Not the process word "Checkpoint" | — |
+| Metrics checkpoint | A named match over player events (type, detail, outcome, at least N times) that the report counts; defined in a file, not in code, and independent of other checkpoints. Not the process word "Checkpoint" | `CheckpointFile` (`server/analytics/checkpoints.json`) |
+| Funnel (metrics) | An optional ordered list of metrics checkpoints; a player reaches a step after reaching every step before it, each at or after the one before | `Funnel` |
+| Left (metrics) | A player not seen for the report's "left after" days (default 3) before its "now" | `ReportContext` |
+| Last stop | For a player who left, the checkpoint with their latest reach | `Explorer` |
 | Snapshot | Full authoritative city state sent to the client | `CitySnapshotDto` |
 | State version | Counter incremented on every persisted change | `StateVersion` |
 | Display prediction | Client-side `Advance` on a copy of the snapshot, for visuals only | `DisplayClock` |

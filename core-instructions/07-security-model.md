@@ -131,6 +131,13 @@ Never log: tokens, signing keys, full request bodies in production, personal dat
   no display name, token, address or body; the columns are pinned by `PlayerEvents_Columns_AreExactlyThese`. A player's events delete
   with the player (cascade).
 
+- As built (CR-0009-T2): the metrics report (`tools/MetricsReport`) reads the database in one read-only, repeatable-read transaction and
+  writes one page, `server-panel/.run/metrics/report.html`, on the developer's disk. That file holds player data, so it is git-ignored;
+  it shows player ids only (a dev name is used in a `WHERE` for `--exclude` and never selected or printed) and loads nothing from the
+  network. The connection string reaches the tool in the environment, never as an argument (the process list shows those).
+  Tests: `HtmlReportTests` (no dev name, no network reference), `MetricsLoaderTests` (`ReadOnly_AWriteInside_Fails`,
+  `Load_Exclude_RemovesThePlayerAndSelectsNoName`), `server-panel/test-metrics.sh`.
+
 - Reviewed (M0-60): every server log call and every client `ClientLog` call; none writes a token, a key, a body or a display name. A failed
   request's client line has the server's `code`, `detail` and `traceId`, and an answer that isn't Problem Details is never copied into it
   (`ApiResponseParser`). The trace id in every server line is the server's own (`ServerTraceContext`), so a client can't plant one.
