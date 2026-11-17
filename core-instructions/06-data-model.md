@@ -124,6 +124,10 @@ COMMIT
   `building.completed` (detail the type, `value` the new level) per completion, before the command's event. **Limitation:** an event's
   `city_clock` and `created_at` are those of the request that settled the city, not of the second the completion happened inside the window,
   so a completion during a long offline gap is dated at the player's return (the city's `research_completed_at` has the exact second).
+- **Session events (CR-0009):** a settle, alone or in a command, more than `Metrics:SessionGapSeconds` (default 1800, real time) after
+  the player's last-seen second (read before the settle marks the city seen) records `session.start` first; a session start always moves
+  `last_seen_unix`, so the city is saved. The first dev login writes `player.created` and `session.start` with the new player and city;
+  a later login writes none. A replay, a conflict and a shape refusal settle nothing and start no session.
 - **Unexpected exception:** full rollback; nothing is committed.
 - **Unique violation on the receipt insert** (two identical requests raced): roll back, read the stored receipt, return it (a different
   payload hash: `IDEMPOTENCY_CONFLICT`; no receipt behind it: the exception propagates).

@@ -24,5 +24,5 @@ public sealed class SessionPolicy
     /// <param name="lastSeenUnixSec">The player's last-seen second, read before this request marks the city seen.</param>
     /// <param name="nowUnixSec">The request's server second.</param>
     /// <returns><see langword="true"/> when the request starts a session; exactly the gap does not.</returns>
-    public bool StartsSession(long lastSeenUnixSec, long nowUnixSec) => GapSeconds < 0;
+    public bool StartsSession(long lastSeenUnixSec, long nowUnixSec) => nowUnixSec - lastSeenUnixSec > GapSeconds;
 }

@@ -1,6 +1,7 @@
+using CityBuilder.Api.Metrics;
 using CityBuilder.Application.Metrics;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -31,7 +32,11 @@ public sealed class MetricsOptionsTests(ApiFactory factory) : IClassFixture<ApiF
         Assert.Equal(36_000, fast.Services.GetRequiredService<SessionPolicy>().GapSeconds);
     }
 
-    /// <summary>A gap below a minute or above a day stops the start.</summary>
+    /// <summary>
+    /// A gap below a minute or above a day stops the start: the start validator the host runs (<see cref="IStartupValidator"/>) fails on
+    /// it. Checked on the registration itself, not by starting a host: a host whose start fails can lose the validation's exception to a
+    /// disposed service provider (seen once in a full run).
+    /// </summary>
     /// <param name="gap">The setting's value.</param>
     [Theory]
     [InlineData("59")]
@@ -40,9 +45,13 @@ public sealed class MetricsOptionsTests(ApiFactory factory) : IClassFixture<ApiF
     [InlineData("86401")]
     public void Start_SessionGapOutOfRange_FailsValidation(string gap)
     {
-        using WebApplicationFactory<Program> broken = factory.WithWebHostBuilder(host => host.UseSetting("Metrics:SessionGapSeconds", gap));
+        IConfiguration configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["Metrics:SessionGapSeconds"] = gap })
+            .Build();
+        using ServiceProvider services = new ServiceCollection().AddPlayerMetrics(configuration).BuildServiceProvider();
 
-        OptionsValidationException exception = Assert.Throws<OptionsValidationException>(() => broken.Services);
+        OptionsValidationException exception =
+            Assert.Throws<OptionsValidationException>(() => services.GetRequiredService<IStartupValidator>().Validate());
 
         Assert.Contains(exception.Failures,
             failure => failure.StartsWith("Metrics:SessionGapSeconds must be between 60 and 86400", StringComparison.Ordinal));

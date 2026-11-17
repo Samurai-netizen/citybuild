@@ -22,9 +22,15 @@ public static class PlayerMetrics
         ArgumentNullException.ThrowIfNull(configuration);
 
         services.AddOptions<MetricsOptions>()
-            .Bind(configuration.GetSection(MetricsOptions.SectionName));
+            .Bind(configuration.GetSection(MetricsOptions.SectionName))
+            .Validate(options => options.SessionGapSeconds is >= MetricsOptions.MinSessionGapSeconds and <= MetricsOptions.MaxSessionGapSeconds,
+                $"Metrics:SessionGapSeconds must be between {MetricsOptions.MinSessionGapSeconds} and {MetricsOptions.MaxSessionGapSeconds}.")
+            .ValidateOnStart();
 
-        services.AddSingleton(provider => new SessionPolicy(provider.GetRequiredService<IOptions<MetricsOptions>>().Value.SessionGapSeconds));
+        // The gap is real time: on a fast clock it is that many more server seconds, like the presence grace.
+        services.AddSingleton(provider => new SessionPolicy(checked(
+            provider.GetRequiredService<IOptions<MetricsOptions>>().Value.SessionGapSeconds
+            * ServerClock.TimeScaleOf(provider.GetRequiredService<TimeProvider>()))));
         return services;
     }
 }
