@@ -1,0 +1,28 @@
+{
+  "checkpoints": [
+    {"id": "placed_house", "title": "Placed a Cottage", "event": "command.place-building", "detail": "house", "outcome": "accepted"},
+    {"id": "placed_woodcutter", "title": "Placed a Woodcutter's Hut", "event": "command.place-building", "detail": "woodcutter", "outcome": "accepted"},
+    {"id": "placed_sawmill", "title": "Placed a Sawmill", "event": "command.place-building", "detail": "sawmill", "outcome": "accepted"},
+    {"id": "placed_trading_post", "title": "Placed a Trading Post", "event": "command.place-building", "detail": "trading_post", "outcome": "accepted"},
+    {"id": "placed_scriptorium", "title": "Placed a Scriptorium", "event": "command.place-building", "detail": "scriptorium", "outcome": "accepted"},
+    {"id": "placed_courier_station", "title": "Placed a Courier Station", "event": "command.place-building", "detail": "courier_station", "outcome": "accepted"},
+    {"id": "placed_warehouse", "title": "Placed a Warehouse", "event": "command.place-building", "detail": "warehouse", "outcome": "accepted"},
+    {"id": "first_upgrade", "title": "Upgraded a building", "event": "command.upgrade-building", "outcome": "accepted"},
+    {"id": "started_research", "title": "Started a research", "event": "command.start-research", "outcome": "accepted"},
+    {"id": "researched_trade_charter", "title": "Completed the research Trade Charter", "event": "research.completed", "detail": "trade_charter"},
+    {"id": "researched_sharp_axes", "title": "Completed the research Sharpened Axes", "event": "research.completed", "detail": "sharp_axes"},
+    {"id": "researched_frame_saw", "title": "Completed the research Frame Saw", "event": "research.completed", "detail": "frame_saw"},
+    {"id": "researched_storehouses", "title": "Completed the research Storehouses", "event": "research.completed", "detail": "storehouses"},
+    {"id": "researched_tally_sticks", "title": "Completed the research Tally Sticks", "event": "research.completed", "detail": "tally_sticks"},
+    {"id": "researched_sturdy_boots", "title": "Completed the research Sturdy Boots", "event": "research.completed", "detail": "sturdy_boots"},
+    {"id": "produced_logs", "title": "First logs produced", "event": "production.first", "detail": "logs"},
+    {"id": "produced_planks", "title": "First planks produced", "event": "production.first", "detail": "planks"},
+    {"id": "came_back", "title": "Came back a second time", "event": "session.start", "atLeast": 2},
+    {"id": "came_back_5", "title": "Came back five times", "event": "session.start", "atLeast": 5},
+    {"id": "ran_out_placing", "title": "Could not pay for a building", "event": "command.place-building", "outcome": "INSUFFICIENT_RESOURCE"},
+    {"id": "ran_out_upgrading", "title": "Could not pay for an upgrade", "event": "command.upgrade-building", "outcome": "INSUFFICIENT_RESOURCE"}
+  ],
+  "funnels": [
+    { "name": "First session", "steps": ["placed_woodcutter", "produced_logs", "placed_sawmill", "produced_planks", "started_research", "came_back"] }
+  ]
+}
