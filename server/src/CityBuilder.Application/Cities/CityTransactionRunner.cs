@@ -7,7 +7,8 @@ namespace CityBuilder.Application.Cities;
 /// <see cref="ICityTransactionRunner"/> over the ports: <see cref="IUnitOfWork.BeginTransactionAsync"/> gives the transaction and
 /// <see cref="ICityRepository.LoadForUpdateAsync"/> the row lock (<c>SELECT … FOR UPDATE</c>). It is the only Application type that uses
 /// <see cref="ICityRepository"/> (an architecture test checks it), so no use case loads or writes a city without the lock. Scoped, one per
-/// request, and it runs once: a request never locks a second city (<c>core-instructions/06-data-model.md</c>, lock ordering).
+/// request, and it runs once: a request never locks a second city (<c>core-instructions/06-data-model.md</c>, lock ordering). The player
+/// events the work recorded and didn't write with the city's save are written after the work and before the commit (CR-0009).
 /// </summary>
 /// <param name="cities">The stored cities.</param>
 /// <param name="unitOfWork">The request's unit of work: the transaction and the writes.</param>
@@ -44,6 +45,8 @@ public sealed class CityTransactionRunner(ICityRepository cities, IUnitOfWork un
         try
         {
             TResult result = await work(cityTransaction, cancellationToken);
+            // The events of a work that didn't save the city (a refusal at an unchanged instant), or recorded after its save.
+            await cityTransaction.FlushEventsAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
             return result;
         }
