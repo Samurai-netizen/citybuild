@@ -7,9 +7,9 @@
 ## Resume point
 - **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M0-C (M0-72, M0-76, M0-79, M0-81) · branch `task/M0-C-smoke-triage-coverage` · log `docs/build-log/2026/2026-11-17-02-M0-C.md`
-- **Part / step:** C (M0-79 triage) / start: quality.sh, then classify issues · A, B done (smoke S1, S2 pass, S3-S12 owner free play) · D M0-81
+- **Part / step:** D (M0-81 coverage matrix) / start · A, B, C done (smoke pass, no P0/P1 open)
 - **Last completed:** M0-B (PR #99, merged)
-- **Next step:** part C: `quality.sh`, classify every open issue (M0-C-4 P2 still open), fix P0/P1; then part D (coverage matrix).
+- **Next step:** part D: `docs/testing/COVERAGE-MATRIX.md` (invariants `04` §10, error codes `05`, threats `07` → tests), tests for gaps.
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. CR-0012 (approved) runs after M0-D.
 - **Known broken / do not touch:** nothing.
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
@@ -50,7 +50,7 @@ All commands exist.
 
 ## Open issues / tech debt
 - M0-C-1 P1 route editor unreadable: fixed (layout rework), owner-checked. M0-C-2 P3 EF history-table error lines on an empty database.
-- M0-C-3 P1 a store above its limit (returned loads): fixed, stores never overflow (decision 2), owner-checked. M0-C-4 P2 401 on re-energize at 60×: to check.
+- M0-C-3 P1 a store above its limit (returned loads): fixed, stores never overflow (decision 2), owner-checked. M0-C-4 P2 a command with an expired token is refused once (no re-login in CommandSender): follow-up.
 - M0-C-5 P2 send to a resting courier said "Sent", nothing moved: fixed, a popup asks to re-energize (decision 3), owner-checked.
 - Audit item A18 (Unity 6.6 installed, the stack pins 6.3) is closed: the project is 6000.3.25f1 (M0-04).
 - Other kit wording items with their owner tasks: M0-01 build log → Follow-ups.
