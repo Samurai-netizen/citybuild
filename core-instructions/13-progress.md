@@ -7,9 +7,9 @@
 ## Resume point
 - **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M0-C (M0-72, M0-76, M0-79, M0-81) · branch `task/M0-C-smoke-triage-coverage` · log `docs/build-log/2026/2026-11-17-02-M0-C.md`
-- **Part / step:** D (M0-81 coverage matrix) / start · A, B, C done (smoke pass, no P0/P1 open)
+- **Part / step:** finish · A, B, C, D done (smoke pass, no P0/P1 open, `docs/testing/COVERAGE-MATRIX.md` with 5 gap tests)
 - **Last completed:** M0-B (PR #99, merged)
-- **Next step:** part D: `docs/testing/COVERAGE-MATRIX.md` (invariants `04` §10, error codes `05`, threats `07` → tests), tests for gaps.
+- **Next step:** /finish-task M0-C: CHANGELOG, module docs `CityBuilder.Client.Net.md` and `CityBuilder.Infrastructure.md` (quality.sh `docs`), the full run, PR.
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. CR-0012 (approved) runs after M0-D.
 - **Known broken / do not touch:** nothing.
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)

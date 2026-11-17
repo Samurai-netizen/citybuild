@@ -176,6 +176,8 @@ frozen cycle counts as running (its inputs are refunded). Workers on a house, a 
 16. Only producers and courier stations are paused, never while constructing; a paused producer starts no cycle; a courier of a paused
     station never leaves its station (D23, D24).
 
+Which tests hold each invariant, error code and threat: `docs/testing/COVERAGE-MATRIX.md` (M0-81).
+
 ## 11. Settlement report
 Returned with every settled snapshot: `elapsedSeconds` (the simulated seconds, ≥ 0); `produced{item:qty}` (outputs of completed cycles, the
 currency included); `consumed{item:qty}` (inputs of started cycles); `delivered{item:qty}` (goods walkers handed to projects, used up);

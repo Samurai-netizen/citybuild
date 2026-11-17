@@ -141,4 +141,5 @@ flowchart LR
 - `LOCAL-E2E.md`: the manual check of the Unity client against the real server on one machine (M0-42).
 - `KILL-SERVER-CHECK.md` and `kill-server-check.sh`: kills the real server with commands on their way, sends them again and counts the rows (M0-56).
 - `UNITY-SMOKE-TEST.md`: the manual smoke test of the whole Era I loop in Unity against the real server at 60 times the speed, with the last run's results (M0-72, M0-76).
+- `COVERAGE-MATRIX.md`: every engine invariant, API error code and M0 threat with the tests that hold it, and the known gaps (M0-81).
 - `server-panel/goods.sql` (the panel's goods script, CR-0006) is tested by `ServerPanel/GoodsPanelScriptTests` in the integration project: it runs the file with the container's own `psql` through `PostgresServer.RunPsqlFileAsync`. The panel's argument checks have no database: `bash server-panel/test-goods.sh` (not run by CI yet; the workflow files are protected, `15`).

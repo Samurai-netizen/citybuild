@@ -43,6 +43,6 @@ in chapters, with every backticked path and spec number as a link (`website/READ
 | `how-to/` | Worked guides for common changes | AI, kept current |
 | `reference/` | Generated reference: content, endpoints, errors, configuration, DB schema, project map | `tools/DocTools` |
 | `api/` | Running the API: logs and correlation (`traceId` vs `requestId`, every event id), requests to try by hand (`smoke.http`) | AI, kept current |
-| `testing/` | How to run the test suites (integration tests need Docker), test checklists | AI, kept current |
+| `testing/` | How to run the test suites (integration tests need Docker), test checklists, the coverage matrix of invariants, error codes and threats | AI, kept current |
 | `balance/` | Balance reports: simulator runs against the economy goals, proposed number changes (`balance/README.md`) | AI, per task |
 | `security/` | Security reports: what the system protects and which tests show it (`security/README.md`) | AI, per task |
