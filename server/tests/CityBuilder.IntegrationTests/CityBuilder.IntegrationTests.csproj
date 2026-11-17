@@ -32,6 +32,12 @@
     <None Include="..\CityBuilder.Simulation.Tests\Fixtures\content-golden-v2.json" Link="Fixtures\content-golden-v2.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <!-- The end-to-end suite's frozen content (M0-B decision 3): content mvp-3 as it was on 2026-11-17, so a balance change can't
+       rewrite the suite's expectations. Never edit it; a new content model gets a new file. -->
+  <ItemGroup>
+    <None Include="Fixtures\content-e2e-v1.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <!-- The server panel's goods script (CR-0006), the file itself linked, so GoodsPanelScriptTests run what panel.sh runs. -->
   <ItemGroup>
     <None Include="..\..\..\server-panel\goods.sql" Link="server-panel\goods.sql" CopyToOutputDirectory="PreserveNewest" />

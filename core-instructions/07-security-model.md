@@ -12,9 +12,9 @@
 > headers) and the per-player rate limits (M0-34, tested in memory and on PostgreSQL); the client ↔ server boundary review: the inventory of what
 > the client sends and its test, the trace id the server's own, plain HTTP only in development builds (M0-60); the three road commands with
 > the same strict body and their tile lists refused before the lock (CR-0008-T1 part D, tested in memory and on PostgreSQL); `start-trip` with
-> the same strict body, its ids, item and amount refused before the lock and every building id resolved in the caller's city (part E); `cancel-delivery` and `set-paused` the same way (CR-0008-T3). The
-> rest of the `Security_` tests are *(planned)*
-> (attack suite M0-74, report M0-78). A task that builds a part updates this line.
+> the same strict body, its ids, item and amount refused before the lock and every building id resolved in the caller's city (part E); `cancel-delivery` and `set-paused` the same way (CR-0008-T3); the
+> HTTP end-to-end, attack and concurrency suites (M0-73 to M0-75). Summary against the tests, with what isn't covered:
+> `docs/security/MVP-SECURITY-BOUNDARIES.md` (M0-78). A task that builds a part updates this line.
 
 **Goal for M0:** a modified client, a replayed request or a wrong clock cannot create resources, skip costs,
 skip waiting, over-assign workers, skip research, or touch another player's city.

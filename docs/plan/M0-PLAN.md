@@ -336,17 +336,17 @@ The AI coder updates its row at start (`In progress`) and finish (`In review`). 
 | M0-65 | 11 | Banned APIs and architecture tests | S | Done |
 | M0-66 | 11 | Architecture fitness and dependency review | O | Done |
 | M0-67 | 12 | Balance simulator | O PLAN | Done |
-| M0-68 | 12 | Strategy runs and findings | O | In review |
-| M0-69 | 12 | Apply approved content changes | S MANUAL decision | In review |
-| M0-70 | 12 | Content validation hardening | S | In review |
+| M0-68 | 12 | Strategy runs and findings | O | Done |
+| M0-69 | 12 | Apply approved content changes | S MANUAL decision | Done |
+| M0-70 | 12 | Content validation hardening | S | Done |
 | M0-71 | 12 | First-session polish | S | Skipped |
 | M0-72 | 12 | Playtest and smoke checklist | O MANUAL | Todo |
-| M0-73 | 13 | HTTP end-to-end suite | O | Todo |
-| M0-74 | 13 | Attack suite | O | Todo |
-| M0-75 | 13 | Concurrency suite | O | Todo |
+| M0-73 | 13 | HTTP end-to-end suite | O | In review |
+| M0-74 | 13 | Attack suite | O | In review |
+| M0-75 | 13 | Concurrency suite | O | In review |
 | M0-76 | 13 | Unity smoke run | S MANUAL | Todo |
-| M0-77 | 13 | Clean-clone test | S | Todo |
-| M0-78 | 13 | Security boundaries report | O | Todo |
+| M0-77 | 13 | Clean-clone test | S | In review |
+| M0-78 | 13 | Security boundaries report | O | In review |
 | M0-79 | 14 | Bug triage | O | Todo |
 | M0-80 | 14 | Code-freeze review | O | Todo |
 | M0-81 | 14 | Invariant gap analysis | O | Todo |

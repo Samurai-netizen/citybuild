@@ -117,6 +117,13 @@ flowchart LR
   a rule's code is play; anything else fails with the seed and the step. To audit by hand, run the class:
   `dotnet test server/CityBuilder.slnx --filter "FullyQualifiedName~LedgerAuditDatabaseTests"`. A new command joins the random game
   (`docs/how-to/add-command.md`). The auditor has no endpoint.
+- The Day 13 suites (M0-B), summarised with every linked test in `docs/security/MVP-SECURITY-BOUNDARIES.md`:
+  `EndToEnd/HttpEndToEndTests` plays the Era I loop of `EndToEnd/EraOneLoop.cs` (a script as data) over HTTP on its own frozen
+  `Fixtures/content-e2e-v1.json` and compares the stored city with the engine's at every step; `EraOneLoopScriptTests` checks the
+  script on the engine alone, so a failure there is the script's. `Security/AttackTests` sends each attack to every command endpoint of a
+  played city (`GoldenHttpPlayer.SendRawAsync` for bodies the DTOs can't express). `Concurrency/RaceTests` sends one player's requests
+  at once with `Task.WhenAll` (all three fail with the city's `FOR UPDATE` removed, so they do overlap) and checks the winner, then `Concurrency/SoundCity` (the ledger auditor and the city's invariants); a
+  hand-built race city gets a `STARTING_GRANT` row per stored total so the auditor can audit it.
 - A lost response (`Commands/LostResponseDatabaseTests`, M0-56): the command, a poll that moves the city past it, then the same body again; the client hanging up while its request waits for the city's lock (`DatabaseLocks`). The client's side: `Tests/EditMode/Net/LostResponseTests`, with a wire of its own that keeps receipts, so a retry with a new id would count as a second application.
 - Examples: `Persistence/CityRepositoryDatabaseTests` (repositories through the server), `Persistence/CityTransactionDatabaseTests`
   (the runner: rollback, version check, two transactions on one city, lock timeout), `Persistence/SettleCityDatabaseTests` (a use case

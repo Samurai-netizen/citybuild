@@ -20,7 +20,7 @@ through a pull request that the owner merges. See `CONTRIBUTING.md` and `AGENTS.
 ## Documentation
 Read it as a book, with search: the **handbook** at https://samurai-netizen.github.io/citybuild/ (built from these Markdown files
 after every merge). In the repository, start at [docs/README.md](docs/README.md), the map of all documentation (game design,
-architecture, decisions, build log, how-tos, reference). Setup: [docs/getting-started.md](docs/getting-started.md).
+architecture, decisions, build log, how-tos, reference). Setup of a new clone, step by step: [docs/getting-started.md](docs/getting-started.md#a-new-clone).
 
 ## Repository layout
 | Path | Contents |
@@ -30,7 +30,7 @@ architecture, decisions, build log, how-tos, reference). Setup: [docs/getting-st
 | `shared/Simulation/` | The deterministic game engine (used by server and client); built by `shared/Simulation.Build/` |
 | `server/` | ASP.NET Core API, application, domain, infrastructure, tests |
 | `client/CityBuilder/` | Unity project |
-| `tools/` | DocTools (generated reference docs, M0-61), BalanceSim (economy simulator) *(planned, M0-67)* |
+| `tools/` | DocTools (generated reference docs, M0-61), BalanceSim (economy simulator, M0-67) |
 | `website/` | The handbook site (Docusaurus) over `core-instructions/` and `docs/` |
 | `scripts/dev/` | Developer and process scripts |
 | `.claude/`, `.githooks/`, `.github/` | AI tool config, git hooks, CI and PR template |

@@ -25,6 +25,26 @@ How to get from a clean machine to a running project. Every command here must wo
 7. Start Claude Code in the folder (`claude`) and run `/context` to check that `CLAUDE.md` loaded `AGENTS.md`,
    `02-principles.md` and `13-progress.md`. Accept the workspace trust prompt, so the project's permission rules apply.
 
+## A new clone
+The order that takes a fresh clone to a running, tested project (checked on a clean clone in M0-77). Prerequisites above first.
+1. `git clone https://github.com/Samurai-netizen/citybuild.git` and `cd citybuild`.
+2. `bash scripts/dev/setup-hooks.sh`, then `bash scripts/dev/check-docs.sh` prints `check-docs: OK`.
+3. `dotnet tool restore` (the pinned `dotnet-ef`), then `dotnet build server/CityBuilder.slnx`.
+4. The database, steps 1 to 3 of [Database](#database): `.env`, the API's secrets, `docker compose up -d postgres`.
+5. `dotnet run --project server/src/CityBuilder.Api`: it applies the migrations; `curl http://localhost:8080/health` prints `Healthy`,
+   and the dev login of the Run table answers a token.
+6. Tests: `bash scripts/dev/test.sh fast`, then `bash scripts/dev/test.sh int-db` (Docker running).
+7. Unity (Editor closed): `<UNITY> -batchmode -quit -projectPath client/CityBuilder -logFile -` resolves the packages, the engine among
+   them (`file:../../../shared/Simulation`), and compiles; exit code 0 and no `error CS` (`client/README.md`).
+
+**A second clone on the same machine** shares two things with the first unless you change them:
+- the API's user-secrets: they are stored per `UserSecretsId` (`citybuilder-api`), not per folder, so `dotnet user-secrets set` in the
+  second clone overwrites the first one's connection string and signing key. Give the second clone its values as environment variables
+  instead: `ConnectionStrings__CityBuilder` and `Auth__SigningKey`, set in the shell that runs `dotnet run`.
+- the database: compose names the container and the volume after the folder (`citybuild-postgres-1`, `citybuild_postgres-data`). Clone
+  into another folder name (or set `COMPOSE_PROJECT_NAME` in its `.env`) and pick another `POSTGRES_PORT`.
+Also only one API can listen on port 8080 (Troubleshooting).
+
 ## Run (filled in as tasks make commands real)
 | What | Command | Since |
 |---|---|---|
@@ -129,3 +149,7 @@ Added whenever a setup problem is solved (the build log entry links here).
 - **The API stops at startup with an `NpgsqlException`:** the database isn't running (`docker compose up -d postgres`) or the
   connection string doesn't match `.env` (M0-19).
 - **`docker compose up` says "required variable POSTGRES_PASSWORD is missing a value":** create `.env` from `.env.example` (M0-19).
+- **The API stops at startup with "address already in use" for port 8080:** another API (another clone, the server panel) is running.
+  Stop it, or run this one on another port: `dotnet run --project server/src/CityBuilder.Api -- --urls http://localhost:8090`, and point
+  curl and the client (`ApiClientSettings.asset`) at that port (M0-77).
+- **Unity's batch log prints ".. is not a valid directory name" twice:** harmless; the packages resolve and the project compiles (M0-77).
