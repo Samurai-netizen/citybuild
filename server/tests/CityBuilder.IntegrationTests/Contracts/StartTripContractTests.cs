@@ -64,6 +64,32 @@ public sealed class StartTripContractTests(ApiFactory factory) : IClassFixture<A
     }
 
     /// <summary>
+    /// A client that sets its device clock a day ahead and says so in the request's headers (<c>Date</c>, <c>X-Client-Time</c>) gains nothing
+    /// (<c>07</c> → Change the device clock; M0-81): the city settles to the server's clock only, so the trip leaves at second 0 and arrives
+    /// at 10 as without the headers, and nothing was produced or delivered in the meantime.
+    /// </summary>
+    [Fact]
+    public async Task Security_ClockHeadersFromTheClient_AreIgnored()
+    {
+        (FakeCityStore _, WebApplicationFactory<Program> server) = Serve(new FakeTimeProvider(_settledAt));
+        await using WebApplicationFactory<Program> _ = server;
+        DateTimeOffset dayAhead = _settledAt.AddDays(1);
+        var headers = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["Date"] = dayAhead.ToString("R", System.Globalization.CultureInfo.InvariantCulture),
+            ["X-Client-Time"] = dayAhead.ToUnixTimeSeconds().ToString(System.Globalization.CultureInfo.InvariantCulture),
+        };
+
+        ApiResponse response = await ApiClient.PostAsync(
+            server, _path, _playerId, new StringContent(Body(2, 3, "logs", "all"), System.Text.Encoding.UTF8, "application/json"), headers);
+
+        Assert.Equal(HttpStatusCode.OK, response.Status);
+        JsonNode city = response.Json()["city"]!;
+        Assert.Equal((0L, 10L), ((long)city["trips"]![0]!["departedAt"]!, (long)city["trips"]![0]!["arrivesAt"]!));
+        Assert.Equal("""{"coins":100,"logs":35,"planks":0}""", city["totals"]!.ToJsonString());
+    }
+
+    /// <summary>
     /// When the first walk is over the request that settles the city delivers the load: the warehouse holds 5 + 10 logs, the settlement says
     /// 10 logs were moved, and the worker walks back for the next load (D21). After the third load, at 50 s, all 30 are delivered, the trip is
     /// gone and its worker free.
