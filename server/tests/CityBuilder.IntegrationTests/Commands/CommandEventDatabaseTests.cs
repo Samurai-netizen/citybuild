@@ -77,8 +77,9 @@ public sealed class CommandEventDatabaseTests(PostgresServer server) : PostgresT
     }
 
     /// <summary>
-    /// A <c>GET /city</c> an hour after the research <c>frame_saw</c> started settles it to completion: one <c>research.completed</c> row
-    /// with the research id at the settled clock, in the settle's transaction.
+    /// A <c>GET /city</c> an hour after the research <c>frame_saw</c> started settles it to completion: a <c>session.start</c> row (an hour
+    /// is more than the 30-minute session gap), then one <c>research.completed</c> row with the research id, both at the settled clock, in
+    /// the settle's transaction, in that order (by id).
     /// </summary>
     [Fact]
     public async Task GetCity_ResearchCompletedInTheWindow_StoresItsEvent()
@@ -92,10 +93,10 @@ public sealed class CommandEventDatabaseTests(PostgresServer server) : PostgresT
         ApiResponse response = await ApiClient.GetAsync(Factory, "/api/v1/city", player);
 
         Assert.Equal(HttpStatusCode.OK, response.Status);
-        PlayerEventRow row = Assert.Single(await PlayerEventsAsync(Database, player));
+        long clock = (await LoadAsync(Factory, player)).State.Clock;
         Assert.Equal(
-            ("research.completed", "frame_saw", (string?)null, (long?)null, (await LoadAsync(Factory, player)).State.Clock),
-            (row.EventType, row.Detail, row.Outcome, row.Value, row.CityClock));
+            [("session.start", (string?)null, (string?)null, (long?)null, clock), ("research.completed", "frame_saw", null, null, clock)],
+            (await PlayerEventsAsync(Database, player)).Select(row => (row.EventType, row.Detail, row.Outcome, row.Value, row.CityClock)));
     }
 
     /// <summary>Stores a player with the starter city, last settled at the factory's start.</summary>

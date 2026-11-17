@@ -10,7 +10,8 @@ namespace CityBuilder.Application.Tests.Commands;
 
 /// <summary>
 /// The command's player event (CR-0009, <c>command.&lt;type&gt;</c>) in <see cref="CommandPipeline"/>: a command applied or refused by a game
-/// rule records exactly one event in its transaction, with the command's detail and the outcome (<c>accepted</c> or the error code); a
+/// rule records exactly one event in its transaction, with the command's detail and the outcome (<c>accepted</c> or the error code), after
+/// <c>session.start</c> when the command starts a session; a
 /// replay, an idempotency conflict, a shape refusal, the receipt race and a failed write record none.
 /// </summary>
 public sealed class CommandPipelineEventTests
@@ -31,8 +32,8 @@ public sealed class CommandPipelineEventTests
     }
 
     /// <summary>
-    /// A rule's refusal records one event with the error code as the outcome, written with the settlement it commits (one write); an unknown
-    /// type gives no detail.
+    /// A rule's refusal within the session gap records one event with the error code as the outcome, written with the settlement it commits
+    /// (one write); an unknown type gives no detail.
     /// </summary>
     /// <param name="typeId">The type to place.</param>
     /// <param name="x">The tile's column (0 is taken by the cottage at row 0).</param>
@@ -45,7 +46,7 @@ public sealed class CommandPipelineEventTests
     {
         InMemoryCityRepository repository = Repository();
         FakeTimeProvider clock = ClockAtLastSettled();
-        clock.Advance(TimeSpan.FromHours(1));
+        clock.Advance(TimeSpan.FromMinutes(20));
 
         await Pipeline(repository, clock).ExecuteAsync(
             PlayerId, PlaceCottage() with { BuildingTypeId = typeId, X = x, Y = 0 }, Writer(repository), TestContext.Current.CancellationToken);
@@ -74,8 +75,8 @@ public sealed class CommandPipelineEventTests
     }
 
     /// <summary>
-    /// A command after thirty days away, accepted or refused by a rule: its settlement's completions are recorded before the command's own
-    /// event, all in the command's transaction (one write).
+    /// A command after thirty days away, accepted or refused by a rule: the session's start, then its settlement's completions, then the
+    /// command's own event, all in the command's transaction (one write).
     /// </summary>
     /// <param name="x">The tile's column: 1 is free, 0 is taken by the cottage.</param>
     /// <param name="outcome">The command event's outcome.</param>
@@ -93,12 +94,54 @@ public sealed class CommandPipelineEventTests
 
         Assert.Equal(
             [
-                (PlayerEventTypes.ResearchCompleted, Forestry.Value, (string?)null),
+                (PlayerEventTypes.SessionStart, (string?)null, (string?)null),
+                (PlayerEventTypes.ResearchCompleted, Forestry.Value, null),
                 (PlayerEventTypes.BuildingCompleted, "manor", null),
                 ("command.place-test", "cottage", outcome),
             ],
             repository.PlayerEvents.Select(e => (e.EventType, e.Detail, e.Outcome)));
         Assert.Equal(1, repository.SaveChangesCount);
+    }
+
+    /// <summary>
+    /// A command more than the session gap after the last request, accepted or refused: <c>session.start</c> first, at the settled clock and
+    /// the command's time, then the command's event; exactly the gap records only the command's.
+    /// </summary>
+    /// <param name="seconds">Seconds since the last request.</param>
+    /// <param name="x">The tile's column: 1 is free, 0 is taken by the cottage.</param>
+    /// <param name="expected">The event types, in order.</param>
+    [Theory]
+    [InlineData(1801, 1, new[] { PlayerEventTypes.SessionStart, "command.place-test" })]
+    [InlineData(1801, 0, new[] { PlayerEventTypes.SessionStart, "command.place-test" })]
+    [InlineData(1800, 1, new[] { "command.place-test" })]
+    [InlineData(1800, 0, new[] { "command.place-test" })]
+    public async Task ExecuteAsync_AfterTheGap_RecordsSessionStartFirst(long seconds, int x, string[] expected)
+    {
+        InMemoryCityRepository repository = Repository();
+        FakeTimeProvider clock = ClockAtLastSettled();
+        clock.Advance(TimeSpan.FromSeconds(seconds));
+
+        await Pipeline(repository, clock).ExecuteAsync(
+            PlayerId, PlaceCottage() with { X = x, Y = x == 0 ? 0 : 1 }, Writer(repository), TestContext.Current.CancellationToken);
+
+        Assert.Equal(expected, repository.PlayerEvents.Select(e => e.EventType));
+        Assert.All(repository.PlayerEvents, e => Assert.Equal(
+            (repository.Stored(PlayerId).State.Clock, clock.GetUtcNow()), (e.CityClock, e.OccurredAt)));
+        Assert.Equal(1, repository.SaveChangesCount);
+    }
+
+    /// <summary>A replay an hour later is no request that settles: it records no session start.</summary>
+    [Fact]
+    public async Task ExecuteAsync_ReplayAfterTheGap_RecordsNoSessionStart()
+    {
+        InMemoryCityRepository repository = Repository();
+        FakeTimeProvider clock = ClockAtLastSettled();
+        await Pipeline(repository, clock).ExecuteAsync(PlayerId, PlaceCottage(), Writer(repository), TestContext.Current.CancellationToken);
+        clock.Advance(TimeSpan.FromHours(1));
+
+        await Pipeline(repository, clock).ExecuteAsync(PlayerId, PlaceCottage(), Writer(repository), TestContext.Current.CancellationToken);
+
+        Assert.Equal(["command.place-test"], repository.PlayerEvents.Select(e => e.EventType));
     }
 
     /// <summary>The same request again is a replay: it records nothing more.</summary>

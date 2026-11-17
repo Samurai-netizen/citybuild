@@ -25,10 +25,11 @@ namespace CityBuilder.Application.Commands;
 /// <param name="content">The game content.</param>
 /// <param name="timeProvider">The server clock, the only clock that drives progress.</param>
 /// <param name="presence">When the player counts as away, for the couriers' stamina (<c>04</c> section 2); a replay is no presence.</param>
+/// <param name="sessions">When a command starts a play session (CR-0009, <c>session.start</c>); a replay starts none.</param>
 /// <exception cref="ArgumentNullException">A parameter is null.</exception>
 public sealed class CommandPipeline(
     ICityTransactionRunner transactions, ICommandReceiptRepository receipts, IContentProvider content, TimeProvider timeProvider,
-    PresencePolicy presence)
+    PresencePolicy presence, SessionPolicy sessions)
 {
     /// <summary>Locks, loads and stores the acting player's city.</summary>
     private readonly ICityTransactionRunner _transactions = transactions ?? throw new ArgumentNullException(nameof(transactions));
@@ -40,6 +41,8 @@ public sealed class CommandPipeline(
     private readonly TimeProvider _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
     /// <summary>When the player counts as away; the settle records the command as the player's last-seen second.</summary>
     private readonly PresencePolicy _presence = presence ?? throw new ArgumentNullException(nameof(presence));
+    /// <summary>When the command starts a play session; read against the last-seen second before the settle marks the city seen.</summary>
+    private readonly SessionPolicy _sessions = sessions ?? throw new ArgumentNullException(nameof(sessions));
 
     /// <summary>Runs the player's command through every step, once.</summary>
     /// <param name="playerId">The acting player, from the access token.</param>

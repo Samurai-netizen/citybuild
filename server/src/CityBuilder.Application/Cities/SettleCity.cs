@@ -17,8 +17,9 @@ namespace CityBuilder.Application.Cities;
 /// <param name="content">The game content.</param>
 /// <param name="timeProvider">The server clock, the only clock that drives progress.</param>
 /// <param name="presence">When the player counts as away, for the couriers' stamina (<c>04</c> section 2).</param>
+/// <param name="sessions">When a request starts a play session (CR-0009, <c>session.start</c>).</param>
 /// <exception cref="ArgumentNullException">A parameter is null.</exception>
-public sealed class SettleCity(ICityTransactionRunner transactions, IContentProvider content, TimeProvider timeProvider, PresencePolicy presence)
+public sealed class SettleCity(ICityTransactionRunner transactions, IContentProvider content, TimeProvider timeProvider, PresencePolicy presence, SessionPolicy sessions)
 {
     /// <summary>Locks, loads and stores the acting player's city.</summary>
     private readonly ICityTransactionRunner _transactions = transactions ?? throw new ArgumentNullException(nameof(transactions));
@@ -28,6 +29,8 @@ public sealed class SettleCity(ICityTransactionRunner transactions, IContentProv
     private readonly TimeProvider _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
     /// <summary>When the player counts as away; the settle records this request as the player's last-seen second.</summary>
     private readonly PresencePolicy _presence = presence ?? throw new ArgumentNullException(nameof(presence));
+    /// <summary>When the settle starts a play session; read against the last-seen second before the settle marks the city seen.</summary>
+    private readonly SessionPolicy _sessions = sessions ?? throw new ArgumentNullException(nameof(sessions));
 
     /// <summary>Settles the player's city to now and stores it if anything changed.</summary>
     /// <param name="playerId">The acting player.</param>

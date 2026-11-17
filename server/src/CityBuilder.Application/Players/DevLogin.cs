@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using CityBuilder.Application.Cities;
 using CityBuilder.Application.Content;
+using CityBuilder.Application.Metrics;
 using CityBuilder.Application.Persistence;
 using CityBuilder.Domain.Ledger;
 using CityBuilder.Domain.Players;
@@ -20,9 +21,11 @@ namespace CityBuilder.Application.Players;
 /// <param name="unitOfWork">The transaction and the writes.</param>
 /// <param name="content">The game content; the starter city comes from it.</param>
 /// <param name="timeProvider">The server clock: the ids' time, and the second the new city is settled at.</param>
+/// <param name="playerEvents">Stores the new player's first events (CR-0009) in the creating transaction.</param>
 /// <exception cref="ArgumentNullException">A parameter is null.</exception>
 public sealed class DevLogin(
-    IPlayerRepository players, INewCityRepository newCities, IUnitOfWork unitOfWork, IContentProvider content, TimeProvider timeProvider)
+    IPlayerRepository players, INewCityRepository newCities, IUnitOfWork unitOfWork, IContentProvider content, TimeProvider timeProvider,
+    IPlayerEventRepository playerEvents)
 {
     /// <summary>The longest display name: 32 characters.</summary>
     public const int MaxDisplayNameLength = 32;
@@ -37,6 +40,8 @@ public sealed class DevLogin(
     private readonly IContentProvider _content = content ?? throw new ArgumentNullException(nameof(content));
     /// <summary>The server clock.</summary>
     private readonly TimeProvider _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
+    /// <summary>Adds the new player's <c>player.created</c> and <c>session.start</c>.</summary>
+    private readonly IPlayerEventRepository _playerEvents = playerEvents ?? throw new ArgumentNullException(nameof(playerEvents));
 
     /// <summary>
     /// Whether a display name is allowed: 1 to <see cref="MaxDisplayNameLength"/> characters, each an ASCII letter, a digit, <c>_</c>,
