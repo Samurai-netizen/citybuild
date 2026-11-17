@@ -1,5 +1,7 @@
 using CityBuilder.Application.Content;
+using CityBuilder.Application.Metrics;
 using CityBuilder.Application.Persistence;
+using CityBuilder.Domain.Metrics;
 
 namespace CityBuilder.Application.Cities;
 
@@ -8,7 +10,8 @@ namespace CityBuilder.Application.Cities;
 /// the city's transaction (<see cref="ICityTransactionRunner"/>) the server clock, floored to whole seconds, gives the window from the last
 /// settled second; the engine advances the city by it (every timer, cycle start and walk of the window, with no cap), and the closing zero-length advance leaves it canonical. The city is saved with the settlement's
 /// ledger rows (one per item and direction, <see cref="Settlement.LedgerEntries"/>) only if anything changed, so <c>state_version</c>
-/// rises only then. The steps are <see cref="CitySettler"/>'s, which the command pipeline runs as well.
+/// rises only then; what the settlement completed is recorded as player events in the same transaction (CR-0009,
+/// <see cref="SettlementEvents"/>), written also when the city is not saved. The steps are <see cref="CitySettler"/>'s, which the command pipeline runs as well.
 /// </summary>
 /// <param name="transactions">Runs the settle in the transaction that holds the city's row lock.</param>
 /// <param name="content">The game content.</param>
@@ -46,6 +49,11 @@ public sealed class SettleCity(ICityTransactionRunner transactions, IContentProv
         DateTimeOffset now = _timeProvider.GetUtcNow();
         CitySettler settler = CitySettler.Begin(transaction.City, _content.Content, now, _presence);
         Settlement settlement = settler.Close();
+        foreach (PlayerEvent completed in SettlementEvents.Of(transaction.City, settlement, now))
+        {
+            transaction.Record(completed);
+        }
+
         bool changed = settler.Changed;
         if (changed)
         {

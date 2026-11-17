@@ -15,7 +15,7 @@ namespace CityBuilder.Application.Commands;
 /// <c>06</c>, write transaction pattern; ADR-0004). In order: the shape check (before the database); the city's transaction with its row
 /// lock (<see cref="ICityTransactionRunner"/>); the receipt of <c>(playerId, requestId)</c>: the same payload hash returns the stored response
 /// and another hash <c>IDEMPOTENCY_CONFLICT</c>, both before the settle and writing nothing; the settle; the mutation (<see cref="ICityCommand.Apply"/>);
-/// the command's player event (CR-0009), on a rule error and on success, in the same transaction; on a rule error the closing advance and
+/// the settlement's completions and then the command's player event (CR-0009), on a rule error and on success, in the same transaction; on a rule error the closing advance and
 /// the settlement only, without a receipt (and when nothing was settled, only the event); otherwise the closing advance and one save of the city,
 /// its ledger rows (settlement, then refunds and costs, then the closing advance) and the receipt with the response. A unique violation on the
 /// receipt (an identical request committed first) rolls back, and the stored receipt answers. Scoped, one per request.
@@ -120,6 +120,7 @@ public sealed class CommandPipeline(
         {
             // Time passed is never undone (decision 014): the settlement is committed, but no receipt, so a new attempt needs a new id.
             Settlement rejectedAfter = settler.Close();
+            RecordSettlement(transaction, rejectedAfter, now);
             transaction.Record(CommandEvent(city, command, detail, CommandEvents.Outcome(errorCode), now));
             if (settler.Changed)
             {
@@ -135,9 +136,22 @@ public sealed class CommandPipeline(
         string response = writeResponse(new CommandSuccess(command.RequestId, city, settlement, checked(city.StateVersion + 1), now));
 
         // A successful command always saves, also when it changed nothing: its receipt describes the saved state.
+        RecordSettlement(transaction, settlement, now);
         transaction.Record(CommandEvent(city, command, detail, PlayerEventTypes.OutcomeAccepted, now));
         await transaction.SaveAsync(ledger, new CommandReceipt(command.RequestId, command.CommandType, payloadHash, response), cancellationToken);
         return CommandResult.Succeeded(response, settlement);
+    }
+
+    /// <summary>Records what the settlement completed (<see cref="SettlementEvents"/>), before the command's own event.</summary>
+    /// <param name="transaction">The acting player's city, settled and closed.</param>
+    /// <param name="settlement">The closed settlement.</param>
+    /// <param name="now">The server time of the command.</param>
+    private static void RecordSettlement(CityTransaction transaction, Settlement settlement, DateTimeOffset now)
+    {
+        foreach (PlayerEvent completed in SettlementEvents.Of(transaction.City, settlement, now))
+        {
+            transaction.Record(completed);
+        }
     }
 
     /// <summary>
