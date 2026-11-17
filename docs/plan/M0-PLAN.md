@@ -82,7 +82,8 @@ Also:
 ## 1. Goal and Definition of Done
 
 After 14 days (realistically 16–20) you have a clean, tested, extensible spine — **not** a full game:
-Evidence for each box: `docs/MVP-AUDIT.md` → Definition of Done (M0-83). The Process box is ticked when M0-84 closes the board.
+Evidence for each box: `docs/MVP-AUDIT.md` → Definition of Done (M0-83). The Process box was ticked by M0-84 (`docs/HANDOFF-M0.md`): M0-71
+is Skipped (M1-PLAN §3, M1-10 replaces it), M0-80 … M0-84 are `In review` in their PR and `Done` at its merge.
 
 - [x] Unity opens without errors; the server builds with zero warnings in `src/`; `docker compose up` works.
 - [x] Dev login creates a player and an Era I starter city on the server.
@@ -104,7 +105,7 @@ Evidence for each box: `docs/MVP-AUDIT.md` → Definition of Done (M0-83). The P
 - [x] Golden scenarios #1 and #2 (`23-mvp-content.md`) pass in the engine and over HTTP.
 - [x] Determinism, split invariance, timer invariance, conservation, attack and concurrency suites pass.
 - [x] A clean clone can be set up from the README, and a development build reaches the city screen.
-- [ ] **Process:** every task has a build log entry with its decisions; every project or assembly has a current module doc;
+- [x] **Process:** every task has a build log entry with its decisions; every project or assembly has a current module doc;
       generated reference docs are current; CI is green on `main`; the board shows all 88 tasks (85 plan tasks and CR-0008's three) `Done` or
       `Skipped` (with a reason).
 
@@ -341,16 +342,16 @@ The AI coder updates its row at start (`In progress`) and finish (`In review`). 
 | M0-69 | 12 | Apply approved content changes | S MANUAL decision | Done |
 | M0-70 | 12 | Content validation hardening | S | Done |
 | M0-71 | 12 | First-session polish | S | Skipped |
-| M0-72 | 12 | Playtest and smoke checklist | O MANUAL | In review |
+| M0-72 | 12 | Playtest and smoke checklist | O MANUAL | Done |
 | M0-73 | 13 | HTTP end-to-end suite | O | Done |
 | M0-74 | 13 | Attack suite | O | Done |
 | M0-75 | 13 | Concurrency suite | O | Done |
-| M0-76 | 13 | Unity smoke run | S MANUAL | In review |
+| M0-76 | 13 | Unity smoke run | S MANUAL | Done |
 | M0-77 | 13 | Clean-clone test | S | Done |
 | M0-78 | 13 | Security boundaries report | O | Done |
-| M0-79 | 14 | Bug triage | O | In review |
+| M0-79 | 14 | Bug triage | O | Done |
 | M0-80 | 14 | Code-freeze review | O | In progress |
-| M0-81 | 14 | Invariant gap analysis | O | In review |
+| M0-81 | 14 | Invariant gap analysis | O | Done |
 | M0-82 | 14 | Development build | S MANUAL | In progress |
 | M0-83 | 14 | Final MVP audit | O | In progress |
 | M0-84 | 14 | M0 close-out | S | In progress |

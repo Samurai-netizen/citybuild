@@ -56,7 +56,7 @@ flowchart LR
 | Golden scenarios #1 and #2 in the engine and over HTTP | `Simulation.Tests/Golden/*`; `IntegrationTests/Golden/*` | met |
 | Determinism, split invariance, timer invariance, conservation, attack and concurrency suites | `Properties/*PropertyTests` (`InvariantPropertyTests` holds conservation); `Security/*`; `Concurrency/RaceTests` | met |
 | A clean clone set up from the README; a development build reaches the city screen | Clean clone, every step (M0-B part D); `docs/BUILD.md`: macOS player reached dev login, content and city over HTTP (M0-82). The city on a screen and on a phone: owner check | met, the on-screen check is the owner's |
-| Process: build log entries with decisions; current module docs; generated reference current; CI green on `main`; the board's 88 tasks `Done` or `Skipped` | `check-docs.sh` (pre-commit and CI) checks entries, module docs and DocTools; CI on `main` green after PR #100. The board closes in M0-84 (`docs/HANDOFF-M0.md`) | met once M0-84 merges |
+| Process: build log entries with decisions; current module docs; generated reference current; CI green on `main`; the board's 88 tasks `Done` or `Skipped` | `check-docs.sh` (pre-commit and CI) checks entries, module docs and DocTools; CI on `main` green after PR #100. The board closed in M0-84 (`docs/HANDOFF-M0.md`) | met (M0-80 … M0-84 `Done` at the merge) |
 
 ## Gaps found (follow-ups, none blocks M0)
 - **Expired token on a command** (M0-C-4, P2): `CommandSender` does not log in again on a 401, so the first command after expiry is refused once.
@@ -65,4 +65,4 @@ flowchart LR
 - **Application identifiers** are the Unity template's (`docs/BUILD.md`); a store build needs real ones.
 - **Not verified here:** the Windows and iOS builds, and the APK on a phone (owner, `docs/BUILD.md`).
 
-The M1 backlog that takes these up is in `docs/HANDOFF-M0.md` *(planned, M0-84)*.
+The M1 backlog that takes these up is in `docs/HANDOFF-M0.md` (M0-84).

@@ -14,6 +14,7 @@ in chapters, with every backticked path and spec number as a link (`website/READ
 | set up and run the project | [getting-started.md](getting-started.md) |
 | make a development build of the client (desktop, Android, iOS) | [BUILD.md](BUILD.md) (M0-82) |
 | understand the architecture as built | [architecture/overview.md](architecture/overview.md), [modules/](modules/README.md) |
+| start M1: what M0 built, how to run it, its guarantees and known issues, the M1 backlog and M2 readiness | [HANDOFF-M0.md](HANDOFF-M0.md) (M0-84) |
 | see how each link of a player action is held, from a tap to the screen, and M0's Definition of Done with evidence | [MVP-AUDIT.md](MVP-AUDIT.md) (M0-83) |
 | see how well the architecture holds up, and every package with why it exists | [ARCHITECTURE-FITNESS-REVIEW.md](ARCHITECTURE-FITNESS-REVIEW.md) (M0-66) |
 | understand the intended architecture and rules | `core-instructions/README.md` (index of all specs) |
