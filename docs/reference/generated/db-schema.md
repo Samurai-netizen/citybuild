@@ -22,6 +22,7 @@ Tables in alphabetical order. Each table's mapping is in `Persistence/Configurat
 | `city_trips` | 10 | `city_id`, `trip_id` | `cities` |
 | `command_receipts` | 6 | `player_id`, `request_id` | `players` |
 | `ledger_entries` | 9 | `id` | `cities` |
+| `player_events` | 8 | `id` | `players` |
 | `players` | 3 | `id` | — |
 
 ## cities
@@ -304,6 +305,27 @@ Tables in alphabetical order. Each table's mapping is in `Persistence/Configurat
 | `fk_ledger_entries_cities_city_id` | foreign key | `city_id` → `cities` (`id`), on delete `Restrict` |
 | `ix_ledger_entries_city_id_created_at` | index | `city_id`, `created_at` |
 
+## player_events
+
+| Column | Type | Null | Default |
+|---|---|---|---|
+| `id` | `bigint` | no | — |
+| `city_clock` | `bigint` | no | — |
+| `created_at` | `timestamp with time zone` | no | — |
+| `detail` | `text` | yes | — |
+| `event_type` | `text` | no | — |
+| `outcome` | `text` | yes | — |
+| `player_id` | `uuid` | no | — |
+| `value` | `bigint` | yes | — |
+
+| Constraint or index | Kind | Definition |
+|---|---|---|
+| `pk_player_events` | primary key | `id` |
+| `fk_player_events_players_player_id` | foreign key | `player_id` → `players` (`id`), on delete `Cascade` |
+| `ix_player_events_event_type_detail` | index | `event_type`, `detail` |
+| `ix_player_events_player_id_created_at` | index | `player_id`, `created_at` |
+| `ck_player_events_city_clock` | check | `city_clock >= 0` |
+
 ## players
 
 | Column | Type | Null | Default |
@@ -332,3 +354,4 @@ In the order they apply (`server/src/CityBuilder.Infrastructure/Persistence/Migr
 | 7 | `20261111231311_AddDeliveryLines` |
 | 8 | `20261112012041_AddBuildingPaused` |
 | 9 | `20261117143301_TripWaitingLeg` |
+| 10 | `20261117184547_AddPlayerEvents` |

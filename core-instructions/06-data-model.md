@@ -10,7 +10,8 @@
 > `SETTLEMENT_DELIVERED` and `SETTLEMENT_REFUNDED` rows (part E); `city_couriers`, `city_courier_loads` and `city_route_actions` with
 > the migration `AddCouriersAndRoutes` and their mapping (part G); `cities.last_seen_unix` with the migration `AddLastSeen` (part H);
 > `city_delivery_lines`, `cities.next_line_id` and the trips' `remaining` and `leg` with the migration `AddDeliveryLines` (CR-0008-T3,
-> amendment 1); `city_buildings.paused` with the migration `AddBuildingPaused` (amendment 2). A task that builds a part updates this line.
+> amendment 1); `city_buildings.paused` with the migration `AddBuildingPaused` (amendment 2); `player_events` with the migration
+> `AddPlayerEvents` and `PlayerEventRepository` (CR-0009-T1). A task that builds a part updates this line.
 >
 > **As built:** this file is the normative schema. The schema the EF Core model defines today, every table, column, key, index and check
 > constraint and the migrations in order, is generated in `docs/reference/generated/db-schema.md` and checked in CI (M0-61).
@@ -32,6 +33,7 @@ are `bigint` city-clock seconds and worker-seconds. Quantities are `bigint`. Ite
 | `city_research` | `(city_id, research_id) pk`, `completed_at bigint` | completed nodes only |
 | `command_receipts` | `(player_id, request_id) pk`, `command_type`, `payload_hash bytea`, `response_json json`, `created_at` | Successful commands only; `json`, not `jsonb`, keeps the response text as written (decision 041); cleanup job later |
 | `ledger_entries` | `id bigint identity pk`, `city_id`, `item_id`, `delta bigint`, `balance_after bigint`, `reason text`, `ref_type text`, `ref_id text`, `created_at` | `index (city_id, created_at)` |
+| `player_events` | `id bigint identity pk`, `player_id uuid`, `event_type text`, `detail text null`, `outcome text null`, `value bigint null`, `city_clock bigint`, `created_at` | `index (player_id, created_at)`, `index (event_type, detail)`; `check (city_clock >= 0)`; FK to `players`, cascade; the player metrics (CR-0009): append-only, the player's id and content ids only, never a name, token, address or request body (`07`); never read by game code (`02` rule 23); `id` orders the events of one request, which share `created_at` |
 
 Ledger reasons in M0: `STARTING_GRANT`, `SETTLEMENT_PRODUCED`, `SETTLEMENT_CONSUMED`, `COST_PLACE`, `COST_UPGRADE`,
 `REFUND_UPGRADE`, `COST_RESEARCH`; CR-0008 adds `COST_ROAD` (part D), `SETTLEMENT_DELIVERED` and `SETTLEMENT_REFUNDED` (part E; below). `DEV_ADJUST` is written only by the developer's goods script of the server panel (`server-panel/goods.sql`, CR-0006) on the dev database,
@@ -85,13 +87,14 @@ labor, city totals, a building's project.
 - A row that breaks these rules or the engine's fails the load; a broken city is never settled and saved over.
 
 A column without `null` in the table is `NOT NULL`; `ledger_entries.ref_type` and `ref_id` are nullable too (a `STARTING_GRANT` has no
-reference). `players.id` and `cities.id` are set by the application; `ledger_entries.id` is the only identity.
+reference). `players.id` and `cities.id` are set by the application; `ledger_entries.id` and `player_events.id` are the only identities.
 
 **Foreign keys:** `cities.player_id` → `players`; `city_buildings`, `city_research`, `city_research_needs`, `city_roads` and `city_trips` →
 `cities`, `city_stores`, `city_project_needs`, `city_couriers` and `city_route_actions` → `city_buildings`, `city_courier_loads` and
 `city_delivery_lines` → `city_couriers`, with `ON DELETE CASCADE`
 (the city owns its state); `ledger_entries.city_id` → `cities` and `command_receipts.player_id` → `players` with `ON DELETE RESTRICT` (the audit
-trail never disappears with what it belongs to), and `cities.player_id` is `RESTRICT` as well.
+trail never disappears with what it belongs to), and `cities.player_id` is `RESTRICT` as well. `player_events.player_id` → `players` is
+`ON DELETE CASCADE`: the events are analytics, not audit, so a player's events go with the player (CR-0009).
 
 **Names:** snake_case everywhere, constraints included: `pk_<table>`, `ux_<table>_<columns>` (unique), `ix_<table>_<columns>`,
 `fk_<table>_<principal>_<column>`, `ck_<table>_<column>`.
