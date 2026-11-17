@@ -97,7 +97,9 @@ properties and `Thread.Sleep` in every `src/` project (`14`).
 ## Required negative tests for every command
 Unauthenticated · malformed body · unknown ids · out-of-bounds or out-of-range values · each business-rule error code ·
 replay with the same payload · replay with a different payload · another player's ids · concurrent duplicates.
-Assert on the **database state and ledger**, not only on the HTTP status.
+Assert on the **database state and ledger**, not only on the HTTP status. A rule's refusal stores its one player event (CR-0009) and
+nothing else (`DatabaseCommands.AssertStoredWithRefusalsAsync`); a shape refusal, a replay and a conflict store none. The command's
+`EventDetail` has a case in `CommandEventDetailTests`.
 
 ## Naming
 `Method_Scenario_ExpectedResult`, e.g. `Advance_SawmillLosesWorkersMidCycle_KeepsProgressAndFreezes`.

@@ -91,8 +91,9 @@ flowchart LR
   the test, a model the test keeps and checks every answer against, and `Assert.True` messages that name the seed and the step.
 - The pipeline without HTTP (its own tests): resolve `CommandPipeline` from a request scope and pass it a command and a response
   writer. On PostgreSQL, `Commands/DatabaseCommands` does it (`ExecuteAsync`, with test commands that call the engine's rules), stores a
-  player with a city to send them to, and writes everything stored about the city as one text (`StoredAsync`), so one assertion shows that
-  a replay or a conflict wrote nothing. With fakes: `CityBuilder.Application.Tests`, `Commands/PipelineFixture`; there,
+  player with a city to send them to, and writes everything stored about the city as one text (`StoredAsync`: the city, its ledger, its
+  receipts and its player events), so one assertion shows that a replay or a conflict wrote nothing. A rule's refusal adds exactly its
+  player event (CR-0009): `AssertStoredWithRefusalsAsync(…, before, codes)`. With fakes: `CityBuilder.Application.Tests`, `Commands/PipelineFixture`; there,
   `InMemoryCityRepository` keeps receipts with a unique key, and `BeforeNextWrite` lets another request commit between a lookup and a
   write: the receipt race without threads.
 - The receipt race on PostgreSQL: insert the receipt of the same key in a transaction of the test's own (no commit), send the command,
