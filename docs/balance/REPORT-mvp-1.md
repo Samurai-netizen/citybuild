@@ -108,6 +108,30 @@ the second research waits for the next day's check-in. Whether that is acceptabl
 2026-11-17: "I approve P1 and P2, and P3 should be a research for later". M0-69 (M0-A part C) applies P1 and P2. P3 is CR-0012
 (Proposed): a research that raises courier stamina, instead of new content numbers. Once a day may miss goal 3 ("yes", 2026-11-17; now in `24`).
 
+## After M0-69 (`mvp-3`: P1 + P2 applied)
+Same command and simulator, on `mvp-3` (purse 1000, Trading Post 200 coins + 5 planks). The numbers equal the `p1000_tp5` variant above.
+
+| Strategy | Check-ins | First coins | 2nd research | 3rd research | First courier station | Coins on day 1 | All research | Coins/h | Idle worker time |
+|---|---|---|---|---|---|---|---|---|---|
+| GreedyCoins | 08:00,13:00,20:00 | 0:19:40 (0:23:30) | 5:00:00 (29:00:00) | 12:00:00 | 0:12:00 (24:01:00) | 8 530 (160) | — ¹ | 451 (250) | 5.9 % (13.5 %) |
+| GreedyCoins | every 4h | 0:19:40 (0:23:30) | 4:00:00 (16:00:00) | 8:00:00 | 0:12:00 (12:01:00) | 9 710 (4 800) | — ¹ | 560 (436) | 6.6 % (8.5 %) |
+| GreedyCoins | once a day | 0:19:40 (0:23:30) | 24:00:00 (—) | 48:00:00 | 0:12:00 (—) | 1 300 (50) | — | 118 (2) | 14.3 % (41.6 %) |
+| ResearchRush | 08:00,13:00,20:00 | 0:18:30 (0:23:30) | 0:10:30 (29:00:00) | 12:00:00 | 5:04:30 (24:01:00) | 2 530 (160) | 37:12:54 (61:07:38) | 582 (359) | 13.3 % (12.6 %) |
+| ResearchRush | every 4h | 0:18:30 (0:23:30) | 0:10:30 (16:00:00) | 8:00:00 | 4:04:30 (12:01:00) | 7 080 (4 780) | 21:16:48 (33:07:20) | 893 (689) | 10.3 % (9.9 %) |
+| ResearchRush | once a day | 0:18:30 (0:23:30) | 0:10:30 (—) | 48:00:00 | 24:04:30 (—) | 70 (50) | — | 35 (2) | 32.5 % (41.6 %) |
+| Balanced | 08:00,13:00,20:00 | 0:18:30 (0:23:30) | 0:10:30 (29:00:00) | 12:00:00 | 5:04:30 (24:01:00) | 2 530 (160) | 39:39:04 (62:11:12) | 324 (216) | 19.2 % (22.3 %) |
+| Balanced | every 4h | 0:18:30 (0:23:30) | 0:10:30 (16:00:00) | 8:00:00 | 4:04:30 (12:01:00) | 4 590 (3 500) | 23:36:40 (37:09:04) | 511 (417) | 11.8 % (14.6 %) |
+| Balanced | once a day | 0:18:30 (0:23:30) | 0:10:30 (—) | 48:00:00 | 24:04:30 (—) | 70 (50) | — | 35 (2) | 32.5 % (41.6 %) |
+
+Before (`mvp-2`) in brackets. The 3rd research on `mvp-2` started at 36:00 (three a day) and 20:00 (every 4 h).
+
+- **Goal 1: met.** First coins at 0:18:30 (GreedyCoins 0:19:40, it builds the courier station first).
+- **Goal 2: met from the second check-in.** The courier station comes in the first session (GreedyCoins) or at the 2nd check-in
+  (4–5 h), so goods move while the player is away.
+- **Goal 3: met on three a day and every 4 h.** The 2nd research starts in the first session or after one absence, the 3rd after two.
+- **Once a day: still misses goal 3** (3rd research at 48 h), which the owner accepted on 2026-11-17. It now earns 35–118 coins/h
+  instead of 2. Longer courier stamina comes with CR-0012.
+
 ## Simulator findings
 - **Fixed in M0-A (regression test `ConstructionTests`, commit `87bcfe9`):** with spare coins, Balanced ordered an upgrade with goods before
   the basic city stood. First it was the only Woodcutter's Hut, whose planks come from the Sawmill, whose logs come from that hut, and a
@@ -118,4 +142,4 @@ the second research waits for the next day's check-in. Whether that is acceptabl
   the courier station is the last building of the basic city, so the strategies learn the value of a first-session station only from the
   coins (GreedyCoins with P1 builds it at 0:12, the others spend on research first).
 
-Last updated: M0-68 (M0-A)
+Last updated: M0-69 (M0-A)

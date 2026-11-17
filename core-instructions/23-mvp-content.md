@@ -8,6 +8,8 @@
 > **CR-0008 (logistics)** sets the numbers below for content version `mvp-2` (`04` §16–§19). The JSON is `mvp-2` from CR-0008-T1 part C
 > with the walking rules and road levels; the rest arrives in part E (until then its items, buildings, research and starting city are the
 > M0 numbers, git history of this file), and the 8 h cap goes in part H.
+> **M0-69 (`mvp-3`):** the owner's picks from balance report 1 (`docs/balance/REPORT-mvp-1.md`, P1 and P2): starting purse 800 → 1000,
+> Trading Post 10 → 5 planks. The golden scenarios below keep `mvp-2` (`content-golden-v2.json`: purse 800, Trading Post 10 planks).
 >
 > **As built:** the JSON's numbers, every item, building level, recipe with its per-hour rate at full staffing, and research node, are
 > generated in `docs/reference/generated/content.md` and checked in CI (M0-61). This file keeps the design copy and the golden scenario.
@@ -29,7 +31,7 @@
 | Routes | at most 8 stops, at most 4 actions per stop; need a built `scriptorium` (`routeBuilding`, CR-0008 D15) |
 | Delivery lines | at most 20 per courier (`maxDeliveryLines`, CR-0008 D16–D17) |
 | Amount presets | `all` 100 % · `half` 50 % · `quarter` 25 % |
-| Content version | `mvp-2` |
+| Content version | `mvp-3` |
 
 ## Items
 
@@ -46,7 +48,7 @@
 | `house` | Cottage | house | start | 50 coins | 30 s | 2 | provides 4 / 6 workers |
 | `woodcutter` | Woodcutter's Hut | producer | start | 80 coins | 60 s | 2 | max workers 2 / 4 · store logs 40 / 80 |
 | `sawmill` | Sawmill | producer | start | 150 coins + 10 logs | 120 s | 2 | max workers 3 / 6 · store logs 40, planks 20 / logs 80, planks 40 |
-| `trading_post` | Trading Post | producer | research `trade_charter` | 200 coins + 10 planks | 180 s | 2 | max workers 2 / 4 · store planks 40 / 80 |
+| `trading_post` | Trading Post | producer | research `trade_charter` | 200 coins + 5 planks | 180 s | 2 | max workers 2 / 4 · store planks 40 / 80 |
 | `scriptorium` | Scriptorium (the science building, one per city) | science | start | 100 coins | 30 s | 1 | research happens here |
 | `courier_station` | Courier Station | courierStation | start | 120 coins | 60 s | 2 | 2 / 4 couriers · carry 10 / 15 · stamina 14 400 s (4 h) / 28 800 s (8 h) |
 | `warehouse` | Warehouse | warehouse | start | 100 coins + 20 logs | 60 s | 2 | store logs 100, planks 100 / logs 200, planks 200 |
@@ -95,12 +97,12 @@ With both labor researches, a full L1 Woodcutter (24 s/log, 150/h) feeds a full 
 A research's goods are delivered to the Scriptorium; its timer runs once they are all in. Completing all six doesn't change the era in M0.
 
 ## Starting city (created by the server for every new player)
-purse 800 coins · era 1 · no buildings, no goods · no research · city clock 0.
+purse 1000 coins · era 1 · no buildings, no goods · no research · city clock 0.
 The first session (golden #1): Cottage and Woodcutter first, the Scriptorium and Trade Charter, the Sawmill fed by hand trips; the first
-coins come at about 20–23 minutes (`24` goal 1), measured again by the balance simulator (M0-67, M0-68).
+coins come at about 18–20 minutes (`24` goal 1, M0-69 runs); the 1000 coins also pay for the Courier Station or the second research.
 
 ## Golden scenario #1 — first session (hand-checked; re-check whenever content changes)
-Content `content-golden-v2.json` (a frozen copy of the numbers above). Ids and tiles: Cottage 1 (0,2), Woodcutter 2 (0,0),
+Content `content-golden-v2.json` (a frozen copy of the `mvp-2` numbers: purse 800, Trading Post 10 planks). Ids and tiles: Cottage 1 (0,2), Woodcutter 2 (0,0),
 Scriptorium 3 (4,0), Sawmill 4 (2,0), Cottage 5 (1,2), Trading Post 6 (2,2). Walks: Woodcutter ↔ Sawmill and Sawmill ↔ Trading Post are two
 ground steps (10 s). Actions: `t=0` place Cottage 1 and Woodcutter 2 · `t=30` place Scriptorium 3 · `t=60` start `trade_charter`, place
 Sawmill 4 and Cottage 5 · `t=360` trip 2 → 4 logs `all` · `t=490` trip 2 → 4 logs `all` · `t=660` place Trading Post 6, trip 4 → 6 planks

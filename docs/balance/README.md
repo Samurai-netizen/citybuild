@@ -6,7 +6,7 @@ be reproduced. How to run the simulator: [run-balance-simulator.md](../how-to/ru
 
 | Report | Content | Task | What it decides |
 |---|---|---|---|
-| [REPORT-mvp-1.md](REPORT-mvp-1.md) | `mvp-2` | M0-68 (M0-A) | The proposed Era I number changes the owner picks for M0-69 |
+| [REPORT-mvp-1.md](REPORT-mvp-1.md) | `mvp-2`, after: `mvp-3` | M0-68, M0-69 (M0-A) | The proposed Era I number changes, the owner's picks, and the runs after them |
 
 A report is written once, by its task. A later content change gets a new report (`REPORT-mvp-2.md`, …), or a before/after section
 appended by the task that applies the change (M0-69).
