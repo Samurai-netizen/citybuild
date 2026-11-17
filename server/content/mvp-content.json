@@ -1,5 +1,5 @@
 {
-  "contentVersion": "mvp-2",
+  "contentVersion": "mvp-3",
   "rules": {
     "gridWidth": 8,
     "gridHeight": 8,
@@ -19,7 +19,7 @@
   },
   "startingCity": {
     "era": 1,
-    "purse": 800
+    "purse": 1000
   },
   "eras": [
     { "number": 1, "id": "early_medieval", "name": "Early Middle Ages" }
@@ -108,7 +108,7 @@
       "kind": "producer",
       "era": 1,
       "availableAtStart": false,
-      "cost": { "coins": 200, "planks": 10 },
+      "cost": { "coins": 200, "planks": 5 },
       "buildSeconds": 180,
       "levels": [
         {

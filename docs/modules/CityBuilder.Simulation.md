@@ -40,12 +40,16 @@ flowchart LR
   SH -- errors --> R1["GameContentResult: every shape error"]
   SH -- ok --> RU{"rule phase<br/>values · buildings · references · unlocks · research · labor"}
   RU -- errors --> R2["GameContentResult: every rule error"]
-  RU -- ok --> G["GameContentResult.Content: GameContent"]
+  RU -- ok --> GR{"graph phase (M0-70)<br/>goods made and used · levels never worse · reachability"}
+  GR -- errors --> R3["GameContentResult: every graph error"]
+  GR -- ok --> G["GameContentResult.Content: GameContent"]
 ```
 The engine accepts content only as a `GameContent`, and only the factory makes one, so every definition the engine sees has passed every rule
 of `04` → Content rules. Bad data is never an exception: the result lists each error with a stable `ContentErrorCode`, a path in the JSON's
 own names (`buildings[sawmill].levels[2].recipe.labor`) and a message. A broken value gives one error: later rules skip what earlier ones
-reported. The JSON format is the shape of the `*Data` classes in camelCase; the worked example is `docs/how-to/add-building-or-item.md`. Design decisions: build log `docs/build-log/2026/2026-10-14-05-M0-07a.md`, decisions 2–8 and 11–31.
+reported, and the graph phase (`GraphRules`, then `ReachabilityRules`, rules 14 to 16) runs only on content that passed every other rule.
+`ReachabilityRules` plays the content from the start era by era and reports what a city could never build, upgrade or research in its era.
+The JSON format is the shape of the `*Data` classes in camelCase; the worked example is `docs/how-to/add-building-or-item.md`. Design decisions: build log `docs/build-log/2026/2026-10-14-05-M0-07a.md`, decisions 2–8 and 11–31.
 
 ## City state and mutations
 ```mermaid
@@ -195,7 +199,7 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
   dictionary key; `EraId` has no order. One test fails loudly where the machine has no culture data.
 - `Content/`: `ContentFixture.Valid()` is a small synthetic content in code with its own numbers; each test changes one value
   (`ValidWith`) and `ContentAssert` checks the exact errors. `GameContentFactoryTests` (what valid data becomes), `ContentShapeTests`,
-  `ContentValueRuleTests`, `ContentBuildingRuleTests`, `ContentReferenceRuleTests`, `ContentResearchRuleTests`, `ContentEraRuleTests`, `ContentWalkRuleTests` (CR-0008): at least one failing case
+  `ContentValueRuleTests`, `ContentBuildingRuleTests`, `ContentReferenceRuleTests`, `ContentResearchRuleTests`, `ContentEraRuleTests`, `ContentWalkRuleTests` (CR-0008), `ContentGraphRuleTests` (M0-70): at least one failing case
   per rule and error code, named after the error path.
 - `Rules/RoadRulesTests` and `State/CityRoadsTests` (CR-0008): every road command's success path and code, the order of the checks over a
   list, a building refused on a road; road state, sorting, lookups and `TileAt`. `Rules/StartTripTests`, `State/AmountTests`,
@@ -308,4 +312,4 @@ too, but guards the Unity client's asmdefs and manifest, not the engine (see `do
   depend on `Dictionary` or `HashSet` order (`04` §9).
 - Content error messages are English text for content authors; only `ContentErrorCode` and `Path` are stable.
 
-Last updated: M0-65
+Last updated: M0-A (M0-70)

@@ -11,7 +11,8 @@ The repository on GitHub is the single place where all work and all context live
 ## Commits
 - Format (checked by `.githooks/commit-msg`): `<type>(<ID>): <summary>`
   - `type` ∈ `feat fix test docs refactor perf build ci chore wip`; `ID` = task or CR id (`M0-15`, `CR-0007`, `CR-0007-T1`); a plan task
-    that the owner split carries a letter (`M0-07a`, `M0-07b`); CI checks the same pattern
+    that the owner split carries a letter (`M0-07a`, `M0-07b`); a group of plan tasks the owner merged into one carries a capital
+    letter (`M0-A`, `docs/plan/M1-PLAN.md` §3); CI checks the same pattern
   - the owner may use `repo` or `kit` as the ID for maintenance
   - example: `feat(M0-32): keep labor progress when workers are reassigned`
 - Each commit leaves the build green, except `wip(...)` checkpoint commits on task branches, which say what's broken in the body.

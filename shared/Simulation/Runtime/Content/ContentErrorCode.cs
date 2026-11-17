@@ -134,5 +134,38 @@ namespace CityBuilder.Simulation.Content
 
         /// <summary>The content has no amount preset or more than 8 (rule 13).</summary>
         InvalidAmountPresets,
+
+        /// <summary>
+        /// A good is used (a recipe input or a cost) but no recipe makes it; or the currency is used, the starting purse is 0 and no recipe makes
+        /// it (rule 14). Reported once per item; the message names each use.
+        /// </summary>
+        ItemNeverProduced,
+
+        /// <summary>A good is neither a recipe input nor in any cost, so making or storing it serves nothing (rule 14).</summary>
+        ItemNeverUsed,
+
+        /// <summary>
+        /// A level's recipe is worse than the level below: with all max workers it makes less of a good per second, or it needs more of an input
+        /// for each output (rule 15).
+        /// </summary>
+        RecipeWorse,
+
+        /// <summary>
+        /// An upgrade costs less of the currency, or fewer goods in all, than the upgrade to the level below it (from level 3; the build cost is
+        /// not an upgrade; rule 15).
+        /// </summary>
+        UpgradeCostDecrease,
+
+        /// <summary>
+        /// Played from the start, era by era, a building type or one of its levels can't be reached in its era: never unlocked in time, or its
+        /// cost needs a good no reachable recipe makes (rule 16).
+        /// </summary>
+        BuildingUnreachable,
+
+        /// <summary>
+        /// Played from the start, era by era, a research node can't be started in its era: a prerequisite is never reached, or its cost needs a
+        /// good no reachable recipe makes (rule 16).
+        /// </summary>
+        ResearchUnreachable,
     }
 }

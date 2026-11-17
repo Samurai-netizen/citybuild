@@ -5,19 +5,19 @@
 > This file is loaded into every session: Milestone-table notes are task ids and PR numbers only (≤ ~100 characters per row).
 
 ## Resume point
-- **State:** IDLE          <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (CR-0009-T1 and T2 are planned and parked for a later date: `docs/plan/CR-0009-T1-PLAN.md`, `CR-0009-T2-PLAN.md`; both plans approved by the owner 2026-11-16)
+- **State:** IDLE <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** none · M0-A in review (PR #98, branch `task/M0-A-balance`; it also lands CR-0010-T1). CR-0009-T1 and T2 (player metrics) are parked.
 - **Part / step:** —
-- **Last completed:** M0-66 · Architecture fitness and dependency review (in review; build log `docs/build-log/2026/2026-11-13-01-M0-66.md`)
-- **Next step:** `/start-task M0-67` ([PLAN]: balance simulator). When the owner says so: `/start-task CR-0009-T1`, following `docs/plan/CR-0009-T1-PLAN.md` (append Session 2 to its build log entry `docs/build-log/2026/2026-11-16-01-CR-0009-T1.md`), then `/start-task CR-0009-T2`, following `docs/plan/CR-0009-T2-PLAN.md`.
-- **Open questions for the owner:** M0-66: "For the owner" in `docs/ARCHITECTURE-FITNESS-REVIEW.md` (approve URP, uGUI, IDE packages; npm alerts; Unity in CI). M0-64: the two Follow-ups in its build log (refund reasons, a CLI). M0-61: the stashed Unity Editor settings (`git stash list`), apply or drop; Follow-ups in its build log. CR-0008-T3: the `22` edit (decision 27) and the Follow-ups in its build log. CR-0008-T1: 8 Dependabot alerts on `main` (build log Follow-ups). M0-58: the [MANUAL] content-change check (`client/README.md`; no automated test covers the `GameRoot` rebuild). CR-0006-T1: `AGENTS.md` (protected) does not list the goods commands, say if I may add them; `test-goods.sh` is not in CI (workflow files are protected); the [MANUAL] try on the real dev database (Follow-ups). M0-53 and older questions: their build log entries (M0-53: the [MANUAL] look at the welcome-back report, decisions 5, 7, 9, 11). M0-55: the [MANUAL] look at the connection states (`client/README.md`). CR-0007-T1: the [MANUAL] look at the new UI (`client/README.md`); the status label may be removed (build log follow-ups).
+- **Last completed:** M0-A (M0-68, M0-70, M0-69): balance report 1, content graph rules 14–16, content `mvp-3`
+- **Next step:** after the owner merges M0-A: `/start-task M0-B` (`docs/plan/M1-PLAN.md` §3).
+- **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. CR-0012 (approved) runs after M0-D.
 - **Known broken / do not touch:** nothing.
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
-- **Verify with:** `bash scripts/dev/check-docs.sh --base origin/main` (as CI) · `bash scripts/dev/docs-site.sh build` · `dotnet build server/CityBuilder.slnx` ·
-  `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"` · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
+- **Verify with:** in the loop `bash scripts/dev/test.sh <area> [filter]`, at a checkpoint `bash scripts/dev/test.sh changed`, at the finish
+  `bash scripts/dev/quality.sh` (as CI; `08` → Test tiers) · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` · tasks done: 70 / 88
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` (remaining tasks grouped in `docs/plan/M1-PLAN.md` §3) · tasks done: 74 / 88 · next milestone: `docs/plan/M1-PLAN.md` (Proposed, CR-0011)
 
 | Area | State | Notes |
 |---|---|---|
@@ -34,9 +34,10 @@
 | Dev tooling (CR-0006) | done | goods for the `devtest` account (CR-0006-T1) |
 | Resilience (limits, retries, logging) | in progress | M0-34, M0-35, M0-57 to M0-59 (PR #46, #47, #81, #82, #84) |
 | Docs automation (DocTools) + docs completeness | in progress | CR-0002, CR-0003 (PR #27, #29); M0-61 (PR #89); M0-63 (PR #91) |
+| Workflow v2 (CR-0010) | in progress | CR-0010-T1, lands with M0-A: tests first, `test.sh`, token budget, asset requests (`27`) |
 | Logistics (CR-0008) | done | T1 to T3 (PR #86, #87, #88) |
-| Balance simulator | in progress | M0-67 (in review) |
-| E2E / security / concurrency suites | in progress | M0-36, M0-56, M0-60 (PR #48, #80, #85); M0-64, M0-65 (PR #92, #93) |
+| Balance simulator | done | M0-67 (PR #95); M0-68 to M0-70 in M0-A |
+| E2E / security / concurrency suites | in progress | M0-36, M0-56, M0-60 (PR #48, #80, #85); M0-64 to M0-66 (PR #92 to #94) |
 | Dev build + M0 close-out | not started | |
 
 Per-task detail (what each PR added): `docs/plan/M0-PLAN.md`, `docs/build-log/`, `git log`.
@@ -44,7 +45,7 @@ Per-task detail (what each PR added): `docs/plan/M0-PLAN.md`, `docs/build-log/`,
 States: `not started` · `in progress` · `done` · `blocked (reason)`
 
 ## Commands
-The command list is in `AGENTS.md` → Commands (marks `[Mx-NN]` = not real yet); the "since" task for each is in `docs/getting-started.md` → Run.
+Tests: `bash scripts/dev/test.sh` (CR-0010). The command list is in `AGENTS.md` → Commands (marks `[Mx-NN]` = not real yet); the "since" task for each is in `docs/getting-started.md` → Run.
 All commands exist.
 
 ## Open issues / tech debt
@@ -56,3 +57,5 @@ All commands exist.
   (build log BL-20261014-05, decision 1). Split plan tasks carry a letter; the commit id pattern allows it (`18`).
 - CR-0008 (logistics, approved 2026-11-02) adds three tasks between M0-60 and M0-61 (`CR-0008-T1` … `T3`, board rows "10+"): 88 on the
   board. Its design changes `22`, `04`, `05`, `06`, `23`; M0-61 onward cover the new model (plan §0.00, §7).
+- The owner approved the M0 regrouping of `docs/plan/M1-PLAN.md` §3 on 2026-11-17 (M0-A … M0-D, M0-71 skipped): one task per group,
+  one branch and PR each; the M0 specs stay in `docs/plan/M0-PLAN.md` (build log BL-20261116-02, Session 2).

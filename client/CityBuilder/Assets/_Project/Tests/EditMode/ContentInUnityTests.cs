@@ -44,7 +44,7 @@ namespace CityBuilder.Client.Tests.EditMode
                 Is.EqualTo(new[] { "NotPositive rules.gridWidth", "Negative buildings[hut].cost.gold" }));
         }
 
-        /// <summary>One era, a good and the currency, a house and the science building; the numbers are made up for this test.</summary>
+        /// <summary>One era, a good and the currency, a house, a producer of the good and the science building; the numbers are made up for this test.</summary>
         private static GameContentData SmallContent() => new GameContentData
         {
             ContentVersion = "unity-test-1",
@@ -86,6 +86,27 @@ namespace CityBuilder.Client.Tests.EditMode
                     BuildSeconds = 3,
                     Levels = new List<BuildingLevelData?> { new BuildingLevelData { Level = 1, WorkersProvided = 2 } },
                 },
+                // The camp makes wood and the study costs 1 wood, so wood is made and used (content rule 14, 04 §14).
+                new BuildingData
+                {
+                    Id = "camp",
+                    Name = "Camp",
+                    Kind = "producer",
+                    Era = 1,
+                    AvailableAtStart = true,
+                    Cost = new Dictionary<string, long?> { ["gold"] = 6 },
+                    BuildSeconds = 4,
+                    Levels = new List<BuildingLevelData?>
+                    {
+                        new BuildingLevelData
+                        {
+                            Level = 1,
+                            MaxWorkers = 1,
+                            Recipe = new RecipeData { Outputs = new Dictionary<string, long?> { ["wood"] = 1 }, Labor = 20 },
+                            Storage = new Dictionary<string, long?> { ["wood"] = 10 },
+                        },
+                    },
+                },
                 new BuildingData
                 {
                     Id = "study",
@@ -94,7 +115,7 @@ namespace CityBuilder.Client.Tests.EditMode
                     Era = 1,
                     AvailableAtStart = true,
                     MaxPerCity = 1,
-                    Cost = new Dictionary<string, long?> { ["gold"] = 4 },
+                    Cost = new Dictionary<string, long?> { ["gold"] = 4, ["wood"] = 1 },
                     BuildSeconds = 2,
                     Levels = new List<BuildingLevelData?> { new BuildingLevelData { Level = 1 } },
                 },

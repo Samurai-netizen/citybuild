@@ -6,7 +6,8 @@ namespace CityBuilder.IntegrationTests.Contracts;
 /// The frozen content the contract tests run the server on: a small content file of the tests' own, so a balance change to
 /// <c>server/content/mvp-content.json</c> never changes what they expect. Its items, buildings, research and the keys of its cost maps are
 /// deliberately not in id order, so a response that is sorted proves the server sorts. <see cref="ContentGoldenTests"/> checks the text it
-/// gives at <c>/content</c>; <see cref="CitySnapshotContractTests"/> run cities on it.
+/// gives at <c>/content</c>; <see cref="CitySnapshotContractTests"/> run cities on it. The sawpit makes logs and planks from nothing, so
+/// the content passes the graph rules (every good made and used, everything reachable, M0-70); no test builds it.
 /// </summary>
 internal static class ContractContent
 {
@@ -86,6 +87,13 @@ internal static class ContractContent
               "levels": [
                 { "level": 1, "maxWorkers": 1, "recipe": { "inputs": { "planks": 2, "logs": 1 }, "outputs": { "coins": 6 }, "labor": 90 },
                   "storage": { "planks": 20, "logs": 10 } }
+              ]
+            },
+            {
+              "id": "sawpit", "name": "Sawpit", "kind": "producer", "era": 1, "availableAtStart": true,
+              "cost": { "coins": 15 }, "buildSeconds": 20,
+              "levels": [
+                { "level": 1, "maxWorkers": 1, "recipe": { "outputs": { "planks": 1, "logs": 1 }, "labor": 60 }, "storage": { "planks": 10, "logs": 10 } }
               ]
             },
             {

@@ -18,6 +18,47 @@ per test (how to run: `docs/testing/README.md`): migrations on an empty database
 
 Mark integration tests with `[Trait("Category", "Integration")]` so the fast suite runs without Docker.
 
+## Test-first loop (every behaviour, every layer)
+A test is written, and seen failing, **before** the code it tests (owner directive OD-20, `15`; the steps are in `16` §C).
+1. **List.** The task spec names the behaviours ("Tests first"). Add the neighbours you see: the error codes, the boundaries, the
+   replay. Don't pad: a test protects a rule, an invariant or a contract, not a line of code.
+2. **Red.** Write those tests with the least code that compiles. Run only them. Each fails because the behaviour is missing; a test
+   that passes before its code exists tests nothing, so fix the test.
+3. **Green.** Write the code until the same focused run passes.
+4. **Clean.** Refactor with the tests green.
+
+| Kind of work | The test that comes first |
+|---|---|
+| Engine rule, effect, content rule | Rule tests; a property when it is an invariant; a golden table when it is a scenario |
+| Command, endpoint | Rule tests of the mutation, application tests with fakes, integration tests (every error code, replay, another player), `Security_` tests |
+| Persistence, migration | Integration tests on the database state, from the previous schema where data exists |
+| Client logic (store, view-model, formatting, planner) | Unity EditMode tests |
+| Client screen behaviour | PlayMode test of the flow where one exists for the area; else EditMode on the view-model |
+| Bug | The regression test that fails with the bug |
+| Pure looks (layout, colour, motion, art, sound choice) | No test: a line in the task's `[MANUAL]` list, and the static checks (`MobileLayoutTests`, `check-ui-rules.py`) |
+| Tools and scripts | Their test project, or a script that proves each outcome (as `test-guard-bash.sh` does) |
+
+The evidence is in git: a `test(<ID>): red, …` save before the `feat(<ID>): …` that makes it green.
+
+## Test tiers: what to run, and when
+Run the smallest set that can fail (OD-21). `scripts/dev/test.sh` prints one line per area and only the failing tests.
+
+| Tier | Runs | When | Command |
+|---|---|---|---|
+| **T0 focus** | The class or method under work | Every red and green of the loop | `bash scripts/dev/test.sh sim CourierRouteTests` |
+| **T1 area** | The test projects of the files a part changed | At each checkpoint | `bash scripts/dev/test.sh changed` (`client/` or `shared/` changed: `test-unity.sh` too, where `UNITY_EDITOR` is set) |
+| **T2 full** | Everything CI runs, locally | **Once, at the finish**, and at the early points below | `bash scripts/dev/quality.sh` |
+| **T3 CI** | Everything, on a clean machine | Every PR | GitHub Actions (`18`) |
+
+**An early full run (T2, or `test.sh fast`) is worth its cost** only when a part: changes the engine's shared rules or a type the
+server and the client both use · changes content JSON or a golden fixture · renames or moves across projects · merges `main` into the
+branch · comes right before a `[MANUAL]` playtest or a question that depends on everything working. The task spec's "Full run" line
+names these points; outside them, T0 and T1 are enough, and CI is the net.
+
+Areas of `test.sh`: `sim` (engine) · `domain` · `app` · `int` (in-process, no Docker) · `int-db` (PostgreSQL, needs Docker) · `repo`
+(documentation and architecture checks over the source tree) · `doctools` · `fast` (all but `int-db`) · `changed`.
+A changed engine runs `sim` and `app`; changed content runs `sim`, `int` and `doctools`; any changed C# file runs `repo`.
+
 ## Simulation test kinds (the most important ones)
 - **Rule tests:** one rule per test. Start rule, completion rule, ordering (research → completions → starts),
   storage cap, labor ÷ workers with ceiling, worker change mid-cycle, frozen cycle, auto-staffing, research effects
@@ -66,10 +107,13 @@ that says what it builds (`14` → Documentation in code).
 
 ## Commands
 ```
-dotnet test server/CityBuilder.slnx --filter "Category!=Integration"   # fast, no Docker
+bash scripts/dev/test.sh <area> [filter]                               # T0 and T1: quiet, focused (areas above)
+bash scripts/dev/quality.sh                                            # T2: everything CI runs
+dotnet test server/CityBuilder.slnx --filter "Category!=Integration"   # the fast suite, raw output
 dotnet test server/CityBuilder.slnx --filter "Category=Integration"    # needs Docker
 UNITY_EDITOR=<Unity program> scripts/dev/test-unity.sh  (or .ps1)     # Unity batchmode; the Editor must be closed
 ```
+When a Unity test fails, read `result="Failed"` in `client/CityBuilder/Logs/test-unity/*.xml`, never the whole log.
 
 ## Where tests run
 - **CI (GitHub Actions):** server fast and integration tests on every PR (`18`).
@@ -77,6 +121,8 @@ UNITY_EDITOR=<Unity program> scripts/dev/test-unity.sh  (or .ps1)     # Unity ba
 - Record test counts before → after in the task report. A drop in the count needs a G-Tests approval.
 
 ## Rules for AI coders
+- Tests first: no behaviour without a test that was red before it (above).
+- Run the smallest tier that can fail; never the full suite after every change (above).
 - Never delete, skip or loosen an assertion to get green. If a test is wrong, explain why first.
 - A bug fix starts with a failing regression test.
 - If you could not run a suite (no Docker, no Unity), say so explicitly in the task report.

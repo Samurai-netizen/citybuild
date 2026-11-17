@@ -3,7 +3,8 @@
 ## Goals
 1. The first research starts in the first minute, and the first coins arrive within ~20 minutes.
 2. Every check-in has something worth doing: a worker change, a build or upgrade, a research to fund, (Era II+) an order.
-3. The next research is always visible and usually affordable within one or two absences.
+3. The next research is always visible and usually affordable within one or two absences. Once-a-day play may miss this (owner,
+   2026-11-17, balance report 1): it costs output and pace, never progress.
 4. Bottlenecks can be understood from the UI alone (stall reasons, net rates, free workers, stores, what a project still needs, where the
    couriers are).
 5. (Era II+) A healthy market: prices are stable over weeks, newer players have goods veterans want, and no item can be cornered.

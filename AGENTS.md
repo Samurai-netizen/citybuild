@@ -33,23 +33,34 @@ Then check the repo state (`git status`, branch, last commits) and that hooks ar
 | endpoints, DTOs, errors | `core-instructions/05-api-contract.md` |
 | EF Core, migrations, transactions | `core-instructions/06-data-model.md` |
 | security | `core-instructions/07-security-model.md` |
-| tests | `core-instructions/08-testing-strategy.md` |
+| tests (always: the test-first loop and the test tiers) | `core-instructions/08-testing-strategy.md` |
+| models, pictures, audio, fonts | `core-instructions/27-asset-pipeline.md`, `docs/assets/README.md` |
 | anything under `client/` | `core-instructions/09-unity-client.md` |
 | game numbers | `core-instructions/23-mvp-content.md`, `server/content/*.json` |
 | game design questions | `core-instructions/22-game-mechanics.md` (owner's pillars are fixed) |
-| scope | `core-instructions/10-milestones.md`, `core-instructions/30-out-of-scope.md` |
+| scope | `core-instructions/10-milestones.md`, `core-instructions/30-out-of-scope.md`; M1: `docs/plan/M1-PLAN.md` (Proposed) |
 | all files | `core-instructions/README.md` (index), `docs/README.md` (docs map) |
 
 ## The loop (details in `16`)
-1. **Start:** preconditions → branch `task/<ID>-<slug>` → build log entry (`scripts/dev/new-log-entry.sh`) with its plan and its
-   **Docs impact** table (the pages the change could make wrong, from `19`) → resume point IN PROGRESS → commit and push.
-2. **Work in small green steps,** code, tests and docs together. After each step, checkpoint: resume point, build log, commit, push.
-3. **Finish:** Definition of Done (`11`) → docs per recipe, every Docs impact row closed → `check-docs.sh` and the handbook build →
-   review → PR. The owner merges.
+A task is one PR, made of **parts**; a part is made of **steps**.
+1. **Start:** preconditions → read only what the spec's "Read first" names → branch `task/<ID>-<slug>` → build log entry
+   (`scripts/dev/new-log-entry.sh`) with the parts, the first test list and the **Docs impact** table (`19`) → resume point
+   IN PROGRESS → commit and push.
+2. **Step: tests first.** Write the failing test, run only it (`scripts/dev/test.sh <area> <Class>`), make it pass, tidy.
+   **Save** after each green step: commit and push, nothing else.
+3. **Part: checkpoint.** `test.sh changed` green → build log (five lines, decisions) and resume point → commit, push → shed context
+   (`/compact`, or a new session and `/resume`).
+4. **Finish:** the one full run (`quality.sh`) → Definition of Done (`11`), every Docs impact row closed → review → the next task's
+   asset request (`27`) → PR. The owner merges.
 
 ## Hard rules (full list in `02`, `15`, `18`)
 - Only work on a task from `docs/plan/` or an **approved** CR. New ideas → `docs/changes/CR-NNNN-*.md` (Proposed), then stop.
-- **Log every decision** in the build log entry as you make it. Write owner instructions into the repo the same session.
+- **Tests before code,** and the smallest test run that can fail: focused in the loop, the touched areas at a checkpoint, everything
+  once at the finish (`08`). Never the full suite after every change.
+- **Make no game assets** (models, pictures, audio, fonts): list them in an asset request, one task ahead; code runs on placeholders (`27`).
+- **Spend tokens on code and tests** (`16` §H): read by section, run quietly, short logs and reports, one part per context.
+- **Log every decision** in the build log entry as you make it, one row (`17` §4 says what counts). Write owner instructions into the
+  repo the same session.
 - **Docs are updated in the same PR as the code,** and the build log's Docs impact table says which pages and why (`17` §5).
   Never hand-edit `docs/reference/generated/`. Docs are plain Markdown, placeholders in backticks (`17` §7).
 - **Every file and every declaration says what it is for** (OD-12): a doc comment on each type, member and local function, a header
@@ -69,9 +80,10 @@ bash scripts/dev/check-docs.sh [--base origin/main]   # docs and process checks 
 bash scripts/dev/docs-site.sh build             # the handbook site, as CI builds it (Node.js 20+); `start` = live preview
 bash scripts/dev/test-guard-bash.sh             # after changing .claude/hooks/guard-bash.sh
 bash scripts/dev/cloud-setup.sh                 # setup step of a cloud session: .NET SDK if missing, hooks, packages
+bash scripts/dev/test.sh sim CourierRouteTests   # focused, quiet tests: <area> [filter]; `changed` = the areas you touched (`08`)
 dotnet build server/CityBuilder.slnx
 dotnet format server/CityBuilder.slnx --verify-no-changes   # as CI; part of Done
-dotnet test  server/CityBuilder.slnx --filter "Category!=Integration"  # fast suite
+dotnet test  server/CityBuilder.slnx --filter "Category!=Integration"  # fast suite, raw output (prefer test.sh fast)
 dotnet test  server/CityBuilder.slnx --filter "Category=Integration"   # needs Docker (docs/testing/README.md)
 dotnet run   --project server/src/CityBuilder.Api                      # http://localhost:8080
 docker compose up -d postgres                                          # dev database; first .env from .env.example
@@ -79,7 +91,7 @@ dotnet tool restore                                                    # once pe
 dotnet ef migrations add <Name> --project server/src/CityBuilder.Infrastructure --startup-project server/src/CityBuilder.Api --output-dir Persistence/Migrations
 bash scripts/dev/test-unity.sh                                         # needs UNITY_EDITOR; close the Unity Editor first
 blender -b --factory-startup --python art/blender/build_all.py         # rebuild the art; writes the FBX files into the Unity project (art/README.md)
-bash scripts/dev/quality.sh                                            # everything CI runs, locally (skips are named)
+bash scripts/dev/quality.sh                                            # everything CI runs, locally (skips are named): once, at the finish
 dotnet run --project tools/DocTools -- generate                        # regenerate docs/reference/generated (`check`: as CI)
 dotnet run --project tools/BalanceSim -- --help                        # balance simulator; no options = all strategies × patterns, 72 h
 ```

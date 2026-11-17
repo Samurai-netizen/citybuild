@@ -8,8 +8,8 @@ namespace CityBuilder.Simulation.Content
     /// The only way to make a <see cref="GameContent"/>: checks content data and builds the immutable definitions from it. Bad data is
     /// never an exception: the result lists every error instead. The checks run in two phases. The shape phase reports values that are
     /// missing, malformed or not allowed where they are; when it finds any, the factory stops, because the definitions can't be built
-    /// reliably. Otherwise the rule phase runs every rule and reports every rule error (<c>core-instructions/04-simulation-model.md</c>,
-    /// content rules).
+    /// reliably. Otherwise the rule phase runs every rule and reports every rule error; only when it finds none, the graph phase checks that
+    /// every good is made and used and that everything can be reached (<c>core-instructions/04-simulation-model.md</c>, content rules).
     /// </summary>
     public static class GameContentFactory
     {
@@ -52,6 +52,11 @@ namespace CityBuilder.Simulation.Content
             UnlockRules.Check(draft, errors);
             ResearchRules.Check(draft, errors);
             LaborRules.Check(draft, errors);
+            if (errors.Count == 0)
+            {
+                GraphRules.Check(draft, errors);
+            }
+
             return errors.Count == 0 ? GameContentResult.Valid(draft.ToContent()) : GameContentResult.Invalid(errors.ToReadOnlyList());
         }
     }

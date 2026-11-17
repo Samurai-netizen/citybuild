@@ -163,8 +163,16 @@ public sealed class StallReasonTests
     public void Of_TwoInputsMissing_NamesTheFirstInOrdinalOrder()
     {
         // The workshop also needs 1 boards here (its store holds boards); "boards" sorts before "wood". The currency can't be an input (rule 4).
+        // The lumber camp makes boards too, so the boards input can be had (graph rule 16).
         GameContent content = ContentAssert.Valid(ContentFixture.ValidWith(data =>
-            ContentFixture.Level(data, "workshop", 1).Recipe!.Inputs = new Dictionary<string, long?> { ["wood"] = 2, ["boards"] = 1 }));
+        {
+            ContentFixture.Level(data, "workshop", 1).Recipe!.Inputs = new Dictionary<string, long?> { ["wood"] = 2, ["boards"] = 1 };
+            foreach (int level in new[] { 1, 2 })
+            {
+                ContentFixture.Level(data, "lumber_camp", level).Recipe!.Outputs!["boards"] = 1;
+                ContentFixture.Level(data, "lumber_camp", level).Storage!["boards"] = 10;
+            }
+        }));
         CityState city = City(buildings: [Idle(1, "workshop", 0, 0, workers: 1)]);
 
         Assert.Equal("MissingInput:boards", StallReason.Of(city, content, city.Buildings[0])?.ToString());

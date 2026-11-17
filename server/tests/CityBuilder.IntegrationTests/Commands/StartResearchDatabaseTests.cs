@@ -65,7 +65,7 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
     /// Trade Charter, started at 0, ends at 600, and its effect applies in the settle of the first request at that second. At 599 the
     /// trading post is still <c>BUILDING_LOCKED</c> (422); at 600 the place request's settle completes the research before the mutation
     /// (its settlement block names it, the slot is free, the completion is stored at 600) and the trading post is placed, constructing from
-    /// 600 as a construction site waiting for its 10 planks (CR-0008), paid with 200 coins.
+    /// 600 as a construction site waiting for its 5 planks (CR-0008), paid with 200 coins.
     /// </summary>
     [Fact]
     public async Task Post_TradeCharter_MakesTheTradingPostPlaceableWhenItCompletes()
@@ -85,7 +85,7 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
         Assert.Equal("""{"activeId":null,"startedAt":null,"endsAt":null,"needs":{},"completed":["trade_charter"]}""", snapshot["city"]!["research"]!.ToJsonString());
         Assert.Equal("none, completed: trade_charter 600", await ResearchAsync(city));
         Assert.Equal("3 trading_post L1 Constructing - target 0 workers 0", await BuildingAsync(Database, city, 3));
-        Assert.Equal("""{"planks":10}""", snapshot["city"]!["buildings"]![2]!["needs"]!.ToJsonString());
+        Assert.Equal("""{"planks":5}""", snapshot["city"]!["buildings"]![2]!["needs"]!.ToJsonString());
         Assert.Equal("coins 650", await StockAsync(Database, city));
     }
 

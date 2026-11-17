@@ -217,8 +217,8 @@ public sealed class ContentReferenceRuleTests
     public void Create_SameIdForAnItemAndABuildingType_IsAccepted()
     {
         // Ids are unique per kind of definition: an item and a building type are different things even with the same text.
-        GameContentData data = Valid();
-        data.Items!.Add(new ItemData { Id = "hut", Name = "Hut Token", Era = 1, Currency = false, Tradable = false });
+        // The depot (a warehouse nothing else names) takes the id of the item wood; an unused extra item would break rule 14 instead.
+        GameContentData data = ValidWith(data => Building(data, "depot").Id = "wood");
 
         ContentAssert.Valid(data);
     }

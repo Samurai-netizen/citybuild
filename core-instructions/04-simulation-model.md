@@ -230,6 +230,19 @@ quantities, durations, milliseconds and labor ≤ 10¹²; grid size and worker c
 13. **Routes and amounts:** 1..8 amount presets with unique ids and a percentage 1..100; `tripCarryLimit` ≥ 1; `maxDeliveryLines` 1..100;
     `routeBuilding`, when given, names a known building type (without it routes need no building); an `UnlockAmountMode` names `percent` or `exact`.
 
+The **graph rules** (M0-70) run only when every rule above passed, so they never repeat an error already reported:
+
+14. **Goods are made and used:** every item with an amount above 0 in a recipe input or a cost is an output of some recipe (the currency
+    may come from a starting purse above 0 instead), and every good is a recipe input or in a cost. Reported once per item, naming its uses.
+15. **Levels never get worse:** with all max workers, a level's recipe makes each output of the level below at least as fast
+    (`output × maxWorkers / labor`) and needs no more of any input for each such output; from level 3, an upgrade costs at least as much
+    currency, and as many goods in all, as the upgrade below it (the build cost is not an upgrade).
+16. **Everything can be reached, era by era:** playing from the start (the purse, the types available at the start), a type is built once
+    it is unlocked, of this era or an earlier one, and its cost can be paid; it rises a level while that upgrade can be paid; a recipe runs
+    once a house can be built and its inputs can be had; a node of this era is done once the science building can be built, its
+    prerequisites are done and its cost can be paid. Each era repeats until nothing new is reached. Every building type and level of the
+    era, and every node of the era, must have been reached. Only which things can exist counts, not amounts or time; balance is BalanceSim's.
+
 ## 15. Display helpers (not authority)
 `shared/Simulation/Runtime/Display/` holds pure estimates for the player's screens. The server never calls them, and nothing they return
 is sent or stored. All values are integers, rounded down: seconds, permille (0..1000), or rates in thousandths of an item per hour.

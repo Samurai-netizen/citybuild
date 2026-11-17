@@ -31,7 +31,7 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
     private static readonly Guid _requestId = new("1de9e700-0000-4000-8000-0000000002a1");
 
     /// <summary>
-    /// A sawmill on a free tile: the purse pays the cost's 150 coins (800 → 650), the building row is level 1, a construction site
+    /// A sawmill on a free tile: the purse pays the cost's 150 coins (1000 → 850), the building row is level 1, a construction site
     /// (<c>Constructing</c> without a start or an end) waiting for the cost's 10 logs, with no workers (CR-0008); the ledger holds the one
     /// <c>COST_PLACE</c> row of the coins, referenced by the request id; the receipt holds the response text and the payload's hash; and the
     /// response shows the stored version and purse.
@@ -50,8 +50,8 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
         Assert.Equal((2L, 0L), (row.StateVersion, row.ClockSeconds));
         Assert.Equal(row.StateVersion, (long)snapshot["stateVersion"]!);
 
-        Assert.Equal("coins 650", await StockAsync(city));
-        Assert.Equal(650, (long)snapshot["city"]!["purse"]!);
+        Assert.Equal("coins 850", await StockAsync(city));
+        Assert.Equal(850, (long)snapshot["city"]!["purse"]!);
 
         CityBuildingRow building = await db.CityBuildings.AsNoTracking().SingleAsync(TestContext.Current.CancellationToken);
         Assert.Equal(
@@ -64,7 +64,7 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
 
         List<LedgerEntryRow> ledger = await LedgerAsync(Database, city);
         Assert.Equal(
-            ["coins -150 650 COST_PLACE command " + _requestId],
+            ["coins -150 850 COST_PLACE command " + _requestId],
             ledger.Select(entry => $"{entry.ItemId} {entry.Delta} {entry.BalanceAfter} {entry.Reason} {entry.RefType} {entry.RefId}").Order(StringComparer.Ordinal));
 
         CommandReceiptRow receipt = Assert.Single(await ReceiptsAsync(Database, player));
@@ -75,7 +75,7 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
     /// <summary>
     /// Each rule refuses with its code and status, and a refusal with no time elapsed stores nothing: the city, its stock, ledger and
     /// receipts are as they were after the commands before it. The commands before it set the city up (a tile taken, both builders busy,
-    /// the one scriptorium a city may have). The starter's 800 coins outlast what two builders can place, so the coins are short in
+    /// the one scriptorium a city may have). The starter's 1000 coins outlast what two builders can place, so the coins are short in
     /// <see cref="Post_CoinsShort_Is422InsufficientResourceAndStoresNothing"/>.
     /// </summary>
     /// <param name="before">The placements that succeed first, as <c>type x y</c>.</param>
@@ -160,7 +160,7 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
         Assert.Single(responses.Select(response => response.Body).Distinct(StringComparer.Ordinal));
         Assert.Single((await LoadAsync(Factory, player)).State.Buildings);
         Assert.Single(await ReceiptsAsync(Database, player));
-        Assert.Equal("coins 750", await StockAsync(city));
+        Assert.Equal("coins 950", await StockAsync(city));
         Assert.Single(await LedgerAsync(Database, city));
     }
 
@@ -199,7 +199,7 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
         // prove that the second request ran in the second city and the first one's receipt didn't answer it.
         Assert.Equal(firstStored, await StoredAsync(Factory, Database, first, firstCity));
         Assert.Single((await LoadAsync(Factory, second)).State.Buildings);
-        Assert.Equal("coins 750", await StockAsync(secondCity));
+        Assert.Equal("coins 950", await StockAsync(secondCity));
         Assert.Equal(_requestId, Assert.Single(await ReceiptsAsync(Database, second)).RequestId);
     }
 

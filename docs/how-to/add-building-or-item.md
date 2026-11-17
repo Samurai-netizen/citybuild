@@ -32,7 +32,9 @@ gets a new copy and hand-checked numbers.
 - Optional, and left out when empty or 0: `inputs`, `prerequisites`, `effects`, `maxWorkers`, `workersProvided`, `storage`, `maxPerCity`,
   `carryLimit`, `staminaSeconds`. Everything else is required.
 - The rules every file must pass (positive amounts, unique ids, existing references, stores, the currency, the science building, unlocks,
-  no research cycle, the shortest cycle) are `core-instructions/04-simulation-model.md` §14.
+  no research cycle, the shortest cycle) are `core-instructions/04-simulation-model.md` §14. Once they pass, the graph rules (M0-70, rules
+  14 to 16) check that every good is made by a recipe and used in a recipe or a cost, that no level is worse than the one below, and that
+  a city can reach every building type, level and research node in its era (`BuildingUnreachable`, `ResearchUnreachable` name what can't).
 
 ## Worked example: stone from a quarry
 Goal: a new good `stone`, made by a `quarry` that is locked until the research `masonry`. The numbers below only show the shape; they
@@ -83,16 +85,19 @@ are not a design.
 }
 ```
 
-**5. The version:** a new one, `"contentVersion": "mvp-3"`.
+**5. A use for it.** A good that is made but never used is an error (`ItemNeverUsed`, rule 14): put it in a recipe input or a cost, for
+example the warehouse's level 2 upgrade, `"upgradeCost": { "coins": 200, "planks": 30, "stone": 10 }`.
 
-**6. Check it.** Either command loads the real file through the same loader as the server:
+**6. The version:** a new one, `"contentVersion": "mvp-3"`.
+
+**7. Check it.** Either command loads the real file through the same loader as the server:
 ```bash
 dotnet test server/tests/CityBuilder.IntegrationTests --filter "FullyQualifiedName~ContentFileLoaderTests.Load_RealMvpContent"
 dotnet run --project server/src/CityBuilder.Api    # logs "Content mvp-2 loaded from …", or stops listing every error
 ```
 To try a draft without touching the real file, point the server at it: `dotnet run --project server/src/CityBuilder.Api -- --Content:FilePath=/path/to/draft.json`.
 
-**7. Docs:** the new rows in `23` (Items, Buildings, Recipes, Upgrades, Research), the CHANGELOG line, the balance note.
+**8. Docs:** the new rows in `23` (Items, Buildings, Recipes, Upgrades, Research), the CHANGELOG line, the balance note.
 
 ## When the check fails
 The loader lists every rule error at once, each with a code, a path in the JSON's own names and a message. This example without the

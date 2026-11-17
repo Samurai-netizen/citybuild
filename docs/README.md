@@ -8,7 +8,9 @@ in chapters, with every backticked path and spec number as a link (`website/READ
 |---|---|
 | see the art style or rebuild the models | `art/README.md` |
 | understand the game | `core-instructions/22-game-mechanics.md` (pillars + mechanics), `21-game-vision.md`, `25-eras-and-research.md` |
-| see where the project stands right now | `core-instructions/13-progress.md` (resume point), `docs/plan/M0-PLAN.md` (task board) |
+| see where the project stands right now | `core-instructions/13-progress.md` (resume point), `docs/plan/M0-PLAN.md` (task board), [owner-queue.md](owner-queue.md) (questions waiting for the owner) |
+| see what comes after M0 | `docs/plan/M1-PLAN.md` (proposed: what the game lacks, 18 tasks, owner decisions) |
+| ask for a model, picture, sound or font | `core-instructions/27-asset-pipeline.md`, [assets/](assets/README.md) (asset requests) |
 | set up and run the project | [getting-started.md](getting-started.md) |
 | understand the architecture as built | [architecture/overview.md](architecture/overview.md), [modules/](modules/README.md) |
 | see how well the architecture holds up, and every package with why it exists | [ARCHITECTURE-FITNESS-REVIEW.md](ARCHITECTURE-FITNESS-REVIEW.md) (M0-66) |
@@ -42,4 +44,5 @@ in chapters, with every backticked path and spec number as a link (`website/READ
 | `reference/` | Generated reference: content, endpoints, errors, configuration, DB schema, project map | `tools/DocTools` |
 | `api/` | Running the API: logs and correlation (`traceId` vs `requestId`, every event id), requests to try by hand (`smoke.http`) | AI, kept current |
 | `testing/` | How to run the test suites (integration tests need Docker), test checklists | AI, kept current |
-| `security/`, `balance/` *(planned: M0-78, M0-68)* | Security report, balance reports | AI, per task |
+| `balance/` | Balance reports: simulator runs against the economy goals, proposed number changes (`balance/README.md`) | AI, per task |
+| `security/` *(planned: M0-78)* | Security report | AI, per task |

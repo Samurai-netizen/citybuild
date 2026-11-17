@@ -29,8 +29,9 @@ Every step of a check-in runs, in order: research, builds and upgrades, workers,
   (the basic reserve, locked types included) are kept back from growth, upgrades and research, except research that unlocks one of them.
 - **Growth** (`Construction.NextExpansion`, `NextUpgrade`, `NextStationUpgrade`): more couriers when the routes can't hold another chain
   building; otherwise the producer of the first good whose demand at full staffing exceeds its supply, else another coin producer.
-  Buildings go on the first free tile in row-major order. Only one project waits for goods at a time, and an upgrade is only ordered when
-  another building makes or holds its goods.
+  Buildings go on the first free tile in row-major order. Only one project waits for goods at a time, and an upgrade with goods is only ordered
+  once every chain type stands and when its goods can reach it without the building itself: other buildings hold them, or make them
+  from inputs that can reach them the same way (M0-A: the only hut's upgrade waited for planks made from its own logs).
 - **Workers** (`Workforce`): courier stations first, then producers one worker at a time in chain order. Upgrading buildings get none.
   One worker stays free for hand deliveries until a courier station is built.
 - **Logistics** (`Logistics`, `Routes`): one route per good (its producers take, its waiting projects and consumers put, all), split into
@@ -74,7 +75,7 @@ Every step of a check-in runs, in order: research, builds and upgrades, workers,
 `tools/BalanceSim.Tests` is in the server's solution, so the fast suite runs it:
 `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`. It covers the check-in patterns, the check-in list, the
 timeline rows, every strategy with every default pattern (research starts and coins arrive in the first check-in, the engine rejects no
-action), ResearchRush finishing all research, the chain read from the real content, the command line and its errors, and byte-identical
+action), ResearchRush finishing all research, Balanced with a larger purse still earning coins in the first check-in (`ConstructionTests`), the chain read from the real content, the command line and its errors, and byte-identical
 output for the same arguments.
 
 ## Known limitations
@@ -85,4 +86,4 @@ output for the same arguments.
 - No roads, no warehouses, no pausing; one row-major layout.
 - `RepositoryRoot` repeats DocTools' ten lines: the tools share no project.
 
-Last updated: M0-67
+Last updated: M0-A (M0-68)
