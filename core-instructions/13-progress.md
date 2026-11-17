@@ -7,11 +7,11 @@
 ## Resume point
 - **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** CR-0009-T2 (player metrics: the report) · branch `task/CR-0009-T2-report` · log `docs/build-log/2026/2026-11-17-05-CR-0009-T2.md`
-- **Part / step:** A to E done (`7ff4247`); F (`MetricsLoader`, PostgreSQL tests) of A to I next; plan `docs/plan/CR-0009-T2-PLAN.md` §4
+- **Part / step:** A to F done (`4058cc7`); G (`HtmlReport`) of A to I next; plan `docs/plan/CR-0009-T2-PLAN.md` §4
 - **Last completed:** CR-0009-T1 (PR #102, merged 2026-11-17)
-- **Next step:** part F: red PostgreSQL tests (test list in the build log) in `server/tests/CityBuilder.IntegrationTests/Metrics/` on
-  `PostgresTest` (project reference to the tool), then `MetricsLoader` (read-only, repeatable read, `AsNoTracking`, ledger `GROUP BY`); plan §4 step 6.
-  Tool tests: `dotnet test tools/MetricsReport.Tests` (no `test.sh` area).
+- **Next step:** part G: red `HtmlReport` tests (test list in the build log) in `tools/MetricsReport.Tests`, then `HtmlReport` (one
+  self-contained page, inline sort script, every cell `data-sort`) and `CommandLine.Run` writing it; plan §3.4, §4 step 7.
+  Tool tests: `dotnet test tools/MetricsReport.Tests`; loader: `bash scripts/dev/test.sh int Metrics` (Docker).
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. M1 CRs (CR-0011) to approve.
 - **Known broken / do not touch:** nothing.
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)

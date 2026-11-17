@@ -9,7 +9,7 @@ MetricsReport answers "what did the players do, how many reached each checkpoint
 ([CR-0009](../changes/CR-0009-player-metrics.md), part 4). It reads the player events that the server records (`player_events`,
 `core-instructions/06-data-model.md`) **read-only**, and the checkpoint file `server/analytics/checkpoints.json`, and writes one
 self-contained HTML page. It is a developer tool: never deployed, no endpoint, and nothing in the game reads what it computes.
-*(In progress, CR-0009-T2: the command line, the checkpoint file, the analysis model, the checkpoint explorer, the funnels, actions, friction, return and one-player sections exist; the loader and the page follow.)*
+*(In progress, CR-0009-T2: the command line, the checkpoint file, the analysis model, the checkpoint explorer, the funnels, actions, friction, return and one-player sections, and the loader exist; the page follows.)*
 
 ## Key types
 | Type | Responsibility |
@@ -23,11 +23,15 @@ self-contained HTML page. It is a developer tool: never deployed, no endpoint, a
 | `ReportContext` | the population's timelines, "now" (the later of the clock and the newest last seen), who left, the least sample |
 | `Explorer`, `ExplorerRow`, `ExplorerDetail` | the checkpoint explorer: one row per checkpoint with the columns of the plan §3.4, last stop descending, and the detail blocks |
 | `Funnels`, `Actions`, `Friction`, `Returns`, `OnePlayer` | the other sections of the plan §3.4, each from `ReportContext`: funnel steps in order, per event type, refusals and the leavers' last events and last sessions, return per creation day, one player's timeline (at most 5000 rows) |
+| `MetricsLoader`, `LoadFilter` | reads the population (period, `--exclude`), its events and per player and item the first `SETTLEMENT_PRODUCED` ledger row (a `GROUP BY`) as `production.first`, in one read-only, repeatable-read transaction with `AsNoTracking`; no `player_events` table: `MetricsDatabaseException`, exit code 2 |
 | `Rate`, `Stats` | percentages in tenths from whole counts (half up, away from zero), `—` over nobody, the small-sample mark; the lower median |
 
 ## Rules and invariants
 - Ids only: no dev name or other personal data is ever read into the page (owner's answer to the CR's question 3).
-- The tool only reads: one read-only transaction.
+- The tool only reads: one read-only transaction. The connection string comes from `ConnectionStrings__CityBuilder`, never an argument.
+- `dev_name` is used only in the `WHERE` of `--exclude`, never selected; a loaded player holds no text.
+- `production.first` has id 0 (before a recorded event of the same second) and the city clock of the player's last recorded event at
+  or before it (the ledger keeps no city clock).
 - A broken checkpoint file stops the report with the first error and its line (exit code 1); a `detail` must be a building,
   research or item id of the content file. The `outcome` is not checked against the error codes (they live in the Api).
 - A named checkpoint's missing `detail` or `outcome` matches any; an unnamed checkpoint matches its exact triple, a missing part only
@@ -44,7 +48,8 @@ self-contained HTML page. It is a developer tool: never deployed, no endpoint, a
 A new checkpoint is a line in `server/analytics/checkpoints.json`, no code.
 
 ## Tests
-`tools/MetricsReport.Tests` (no database): `dotnet test tools/MetricsReport.Tests`.
+`tools/MetricsReport.Tests` (no database): `dotnet test tools/MetricsReport.Tests`. The loader on PostgreSQL:
+`CityBuilder.IntegrationTests/Metrics/` (`MetricsLoaderTests`, `MetricsReportDatabaseTests`; Docker), `bash scripts/dev/test.sh int Metrics`.
 
 ## Known limitations
 - Everything is loaded and computed in memory: fine for M0 to M2 sizes.
