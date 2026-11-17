@@ -80,6 +80,9 @@ Use these names in code, docs and UI text. Consistent words keep Claude and the 
 | Command pipeline | The one path every command takes: shape check, own-city lock, receipt check, settle, mutation, closing advance, one save with the ledger and the receipt (`03`, request lifecycle) | `CommandPipeline`, `ICityCommand` |
 | Canonical payload | The command type and the command's data in a fixed form, whose SHA-256 a receipt keeps: the same request id with another payload is a conflict (`05`, idempotency rules) | `CommandPayload` |
 | Ledger entry | Audit row for one item change | `LedgerEntry` |
+| Player event | One append-only row of what a player did or reached (a command and its outcome, a completed research or building, a session start), written in the city's transaction, for the metrics only: game code never reads it (CR-0009) | `PlayerEvent`, `PlayerEventTypes`, `IPlayerEventRepository`, `player_events` |
+| Session (metrics) | A run of settling requests with no gap longer than `Metrics:SessionGapSeconds`; each start is a `session.start` event | `SessionPolicy` |
+| Metrics checkpoint | A named match over player events (type, detail, outcome, at least N times) that the report counts; defined in a file, not in code, and independent of other checkpoints *(planned, CR-0009-T2)*. Not the process word "Checkpoint" | — |
 | Snapshot | Full authoritative city state sent to the client | `CitySnapshotDto` |
 | State version | Counter incremented on every persisted change | `StateVersion` |
 | Display prediction | Client-side `Advance` on a copy of the snapshot, for visuals only | `DisplayClock` |

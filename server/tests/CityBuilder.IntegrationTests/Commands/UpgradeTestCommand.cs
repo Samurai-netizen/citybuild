@@ -1,4 +1,5 @@
 using CityBuilder.Application.Commands;
+using CityBuilder.Application.Metrics;
 using CityBuilder.Domain.Ledger;
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.Rules;
@@ -29,4 +30,8 @@ internal sealed record UpgradeTestCommand(Guid RequestId, int BuildingId) : ICit
 
     /// <inheritdoc />
     public MutationResult Apply(CityState city, GameContent content) => CityRules.UpgradeBuilding(city, content, BuildingId);
+
+    /// <summary>The type of the building to upgrade, when the city has it.</summary>
+    /// <inheritdoc />
+    public string? EventDetail(CityState city, GameContent content) => CommandEvents.BuildingTypeOf(city, BuildingId);
 }

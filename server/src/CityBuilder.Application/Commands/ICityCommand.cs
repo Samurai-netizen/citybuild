@@ -35,6 +35,17 @@ public interface ICityCommand
     string? ValidateShape();
 
     /// <summary>
+    /// The content id this command is about, for the player metrics (CR-0009, the <c>detail</c> of its <c>command.&lt;type&gt;</c> event): a
+    /// building type, a research node, an item. Only an id that exists in <paramref name="content"/> (or the type of a building the city
+    /// has), through <see cref="Metrics.CommandEvents"/>; <see langword="null"/> when the command names none. Read on the settled city before
+    /// <see cref="Apply"/>. A method, so not part of the canonical payload (<see cref="CommandPayload"/>).
+    /// </summary>
+    /// <param name="city">The city's state, settled to now, before the mutation.</param>
+    /// <param name="content">The game content.</param>
+    /// <returns>The content id, or <see langword="null"/>.</returns>
+    string? EventDetail(CityState city, GameContent content);
+
+    /// <summary>
     /// Applies the command's mutation to the settled city through the engine's rules (<c>CityRules</c>, <c>04</c> section 8). A rejection
     /// changes nothing; the pipeline then commits only the settlement.
     /// </summary>

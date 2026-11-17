@@ -1,19 +1,22 @@
 using CityBuilder.Application.Cities;
 using CityBuilder.Application.Commands;
+using CityBuilder.Application.Metrics;
 using CityBuilder.Application.Persistence;
 using CityBuilder.Domain.Commands;
 using CityBuilder.Domain.Ledger;
+using CityBuilder.Domain.Metrics;
 
 namespace CityBuilder.Application.Tests.Cities;
 
 /// <summary>
-/// A fake <see cref="ICityRepository"/>, <see cref="IUnitOfWork"/> and <see cref="ICommandReceiptRepository"/> in one, for use case tests
-/// without a database: it keeps the cities and the receipts in memory, counts the saves and the writes, and records what happened in
-/// <see cref="Events"/> in order. Like the real repository it loads a city only inside a transaction; there is no row to lock and nothing to
-/// roll back in memory, so a rollback is only recorded (and drops the staged receipts). A receipt becomes visible when its write succeeds,
-/// and a write of a receipt whose key is stored already fails with <see cref="DuplicateKeyException"/>, as the primary key would.
+/// A fake <see cref="ICityRepository"/>, <see cref="IUnitOfWork"/>, <see cref="ICommandReceiptRepository"/> and
+/// <see cref="IPlayerEventRepository"/> in one, for use case tests without a database: it keeps the cities, the receipts and the player
+/// events in memory, counts the saves and the writes, and records what happened in <see cref="Events"/> in order. Like the real repository
+/// it loads a city only inside a transaction; there is no row to lock and nothing to roll back in memory, so a rollback is only recorded
+/// (and drops the staged receipts and player events). A receipt or a player event becomes visible when its write succeeds, and a write of
+/// a receipt whose key is stored already fails with <see cref="DuplicateKeyException"/>, as the primary key would.
 /// </summary>
-internal sealed class InMemoryCityRepository : ICityRepository, IUnitOfWork, ICommandReceiptRepository
+internal sealed class InMemoryCityRepository : ICityRepository, IUnitOfWork, ICommandReceiptRepository, IPlayerEventRepository
 {
     /// <summary>The cities, by player id.</summary>
     private readonly Dictionary<Guid, CityAggregate> _cities = [];
@@ -23,6 +26,9 @@ internal sealed class InMemoryCityRepository : ICityRepository, IUnitOfWork, ICo
 
     /// <summary>The receipts staged by <see cref="Save"/> since the last write, with their player.</summary>
     private readonly List<(Guid PlayerId, CommandReceipt Receipt)> _stagedReceipts = [];
+
+    /// <summary>The player events staged by <see cref="Add(IReadOnlyList{PlayerEvent})"/> since the last write, in order.</summary>
+    private readonly List<PlayerEvent> _stagedPlayerEvents = [];
 
     /// <summary>Whether a transaction is open.</summary>
     private bool _inTransaction;
@@ -44,6 +50,12 @@ internal sealed class InMemoryCityRepository : ICityRepository, IUnitOfWork, ICo
     /// <c>commit</c>, <c>rollback</c> (disposed without a commit); tests add their own (a response writer's <c>respond</c>).
     /// </summary>
     public List<string> Events { get; } = [];
+
+    /// <summary>
+    /// The written player events, in the order they were staged: only what was staged and then written by a <see cref="SaveChangesAsync"/>
+    /// that succeeded (not <see cref="Events"/>, the call log).
+    /// </summary>
+    public List<PlayerEvent> PlayerEvents { get; } = [];
 
     /// <summary>When set, the next <see cref="SaveChangesAsync"/> throws it instead of writing, as a database error would.</summary>
     public Exception? FailNextWrite { get; set; }
@@ -108,10 +120,13 @@ internal sealed class InMemoryCityRepository : ICityRepository, IUnitOfWork, ICo
         Events.Add("save");
     }
 
+    /// <summary>Stages the player events (a copy of the list) for the next write; they become <see cref="PlayerEvents"/> when it succeeds.</summary>
+    public void Add(IReadOnlyList<PlayerEvent> events) => _stagedPlayerEvents.AddRange(events);
+
     /// <summary>
-    /// Runs <see cref="BeforeNextWrite"/>, then writes the staged receipts and counts the write in <see cref="SaveChangesCount"/> (the cities
-    /// are already in memory); throws <see cref="FailNextWrite"/> instead, or <see cref="DuplicateKeyException"/> for a receipt whose key is
-    /// stored already.
+    /// Runs <see cref="BeforeNextWrite"/>, then writes the staged receipts and player events and counts the write in
+    /// <see cref="SaveChangesCount"/> (the cities are already in memory); throws <see cref="FailNextWrite"/> instead, or
+    /// <see cref="DuplicateKeyException"/> for a receipt whose key is stored already.
     /// </summary>
     public Task SaveChangesAsync(CancellationToken cancellationToken)
     {
@@ -139,6 +154,8 @@ internal sealed class InMemoryCityRepository : ICityRepository, IUnitOfWork, ICo
         }
 
         _stagedReceipts.Clear();
+        PlayerEvents.AddRange(_stagedPlayerEvents);
+        _stagedPlayerEvents.Clear();
 
         SaveChangesCount++;
         Events.Add("write");
@@ -158,7 +175,9 @@ internal sealed class InMemoryCityRepository : ICityRepository, IUnitOfWork, ICo
         return Task.FromResult<IUnitOfWorkTransaction>(new Transaction(this));
     }
 
-    /// <summary>The fake transaction: records its commit, or a rollback when it is disposed without one, and closes.</summary>
+    /// <summary>
+    /// The fake transaction: records its commit, or a rollback when it is disposed without one (dropping what is staged), and closes.
+    /// </summary>
     /// <param name="owner">The repository whose transaction it is.</param>
     private sealed class Transaction(InMemoryCityRepository owner) : IUnitOfWorkTransaction
     {
@@ -180,6 +199,7 @@ internal sealed class InMemoryCityRepository : ICityRepository, IUnitOfWork, ICo
             {
                 owner.Events.Add("rollback");
                 owner._stagedReceipts.Clear();
+                owner._stagedPlayerEvents.Clear();
             }
 
             owner._inTransaction = false;

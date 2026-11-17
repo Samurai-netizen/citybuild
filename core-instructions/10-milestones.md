@@ -52,7 +52,7 @@ the order book is never empty for basic goods (NPC liquidity works).
 
 ## M3 — Soft-launch readiness (≈ 4 weeks)
 Server container image (moved from M0), cloud hosting with managed PostgreSQL, CD pipeline, Unity tests in CI, crash reporting, metrics and alerts, Play Integrity / App Attest,
-GDPR export/delete, store compliance, analytics (funnel, retention, stall reasons), Redis only if measurements demand it.
+GDPR export/delete, store compliance, analytics (funnel, retention, stall reasons; the recording and the funnel report are built in M0 by CR-0009, with no SDK and no outside service), Redis only if measurements demand it.
 Monetization v1 within the rules in `22` (cosmetics, slots, capped speed-ups); server-side IAP validation.
 **Exit:** soft launch in 1–2 test countries with Eras I–II.
 

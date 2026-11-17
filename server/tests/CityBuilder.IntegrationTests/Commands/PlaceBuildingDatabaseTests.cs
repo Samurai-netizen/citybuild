@@ -73,10 +73,10 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
     }
 
     /// <summary>
-    /// Each rule refuses with its code and status, and a refusal with no time elapsed stores nothing: the city, its stock, ledger and
-    /// receipts are as they were after the commands before it. The commands before it set the city up (a tile taken, both builders busy,
+    /// Each rule refuses with its code and status, and a refusal with no time elapsed stores only its player event (CR-0009): the city, its
+    /// stock, ledger and receipts are as they were after the commands before it. The commands before it set the city up (a tile taken, both builders busy,
     /// the one scriptorium a city may have). The starter's 1000 coins outlast what two builders can place, so the coins are short in
-    /// <see cref="Post_CoinsShort_Is422InsufficientResourceAndStoresNothing"/>.
+    /// <see cref="Post_CoinsShort_Is422InsufficientResourceAndStoresOnlyItsEvent"/>.
     /// </summary>
     /// <param name="before">The placements that succeed first, as <c>type x y</c>.</param>
     /// <param name="typeId">The refused placement's type.</param>
@@ -91,7 +91,7 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
     [InlineData(new[] { "woodcutter 2 3" }, "house", 2, 3, HttpStatusCode.Conflict, "TILE_OCCUPIED")]
     [InlineData(new[] { "house 0 0", "house 1 0" }, "house", 2, 0, HttpStatusCode.Conflict, "NO_FREE_BUILDER")]
     [InlineData(new[] { "scriptorium 0 0" }, "scriptorium", 1, 0, HttpStatusCode.UnprocessableEntity, "BUILDING_LIMIT")]
-    public async Task Post_RuleRefuses_AnswersItsCodeAndStoresNothing(string[] before, string typeId, int x, int y, HttpStatusCode status, string code)
+    public async Task Post_RuleRefuses_AnswersItsCodeAndStoresOnlyItsEvent(string[] before, string typeId, int x, int y, HttpStatusCode status, string code)
     {
         (Guid player, Guid city) = await StoreStarterAsync("builder");
         foreach (string placement in before)
@@ -108,7 +108,7 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
         Assert.Equal(status, response.Status);
         JsonNode problem = response.Json();
         Assert.Equal((code, _requestId.ToString()), ((string)problem["code"]!, (string)problem["requestId"]!));
-        Assert.Equal(stored, await StoredAsync(Factory, Database, player, city));
+        await AssertStoredWithRefusalsAsync(Factory, Database, player, city, stored, code);
     }
 
     /// <summary>
@@ -165,10 +165,11 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
     }
 
     /// <summary>
-    /// With 100 coins a sawmill (150 coins) is <c>INSUFFICIENT_RESOURCE</c> (422), and the refusal with no time elapsed stores nothing.
+    /// With 100 coins a sawmill (150 coins) is <c>INSUFFICIENT_RESOURCE</c> (422), and the refusal with no time elapsed stores only
+    /// its player event (CR-0009).
     /// </summary>
     [Fact]
-    public async Task Post_CoinsShort_Is422InsufficientResourceAndStoresNothing()
+    public async Task Post_CoinsShort_Is422InsufficientResourceAndStoresOnlyItsEvent()
     {
         (Guid player, Guid city) = await HandBuiltCities.StoreCityAsync(Factory, "poor", 100, HandBuiltCities.House(1));
         string stored = await StoredAsync(Factory, Database, player, city);
@@ -177,7 +178,7 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
 
         Assert.Equal(HttpStatusCode.UnprocessableEntity, response.Status);
         Assert.Equal("INSUFFICIENT_RESOURCE", (string)response.Json()["code"]!);
-        Assert.Equal(stored, await StoredAsync(Factory, Database, player, city));
+        await AssertStoredWithRefusalsAsync(Factory, Database, player, city, stored, "INSUFFICIENT_RESOURCE");
     }
 
     /// <summary>

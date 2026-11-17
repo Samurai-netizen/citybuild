@@ -1,3 +1,4 @@
+using CityBuilder.Application.Metrics;
 using CityBuilder.Domain.Ledger;
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.Rules;
@@ -37,4 +38,8 @@ public sealed record SetPausedCommand(Guid RequestId, int BuildingId, bool Pause
 
     /// <inheritdoc />
     public MutationResult Apply(CityState city, GameContent content) => CityRules.SetPaused(city, content, BuildingId, Paused);
+
+    /// <summary>The type of the building, when the city has it.</summary>
+    /// <inheritdoc />
+    public string? EventDetail(CityState city, GameContent content) => CommandEvents.BuildingTypeOf(city, BuildingId);
 }

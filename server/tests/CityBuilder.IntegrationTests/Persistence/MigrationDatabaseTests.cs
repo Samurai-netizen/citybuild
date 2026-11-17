@@ -21,7 +21,7 @@ public sealed class MigrationDatabaseTests(PostgresServer server) : PostgresTest
     private static readonly string[] _tables =
     [
         "__EFMigrationsHistory", "cities", "city_buildings", "city_courier_loads", "city_couriers", "city_delivery_lines", "city_project_needs", "city_research", "city_research_needs", "city_roads",
-        "city_route_actions", "city_stores", "city_trips", "command_receipts", "ledger_entries", "players",
+        "city_route_actions", "city_stores", "city_trips", "command_receipts", "ledger_entries", "player_events", "players",
     ];
 
     /// <summary>
@@ -134,6 +134,32 @@ public sealed class MigrationDatabaseTests(PostgresServer server) : PostgresTest
         Assert.Equal(0, await db.CityRoads.CountAsync(cancellationToken));
         Assert.Equal(0, await db.LedgerEntries.CountAsync(cancellationToken));
         Assert.Equal(0, await db.CommandReceipts.CountAsync(cancellationToken));
+    }
+
+    /// <summary>
+    /// <c>AddPlayerEvents</c> (CR-0009-T1) only adds a table: a player stored under <c>TripWaitingLeg</c> is still there afterwards, has no
+    /// events (nothing is backfilled, CR-0009 → Out of scope), and an event for them can be written.
+    /// </summary>
+    [Fact]
+    public async Task Migrate_AddPlayerEventsOverTripWaitingLeg_KeepsPlayersAndStartsWithNoEvents()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        await using CityBuilderDbContext db = Database.CreateContext();
+        IMigrator migrator = db.GetService<IMigrator>();
+        await migrator.MigrateAsync("20261117143301_TripWaitingLeg", cancellationToken: cancellationToken);
+        await db.Database.ExecuteSqlRawAsync(
+            "INSERT INTO players (id, dev_name, created_at) VALUES ('91a7e400-0000-4000-8000-000000000003', 'dev3', now());",
+            cancellationToken);
+
+        await migrator.MigrateAsync(cancellationToken: cancellationToken);
+
+        Assert.Equal("dev3", await db.Players.AsNoTracking().Select(row => row.DevName).SingleAsync(cancellationToken));
+        Assert.Equal(0, await db.PlayerEvents.CountAsync(cancellationToken));
+        await db.Database.ExecuteSqlRawAsync(
+            "INSERT INTO player_events (player_id, event_type, city_clock, created_at) VALUES " +
+            "('91a7e400-0000-4000-8000-000000000003', 'session.start', 0, now());",
+            cancellationToken);
+        Assert.Equal(1, await db.PlayerEvents.CountAsync(cancellationToken));
     }
 
     /// <summary>Migrating a database a second time applies nothing: the migrations run once.</summary>

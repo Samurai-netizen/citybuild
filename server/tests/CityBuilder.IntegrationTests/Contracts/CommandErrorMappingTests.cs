@@ -1,4 +1,5 @@
 using CityBuilder.Api.Errors;
+using CityBuilder.Application.Metrics;
 using CityBuilder.Simulation.Rules;
 
 namespace CityBuilder.IntegrationTests.Contracts;
@@ -59,6 +60,22 @@ public sealed class CommandErrorMappingTests
         Assert.Equal("urn:citybuilder:error:" + code.Replace('_', '-').ToLowerInvariant(), error.Type);
         Assert.False(string.IsNullOrWhiteSpace(error.Title));
         Assert.False(string.IsNullOrWhiteSpace(error.Detail));
+    }
+
+    /// <summary>
+    /// A refused command's player event (CR-0009) has the code the client is answered with as its outcome: the Application's spelling
+    /// (<see cref="CommandEvents.Outcome"/>) is the catalogue's for every engine code.
+    /// </summary>
+    /// <param name="engineCode">The engine's code.</param>
+    /// <param name="code">The API code.</param>
+    /// <param name="status">The HTTP status (not used here).</param>
+    [Theory]
+    [MemberData(nameof(Table))]
+    public void Outcome_EngineCode_IsTheContractsCode(MutationErrorCode engineCode, string code, int status)
+    {
+        _ = status;
+
+        Assert.Equal(code, CommandEvents.Outcome(engineCode));
     }
 
     /// <summary>The table above names every engine code once, so a new engine code fails here until it has its row and its mapping.</summary>

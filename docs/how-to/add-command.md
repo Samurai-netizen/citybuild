@@ -41,8 +41,15 @@ public sealed record PlaceBuildingCommand(Guid RequestId, string BuildingTypeId,
     }
     public MutationResult Apply(CityState city, GameContent content) =>
         CityRules.PlaceBuilding(city, content, new BuildingTypeId(BuildingTypeId), X, Y);
+    public string? EventDetail(CityState city, GameContent content) =>  // the player metrics' detail (CR-0009)
+        CommandEvents.BuildingType(content, BuildingTypeId);
 }
 ```
+`EventDetail` is the only metrics code a command has (CR-0009): the content id it is about, for the `detail` of the
+`command.<type>` player event the pipeline records for every applied or refused command. Use a `CommandEvents` helper
+(`BuildingType`, `BuildingTypeOf` for a building id of the city, `Research`, `Item`), which gives only an id the content or the city has,
+or return `null` when the command names no one content id (the road, route and courier commands). Add a case to
+`CommandEventDetailTests`; `EveryCityCommand_HasAnEventDetailCase` fails until you do. It is a method, so it is not in the payload.
 A list in the body becomes a list of a small record with properties, as the road commands' tiles are `CommandTile(X, Y)` (CR-0008-T1
 part D): the payload serializes properties, so a value tuple's fields would hash every list alike. Its order is part of the payload.
 `ValidateShape` refuses only what no city state could make valid: an id that can't be a content id (`ContentIds`, the format the content

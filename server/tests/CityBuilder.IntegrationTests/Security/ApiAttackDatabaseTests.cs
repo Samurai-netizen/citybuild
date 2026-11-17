@@ -127,7 +127,7 @@ public sealed class ApiAttackDatabaseTests(PostgresServer server) : PostgresTest
 
     /// <summary>
     /// Coordinates past the 8 × 8 grid (past the <c>smallint</c> columns the tile is stored in, and the limits of <c>int</c>) are
-    /// <c>OUT_OF_BOUNDS</c> (422) by the rule, and nothing is stored: no building row at a wrapped or clipped tile, no cost paid.
+    /// <c>OUT_OF_BOUNDS</c> (422) by the rule, and only the refusal's player event is stored (CR-0009): no building row at a wrapped or clipped tile, no cost paid.
     /// </summary>
     /// <param name="x">The column.</param>
     /// <param name="y">The row.</param>
@@ -136,7 +136,7 @@ public sealed class ApiAttackDatabaseTests(PostgresServer server) : PostgresTest
     [InlineData(32768, 0)]
     [InlineData(65536, 65536)]
     [InlineData(0, int.MaxValue)]
-    public async Task Security_CoordinatesPastTheGrid_AreOutOfBoundsAndStoreNothing(int x, int y)
+    public async Task Security_CoordinatesPastTheGrid_AreOutOfBoundsAndStoreOnlyTheirEvent(int x, int y)
     {
         (Guid player, Guid city) = await StoreStarterAsync("attacker");
         string stored = await StoredAsync(Factory, Database, player, city);
@@ -146,7 +146,7 @@ public sealed class ApiAttackDatabaseTests(PostgresServer server) : PostgresTest
 
         Assert.Equal(HttpStatusCode.UnprocessableEntity, response.Status);
         Assert.Equal("OUT_OF_BOUNDS", (string)response.Json()["code"]!);
-        Assert.Equal(stored, await StoredAsync(Factory, Database, player, city));
+        await AssertStoredWithRefusalsAsync(Factory, Database, player, city, stored, "OUT_OF_BOUNDS");
     }
 
     /// <summary>

@@ -82,6 +82,12 @@ public sealed partial class PersistenceModelTests
             ("balance_after", "bigint", false), ("reason", "text", false), ("ref_type", "text", true), ("ref_id", "text", true),
             ("created_at", "timestamp with time zone", false),
         ],
+        ["player_events"] =
+        [
+            ("id", "bigint", false), ("player_id", "uuid", false), ("event_type", "text", false), ("detail", "text", true),
+            ("outcome", "text", true), ("value", "bigint", true), ("city_clock", "bigint", false),
+            ("created_at", "timestamp with time zone", false),
+        ],
     };
 
     /// <summary>The names of the tables in 06, for the theories.</summary>
@@ -146,6 +152,7 @@ public sealed partial class PersistenceModelTests
     [InlineData("city_route_actions", "city_id,station_id,slot,stop_index,action_index")]
     [InlineData("command_receipts", "player_id,request_id")]
     [InlineData("ledger_entries", "id")]
+    [InlineData("player_events", "id")]
     public void PrimaryKey_EachTable_IsTheKeyOfTheDataModel(string tableName, string keyColumns)
     {
         IPrimaryKeyConstraint key = Assert.IsAssignableFrom<IPrimaryKeyConstraint>(Table(tableName).PrimaryKey);
@@ -168,13 +175,21 @@ public sealed partial class PersistenceModelTests
                 .OrderBy(i => i.Item2, StringComparer.Ordinal));
     }
 
-    /// <summary>The only index that isn't unique is the ledger's <c>(city_id, created_at)</c>.</summary>
+    /// <summary>
+    /// The indexes that aren't unique are the ledger's <c>(city_id, created_at)</c> and the player events' <c>(player_id, created_at)</c>
+    /// and <c>(event_type, detail)</c> (CR-0009: one player's timeline, and the players per event for the report).
+    /// </summary>
     [Fact]
-    public void Indexes_Model_HaveTheLedgerIndexOfTheDataModel()
+    public void Indexes_Model_AreTheIndexesOfTheDataModel()
     {
         Assert.Equal(
-            [("ledger_entries", "ix_ledger_entries_city_id_created_at", "city_id,created_at")],
-            Tables().SelectMany(t => t.Indexes.Where(i => !i.IsUnique).Select(i => (t.Name, i.Name, Columns(i.Columns)))));
+            [
+                ("ledger_entries", "ix_ledger_entries_city_id_created_at", "city_id,created_at"),
+                ("player_events", "ix_player_events_event_type_detail", "event_type,detail"),
+                ("player_events", "ix_player_events_player_id_created_at", "player_id,created_at"),
+            ],
+            Tables().SelectMany(t => t.Indexes.Where(i => !i.IsUnique).Select(i => (t.Name, i.Name, Columns(i.Columns))))
+                .OrderBy(i => i.Item2, StringComparer.Ordinal));
     }
 
     /// <summary>The check constraints are those of 06, each on its table.</summary>
@@ -214,6 +229,7 @@ public sealed partial class PersistenceModelTests
                 ("city_trips", "ck_city_trips_arrives_at", "arrives_at > departed_at"),
                 ("city_trips", "ck_city_trips_quantity", "(leg = 'ToTarget' and quantity > 0) or (leg = 'ToSource' and ((quantity = 0 and remaining > 0) or (quantity > 0 and remaining = 0))) or (leg = 'Waiting' and quantity > 0 and remaining = 0)"),
                 ("city_trips", "ck_city_trips_remaining", "remaining >= 0"),
+                ("player_events", "ck_player_events_city_clock", "city_clock >= 0"),
             ],
             Tables().SelectMany(t => t.CheckConstraints.Select(c => (t.Name, c.Name, c.Sql)))
                 .OrderBy(c => c.Item2, StringComparer.Ordinal));
@@ -221,7 +237,8 @@ public sealed partial class PersistenceModelTests
 
     /// <summary>
     /// The foreign keys of 06: a city's state rows go with the city (cascade), the city, the ledger and the receipts block the delete
-    /// of what they belong to (restrict), because they are the audit trail.
+    /// of what they belong to (restrict), because they are the audit trail; a player's events go with the player (cascade, CR-0009:
+    /// analytics, not audit).
     /// </summary>
     [Fact]
     public void ForeignKeys_Model_AreTheForeignKeysOfTheDataModel()
@@ -242,6 +259,7 @@ public sealed partial class PersistenceModelTests
                 ("city_trips", "fk_city_trips_cities_city_id", "city_id", "cities", ReferentialAction.Cascade),
                 ("command_receipts", "fk_command_receipts_players_player_id", "player_id", "players", ReferentialAction.Restrict),
                 ("ledger_entries", "fk_ledger_entries_cities_city_id", "city_id", "cities", ReferentialAction.Restrict),
+                ("player_events", "fk_player_events_players_player_id", "player_id", "players", ReferentialAction.Cascade),
             ],
             Tables().SelectMany(t => t.ForeignKeyConstraints.Select(f =>
                     (t.Name, f.Name, Columns(f.Columns), f.PrincipalTable.Name, f.OnDeleteAction)))
@@ -259,20 +277,23 @@ public sealed partial class PersistenceModelTests
     }
 
     /// <summary>
-    /// The database numbers the ledger (identity column); every other key comes from the application or the content, never from a
-    /// database default.
+    /// The database numbers the ledger and the player events (identity columns, CR-0009); every other key comes from the application or
+    /// the content, never from a database default.
     /// </summary>
     [Fact]
-    public void ValueGeneration_Model_OnlyLedgerIdIsAnIdentity()
+    public void ValueGeneration_Model_OnlyTheLedgerAndEventIdsAreIdentities()
     {
         IEntityType ledger = Model().FindEntityType(typeof(LedgerEntryRow))!;
+        IEntityType events = Model().FindEntityType(typeof(PlayerEventRow))!;
 
         Assert.Equal(NpgsqlValueGenerationStrategy.IdentityByDefaultColumn,
             ledger.FindProperty(nameof(LedgerEntryRow.Id))!.GetValueGenerationStrategy());
+        Assert.Equal(NpgsqlValueGenerationStrategy.IdentityByDefaultColumn,
+            events.FindProperty(nameof(PlayerEventRow.Id))!.GetValueGenerationStrategy());
         Assert.Equal(
-            [(nameof(LedgerEntryRow), nameof(LedgerEntryRow.Id))],
+            [(nameof(LedgerEntryRow), nameof(LedgerEntryRow.Id)), (nameof(PlayerEventRow), nameof(PlayerEventRow.Id))],
             Model().GetEntityTypes().SelectMany(e => e.GetProperties().Where(p => p.ValueGenerated != ValueGenerated.Never)
-                .Select(p => (e.ClrType.Name, p.Name))));
+                .Select(p => (e.ClrType.Name, p.Name))).OrderBy(p => p.Item1, StringComparer.Ordinal));
     }
 
     /// <summary>Every name in the schema (tables, columns, keys, indexes, foreign keys, checks) is snake_case (06, EF Core conventions).</summary>

@@ -1,8 +1,10 @@
 using CityBuilder.Application.Cities;
 using CityBuilder.Application.Content;
+using CityBuilder.Application.Metrics;
 using CityBuilder.Application.Persistence;
 using CityBuilder.Domain.Commands;
 using CityBuilder.Domain.Ledger;
+using CityBuilder.Domain.Metrics;
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.Rules;
 
@@ -13,7 +15,8 @@ namespace CityBuilder.Application.Commands;
 /// <c>06</c>, write transaction pattern; ADR-0004). In order: the shape check (before the database); the city's transaction with its row
 /// lock (<see cref="ICityTransactionRunner"/>); the receipt of <c>(playerId, requestId)</c>: the same payload hash returns the stored response
 /// and another hash <c>IDEMPOTENCY_CONFLICT</c>, both before the settle and writing nothing; the settle; the mutation (<see cref="ICityCommand.Apply"/>);
-/// on a rule error the closing advance and the settlement only, without a receipt; otherwise the closing advance and one save of the city,
+/// <c>session.start</c> when the command starts a session, the settlement's completions and then the command's player event (CR-0009), on a rule error and on success, in the same transaction; on a rule error the closing advance and
+/// the settlement only, without a receipt (and when nothing was settled, only the event); otherwise the closing advance and one save of the city,
 /// its ledger rows (settlement, then refunds and costs, then the closing advance) and the receipt with the response. A unique violation on the
 /// receipt (an identical request committed first) rolls back, and the stored receipt answers. Scoped, one per request.
 /// </summary>
@@ -22,10 +25,11 @@ namespace CityBuilder.Application.Commands;
 /// <param name="content">The game content.</param>
 /// <param name="timeProvider">The server clock, the only clock that drives progress.</param>
 /// <param name="presence">When the player counts as away, for the couriers' stamina (<c>04</c> section 2); a replay is no presence.</param>
+/// <param name="sessions">When a command starts a play session (CR-0009, <c>session.start</c>); a replay starts none.</param>
 /// <exception cref="ArgumentNullException">A parameter is null.</exception>
 public sealed class CommandPipeline(
     ICityTransactionRunner transactions, ICommandReceiptRepository receipts, IContentProvider content, TimeProvider timeProvider,
-    PresencePolicy presence)
+    PresencePolicy presence, SessionPolicy sessions)
 {
     /// <summary>Locks, loads and stores the acting player's city.</summary>
     private readonly ICityTransactionRunner _transactions = transactions ?? throw new ArgumentNullException(nameof(transactions));
@@ -37,6 +41,8 @@ public sealed class CommandPipeline(
     private readonly TimeProvider _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
     /// <summary>When the player counts as away; the settle records the command as the player's last-seen second.</summary>
     private readonly PresencePolicy _presence = presence ?? throw new ArgumentNullException(nameof(presence));
+    /// <summary>When the command starts a play session; read against the last-seen second before the settle marks the city seen.</summary>
+    private readonly SessionPolicy _sessions = sessions ?? throw new ArgumentNullException(nameof(sessions));
 
     /// <summary>Runs the player's command through every step, once.</summary>
     /// <param name="playerId">The acting player, from the access token.</param>
@@ -108,12 +114,19 @@ public sealed class CommandPipeline(
         CityAggregate city = transaction.City;
         GameContent content = _content.Content;
         DateTimeOffset now = _timeProvider.GetUtcNow();
+        // Read before Begin, which marks the city seen at now; the session's start is recorded first, once the settle is closed.
+        long lastSeen = city.LastSeenUnixSec;
         CitySettler settler = CitySettler.Begin(city, content, now, _presence);
+
+        // The metrics' detail is read on the settled city before the mutation (an upgraded or placed building is named as it was asked for).
+        string? detail = command.EventDetail(city.State, content);
         MutationResult mutation = command.Apply(city.State, content);
         if (mutation.ErrorCode is { } errorCode)
         {
             // Time passed is never undone (decision 014): the settlement is committed, but no receipt, so a new attempt needs a new id.
             Settlement rejectedAfter = settler.Close();
+            RecordSettlement(transaction, rejectedAfter, lastSeen, now);
+            transaction.Record(CommandEvent(city, command, detail, CommandEvents.Outcome(errorCode), now));
             if (settler.Changed)
             {
                 await transaction.SaveAsync(settler.LedgerEntries(), receipt: null, cancellationToken);
@@ -128,9 +141,45 @@ public sealed class CommandPipeline(
         string response = writeResponse(new CommandSuccess(command.RequestId, city, settlement, checked(city.StateVersion + 1), now));
 
         // A successful command always saves, also when it changed nothing: its receipt describes the saved state.
+        RecordSettlement(transaction, settlement, lastSeen, now);
+        transaction.Record(CommandEvent(city, command, detail, PlayerEventTypes.OutcomeAccepted, now));
         await transaction.SaveAsync(ledger, new CommandReceipt(command.RequestId, command.CommandType, payloadHash, response), cancellationToken);
         return CommandResult.Succeeded(response, settlement);
     }
+
+    /// <summary>
+    /// Records the session's start when the command starts one (<see cref="SessionEvents"/>), then what the settlement completed
+    /// (<see cref="SettlementEvents"/>), before the command's own event.
+    /// </summary>
+    /// <param name="transaction">The acting player's city, settled and closed.</param>
+    /// <param name="settlement">The closed settlement.</param>
+    /// <param name="lastSeen">The city's last-seen second before this command.</param>
+    /// <param name="now">The server time of the command.</param>
+    private void RecordSettlement(CityTransaction transaction, Settlement settlement, long lastSeen, DateTimeOffset now)
+    {
+        if (SessionEvents.StartOf(transaction.City, lastSeen, _sessions, now) is { } sessionStart)
+        {
+            transaction.Record(sessionStart);
+        }
+
+        foreach (PlayerEvent completed in SettlementEvents.Of(transaction.City, settlement, now))
+        {
+            transaction.Record(completed);
+        }
+    }
+
+    /// <summary>
+    /// The command's player event (CR-0009): <c>command.&lt;type&gt;</c> with its detail and outcome, at the settled city clock and the
+    /// command's server second. Recorded on the transaction, so it is written exactly when the command's transaction commits.
+    /// </summary>
+    /// <param name="city">The acting player's city, settled and closed.</param>
+    /// <param name="command">The command.</param>
+    /// <param name="detail">The content id it is about, or <see langword="null"/>.</param>
+    /// <param name="outcome"><c>accepted</c> or the error code.</param>
+    /// <param name="now">The server time of the command.</param>
+    /// <returns>The event.</returns>
+    private static PlayerEvent CommandEvent(CityAggregate city, ICityCommand command, string? detail, string outcome, DateTimeOffset now) =>
+        new(city.PlayerId, PlayerEventTypes.ForCommand(command.CommandType), detail, outcome, value: null, city.State.Clock, now);
 
     /// <summary>The answer of a stored receipt: its response for the same payload, a conflict for another.</summary>
     /// <param name="stored">The receipt of the request id.</param>

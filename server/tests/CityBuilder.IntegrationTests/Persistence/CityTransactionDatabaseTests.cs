@@ -2,6 +2,7 @@ using CityBuilder.Application.Cities;
 using CityBuilder.Application.Persistence;
 using CityBuilder.Domain.Commands;
 using CityBuilder.Domain.Ledger;
+using CityBuilder.Domain.Metrics;
 using CityBuilder.Domain.Players;
 using CityBuilder.Infrastructure.Persistence;
 using CityBuilder.IntegrationTests.Postgres;
@@ -18,7 +19,8 @@ namespace CityBuilder.IntegrationTests.Persistence;
 /// The city transaction (<see cref="ICityTransactionRunner"/>, <c>core-instructions/06-data-model.md</c>, write transaction pattern) on
 /// PostgreSQL, through the server's registrations: an exception after the writes rolls everything back; a <c>state_version</c> changed
 /// without the lock is a conflict, and the failed save leaves nothing staged for a later one; two transactions on one city run one after the other, the second seeing what the first committed; a lock
-/// wait beyond the lock timeout is a conflict; a request can't lock a second city. Each test starts with the sample city
+/// wait beyond the lock timeout is a conflict; a request can't lock a second city; the player events of a work that doesn't save the city
+/// are stored without touching it, and those of a work that throws are not stored (CR-0009). Each test starts with the sample city
 /// (<see cref="SampleCities.Full"/>) stored once, so at state version 8.
 /// </summary>
 /// <param name="server">The run's PostgreSQL server.</param>
@@ -242,6 +244,69 @@ public sealed class CityTransactionDatabaseTests(PostgresServer server) : Postgr
         await using IUnitOfWorkTransaction transaction = await unitOfWork.BeginTransactionAsync(cancellationToken);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => unitOfWork.BeginTransactionAsync(cancellationToken));
+    }
+
+    /// <summary>
+    /// Events recorded by a work that doesn't save the city (a command refused at an instant where nothing changed) are committed in the
+    /// transaction, in the order recorded, while the city row is not written: <c>state_version</c> and the settled time stay, and no ledger
+    /// entry or receipt appears (<c>06</c>, write transaction pattern).
+    /// </summary>
+    [Fact]
+    public async Task Events_WithoutACitySave_AreStoredAndStateVersionStays()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        await StoreSampleCityAsync();
+        var occurredAt = new DateTimeOffset(2026, 11, 17, 12, 0, 0, TimeSpan.Zero);
+
+        await RunAsync(Factory, PlayerId, (transaction, _, _) =>
+        {
+            transaction.Record(new PlayerEvent(
+                PlayerId, PlayerEventTypes.ForCommand("upgrade-building"), "woodcutter", "INSUFFICIENT_RESOURCE", null, 120, occurredAt));
+            transaction.Record(new PlayerEvent(PlayerId, PlayerEventTypes.SessionStart, null, null, null, 120, occurredAt));
+            return Task.FromResult(0);
+        });
+
+        await using CityBuilderDbContext stored = Database.CreateContext();
+        var events = await stored.PlayerEvents.OrderBy(row => row.Id)
+            .Select(row => new { row.PlayerId, row.EventType, row.Detail, row.Outcome, row.CityClock, row.CreatedAt })
+            .ToListAsync(cancellationToken);
+        Assert.Equal(
+            [
+                new { PlayerId, EventType = "command.upgrade-building", Detail = (string?)"woodcutter", Outcome = (string?)"INSUFFICIENT_RESOURCE", CityClock = 120L, CreatedAt = occurredAt },
+                new { PlayerId, EventType = "session.start", Detail = (string?)null, Outcome = (string?)null, CityClock = 120L, CreatedAt = occurredAt },
+            ],
+            events);
+        var city = await stored.Cities.Select(row => new { row.StateVersion, row.LastSettledUnix }).SingleAsync(cancellationToken);
+        Assert.Equal((_storedVersion, Full().LastSettledUnixSec), (city.StateVersion, city.LastSettledUnix));
+        Assert.Equal(0, await stored.LedgerEntries.CountAsync(cancellationToken));
+        Assert.Equal(0, await stored.CommandReceipts.CountAsync(cancellationToken));
+    }
+
+    /// <summary>
+    /// Events of a work that throws are not stored: neither the one written with the city's save (visible inside the transaction) nor the
+    /// one recorded after it; the city keeps its stored version.
+    /// </summary>
+    [Fact]
+    public async Task Events_WhenTheWorkThrows_AreNotStored()
+    {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        await StoreSampleCityAsync();
+        var occurredAt = new DateTimeOffset(2026, 11, 17, 12, 0, 0, TimeSpan.Zero);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => RunAsync<int>(Factory, PlayerId, async (transaction, services, ct) =>
+        {
+            transaction.Record(new PlayerEvent(
+                PlayerId, PlayerEventTypes.ForCommand("place-building"), "woodcutter", PlayerEventTypes.OutcomeAccepted, null, 120, occurredAt));
+            transaction.City.MarkSettled(transaction.City.LastSettledUnixSec + 60, transaction.City.ContentVersion);
+            await transaction.SaveAsync([], receipt: null, ct);
+            Assert.Equal(1, await services.GetRequiredService<CityBuilderDbContext>().PlayerEvents.CountAsync(ct));
+            transaction.Record(new PlayerEvent(PlayerId, PlayerEventTypes.ResearchCompleted, "masonry", null, null, 120, occurredAt));
+            throw new InvalidOperationException("after the save");
+        }));
+
+        await using CityBuilderDbContext stored = Database.CreateContext();
+        Assert.Equal(0, await stored.PlayerEvents.CountAsync(cancellationToken));
+        Assert.Equal(_storedVersion, await StoredVersionAsync());
     }
 
     /// <summary>Stores the sample city's owner and <see cref="SampleCities.Full"/> (as state version 8), in a scope of its own.</summary>

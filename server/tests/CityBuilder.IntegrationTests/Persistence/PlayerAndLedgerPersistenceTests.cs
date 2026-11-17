@@ -1,5 +1,6 @@
 using CityBuilder.Application.Cities;
 using CityBuilder.Application.Commands;
+using CityBuilder.Application.Metrics;
 using CityBuilder.Application.Persistence;
 using CityBuilder.Application.Players;
 using CityBuilder.Domain.Commands;
@@ -83,6 +84,7 @@ public sealed class PlayerAndLedgerPersistenceTests
         Assert.IsType<PlayerRepository>(services.GetRequiredService<IPlayerRepository>());
         Assert.IsType<UnitOfWork>(services.GetRequiredService<IUnitOfWork>());
         Assert.IsType<CommandReceiptRepository>(services.GetRequiredService<ICommandReceiptRepository>());
+        Assert.IsType<PlayerEventRepository>(services.GetRequiredService<IPlayerEventRepository>());
         Assert.Same(services.GetRequiredService<ICityRepository>(), services.GetRequiredService<ICityRepository>());
         Assert.Same(services.GetRequiredService<CityBuilderDbContext>(), services.GetRequiredService<CityBuilderDbContext>());
     }

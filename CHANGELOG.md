@@ -5,6 +5,9 @@ Each merged task adds one line under **Unreleased**, with its task id. Milestone
 
 ## Unreleased
 
+### Added
+- Player metrics, recording (CR-0009-T1): the append-only table `player_events` (migration `AddPlayerEvents`; ids only, no display name, token, address or body; deleted with its player), written in the city's transaction: `command.<type>` for every command applied or refused by a rule (`ICityCommand.EventDetail` names its content id; a replay, a conflict and a shape refusal record nothing), `research.completed` and `building.completed` from each settlement, `player.created` and `session.start` (`Metrics:SessionGapSeconds`, default 1800). Game code can only add events (`IPlayerEventRepository.Add`); the engine, the client and the API contract are unchanged, guarded by `PlayerEventRepositoryShapeTests` and `MetricsSourceTests`. Decision 053 in `12`.
+
 ## 0.1.0 — M0 (2026-11-17)
 The technical vertical slice of Era I (`core-instructions/10-milestones.md`); the handoff is `docs/HANDOFF-M0.md`.
 

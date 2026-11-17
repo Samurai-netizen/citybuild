@@ -11,6 +11,7 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
+- [BL-20261117-04 · CR-0009-T1 · Player metrics: recording](2026/2026-11-17-04-CR-0009-T1.md) — Done
 - [BL-20261117-03 · M0-D · Code freeze, development build, final audit, close-out](2026/2026-11-17-03-M0-D.md) — Done
 - [BL-20261117-02 · M0-C · Smoke checklist and playtest, bug triage, invariant coverage](2026/2026-11-17-02-M0-C.md) — Done
 - [BL-20261117-01 · M0-B · HTTP, attack and concurrency suites, clean clone, security report](2026/2026-11-17-01-M0-B.md) — Done

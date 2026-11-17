@@ -10,7 +10,8 @@
 > `SETTLEMENT_DELIVERED` and `SETTLEMENT_REFUNDED` rows (part E); `city_couriers`, `city_courier_loads` and `city_route_actions` with
 > the migration `AddCouriersAndRoutes` and their mapping (part G); `cities.last_seen_unix` with the migration `AddLastSeen` (part H);
 > `city_delivery_lines`, `cities.next_line_id` and the trips' `remaining` and `leg` with the migration `AddDeliveryLines` (CR-0008-T3,
-> amendment 1); `city_buildings.paused` with the migration `AddBuildingPaused` (amendment 2). A task that builds a part updates this line.
+> amendment 1); `city_buildings.paused` with the migration `AddBuildingPaused` (amendment 2); `player_events` with the migration
+> `AddPlayerEvents` and `PlayerEventRepository` (CR-0009-T1). A task that builds a part updates this line.
 >
 > **As built:** this file is the normative schema. The schema the EF Core model defines today, every table, column, key, index and check
 > constraint and the migrations in order, is generated in `docs/reference/generated/db-schema.md` and checked in CI (M0-61).
@@ -32,6 +33,7 @@ are `bigint` city-clock seconds and worker-seconds. Quantities are `bigint`. Ite
 | `city_research` | `(city_id, research_id) pk`, `completed_at bigint` | completed nodes only |
 | `command_receipts` | `(player_id, request_id) pk`, `command_type`, `payload_hash bytea`, `response_json json`, `created_at` | Successful commands only; `json`, not `jsonb`, keeps the response text as written (decision 041); cleanup job later |
 | `ledger_entries` | `id bigint identity pk`, `city_id`, `item_id`, `delta bigint`, `balance_after bigint`, `reason text`, `ref_type text`, `ref_id text`, `created_at` | `index (city_id, created_at)` |
+| `player_events` | `id bigint identity pk`, `player_id uuid`, `event_type text`, `detail text null`, `outcome text null`, `value bigint null`, `city_clock bigint`, `created_at` | `index (player_id, created_at)`, `index (event_type, detail)`; `check (city_clock >= 0)`; FK to `players`, cascade; the player metrics (CR-0009): append-only, the player's id and content ids only, never a name, token, address or request body (`07`); never read by game code (`02` rule 23); `id` orders the events of one request, which share `created_at` |
 
 Ledger reasons in M0: `STARTING_GRANT`, `SETTLEMENT_PRODUCED`, `SETTLEMENT_CONSUMED`, `COST_PLACE`, `COST_UPGRADE`,
 `REFUND_UPGRADE`, `COST_RESEARCH`; CR-0008 adds `COST_ROAD` (part D), `SETTLEMENT_DELIVERED` and `SETTLEMENT_REFUNDED` (part E; below). `DEV_ADJUST` is written only by the developer's goods script of the server panel (`server-panel/goods.sql`, CR-0006) on the dev database,
@@ -85,13 +87,14 @@ labor, city totals, a building's project.
 - A row that breaks these rules or the engine's fails the load; a broken city is never settled and saved over.
 
 A column without `null` in the table is `NOT NULL`; `ledger_entries.ref_type` and `ref_id` are nullable too (a `STARTING_GRANT` has no
-reference). `players.id` and `cities.id` are set by the application; `ledger_entries.id` is the only identity.
+reference). `players.id` and `cities.id` are set by the application; `ledger_entries.id` and `player_events.id` are the only identities.
 
 **Foreign keys:** `cities.player_id` → `players`; `city_buildings`, `city_research`, `city_research_needs`, `city_roads` and `city_trips` →
 `cities`, `city_stores`, `city_project_needs`, `city_couriers` and `city_route_actions` → `city_buildings`, `city_courier_loads` and
 `city_delivery_lines` → `city_couriers`, with `ON DELETE CASCADE`
 (the city owns its state); `ledger_entries.city_id` → `cities` and `command_receipts.player_id` → `players` with `ON DELETE RESTRICT` (the audit
-trail never disappears with what it belongs to), and `cities.player_id` is `RESTRICT` as well.
+trail never disappears with what it belongs to), and `cities.player_id` is `RESTRICT` as well. `player_events.player_id` → `players` is
+`ON DELETE CASCADE`: the events are analytics, not audit, so a player's events go with the player (CR-0009).
 
 **Names:** snake_case everywhere, constraints included: `pk_<table>`, `ux_<table>_<columns>` (unique), `ix_<table>_<columns>`,
 `fk_<table>_<principal>_<column>`, `ck_<table>_<column>`.
@@ -107,13 +110,24 @@ BEGIN
   settle → mutate (if command) → zero-length advance
   UPDATE cities SET …, state_version = state_version + 1 WHERE id = @c AND state_version = @v
   upsert buildings, upsert stores, merge needs, research needs, roads and trips (insert, update, delete), insert research completions,
-  insert ledger rows, insert receipt
+  insert ledger rows, insert receipt, insert player_events (those recorded so far)
+  (after the work) insert player_events recorded without a city save, or after it  -- CR-0009; the cities row is not touched
 COMMIT
 ```
 
-- **Nothing changed** (no time elapsed, the same content, nothing produced, consumed, completed or started): nothing is written, so
-  `state_version` and `updated_at` stay; the transaction commits empty. Repeated settles at one instant are free of writes.
-- **Business-rule rejection:** the settlement is committed (time passed is real), but there is no mutation and no receipt.
+- **Nothing changed** (no time elapsed, the same content, nothing produced, consumed, completed or started): the city is not written, so
+  `state_version` and `updated_at` stay. The transaction commits empty, unless the work recorded a player event (CR-0009): then only its
+  `player_events` rows are inserted. Repeated settles at one instant write no city rows.
+- **Business-rule rejection:** the settlement is committed (time passed is real), but there is no mutation and no receipt. Its
+  `command.<type>` event is written: with the settlement's save, or alone at an instant where nothing else changed (`state_version` stays).
+- **Settlement events (CR-0009):** a settle, alone or in a command, records one `research.completed` (detail the research id) and one
+  `building.completed` (detail the type, `value` the new level) per completion, before the command's event. **Limitation:** an event's
+  `city_clock` and `created_at` are those of the request that settled the city, not of the second the completion happened inside the window,
+  so a completion during a long offline gap is dated at the player's return (the city's `research_completed_at` has the exact second).
+- **Session events (CR-0009):** a settle, alone or in a command, more than `Metrics:SessionGapSeconds` (default 1800, real time) after
+  the player's last-seen second (read before the settle marks the city seen) records `session.start` first; a session start always moves
+  `last_seen_unix`, so the city is saved. The first dev login writes `player.created` and `session.start` with the new player and city;
+  a later login writes none. A replay, a conflict and a shape refusal settle nothing and start no session.
 - **Unexpected exception:** full rollback; nothing is committed.
 - **Unique violation on the receipt insert** (two identical requests raced): roll back, read the stored receipt, return it (a different
   payload hash: `IDEMPOTENCY_CONFLICT`; no receipt behind it: the exception propagates).
@@ -126,7 +140,9 @@ COMMIT
   write path (a bug) into a loud failure instead of a silent lost update.
 - **One entry point (M0-22):** a use case changes a city only through `ICityTransactionRunner.RunAsync(playerId, work)`: it begins the
   transaction, takes the lock and loads the city, runs the work (which saves the city once, `CityTransaction.SaveAsync`), and commits when
-  the work returns; an exception rolls everything back. A request runs it once, so it never locks a second city; the repository also
+  the work returns; an exception rolls everything back. The player events the work records (`CityTransaction.Record`, CR-0009) are
+  written with that save; those recorded without a save, or after it, are written by the runner after the work and before the commit
+  (`CityTransaction.FlushEventsAsync`). So an event exists exactly when its transaction commits. A request runs it once, so it never locks a second city; the repository also
   refuses a load outside a transaction or of a second city; a rollback leaves nothing staged for a later save (M0-24). A lock timeout and a
   stale `state_version` both surface as
   `ConcurrencyConflictException`, which the API maps to `CONCURRENCY_CONFLICT`. The modules: `docs/modules/CityBuilder.Application.md`,

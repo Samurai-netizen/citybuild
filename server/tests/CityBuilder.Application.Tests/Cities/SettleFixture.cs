@@ -1,5 +1,6 @@
 using CityBuilder.Application.Cities;
 using CityBuilder.Application.Content;
+using CityBuilder.Application.Metrics;
 using CityBuilder.Simulation;
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.Content.Data;
@@ -146,10 +147,13 @@ internal static class SettleFixture
     /// own, with a new <see cref="CityTransactionRunner"/> (<see cref="RunnerPerRequest"/>), so a test can settle with it again and again.
     /// </summary>
     public static SettleCity UseCase(InMemoryCityRepository repository, TimeProvider clock) =>
-        new(new RunnerPerRequest(repository), new FixedContent(Content), clock, Presence);
+        new(new RunnerPerRequest(repository), new FixedContent(Content), clock, Presence, Sessions);
 
     /// <summary>The server's presence policy: the player counts as away 300 s after a request (<c>04</c> section 2).</summary>
     public static PresencePolicy Presence { get; } = new(300);
+
+    /// <summary>The server's default session policy: a request more than 1 800 s after the last one starts a session (CR-0009).</summary>
+    public static SessionPolicy Sessions { get; } = new(1800);
 
     /// <summary>The city's state as text, field by field, so two cities compare in one assertion that shows the first difference.</summary>
     public static string Describe(CityState city)
@@ -309,7 +313,7 @@ internal static class SettleFixture
         /// <summary>Runs the work with a new runner, as a new request would.</summary>
         public Task<TResult> RunAsync<TResult>(
             Guid playerId, Func<CityTransaction, CancellationToken, Task<TResult>> work, CancellationToken cancellationToken) =>
-            new CityTransactionRunner(repository, repository).RunAsync(playerId, work, cancellationToken);
+            new CityTransactionRunner(repository, repository, repository).RunAsync(playerId, work, cancellationToken);
     }
 
     /// <summary>An <see cref="IContentProvider"/> that serves the given content.</summary>

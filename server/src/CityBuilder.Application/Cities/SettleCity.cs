@@ -1,5 +1,7 @@
 using CityBuilder.Application.Content;
+using CityBuilder.Application.Metrics;
 using CityBuilder.Application.Persistence;
+using CityBuilder.Domain.Metrics;
 
 namespace CityBuilder.Application.Cities;
 
@@ -8,14 +10,17 @@ namespace CityBuilder.Application.Cities;
 /// the city's transaction (<see cref="ICityTransactionRunner"/>) the server clock, floored to whole seconds, gives the window from the last
 /// settled second; the engine advances the city by it (every timer, cycle start and walk of the window, with no cap), and the closing zero-length advance leaves it canonical. The city is saved with the settlement's
 /// ledger rows (one per item and direction, <see cref="Settlement.LedgerEntries"/>) only if anything changed, so <c>state_version</c>
-/// rises only then. The steps are <see cref="CitySettler"/>'s, which the command pipeline runs as well.
+/// rises only then; what the settlement completed is recorded as player events in the same transaction (CR-0009,
+/// <see cref="SettlementEvents"/>), after <c>session.start</c> when the settle starts a session (<see cref="SessionEvents"/>), written
+/// also when the city is not saved. The steps are <see cref="CitySettler"/>'s, which the command pipeline runs as well.
 /// </summary>
 /// <param name="transactions">Runs the settle in the transaction that holds the city's row lock.</param>
 /// <param name="content">The game content.</param>
 /// <param name="timeProvider">The server clock, the only clock that drives progress.</param>
 /// <param name="presence">When the player counts as away, for the couriers' stamina (<c>04</c> section 2).</param>
+/// <param name="sessions">When a request starts a play session (CR-0009, <c>session.start</c>).</param>
 /// <exception cref="ArgumentNullException">A parameter is null.</exception>
-public sealed class SettleCity(ICityTransactionRunner transactions, IContentProvider content, TimeProvider timeProvider, PresencePolicy presence)
+public sealed class SettleCity(ICityTransactionRunner transactions, IContentProvider content, TimeProvider timeProvider, PresencePolicy presence, SessionPolicy sessions)
 {
     /// <summary>Locks, loads and stores the acting player's city.</summary>
     private readonly ICityTransactionRunner _transactions = transactions ?? throw new ArgumentNullException(nameof(transactions));
@@ -25,6 +30,8 @@ public sealed class SettleCity(ICityTransactionRunner transactions, IContentProv
     private readonly TimeProvider _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
     /// <summary>When the player counts as away; the settle records this request as the player's last-seen second.</summary>
     private readonly PresencePolicy _presence = presence ?? throw new ArgumentNullException(nameof(presence));
+    /// <summary>When the settle starts a play session; read against the last-seen second before the settle marks the city seen.</summary>
+    private readonly SessionPolicy _sessions = sessions ?? throw new ArgumentNullException(nameof(sessions));
 
     /// <summary>Settles the player's city to now and stores it if anything changed.</summary>
     /// <param name="playerId">The acting player.</param>
@@ -44,8 +51,20 @@ public sealed class SettleCity(ICityTransactionRunner transactions, IContentProv
     {
         // Now is read under the lock: a request that waited for it settles from where the one before it ended.
         DateTimeOffset now = _timeProvider.GetUtcNow();
+        // Read before Begin, which marks the city seen at now.
+        long lastSeen = transaction.City.LastSeenUnixSec;
         CitySettler settler = CitySettler.Begin(transaction.City, _content.Content, now, _presence);
         Settlement settlement = settler.Close();
+        if (SessionEvents.StartOf(transaction.City, lastSeen, _sessions, now) is { } sessionStart)
+        {
+            transaction.Record(sessionStart);
+        }
+
+        foreach (PlayerEvent completed in SettlementEvents.Of(transaction.City, settlement, now))
+        {
+            transaction.Record(completed);
+        }
+
         bool changed = settler.Changed;
         if (changed)
         {

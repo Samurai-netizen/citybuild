@@ -357,7 +357,7 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
 
     /// <summary>
     /// Sends a start and asserts the refusal: the status, the code and the request id, and the city stored exactly as before (no time has
-    /// elapsed since the last request, so not even a settlement is written).
+    /// elapsed since the last request, so not even a settlement is written): only the refusal's player event is added (CR-0009).
     /// </summary>
     /// <param name="player">The acting player.</param>
     /// <param name="city">Their city.</param>
@@ -373,7 +373,7 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
         Assert.Equal(status, response.Status);
         JsonNode problem = response.Json();
         Assert.Equal((code, _requestId.ToString()), ((string)problem["code"]!, (string)problem["requestId"]!));
-        Assert.Equal(stored, await StoredAsync(Factory, Database, player, city));
+        await AssertStoredWithRefusalsAsync(Factory, Database, player, city, stored, code);
     }
 
     /// <summary>Sends a start over HTTP with the player's token.</summary>

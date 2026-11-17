@@ -29,6 +29,8 @@ and every 2 minutes in the foreground. Every command response carries the full a
    the settlement from step 5 is still committed, because time passing is never undone.
 7. Zero-length advance → canonical state.
 8. Write the city (with its purse), buildings, stores, needs, research, roads, trips, couriers, their loads, routes, delivery lines, ledger entries and command receipt; increment `StateVersion`.
+   The player events recorded so far go with it (`player_events`, CR-0009). When nothing changed, the city is not written; any event
+   recorded without a save, or after it, is inserted alone after the work (`StateVersion` stays).
 9. `COMMIT` → map to DTO → respond with the snapshot (+ settlement report).
 
 ## Projects and dependency direction

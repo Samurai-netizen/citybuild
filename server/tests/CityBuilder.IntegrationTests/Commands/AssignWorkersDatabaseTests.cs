@@ -357,7 +357,7 @@ public sealed class AssignWorkersDatabaseTests(PostgresServer server) : Postgres
 
     /// <summary>
     /// Sends an assignment and asserts the refusal: the status, the code and the request id, and the city stored exactly as before (no time
-    /// has elapsed, so not even a settlement is written).
+    /// has elapsed, so not even a settlement is written): only the refusal's player event is added (CR-0009).
     /// </summary>
     /// <param name="player">The acting player.</param>
     /// <param name="city">Their city.</param>
@@ -374,7 +374,7 @@ public sealed class AssignWorkersDatabaseTests(PostgresServer server) : Postgres
         Assert.Equal(status, response.Status);
         JsonNode problem = response.Json();
         Assert.Equal((code, _requestId.ToString()), ((string)problem["code"]!, (string)problem["requestId"]!));
-        Assert.Equal(stored, await StoredAsync(Factory, Database, player, city));
+        await AssertStoredWithRefusalsAsync(Factory, Database, player, city, stored, code);
     }
 
     /// <summary>Sends an assignment over HTTP with the player's token.</summary>

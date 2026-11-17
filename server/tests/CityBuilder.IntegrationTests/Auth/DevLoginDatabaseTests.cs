@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.JsonWebTokens;
+using static CityBuilder.IntegrationTests.Commands.DatabaseCommands;
 using static CityBuilder.IntegrationTests.Persistence.DatabaseCities;
 using DatabaseLocks = CityBuilder.IntegrationTests.Persistence.DatabaseLocks;
 
@@ -24,7 +25,8 @@ namespace CityBuilder.IntegrationTests.Auth;
 /// <summary>
 /// The dev login end to end on PostgreSQL (<c>POST /api/v1/auth/dev-login</c>, the server clock a <c>FakeTimeProvider</c> at
 /// <see cref="PostgresApiFactory.Start"/>): the first login of a name stores the player, the starter city and its <c>STARTING_GRANT</c>
-/// ledger rows in one transaction; later logins of the name find the same player; the token acts for that player.
+/// ledger rows and the player's first events (<c>player.created</c>, <c>session.start</c>; CR-0009) in one transaction; later logins of
+/// the name find the same player and store no event; the token acts for that player.
 /// </summary>
 /// <param name="server">The run's PostgreSQL server.</param>
 [Trait("Category", "Integration")]
@@ -143,6 +145,49 @@ public sealed class DevLoginDatabaseTests(PostgresServer server) : PostgresTest(
         await using CityBuilderDbContext db = Database.CreateContext();
         Assert.Equal(1, await db.Players.CountAsync(cancellationToken));
         Assert.Equal(1, await db.Cities.CountAsync(cancellationToken));
+        // The losing login's events went with its rolled-back transaction; the winner here was stored by hand, with none (CR-0009).
+        Assert.Equal(0, await db.PlayerEvents.CountAsync(cancellationToken));
+    }
+
+    /// <summary>
+    /// The first login of a name stores the new player's <c>player.created</c> and <c>session.start</c> (CR-0009), in that order, at the
+    /// new city's clock 0 and the server's time, with no detail, outcome or value.
+    /// </summary>
+    [Fact]
+    public async Task PostDevLogin_NewName_StoresPlayerCreatedAndSessionStart()
+    {
+        Guid player = PlayerOf(await LoginAsync("dev1"));
+
+        Assert.Equal(
+            [
+                ("player.created", (string?)null, (string?)null, (long?)null, 0L, PostgresApiFactory.Start),
+                ("session.start", null, null, null, 0L, PostgresApiFactory.Start),
+            ],
+            (await PlayerEventsAsync(Database, player))
+                .Select(row => (row.EventType, row.Detail, row.Outcome, row.Value, row.CityClock, row.CreatedAt)));
+    }
+
+    /// <summary>A later login of the name, also hours later, stores no event: the next request that settles the city decides on a session.</summary>
+    [Fact]
+    public async Task PostDevLogin_SameNameAgain_StoresNoEvent()
+    {
+        Guid player = PlayerOf(await LoginAsync("dev1"));
+        Factory.Clock.Advance(TimeSpan.FromHours(3));
+
+        await LoginAsync("dev1");
+
+        Assert.Equal(2, (await PlayerEventsAsync(Database, player)).Count);
+    }
+
+    /// <summary>Two first logins of one name at once end with one player and two events in total, whichever way the race goes.</summary>
+    [Fact]
+    public async Task PostDevLogin_TwoFirstLoginsAtOnce_StoreTwoEventsInTotal()
+    {
+        DevLoginResponse[] logins = await Task.WhenAll(LoginAsync("dev1"), LoginAsync("dev1"));
+
+        Assert.Equal(PlayerOf(logins[0]), PlayerOf(logins[1]));
+        await using CityBuilderDbContext db = Database.CreateContext();
+        Assert.Equal(2, await db.PlayerEvents.CountAsync(TestContext.Current.CancellationToken));
     }
 
     /// <summary>

@@ -64,9 +64,12 @@ public sealed class CommandPipelineRuleTests
         Assert.Equal(LastSettled.ToUnixTimeSeconds() + 3600, repository.Stored(PlayerId).LastSettledUnixSec);
     }
 
-    /// <summary>A rejection with nothing to settle (no time passed) writes nothing; the transaction commits empty.</summary>
+    /// <summary>
+    /// A rejection with nothing to settle (no time passed) saves no city: the only write is the command's player event (CR-0009), before the
+    /// commit.
+    /// </summary>
     [Fact]
-    public async Task ExecuteAsync_RuleRejectsWithNothingToSettle_WritesNothing()
+    public async Task ExecuteAsync_RuleRejectsWithNothingToSettle_WritesOnlyItsEvent()
     {
         InMemoryCityRepository repository = Repository();
 
@@ -74,7 +77,8 @@ public sealed class CommandPipelineRuleTests
             .ExecuteAsync(PlayerId, PlaceCottage() with { X = 0, Y = 0 }, Writer(repository), TestContext.Current.CancellationToken);
 
         Assert.Equal(CommandOutcome.Rejected, result.Outcome);
-        Assert.Equal(["begin", $"load {PlayerId}", "find receipt", "commit"], repository.Events);
+        Assert.Equal(["begin", $"load {PlayerId}", "find receipt", "write", "commit"], repository.Events);
+        Assert.Equal(0, repository.SaveCount);
     }
 
     /// <summary>A rejected request id has no receipt, so sending it again runs the command again instead of replaying.</summary>

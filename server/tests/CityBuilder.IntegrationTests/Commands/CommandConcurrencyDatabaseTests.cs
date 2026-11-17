@@ -40,8 +40,8 @@ public sealed class CommandConcurrencyDatabaseTests(PostgresServer server) : Pos
     /// <summary>
     /// Ten identical requests queued behind the city's held lock (PostgreSQL shows all ten waiting) while the clock moves on 10 minutes: the
     /// first applies the command, the nine after it find its receipt under the lock and replay it, so all ten answer with one text. The city
-    /// is saved once (version + 1) with one receipt, and ends exactly as its twin that got the command once at the same time, with the same
-    /// ledger: one mutation, one settle, one cost.
+    /// is saved once (version + 1) with one receipt and one player event (CR-0009), and ends exactly as its twin that got the command once at
+    /// the same time, with the same ledger: one mutation, one settle, one cost.
     /// </summary>
     [Fact]
     public async Task ExecuteAsync_TenIdenticalRequestsAtOnce_ApplyOnceAndAllGetTheSameResponse()
@@ -71,6 +71,7 @@ public sealed class CommandConcurrencyDatabaseTests(PostgresServer server) : Pos
         Assert.Equal(_storedVersion + 1, stored.StateVersion);
         Assert.Equal(StateOf(await LoadAsync(server, twin)), StateOf(stored));
         Assert.Equal(Totals(await LedgerAsync(Database, twinCity)), Totals(await LedgerAsync(Database, city)));
+        Assert.Equal("accepted", Assert.Single(await PlayerEventsAsync(Database, player)).Outcome);
     }
 
     /// <summary>

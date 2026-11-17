@@ -661,6 +661,59 @@ namespace CityBuilder.Infrastructure.Persistence.Migrations
                     b.ToTable("ledger_entries", (string)null);
                 });
 
+            modelBuilder.Entity("CityBuilder.Infrastructure.Persistence.Rows.PlayerEventRow", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("CityClock")
+                        .HasColumnType("bigint")
+                        .HasColumnName("city_clock");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Detail")
+                        .HasColumnType("text")
+                        .HasColumnName("detail");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("event_type");
+
+                    b.Property<string>("Outcome")
+                        .HasColumnType("text")
+                        .HasColumnName("outcome");
+
+                    b.Property<Guid>("PlayerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("player_id");
+
+                    b.Property<long?>("Value")
+                        .HasColumnType("bigint")
+                        .HasColumnName("value");
+
+                    b.HasKey("Id")
+                        .HasName("pk_player_events");
+
+                    b.HasIndex("EventType", "Detail")
+                        .HasDatabaseName("ix_player_events_event_type_detail");
+
+                    b.HasIndex("PlayerId", "CreatedAt")
+                        .HasDatabaseName("ix_player_events_player_id_created_at");
+
+                    b.ToTable("player_events", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_player_events_city_clock", "city_clock >= 0");
+                        });
+                });
+
             modelBuilder.Entity("CityBuilder.Infrastructure.Persistence.Rows.PlayerRow", b =>
                 {
                     b.Property<Guid>("Id")
@@ -824,6 +877,16 @@ namespace CityBuilder.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_ledger_entries_cities_city_id");
+                });
+
+            modelBuilder.Entity("CityBuilder.Infrastructure.Persistence.Rows.PlayerEventRow", b =>
+                {
+                    b.HasOne("CityBuilder.Infrastructure.Persistence.Rows.PlayerRow", null)
+                        .WithMany()
+                        .HasForeignKey("PlayerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_player_events_players_player_id");
                 });
 #pragma warning restore 612, 618
         }

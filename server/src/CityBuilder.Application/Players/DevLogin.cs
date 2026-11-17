@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using CityBuilder.Application.Cities;
 using CityBuilder.Application.Content;
+using CityBuilder.Application.Metrics;
 using CityBuilder.Application.Persistence;
 using CityBuilder.Domain.Ledger;
 using CityBuilder.Domain.Players;
@@ -13,16 +14,19 @@ namespace CityBuilder.Application.Players;
 /// The development login (<c>core-instructions/05-api-contract.md</c>, <c>POST /api/v1/auth/dev-login</c>; M0 only, Development only): a
 /// display name is the whole identity. The first login of a name creates the player and their starter city
 /// (<see cref="CityFactory.CreateStarterCity"/>) in one transaction, with one <c>STARTING_GRANT</c> ledger entry per item of the starting
-/// stock, so the ledger reconciles with the stock from the first row. A later login of the name finds the same player. Scoped.
+/// stock, so the ledger reconciles with the stock from the first row, and the player's first events (CR-0009). A later login of the name
+/// finds the same player and records nothing. Scoped.
 /// </summary>
 /// <param name="players">The stored players.</param>
 /// <param name="newCities">Stores the new city: the one city write without a row lock (ADR-0009).</param>
 /// <param name="unitOfWork">The transaction and the writes.</param>
 /// <param name="content">The game content; the starter city comes from it.</param>
 /// <param name="timeProvider">The server clock: the ids' time, and the second the new city is settled at.</param>
+/// <param name="playerEvents">Stores the new player's first events (CR-0009) in the creating transaction.</param>
 /// <exception cref="ArgumentNullException">A parameter is null.</exception>
 public sealed class DevLogin(
-    IPlayerRepository players, INewCityRepository newCities, IUnitOfWork unitOfWork, IContentProvider content, TimeProvider timeProvider)
+    IPlayerRepository players, INewCityRepository newCities, IUnitOfWork unitOfWork, IContentProvider content, TimeProvider timeProvider,
+    IPlayerEventRepository playerEvents)
 {
     /// <summary>The longest display name: 32 characters.</summary>
     public const int MaxDisplayNameLength = 32;
@@ -37,6 +41,8 @@ public sealed class DevLogin(
     private readonly IContentProvider _content = content ?? throw new ArgumentNullException(nameof(content));
     /// <summary>The server clock.</summary>
     private readonly TimeProvider _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
+    /// <summary>Adds the new player's <c>player.created</c> and <c>session.start</c>.</summary>
+    private readonly IPlayerEventRepository _playerEvents = playerEvents ?? throw new ArgumentNullException(nameof(playerEvents));
 
     /// <summary>
     /// Whether a display name is allowed: 1 to <see cref="MaxDisplayNameLength"/> characters, each an ASCII letter, a digit, <c>_</c>,
@@ -86,7 +92,8 @@ public sealed class DevLogin(
 
     /// <summary>
     /// Creates the player and their starter city in one transaction: the player, the city (clock 0, settled at the server's current second,
-    /// with the content's version) and a <c>STARTING_GRANT</c> entry for the coins of its purse (CR-0008: a new city has no goods).
+    /// with the content's version), a <c>STARTING_GRANT</c> entry for the coins of its purse (CR-0008: a new city has no goods) and the
+    /// player's <c>player.created</c> and <c>session.start</c> (CR-0009). A lost race rolls all of it back.
     /// </summary>
     /// <param name="displayName">The new player's name.</param>
     /// <param name="cancellationToken">Cancels the creation; nothing is committed then.</param>
@@ -108,6 +115,7 @@ public sealed class DevLogin(
         await using IUnitOfWorkTransaction transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
         _players.Add(player);
         _newCities.Add(city, startingGrant);
+        _playerEvents.Add(SessionEvents.FirstLogin(city, now));
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return player.Id;

@@ -6,6 +6,7 @@ using CityBuilder.Api.Auth;
 using CityBuilder.Api.Content;
 using CityBuilder.Api.Endpoints;
 using CityBuilder.Api.Http;
+using CityBuilder.Api.Metrics;
 using CityBuilder.Api.OpenApi;
 using CityBuilder.Api.Persistence;
 using CityBuilder.Api.Time;
@@ -64,6 +65,9 @@ builder.Services.AddHealthChecks();
 // The server clock is the only clock that drives game progress (core-instructions/02-principles.md, rule 3): the system clock, or in
 // Development a fast one (Simulation:DevTimeScale; any other scale outside Development stops the start).
 builder.Services.AddServerClock(builder.Configuration, builder.Environment);
+
+// The player metrics (CR-0009): the session gap of session.start (Metrics:SessionGapSeconds, real time like the presence grace).
+builder.Services.AddPlayerMetrics(builder.Configuration);
 
 // The content is loaded and validated once (core-instructions/03-architecture.md, content pipeline).
 builder.Services.AddOptions<ContentOptions>()
