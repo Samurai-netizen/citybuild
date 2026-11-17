@@ -3,6 +3,8 @@
 # Usage: panel.sh [start|stop|restart|status|logs|stop-all]   (no argument opens the menu)
 #        panel.sh goods show | add|remove|set <item> <amount> [<building id>]   (the purse, or a building's store, of the player the Unity
 #        client uses, or of $PLAYER; CR-0006; a good needs the building id, the currency goes to the purse, CR-0008 decision 35)
+#        panel.sh metrics [arguments]   (the player metrics report of the local database, opened in the browser; CR-0009-T2;
+#        the arguments are the tool's, see panel.sh metrics --help)
 set -u
 
 PANEL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -15,6 +17,8 @@ HEALTH_URL="http://localhost:$PORT/health"
 CONTENT_FILE="$ROOT/server/content/mvp-content.json"
 GOODS_SQL="$PANEL_DIR/goods.sql"
 CLIENT_SETTINGS="$ROOT/client/CityBuilder/Assets/_Project/Resources/Config/ApiClientSettings.asset"
+ENV_FILE="${ENV_FILE:-$ROOT/.env}"
+METRICS_PAGE="$RUN_DIR/metrics/report.html"
 
 mkdir -p "$RUN_DIR"
 cd "$ROOT" || exit 1
@@ -195,6 +199,55 @@ goods_menu() {
   fi
 }
 
+# Prints the value of a KEY=value line of the .env file (the last one wins), without running the file as a script.
+env_value() { sed -n "s/^$1=//p" "$ENV_FILE" | tail -n 1 | tr -d '\r'; }
+
+# Prints the connection string of the dev database from the .env file, as docs/getting-started.md → Database builds it. Each value is
+# quoted, a ' doubled, so a ; in the password stays in the password. Fails, naming the key, when a required value is missing.
+metrics_connection() {
+  local key value q="'" result="Host=localhost"
+  value="$(env_value POSTGRES_PORT)"; result="$result;Port='${value:-5432}'"
+  for key in POSTGRES_DB:Database POSTGRES_USER:Username POSTGRES_PASSWORD:Password; do
+    value="$(env_value "${key%%:*}")"
+    [ -n "$value" ] || { say "$ENV_FILE has no ${key%%:*}."; return 1; }
+    result="$result;${key#*:}=$q${value//$q/$q$q}$q"
+  done
+  say "$result"
+}
+
+# Opens a file in the browser: open (macOS), else xdg-open (Linux), else prints where it is.
+open_page() {
+  if command -v open >/dev/null 2>&1; then open "$1"
+  elif command -v xdg-open >/dev/null 2>&1; then xdg-open "$1" >/dev/null 2>&1
+  else say "Open it in a browser: $1"; fi
+}
+
+# The metrics report (CR-0009-T2): runs tools/MetricsReport on the local database with the user's arguments, writes the page to
+# $METRICS_PAGE (git-ignored: it holds player data) and opens it. The connection string goes in the environment, never in the arguments
+# (the process list shows those). `--help` needs no database.
+metrics() {
+  local arg
+  for arg in "$@"; do
+    case "$arg" in
+      --help) dotnet run --project tools/MetricsReport -- --help; return $? ;;
+      --out) say "The panel writes the page to $METRICS_PAGE; leave out --out (or run the tool itself: tools/README.md)."; return 2 ;;
+    esac
+  done
+  if [ ! -f "$ENV_FILE" ]; then say "No .env file. Run: cp .env.example .env   (then choose your own password)"; return 1; fi
+  local connection; connection="$(metrics_connection)" || { say "$connection"; return 1; }
+  if ! db_running; then say "The database is not running. Start it first (option 1 of the menu, or: panel.sh start)."; return 1; fi
+  ConnectionStrings__CityBuilder="$connection" dotnet run --project tools/MetricsReport -- --out "$METRICS_PAGE" "$@" || return $?
+  say "Report: $METRICS_PAGE"
+  open_page "$METRICS_PAGE"
+}
+
+# The metrics part of the menu: asks for the dev names to leave out, then writes and opens the report.
+metrics_menu() {
+  local exclude
+  read -r -p "Dev names to leave out, comma-separated (for example devtest; Enter for none): " exclude
+  if [ -n "$exclude" ]; then metrics --exclude "$exclude"; else metrics; fi
+}
+
 # The interactive menu.
 menu() {
   while true; do
@@ -208,6 +261,7 @@ menu() {
     say " 4) Log      (last 40 lines)"
     say " 5) Stop all (API + database)"
     say " 6) Goods     (add or remove items of the player "$(goods_player 2>/dev/null || echo '?')")"
+    say " 7) Metrics   (the player metrics report, opened in the browser)"
     say " 0) Quit     (the server keeps running)"
     say ""
     read -r -p "Choose: " choice
@@ -219,6 +273,7 @@ menu() {
       4) logs ;;
       5) stop_all ;;
       6) goods_menu ;;
+      7) metrics_menu ;;
       0|q|Q) exit 0 ;;
       *) say "Unknown choice." ;;
     esac
@@ -235,6 +290,7 @@ case "${1:-menu}" in
   logs) logs ;;
   stop-all) stop_all ;;
   goods) shift; goods "$@" ;;
+  metrics) shift; metrics "$@" ;;
   menu) menu ;;
-  *) say "Usage: panel.sh [start|stop|restart|status|logs|stop-all|goods ...]"; exit 2 ;;
+  *) say "Usage: panel.sh [start|stop|restart|status|logs|stop-all|goods ...|metrics ...]"; exit 2 ;;
 esac

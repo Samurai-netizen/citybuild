@@ -38,7 +38,7 @@ cp "$WORK/bin/open" "$WORK/bin/xdg-open"
 chmod +x "$WORK/bin/docker" "$WORK/bin/dotnet" "$WORK/bin/open" "$WORK/bin/xdg-open"
 export FAKE_DOTNET_LOG="$WORK/dotnet.log" FAKE_CONNECTION_LOG="$WORK/connection.log" FAKE_OPEN_LOG="$WORK/open.log"
 
-# The fake .env: a password with a ; and a ' (both must survive into the connection string), another port.
+# The fake .env: a password with a ; and a ' (both must survive into the connection string: every value is quoted), another port.
 cat > "$WORK/env" <<'ENV'
 # a comment
 POSTGRES_USER=u1
@@ -77,7 +77,7 @@ run_metrics --exclude devtest --from 2026-11-01
 [ "$CODE" -eq 0 ] || fail "valid: exit code $CODE ($OUT)"
 [ "$(cat "$FAKE_DOTNET_LOG")" = "run --project tools/MetricsReport -- --out $PAGE --exclude devtest --from 2026-11-01" ] \
   || fail "valid: arguments were '$(cat "$FAKE_DOTNET_LOG")'"
-[ "$(cat "$FAKE_CONNECTION_LOG")" = "Host=localhost;Port=5433;Database=db1;Username=u1;Password='p;w''d'" ] \
+[ "$(cat "$FAKE_CONNECTION_LOG")" = "Host=localhost;Port='5433';Database='db1';Username='u1';Password='p;w''d'" ] \
   || fail "valid: connection string was '$(cat "$FAKE_CONNECTION_LOG")'"
 case "$(cat "$FAKE_DOTNET_LOG")" in *"p;w"*) fail "valid: the password is in the arguments" ;; esac
 [ "$(cat "$FAKE_OPEN_LOG")" = "$PAGE" ] || fail "valid: opened '$(cat "$FAKE_OPEN_LOG")'"
@@ -86,7 +86,7 @@ case "$OUT" in *"$PAGE"*) ;; *) fail "valid: the output does not name the page: 
 # Without POSTGRES_PORT the port is compose's default.
 ENV_FILE="$WORK/env-no-port" run_metrics
 [ "$CODE" -eq 0 ] || fail "default port: exit code $CODE ($OUT)"
-case "$(cat "$FAKE_CONNECTION_LOG")" in "Host=localhost;Port=5432;"*) ;; *) fail "default port: '$(cat "$FAKE_CONNECTION_LOG")'" ;; esac
+case "$(cat "$FAKE_CONNECTION_LOG")" in "Host=localhost;Port='5432';"*) ;; *) fail "default port: '$(cat "$FAKE_CONNECTION_LOG")'" ;; esac
 
 # A failed run passes its exit code on and opens nothing.
 FAKE_DOTNET_EXIT=2 run_metrics
