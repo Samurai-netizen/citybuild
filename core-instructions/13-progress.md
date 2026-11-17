@@ -7,9 +7,9 @@
 ## Resume point
 - **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** CR-0009-T1 (player metrics: recording) · branch `task/CR-0009-T1-recording` · log `docs/build-log/2026/2026-11-17-04-CR-0009-T1.md` · plan `docs/plan/CR-0009-T1-PLAN.md`
-- **Part / step:** A of A … H (domain type, table, recording, command events, settlement events, session events, guards, docs) · red
+- **Part / step:** B of A … H (domain type, table, recording, command events, settlement events, session events, guards, docs) · A done (`32924e0`)
 - **Last completed:** M0-D (#101 merged; M0-80 … M0-84 `Done`)
-- **Next step:** part A: `PlayerEventTests` red, then `PlayerEvent`, `PlayerEventTypes`, `IPlayerEventRepository`. After this task: CR-0009-T2 or CR-0012-T1 (owner). Owner, any time: the APK on a phone (`docs/BUILD.md`).
+- **Next step:** part B (plan file §4 step 2): red tests from the build log's part B list, then `PlayerEventRow`, its configuration, `PlayerEventRepository`, migration `AddPlayerEvents`. After this task: CR-0009-T2 or CR-0012-T1 (owner). Owner, any time: the APK on a phone (`docs/BUILD.md`).
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. M1 CRs (CR-0011) to approve.
 - **Known broken / do not touch:** nothing.
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
