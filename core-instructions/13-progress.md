@@ -7,7 +7,7 @@
 ## Resume point
 - **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M0-A · Balance: strategy runs, content validation, approved number changes (M0-68, M0-70, M0-69; M0-67 done) · branch `task/M0-A-balance` · build log `docs/build-log/2026/2026-11-16-03-M0-A.md`. Its PR also lands workflow v2 and the M1 plan (CR-0010-T1; PR #97 closed). CR-0009-T1 and T2 (player metrics) are parked.
-- **Part / step:** parts 0, A, B and C done; the finish next
+- **Part / step:** finish: full run done; 5 integration tests updated to mvp-3 numbers (decision 12), rerun and Unity tests running
 - **Last completed:** M0-A part C: content `mvp-3` (purse 1000, Trading Post 5 planks), before/after in `docs/balance/REPORT-mvp-1.md`; B: graph rules 14–16
 - **Next step:** the finish: `quality.sh`, `test-unity.sh` (Unity EditMode fixtures changed in B), Definition of Done (CHANGELOG, M0-PLAN rows), PR.
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. CR-0012 (approved) runs after M0-D.
