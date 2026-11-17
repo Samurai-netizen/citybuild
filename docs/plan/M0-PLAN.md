@@ -348,11 +348,11 @@ The AI coder updates its row at start (`In progress`) and finish (`In review`). 
 | M0-77 | 13 | Clean-clone test | S | Done |
 | M0-78 | 13 | Security boundaries report | O | Done |
 | M0-79 | 14 | Bug triage | O | In review |
-| M0-80 | 14 | Code-freeze review | O | Todo |
+| M0-80 | 14 | Code-freeze review | O | In progress |
 | M0-81 | 14 | Invariant gap analysis | O | In review |
-| M0-82 | 14 | Development build | S MANUAL | Todo |
-| M0-83 | 14 | Final MVP audit | O | Todo |
-| M0-84 | 14 | M0 close-out | S | Todo |
+| M0-82 | 14 | Development build | S MANUAL | In progress |
+| M0-83 | 14 | Final MVP audit | O | In progress |
+| M0-84 | 14 | M0 close-out | S | In progress |
 
 ---
 

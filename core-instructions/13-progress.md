@@ -5,11 +5,11 @@
 > This file is loaded into every session: Milestone-table notes are task ids and PR numbers only (≤ ~100 characters per row).
 
 ## Resume point
-- **State:** IDLE <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (M0-C in review: branch `task/M0-C-smoke-triage-coverage`, log `docs/build-log/2026/2026-11-17-02-M0-C.md`)
-- **Part / step:** —
-- **Last completed:** M0-C (PR #100, awaiting the owner's merge)
-- **Next step:** after the merge, `/start-task M0-D` (M0-80, M0-82, M0-83, M0-84; `docs/plan/M1-PLAN.md` §3).
+- **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** M0-D (M0-80, M0-82, M0-83, M0-84) · branch `task/M0-D-freeze-build-audit-closeout` · log `docs/build-log/2026/2026-11-17-03-M0-D.md`
+- **Part / step:** A (M0-80 code-freeze review) · parts A review, B dev build, C audit, D close-out
+- **Last completed:** M0-C (PR #100, merged)
+- **Next step:** part A: walk the M0-80 checklist over `server/`, `shared/`, `client/`; findings into the build log; fix high-risk only.
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. CR-0012 (approved) runs after M0-D.
 - **Known broken / do not touch:** nothing.
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
@@ -38,7 +38,7 @@
 | Logistics (CR-0008) | done | T1 to T3 (PR #86, #87, #88) |
 | Balance simulator | done | M0-67 (PR #95); M0-68 to M0-70 (PR #98) |
 | E2E / security / concurrency suites | done | M0-36, M0-56, M0-60 (PR #48, #80, #85); M0-64 to M0-66 (PR #92 to #94); M0-B (PR #99); M0-C (PR #100) |
-| Dev build + M0 close-out | not started | |
+| Dev build + M0 close-out | in progress | M0-D |
 
 Per-task detail (what each PR added): `docs/plan/M0-PLAN.md`, `docs/build-log/`, `git log`.
 
