@@ -26,6 +26,12 @@
     <ProjectReference Include="..\..\src\CityBuilder.Api\CityBuilder.Api.csproj" />
   </ItemGroup>
 
+  <!-- The metrics report tool (CR-0009-T2), for the PostgreSQL tests of its loader (Metrics/). The alias keeps the tool's Program apart
+       from the Api's, which WebApplicationFactory<Program> names. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\tools\MetricsReport\MetricsReport.csproj" Aliases="MetricsTool" />
+  </ItemGroup>
+
   <!-- Golden scenario #1's frozen content, the engine test's own file linked (never copied: one frozen file, protected in
        core-instructions/15-change-control.md), so the test over HTTP (Golden/) loads exactly what the engine test loads. -->
   <ItemGroup>
