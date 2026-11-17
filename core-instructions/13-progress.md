@@ -7,9 +7,9 @@
 ## Resume point
 - **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M0-C (M0-72, M0-76, M0-79, M0-81) · branch `task/M0-C-smoke-triage-coverage` · log `docs/build-log/2026/2026-11-17-02-M0-C.md`
-- **Part / step:** A (M0-72 smoke checklist + playtest) / playtest: S1 pass, M0-C-1/-3/-5 fixed and owner-checked, next S2 · parts B M0-76, C M0-79, D M0-81
+- **Part / step:** A (M0-72 smoke checklist + playtest) / playtest: S1 pass, M0-C-1/-3/-5 fixed and owner-checked, S2 pass, next S3 · parts B M0-76, C M0-79, D M0-81
 - **Last completed:** M0-B (PR #99, merged)
-- **Next step:** part A: the owner runs S2 to S12 (DevTimeScale 60); M0-C-4 to check in S8.
+- **Next step:** part A: the owner runs S3 to S12 (DevTimeScale 60); M0-C-4 to check in S8.
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. CR-0012 (approved) runs after M0-D.
 - **Known broken / do not touch:** nothing.
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
