@@ -38,16 +38,25 @@ public sealed class PlayerTimeline
     /// <returns>The reaching event, or <see langword="null"/> when the player has fewer matches.</returns>
     public MetricsEvent? Reach(ReportCheckpoint checkpoint)
     {
+        int index = ReachIndex(checkpoint);
+        return index < 0 ? null : Events[index];
+    }
+
+    /// <summary>Where in <see cref="Events"/> the player reached a checkpoint.</summary>
+    /// <param name="checkpoint">The checkpoint.</param>
+    /// <returns>The index of the reaching event, or -1 when the player has fewer matches.</returns>
+    public int ReachIndex(ReportCheckpoint checkpoint)
+    {
         int seen = 0;
-        foreach (MetricsEvent playerEvent in Events)
+        for (int index = 0; index < Events.Count; index++)
         {
-            if (CheckpointMatcher.Matches(checkpoint, playerEvent) && ++seen == checkpoint.AtLeast)
+            if (CheckpointMatcher.Matches(checkpoint, Events[index]) && ++seen == checkpoint.AtLeast)
             {
-                return playerEvent;
+                return index;
             }
         }
 
-        return null;
+        return -1;
     }
 
     /// <summary>How many of the player's events match a checkpoint.</summary>

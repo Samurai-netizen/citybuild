@@ -9,7 +9,7 @@ MetricsReport answers "what did the players do, how many reached each checkpoint
 ([CR-0009](../changes/CR-0009-player-metrics.md), part 4). It reads the player events that the server records (`player_events`,
 `core-instructions/06-data-model.md`) **read-only**, and the checkpoint file `server/analytics/checkpoints.json`, and writes one
 self-contained HTML page. It is a developer tool: never deployed, no endpoint, and nothing in the game reads what it computes.
-*(In progress, CR-0009-T2: the command line, the checkpoint file and the analysis model exist; the numbers and the page follow.)*
+*(In progress, CR-0009-T2: the command line, the checkpoint file, the analysis model and the checkpoint explorer exist; the other sections and the page follow.)*
 
 ## Key types
 | Type | Responsibility |
@@ -20,6 +20,9 @@ self-contained HTML page. It is a developer tool: never deployed, no endpoint, a
 | `MetricsData` | the players (ids, creation, last seen) and their events as plain records, so every number is computed without a database |
 | `CheckpointMatcher`, `ReportCheckpoint` | which events match a checkpoint; the named checkpoints of the file plus one unnamed per distinct `(event_type, detail, outcome)` |
 | `PlayerTimeline` | one player's events in `(created_at, id)` order and the reach of a checkpoint: its `atLeast`-th match |
+| `ReportContext` | the population's timelines, "now" (the later of the clock and the newest last seen), who left, the least sample |
+| `Explorer`, `ExplorerRow`, `ExplorerDetail` | the checkpoint explorer: one row per checkpoint with the columns of the plan §3.4, last stop descending, and the detail blocks |
+| `Rate`, `Stats` | percentages in tenths from whole counts (half up, away from zero), `—` over nobody, the small-sample mark; the lower median |
 
 ## Rules and invariants
 - Ids only: no dev name or other personal data is ever read into the page (owner's answer to the CR's question 3).
@@ -28,6 +31,9 @@ self-contained HTML page. It is a developer tool: never deployed, no endpoint, a
   research or item id of the content file. The `outcome` is not checked against the error codes (they live in the Api).
 - A named checkpoint's missing `detail` or `outcome` matches any; an unnamed checkpoint matches its exact triple, a missing part only
   a missing one. Its title is `event_type / detail / outcome`, a missing outcome left out and a missing detail before an outcome shown as `—`.
+- The explorer reads no funnel. Last stop: a leaver's latest reach, once among the named and once among the unnamed checkpoints (a tie in
+  time: the higher event id; one event reaching two named checkpoints: the first in the file). "Played after the reach" is the last seen
+  minus the reach; the detail blocks go to every named row and the 50 most reached unnamed ones.
 
 ## How to extend
 A new checkpoint is a line in `server/analytics/checkpoints.json`, no code.
