@@ -8,7 +8,7 @@
 - **State:** IDLE <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** — (M0-C in review: branch `task/M0-C-smoke-triage-coverage`, log `docs/build-log/2026/2026-11-17-02-M0-C.md`)
 - **Part / step:** —
-- **Last completed:** M0-C (PR open, awaiting the owner's merge)
+- **Last completed:** M0-C (PR #100, awaiting the owner's merge)
 - **Next step:** after the merge, `/start-task M0-D` (M0-80, M0-82, M0-83, M0-84; `docs/plan/M1-PLAN.md` §3).
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. CR-0012 (approved) runs after M0-D.
 - **Known broken / do not touch:** nothing.
@@ -37,7 +37,7 @@
 | Workflow v2 (CR-0010) | in progress | CR-0010-T1, lands with M0-A: tests first, `test.sh`, token budget, asset requests (`27`) |
 | Logistics (CR-0008) | done | T1 to T3 (PR #86, #87, #88) |
 | Balance simulator | done | M0-67 (PR #95); M0-68 to M0-70 (PR #98) |
-| E2E / security / concurrency suites | done | M0-36, M0-56, M0-60 (PR #48, #80, #85); M0-64 to M0-66 (PR #92 to #94); M0-B (PR #99); M0-C (PR open) |
+| E2E / security / concurrency suites | done | M0-36, M0-56, M0-60 (PR #48, #80, #85); M0-64 to M0-66 (PR #92 to #94); M0-B (PR #99); M0-C (PR #100) |
 | Dev build + M0 close-out | not started | |
 
 Per-task detail (what each PR added): `docs/plan/M0-PLAN.md`, `docs/build-log/`, `git log`.
