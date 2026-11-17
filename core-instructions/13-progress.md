@@ -7,11 +7,12 @@
 ## Resume point
 - **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** CR-0009-T2 (player metrics: the report) · branch `task/CR-0009-T2-report` · log `docs/build-log/2026/2026-11-17-05-CR-0009-T2.md`
-- **Part / step:** A to G done (`5351bed`); H (`panel.sh metrics`) of A to I next; plan `docs/plan/CR-0009-T2-PLAN.md` §4
+- **Part / step:** A to H done (`4d425c6`); I (real run, docs) of A to I next; plan `docs/plan/CR-0009-T2-PLAN.md` §4
 - **Last completed:** CR-0009-T1 (PR #102, merged 2026-11-17)
-- **Next step:** part H: `panel.sh metrics [arguments]` and its menu entry (`.env` → `ConnectionStrings__CityBuilder`, writes
-  `server-panel/.run/metrics/report.html`, opens it) and `server-panel/test-metrics.sh` like `test-goods.sh`; plan §4 step 8. Tool tests:
-  `dotnet test tools/MetricsReport.Tests`; PostgreSQL: `bash scripts/dev/test.sh int-db Metrics` (Docker).
+- **Next step:** part I: real run on the dev database (Docker; play a few `devtest` commands, `panel.sh metrics --exclude ...` or
+  without, click every header, compare numbers with `psql` counts; write it under Verification), then the open Docs impact rows
+  (`add-checkpoint.md` + how-to README, `server-panel/README.md`, getting-started, `07`, `19`, `31`, `AGENTS.md` point B, CHANGELOG, CR
+  status), then `/finish-task`. Panel test: `bash server-panel/test-metrics.sh`.
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. M1 CRs (CR-0011) to approve.
 - **Known broken / do not touch:** nothing.
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
