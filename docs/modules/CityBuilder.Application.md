@@ -27,6 +27,7 @@ need (`ICityRepository`, `IUnitOfWork`, `IContentProvider`, `ICommandReceiptRepo
 | `Cities/CityTransaction` | What the work gets: the locked `City` and `SaveAsync(ledger, receipt)`, which stages the city and writes it inside the transaction (`state_version` + 1), once; after the work ends it throws |
 | `Persistence/ConcurrencyConflictException` | Another request got in the way: the lock wasn't granted within the lock timeout, or the stored `state_version` wasn't the loaded one. Nothing was committed; the API answers `CONCURRENCY_CONFLICT` (`05`; the command endpoints and the global handler map it, M0-34); the pipeline lets it propagate |
 | `Persistence/CityNotFoundException` | The player named by a verified token has no city (a reset development database). Nothing was committed; the API answers `AUTHENTICATION_REQUIRED` (`05`), and the client logs in again (CR-0004) |
+| `Metrics/IPlayerEventRepository` | The port to the stored player events (CR-0009-T1): `Add(events)` stages rows that the open transaction's unit of work writes. No read member: game code never reads events (`02` rule 23); the report tool does (CR-0009-T2) |
 | `Players/IPlayerRepository` | The port to the stored players: `FindByDevNameAsync(devName)` and `Add(player)` (staged), for the dev login. Implemented by `PlayerRepository` in Infrastructure |
 | `Players/ICurrentPlayer` | The acting player of the request: `PlayerId`, taken only from the verified access token (never a body); it throws when the request has no verified token. Implemented by `HttpCurrentPlayer` in the Api |
 | `Players/DevLogin`, `Players/DevLoginResult` | The dev login (Development only, `05`): `IsValidDisplayName(name)` (1 to 32 ASCII letters, digits, `_`, `-`, `.`; compared exactly); `ExecuteAsync(displayName)` returns the player of the name and whether this login created them. The first login creates, in one transaction (`IUnitOfWork`), the player, the starter city (`CityFactory.CreateStarterCity`, clock 0, settled at the server's second, the content's version; ids UUID v7) through `INewCityRepository`, and one `STARTING_GRANT` ledger entry for the starting purse (coins only since CR-0008). A first login that loses a race on the name (`DuplicateKeyException`) returns the winner's player |
@@ -133,4 +134,4 @@ back in time, so a clock behind is a last settled second ahead of now. The conte
 - `DevLogin` has no tests with fakes: what it does is all persistence (one transaction, a unique index, a race), so it is tested on
   PostgreSQL (`CityBuilder.IntegrationTests`, `Auth/DevLoginDatabaseTests`).
 
-Last updated: M0-64
+Last updated: CR-0009-T1

@@ -4,7 +4,7 @@
 **References:** `CityBuilder.Simulation` ·
 **Referenced by:** `CityBuilder.Application`, `CityBuilder.Infrastructure`, `CityBuilder.Domain.Tests`
 
-> The player, the ledger entry and the command receipt exist (M0-20); the M2 concepts (market, guilds) follow *(planned, M2)*. The
+> The player, the ledger entry and the command receipt exist (M0-20), the player event since CR-0009-T1; the M2 concepts (market, guilds) follow *(planned, M2)*. The
 > settlement record is Application's `Cities/Settlement` (M0-23), not a Domain type. Their database rows are Infrastructure's row classes (M0-19), mapped explicitly (M0-20).
 
 ## Purpose
@@ -18,6 +18,8 @@ Game rules that the client also runs belong in `CityBuilder.Simulation`, not her
 | `Players/Player` | A player of the M0 dev login: `Id` (not empty) and `DevName` (not blank). Real accounts come in M1 |
 | `Ledger/LedgerEntry` | One change of one item: `Item`, `Delta` (never 0), `BalanceAfter` (the quantities after and before are never below 0), `Reason`, and an optional reference (`RefType` and `RefId` both set or both null). The city and the wall time are added when it is stored |
 | `Ledger/LedgerReason` | The ledger reasons of `06` (`StartingGrant` … `CostResearch`, `CostRoad` from CR-0008-T1 part D, `SettlementDelivered` and `SettlementRefunded` from part E); Infrastructure stores each as its text (`STARTING_GRANT`, `COST_ROAD`) |
+| `Metrics/PlayerEvent` | One thing a player did or reached, for the player metrics (CR-0009-T1): `PlayerId` (not empty), `EventType` (1 to 64 of `a-z 0-9 . - _`, `IsEventTypeName`), optional `Detail` and `Outcome` (not blank, at most 64), optional `Value`, `CityClock` (≥ 0), `OccurredAt`. Holds content ids only, never a name, token, address or request text (`07`) |
+| `Metrics/PlayerEventTypes` | The event type names (`research.completed`, `building.completed`, `session.start`, `player.created`), `ForCommand(type)` = `command.<type>`, and the outcome `accepted`. The report's checkpoints match these names (CR-0009-T2) |
 | `Commands/CommandReceipt` | The stored answer to one successful command: `RequestId` (not empty), `CommandType`, `PayloadHash` (exactly 32 bytes, SHA-256, copied), `ResponseJson`. The player and the wall time are added when it is stored |
 
 ## Rules and invariants
@@ -38,4 +40,4 @@ Run: `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`.
 ## Known limitations
 - The settlement record lives in Application (`Cities/Settlement`, M0-23), because only the settle use case builds and reads it.
 
-Last updated: M0-63
+Last updated: CR-0009-T1
