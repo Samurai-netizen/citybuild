@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The player metrics report (docs/modules/MetricsReport.md; docs/changes/CR-0009-player-metrics.md, part 4): a console tool that reads
+       the recorded player events read-only from PostgreSQL and the checkpoint file server/analytics/checkpoints.json, and writes one
+       self-contained HTML page. It references Infrastructure for the EF Core model and the content loader, and the engine's .NET build
+       for the content types. Never deployed; nothing in the game reads what it computes. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>CityBuilder.MetricsReport</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\server\src\CityBuilder.Infrastructure\CityBuilder.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\shared\Simulation.Build\CityBuilder.Simulation.csproj" />
+  </ItemGroup>
+
+</Project>

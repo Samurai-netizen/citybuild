@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Tests of the metrics report (docs/modules/MetricsReport.md): the command line, the checkpoint file and its validation, and the
+       numbers of every section on hand-made data with known answers. They need no database; the PostgreSQL tests of the loader are in
+       server/tests/CityBuilder.IntegrationTests/Metrics/. -->
+  <PropertyGroup>
+    <!-- xUnit v3 test projects are executables. -->
+    <OutputType>Exe</OutputType>
+    <RootNamespace>CityBuilder.MetricsReport.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="xunit.v3.mtp-off" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MetricsReport\MetricsReport.csproj" />
+  </ItemGroup>
+
+</Project>

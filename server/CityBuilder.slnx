@@ -22,5 +22,7 @@
     <Project Path="../tools/BalanceSim/BalanceSim.csproj" />
     <Project Path="../tools/DocTools.Tests/DocTools.Tests.csproj" />
     <Project Path="../tools/DocTools/DocTools.csproj" />
+    <Project Path="../tools/MetricsReport.Tests/MetricsReport.Tests.csproj" />
+    <Project Path="../tools/MetricsReport/MetricsReport.csproj" />
   </Folder>
 </Solution>

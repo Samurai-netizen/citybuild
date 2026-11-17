@@ -21,3 +21,4 @@ Modules are added by the tasks that create them (M0-02, M0-03, M0-04, M0-61, M0-
 | `CityBuilder.Client.Presentation` | Unity assembly, `client/CityBuilder/Assets/_Project/Presentation/` (composition root, UI Toolkit screens, input) | [CityBuilder.Client.Presentation.md](CityBuilder.Client.Presentation.md) |
 | `BalanceSim` | .NET project, `tools/BalanceSim/` (console: plays the content with strategies and check-in patterns, writes summaries and timelines) | [BalanceSim.md](BalanceSim.md) |
 | `DocTools` | .NET project, `tools/DocTools/` (console: generates and checks `docs/reference/generated/`) | [DocTools.md](DocTools.md) |
+| `MetricsReport` | .NET project, `tools/MetricsReport/` (console: reads the player events read-only, writes the player metrics page) | [MetricsReport.md](MetricsReport.md) |
