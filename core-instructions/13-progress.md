@@ -7,9 +7,10 @@
 ## Resume point
 - **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** CR-0009-T2 (player metrics: the report) · branch `task/CR-0009-T2-report` · log `docs/build-log/2026/2026-11-17-05-CR-0009-T2.md`
-- **Part / step:** A (projects, command line) of A to I; plan `docs/plan/CR-0009-T2-PLAN.md` §4
+- **Part / step:** A done (`a7604c7`); B (checkpoint file) of A to I next; plan `docs/plan/CR-0009-T2-PLAN.md` §4
 - **Last completed:** CR-0009-T1 (PR #102, merged 2026-11-17)
-- **Next step:** part A: red tests for `CommandLine` in `tools/MetricsReport.Tests`, then the projects and the parser.
+- **Next step:** part B: red `CheckpointFileTests` (test list in the build log), then `CheckpointFile`, `Checkpoint`, `Funnel` and the starter
+  `server/analytics/checkpoints.json`. Tool tests: `dotnet test tools/MetricsReport.Tests` (no `test.sh` area).
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. M1 CRs (CR-0011) to approve.
 - **Known broken / do not touch:** nothing.
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)

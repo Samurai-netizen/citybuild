@@ -31,6 +31,8 @@ flowchart LR
     n_BalanceSim["BalanceSim"]
     n_DocTools_Tests["DocTools.Tests"]
     n_DocTools["DocTools"]
+    n_MetricsReport_Tests["MetricsReport.Tests"]
+    n_MetricsReport["MetricsReport"]
   end
   n_CityBuilder_Api --> n_CityBuilder_Application
   n_CityBuilder_Api --> n_CityBuilder_Infrastructure
@@ -50,6 +52,9 @@ flowchart LR
   n_DocTools --> n_CityBuilder_Api
   n_DocTools --> n_CityBuilder_Infrastructure
   n_DocTools --> n_CityBuilder_Simulation
+  n_MetricsReport_Tests --> n_MetricsReport
+  n_MetricsReport --> n_CityBuilder_Infrastructure
+  n_MetricsReport --> n_CityBuilder_Simulation
 ```
 
 | Project | Path | Kind | Project references | Packages |
@@ -68,6 +73,8 @@ flowchart LR
 | `BalanceSim` | `tools/BalanceSim/BalanceSim.csproj` | console | `CityBuilder.Infrastructure`, `CityBuilder.Simulation` | — |
 | `DocTools.Tests` | `tools/DocTools.Tests/DocTools.Tests.csproj` | tests | `DocTools` | `Microsoft.NET.Test.Sdk`, `xunit.runner.visualstudio`, `xunit.v3.mtp-off` |
 | `DocTools` | `tools/DocTools/DocTools.csproj` | console | `CityBuilder.Api`, `CityBuilder.Infrastructure`, `CityBuilder.Simulation` | — |
+| `MetricsReport.Tests` | `tools/MetricsReport.Tests/MetricsReport.Tests.csproj` | tests | `MetricsReport` | `Microsoft.NET.Test.Sdk`, `xunit.runner.visualstudio`, `xunit.v3.mtp-off` |
+| `MetricsReport` | `tools/MetricsReport/MetricsReport.csproj` | console | `CityBuilder.Infrastructure`, `CityBuilder.Simulation` | — |
 
 ## Unity assemblies
 

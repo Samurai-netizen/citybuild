@@ -44,6 +44,7 @@ and every 2 minutes in the foreground. Every command response carries the full a
 | `CityBuilder.Api` | Application, Infrastructure (composition root only) | — |
 | `tools/DocTools` (developer tool, never deployed) | Api, Infrastructure, Simulation (it reads what they define) | — ; nothing references it but its tests |
 | `tools/BalanceSim` (developer tool, never deployed) | Simulation, Infrastructure (its content loader only) | Api; nothing references it but its tests |
+| `tools/MetricsReport` (developer tool, never deployed) | Infrastructure (the EF Core model, the content loader), Simulation | Api; nothing references it but its tests and the PostgreSQL tests of its loader |
 | Unity `CityBuilder.Client.*` | Simulation package; Newtonsoft (`Client.Net` only); Input System (`Client.Presentation` only); the test runner (test assemblies only). `Client.Editor` runs only in the Editor and references none of them. Per assembly: `09` | server projects |
 
 - **Simulation:** content definitions (items, buildings, recipes, research, eras), city state, the `Simulator`, and pure mutation rules.
@@ -83,6 +84,7 @@ CityBuilder/
 │   └── tests/ CityBuilder.Simulation.Tests · .Domain.Tests · .Application.Tests · .IntegrationTests · .Repository.Tests
 ├── tools/DocTools/              # generates and checks docs/reference/generated (M0-61); tools/DocTools.Tests
 ├── tools/BalanceSim/            # headless economy simulator (M0-67); tools/BalanceSim.Tests
+├── tools/MetricsReport/         # player metrics page from player_events, read-only (CR-0009-T2); tools/MetricsReport.Tests
 ├── website/                     # the handbook: Docusaurus site over core-instructions/ and docs/ (CR-0002)
 ├── client/CityBuilder/          # Unity project: Assets/_Project/{Core,Net,Presentation,Editor,Art,Resources/UI,Tests}
 ├── docker-compose.yml · .env.example   # PostgreSQL for development; .env (gitignored) holds its credentials (M0-19)
