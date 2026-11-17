@@ -73,6 +73,34 @@ public sealed class CommandPipelineEventTests
         Assert.Equal(0, repository.Stored(PlayerId).StateVersion);
     }
 
+    /// <summary>
+    /// A command after thirty days away, accepted or refused by a rule: its settlement's completions are recorded before the command's own
+    /// event, all in the command's transaction (one write).
+    /// </summary>
+    /// <param name="x">The tile's column: 1 is free, 0 is taken by the cottage.</param>
+    /// <param name="outcome">The command event's outcome.</param>
+    [Theory]
+    [InlineData(1, "accepted")]
+    [InlineData(0, "TILE_OCCUPIED")]
+    public async Task ExecuteAsync_AfterCompletions_RecordsTheSettlementsEventsFirst(int x, string outcome)
+    {
+        InMemoryCityRepository repository = Repository();
+        FakeTimeProvider clock = ClockAtLastSettled();
+        clock.Advance(TimeSpan.FromDays(30));
+
+        await Pipeline(repository, clock).ExecuteAsync(
+            PlayerId, PlaceCottage() with { X = x, Y = x == 0 ? 0 : 1 }, Writer(repository), TestContext.Current.CancellationToken);
+
+        Assert.Equal(
+            [
+                (PlayerEventTypes.ResearchCompleted, Forestry.Value, (string?)null),
+                (PlayerEventTypes.BuildingCompleted, "manor", null),
+                ("command.place-test", "cottage", outcome),
+            ],
+            repository.PlayerEvents.Select(e => (e.EventType, e.Detail, e.Outcome)));
+        Assert.Equal(1, repository.SaveChangesCount);
+    }
+
     /// <summary>The same request again is a replay: it records nothing more.</summary>
     [Fact]
     public async Task ExecuteAsync_Replay_RecordsNothing()

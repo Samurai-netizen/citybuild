@@ -76,6 +76,28 @@ public sealed class CommandEventDatabaseTests(PostgresServer server) : PostgresT
         Assert.Single(await PlayerEventsAsync(Database, player));
     }
 
+    /// <summary>
+    /// A <c>GET /city</c> an hour after the research <c>frame_saw</c> started settles it to completion: one <c>research.completed</c> row
+    /// with the research id at the settled clock, in the settle's transaction.
+    /// </summary>
+    [Fact]
+    public async Task GetCity_ResearchCompletedInTheWindow_StoresItsEvent()
+    {
+        (Guid player, Guid city) = (Guid.NewGuid(), Guid.NewGuid());
+        await StoreAsync(
+            Factory, new Player(player, "research"),
+            WithFrameSawRunning(ContentOf(Factory), city, player, PostgresApiFactory.Start.ToUnixTimeSeconds()));
+        Factory.Clock.Advance(TimeSpan.FromHours(1));
+
+        ApiResponse response = await ApiClient.GetAsync(Factory, "/api/v1/city", player);
+
+        Assert.Equal(HttpStatusCode.OK, response.Status);
+        PlayerEventRow row = Assert.Single(await PlayerEventsAsync(Database, player));
+        Assert.Equal(
+            ("research.completed", "frame_saw", (string?)null, (long?)null, (await LoadAsync(Factory, player)).State.Clock),
+            (row.EventType, row.Detail, row.Outcome, row.Value, row.CityClock));
+    }
+
     /// <summary>Stores a player with the starter city, last settled at the factory's start.</summary>
     /// <param name="name">The player's dev name.</param>
     /// <returns>The player.</returns>
