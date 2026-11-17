@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using CityBuilder.Simulation.Content;
+using CityBuilder.Simulation.Rules;
 using CityBuilder.Simulation.State;
 
 namespace CityBuilder.Simulation.Settlement
@@ -52,7 +53,7 @@ namespace CityBuilder.Simulation.Settlement
             while (index < trips.Count)
             {
                 Trip trip = trips[index];
-                if (trip.ArrivesAt == time && !EndLeg(city, content, trip, time, report))
+                if (trip.Leg != TripLeg.Waiting && trip.ArrivesAt == time && !EndLeg(city, content, trip, time, report))
                 {
                     city.RemoveTripAt(index);
                     continue;
@@ -74,7 +75,9 @@ namespace CityBuilder.Simulation.Settlement
                 long left = Deliveries.Deliver(city, content, target, trip.Item, trip.Quantity, time, report, _timers);
                 if (left > 0)
                 {
-                    city.Buildings[source].AddToStore(trip.Item, left);
+                    // The target is full: the sending ends and the worker carries the rest back (M0-C-3; never above the source's limit).
+                    trip.CarryBack(left, time, checked(time + _walks.Seconds(target, source)));
+                    return true;
                 }
 
                 if (trip.Remaining < 1)
@@ -83,6 +86,18 @@ namespace CityBuilder.Simulation.Settlement
                 }
 
                 trip.WalkBack(time, checked(time + _walks.Seconds(target, source)));
+                return true;
+            }
+
+            if (trip.Quantity > 0)
+            {
+                // Back with goods the target didn't take: what fits goes into the store; with some left the worker waits there.
+                if (HeldLoads.PutBack(city, content, trip))
+                {
+                    return false;
+                }
+
+                trip.Wait();
                 return true;
             }
 
@@ -105,7 +120,8 @@ namespace CityBuilder.Simulation.Settlement
             IReadOnlyList<Trip> trips = city.Trips;
             for (int index = 0; index < trips.Count; index++)
             {
-                if (!earliest.HasValue || trips[index].ArrivesAt < earliest.Value)
+                // A waiting trip walks nowhere: it puts its goods back in the start pass as room appears.
+                if (trips[index].Leg != TripLeg.Waiting && (!earliest.HasValue || trips[index].ArrivesAt < earliest.Value))
                 {
                     earliest = trips[index].ArrivesAt;
                 }

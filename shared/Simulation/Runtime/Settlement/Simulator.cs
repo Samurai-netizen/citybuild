@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using CityBuilder.Simulation.Content;
+using CityBuilder.Simulation.Rules;
 using CityBuilder.Simulation.State;
 
 namespace CityBuilder.Simulation.Settlement
@@ -98,7 +99,7 @@ namespace CityBuilder.Simulation.Settlement
         }
 
         /// <summary>
-        /// The start rule (<c>04</c> section 6), one pass in ascending id order: an idle producer, not paused (CR-0008 D23), with at least 1 worker, every input in its own
+        /// Held goods go back where room has appeared (<see cref="HeldLoads.PutBackWhereRoom"/>, M0-C-3). Then the start rule (<c>04</c> section 6), one pass in ascending id order: an idle producer, not paused (CR-0008 D23), with at least 1 worker, every input in its own
         /// store and room there for every output that is not the currency (<c>stock + quantity ≤</c> the effective limit; an idle building
         /// reserves nothing) takes its inputs from its store and starts a cycle with the labor of now (research reductions included). A start
         /// touches only its own store, so a start never helps or hinders another building, and one pass starts everything that can start
@@ -107,6 +108,8 @@ namespace CityBuilder.Simulation.Settlement
         /// </summary>
         private static void StartEligible(CityState city, GameContent content, long time, SettlementReportBuilder report, BuildingTimerQueue timers)
         {
+            // Held goods first, so goods back in a store can feed a cycle that starts in this pass (M0-C-3).
+            HeldLoads.PutBackWhereRoom(city, content);
             IReadOnlyList<Building> buildings = city.Buildings;
             for (int index = 0; index < buildings.Count; index++)
             {

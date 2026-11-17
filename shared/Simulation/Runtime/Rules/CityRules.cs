@@ -198,11 +198,17 @@ namespace CityBuilder.Simulation.Rules
                 return MutationResult.Rejected(MutationErrorCode.InsufficientWorkers);
             }
 
+            // A removed courier gives its load back; it must all fit, since the courier leaves (M0-C-3: never above a limit).
+            if (definition.Kind == BuildingKind.CourierStation && !CourierRules.RemovedLoadsFitBack(city, content, building, workers))
+            {
+                return MutationResult.Rejected(MutationErrorCode.CourierBusy);
+            }
+
             int before = building.AssignedWorkers;
             building.AssignWorkers(workers, city.Clock);
             if (definition.Kind == BuildingKind.CourierStation)
             {
-                CourierRules.StaffStation(city, level, building, before);
+                CourierRules.StaffStation(city, content, level, building, before);
             }
 
             return MutationResult.Ok;

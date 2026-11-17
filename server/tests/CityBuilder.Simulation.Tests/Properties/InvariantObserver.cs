@@ -265,7 +265,8 @@ internal sealed class InvariantObserver
 
         foreach (Trip trip in city.Trips)
         {
-            if (trip.ArrivesAt < (next ?? long.MaxValue))
+            // A waiting trip walks nowhere: its times are those of its walk back (M0-C-3).
+            if (trip.Leg != TripLeg.Waiting && trip.ArrivesAt < (next ?? long.MaxValue))
             {
                 next = trip.ArrivesAt;
             }

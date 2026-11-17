@@ -61,7 +61,7 @@ namespace CityBuilder.Simulation.Settlement
                     building.CompleteConstruction((int)Math.Min(CityQueries.FreeWorkers(city, content), level.MaxWorkers));
                     if (definition.Kind == BuildingKind.CourierStation)
                     {
-                        CourierRules.StaffStation(city, level, building, 0);
+                        CourierRules.StaffStation(city, content, level, building, 0);
                     }
 
                     report.AddCompletedBuilding(building.Id);

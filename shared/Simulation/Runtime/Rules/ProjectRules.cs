@@ -31,7 +31,7 @@ namespace CityBuilder.Simulation.Rules
             building.StartUpgrade(time, checked(time + next.UpgradeSeconds));
             if (CityQueries.DefinitionOf(content, building.TypeId).Kind == BuildingKind.CourierStation)
             {
-                CourierRules.StopCouriersOf(city, building.Id);
+                CourierRules.StopCouriersOf(city, content, building.Id);
             }
 
             return refunded;
