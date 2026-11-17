@@ -5,11 +5,11 @@
 > This file is loaded into every session: Milestone-table notes are task ids and PR numbers only (≤ ~100 characters per row).
 
 ## Resume point
-- **State:** IDLE <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** —
-- **Part / step:** —
-- **Last completed:** M0-B (branch `task/M0-B-security-suites`, PR #99 in review; log `docs/build-log/2026/2026-11-17-01-M0-B.md`)
-- **Next step:** after the owner merges M0-B: `/start-task M0-C` (smoke checklist, playtest, bug triage, invariant coverage; [MANUAL]).
+- **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** M0-C (M0-72, M0-76, M0-79, M0-81) · branch `task/M0-C-smoke-triage-coverage` · log `docs/build-log/2026/2026-11-17-02-M0-C.md`
+- **Part / step:** A (M0-72 smoke checklist + playtest) / write the checklist · parts B M0-76, C M0-79, D M0-81
+- **Last completed:** M0-B (PR #99, merged)
+- **Next step:** part A: write `docs/testing/UNITY-SMOKE-TEST.md`, then guide the owner through it (DevTimeScale 60).
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. CR-0012 (approved) runs after M0-D.
 - **Known broken / do not touch:** nothing.
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
@@ -37,7 +37,7 @@
 | Workflow v2 (CR-0010) | in progress | CR-0010-T1, lands with M0-A: tests first, `test.sh`, token budget, asset requests (`27`) |
 | Logistics (CR-0008) | done | T1 to T3 (PR #86, #87, #88) |
 | Balance simulator | done | M0-67 (PR #95); M0-68 to M0-70 (PR #98) |
-| E2E / security / concurrency suites | done | M0-36, M0-56, M0-60 (PR #48, #80, #85); M0-64 to M0-66 (PR #92 to #94); M0-B |
+| E2E / security / concurrency suites | done | M0-36, M0-56, M0-60 (PR #48, #80, #85); M0-64 to M0-66 (PR #92 to #94); M0-B (PR #99) |
 | Dev build + M0 close-out | not started | |
 
 Per-task detail (what each PR added): `docs/plan/M0-PLAN.md`, `docs/build-log/`, `git log`.
