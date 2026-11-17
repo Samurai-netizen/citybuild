@@ -1,6 +1,7 @@
 using CityBuilder.Application.Audit;
 using CityBuilder.Application.Cities;
 using CityBuilder.Application.Commands;
+using CityBuilder.Application.Metrics;
 using CityBuilder.Application.Persistence;
 using CityBuilder.Application.Players;
 using CityBuilder.Infrastructure.Persistence.Repositories;
@@ -15,8 +16,8 @@ public static class PersistenceServiceCollectionExtensions
     /// <summary>
     /// Registers <see cref="CityBuilderDbContext"/> (scoped, one per request) on the Npgsql provider, and the ports over it, scoped as well
     /// so the repositories and the unit of work of a request share its context: <see cref="ICityRepository"/>,
-    /// <see cref="INewCityRepository"/> (both <see cref="CityRepository"/>), <see cref="IPlayerRepository"/>, <see cref="ICommandReceiptRepository"/>
-    /// and <see cref="IUnitOfWork"/>;
+    /// <see cref="INewCityRepository"/> (both <see cref="CityRepository"/>), <see cref="IPlayerRepository"/>, <see cref="ICommandReceiptRepository"/>,
+    /// <see cref="IPlayerEventRepository"/> (CR-0009) and <see cref="IUnitOfWork"/>;
     /// <see cref="ICityTransactionRunner"/>, scoped, the one entry point of every change of a stored city; and <see cref="ILedgerAuditSource"/>
     /// (<see cref="LedgerAuditSource"/>), the ledger audit's read-only view (M0-64). The repositories need a <see cref="TimeProvider"/>, which the Api registers. The settings are read when they are first needed, so the Api
     /// can build them from its validated options.
@@ -36,6 +37,7 @@ public static class PersistenceServiceCollectionExtensions
         services.AddScoped<INewCityRepository, CityRepository>();
         services.AddScoped<IPlayerRepository, PlayerRepository>();
         services.AddScoped<ICommandReceiptRepository, CommandReceiptRepository>();
+        services.AddScoped<IPlayerEventRepository, PlayerEventRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<ICityTransactionRunner, CityTransactionRunner>();
         services.AddScoped<ILedgerAuditSource, LedgerAuditSource>();

@@ -80,5 +80,6 @@ public sealed class CityBuilderDbContext(DbContextOptions<CityBuilderDbContext> 
         modelBuilder.ApplyConfiguration(new CityRouteActionConfiguration());
         modelBuilder.ApplyConfiguration(new CommandReceiptConfiguration());
         modelBuilder.ApplyConfiguration(new LedgerEntryConfiguration());
+        modelBuilder.ApplyConfiguration(new PlayerEventConfiguration());
     }
 }
