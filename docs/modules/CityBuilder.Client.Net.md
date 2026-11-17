@@ -19,6 +19,7 @@ client directly (`.claude/rules/unity.md`). `GameRoot` builds it and runs the st
 | `ApiResponseParser` | (status, body) to an `ApiResult<T>`; never throws on a bad body, never copies the body into an error |
 | `ApiJson` | The one serializer setup: camelCase members, enums as wire strings, dates kept as text, depth limit 32, no type names |
 | `IApiTransport`, `UnityWebRequestTransport` | The wire (one request in, one response or network failure out); the second is the real one, tests use a fake. It follows no redirect (`redirectLimit = 0`): the API never sends one, and following it would hand the bearer token to wherever a captive portal or a proxy points (CR-0004) |
+| `ServerAddress` | `static`. `Resolve(commandLine, assetUrl)`: the player's `-server-url <address>` (or `-server-url=<address>`) over the asset's address; the option without a value gives an empty address that `ApiClient` refuses (M0-82, `docs/BUILD.md`) |
 | `ApiClientSettings` | `ScriptableObject` with the server URL, the timeout and the dev player's name (`DevDisplayName`, default `dev1`); the asset is `Resources/Config/ApiClientSettings.asset` |
 | `AuthService`, `AuthState` | The login state machine (`LoggedOut`, `LoggingIn`, `LoggedIn`, `Failed`): `TryRestore(name)` takes a kept token for that player without asking the server, `LoginAsync(name)` calls the dev login and hands the token to `ApiClient`, `Forget()` drops it. A cancel or an unexpected exception during a login leaves it `LoggedOut`, never `LoggingIn` (CR-0004). A failure is `State == Failed` plus `LastError`, not an exception; only a cancel throws. It never decides that a token is still good: the server does |
 | `IAccessTokenStore`, `StoredLogin`, `PlayerPrefsAccessTokenStore`, `NullAccessTokenStore`, `AccessTokenStores` | Where the token lives between runs. `StoredLogin` is the token and the display name it was issued for, nothing else (no snapshot, no balance, no expiry). `AccessTokenStores.For(isDevelopmentBuild)` gives `PlayerPrefs` (keys `CityBuilder.DevLogin.AccessToken` and `.DisplayName`) to the Editor and development players, and a store that keeps nothing to every other build |
@@ -94,7 +95,7 @@ captured from the real server, and the round-trip test. A new error code: add it
   (`PlayerPrefs` with a test-only key prefix; a release build keeps nothing), `ContentServiceTests` (the real `content.json` becomes valid
   content with the right buildings, recipes and effects; broken content lists every error; a refused, lost or non-JSON answer is a failed request).
 - `ApiClientTests` (with `FakeTransport`): method, URL, body and token of every endpoint; timeout; cancellation. `UnityWebRequestTransportTests`
-  run the real transport against an `HttpListener` in the test. `ApiClientSettingsTests`: the asset loads and names a valid dev player.
+  run the real transport against an `HttpListener` in the test. `ApiClientSettingsTests`: the asset loads and names a valid dev player. `ServerAddressTests`: the option over the asset, both forms, a missing value refused. `Build/BuildSettingsTests`: `link.xml` keeps this assembly, IL2CPP on Android, the one build scene.
 - **Fixtures** (`Assets/_Project/Tests/Fixtures/`) are real answers of a development server, copied byte for byte: `content.json` at time
   scale 1, the `snapshot-*.json` and `error-<status>-<CODE>.json` files from a run of the commands as the test player `devtest` at
   `Simulation:DevTimeScale` 10 (so `serverTimeUtc` is in 2034). CR-0008-T1 part E took them again (decision 42: an API on a throwaway
@@ -116,4 +117,4 @@ captured from the real server, and the round-trip test. A new error code: add it
   matching builds.
 - The real transport was walked against a running server once (M0-37 build log); it is not in CI (Unity tests are not).
 
-Last updated: M0-C
+Last updated: M0-82

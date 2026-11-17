@@ -12,6 +12,7 @@ in chapters, with every backticked path and spec number as a link (`website/READ
 | see what comes after M0 | `docs/plan/M1-PLAN.md` (proposed: what the game lacks, 18 tasks, owner decisions) |
 | ask for a model, picture, sound or font | `core-instructions/27-asset-pipeline.md`, [assets/](assets/README.md) (asset requests) |
 | set up and run the project | [getting-started.md](getting-started.md) |
+| make a development build of the client (desktop, Android, iOS) | [BUILD.md](BUILD.md) (M0-82) |
 | understand the architecture as built | [architecture/overview.md](architecture/overview.md), [modules/](modules/README.md) |
 | see how well the architecture holds up, and every package with why it exists | [ARCHITECTURE-FITNESS-REVIEW.md](ARCHITECTURE-FITNESS-REVIEW.md) (M0-66) |
 | understand the intended architecture and rules | `core-instructions/README.md` (index of all specs) |

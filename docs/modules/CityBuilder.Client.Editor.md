@@ -4,7 +4,7 @@
 **References:** none (only Unity's own editor and engine modules) · **Referenced by:** nothing
 
 ## Purpose
-Scripts that run only in the Unity Editor and change how the project's assets are imported, so that no setting depends on someone's clicks
+Scripts that run only in the Unity Editor: they change how the project's assets are imported, so that no setting depends on someone's clicks, and they make the development build (M0-82)
 (`core-instructions/09-unity-client.md` rule 1, CR-0005). It is **not** part of a player build, and it is not responsible for showing anything in the
 game: drawing the models is `CityBuilder.Client.Presentation`.
 
@@ -12,6 +12,8 @@ game: drawing the models is `CityBuilder.Client.Presentation`.
 | Type | Responsibility |
 |---|---|
 | `ArtImportPostprocessor` | An `AssetPostprocessor` over `Assets/_Project/Art/`, `Assets/_Project/Resources/UI/Icons/` and `Assets/_Project/Resources/UI/Glyphs/`. A palette under `Art/Textures/` gets Point filter, no compression, no mips and Clamp. A UI icon under `Resources/UI/Icons/` (CR-0005-T4) or a UI glyph under `Resources/UI/Glyphs/` (CR-0008-T2; both folders live under `Resources/UI/` where the client and USS load them from) gets bilinear filtering, no mips, Clamp, alpha is transparency and not readable. A model under `Art/Resources/Models/` gets scale 1, no cameras, lights, blend shapes, animation or colliders, the file's normals and no tangents. After the import it links the model's material `M_Palette_Era1` to the one shared material `Art/Materials/M_Palette_Era1.mat` (an external object remap, kept in the model's `.meta` file) and imports it once more. It makes that material when it is missing: URP Lit, Base Map the palette, Smoothness 0.1, `_EMISSION` on with an emission of 0.002 (too dark to see) and the baked-emission flag, so that a stalled building's property block can add a grey (M0-50, `StalledTint`; URP switches the keyword off for a black or `EmissiveIsBlack` material) |
+
+| `DevBuild` | Makes a development player (M0-82, `docs/BUILD.md`): `Options(target, path)` takes the enabled scenes of the build settings (Bootstrap only) and the `Development` flag; `DefaultOutput(target)` puts macOS, Windows, Android and iOS under `Builds/`. Called from the menu **CityBuilder → Development build (active target)** or headless with `-executeMethod CityBuilder.Client.Editor.DevBuild.BuildFromCommandLine` (`scripts/dev/build-client.sh`), which exits 0 or 1 |
 
 ## Rules and invariants
 - The assembly is Editor only and references none of the client's assemblies (`ClientAssemblyTests`).
@@ -28,9 +30,9 @@ described for artists in `art/README.md`; change both together.
 ## Tests
 `Assets/_Project/Tests/EditMode/Art/ArtImportTests.cs` reads the imported assets, so the test assembly needs no reference to this one: the palette's
 settings, the settings of every UI icon, the shared material (with its emission keyword, value and flag), the settings and the material of every model, `house_l1`'s size and anchors, and a new FBX without a `.meta` file getting all of it
-on its first import. Run with `scripts/dev/test-unity.sh` (`client/README.md` → Run the tests).
+on its first import. `Build/BuildSettingsTests.cs` checks the settings `DevBuild` builds from (scenes, IL2CPP, `link.xml`), also without a reference; `DevBuild` itself is proven by a build (`scripts/dev/build-client.sh`, macOS and Android in M0-82). Run with `scripts/dev/test-unity.sh` (`client/README.md` → Run the tests).
 
 ## Known limitations
 - One palette only: the source material name and the material path are constants for Era I. Era II changes this.
 
-Last updated: M0-63
+Last updated: M0-82

@@ -43,6 +43,7 @@ const handbook = [
     spec('01'),
     page('core-instructions/13-progress.md', 'Status and resume point'),
     page('docs/getting-started.md'),
+    page('docs/BUILD.md', 'Development build'),
     page('docs/README.md', 'Documentation map'),
     page('core-instructions/README.md', 'Specs index'),
     spec('31'),
