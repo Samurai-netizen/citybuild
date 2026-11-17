@@ -128,6 +128,22 @@ internal sealed class GoldenHttpPlayer : IDisposable
         return (response.StatusCode, text.Length == 0 ? null : JsonNode.Parse(text));
     }
 
+    /// <summary>
+    /// Sends a JSON text as it is to <c>/api/v1/commands/</c><paramref name="command"/> and returns the answer whatever its status, for a body
+    /// no contract type can hold, such as one with a field the server owns (M0-74).
+    /// </summary>
+    /// <param name="command">The command's path segment.</param>
+    /// <param name="json">The body's JSON text.</param>
+    /// <returns>The status and the body (null when empty).</returns>
+    public async Task<(HttpStatusCode Status, JsonNode? Body)> SendRawAsync(string command, string json)
+    {
+        using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+        using HttpResponseMessage response = await _client.PostAsync(
+            new Uri("/api/v1/commands/" + command, UriKind.Relative), content, TestContext.Current.CancellationToken);
+        string text = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        return (response.StatusCode, text.Length == 0 ? null : JsonNode.Parse(text));
+    }
+
     /// <summary>The status of <c>GET /api/v1/city</c> with this player's token, for a token that may have expired (M0-73).</summary>
     /// <returns>The status.</returns>
     public async Task<HttpStatusCode> GetCityStatusAsync()
