@@ -120,6 +120,10 @@ COMMIT
   `player_events` rows are inserted. Repeated settles at one instant write no city rows.
 - **Business-rule rejection:** the settlement is committed (time passed is real), but there is no mutation and no receipt. Its
   `command.<type>` event is written: with the settlement's save, or alone at an instant where nothing else changed (`state_version` stays).
+- **Settlement events (CR-0009):** a settle, alone or in a command, records one `research.completed` (detail the research id) and one
+  `building.completed` (detail the type, `value` the new level) per completion, before the command's event. **Limitation:** an event's
+  `city_clock` and `created_at` are those of the request that settled the city, not of the second the completion happened inside the window,
+  so a completion during a long offline gap is dated at the player's return (the city's `research_completed_at` has the exact second).
 - **Unexpected exception:** full rollback; nothing is committed.
 - **Unique violation on the receipt insert** (two identical requests raced): roll back, read the stored receipt, return it (a different
   payload hash: `IDEMPOTENCY_CONFLICT`; no receipt behind it: the exception propagates).

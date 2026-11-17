@@ -7,9 +7,9 @@
 ## Resume point
 - **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** CR-0009-T1 (player metrics: recording) · branch `task/CR-0009-T1-recording` · log `docs/build-log/2026/2026-11-17-04-CR-0009-T1.md` · plan `docs/plan/CR-0009-T1-PLAN.md`
-- **Part / step:** E of A … H (domain type, table, recording, command events, settlement events, session events, guards, docs) · A … D done (`11c86c9`)
+- **Part / step:** F of A … H (domain type, table, recording, command events, settlement events, session events, guards, docs) · A … E done (`e71315e`)
 - **Last completed:** M0-D (#101 merged; M0-80 … M0-84 `Done`)
-- **Next step:** part E (plan file §4 step 5): red tests from the build log's part E list, then `Metrics/SettlementEvents.Of(city, settlement, now)`, called in `SettleCity` and both `CommandPipeline` branches after `settler.Close()`, before the command's event; the offline-clock limitation into `06`. After this task: CR-0009-T2 or CR-0012-T1 (owner). Owner, any time: the APK on a phone (`docs/BUILD.md`).
+- **Next step:** part F (plan file §4 step 6): red tests from the build log's part F list, then `Metrics/SessionPolicy`, the option `Metrics:SessionGapSeconds` (default 1800, 60 … 86400, × `DevTimeScale`), `session.start` in `SettleCity` and `CommandPipeline` (last seen read before `CitySettler.Begin`, recorded first), `player.created` + `session.start` in `DevLogin`; regenerate `configuration.md`. After this task: CR-0009-T2 or CR-0012-T1 (owner). Owner, any time: the APK on a phone (`docs/BUILD.md`).
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. M1 CRs (CR-0011) to approve.
 - **Known broken / do not touch:** nothing.
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)

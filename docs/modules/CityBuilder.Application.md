@@ -28,6 +28,7 @@ need (`ICityRepository`, `IUnitOfWork`, `IContentProvider`, `ICommandReceiptRepo
 | `Persistence/ConcurrencyConflictException` | Another request got in the way: the lock wasn't granted within the lock timeout, or the stored `state_version` wasn't the loaded one. Nothing was committed; the API answers `CONCURRENCY_CONFLICT` (`05`; the command endpoints and the global handler map it, M0-34); the pipeline lets it propagate |
 | `Persistence/CityNotFoundException` | The player named by a verified token has no city (a reset development database). Nothing was committed; the API answers `AUTHENTICATION_REQUIRED` (`05`), and the client logs in again (CR-0004) |
 | `Metrics/CommandEvents` | What a command's player event says (CR-0009-T1): `BuildingType`, `BuildingTypeOf`, `Research`, `Item` give an id only when the content (or the city) has it, so no client text reaches the table; `Outcome(code)` spells an error code as the API does (`INSUFFICIENT_RESOURCE`; a test holds it to the catalogue) |
+| `Metrics/SettlementEvents` | What a settlement completed as player events (CR-0009-T1): `Of(city, settlement, now)` gives one `research.completed` per completed research (detail the id) and one `building.completed` per completed construction or upgrade (detail the type, `value` the level it now has), at the settled city clock; `SettleCity` and both branches of `CommandPipeline` record them after `Close()`, before the command's event |
 | `Metrics/IPlayerEventRepository` | The port to the stored player events (CR-0009-T1): `Add(events)` stages rows that the open transaction's unit of work writes. No read member: game code never reads events (`02` rule 23); the report tool does (CR-0009-T2) |
 | `Players/IPlayerRepository` | The port to the stored players: `FindByDevNameAsync(devName)` and `Add(player)` (staged), for the dev login. Implemented by `PlayerRepository` in Infrastructure |
 | `Players/ICurrentPlayer` | The acting player of the request: `PlayerId`, taken only from the verified access token (never a body); it throws when the request has no verified token. Implemented by `HttpCurrentPlayer` in the Api |
@@ -93,7 +94,7 @@ another player's request id, the receipt race won by the same or another payload
 `CommandPipelineRuleTests` (shape, empty request id, a rejection commits only the settlement, a retried rejection runs again, settle before
 mutation, a refund the closing advance consumes), `CommandPipelineEventTests` (CR-0009-T1: one event per applied or refused command, also
 with nothing to settle; none for a replay, a conflict, a shape refusal, the receipt race or a failed write) and `CommandEventDetailTests`
-(every command's `EventDetail`, and `EveryCityCommand_HasAnEventDetailCase`); `Metrics/CommandEventsTests` spells the outcomes. `PipelineFixture` runs the pipeline over the fakes with two test commands
+(every command's `EventDetail`, and `EveryCityCommand_HasAnEventDetailCase`); `Metrics/CommandEventsTests` spells the outcomes; `Metrics/SettlementEventsTests` (completions after 30 days, an upgrade's new level, nothing completed) and `Cities/SettleCityEventTests` (one event per completion, none again at the same instant); `CommandPipelineEventTests` also pins the settlement's events before the command's, in both branches. `PipelineFixture` runs the pipeline over the fakes with two test commands
 (`PlaceTestCommand`, `UpgradeTestCommand`) and a response writer that records `respond`. `PlaceBuildingCommandTests`, `UpgradeBuildingCommandTests`, `AssignWorkersCommandTests`, `StartResearchCommandTests`, `RoadCommandsTests` (CR-0008-T1 part D: all three road commands, their shared
 shape check and its messages, a reordered list being another hash), `StartTripCommandTests` (part E: every shape rule, the amount's
 three forms, no ledger reasons), `SetRouteCommandTests` (part G: every shape rule, nested objects in the pinned payload, a pipeline run
@@ -106,7 +107,7 @@ retry writes nothing, also on a restarted host; conflicts; another player's requ
 requests queued behind the lock apply once; the receipt race through the unique key, with the same or another payload) and
 `CommandRejectionDatabaseTests` (a rejection commits only the settlement; the same request runs again) and `CommandEventDatabaseTests`
 (CR-0009-T1, over HTTP: one `player_events` row for an accepted and for a refused command, the version kept when nothing was settled, none
-for a replay). `Cities/CityTransactionRunnerTests` checks the
+for a replay; a `GET /city` that completes a research stores its `research.completed` row). `Cities/CityTransactionRunnerTests` checks the
 transaction's lifecycle on the fakes: begin, lock and load, work, write, commit in that order; a commit without writes when nothing was
 saved; a rollback after an exception, a conflict or a failed load; one save per transaction, none after the work; a second or nested run
 throwing before it locks anything; player events (CR-0009-T1) written with the save, by the runner once before the commit when the city
