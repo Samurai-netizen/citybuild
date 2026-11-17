@@ -341,12 +341,12 @@ The AI coder updates its row at start (`In progress`) and finish (`In review`). 
 | M0-70 | 12 | Content validation hardening | S | Done |
 | M0-71 | 12 | First-session polish | S | Skipped |
 | M0-72 | 12 | Playtest and smoke checklist | O MANUAL | Todo |
-| M0-73 | 13 | HTTP end-to-end suite | O | In progress |
-| M0-74 | 13 | Attack suite | O | In progress |
-| M0-75 | 13 | Concurrency suite | O | In progress |
+| M0-73 | 13 | HTTP end-to-end suite | O | In review |
+| M0-74 | 13 | Attack suite | O | In review |
+| M0-75 | 13 | Concurrency suite | O | In review |
 | M0-76 | 13 | Unity smoke run | S MANUAL | Todo |
-| M0-77 | 13 | Clean-clone test | S | In progress |
-| M0-78 | 13 | Security boundaries report | O | In progress |
+| M0-77 | 13 | Clean-clone test | S | In review |
+| M0-78 | 13 | Security boundaries report | O | In review |
 | M0-79 | 14 | Bug triage | O | Todo |
 | M0-80 | 14 | Code-freeze review | O | Todo |
 | M0-81 | 14 | Invariant gap analysis | O | Todo |

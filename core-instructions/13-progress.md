@@ -5,11 +5,11 @@
 > This file is loaded into every session: Milestone-table notes are task ids and PR numbers only (≤ ~100 characters per row).
 
 ## Resume point
-- **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** M0-B (M0-73, M0-74, M0-75, M0-77, M0-78) · branch `task/M0-B-security-suites` · log `docs/build-log/2026/2026-11-17-01-M0-B.md`
-- **Part / step:** A to E done (last green 023a7ac; D and E are docs only) · next `/finish-task`
-- **Last completed:** M0-A (PR #98, merged)
-- **Next step:** `/finish-task` (`quality.sh`, board rows M0-73…78, `CHANGELOG.md`, PR).
+- **State:** IDLE <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** —
+- **Part / step:** —
+- **Last completed:** M0-B (branch `task/M0-B-security-suites`, PR in review; log `docs/build-log/2026/2026-11-17-01-M0-B.md`)
+- **Next step:** after the owner merges M0-B: `/start-task M0-C` (smoke checklist, playtest, bug triage, invariant coverage; [MANUAL]).
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. CR-0012 (approved) runs after M0-D.
 - **Known broken / do not touch:** nothing.
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
@@ -17,7 +17,7 @@
   `bash scripts/dev/quality.sh` (as CI; `08` → Test tiers) · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` (remaining tasks grouped in `docs/plan/M1-PLAN.md` §3) · tasks done: 74 / 88 · next milestone: `docs/plan/M1-PLAN.md` (Proposed, CR-0011)
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` (remaining tasks grouped in `docs/plan/M1-PLAN.md` §3) · tasks done: 79 / 88 · next milestone: `docs/plan/M1-PLAN.md` (Proposed, CR-0011)
 
 | Area | State | Notes |
 |---|---|---|
@@ -37,7 +37,7 @@
 | Workflow v2 (CR-0010) | in progress | CR-0010-T1, lands with M0-A: tests first, `test.sh`, token budget, asset requests (`27`) |
 | Logistics (CR-0008) | done | T1 to T3 (PR #86, #87, #88) |
 | Balance simulator | done | M0-67 (PR #95); M0-68 to M0-70 (PR #98) |
-| E2E / security / concurrency suites | in progress | M0-36, M0-56, M0-60 (PR #48, #80, #85); M0-64 to M0-66 (PR #92 to #94) |
+| E2E / security / concurrency suites | done | M0-36, M0-56, M0-60 (PR #48, #80, #85); M0-64 to M0-66 (PR #92 to #94); M0-B |
 | Dev build + M0 close-out | not started | |
 
 Per-task detail (what each PR added): `docs/plan/M0-PLAN.md`, `docs/build-log/`, `git log`.
