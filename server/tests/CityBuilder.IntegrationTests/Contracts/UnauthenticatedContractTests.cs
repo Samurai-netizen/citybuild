@@ -1,6 +1,9 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json.Nodes;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using CityBuilder.IntegrationTests.Auth;
 
 namespace CityBuilder.IntegrationTests.Contracts;
@@ -134,6 +137,38 @@ public sealed class UnauthenticatedContractTests(ApiFactory factory) : IClassFix
             factory, path, playerId: null, """{"requestId":"0199a1b2-c3d4-7e5f-8a9b-00000000000e","tiles":[{"x":1,"y":1}]}""");
 
         AssertAuthenticationRequired(response);
+    }
+
+    /// <summary>Each logistics command without a token gets the same 401 answer before its body is read, as every command does (M0-80).</summary>
+    /// <param name="path">The command's path.</param>
+    /// <param name="body">A body the command would accept with a token.</param>
+    [Theory]
+    [InlineData("/api/v1/commands/start-trip", """{"requestId":"0199a1b2-c3d4-7e5f-8a9b-00000000000f","sourceId":1,"targetId":2,"itemId":"logs","amount":5}""")]
+    [InlineData("/api/v1/commands/set-route", """{"requestId":"0199a1b2-c3d4-7e5f-8a9b-000000000010","stationId":6,"slot":1,"stops":[]}""")]
+    [InlineData("/api/v1/commands/reenergize-couriers", """{"requestId":"0199a1b2-c3d4-7e5f-8a9b-000000000011"}""")]
+    [InlineData("/api/v1/commands/cancel-delivery", """{"requestId":"0199a1b2-c3d4-7e5f-8a9b-000000000012","stationId":6,"slot":1,"lineId":null}""")]
+    [InlineData("/api/v1/commands/set-paused", """{"requestId":"0199a1b2-c3d4-7e5f-8a9b-000000000013","buildingId":7,"paused":true}""")]
+    public async Task Post_LogisticsCommandWithoutToken_ReturnsAuthenticationRequiredProblem(string path, string body)
+    {
+        ApiResponse response = await ApiClient.PostAsync(factory, path, playerId: null, body);
+
+        AssertAuthenticationRequired(response);
+    }
+
+    /// <summary>
+    /// Every routed endpoint of <c>/api/v1</c> requires a token, except the dev login, the one that opts out (M0-80): a new endpoint that
+    /// left the group or opted out fails here, so the auth rule never depends on someone remembering a test above.
+    /// </summary>
+    [Fact]
+    public void Security_EveryApiEndpoint_RequiresAToken()
+    {
+        string[] open = [.. factory.Services.GetRequiredService<EndpointDataSource>().Endpoints
+            .OfType<RouteEndpoint>()
+            .Where(endpoint => endpoint.RoutePattern.RawText!.StartsWith("/api/v1/", StringComparison.Ordinal))
+            .Where(endpoint => !endpoint.Metadata.OfType<IAuthorizeData>().Any() || endpoint.Metadata.OfType<IAllowAnonymous>().Any())
+            .Select(endpoint => endpoint.RoutePattern.RawText!)];
+
+        Assert.Equal(["/api/v1/auth/dev-login"], open);
     }
 
     /// <summary>A valid token is not refused: the content endpoint answers 200 (the city endpoint needs a city, which the snapshot tests give it).</summary>
