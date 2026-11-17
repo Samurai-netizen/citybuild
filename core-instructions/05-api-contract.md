@@ -115,14 +115,15 @@ There is no "claim" command, because production and research complete on their o
 - `upgrade-building` (`{ requestId, buildingId }`) checks in the order of `04` §8: `BUILDING_NOT_FOUND` (the id is looked up in **your**
   city only; ids count from 1 in each city, so one only another city has is not found; below 1 is `INVALID_ARGUMENT`), `BUILDING_BUSY`
   (constructing or upgrading), `MAX_LEVEL`, `NO_FREE_BUILDER`, `INSUFFICIENT_RESOURCE` (the stock before any refund). A running or frozen
-  cycle ends without output and its inputs come back (`REFUND_UPGRADE` rows, even above a storage cap); then the next level's upgrade cost
+  cycle ends without output and its inputs come back (`REFUND_UPGRADE` rows; they always fit, since a running cycle's inputs are reserved, M0-C-3); then the next level's upgrade cost
   is paid (`COST_UPGRADE` rows) and the building is `Upgrading` until the clock plus that level's upgrade seconds, still at its level. Its
   workers stay assigned and do nothing (`maxWorkers` stays the current level's); at the end the level rises and the building is `Idle` with
   the same workers (a producer starts its next cycle when it can); the new level's max workers and workers provided apply from then on.
 - `assign-workers` (`{ requestId, buildingId, workers }`, an absolute count; 0 pauses) checks in the order of `04` §8: `BUILDING_NOT_FOUND`
   (your city only, as above; an id below 1 is `INVALID_ARGUMENT`), `INVALID_ARGUMENT` (a house: no recipe), `BUILDING_BUSY` (constructing;
   upgrading is allowed), `WORKER_LIMIT` (above the current level's `maxWorkers`; a negative count is `INVALID_ARGUMENT` before the lock),
-  `INSUFFICIENT_WORKERS` (the increase over the building's current count is more than `workers.free`; fewer workers always fit). It writes no
+  `INSUFFICIENT_WORKERS` (the increase over the building's current count is more than `workers.free`; fewer workers always fit),
+  `COURIER_BUSY` (a courier station only: a courier the change removes carries goods their store has no room to take back, M0-C-3). It writes no
   ledger rows. On a running cycle the labor done so far is kept (`04` §3): a new segment starts at the clock with `laborRemaining` reduced
   by it, and `phaseEndsAt` is the clock plus `ceil(laborRemaining / workers)`, or `null` with 0 workers (`stallReason` `NoWorkers`) until a
   later assignment resumes it. An idle producer that can start begins its cycle in the same response. The same count again succeeds and
@@ -142,7 +143,7 @@ There is no "claim" command, because production and research complete on their o
   upgrade starts (refund, `Upgrading`). `start-research` checks `NO_SCIENCE_BUILDING` (no completed science building) before
   `INSUFFICIENT_RESOURCE`, pays the coins, and the research waits (`startedAt`, `endsAt` `null`, `needs`) until its goods reach the science
   building. `assign-workers` also takes a courier station: each worker is a courier in the next slot, at the station with full stamina; fewer
-  workers remove the highest slots' couriers, whose loads go back to where they came from (`04` §19).
+  workers remove the highest slots' couriers, whose loads go back to where they came from (`04` §19); they must all fit, else `COURIER_BUSY`.
 - **Amounts** (CR-0008) are one JSON string: a preset id (`"all"`, `"half"`, `"quarter"`), a percentage (`"1%"` … `"100%"`) or an exact
   number (`"1"` … 12 digits, no leading zero). Any other text, and a percentage outside 1–100, is `INVALID_ARGUMENT` before the lock; an
   unknown preset id is `INVALID_ARGUMENT` from the rule; a mode the city hasn't researched is `AMOUNT_MODE_LOCKED`.
@@ -253,7 +254,8 @@ There is no "claim" command, because production and research complete on their o
   routes has `[]`. A courier's goods count in `totals`. **Amendment 1:** `deliveryLines` follow `routes` (`id`, `stationId`, `slot`,
   `sourceId`, `targetId`, `itemId`, `quantity`), by (`stationId`, `slot`, `id`); each courier's first line is the one it runs now (`toStop`
   1 = that line's source, 2 = its target). A trip has `remaining` (still in the source for later loads) and `leg` (`ToTarget` with a load,
-  `ToSource` with `quantity` 0). The settlement's `courierSeconds` is the most stamina one courier spent in it
+  `ToSource` with `quantity` 0, or with the goods the target didn't take and `remaining` 0, and `Waiting` at the source with goods its full
+  store can't take yet, M0-C-3). The settlement's `courierSeconds` is the most stamina one courier spent in it
   (0 while the player was present) and `tiredCouriers` [`stationId`, `slot`, `at`] the couriers whose stamina ran out, by station and
   slot, each at the city second it did (part H; `04` §11).
   `stallReason` keeps its values; a courier station without couriers is `NoWorkers`, a warehouse or science building `NoRecipe`.
@@ -297,7 +299,7 @@ There is no "claim" command, because production and research complete on their o
 | `NO_FREE_COURIER` | 422 | A built courier station, but every courier has a route (CR-0008 D14) |
 | `DELIVERY_QUEUE_FULL` | 422 | The delivery's lines don't fit in the courier's queue, `maxDeliveryLines` (CR-0008 D17) |
 | `ROUTES_LOCKED` | 422 | A route before the city has built the `routeBuilding`, the Scriptorium (CR-0008 D15) |
-| `COURIER_BUSY` | 422 | A route for a courier that still has delivery lines (CR-0008 D19) |
+| `COURIER_BUSY` | 422 | A route for a courier that still has delivery lines (CR-0008 D19); fewer station workers while a removed courier carries goods its store can't take back (M0-C-3) |
 | `DELIVERY_NOT_FOUND` | 422 | The line to cancel is not one of that courier's (CR-0008 D18) |
 | `IDEMPOTENCY_CONFLICT` | 409 | Same `requestId`, different payload |
 | `RATE_LIMITED` | 429 | Too many requests |

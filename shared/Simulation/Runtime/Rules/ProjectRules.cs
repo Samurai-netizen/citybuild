@@ -13,7 +13,7 @@ namespace CityBuilder.Simulation.Rules
     {
         /// <summary>
         /// Starts a building's upgrade at <paramref name="time"/> (<c>04</c> section 8, starting an upgrade): a running cycle (frozen or not)
-        /// ends without output and its inputs go back into the building's own store, even above its limit; then the building is upgrading to
+        /// ends without output and its inputs go back into the building's own store (they fit: they were reserved, M0-C-3); then the building is upgrading to
         /// the next level for that level's upgrade seconds; a courier station's couriers stop (their loads go back). Returns the refunded inputs,
         /// or null when no cycle ran.
         /// </summary>

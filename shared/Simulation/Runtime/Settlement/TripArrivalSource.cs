@@ -10,10 +10,11 @@ namespace CityBuilder.Simulation.Settlement
     /// <summary>
     /// The legs of workers' deliveries (<c>core-instructions/04-simulation-model.md</c>, sections 6 and 18, CR-0008 D21), step 3 of the order at
     /// one second, after building completions: trips whose leg ends at the same second do so in ascending trip id, each fully before the next.
-    /// At the target the load is delivered (<see cref="Deliveries"/>) and what is left goes back into the source's store at that second, even
-    /// above its limit (a returned load); with goods still to fetch the worker walks back to the source, otherwise the trip ends and its worker
-    /// is free. At the source the worker takes the next load, at most the rest, the stock and the trip carry limit, and walks to the target;
-    /// with none to take the trip ends. A leg lasts at least 1 s, so a trip never comes up twice at one second; the source keeps the next end
+    /// At the target the load is delivered (<see cref="Deliveries"/>); what is left ends the sending and the worker carries it back to the
+    /// source, puts back what fits and waits there with the rest (<see cref="TripLeg.Waiting"/>, M0-C-3); with nothing left and goods still to
+    /// fetch the worker walks back to the source, otherwise the trip ends and its worker is free. At the source the worker takes the next
+    /// load, at most the rest, the stock and the trip carry limit, and walks to the target; with none to take the trip ends. A waiting trip
+    /// has no leg to end: <see cref="Rules.HeldLoads"/> puts its goods back as room appears. A leg lasts at least 1 s, so a trip never comes up twice at one second; the source keeps the next end
     /// of a leg instead of scanning the trips at every event.
     /// </summary>
     internal sealed class TripArrivalSource : IEventSource

@@ -529,5 +529,35 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Inspector
             Assert.That(targetModel.TripsText, Is.EqualTo("Incoming 4 Logs from Woodcutter's Hut · 15s"));
             Assert.That(sourceModel.TripsText, Is.EqualTo("Sending 4 Logs to Sawmill · 15s"));
         }
+
+        /// <summary>
+        /// A worker carrying back what the target didn't take shows on the source with its countdown, and one waiting at its full source says
+        /// so; neither shows on the target (M0-C-3).
+        /// </summary>
+        [Test]
+        public void Trips_CarriedBackOrWaiting_ShownOnTheSourceOnly()
+        {
+            Building sawmill = BusySawmill();
+            var woodcutter = new Building(2, new BuildingTypeId("woodcutter"), 2, 0, 1, 2, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
+            var back = new Trip(1, 2, 1, new ItemId("logs"), 3, 10, 35, remaining: 0, leg: TripLeg.ToSource);
+            var waiting = new Trip(2, 2, 1, new ItemId("logs"), 2, 5, 15, remaining: 0, leg: TripLeg.Waiting);
+            var city = new CityState(
+                clock: 20,
+                era: 1,
+                nextBuildingId: 10,
+                purse: 500,
+                buildings: new[] { sawmill, woodcutter },
+                completedResearch: Array.Empty<ResearchId>(),
+                activeResearch: null,
+                roads: Array.Empty<RoadTile>(),
+                nextTripId: 3,
+                trips: new[] { back, waiting });
+
+            BuildingInspectorModel targetModel = BuildingInspectorModel.Create(_content, city, sawmill, Nothing, CommandAvailability.Allowed)!;
+            BuildingInspectorModel sourceModel = BuildingInspectorModel.Create(_content, city, woodcutter, Nothing, CommandAvailability.Allowed)!;
+
+            Assert.That(targetModel.TripsText, Is.EqualTo(string.Empty));
+            Assert.That(sourceModel.TripsText, Is.EqualTo("Bringing back 3 Logs from Sawmill · 15s\nWaiting to put back 2 Logs: no room yet"));
+        }
     }
 }

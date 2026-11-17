@@ -111,7 +111,7 @@ public sealed class CityRepositoryDatabaseTests(PostgresServer server) : Postgre
         Assert.Equal(8, await db.CityBuildings.CountAsync(cancellationToken));
         Assert.Equal(3, await db.CityStores.CountAsync(cancellationToken));
         Assert.Equal(2, await db.CityProjectNeeds.CountAsync(cancellationToken));
-        Assert.Equal(1, await db.CityTrips.CountAsync(cancellationToken));
+        Assert.Equal(2, await db.CityTrips.CountAsync(cancellationToken)); // one on its way, one waiting (M0-C-3)
         Assert.Equal(2, await db.CityCouriers.CountAsync(cancellationToken));
         Assert.Equal(3, await db.CityCourierLoads.CountAsync(cancellationToken));
         Assert.Equal(5, await db.CityRouteActions.CountAsync(cancellationToken));

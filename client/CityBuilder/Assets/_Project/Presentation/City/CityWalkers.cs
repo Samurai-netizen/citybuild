@@ -307,7 +307,10 @@ namespace CityBuilder.Client.Presentation.City
             ShowLoad(entry, courier.Loads.Count > 0 ? courier.Loads[0].Item.Value : null);
         }
 
-        /// <summary>Shows one trip's worker on its current leg: from the source to the target with a load, or back for the next one (CR-0008 D21).</summary>
+        /// <summary>
+        /// Shows one trip's worker on its current leg: from the source to the target with a load, or back (empty for the next one, or with
+        /// what the target didn't take) (CR-0008 D21); a waiting worker stands at the source with its load (M0-C-3).
+        /// </summary>
         private void ShowTrip(CityState city, Trip trip)
         {
             if (!city.TryGetBuilding(trip.SourceId, out Building? source) || !city.TryGetBuilding(trip.TargetId, out Building? target))
@@ -317,7 +320,20 @@ namespace CityBuilder.Client.Presentation.City
 
             Entry entry = EntryFor(TripKey(trip.Id), false);
             entry.Seen = true;
-            if (!(entry.Planned && entry.DepartedAt == trip.DepartedAt && entry.ArrivesAt == trip.ArrivesAt))
+            if (trip.Leg == TripLeg.Waiting)
+            {
+                if (!(entry.Planned && !entry.Walking))
+                {
+                    entry.Planned = true;
+                    entry.Walking = false;
+                    entry.Path = WalkPath.Standing(source!.X, source.Y);
+                }
+
+                ShowLoad(entry, trip.Item.Value);
+                return;
+            }
+
+            if (!(entry.Planned && entry.Walking && entry.DepartedAt == trip.DepartedAt && entry.ArrivesAt == trip.ArrivesAt))
             {
                 entry.Planned = true;
                 EnsurePlanner(city);
@@ -327,7 +343,7 @@ namespace CityBuilder.Client.Presentation.City
                 entry.ArrivesAt = trip.ArrivesAt;
             }
 
-            ShowLoad(entry, trip.Item.Value);
+            ShowLoad(entry, trip.Quantity > 0 ? trip.Item.Value : null);
         }
 
         /// <summary>

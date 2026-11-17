@@ -23,8 +23,7 @@ A type: what it is, why it exists and how it fits (`shared/Simulation/Runtime/Se
 /// <summary>
 /// Trip arrivals (<c>core-instructions/04-simulation-model.md</c>, sections 6 and 18), step 3 of the order at one second, after building
 /// completions: trips that arrive at the same second do so in ascending trip id, each fully before the next. A trip's goods are delivered
-/// to its target (<see cref="Deliveries"/>); what is left goes back into the source's store at that second, even above its limit (a
-/// returned load); the trip ends and its worker is free. Only mutations start trips, so during an advance the set only shrinks, and the
+/// to its target (<see cref="Deliveries"/>); what is left the worker carries back to the source; the trip ends and its worker is free. Only mutations start trips, so during an advance the set only shrinks, and the
 /// source keeps the next arrival instead of scanning the trips at every event.
 /// </summary>
 internal sealed class TripArrivalSource : IEventSource

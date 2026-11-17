@@ -468,6 +468,7 @@ public static class CityMapping
     {
         nameof(TripLeg.ToTarget) => TripLeg.ToTarget,
         nameof(TripLeg.ToSource) => TripLeg.ToSource,
+        nameof(TripLeg.Waiting) => TripLeg.Waiting,
         _ => throw new ArgumentException($"Trip {row.TripId} has the leg '{row.Leg}', which no trip has."),
     };
 

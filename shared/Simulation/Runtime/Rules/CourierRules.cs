@@ -18,7 +18,7 @@ namespace CityBuilder.Simulation.Rules
     {
         /// <summary>
         /// Sets the route of a station's slot (0 stops clears it). The slot's courier, if the slot has one, gives its load back to where each
-        /// part came from (a returned load, even above a limit) and stands at its station; a resting one keeps resting (<c>04</c> section 19).
+        /// part came from (a returned load, at most the room; the rest stays on the courier, M0-C-3) and stands at its station; a resting one keeps resting (<c>04</c> section 19).
         /// It leaves for the first stop in the request's zero-length advance. Goods only move, so the result spends and refunds nothing.
         /// </summary>
         /// <param name="city">The city, settled to now.</param>

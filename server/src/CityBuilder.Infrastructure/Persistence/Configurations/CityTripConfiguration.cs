@@ -13,7 +13,7 @@ public sealed class CityTripConfiguration : IEntityTypeConfiguration<CityTripRow
         builder.ToTable("city_trips", table =>
         {
             table.HasCheckConstraint(
-                "ck_city_trips_quantity", "(leg = 'ToTarget' and quantity > 0) or (leg = 'ToSource' and quantity = 0 and remaining > 0)");
+                "ck_city_trips_quantity", "(leg = 'ToTarget' and quantity > 0) or (leg = 'ToSource' and ((quantity = 0 and remaining > 0) or (quantity > 0 and remaining = 0))) or (leg = 'Waiting' and quantity > 0 and remaining = 0)");
             table.HasCheckConstraint("ck_city_trips_remaining", "remaining >= 0");
             table.HasCheckConstraint("ck_city_trips_arrives_at", "arrives_at > departed_at");
         });

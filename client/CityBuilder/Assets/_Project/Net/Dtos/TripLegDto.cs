@@ -14,8 +14,12 @@ namespace CityBuilder.Client.Net
         [EnumMember(Value = "ToTarget")]
         ToTarget,
 
-        /// <summary>Back to the source for the next load, carrying nothing.</summary>
+        /// <summary>Back to the source: for the next load carrying nothing, or carrying what the target didn't take (M0-C-3).</summary>
         [EnumMember(Value = "ToSource")]
         ToSource,
+
+        /// <summary>At the source with goods its full store can't take yet; it puts them back as room appears (M0-C-3).</summary>
+        [EnumMember(Value = "Waiting")]
+        Waiting,
     }
 }

@@ -82,8 +82,8 @@ public sealed class CityMappingTests
             [(CityId, IdleId, "planks", 5L), (CityId, SiteId, "logs", 10L)],
             rows.ProjectNeeds.Select(row => (row.CityId, row.BuildingId, row.ItemId, row.Quantity)));
         Assert.Equal(
-            [(CityId, 1, ProducingId, IdleId, "logs", 2L, 410L, 430L)],
-            rows.Trips.Select(row => (row.CityId, row.TripId, row.SourceId, row.TargetId, row.ItemId, row.Quantity, row.DepartedAt, row.ArrivesAt)));
+            [(CityId, 1, ProducingId, IdleId, "logs", 2L, 410L, 430L, "ToTarget"), (CityId, 2, ProducingId, IdleId, "logs", 3L, 380L, 400L, "Waiting")],
+            rows.Trips.Select(row => (row.CityId, row.TripId, row.SourceId, row.TargetId, row.ItemId, row.Quantity, row.DepartedAt, row.ArrivesAt, row.Leg)));
         Assert.Empty(rows.ResearchNeeds);
         Assert.Equal([(CityId, "masonry", 120L)], rows.Research.Select(row => (row.CityId, row.ResearchId, row.CompletedAt)));
     }

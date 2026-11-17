@@ -33,6 +33,6 @@ public sealed class CityTripRow
     /// <summary><c>remaining</c>: how many of the delivery are still to be fetched from the source by later loads, at least 0 (CR-0008 D21).</summary>
     public long Remaining { get; set; }
 
-    /// <summary><c>leg</c>: <c>ToTarget</c> or <c>ToSource</c>, as the API spells it.</summary>
+    /// <summary><c>leg</c>: <c>ToTarget</c>, <c>ToSource</c> or <c>Waiting</c> (M0-C-3), as the API spells it.</summary>
     public string Leg { get; set; } = "ToTarget";
 }

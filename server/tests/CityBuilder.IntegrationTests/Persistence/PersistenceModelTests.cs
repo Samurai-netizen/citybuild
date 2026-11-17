@@ -212,7 +212,7 @@ public sealed partial class PersistenceModelTests
                 ("city_route_actions", "ck_city_route_actions_stop_index", "stop_index >= 0"),
                 ("city_stores", "ck_city_stores_quantity", "quantity >= 0"),
                 ("city_trips", "ck_city_trips_arrives_at", "arrives_at > departed_at"),
-                ("city_trips", "ck_city_trips_quantity", "(leg = 'ToTarget' and quantity > 0) or (leg = 'ToSource' and quantity = 0 and remaining > 0)"),
+                ("city_trips", "ck_city_trips_quantity", "(leg = 'ToTarget' and quantity > 0) or (leg = 'ToSource' and ((quantity = 0 and remaining > 0) or (quantity > 0 and remaining = 0))) or (leg = 'Waiting' and quantity > 0 and remaining = 0)"),
                 ("city_trips", "ck_city_trips_remaining", "remaining >= 0"),
             ],
             Tables().SelectMany(t => t.CheckConstraints.Select(c => (t.Name, c.Name, c.Sql)))

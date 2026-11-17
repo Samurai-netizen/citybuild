@@ -134,7 +134,7 @@ namespace CityBuilder.Client.Presentation.Feedback
                     message = "Build a Scriptorium first for repeating routes";
                     return true;
                 case ApiErrorCodes.CourierBusy:
-                    message = "That courier still has deliveries. Cancel them first";
+                    message = "That courier is busy: it has deliveries or goods to put back";
                     return true;
                 case ApiErrorCodes.DeliveryNotFound:
                     message = "That delivery is already done";

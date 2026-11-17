@@ -153,7 +153,7 @@ namespace CityBuilder.Client.Net
                 highestTripId = Math.Max(highestTripId, trip.Id);
                 trips.Add(new Trip(
                     trip.Id, trip.SourceId, trip.TargetId, new ItemId(trip.ItemId), trip.Quantity, trip.DepartedAt, trip.ArrivesAt, trip.Remaining,
-                    trip.Leg == TripLegDto.ToSource ? TripLeg.ToSource : TripLeg.ToTarget));
+                    trip.Leg == TripLegDto.ToSource ? TripLeg.ToSource : trip.Leg == TripLegDto.Waiting ? TripLeg.Waiting : TripLeg.ToTarget));
             }
 
             int highestLineId = 0;
