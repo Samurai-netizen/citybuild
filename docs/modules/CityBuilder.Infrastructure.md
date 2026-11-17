@@ -94,7 +94,8 @@ loaded city's changes merge, a used-up store row staying at 0 and removed roads'
 exception inside), `Persistence/CityTransactionDatabaseTests` (the runner: an exception after the writes rolls back the city, the ledger and
 the receipt and frees the lock; a version changed without the lock is a conflict, rolled back, and leaves nothing staged for a later save; two transactions on one city serialize, the
 second seeing the first's commit; a lock wait beyond the timeout is a conflict caused by `55P03`; the default timeout is 3 s; a request can't
-lock a second city, through the runner or the repository; one transaction per request), `Persistence/SettleCityDatabaseTests` (`SettleCity`
+lock a second city, through the runner or the repository; one transaction per request; player events recorded without a city save are
+stored in order while `state_version` stays, and none of a work that throws, CR-0009-T1), `Persistence/SettleCityDatabaseTests` (`SettleCity`
 through the server: the starter city after 0 s, 30 s and 2 h, saved only when time passed; a 1-hour research left alone for 30 h, its
 `city_research` clock and the same ledger totals as a settle at 8 h 2 min; ledger sums equal the total deltas over four settles; repeated settles
 at one instant change no row; a settle on a restarted host continues as one settle would; helpers in `Persistence/DatabaseCities`),

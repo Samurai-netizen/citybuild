@@ -110,13 +110,16 @@ BEGIN
   settle → mutate (if command) → zero-length advance
   UPDATE cities SET …, state_version = state_version + 1 WHERE id = @c AND state_version = @v
   upsert buildings, upsert stores, merge needs, research needs, roads and trips (insert, update, delete), insert research completions,
-  insert ledger rows, insert receipt
+  insert ledger rows, insert receipt, insert player_events (those recorded so far)
+  (after the work) insert player_events recorded without a city save, or after it  -- CR-0009; the cities row is not touched
 COMMIT
 ```
 
-- **Nothing changed** (no time elapsed, the same content, nothing produced, consumed, completed or started): nothing is written, so
-  `state_version` and `updated_at` stay; the transaction commits empty. Repeated settles at one instant are free of writes.
-- **Business-rule rejection:** the settlement is committed (time passed is real), but there is no mutation and no receipt.
+- **Nothing changed** (no time elapsed, the same content, nothing produced, consumed, completed or started): the city is not written, so
+  `state_version` and `updated_at` stay. The transaction commits empty, unless the work recorded a player event (CR-0009): then only its
+  `player_events` rows are inserted. Repeated settles at one instant write no city rows.
+- **Business-rule rejection:** the settlement is committed (time passed is real), but there is no mutation and no receipt. Its
+  `command.<type>` event is written: with the settlement's save, or alone at an instant where nothing else changed (`state_version` stays).
 - **Unexpected exception:** full rollback; nothing is committed.
 - **Unique violation on the receipt insert** (two identical requests raced): roll back, read the stored receipt, return it (a different
   payload hash: `IDEMPOTENCY_CONFLICT`; no receipt behind it: the exception propagates).
@@ -129,7 +132,9 @@ COMMIT
   write path (a bug) into a loud failure instead of a silent lost update.
 - **One entry point (M0-22):** a use case changes a city only through `ICityTransactionRunner.RunAsync(playerId, work)`: it begins the
   transaction, takes the lock and loads the city, runs the work (which saves the city once, `CityTransaction.SaveAsync`), and commits when
-  the work returns; an exception rolls everything back. A request runs it once, so it never locks a second city; the repository also
+  the work returns; an exception rolls everything back. The player events the work records (`CityTransaction.Record`, CR-0009) are
+  written with that save; those recorded without a save, or after it, are written by the runner after the work and before the commit
+  (`CityTransaction.FlushEventsAsync`). So an event exists exactly when its transaction commits. A request runs it once, so it never locks a second city; the repository also
   refuses a load outside a transaction or of a second city; a rollback leaves nothing staged for a later save (M0-24). A lock timeout and a
   stale `state_version` both surface as
   `ConcurrencyConflictException`, which the API maps to `CONCURRENCY_CONFLICT`. The modules: `docs/modules/CityBuilder.Application.md`,
