@@ -8,7 +8,7 @@
 - **State:** IDLE <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** —
 - **Part / step:** —
-- **Last completed:** M0-B (branch `task/M0-B-security-suites`, PR in review; log `docs/build-log/2026/2026-11-17-01-M0-B.md`)
+- **Last completed:** M0-B (branch `task/M0-B-security-suites`, PR #99 in review; log `docs/build-log/2026/2026-11-17-01-M0-B.md`)
 - **Next step:** after the owner merges M0-B: `/start-task M0-C` (smoke checklist, playtest, bug triage, invariant coverage; [MANUAL]).
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. CR-0012 (approved) runs after M0-D.
 - **Known broken / do not touch:** nothing.
