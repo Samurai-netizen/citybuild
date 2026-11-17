@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 using CityBuilder.Infrastructure.Content;
 using CityBuilder.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -119,9 +120,34 @@ public static class CommandLine
             return DatabaseError;
         }
 
-        _ = (checkpoints, data);
-        error.WriteLine("MetricsReport: the page is not built yet (CR-0009-T2 in progress).");
-        return BadInput;
+        DateTimeOffset clock = TimeProvider.System.GetUtcNow();
+        var context = ReportContext.Create(data, clock, settings.LeftAfterDays, settings.MinSample);
+        OnePlayerTimeline? player = null;
+        if (settings.Player is Guid playerId)
+        {
+            player = OnePlayer.Build(context, playerId);
+            if (player is null)
+            {
+                error.WriteLine("MetricsReport: --player names no player of the population (check the id, the period and --exclude).");
+                return BadInput;
+            }
+        }
+
+        string page = HtmlReport.Render(
+            context, checkpoints, new ReportSettings(settings.From, settings.To, settings.Exclude.Count, clock), player);
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(settings.OutPath)!);
+            File.WriteAllText(settings.OutPath, page, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            error.WriteLine("MetricsReport: the page can't be written: " + exception.Message);
+            return BadInput;
+        }
+
+        output.WriteLine(settings.OutPath);
+        return Success;
     }
 
     /// <summary>Loads the data from a database.</summary>
