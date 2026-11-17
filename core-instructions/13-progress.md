@@ -7,9 +7,9 @@
 ## Resume point
 - **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M0-D (M0-80, M0-82, M0-83, M0-84) · branch `task/M0-D-freeze-build-audit-closeout` · log `docs/build-log/2026/2026-11-17-03-M0-D.md`
-- **Part / step:** A (M0-80 code-freeze review) · parts A review, B dev build, C audit, D close-out
+- **Part / step:** B (M0-82 development build) · A done (review: 1 gap, auth tests added)
 - **Last completed:** M0-C (PR #100, merged)
-- **Next step:** part A: walk the M0-80 checklist over `server/`, `shared/`, `client/`; findings into the build log; fix high-risk only.
+- **Next step:** part B: build settings (server URL per build, HTTP only in dev builds, link.xml), `docs/BUILD.md`, [MANUAL] build with the owner.
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. CR-0012 (approved) runs after M0-D.
 - **Known broken / do not touch:** nothing.
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
