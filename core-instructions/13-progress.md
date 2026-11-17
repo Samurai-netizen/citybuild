@@ -7,7 +7,7 @@
 ## Resume point
 - **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M0-B (M0-73, M0-74, M0-75, M0-77, M0-78) · branch `task/M0-B-security-suites` · log `docs/build-log/2026/2026-11-17-01-M0-B.md`
-- **Part / step:** A, B, C done (last green 023a7ac) · next D (M0-77 clean-clone test) · then E M0-78
+- **Part / step:** A, B, C done (last green 023a7ac) · D in progress (findings in the log) · then E M0-78
 - **Last completed:** M0-A (PR #98, merged)
 - **Next step:** part D: clone the repo into a fresh temp directory (scratchpad), follow `README.md` literally (test list in the log entry); fix `README.md`, `docs/getting-started.md` or `scripts/dev/` where a step is missing or fails; log each fix.
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. CR-0012 (approved) runs after M0-D.
