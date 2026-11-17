@@ -11,7 +11,7 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
-- [BL-20261117-02 · M0-C · Smoke checklist and playtest, bug triage, invariant coverage](2026/2026-11-17-02-M0-C.md) — In progress
+- [BL-20261117-02 · M0-C · Smoke checklist and playtest, bug triage, invariant coverage](2026/2026-11-17-02-M0-C.md) — Done
 - [BL-20261117-01 · M0-B · HTTP, attack and concurrency suites, clean clone, security report](2026/2026-11-17-01-M0-B.md) — Done
 - [BL-20261116-03 · M0-A · Balance: strategy runs, content validation, approved number changes](2026/2026-11-16-03-M0-A.md) — Done
 - [BL-20261116-02 · CR-0010-T1 · Workflow v2 in the kit, and the M1 plan proposal](2026/2026-11-16-02-CR-0010-T1.md) — Done
