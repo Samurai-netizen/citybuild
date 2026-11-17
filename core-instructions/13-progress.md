@@ -7,9 +7,9 @@
 ## Resume point
 - **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M0-B (M0-73, M0-74, M0-75, M0-77, M0-78) · branch `task/M0-B-security-suites` · log `docs/build-log/2026/2026-11-17-01-M0-B.md`
-- **Part / step:** A done (commit 2084306) · next B (M0-74 attack suite) / red tests · then C M0-75, D M0-77, E M0-78
+- **Part / step:** A, B done (last green 5569628) · next C (M0-75 concurrency suite) / race tests · then D M0-77, E M0-78
 - **Last completed:** M0-A (PR #98, merged)
-- **Next step:** part B: write `server/tests/CityBuilder.IntegrationTests/Security/AttackTests.cs` (test list in the log entry), run it alone with `test.sh int-db AttackTests`.
+- **Next step:** part C: write `server/tests/CityBuilder.IntegrationTests/Concurrency/RaceTests.cs` (test list in the log entry), run it alone with `test.sh int-db RaceTests`; fix any race found (regression test first).
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. CR-0012 (approved) runs after M0-D.
 - **Known broken / do not touch:** nothing.
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
