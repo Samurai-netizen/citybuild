@@ -1,3 +1,4 @@
+using CityBuilder.Application.Metrics;
 using CityBuilder.Domain.Ledger;
 using CityBuilder.Simulation;
 using CityBuilder.Simulation.Content;
@@ -72,4 +73,8 @@ public sealed record StartTripCommand(Guid RequestId, int SourceId, int TargetId
             Simulation.State.Amount.TryParse(Amount, out Amount? amount)
                 ? amount
                 : throw new InvalidOperationException("The amount's shape was not checked before the command was applied."));
+
+    /// <summary>The good carried, when the content has it.</summary>
+    /// <inheritdoc />
+    public string? EventDetail(CityState city, GameContent content) => CommandEvents.Item(content, ItemId);
 }

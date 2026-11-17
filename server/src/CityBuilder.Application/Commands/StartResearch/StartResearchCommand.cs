@@ -1,3 +1,4 @@
+using CityBuilder.Application.Metrics;
 using CityBuilder.Domain.Ledger;
 using CityBuilder.Simulation;
 using CityBuilder.Simulation.Content;
@@ -41,4 +42,8 @@ public sealed record StartResearchCommand(Guid RequestId, string ResearchId) : I
     /// <inheritdoc />
     public MutationResult Apply(CityState city, GameContent content) =>
         CityRules.StartResearch(city, content, new ResearchId(ResearchId));
+
+    /// <summary>The research node, when the content has it.</summary>
+    /// <inheritdoc />
+    public string? EventDetail(CityState city, GameContent content) => CommandEvents.Research(content, ResearchId);
 }

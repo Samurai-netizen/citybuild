@@ -33,4 +33,8 @@ public sealed record ReenergizeCouriersCommand(Guid RequestId) : ICityCommand
 
     /// <inheritdoc />
     public MutationResult Apply(CityState city, GameContent content) => CourierRules.ReenergizeCouriers(city, content);
+
+    /// <summary>None: the command has no data.</summary>
+    /// <inheritdoc />
+    public string? EventDetail(CityState city, GameContent content) => null;
 }

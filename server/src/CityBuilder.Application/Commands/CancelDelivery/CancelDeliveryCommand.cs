@@ -43,4 +43,8 @@ public sealed record CancelDeliveryCommand(Guid RequestId, int StationId, int Sl
 
     /// <inheritdoc />
     public MutationResult Apply(CityState city, GameContent content) => CourierRules.CancelDelivery(city, content, StationId, Slot, LineId);
+
+    /// <summary>None: a delivery slot is no content id.</summary>
+    /// <inheritdoc />
+    public string? EventDetail(CityState city, GameContent content) => null;
 }

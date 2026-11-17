@@ -32,4 +32,8 @@ public sealed record RemoveRoadsCommand(Guid RequestId, IReadOnlyList<CommandTil
 
     /// <inheritdoc />
     public MutationResult Apply(CityState city, GameContent content) => RoadRules.RemoveRoads(city, content, RoadTileList.ToEngine(Tiles));
+
+    /// <summary>None: tiles are no content id.</summary>
+    /// <inheritdoc />
+    public string? EventDetail(CityState city, GameContent content) => null;
 }

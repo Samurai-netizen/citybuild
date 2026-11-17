@@ -73,6 +73,17 @@ internal static class DatabaseCommands
         $"\"serverTime\":{success.ServerTime.ToUnixTimeSeconds()},\"clock\":{success.City.State.Clock}," +
         $"\"buildings\":{success.City.State.Buildings.Count}}}");
 
+    /// <summary>The player's stored player events (CR-0009), in the order they were written.</summary>
+    /// <param name="database">The test's database.</param>
+    /// <param name="playerId">The player.</param>
+    /// <returns>The rows.</returns>
+    public static async Task<List<PlayerEventRow>> PlayerEventsAsync(TestDatabase database, Guid playerId)
+    {
+        await using CityBuilderDbContext db = database.CreateContext();
+        return await db.PlayerEvents.AsNoTracking().Where(row => row.PlayerId == playerId).OrderBy(row => row.Id)
+            .ToListAsync(TestContext.Current.CancellationToken);
+    }
+
     /// <summary>The stored receipts of a player, by request id, read by a context of the test's own.</summary>
     /// <param name="database">The test's database.</param>
     /// <param name="playerId">The player.</param>
@@ -98,9 +109,11 @@ internal static class DatabaseCommands
         CityAggregate city = await LoadAsync(factory, playerId);
         IEnumerable<string> ledger = (await LedgerAsync(database, cityId)).Select(row =>
             string.Create(CultureInfo.InvariantCulture, $"{row.Id} {row.ItemId} {row.Delta} {row.BalanceAfter} {row.Reason} {row.RefType} {row.RefId}"));
+        IEnumerable<string> events = (await PlayerEventsAsync(database, playerId)).Select(row =>
+            string.Create(CultureInfo.InvariantCulture, $"event {row.EventType} {row.Detail} {row.Outcome} {row.Value} {row.CityClock}"));
         IEnumerable<string> receipts = (await ReceiptsAsync(database, playerId))
             .Select(row => ReceiptLine(row.RequestId, row.CommandType, row.PayloadHash, row.ResponseJson));
-        return string.Join("\n", [$"version {city.StateVersion}", StateOf(city), .. ledger, .. receipts]);
+        return string.Join("\n", [$"version {city.StateVersion}", StateOf(city), .. ledger, .. events, .. receipts]);
     }
 
     /// <summary>The line <see cref="StoredAsync"/> writes for one receipt, so a test can name the receipt it expects there.</summary>

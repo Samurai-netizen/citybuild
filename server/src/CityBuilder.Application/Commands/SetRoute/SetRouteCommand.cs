@@ -142,4 +142,8 @@ public sealed record SetRouteCommand(Guid RequestId, int StationId, int Slot, IR
                 Amount.TryParse(action.Amount, out Amount? amount)
                     ? amount
                     : throw new InvalidOperationException("The route's shape was not checked before the command was applied."))));
+
+    /// <summary>None: a route names a station and several stops, no one content id.</summary>
+    /// <inheritdoc />
+    public string? EventDetail(CityState city, GameContent content) => null;
 }

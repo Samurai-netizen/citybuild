@@ -87,6 +87,9 @@ public sealed class CommandPayloadTests
 
         /// <inheritdoc />
         public MutationResult Apply(CityState city, GameContent content) => throw new NotSupportedException("Only hashed.");
+
+        /// <inheritdoc />
+        public string? EventDetail(CityState city, GameContent content) => throw new NotSupportedException("Only hashed.");
     }
 
     /// <summary><see cref="PlaceTestCommand"/>'s data under another command type; it is only hashed.</summary>
@@ -110,5 +113,8 @@ public sealed class CommandPayloadTests
 
         /// <inheritdoc />
         public MutationResult Apply(CityState city, GameContent content) => throw new NotSupportedException("Only hashed.");
+
+        /// <inheritdoc />
+        public string? EventDetail(CityState city, GameContent content) => throw new NotSupportedException("Only hashed.");
     }
 }

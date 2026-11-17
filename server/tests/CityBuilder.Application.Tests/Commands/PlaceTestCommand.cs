@@ -1,3 +1,4 @@
+using CityBuilder.Application.Metrics;
 using CityBuilder.Application.Commands;
 using CityBuilder.Domain.Ledger;
 using CityBuilder.Simulation;
@@ -36,4 +37,8 @@ internal sealed record PlaceTestCommand(Guid RequestId, string BuildingTypeId, i
     /// <inheritdoc />
     public MutationResult Apply(CityState city, GameContent content) =>
         CityRules.PlaceBuilding(city, content, new BuildingTypeId(BuildingTypeId), X, Y);
+
+    /// <summary>The building type to place, when the content has it.</summary>
+    /// <inheritdoc />
+    public string? EventDetail(CityState city, GameContent content) => CommandEvents.BuildingType(content, BuildingTypeId);
 }

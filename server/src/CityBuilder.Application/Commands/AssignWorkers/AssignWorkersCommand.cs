@@ -1,3 +1,4 @@
+using CityBuilder.Application.Metrics;
 using CityBuilder.Domain.Ledger;
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.Rules;
@@ -41,4 +42,8 @@ public sealed record AssignWorkersCommand(Guid RequestId, int BuildingId, int Wo
 
     /// <inheritdoc />
     public MutationResult Apply(CityState city, GameContent content) => CityRules.AssignWorkers(city, content, BuildingId, Workers);
+
+    /// <summary>The type of the building, when the city has it.</summary>
+    /// <inheritdoc />
+    public string? EventDetail(CityState city, GameContent content) => CommandEvents.BuildingTypeOf(city, BuildingId);
 }

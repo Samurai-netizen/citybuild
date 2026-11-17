@@ -33,4 +33,8 @@ public sealed record PlaceRoadsCommand(Guid RequestId, IReadOnlyList<CommandTile
 
     /// <inheritdoc />
     public MutationResult Apply(CityState city, GameContent content) => RoadRules.PlaceRoads(city, content, RoadTileList.ToEngine(Tiles));
+
+    /// <summary>None: tiles are no content id.</summary>
+    /// <inheritdoc />
+    public string? EventDetail(CityState city, GameContent content) => null;
 }
