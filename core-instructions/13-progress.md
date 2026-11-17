@@ -6,7 +6,7 @@
 
 ## Resume point
 - **State:** IDLE <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (CR-0009-T1 in review: PR open, branch `task/CR-0009-T1-recording`)
+- **Task:** — (CR-0009-T1 in review: PR #102, branch `task/CR-0009-T1-recording`)
 - **Part / step:** —
 - **Last completed:** CR-0009-T1 (player metrics: recording; `In review`)
 - **Next step:** the owner reviews and merges the CR-0009-T1 PR; then CR-0009-T2 (the report, needs T1 merged) or CR-0012-T1 (owner's call). Owner, any time: the APK on a phone (`docs/BUILD.md`).
