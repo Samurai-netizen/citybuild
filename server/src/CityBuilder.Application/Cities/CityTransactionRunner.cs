@@ -1,3 +1,4 @@
+using CityBuilder.Application.Metrics;
 using CityBuilder.Application.Persistence;
 
 namespace CityBuilder.Application.Cities;
@@ -10,13 +11,17 @@ namespace CityBuilder.Application.Cities;
 /// </summary>
 /// <param name="cities">The stored cities.</param>
 /// <param name="unitOfWork">The request's unit of work: the transaction and the writes.</param>
+/// <param name="playerEvents">The request's player events (CR-0009).</param>
 /// <exception cref="ArgumentNullException">A parameter is null.</exception>
-public sealed class CityTransactionRunner(ICityRepository cities, IUnitOfWork unitOfWork) : ICityTransactionRunner
+public sealed class CityTransactionRunner(ICityRepository cities, IUnitOfWork unitOfWork, IPlayerEventRepository playerEvents)
+    : ICityTransactionRunner
 {
     /// <summary>Locks and loads the acting player's city.</summary>
     private readonly ICityRepository _cities = cities ?? throw new ArgumentNullException(nameof(cities));
     /// <summary>Begins and commits the transaction, and writes the saved city.</summary>
     private readonly IUnitOfWork _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+    /// <summary>Stages the player events the work records.</summary>
+    private readonly IPlayerEventRepository _playerEvents = playerEvents ?? throw new ArgumentNullException(nameof(playerEvents));
     /// <summary>Whether this runner has run; a request runs one city transaction.</summary>
     private bool _hasRun;
 
@@ -35,7 +40,7 @@ public sealed class CityTransactionRunner(ICityRepository cities, IUnitOfWork un
         _hasRun = true;
         await using IUnitOfWorkTransaction transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
         CityAggregate city = await _cities.LoadForUpdateAsync(playerId, cancellationToken);
-        var cityTransaction = new CityTransaction(city, _cities, _unitOfWork);
+        var cityTransaction = new CityTransaction(city, _cities, _unitOfWork, _playerEvents);
         try
         {
             TResult result = await work(cityTransaction, cancellationToken);

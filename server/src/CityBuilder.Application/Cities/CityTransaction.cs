@@ -1,6 +1,8 @@
+using CityBuilder.Application.Metrics;
 using CityBuilder.Application.Persistence;
 using CityBuilder.Domain.Commands;
 using CityBuilder.Domain.Ledger;
+using CityBuilder.Domain.Metrics;
 
 namespace CityBuilder.Application.Cities;
 
@@ -14,6 +16,8 @@ public sealed class CityTransaction
     private readonly ICityRepository _cities;
     /// <summary>Writes the staged rows inside the transaction.</summary>
     private readonly IUnitOfWork _unitOfWork;
+    /// <summary>Stages the player events.</summary>
+    private readonly IPlayerEventRepository _playerEvents;
     /// <summary>Whether the work has returned or thrown; the city can't be saved after that.</summary>
     private bool _closed;
 
@@ -21,11 +25,13 @@ public sealed class CityTransaction
     /// <param name="city">The locked city.</param>
     /// <param name="cities">The repository that loaded it.</param>
     /// <param name="unitOfWork">The unit of work of the transaction.</param>
-    internal CityTransaction(CityAggregate city, ICityRepository cities, IUnitOfWork unitOfWork)
+    /// <param name="playerEvents">The player events of the transaction.</param>
+    internal CityTransaction(CityAggregate city, ICityRepository cities, IUnitOfWork unitOfWork, IPlayerEventRepository playerEvents)
     {
         City = city;
         _cities = cities;
         _unitOfWork = unitOfWork;
+        _playerEvents = playerEvents;
     }
 
     /// <summary>The acting player's city, loaded under its row lock; the work changes it in place.</summary>
@@ -57,6 +63,10 @@ public sealed class CityTransaction
         _cities.Save(City, ledger, receipt);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
+
+    /// <summary>Records a player event of the city's player (CR-0009): written in this transaction, so only when it commits.</summary>
+    /// <param name="playerEvent">The event.</param>
+    public void Record(PlayerEvent playerEvent) => throw new NotImplementedException();
 
     /// <summary>Ends the transaction's work: <see cref="SaveAsync"/> throws from now on.</summary>
     internal void Close() => _closed = true;

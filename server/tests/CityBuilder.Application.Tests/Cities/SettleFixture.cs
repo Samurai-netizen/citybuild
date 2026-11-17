@@ -309,7 +309,7 @@ internal static class SettleFixture
         /// <summary>Runs the work with a new runner, as a new request would.</summary>
         public Task<TResult> RunAsync<TResult>(
             Guid playerId, Func<CityTransaction, CancellationToken, Task<TResult>> work, CancellationToken cancellationToken) =>
-            new CityTransactionRunner(repository, repository).RunAsync(playerId, work, cancellationToken);
+            new CityTransactionRunner(repository, repository, repository).RunAsync(playerId, work, cancellationToken);
     }
 
     /// <summary>An <see cref="IContentProvider"/> that serves the given content.</summary>
