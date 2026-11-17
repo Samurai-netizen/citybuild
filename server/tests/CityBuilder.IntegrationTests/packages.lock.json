@@ -678,6 +678,13 @@
       "citybuilder.simulation": {
         "type": "Project"
       },
+      "metricsreport": {
+        "type": "Project",
+        "dependencies": {
+          "CityBuilder.Infrastructure": "[1.0.0, )",
+          "CityBuilder.Simulation": "[1.0.0, )"
+        }
+      },
       "Microsoft.AspNetCore.Authentication.JwtBearer": {
         "type": "CentralTransitive",
         "requested": "[10.0.12, )",

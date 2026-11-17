@@ -1,4 +1,8 @@
 using System.Globalization;
+using CityBuilder.Infrastructure.Content;
+using CityBuilder.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace CityBuilder.MetricsReport;
 
@@ -46,12 +50,24 @@ public static class CommandLine
         bool Help, string OutPath, string CheckpointsPath, string ContentPath, DateOnly? From, DateOnly? To,
         IReadOnlyList<string> Exclude, int LeftAfterDays, int MinSample, Guid? Player);
 
-    /// <summary>Runs the tool.</summary>
+    /// <summary>The environment variable that holds the connection string (the API's key; never an argument: the process list shows those).</summary>
+    public const string ConnectionVariable = "ConnectionStrings__CityBuilder";
+
+    /// <summary>Runs the tool on the database of <see cref="ConnectionVariable"/>.</summary>
     /// <param name="args">The command line.</param>
     /// <param name="output">Where the written path goes.</param>
     /// <param name="error">Where errors and the usage go.</param>
     /// <returns>An exit code.</returns>
-    public static int Run(IReadOnlyList<string> args, TextWriter output, TextWriter error)
+    public static int Run(IReadOnlyList<string> args, TextWriter output, TextWriter error) =>
+        Run(args, output, error, Environment.GetEnvironmentVariable(ConnectionVariable));
+
+    /// <summary>Runs the tool on a database.</summary>
+    /// <param name="args">The command line.</param>
+    /// <param name="output">Where the written path goes.</param>
+    /// <param name="error">Where errors and the usage go.</param>
+    /// <param name="connectionString">The database's connection string, or none.</param>
+    /// <returns>An exit code.</returns>
+    public static int Run(IReadOnlyList<string> args, TextWriter output, TextWriter error, string? connectionString)
     {
         ArgumentNullException.ThrowIfNull(args);
         ArgumentNullException.ThrowIfNull(output);
@@ -75,8 +91,47 @@ public static class CommandLine
             return Success;
         }
 
-        error.WriteLine("MetricsReport: the report is not built yet (CR-0009-T2 in progress).");
+        CheckpointFile checkpoints;
+        try
+        {
+            checkpoints = CheckpointFile.Load(settings.CheckpointsPath, ContentFileLoader.Load(settings.ContentPath));
+        }
+        catch (Exception exception) when (exception is CheckpointFileException or ContentLoadException)
+        {
+            error.WriteLine(exception.Message);
+            return BadInput;
+        }
+
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            error.WriteLine($"MetricsReport: set the environment variable {ConnectionVariable} to the database's connection string.");
+            return DatabaseError;
+        }
+
+        MetricsData data;
+        try
+        {
+            data = Load(connectionString, new LoadFilter(settings.From, settings.To, settings.Exclude));
+        }
+        catch (Exception exception) when (exception is MetricsDatabaseException or NpgsqlException or ArgumentException)
+        {
+            error.WriteLine("MetricsReport: the database can't be read: " + exception.Message);
+            return DatabaseError;
+        }
+
+        _ = (checkpoints, data);
+        error.WriteLine("MetricsReport: the page is not built yet (CR-0009-T2 in progress).");
         return BadInput;
+    }
+
+    /// <summary>Loads the data from a database.</summary>
+    /// <param name="connectionString">The database's connection string.</param>
+    /// <param name="filter">The period and the excluded dev names.</param>
+    /// <returns>The data.</returns>
+    private static MetricsData Load(string connectionString, LoadFilter filter)
+    {
+        using var db = new CityBuilderDbContext(new DbContextOptionsBuilder<CityBuilderDbContext>().UseNpgsql(connectionString).Options);
+        return MetricsLoader.LoadAsync(db, filter, CancellationToken.None).GetAwaiter().GetResult();
     }
 
     /// <summary>Reads the command line.</summary>

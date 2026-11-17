@@ -1,11 +1,10 @@
 extern alias MetricsTool;
-
 using CityBuilder.Infrastructure.Persistence;
 using CityBuilder.Infrastructure.Persistence.Rows;
 using CityBuilder.IntegrationTests.Postgres;
+using MetricsTool::CityBuilder.MetricsReport;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using MetricsTool::CityBuilder.MetricsReport;
 using Npgsql;
 
 namespace CityBuilder.IntegrationTests.Metrics;
@@ -224,8 +223,16 @@ public sealed class MetricsLoaderTests(PostgresServer server) : PostgresTest(ser
         db.Players.Add(new PlayerRow { Id = id, DevName = devName, CreatedAt = createdAt });
         db.Cities.Add(new CityRow
         {
-            Id = cityId, PlayerId = id, Era = 1, LastSettledUnix = lastSeen.ToUnixTimeSeconds(), LastSeenUnix = lastSeen.ToUnixTimeSeconds(),
-            NextBuildingId = 1, StateVersion = 1, ContentVersion = "mvp-3", CreatedAt = createdAt, UpdatedAt = lastSeen,
+            Id = cityId,
+            PlayerId = id,
+            Era = 1,
+            LastSettledUnix = lastSeen.ToUnixTimeSeconds(),
+            LastSeenUnix = lastSeen.ToUnixTimeSeconds(),
+            NextBuildingId = 1,
+            StateVersion = 1,
+            ContentVersion = "mvp-3",
+            CreatedAt = createdAt,
+            UpdatedAt = lastSeen,
         });
         return cityId;
     }
@@ -243,7 +250,13 @@ public sealed class MetricsLoaderTests(PostgresServer server) : PostgresTest(ser
         CityBuilderDbContext db, Guid player, string type, string? detail, string? outcome, long? value, long cityClock, DateTimeOffset at) =>
         db.PlayerEvents.Add(new PlayerEventRow
         {
-            PlayerId = player, EventType = type, Detail = detail, Outcome = outcome, Value = value, CityClock = cityClock, CreatedAt = at,
+            PlayerId = player,
+            EventType = type,
+            Detail = detail,
+            Outcome = outcome,
+            Value = value,
+            CityClock = cityClock,
+            CreatedAt = at,
         });
 
     /// <summary>Adds a ledger row.</summary>
@@ -257,6 +270,12 @@ public sealed class MetricsLoaderTests(PostgresServer server) : PostgresTest(ser
     private static void AddLedger(CityBuilderDbContext db, Guid city, string item, long delta, long balanceAfter, string reason, DateTimeOffset at) =>
         db.LedgerEntries.Add(new LedgerEntryRow
         {
-            CityId = city, ItemId = item, Delta = delta, BalanceAfter = balanceAfter, Reason = reason, RefType = "settlement", CreatedAt = at,
+            CityId = city,
+            ItemId = item,
+            Delta = delta,
+            BalanceAfter = balanceAfter,
+            Reason = reason,
+            RefType = "settlement",
+            CreatedAt = at,
         });
 }
