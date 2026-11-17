@@ -8,7 +8,7 @@ Per-hour rates are at full staffing (the level's max workers) and without resear
 
 ## mvp-content.json
 
-Content version `mvp-2`. The starting city is in era 1 with 800 `coins` and no buildings.
+Content version `mvp-3`. The starting city is in era 1 with 1000 `coins` and no buildings.
 
 ### Rules
 
@@ -52,7 +52,7 @@ Content version `mvp-2`. The starting city is in era 1 with 800 `coins` and no b
 | `house` | Cottage | `House` | 1 | at start | — | 50 `coins` | 30 s | 2 |
 | `sawmill` | Sawmill | `Producer` | 1 | at start | — | 150 `coins`, 10 `logs` | 120 s (2 min) | 2 |
 | `scriptorium` | Scriptorium | `Science` | 1 | at start | 1 | 100 `coins` | 30 s | 1 |
-| `trading_post` | Trading Post | `Producer` | 1 | research `trade_charter` | — | 200 `coins`, 10 `planks` | 180 s (3 min) | 2 |
+| `trading_post` | Trading Post | `Producer` | 1 | research `trade_charter` | — | 200 `coins`, 5 `planks` | 180 s (3 min) | 2 |
 | `warehouse` | Warehouse | `Warehouse` | 1 | at start | — | 100 `coins`, 20 `logs` | 60 s (1 min) | 2 |
 | `woodcutter` | Woodcutter's Hut | `Producer` | 1 | at start | — | 80 `coins` | 60 s (1 min) | 2 |
 

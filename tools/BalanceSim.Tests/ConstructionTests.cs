@@ -1,10 +1,11 @@
+using System.Text.RegularExpressions;
 using CityBuilder.BalanceSim.Strategies;
 using CityBuilder.Infrastructure.Content;
 using CityBuilder.Simulation.Content;
 
 namespace CityBuilder.BalanceSim.Tests;
 
-/// <summary>The shared building choices (<see cref="Construction"/>), played on the real content with one number changed.</summary>
+/// <summary>The shared building choices (<see cref="Construction"/>), played on the real content with one number pinned.</summary>
 public sealed class ConstructionTests
 {
     /// <summary>
@@ -17,11 +18,12 @@ public sealed class ConstructionTests
     {
         using var folder = new TemporaryFolder();
         string source = File.ReadAllText(Path.Combine(TestContent.Root, "server", "content", "mvp-content.json"));
-        string changed = source.Replace("\"purse\": 800", "\"purse\": 1000", StringComparison.Ordinal);
-        Assert.NotEqual(source, changed);
+        // The purse is pinned to the 1000 coins the bug showed with, whatever the real content's purse is (mvp-3 has 1000, M0-69).
+        string changed = Regex.Replace(source, "\"purse\": [0-9]+", "\"purse\": 1000");
         string file = Path.Combine(folder.Path, "content.json");
         File.WriteAllText(file, changed);
         GameContent content = ContentFileLoader.Load(file);
+        Assert.Equal(1000, content.StartingCity.Purse);
 
         RunResult result = SimulationRun.Play(content, SimulationRunTests.Options(StrategyKind.Balanced, "every 4h", hours: 8));
 
