@@ -184,7 +184,7 @@ Filters as arguments: a date range, and `--exclude <dev names>` so test accounts
 | ID | Title | Model | Status |
 |---|---|---|---|
 | CR-0009-T1 | Recording: `player_events` and its migration, `IPlayerEventRecorder`, the command, settlement and session events, in the city's transaction; tests; `06`, `07`, `10`, `30`, the modules, the plan board; implementation plan: `docs/plan/CR-0009-T1-PLAN.md` | O PLAN | Done |
-| CR-0009-T2 | The report: `checkpoints.json` and its validation, `tools/MetricsReport` (overview, checkpoint explorer, funnels, actions, friction, return, one player), `panel.sh metrics`, `docs/how-to/add-checkpoint.md`; implementation plan: `docs/plan/CR-0009-T2-PLAN.md` | O | In progress |
+| CR-0009-T2 | The report: `checkpoints.json` and its validation, `tools/MetricsReport` (overview, checkpoint explorer, funnels, actions, friction, return, one player), `panel.sh metrics`, `docs/how-to/add-checkpoint.md`; implementation plan: `docs/plan/CR-0009-T2-PLAN.md` | O | In review |
 
 T1 is planned in `docs/plan/CR-0009-T1-PLAN.md` (2026-11-16) and parked for a later date at the owner's wish; its section 2 holds four
 points that differ from this CR; the owner approved all four (below), and this CR's text now says what they say. T2 is planned the same way in `docs/plan/CR-0009-T2-PLAN.md`; its section 2 holds three questions, all answered yes (below). T1 is [PLAN] (G-Plan): it changes the write pattern of `06` in one point and adds a table, so the owner sees its plan before code.

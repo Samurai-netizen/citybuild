@@ -5,12 +5,12 @@
 > This file is loaded into every session: Milestone-table notes are task ids and PR numbers only (≤ ~100 characters per row).
 
 ## Resume point
-- **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** CR-0009-T2 (player metrics: the report) · branch `task/CR-0009-T2-report` · log `docs/build-log/2026/2026-11-17-05-CR-0009-T2.md`
-- **Part / step:** A to I done (part I: real run and docs); finish next; plan `docs/plan/CR-0009-T2-PLAN.md` §4
-- **Last completed:** CR-0009-T1 (PR #102, merged 2026-11-17)
-- **Next step:** `/finish-task`: `quality.sh`, the CR task row (In review), the plan board row, the Docs impact rows of the CR and `13`,
-  self-review, PR. Owner [MANUAL]: click every header of the report page (`tools/README.md` → MetricsReport).
+- **State:** IDLE <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** — (CR-0009-T2 in review: branch `task/CR-0009-T2-report`, log `docs/build-log/2026/2026-11-17-05-CR-0009-T2.md`)
+- **Part / step:** —
+- **Last completed:** CR-0009-T2 (player metrics: the report; PR open, owner merges; then CR-0009 status Done)
+- **Next step:** owner: merge the CR-0009-T2 PR, click every header of the report page ([MANUAL], `tools/README.md` → MetricsReport),
+  approve the M1 CRs (CR-0011); then the first M1 task of `docs/plan/M1-PLAN.md` (`/start-task <ID>`).
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. M1 CRs (CR-0011) to approve.
 - **Known broken / do not touch:** nothing.
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
@@ -40,7 +40,7 @@
 | Balance simulator | done | M0-67 (PR #95); M0-68 to M0-70 (PR #98) |
 | E2E / security / concurrency suites | done | M0-36, M0-56, M0-60 (PR #48, #80, #85); M0-64 to M0-66 (PR #92 to #94); M0-B (PR #99); M0-C (PR #100) |
 | Dev build + M0 close-out | done | M0-D (PR #101) |
-| Player metrics (CR-0009) | in progress | CR-0009-T1 (PR #102); T2 (report) in progress |
+| Player metrics (CR-0009) | in progress | CR-0009-T1 (PR #102); T2 (report) in review |
 
 Per-task detail (what each PR added): `docs/plan/M0-PLAN.md`, `docs/build-log/`, `git log`.
 
