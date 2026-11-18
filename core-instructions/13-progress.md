@@ -8,7 +8,7 @@
 - **State:** IDLE <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** — (CR-0009-T2 in review: branch `task/CR-0009-T2-report`, log `docs/build-log/2026/2026-11-17-05-CR-0009-T2.md`)
 - **Part / step:** —
-- **Last completed:** CR-0009-T2 (player metrics: the report; PR open, owner merges; then CR-0009 status Done)
+- **Last completed:** CR-0009-T2 (player metrics: the report; PR #103, owner merges; then CR-0009 status Done)
 - **Next step:** owner: merge the CR-0009-T2 PR, click every header of the report page ([MANUAL], `tools/README.md` → MetricsReport),
   approve the M1 CRs (CR-0011); then the first M1 task of `docs/plan/M1-PLAN.md` (`/start-task <ID>`).
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. M1 CRs (CR-0011) to approve.
