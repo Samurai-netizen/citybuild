@@ -31,6 +31,8 @@ flowchart LR
     n_BalanceSim["BalanceSim"]
     n_DocTools_Tests["DocTools.Tests"]
     n_DocTools["DocTools"]
+    n_MetricsReport_Tests["MetricsReport.Tests"]
+    n_MetricsReport["MetricsReport"]
   end
   n_CityBuilder_Api --> n_CityBuilder_Application
   n_CityBuilder_Api --> n_CityBuilder_Infrastructure
@@ -42,6 +44,7 @@ flowchart LR
   n_CityBuilder_Application_Tests --> n_CityBuilder_Application
   n_CityBuilder_Domain_Tests --> n_CityBuilder_Domain
   n_CityBuilder_IntegrationTests --> n_CityBuilder_Api
+  n_CityBuilder_IntegrationTests --> n_MetricsReport
   n_CityBuilder_Simulation_Tests --> n_CityBuilder_Simulation
   n_BalanceSim_Tests --> n_BalanceSim
   n_BalanceSim --> n_CityBuilder_Infrastructure
@@ -50,6 +53,9 @@ flowchart LR
   n_DocTools --> n_CityBuilder_Api
   n_DocTools --> n_CityBuilder_Infrastructure
   n_DocTools --> n_CityBuilder_Simulation
+  n_MetricsReport_Tests --> n_MetricsReport
+  n_MetricsReport --> n_CityBuilder_Infrastructure
+  n_MetricsReport --> n_CityBuilder_Simulation
 ```
 
 | Project | Path | Kind | Project references | Packages |
@@ -60,7 +66,7 @@ flowchart LR
 | `CityBuilder.Infrastructure` | `server/src/CityBuilder.Infrastructure/CityBuilder.Infrastructure.csproj` | library | `CityBuilder.Application`, `CityBuilder.Domain` | `Microsoft.EntityFrameworkCore.Relational`, `Npgsql.EntityFrameworkCore.PostgreSQL` |
 | `CityBuilder.Application.Tests` | `server/tests/CityBuilder.Application.Tests/CityBuilder.Application.Tests.csproj` | tests | `CityBuilder.Application` | `Microsoft.Extensions.TimeProvider.Testing`, `Microsoft.NET.Test.Sdk`, `xunit.runner.visualstudio`, `xunit.v3.mtp-off` |
 | `CityBuilder.Domain.Tests` | `server/tests/CityBuilder.Domain.Tests/CityBuilder.Domain.Tests.csproj` | tests | `CityBuilder.Domain` | `Microsoft.NET.Test.Sdk`, `xunit.runner.visualstudio`, `xunit.v3.mtp-off` |
-| `CityBuilder.IntegrationTests` | `server/tests/CityBuilder.IntegrationTests/CityBuilder.IntegrationTests.csproj` | console | `CityBuilder.Api` | `Microsoft.AspNetCore.Mvc.Testing`, `Microsoft.Extensions.TimeProvider.Testing`, `Microsoft.NET.Test.Sdk`, `Testcontainers.PostgreSql`, `xunit.runner.visualstudio`, `xunit.v3.mtp-off` |
+| `CityBuilder.IntegrationTests` | `server/tests/CityBuilder.IntegrationTests/CityBuilder.IntegrationTests.csproj` | console | `CityBuilder.Api`, `MetricsReport` | `Microsoft.AspNetCore.Mvc.Testing`, `Microsoft.Extensions.TimeProvider.Testing`, `Microsoft.NET.Test.Sdk`, `Testcontainers.PostgreSql`, `xunit.runner.visualstudio`, `xunit.v3.mtp-off` |
 | `CityBuilder.Repository.Tests` | `server/tests/CityBuilder.Repository.Tests/CityBuilder.Repository.Tests.csproj` | tests | — | `Microsoft.CodeAnalysis.CSharp`, `Microsoft.NET.Test.Sdk`, `xunit.runner.visualstudio`, `xunit.v3.mtp-off` |
 | `CityBuilder.Simulation.Tests` | `server/tests/CityBuilder.Simulation.Tests/CityBuilder.Simulation.Tests.csproj` | tests | `CityBuilder.Simulation` | `Microsoft.NET.Test.Sdk`, `xunit.runner.visualstudio`, `xunit.v3.mtp-off` |
 | `CityBuilder.Simulation` | `shared/Simulation.Build/CityBuilder.Simulation.csproj` | library (netstandard2.1) | — | — |
@@ -68,6 +74,8 @@ flowchart LR
 | `BalanceSim` | `tools/BalanceSim/BalanceSim.csproj` | console | `CityBuilder.Infrastructure`, `CityBuilder.Simulation` | — |
 | `DocTools.Tests` | `tools/DocTools.Tests/DocTools.Tests.csproj` | tests | `DocTools` | `Microsoft.NET.Test.Sdk`, `xunit.runner.visualstudio`, `xunit.v3.mtp-off` |
 | `DocTools` | `tools/DocTools/DocTools.csproj` | console | `CityBuilder.Api`, `CityBuilder.Infrastructure`, `CityBuilder.Simulation` | — |
+| `MetricsReport.Tests` | `tools/MetricsReport.Tests/MetricsReport.Tests.csproj` | tests | `MetricsReport` | `Microsoft.NET.Test.Sdk`, `xunit.runner.visualstudio`, `xunit.v3.mtp-off` |
+| `MetricsReport` | `tools/MetricsReport/MetricsReport.csproj` | console | `CityBuilder.Infrastructure`, `CityBuilder.Simulation` | — |
 
 ## Unity assemblies
 

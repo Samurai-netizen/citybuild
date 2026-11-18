@@ -17,3 +17,18 @@ Adds or removes coins or goods on the city of the player the Unity client plays 
 - Needs the database running and that player's city to exist (log in once with the Unity client or `docs/testing/LOCAL-E2E.md`). Needs `python3` to read the item ids.
 - How it writes: `goods.sql` runs `psql` inside the database container, in one transaction. It locks the city, changes the purse or the store, adds a `DEV_ADJUST` row to the ledger (its balance the city's new total of the item) and raises `state_version`, so the running API and the client pick the change up at the next request or poll. No API restart. It touches no other player and the API has no endpoint for it.
 - Tests: `bash server-panel/test-goods.sh` (arguments, no database) and `GoodsPanelScriptTests` (the SQL on PostgreSQL, `docs/testing/README.md`).
+
+## Player metrics report
+Writes the player metrics page of the local database and opens it in the browser (CR-0009-T2; what the page shows and how to read it:
+`docs/modules/MetricsReport.md`; adding a checkpoint: `docs/how-to/add-checkpoint.md`).
+
+- **Menu:** entry 7, Metrics (it asks for the dev names to leave out). **One command instead:** `bash server-panel/panel.sh metrics`,
+  with the tool's arguments after it, for example `metrics --exclude devtest,dev1 --from 2026-11-01` (all of them: `metrics --help`).
+- Needs the database running and `.env`; the API need not run. The connection string is built from `.env` (`POSTGRES_PORT`,
+  `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`) and handed to the tool in the environment, never as an argument.
+- The page is `server-panel/.run/metrics/report.html`, written over at every run. It is git-ignored: it holds player data (player ids
+  only, no dev names). The panel picks the path, so `--out` is refused. The tool only reads the database.
+- "Left" counts from the later of the machine's clock and the newest "last seen": a city played on a Development server with a fast
+  clock moves that point ahead, and every other player then counts as left. Leave such players out with `--exclude`.
+- Tests: `bash server-panel/test-metrics.sh` (arguments and `.env`, fakes, no database); the tool's own tests are in
+  `docs/testing/README.md`.

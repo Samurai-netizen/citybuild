@@ -79,7 +79,7 @@ M1-01 (design, no code) may run in parallel with M0-A … M0-D: it touches only 
 
 CR-0012 (courier stamina as a research, approved 2026-11-17) runs after all M0 tasks, after M0-D (M0-84): its tasks T1 to T3 are in
 the CR. The owner's placement.
-CR-0009 (player metrics, approved 2026-11-16) T1 started 2026-11-17, after M0-D, at the owner's call; T2 follows T1. Its tasks are in
+CR-0009 (player metrics, approved 2026-11-16) T1 started 2026-11-17, after M0-D, at the owner's call; T2 (the report) is in review. Its tasks are in
 the CR, not on the M0 board (build log BL-20261117-04, decision 2).
 
 The group specs below are what `bash scripts/dev/show-task.sh M0-A` prints. Each part is one M0 task: read its spec with

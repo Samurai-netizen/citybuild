@@ -22,6 +22,7 @@ in chapters, with every backticked path and spec number as a link (`website/READ
 | propose a new feature | [changes/](changes/README.md) (change requests) |
 | make a common change | `core-instructions/19-change-recipes.md`, [how-to/](how-to/README.md) |
 | check what a content change does to the economy | [how-to/run-balance-simulator.md](how-to/run-balance-simulator.md), [modules/BalanceSim.md](modules/BalanceSim.md) |
+| see what players did and where the ones who left stop (player metrics) | [how-to/add-checkpoint.md](how-to/add-checkpoint.md), [modules/MetricsReport.md](modules/MetricsReport.md), `server-panel/README.md` |
 | look up API, errors, content, config, schema | [reference/](reference/README.md) |
 | find a request in the logs, or what a log line means | [api/](api/README.md) |
 | try the API by hand, request by request | `docs/api/smoke.http` |

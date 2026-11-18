@@ -94,13 +94,14 @@ blender -b --factory-startup --python art/blender/build_all.py         # rebuild
 bash scripts/dev/quality.sh                                            # everything CI runs, locally (skips are named): once, at the finish
 dotnet run --project tools/DocTools -- generate                        # regenerate docs/reference/generated (`check`: as CI)
 dotnet run --project tools/BalanceSim -- --help                        # balance simulator; no options = all strategies × patterns, 72 h
+bash server-panel/panel.sh metrics [--exclude devtest]                  # player metrics page of the local database (tools/MetricsReport), opened
 ```
 
 ## Repository map
 `core-instructions/` rules and design (normative) · `docs/` the system as built, the plan, the build log, ADRs, CRs ·
 `website/` the handbook site over both (https://samurai-netizen.github.io/citybuild/) ·
 `shared/Simulation/` engine · `server/` API and tests · `client/CityBuilder/` Unity · `art/` Era I art sources (Blender scripts, UI icons) ·
-`tools/` DocTools, BalanceSim · `server-panel/` a menu for the local database and API (`server-panel/README.md`) ·
+`tools/` DocTools, BalanceSim, MetricsReport · `server-panel/` a menu for the local database and API, and the metrics page (`server-panel/README.md`) ·
 `scripts/dev/` helpers · `.githooks/` git hooks · `.github/` CI and PR template · `.claude/` Claude Code config.
 
 ## Finishing every task

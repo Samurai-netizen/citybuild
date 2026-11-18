@@ -57,6 +57,14 @@ Paths are the M0 layout (`03`). "Module doc" means `docs/modules/<Project>.md`.
   regenerated `docs/reference/generated/project-map.md`.
 - Gate: G-Contract if it changes dependency direction; otherwise a decision row.
 
+## New player metrics checkpoint
+- A fact the server records already (a command, a completed research or building, a session, a first production): one line in
+  `server/analytics/checkpoints.json`, no code. Test: `dotnet test tools/MetricsReport.Tests --filter CheckpointFileTests`.
+- A fact it does not record yet: a name in `PlayerEventTypes`, its test, one line where the Application layer knows the fact
+  (`SettlementEvents`, `SessionEvents`), the name in `KnownEvents` of `tools/MetricsReport`; then the line above. A new command needs
+  none of this (its `EventDetail` only).
+- Docs: the table of `docs/how-to/add-checkpoint.md` (worked guide) for a new event type; `07` if the event holds anything but ids.
+
 ## New script or command
 - Code: `scripts/dev/<name>.sh` (and `.ps1` if it must run without Git Bash), with a header comment and a comment above every function
   (`check-docs.sh` checks both).
