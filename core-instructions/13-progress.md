@@ -12,7 +12,8 @@
 - **Next step:** owner: merge the CR-0009-T2 PR, click every header of the report page ([MANUAL], `tools/README.md` → MetricsReport),
   approve the M1 CRs (CR-0011); then the first M1 task of `docs/plan/M1-PLAN.md` (`/start-task <ID>`).
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. M1 CRs (CR-0011) to approve.
-- **Known broken / do not touch:** nothing.
+- **Known broken / do not touch:** the owner's local Unity edits (`client/CityBuilder/Assets/Settings/*.asset`, `ProjectSettings/ProjectSettings.asset`,
+  `UnityConnectSettings.asset`): leave them uncommitted and don't report them (owner, 2026-11-18).
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
 - **Verify with:** in the loop `bash scripts/dev/test.sh <area> [filter]`, at a checkpoint `bash scripts/dev/test.sh changed`, at the finish
   `bash scripts/dev/quality.sh` (as CI; `08` → Test tiers) · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
