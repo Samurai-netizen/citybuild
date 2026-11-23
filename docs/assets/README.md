@@ -36,3 +36,4 @@ M1-01 wrote one per `[ASSETS]` task of M1 (2026-11-23). AR-M1-03 and AR-M1-04 ar
 | `requests/AR-M1-09.md` | Era I buildings and levels, fills, stockpiles, loads, icons | 84 | outline |
 | `requests/AR-M1-10.md` | advisor portraits, premise cards, pointer | 12 | outline |
 | `requests/AR-M1-17.md` | store graphics | 5 | outline |
+| `requests/BATCH-01-pictures.md` | not a request: the 54 pictures still missing from AR-M1-03, 05, 06, 08, 09 in one sheet, to make at once (owner, 2026-11-24); statuses stay in the source requests | 54 | complete |
