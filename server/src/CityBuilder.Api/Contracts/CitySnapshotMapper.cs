@@ -52,7 +52,8 @@ public static class CitySnapshotMapper
                     CityQueries.WorkersAssigned(state),
                     state.Trips.Count,
                     CityQueries.FreeWorkers(state, content)),
-                new SnapshotBuilders(CityQueries.BuilderSlots(state, content), CityQueries.BuildersBusy(state)),
+                new SnapshotBuilders(
+                    CityQueries.BuilderSlots(state, content), CityQueries.BuildersBusy(state), CityQueries.QueuedOrders(state), content.Rules.BuilderQueueLength),
                 ToResearch(state),
                 state.Buildings.OrderBy(building => building.Id).Select(building => ToBuilding(state, content, building)).ToArray(),
                 state.Roads.OrderBy(road => road.X).ThenBy(road => road.Y).Select(road => new SnapshotRoad(road.X, road.Y, road.Level)).ToArray(),
@@ -147,6 +148,7 @@ public static class CitySnapshotMapper
                 BuildingPhase.Upgrading => "Upgrading",
                 BuildingPhase.Idle => "Idle",
                 BuildingPhase.Producing => "Producing",
+                BuildingPhase.Queued => "Queued",
                 _ => throw new InvalidOperationException($"Building phase {building.Phase} has no wire name; add it to the contract."),
             },
             building.PhaseStartedAt,
@@ -159,7 +161,33 @@ public static class CitySnapshotMapper
             ToStoreLimits(state, content, definition.GetLevel(building.Level), building),
             ToAmounts(building.Needs),
             building.IsConstructionSite ? "Construction" : building.HasUpgradeWaiting ? "Upgrade" : null,
-            building.Paused);
+            building.Paused,
+            QueuePlace(state, building));
+    }
+
+    /// <summary>
+    /// The place of a building's queued order in the builder queue (CR-0013): 1 plus the queued orders made before it; null without one.
+    /// </summary>
+    /// <param name="state">The city.</param>
+    /// <param name="building">The building.</param>
+    /// <returns>The place, from 1, or null.</returns>
+    private static int? QueuePlace(CityState state, Building building)
+    {
+        if (building.QueuedOrder == 0)
+        {
+            return null;
+        }
+
+        int place = 1;
+        foreach (Building other in state.Buildings)
+        {
+            if (other.QueuedOrder > 0 && other.QueuedOrder < building.QueuedOrder)
+            {
+                place++;
+            }
+        }
+
+        return place;
     }
 
     /// <summary>Every item's city total (<see cref="CityQueries.Totals"/>), by item id, 0 included.</summary>

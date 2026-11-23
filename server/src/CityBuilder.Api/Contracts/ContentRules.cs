@@ -4,6 +4,8 @@ namespace CityBuilder.Api.Contracts;
 /// <param name="GridWidth">The width of the city grid in tiles, JSON <c>gridWidth</c>.</param>
 /// <param name="GridHeight">The height of the city grid in tiles, JSON <c>gridHeight</c>.</param>
 /// <param name="BuilderSlots">How many buildings can be under construction or upgrade at once, JSON <c>builderSlots</c>.</param>
+/// <param name="BuilderQueueLength">How many constructions and upgrades may wait for a free builder, JSON <c>builderQueueLength</c>; 0 means no
+/// queue (CR-0013).</param>
 /// <param name="ResearchSlots">How many research nodes can run at once, JSON <c>researchSlots</c>.</param>
 /// <param name="MinCycleSeconds">The shortest a production cycle can take after research, JSON <c>minCycleSeconds</c>.</param>
 /// <param name="MaxLaborReductionPermille">The most research can reduce a cycle's labor, in permille, JSON <c>maxLaborReductionPermille</c>.</param>
@@ -23,6 +25,7 @@ public sealed record ContentRules(
     int GridWidth,
     int GridHeight,
     int BuilderSlots,
+    int BuilderQueueLength,
     int ResearchSlots,
     long MinCycleSeconds,
     int MaxLaborReductionPermille,

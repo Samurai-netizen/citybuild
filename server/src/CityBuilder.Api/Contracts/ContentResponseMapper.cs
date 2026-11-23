@@ -41,6 +41,7 @@ public static class ContentResponseMapper
         rules.GridWidth,
         rules.GridHeight,
         rules.BuilderSlots,
+        rules.BuilderQueueLength,
         rules.ResearchSlots,
         rules.MinCycleSeconds,
         rules.MaxLaborReductionPermille,

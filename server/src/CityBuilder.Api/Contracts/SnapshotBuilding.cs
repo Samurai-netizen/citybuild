@@ -13,7 +13,8 @@ namespace CityBuilder.Api.Contracts;
 /// <param name="MaxLevel">The highest level the building may reach now, JSON <c>maxLevel</c>: its type's base max level plus the completed <c>maxLevelBonus</c> research (M1-02).</param>
 /// <param name="AssignedWorkers">The workers assigned, JSON <c>assignedWorkers</c>; 0 for a house or a building under construction.</param>
 /// <param name="MaxWorkers">The most workers the building's level takes, JSON <c>maxWorkers</c>; 0 for houses.</param>
-/// <param name="Phase">What the building is doing, JSON <c>phase</c>: <c>Constructing</c>, <c>Upgrading</c>, <c>Idle</c> or <c>Producing</c>.</param>
+/// <param name="Phase">What the building is doing, JSON <c>phase</c>: <c>Constructing</c>, <c>Upgrading</c>, <c>Idle</c>, <c>Producing</c> or
+/// <c>Queued</c> (placed and paid, waiting for a free builder, CR-0013).</param>
 /// <param name="PhaseStartedAt">When the phase (while producing, the cycle) started, JSON <c>phaseStartedAt</c>; 0 when idle and for a construction site.</param>
 /// <param name="PhaseEndsAt">When the phase ends, JSON <c>phaseEndsAt</c>; <see langword="null"/> when idle, for a frozen cycle (producing with 0 workers)
 /// and for a construction site, which waits for goods (CR-0008).</param>
@@ -30,6 +31,8 @@ namespace CityBuilder.Api.Contracts;
 /// waiting while the building keeps working) or <see langword="null"/> (CR-0008).</param>
 /// <param name="Paused">Whether the player paused it, JSON <c>paused</c> (CR-0008 D23): a paused producer starts no new cycle, a paused courier
 /// station's couriers go home and wait; always <see langword="false"/> for other buildings and while constructing.</param>
+/// <param name="QueuePlace">The place of the building's queued order in the builder queue, JSON <c>queuePlace</c> (CR-0013): 1 starts next;
+/// a queued construction or a queued upgrade (the building keeps working); <see langword="null"/> without one.</param>
 public sealed record SnapshotBuilding(
     int Id,
     string TypeId,
@@ -50,4 +53,5 @@ public sealed record SnapshotBuilding(
     IReadOnlyDictionary<string, long> StoreLimits,
     IReadOnlyDictionary<string, long> Needs,
     string? Project,
-    bool Paused);
+    bool Paused,
+    int? QueuePlace);
