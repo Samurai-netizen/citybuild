@@ -11,12 +11,13 @@ namespace CityBuilder.Simulation.Tests.Content;
 internal static class ContentFixture
 {
     /// <summary>
-    /// The valid test content, built new on every call: two eras; gold (the currency), wood and boards; a hut (3 then 5 workers), a lumber
+    /// The valid test content, built new on every call: two eras; gold (the currency), wood and boards; a hut (3, 5, then 7 workers; level 3
+    /// only after research: its base max level is 2), a lumber
     /// camp (1 wood from 40 labor, 2 then 3 workers, a store of 100 then 150 wood), a workshop locked behind carpentry (2 wood → 1 boards, 90
     /// labor, a store of 20 wood and 80 boards; it costs 40 gold and 10 wood), a depot (warehouse: 100 wood and 100 boards, then 200 each), a
     /// post (courier station: 2 then 3 couriers carrying 5 then 8, stamina 600 then 1 200 s) and a school (the science building, one per
     /// city); research carpentry → better_saws (−250 ‰ camp, −100 ‰ workshop) → warehouses (era 2, +50 wood, +40 boards), tallying (percent
-    /// amounts, after carpentry), boots (walks 100 ‰ faster); walking 4 000 ms per ground tile, crossings at 250 ‰, a path (2 000 ms, 2 gold)
+    /// amounts, after carpentry), boots (walks 100 ‰ faster), guild (hut max level +1, +1 builder slot) → charter (grants the charter); walking 4 000 ms per ground tile, crossings at 250 ‰, a path (2 000 ms, 2 gold)
     /// and a paved path (1 000 ms, 6 gold); presets all (100 %) and half (50 %); trips carry 6; routes of up to 6 stops with 3 actions each;
     /// a new city starts with 100 gold.
     /// </summary>
@@ -72,7 +73,9 @@ internal static class ContentFixture
                 [
                     new BuildingLevelData { Level = 1, WorkersProvided = 3 },
                     new BuildingLevelData { Level = 2, WorkersProvided = 5, UpgradeCost = new() { ["gold"] = 20, ["wood"] = 5 }, UpgradeSeconds = 8 },
+                    new BuildingLevelData { Level = 3, WorkersProvided = 7, UpgradeCost = new() { ["gold"] = 40, ["wood"] = 10 }, UpgradeSeconds = 10 },
                 ],
+                BaseMaxLevel = 2,
             },
             new BuildingData
             {
@@ -175,6 +178,20 @@ internal static class ContentFixture
             {
                 Id = "boots", Name = "Boots", Era = 1, Cost = new() { ["gold"] = 20, ["wood"] = 3 }, DurationSeconds = 40,
                 Effects = [new ResearchEffectData { Type = "walkSpeedBonus", Permille = 100 }],
+            },
+            new ResearchData
+            {
+                Id = "guild", Name = "Guild", Era = 1, Cost = new() { ["gold"] = 40 }, DurationSeconds = 60,
+                Effects =
+                [
+                    new ResearchEffectData { Type = "maxLevelBonus", Building = "hut", Amount = 1 },
+                    new ResearchEffectData { Type = "builderSlotBonus", Amount = 1 },
+                ],
+            },
+            new ResearchData
+            {
+                Id = "charter", Name = "Charter", Era = 1, Cost = new() { ["gold"] = 10 }, DurationSeconds = 30, Prerequisites = ["guild"],
+                Effects = [new ResearchEffectData { Type = "grantCharter" }],
             },
         ],
     };

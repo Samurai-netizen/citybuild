@@ -93,6 +93,12 @@ namespace CityBuilder.Simulation.Content
         /// <summary>An effect targets the wrong kind of thing: a labor reduction on a building that isn't a producer, or a storage bonus on the currency.</summary>
         InvalidEffectTarget,
 
+        /// <summary>
+        /// A building type's level cap doesn't fit its levels: its <c>baseMaxLevel</c> is above its last level, or the <c>maxLevelBonus</c>
+        /// effects of all research would raise it past its last level (M1-02).
+        /// </summary>
+        LevelCapMismatch,
+
         /// <summary>A locked building type is unlocked by no research node or by several, or a start building is unlocked by research.</summary>
         UnlockMismatch,
 

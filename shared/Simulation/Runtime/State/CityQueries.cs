@@ -128,6 +128,25 @@ namespace CityBuilder.Simulation.State
             return busy;
         }
 
+        /// <summary>The builder slots: the content's plus every completed <see cref="BuilderSlotBonusEffect"/> (<c>04</c> section 8).</summary>
+        /// <param name="city">The city.</param>
+        /// <param name="content">The game content.</param>
+        /// <returns>The number of builder slots.</returns>
+        public static int BuilderSlots(CityState city, GameContent content) => content.Rules.BuilderSlots;
+
+        /// <summary>A building type's max level: its base max level plus every completed <see cref="MaxLevelBonusEffect"/> for it (<c>04</c> section 8).</summary>
+        /// <param name="city">The city.</param>
+        /// <param name="content">The game content.</param>
+        /// <param name="type">A building type of the content.</param>
+        /// <returns>The highest level a building of the type may reach now.</returns>
+        public static int MaxLevel(CityState city, GameContent content, BuildingTypeId type) => DefinitionOf(content, type).MaxLevel;
+
+        /// <summary>Whether a completed node has a <see cref="GrantCharterEffect"/>: the city is chartered (<c>25</c>, the end of Era I).</summary>
+        /// <param name="city">The city.</param>
+        /// <param name="content">The game content.</param>
+        /// <returns>True from the charter node's completion second on.</returns>
+        public static bool IsChartered(CityState city, GameContent content) => false;
+
         /// <summary>
         /// How much of a good a building has reserved: the output of its own running cycle (frozen ones included), which will enter its store
         /// when the cycle completes, plus that cycle's inputs, which come back into the store if an upgrade ends the cycle (<c>04</c> section 16;

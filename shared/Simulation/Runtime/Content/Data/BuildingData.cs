@@ -33,6 +33,12 @@ namespace CityBuilder.Simulation.Content.Data
         /// <summary>Required. How long construction takes, in seconds.</summary>
         public long? BuildSeconds { get; set; }
 
+        /// <summary>
+        /// Optional. The highest level reachable without research, 1 to the last level; absent: the last level. Levels above it open through
+        /// <c>maxLevelBonus</c> effects (M1-02).
+        /// </summary>
+        public int? BaseMaxLevel { get; set; }
+
         /// <summary>Required. The levels, numbered 1 to the max level, in any order.</summary>
         public List<BuildingLevelData?>? Levels { get; set; }
     }
