@@ -7,9 +7,10 @@
 ## Resume point
 - **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M1-02 Full Era I content and the three new research effects · branch `task/M1-02-era1-content` · log `docs/build-log/2026/2026-11-23-02-M1-02.md`
-- **Part / step:** A1 effects (tests first); then A2 builder queue (CR-0013) · B content · C server and client
+- **Part / step:** A1 effects done (checkpoint); next A2 builder queue (CR-0013) · B content · C server and client
 - **Last completed:** M1-01 Design lock for Era I (PR #104, merged 2026-11-23).
-- **Next step:** part A1: the failing tests of the build log's test list (plan and CR-0013 approved 2026-11-23). Also open: the owner's
+- **Next step:** part A2 (builder queue, CR-0013): the failing tests of the build log's A2 test list, then the full run (`quality.sh`). The `22`
+  edit is a protected file: ask the owner. Last green: the A1 checkpoint commit. Also open: the owner's
   [MANUAL] click-through of the metrics report (`tools/README.md` → MetricsReport).
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. The hosting provider (in M1-13).
 - **Known broken / do not touch:** the owner's local Unity edits (`client/CityBuilder/Assets/Settings/*.asset`, `ProjectSettings/ProjectSettings.asset`,

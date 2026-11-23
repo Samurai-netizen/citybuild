@@ -73,7 +73,7 @@ One document, the same for every player: `contentVersion`; `rules` (`gridWidth`,
 `minWalkSeconds`, `maxWalkBonusPermille`, `tripCarryLimit`, `maxRouteStops`, `maxStopActions`, `maxDeliveryLines`, `routeBuilding`
 (a building type id, or `null` when routes need none), `timeScale`); `startingCity` (`era`,
 `purse`); `eras`; `items` (`id`, `name`, `era`, `currency`, `tradable`); `buildings` (`id`, `name`, `kind`, `era`, `availableAtStart`,
-`unlockedBy`, `maxPerCity`, `cost`, `buildSeconds`), each with its `levels` (`maxWorkers`, `workersProvided`, `recipe` with `inputs`,
+`unlockedBy`, `maxPerCity`, `cost`, `buildSeconds`, `baseMaxLevel`: the highest level without research, M1-02), each with its `levels` (`maxWorkers`, `workersProvided`, `recipe` with `inputs`,
 `outputs` and `labor`, `storage`, `carryLimit`, `staminaSeconds`, `upgradeCost`, `upgradeSeconds`); `research` (`cost`,
 `durationSeconds`, `prerequisites`, `effects`); `roads` (`level`, `name`, `tileMillis`, `cost`: to place at level 1, to upgrade to it
 above); and `amountPresets` (`id`, `name`, `percent`). The numbers are the content file's.
@@ -84,7 +84,8 @@ above); and `amountPresets` (`id`, `name`, `percent`). The numbers are the conte
   not upgraded to); `unlockedBy` of a building that needs no research; `maxPerCity` of a type without a limit. `maxWorkers` is 0 for the
   kinds without workers and `workersProvided` 0 but for houses.
 - **Names:** `kind` is `House`, `Producer`, `Warehouse`, `CourierStation` or `Science`. An effect is one flat object: `type`
-  (`unlockBuilding`, `laborReduction`, `storageCapBonus`, `unlockAmountMode`, `walkSpeedBonus`) and the fields that type uses (`building`,
+  (`unlockBuilding`, `laborReduction`, `storageCapBonus`, `unlockAmountMode`, `walkSpeedBonus`; since M1-02 `maxLevelBonus` with `building`
+  and `amount`, `builderSlotBonus` with `amount`, `grantCharter` with none) and the fields that type uses (`building`,
   `permille`, `item`, `amount`, `mode`: `percent` or `exact`); the other fields are `null`.
 - `rules.timeScale` is the server clock's speed: server seconds per real second. Always 1 outside Development; a Development server with
   `Simulation:DevTimeScale` above 1 reports that scale (M0-35, `04` §1).
@@ -194,14 +195,14 @@ There is no "claim" command, because production and research complete on their o
   "requestId": "6f1c…", "stateVersion": 42, "serverTimeUtc": "2026-10-03T10:30:05Z", "contentVersion": "mvp-2",
   "city": {
     "clock": 123456, "era": 1,
-    "purse": 640,
+    "purse": 640, "chartered": false,
     "totals": { "coins": 640, "logs": 41, "planks": 12 },
     "workers": { "provided": 8, "assigned": 6, "onTrips": 1, "free": 1 },
     "builders": { "slots": 2, "busy": 1 },
     "research": { "activeId": "frame_saw", "startedAt": null, "endsAt": null, "needs": { "planks": 18 },
                   "completed": ["sharp_axes", "storehouses", "trade_charter"] },
     "buildings": [
-      { "id": 4, "typeId": "sawmill", "x": 2, "y": 4, "level": 1,
+      { "id": 4, "typeId": "sawmill", "x": 2, "y": 4, "level": 1, "maxLevel": 2,
         "assignedWorkers": 3, "maxWorkers": 3, "phase": "Producing",
         "phaseStartedAt": 123420, "phaseEndsAt": 123480,
         "cycleLabor": 180, "laborRemaining": 180, "segmentStartedAt": 123420, "stallReason": null,
@@ -237,6 +238,9 @@ There is no "claim" command, because production and research complete on their o
   `trips` are the manual trips under way. `settlement.delivered` (handed to projects), `moved` (put into stores) and `refunded` (an
   upgrade's inputs given back at its last delivery) are item maps like `produced`. `maxWorkers` is the most workers the building's current level takes, also while it is being built or upgraded (0 for houses).
   `phase` is `Constructing`, `Upgrading`, `Idle` or `Producing`; the timer fields a phase doesn't use are 0.
+- Research effects in the snapshot (M1-02, derived, never stored): `chartered` is true once a `grantCharter` node is done; a building's
+  `maxLevel` is the highest level it may reach now (its type's `baseMaxLevel` plus done `maxLevelBonus` nodes); `builders.slots` is
+  `builderSlots` plus done `builderSlotBonus` nodes.
 - `settlement` is what the settlement **of this request** did, from the city's last settled second to now: a request seconds after another
   one reports only those seconds. The client reads it on every snapshot it takes (`SettlementSummary`); a settlement of 300 seconds or more
   (a routine poll settles about 120) is shown to the player as the welcome-back report (`09`).

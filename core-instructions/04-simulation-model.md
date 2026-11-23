@@ -80,7 +80,10 @@ courier station; D23) · `NoWorkers` (idle producer, courier station without cou
   `ActiveResearch.EndsAt = t + Duration` (at once when the node costs coins only). Research needs no workers.
 - On completion, the node is added to `CompletedResearch` and its effects apply at that moment:
   `UnlockBuilding(type)`, `LaborReduction(type, ‰)`, `StorageCapBonus(item, +n)` (raises the limit of the item in every store that holds
-  it, §16), `UnlockAmountMode(mode)` (§19), `WalkSpeedBonus(‰)` (§17) (M0 set; more types in `25`).
+  it, §16), `UnlockAmountMode(mode)` (§19), `WalkSpeedBonus(‰)` (§17) (M0 set); since M1-02 `MaxLevelBonus(type, +n)` (a type's max level
+  is its `baseMaxLevel` plus the bonuses, §8), `BuilderSlots(+n)` (builder slots = `builderSlots` + the bonuses, §8) and `GrantCharter`
+  (the city is **chartered**, `25`). All are derived from `CompletedResearch`: nothing is stored. A node may have several effects. More
+  types in `25`.
 - A cycle that starts from that second on uses the effects (completion comes before starts, §6), and so does a walk. Running cycles keep
   their labor, walks their arrival.
 - **Era transition** *(planned: built with Era II, `25`)*: when every research node of the current era is completed, `Era += 1` at that
@@ -125,7 +128,7 @@ once per advance and kept (§17).
 | Mutation | Checks (error code) | Effect |
 |---|---|---|
 | PlaceBuilding | type known (`UNKNOWN_BUILDING_TYPE`), of the city's era or earlier and unlocked (`BUILDING_LOCKED`), in bounds (`OUT_OF_BOUNDS`), tile free of buildings and roads (`TILE_OCCUPIED`), below the type's `maxPerCity` (`BUILDING_LIMIT`), free builder (`NO_FREE_BUILDER`), the cost's coins (`INSUFFICIENT_RESOURCE`) | pay the coins, `Id = NextBuildingId++`, `Constructing`; its project needs the cost's goods (§16); with none, the timer runs from now for the build seconds |
-| UpgradeBuilding | exists (`BUILDING_NOT_FOUND`), Idle/Producing without a waiting upgrade (`BUILDING_BUSY`), level < max (`MAX_LEVEL`), free builder (`NO_FREE_BUILDER`), the next level's coins (`INSUFFICIENT_RESOURCE`) | pay the coins; with no goods in the upgrade cost the upgrade starts now (below); otherwise the building keeps working with an upgrade waiting for those goods (§16) |
+| UpgradeBuilding | exists (`BUILDING_NOT_FOUND`), Idle/Producing without a waiting upgrade (`BUILDING_BUSY`), level < the type's max level now (`MAX_LEVEL`; base max level + completed `MaxLevelBonus`, §5), free builder (`NO_FREE_BUILDER`), the next level's coins (`INSUFFICIENT_RESOURCE`) | pay the coins; with no goods in the upgrade cost the upgrade starts now (below); otherwise the building keeps working with an upgrade waiting for those goods (§16) |
 | AssignWorkers | exists (`BUILDING_NOT_FOUND`), a producer or courier station (`INVALID_ARGUMENT`), not Constructing (`BUILDING_BUSY`), `0 ≤ n ≤ MaxWorkers` of the current level, also while upgrading (`WORKER_LIMIT`), the increase `n − assigned` ≤ free (`INSUFFICIENT_WORKERS`); a station's removed couriers' loads all fit back into their stores (`COURIER_BUSY`, M0-C-3) | set `n`; a producer gets the labor segment update (§3); a station gains couriers at its station or loses its highest slots (§19) |
 | StartResearch | known (`UNKNOWN_RESEARCH`), not done (`RESEARCH_COMPLETED`), slot free (`RESEARCH_IN_PROGRESS`), prerequisites + current era (`RESEARCH_LOCKED`), a completed science building (`NO_SCIENCE_BUILDING`), the coins (`INSUFFICIENT_RESOURCE`) | pay the coins, fill the slot; the goods are delivered to the science building, then the timer runs (§5) |
 | PlaceRoads(tiles) | every tile in bounds (`OUT_OF_BOUNDS`), without a building or road (`TILE_OCCUPIED`), the coins of level 1 for every tile (`INSUFFICIENT_RESOURCE`) | pay, a level-1 road on every tile (§17) |
@@ -139,7 +142,8 @@ once per advance and kept (§17).
 
 **Starting an upgrade** (at once, or when its last good arrives): a running cycle (frozen or not) ends without output and its inputs go back
 into the building's store (they always fit: a running cycle's inputs are reserved, §16); the building is `Upgrading` to `TargetLevel = Level + 1` for that level's upgrade seconds; a
-courier station's couriers stop (§19). **Builders busy** = `Constructing` + `Upgrading` + upgrades waiting for goods.
+courier station's couriers stop (§19). **Builders busy** = `Constructing` + `Upgrading` + upgrades waiting for goods; a free builder means busy < builder slots
+(`builderSlots` + completed `BuilderSlots`, §5).
 Checks run in the listed order; the first failure is returned and changes nothing; a list of tiles or stops is applied all or nothing. An
 applied mutation names what it paid and refunded (the ledger rows of `06`). "Current era" means the node's era equals the city's, and a
 frozen cycle counts as running (its inputs are refunded). Workers on a house, a warehouse or the science building are `INVALID_ARGUMENT`.
@@ -232,6 +236,9 @@ quantities, durations, milliseconds and labor ≤ 10¹²; grid size and worker c
     Σ walk bonuses ≤ `MaxWalkBonusPermille` (≤ 900).
 13. **Routes and amounts:** 1..8 amount presets with unique ids and a percentage 1..100; `tripCarryLimit` ≥ 1; `maxDeliveryLines` 1..100;
     `routeBuilding`, when given, names a known building type (without it routes need no building); an `UnlockAmountMode` names `percent` or `exact`.
+13a. **Level caps** (M1-02): a type's `baseMaxLevel` (absent: its last level) is 1..its last level, and the `MaxLevelBonus`es of all research
+    never raise it past the last level (`LevelCapMismatch`); a `MaxLevelBonus` names a type with a level above its base max level
+    (`InvalidEffectTarget`); a `MaxLevelBonus` or `BuilderSlots` amount is > 0.
 
 The **graph rules** (M0-70) run only when every rule above passed, so they never repeat an error already reported:
 
@@ -241,8 +248,8 @@ The **graph rules** (M0-70) run only when every rule above passed, so they never
     (`output × maxWorkers / labor`) and needs no more of any input for each such output; from level 3, an upgrade costs at least as much
     currency, and as many goods in all, as the upgrade below it (the build cost is not an upgrade).
 16. **Everything can be reached, era by era:** playing from the start (the purse, the types available at the start), a type is built once
-    it is unlocked, of this era or an earlier one, and its cost can be paid; it rises a level while that upgrade can be paid; a recipe runs
-    once a house can be built and its inputs can be had; a node of this era is done once the science building can be built, its
+    it is unlocked, of this era or an earlier one, and its cost can be paid; it rises a level while that upgrade can be paid and the level is within its max level with the done nodes (M1-02); a recipe
+    runs once a house can be built and its inputs can be had; a node of this era is done once the science building can be built, its
     prerequisites are done and its cost can be paid. Each era repeats until nothing new is reached. Every building type and level of the
     era, and every node of the era, must have been reached. Only which things can exist counts, not amounts or time; balance is BalanceSim's.
 

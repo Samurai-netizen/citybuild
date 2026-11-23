@@ -2,8 +2,9 @@
 
 An effect type is what completing a research node changes (`core-instructions/25-eras-and-research.md` → Effect types). M0 has five:
 `unlockBuilding`, `laborReduction`, `storageCapBonus` (every store's limit of a good), and since CR-0008 `unlockAmountMode` (a trip's or
-route's percentage or exact amount) and `walkSpeedBonus` (every walk shorter by a share). A node that only uses those is a content-only
-change (`add-building-or-item.md`).
+route's percentage or exact amount) and `walkSpeedBonus` (every walk shorter by a share). M1-02 added `maxLevelBonus` (a type's max level
+above its `baseMaxLevel`), `builderSlotBonus` and `grantCharter`. A node that only uses those is a content-only change
+(`add-building-or-item.md`).
 A new type needs engine code, content validation, tests and docs: recipe "New engine rule or effect type" in `core-instructions/19-change-recipes.md`
 is the checklist; this guide walks through it with an example.
 
@@ -15,7 +16,8 @@ is the checklist; this guide walks through it with an example.
   Prefer derived: nothing is stored twice, and `Simulator.Advance` needs no new code.
 
 ## Worked example: `builderSlotBonus`
-Goal: "Guild of Masons → +1 builder" from the `25` roadmap. The numbers only show the shape; they are not a design.
+Goal: "Guild of Masons → +1 builder" from the `25` roadmap. M1-02 built it this way (`BuilderSlotBonusEffect`, `CityQueries.BuilderSlots`,
+`LevelCapAndBuilderSlotRuleTests`); read the code beside this walk-through. The numbers only show the shape; they are not a design.
 ```json
 { "type": "builderSlotBonus", "amount": 1 }
 ```

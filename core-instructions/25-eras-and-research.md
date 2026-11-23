@@ -56,12 +56,12 @@ Move, demolish, decorations, the town name and cancelling research are minor mec
 | `StorageCapBonus(item, +n)` | Storehouses → a higher limit for logs and planks in every building's store | yes |
 | `UnlockAmountMode(mode)` | Tally Sticks → any percentage in courier actions (Era I); an Era II node → exact numbers | yes (CR-0008-T1) |
 | `WalkSpeedBonus(‰)` | Sturdy Boots → walkers 20 % faster | yes (CR-0008-T1) |
-| `MaxLevelBonus(type, +n)` | Timber Framing → Cottage max level 3 | M1 (M1-02) |
-| `LandExpansion(area)` | Land Survey I → opens the next area of the map (M1: from the mist, `22` → Grid, terrain and land) | M1 (M1-02, M1-03) |
-| `BuilderSlots(+n)` | Guild of Masons → +1 builder | M1 (M1-02) |
+| `MaxLevelBonus(type, +n)` | Timber Framing → Cottage max level 3 | M1 (built in M1-02; JSON `maxLevelBonus`, a type's `baseMaxLevel`) |
+| `LandExpansion(area)` | Land Survey I → opens the next area of the map (M1: from the mist, `22` → Grid, terrain and land) | M1 (M1-03; M1-02 decision 1) |
+| `BuilderSlots(+n)` | Guild of Masons → +1 builder | M1 (built in M1-02; JSON `builderSlotBonus`) |
 | `ResearchSlots(+n)` | a later era only (Slots rule above) | later |
 | `UnlockRoadKind(kind)` | Bridge Building → bridges over water | M1 (M1-03) |
-| `GrantCharter` | Town Charter → Era I is complete | M1 (M1-02) |
+| `GrantCharter` | Town Charter → Era I is complete | M1 (built in M1-02; JSON `grantCharter`, the snapshot's `chartered`) |
 | `UnlockRecipe(type, recipe)` | used once Era IV production lines exist | later |
 
 ## Logistics through the eras
