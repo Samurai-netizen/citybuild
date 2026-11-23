@@ -57,6 +57,41 @@ internal sealed class InvariantChecks
         Report(Invariant.StaminaAndLoads, step, Stamina(step) ?? Loads(step));
         Report(Invariant.DeliveryLines, step, Lines(step.After));
         Report(Invariant.Paused, step, Paused(step));
+        Report(Invariant.BuilderQueue, step, Queue(step));
+    }
+
+    /// <summary>
+    /// Invariant 17 (CR-0013): at most <c>builderQueueLength</c> orders wait; after every step (which ends with an advance) no builder is free
+    /// while an order waits; and the orders a step started were all made before every order still waiting. The free builders are counted
+    /// from the phases and the slot bonuses here, independently of the engine's queries.
+    /// </summary>
+    private string? Queue(InvariantStep step)
+    {
+        Building[] waiting = [.. step.After.Buildings.Where(building => building.QueuedOrder > 0)];
+        CountIf(waiting.Length > 0, "steps with a queued order");
+        CountIf(waiting.Length > 0 && waiting.Length == _content.Rules.BuilderQueueLength, "steps with a full builder queue");
+        if (waiting.Length > _content.Rules.BuilderQueueLength)
+        {
+            return $"{waiting.Length} orders queued, the queue holds {_content.Rules.BuilderQueueLength}";
+        }
+
+        int busy = step.After.Buildings.Count(building =>
+            building.Phase is BuildingPhase.Constructing or BuildingPhase.Upgrading
+            || (building.Phase is BuildingPhase.Idle or BuildingPhase.Producing && building.Needs.Count > 0));
+        long slots = _content.Rules.BuilderSlots
+            + step.After.CompletedResearch.Sum(id => Research(id).Effects.OfType<BuilderSlotBonusEffect>().Sum(bonus => bonus.Amount));
+        if (waiting.Length > 0 && busy < slots)
+        {
+            return $"order {waiting.Min(building => building.QueuedOrder)} waits while {slots - busy} builders are free";
+        }
+
+        int[] started = [.. step.Before.Buildings
+            .Where(building => building.QueuedOrder > 0 && step.After.TryGetBuilding(building.Id, out Building? after) && after.QueuedOrder == 0)
+            .Select(building => building.QueuedOrder)];
+        CountIf(started.Length > 0, "steps that started a queued order");
+        return started.Length > 0 && waiting.Length > 0 && started.Max() > waiting.Min(building => building.QueuedOrder)
+            ? $"order {started.Max()} started before order {waiting.Min(building => building.QueuedOrder)}"
+            : null;
     }
 
     /// <summary>

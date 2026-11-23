@@ -132,7 +132,7 @@ public sealed class BuilderQueueRuleTests
         RulesAssert.Rejected(
             MutationErrorCode.ItemNotAccepted,
             city,
-            city => TripRules.StartTrip(city, _queueContent, 2, 3, new ItemId("wood"), Amount.Exact(1)));
+            city => TripRules.StartTrip(city, _queueContent, 2, 3, new ItemId("wood"), Amount.Preset(new AmountPresetId("all"))));
     }
 
     /// <summary>A queued house provides no workers: it isn't built yet.</summary>
@@ -168,7 +168,10 @@ public sealed class BuilderQueueRuleTests
         Assert.Equal((2, 0), (CityQueries.BuildersBusy(city), CityQueries.QueuedOrders(city)));
     }
 
-    /// <summary>Queued orders start in the order they were made, not by building id: order 1 first, order 2 at the next free builder.</summary>
+    /// <summary>
+    /// Queued orders start in the order they were made, not by building id: order 1 (the hut, id 4) at 1010, order 2 (the depot's upgrade, id
+    /// 3) when the next builder frees up, the hut's own completion at 1015.
+    /// </summary>
     [Fact]
     public void Advance_TwoQueuedOrders_StartInTheOrderMade()
     {
@@ -177,10 +180,10 @@ public sealed class BuilderQueueRuleTests
 
         Simulator.Advance(city, _queueContent, 10);
         Assert.Equal((BuildingPhase.Idle, 2, BuildingPhase.Constructing, 0), (city.Buildings[2].Phase, city.Buildings[2].QueuedOrder, city.Buildings[3].Phase, city.Buildings[3].QueuedOrder));
-        Simulator.Advance(city, _queueContent, 40);
+        Simulator.Advance(city, _queueContent, 5);
 
         Building depot = city.Buildings[2];
-        Assert.Equal((BuildingPhase.Upgrading, 1050L, (long?)1059, 0), (depot.Phase, depot.PhaseStartedAt, depot.PhaseEndsAt, depot.QueuedOrder));
+        Assert.Equal((BuildingPhase.Upgrading, 1015L, (long?)1024, 0), (depot.Phase, depot.PhaseStartedAt, depot.PhaseEndsAt, depot.QueuedOrder));
     }
 
     /// <summary>A queued construction whose cost has goods starts as a construction site that waits for them.</summary>

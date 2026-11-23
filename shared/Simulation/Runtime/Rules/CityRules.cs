@@ -18,7 +18,8 @@ namespace CityBuilder.Simulation.Rules
         /// <summary>
         /// Places a building: pays the coins of the type's cost and starts construction on the tile: from the clock for the type's build
         /// seconds when the cost has no goods, otherwise as a construction site that waits for them (<c>04</c> section 16). The building gets
-        /// the next id, level 1, no workers and an empty store. Placing never needs workers.
+        /// the next id, level 1, no workers and an empty store. Placing never needs workers. With every builder busy and room in the builder queue
+        /// (CR-0013) it pays the same coins and places a queued construction instead, which starts when a builder frees up (<see cref="Settlement.Simulator"/>).
         /// </summary>
         /// <param name="city">The city, settled to now.</param>
         /// <param name="content">The game content.</param>
@@ -29,7 +30,7 @@ namespace CityBuilder.Simulation.Rules
         /// Ok, or the first failed check: <see cref="MutationErrorCode.UnknownBuildingType"/>, <see cref="MutationErrorCode.BuildingLocked"/>
         /// (a later era than the city's, or not unlocked yet), <see cref="MutationErrorCode.OutOfBounds"/>, <see cref="MutationErrorCode.TileOccupied"/>
         /// (a building or a road), <see cref="MutationErrorCode.BuildingLimit"/> (the type's <c>maxPerCity</c>),
-        /// <see cref="MutationErrorCode.NoFreeBuilder"/>, <see cref="MutationErrorCode.InsufficientResource"/> (the cost's coins).
+        /// <see cref="MutationErrorCode.NoFreeBuilder"/> (every builder busy and the queue full), <see cref="MutationErrorCode.InsufficientResource"/> (the cost's coins).
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="city"/> or <paramref name="content"/> is null.</exception>
         public static MutationResult PlaceBuilding(CityState city, GameContent content, BuildingTypeId typeId, int x, int y)
@@ -62,7 +63,8 @@ namespace CityBuilder.Simulation.Rules
                 return MutationResult.Rejected(MutationErrorCode.BuildingLimit);
             }
 
-            if (!HasFreeBuilder(city, content))
+            bool queue = !HasFreeBuilder(city, content);
+            if (queue && !HasQueueRoom(city, content))
             {
                 return MutationResult.Rejected(MutationErrorCode.NoFreeBuilder);
             }
@@ -75,7 +77,11 @@ namespace CityBuilder.Simulation.Rules
 
             city.PayFromPurse(coins);
             IReadOnlyList<ItemQuantity> goods = Costs.GoodsOf(content, definition.Cost);
-            if (goods.Count == 0)
+            if (queue)
+            {
+                city.AddQueuedConstruction(typeId, x, y);
+            }
+            else if (goods.Count == 0)
             {
                 city.AddBuilding(typeId, x, y, checked(city.Clock + definition.BuildSeconds));
             }
@@ -92,15 +98,17 @@ namespace CityBuilder.Simulation.Rules
         /// goods in the cost the upgrade starts at once: a running cycle (frozen or not) ends without output, its inputs come back into the
         /// building's store (they fit: they were reserved, M0-C-3), and the upgrade runs from the clock for the next level's upgrade seconds. With goods the
         /// building keeps working with an upgrade waiting for them, which starts the same way when the last one arrives (CR-0008 D12). The
-        /// workers stay assigned and do nothing while it upgrades.
+        /// workers stay assigned and do nothing while it upgrades. With every builder busy and room in the builder queue (CR-0013) it pays the
+        /// same coins and queues the upgrade instead: the building keeps working, and the upgrade starts (or waits for its goods) when a builder
+        /// frees up.
         /// </summary>
         /// <param name="city">The city, settled to now.</param>
         /// <param name="content">The game content.</param>
         /// <param name="buildingId">The building's id in the city.</param>
         /// <returns>
         /// Ok, or the first failed check: <see cref="MutationErrorCode.BuildingNotFound"/>, <see cref="MutationErrorCode.BuildingBusy"/>
-        /// (constructing, upgrading, or an upgrade already waiting for goods), <see cref="MutationErrorCode.MaxLevel"/>,
-        /// <see cref="MutationErrorCode.NoFreeBuilder"/>, <see cref="MutationErrorCode.InsufficientResource"/> (the upgrade cost's coins).
+        /// (constructing, queued, upgrading, or an upgrade already waiting for goods or queued), <see cref="MutationErrorCode.MaxLevel"/>,
+        /// <see cref="MutationErrorCode.NoFreeBuilder"/> (every builder busy and the queue full), <see cref="MutationErrorCode.InsufficientResource"/> (the upgrade cost's coins).
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="city"/> or <paramref name="content"/> is null.</exception>
         public static MutationResult UpgradeBuilding(CityState city, GameContent content, int buildingId)
@@ -111,7 +119,7 @@ namespace CityBuilder.Simulation.Rules
                 return MutationResult.Rejected(MutationErrorCode.BuildingNotFound);
             }
 
-            if ((building.Phase != BuildingPhase.Idle && building.Phase != BuildingPhase.Producing) || building.HasUpgradeWaiting)
+            if ((building.Phase != BuildingPhase.Idle && building.Phase != BuildingPhase.Producing) || building.HasUpgradeWaiting || building.HasUpgradeQueued)
             {
                 return MutationResult.Rejected(MutationErrorCode.BuildingBusy);
             }
@@ -121,7 +129,8 @@ namespace CityBuilder.Simulation.Rules
                 return MutationResult.Rejected(MutationErrorCode.MaxLevel);
             }
 
-            if (!HasFreeBuilder(city, content))
+            bool queue = !HasFreeBuilder(city, content);
+            if (queue && !HasQueueRoom(city, content))
             {
                 return MutationResult.Rejected(MutationErrorCode.NoFreeBuilder);
             }
@@ -136,7 +145,11 @@ namespace CityBuilder.Simulation.Rules
             city.PayFromPurse(coins);
             IReadOnlyList<ItemQuantity> goods = Costs.GoodsOf(content, nextLevel.UpgradeCost);
             IReadOnlyList<ItemQuantity>? refunded = null;
-            if (goods.Count == 0)
+            if (queue)
+            {
+                building.QueueUpgrade(city.TakeQueuedOrder());
+            }
+            else if (goods.Count == 0)
             {
                 refunded = ProjectRules.StartUpgrade(city, content, building, city.Clock);
             }
@@ -161,7 +174,7 @@ namespace CityBuilder.Simulation.Rules
         /// <param name="workers">The new worker count.</param>
         /// <returns>
         /// Ok, or the first failed check: <see cref="MutationErrorCode.BuildingNotFound"/>, <see cref="MutationErrorCode.InvalidArgument"/> (neither
-        /// a producer nor a courier station: a house, a warehouse, the science building), <see cref="MutationErrorCode.BuildingBusy"/> (constructing), <see cref="MutationErrorCode.WorkerLimit"/>
+        /// a producer nor a courier station: a house, a warehouse, the science building), <see cref="MutationErrorCode.BuildingBusy"/> (constructing or queued), <see cref="MutationErrorCode.WorkerLimit"/>
         /// (negative or above the level's max), <see cref="MutationErrorCode.InsufficientWorkers"/> (the increase is more than the free workers).
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="city"/> or <paramref name="content"/> is null.</exception>
@@ -181,7 +194,7 @@ namespace CityBuilder.Simulation.Rules
 
             BuildingLevelDefinition level = definition.GetLevel(building.Level);
 
-            if (building.Phase == BuildingPhase.Constructing)
+            if (!building.IsBuilt)
             {
                 return MutationResult.Rejected(MutationErrorCode.BuildingBusy);
             }
@@ -225,7 +238,7 @@ namespace CityBuilder.Simulation.Rules
         /// <param name="paused">True to pause, false to resume.</param>
         /// <returns>
         /// Ok, or the first failed check: <see cref="MutationErrorCode.BuildingNotFound"/>, <see cref="MutationErrorCode.InvalidArgument"/> (neither
-        /// a producer nor a courier station), <see cref="MutationErrorCode.BuildingBusy"/> (constructing).
+        /// a producer nor a courier station), <see cref="MutationErrorCode.BuildingBusy"/> (constructing or queued).
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="city"/> or <paramref name="content"/> is null.</exception>
         public static MutationResult SetPaused(CityState city, GameContent content, int buildingId, bool paused)
@@ -242,7 +255,7 @@ namespace CityBuilder.Simulation.Rules
                 return MutationResult.Rejected(MutationErrorCode.InvalidArgument);
             }
 
-            if (building.Phase == BuildingPhase.Constructing)
+            if (!building.IsBuilt)
             {
                 return MutationResult.Rejected(MutationErrorCode.BuildingBusy);
             }
@@ -337,6 +350,9 @@ namespace CityBuilder.Simulation.Rules
 
         /// <summary>Whether a builder slot is free for one more construction or upgrade (<see cref="CityQueries.BuildersBusy"/> below the content's slots).</summary>
         private static bool HasFreeBuilder(CityState city, GameContent content) => CityQueries.BuildersBusy(city) < CityQueries.BuilderSlots(city, content);
+
+        /// <summary>Whether the builder queue has room for one more order (CR-0013): fewer queued orders than the content's queue length.</summary>
+        private static bool HasQueueRoom(CityState city, GameContent content) => CityQueries.QueuedOrders(city) < content.Rules.BuilderQueueLength;
 
         /// <summary>Whether the city has completed every prerequisite of a research node.</summary>
         private static bool HasCompletedAll(CityState city, ResearchDefinition node)

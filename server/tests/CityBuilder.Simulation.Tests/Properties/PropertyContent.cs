@@ -11,7 +11,7 @@ namespace CityBuilder.Simulation.Tests.Properties;
 /// building stores, coins only from the locked Trading Post), and <c>fixture</c> is the rule tests' <see cref="CityFixture.TestContent"/> (a
 /// 1 h cap, two eras, a locked chain building, a currency output from the start, upgrades that refund inputs), which reaches chains and
 /// upgrades in many more seeds; <c>fixture-m1</c> is that fixture with its guild open from the start (M1-02: a raised level cap and a third
-/// builder). The seeds' histories changed with CR-0008 (the content and the model did) and, for <c>fixture</c>, with M1-02's nodes.
+/// builder) and a builder queue of two places (CR-0013). The seeds' histories changed with CR-0008 (the content and the model did) and, for <c>fixture</c>, with M1-02's nodes.
 /// </summary>
 internal static class PropertyContent
 {
@@ -23,12 +23,13 @@ internal static class PropertyContent
 
     /// <summary>
     /// The fixture with its guild node open from the start (no prerequisite), so most seeds complete it and play with the raised hut level
-    /// and the third builder slot (M1-02). The plain fixture keeps the guild behind tallying: a node open from the start changes which
+    /// and the third builder slot (M1-02), and with a builder queue of two places, so orders made with every builder busy wait (CR-0013). The plain fixture keeps the guild behind tallying: a node open from the start changes which
     /// research its seeds pick, and its labor reduction cases depend on that.
     /// </summary>
     private static readonly GameContent _fixtureM1 = ContentAssert.Valid(ContentFixture.ValidWith(data =>
     {
         ContentFixture.Research(data, "guild").Prerequisites = null;
+        data.Rules!.BuilderQueueLength = 2;
         CityFixture.Extend(data);
     }));
 

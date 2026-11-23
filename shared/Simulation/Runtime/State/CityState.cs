@@ -55,6 +55,10 @@ namespace CityBuilder.Simulation.State
         /// no route, between buildings of the city; null for none.
         /// </param>
         /// <param name="nextLineId">The id the next delivery line gets, above every line's id, at least 1.</param>
+        /// <param name="nextQueuedOrder">
+        /// The order the next queued construction or upgrade gets (CR-0013), above every building's queued order, at least 1; queued orders are
+        /// unique.
+        /// </param>
         /// <exception cref="ArgumentNullException">A list or a building is null.</exception>
         /// <exception cref="ArgumentException">The values don't form a valid city; the message says which rule they break.</exception>
         public CityState(
@@ -71,11 +75,13 @@ namespace CityBuilder.Simulation.State
             IEnumerable<Courier>? couriers = null,
             IEnumerable<Route>? routes = null,
             IEnumerable<DeliveryLine>? deliveryLines = null,
-            int nextLineId = 1)
+            int nextLineId = 1,
+            int nextQueuedOrder = 1)
         {
-            if (clock < 0 || era < 1 || nextBuildingId < 1 || purse < 0 || nextTripId < 1 || nextLineId < 1)
+            if (clock < 0 || era < 1 || nextBuildingId < 1 || purse < 0 || nextTripId < 1 || nextLineId < 1 || nextQueuedOrder < 1)
             {
-                throw new ArgumentException("The clock and the purse must not be negative, and the era and the next building, trip and line ids must be at least 1.");
+                throw new ArgumentException(
+                    "The clock and the purse must not be negative, and the era, the next building, trip and line ids and the next queued order must be at least 1.");
             }
 
             Clock = clock;
@@ -85,6 +91,8 @@ namespace CityBuilder.Simulation.State
             Purse = purse;
 
             _buildings = SortedBuildings(buildings, nextBuildingId);
+            NextQueuedOrder = nextQueuedOrder;
+            RequireQueuedOrders(_buildings, nextQueuedOrder);
             _completedResearch = SortedResearch(completedResearch, activeResearch);
             _roads = SortedRoads(roads ?? Array.Empty<RoadTile>(), _buildings);
             NextTripId = nextTripId;
@@ -194,6 +202,12 @@ namespace CityBuilder.Simulation.State
 
         /// <summary>The id the next delivery line gets. Ids are never reused.</summary>
         public int NextLineId { get; private set; }
+
+        /// <summary>
+        /// The order the next queued construction or upgrade gets (CR-0013, <c>04</c> section 8). Orders are never reused, so the queue starts
+        /// them by their order: the order they were made in.
+        /// </summary>
+        public int NextQueuedOrder { get; private set; }
 
         /// <summary>How many delivery lines the courier of a station's slot has queued.</summary>
         /// <param name="stationId">The courier station's building id.</param>
@@ -452,6 +466,18 @@ namespace CityBuilder.Simulation.State
         internal Building AddConstructionSite(BuildingTypeId typeId, int x, int y, IReadOnlyList<ItemQuantity> needs) =>
             Append(Building.StartConstructionSite(NextBuildingId, typeId, x, y, needs));
 
+        /// <summary>Places a construction in the builder queue with the next id and the next queued order (CR-0013).</summary>
+        internal Building AddQueuedConstruction(BuildingTypeId typeId, int x, int y) =>
+            Append(Building.Queue(NextBuildingId, typeId, x, y, TakeQueuedOrder()));
+
+        /// <summary>Hands out the next queued order (CR-0013) and moves the counter on.</summary>
+        internal int TakeQueuedOrder()
+        {
+            int order = NextQueuedOrder;
+            NextQueuedOrder = checked(NextQueuedOrder + 1);
+            return order;
+        }
+
         /// <summary>
         /// Starts a trip with the next trip id, carrying its first load of <paramref name="quantity"/> with <paramref name="remaining"/> still in
         /// the source for later loads; ids only grow, so appending keeps the list sorted.
@@ -577,6 +603,21 @@ namespace CityBuilder.Simulation.State
             }
 
             return sorted;
+        }
+
+        /// <summary>Throws unless every queued order is below <paramref name="nextQueuedOrder"/> and no two buildings share one (CR-0013).</summary>
+        private static void RequireQueuedOrders(List<Building> buildings, int nextQueuedOrder)
+        {
+            var orders = new HashSet<int>();
+            foreach (Building building in buildings)
+            {
+                if (building.QueuedOrder > 0 && (building.QueuedOrder >= nextQueuedOrder || !orders.Add(building.QueuedOrder)))
+                {
+                    throw new ArgumentException(
+                        FormattableString.Invariant($"Building {building.Id}: its queued order {building.QueuedOrder} is not below the next queued order, or is taken."),
+                        nameof(buildings));
+                }
+            }
         }
 
         /// <summary>The index of the road on a tile in <see cref="_roads"/>, or the bitwise complement of where it would go (binary search by tile).</summary>

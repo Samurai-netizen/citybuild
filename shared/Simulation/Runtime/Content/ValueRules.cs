@@ -53,7 +53,7 @@ namespace CityBuilder.Simulation.Content
 
         /// <summary>
         /// The grid, the slots, the minimum cycle and the base caps are greater than zero; exactly one research slot; the labor
-        /// reduction limit is 0 to 1000 permille.
+        /// reduction limit is 0 to 1000 permille; the builder queue's length is 0 to 32767 (CR-0013).
         /// </summary>
         private static void CheckRules(GameRules rules, ContentErrorList errors)
         {
@@ -62,6 +62,8 @@ namespace CityBuilder.Simulation.Content
             AtMostStoredSmallValue(rules.GridWidth, "rules.gridWidth", errors);
             AtMostStoredSmallValue(rules.GridHeight, "rules.gridHeight", errors);
             Positive(rules.BuilderSlots, "rules.builderSlots", errors);
+            AtLeastZero(rules.BuilderQueueLength, "rules.builderQueueLength", errors);
+            AtMostStoredSmallValue(rules.BuilderQueueLength, "rules.builderQueueLength", errors);
             Positive(rules.ResearchSlots, "rules.researchSlots", errors);
             if (rules.ResearchSlots > _supportedResearchSlots)
             {

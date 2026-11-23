@@ -111,8 +111,8 @@ namespace CityBuilder.Simulation.Settlement
                 }
 
                 int station = city.IndexOfBuilding(courier.StationId);
-                BuildingPhase phase = city.Buildings[station].Phase;
-                if (phase == BuildingPhase.Constructing || phase == BuildingPhase.Upgrading || city.Buildings[station].Paused)
+                Building stationBuilding = city.Buildings[station];
+                if (!stationBuilding.IsBuilt || stationBuilding.Phase == BuildingPhase.Upgrading || stationBuilding.Paused)
                 {
                     continue;
                 }

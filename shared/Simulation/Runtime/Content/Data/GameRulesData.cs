@@ -14,6 +14,9 @@ namespace CityBuilder.Simulation.Content.Data
         /// <summary>Required. How many constructions and upgrades may run at once.</summary>
         public int? BuilderSlots { get; set; }
 
+        /// <summary>Optional, 0 when left out. How many constructions and upgrades may wait for a free builder (CR-0013).</summary>
+        public int? BuilderQueueLength { get; set; }
+
         /// <summary>Required. How many research nodes may run at once; exactly 1 in M0.</summary>
         public int? ResearchSlots { get; set; }
 

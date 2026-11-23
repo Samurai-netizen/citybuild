@@ -11,7 +11,9 @@ namespace CityBuilder.Simulation.State
     /// building, through <see cref="Rules.CityRules"/> and <see cref="Settlement.Simulator"/>; everything else reads it. The fields a phase
     /// doesn't use are 0, and <see cref="PhaseEndsAt"/> is null (<see cref="BuildingPhase"/>). A <b>construction site</b> is
     /// <see cref="BuildingPhase.Constructing"/> without a timer and with needs; an <b>upgrade waiting for goods</b> is an
-    /// <see cref="BuildingPhase.Idle"/> or <see cref="BuildingPhase.Producing"/> building with needs.
+    /// <see cref="BuildingPhase.Idle"/> or <see cref="BuildingPhase.Producing"/> building with needs. A <b>queued order</b> (CR-0013) has a
+    /// <see cref="QueuedOrder"/>: a construction in the <see cref="BuildingPhase.Queued"/> phase, or a queued upgrade of an idle or producing
+    /// building without needs.
     /// </summary>
     public sealed class Building
     {
@@ -53,6 +55,10 @@ namespace CityBuilder.Simulation.State
         /// Whether the player paused the building (CR-0008 D23); never while constructing. That only producers and courier stations are paused
         /// is the caller's business, like the level.
         /// </param>
+        /// <param name="queuedOrder">
+        /// The building's place in the builder queue (CR-0013): at least 1 for a queued construction (phase queued) or a queued upgrade (idle or
+        /// producing, without needs); otherwise 0. That orders are unique and below the city's next order is the city's check.
+        /// </param>
         /// <exception cref="ArgumentException">The values don't form a valid building; the message says which rule they break.</exception>
         public Building(
             int id,
@@ -70,7 +76,8 @@ namespace CityBuilder.Simulation.State
             long segmentStartedAt,
             IEnumerable<KeyValuePair<ItemId, long>>? store = null,
             IEnumerable<KeyValuePair<ItemId, long>>? needs = null,
-            bool paused = false)
+            bool paused = false,
+            int queuedOrder = 0)
         {
             Id = id;
             TypeId = typeId;
@@ -86,6 +93,7 @@ namespace CityBuilder.Simulation.State
             LaborRemaining = laborRemaining;
             SegmentStartedAt = segmentStartedAt;
             Paused = paused;
+            QueuedOrder = queuedOrder;
             Store = _store;
             Needs = _needs;
 
@@ -148,6 +156,12 @@ namespace CityBuilder.Simulation.State
         public bool Paused { get; private set; }
 
         /// <summary>
+        /// The order's place in the builder queue (CR-0013): the city's order counter when it was queued, so the lowest starts first; 0 when
+        /// the building has no queued order.
+        /// </summary>
+        public int QueuedOrder { get; private set; }
+
+        /// <summary>
         /// The goods in the building's store (<c>04</c> section 16), by item id; a good it holds none of is absent. The level's
         /// <see cref="BuildingLevelDefinition.Storage"/> says which goods the store holds and their limits.
         /// </summary>
@@ -164,6 +178,15 @@ namespace CityBuilder.Simulation.State
 
         /// <summary>Whether an upgrade waits for goods: the building keeps working, and its builder slot is taken (<c>04</c> section 8).</summary>
         public bool HasUpgradeWaiting => (Phase == BuildingPhase.Idle || Phase == BuildingPhase.Producing) && _needs.Count > 0;
+
+        /// <summary>Whether an upgrade waits in the builder queue (CR-0013): the building keeps working and takes no builder slot yet.</summary>
+        public bool HasUpgradeQueued => (Phase == BuildingPhase.Idle || Phase == BuildingPhase.Producing) && QueuedOrder > 0;
+
+        /// <summary>
+        /// Whether the building is built: neither under construction (a construction site too) nor queued. Only a built building provides
+        /// workers, hosts research, carries goods or unlocks routes.
+        /// </summary>
+        public bool IsBuilt => Phase != BuildingPhase.Constructing && Phase != BuildingPhase.Queued;
 
         /// <summary>How much of a good the store holds.</summary>
         /// <param name="item">The good.</param>
@@ -194,6 +217,54 @@ namespace CityBuilder.Simulation.State
             return building;
         }
 
+        /// <summary>Places a construction in the builder queue as order <paramref name="order"/> (CR-0013): level 1, no workers, no timer.</summary>
+        internal static Building Queue(int id, BuildingTypeId typeId, int x, int y, int order) =>
+            new Building(id, typeId, x, y, 1, 0, BuildingPhase.Queued, 0, null, 0, 0, 0, 0, queuedOrder: order);
+
+        /// <summary>
+        /// A queued construction leaves the queue and starts (CR-0013): with <paramref name="needs"/> (at least one good) as a construction site,
+        /// otherwise with its build timer from <paramref name="startedAt"/> to <paramref name="endsAt"/>.
+        /// </summary>
+        internal void StartQueuedConstruction(IReadOnlyList<ItemQuantity> needs, long startedAt, long endsAt)
+        {
+            RequirePhase(BuildingPhase.Queued);
+            QueuedOrder = 0;
+            Phase = BuildingPhase.Constructing;
+            AddAll(_needs, needs);
+            if (_needs.Count == 0)
+            {
+                if (endsAt < startedAt)
+                {
+                    throw new InvalidOperationException(FormattableString.Invariant($"Building {Id}: a construction ends before it starts."));
+                }
+
+                PhaseStartedAt = startedAt;
+                PhaseEndsAt = endsAt;
+            }
+        }
+
+        /// <summary>Puts an upgrade of this idle or producing building into the builder queue as order <paramref name="order"/> (CR-0013).</summary>
+        internal void QueueUpgrade(int order)
+        {
+            if ((Phase != BuildingPhase.Idle && Phase != BuildingPhase.Producing) || _needs.Count > 0 || QueuedOrder > 0 || order < 1)
+            {
+                throw new InvalidOperationException(FormattableString.Invariant($"Building {Id}: only an idle or producing building without a project queues an upgrade."));
+            }
+
+            QueuedOrder = order;
+        }
+
+        /// <summary>A queued upgrade leaves the queue (CR-0013); the caller then starts it or lets it wait for its goods.</summary>
+        internal void LeaveUpgradeQueue()
+        {
+            if (!HasUpgradeQueued)
+            {
+                throw new InvalidOperationException(FormattableString.Invariant($"Building {Id} has no queued upgrade."));
+            }
+
+            QueuedOrder = 0;
+        }
+
         /// <summary>A construction site's needs are in: the build timer runs from <paramref name="startedAt"/> to <paramref name="endsAt"/>.</summary>
         internal void StartConstructionTimer(long startedAt, long endsAt)
         {
@@ -210,7 +281,7 @@ namespace CityBuilder.Simulation.State
         /// <summary>An upgrade was ordered and waits for <paramref name="needs"/> (at least one good above 0); the building keeps working meanwhile.</summary>
         internal void WaitForUpgrade(IReadOnlyList<ItemQuantity> needs)
         {
-            if ((Phase != BuildingPhase.Idle && Phase != BuildingPhase.Producing) || _needs.Count > 0)
+            if ((Phase != BuildingPhase.Idle && Phase != BuildingPhase.Producing) || _needs.Count > 0 || QueuedOrder > 0)
             {
                 throw new InvalidOperationException(FormattableString.Invariant($"Building {Id}: only an idle or producing building without a project waits for an upgrade."));
             }
@@ -271,9 +342,9 @@ namespace CityBuilder.Simulation.State
         /// </summary>
         internal void StartUpgrade(long startedAt, long endsAt)
         {
-            if (_needs.Count > 0)
+            if (_needs.Count > 0 || QueuedOrder > 0)
             {
-                throw new InvalidOperationException(FormattableString.Invariant($"Building {Id}: an upgrade starts only when its goods are in."));
+                throw new InvalidOperationException(FormattableString.Invariant($"Building {Id}: an upgrade starts only when its goods are in and it has left the queue."));
             }
 
             int targetLevel = checked(Level + 1);
@@ -330,9 +401,9 @@ namespace CityBuilder.Simulation.State
         /// <summary>Pauses or resumes the building (<c>04</c> section 8, <c>SetPaused</c>). The caller checks that it is not constructing.</summary>
         internal void SetPaused(bool paused)
         {
-            if (paused && Phase == BuildingPhase.Constructing)
+            if (paused && !IsBuilt)
             {
-                throw new InvalidOperationException(FormattableString.Invariant($"Building {Id}: a building under construction is never paused."));
+                throw new InvalidOperationException(FormattableString.Invariant($"Building {Id}: a building under construction or queued is never paused."));
             }
 
             Paused = paused;
@@ -397,9 +468,14 @@ namespace CityBuilder.Simulation.State
         /// </summary>
         private string? FindProblem()
         {
-            if (Id < 1 || X < 0 || Y < 0 || Level < 1 || AssignedWorkers < 0 || PhaseStartedAt < 0)
+            if (Id < 1 || X < 0 || Y < 0 || Level < 1 || AssignedWorkers < 0 || PhaseStartedAt < 0 || QueuedOrder < 0)
             {
-                return "the id and level must be at least 1, and the tile, workers and start must not be negative.";
+                return "the id and level must be at least 1, and the tile, workers, start and queued order must not be negative.";
+            }
+
+            if (QueuedOrder > 0 && Phase != BuildingPhase.Queued && !(HasUpgradeQueued && _needs.Count == 0))
+            {
+                return "only a queued construction, or an idle or producing building without needs (a queued upgrade), has a queued order.";
             }
 
             switch (Phase)
@@ -420,6 +496,11 @@ namespace CityBuilder.Simulation.State
                     return PhaseStartedAt == 0 && PhaseEndsAt == null && TargetLevel == 0 && HasNoCycle()
                         ? null
                         : "an idle building has no start, end, target level or cycle.";
+                case BuildingPhase.Queued:
+                    return QueuedOrder >= 1 && Level == 1 && AssignedWorkers == 0 && PhaseStartedAt == 0 && PhaseEndsAt == null && TargetLevel == 0
+                        && HasNoCycle() && _needs.Count == 0 && _store.Count == 0 && !Paused
+                        ? null
+                        : "a queued construction has a queued order, level 1, no workers, timer, target level, cycle, needs or store, and is not paused.";
                 case BuildingPhase.Producing:
                     return TargetLevel == 0 && CycleLabor >= 1 && LaborRemaining >= 0 && LaborRemaining <= CycleLabor
                         && SegmentStartedAt >= PhaseStartedAt && (PhaseEndsAt == null) == (AssignedWorkers == 0) && EndsWhenTheLaborIsDone()

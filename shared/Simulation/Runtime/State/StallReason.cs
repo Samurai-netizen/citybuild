@@ -56,7 +56,7 @@ namespace CityBuilder.Simulation.State
                 throw new ArgumentNullException(nameof(building));
             }
 
-            if (building.Phase == BuildingPhase.Constructing || building.Phase == BuildingPhase.Upgrading)
+            if (!building.IsBuilt || building.Phase == BuildingPhase.Upgrading)
             {
                 return null;
             }
