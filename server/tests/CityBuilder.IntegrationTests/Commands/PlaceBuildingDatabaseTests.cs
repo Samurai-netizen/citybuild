@@ -225,7 +225,7 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
         Assert.Equal(HttpStatusCode.OK, response.Status);
         JsonNode snapshot = response.Json();
         Assert.Equal((1L, "[1,2]"), ((long)snapshot["settlement"]!["elapsedSeconds"]!, snapshot["settlement"]!["completedBuildings"]!.ToJsonString()));
-        Assert.Equal("""{"slots":2,"busy":1}""", snapshot["city"]!["builders"]!.ToJsonString());
+        Assert.Equal("""{"slots":2,"busy":1,"queued":0,"queueLength":0}""", snapshot["city"]!["builders"]!.ToJsonString());
 
         await using CityBuilderDbContext db = Database.CreateContext();
         List<CityBuildingRow> buildings = await db.CityBuildings.AsNoTracking().OrderBy(row => row.BuildingId).ToListAsync(TestContext.Current.CancellationToken);

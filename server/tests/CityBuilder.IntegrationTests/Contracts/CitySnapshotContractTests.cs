@@ -72,7 +72,7 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
             "trips:array couriers:array routes:array deliveryLines:array",
             "$.city");
         JsonShape.AssertObject(city["workers"], "provided:int assigned:int onTrips:int free:int", "$.city.workers");
-        JsonShape.AssertObject(city["builders"], "slots:int busy:int", "$.city.builders");
+        JsonShape.AssertObject(city["builders"], "slots:int busy:int queued:int queueLength:int", "$.city.builders");
         JsonShape.AssertObject(city["research"], "activeId:string? startedAt:int? endsAt:int? needs:object completed:array", "$.city.research");
         JsonArray buildings = city["buildings"]!.AsArray();
         Assert.Equal(11, buildings.Count);
@@ -81,7 +81,7 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
             JsonShape.AssertObject(
                 buildings[index],
                 "id:int typeId:string x:int y:int level:int maxLevel:int assignedWorkers:int maxWorkers:int phase:string phaseStartedAt:int phaseEndsAt:int? " +
-                "cycleLabor:int laborRemaining:int segmentStartedAt:int stallReason:string? store:object storeLimits:object needs:object project:string? paused:bool",
+                "cycleLabor:int laborRemaining:int segmentStartedAt:int stallReason:string? store:object storeLimits:object needs:object project:string? paused:bool queuePlace:int?",
                 $"$.city.buildings[{index}]");
         }
 
@@ -157,7 +157,7 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
         Assert.Equal("[]", city["roads"]!.ToJsonString());
         Assert.Equal("[]", city["trips"]!.ToJsonString());
         Assert.Equal("""{"provided":0,"assigned":0,"onTrips":0,"free":0}""", city["workers"]!.ToJsonString());
-        Assert.Equal("""{"slots":2,"busy":0}""", city["builders"]!.ToJsonString());
+        Assert.Equal("""{"slots":2,"busy":0,"queued":0,"queueLength":2}""", city["builders"]!.ToJsonString());
         Assert.False((bool)city["chartered"]!);
     }
 
@@ -186,9 +186,48 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
 
         JsonNode city = (await ApiClient.GetAsync(server, "/api/v1/city", _playerId)).Json()["city"]!;
 
-        Assert.Equal("""{"slots":3,"busy":0}""", city["builders"]!.ToJsonString());
+        Assert.Equal("""{"slots":3,"busy":0,"queued":0,"queueLength":2}""", city["builders"]!.ToJsonString());
         Assert.True((bool)city["chartered"]!);
         Assert.Equal([3, 1], city["buildings"]!.AsArray().Select(building => (int)building!["maxLevel"]!));
+    }
+
+    /// <summary>
+    /// The snapshot shows the builder queue (CR-0013): with both builders on constructions, a queued woodcutter (order 7) is phase
+    /// <c>Queued</c> without times or a store, the house whose upgrade is queued (order 3) stays idle; <c>queuePlace</c> is each order's place
+    /// in the queue (1 starts next) and <c>builders</c> counts the queued orders and the content's queue length.
+    /// </summary>
+    [Fact]
+    public async Task Get_CityWithQueuedOrders_ShowsTheirPlacesAndTheQueue()
+    {
+        var state = new CityState(
+            clock: 1000,
+            era: 1,
+            nextBuildingId: 5,
+            purse: 10,
+            buildings:
+            [
+                new Building(1, House, 0, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, queuedOrder: 3),
+                new Building(2, Woodcutter, 1, 0, 1, 0, BuildingPhase.Constructing, 990, 1050, 0, 0, 0, 0),
+                new Building(3, Woodcutter, 2, 0, 1, 0, BuildingPhase.Constructing, 990, 1060, 0, 0, 0, 0),
+                new Building(4, Woodcutter, 3, 0, 1, 0, BuildingPhase.Queued, 0, null, 0, 0, 0, 0, queuedOrder: 7),
+            ],
+            completedResearch: [],
+            activeResearch: null,
+            nextQueuedOrder: 8);
+        FakeCityStore store = StoreWith(new CityAggregate(Guid.NewGuid(), _playerId, state, [], _settledAt.ToUnixTimeSeconds(), stateVersion: 3, "contract-2"));
+        await using WebApplicationFactory<Program> server = store.Serve(factory, new FakeTimeProvider(_settledAt), _files.Write(Json));
+
+        JsonNode city = (await ApiClient.GetAsync(server, "/api/v1/city", _playerId)).Json()["city"]!;
+
+        Assert.Equal("""{"slots":2,"busy":2,"queued":2,"queueLength":2}""", city["builders"]!.ToJsonString());
+        JsonNode[] buildings = [.. city["buildings"]!.AsArray().Select(building => building!)];
+        Assert.Equal(("Idle", 1), ((string)buildings[0]["phase"]!, (int)buildings[0]["queuePlace"]!));
+        Assert.Equal(
+            """{"id":4,"typeId":"woodcutter","x":3,"y":0,"level":1,"maxLevel":2,"assignedWorkers":0,"maxWorkers":2,"phase":"Queued",""" +
+            """ "phaseStartedAt":0,"phaseEndsAt":null,"cycleLabor":0,"laborRemaining":0,"segmentStartedAt":0,"stallReason":null,""".TrimStart() +
+            """ "store":{},"storeLimits":{},"needs":{},"project":null,"paused":false,"queuePlace":2}""".TrimStart(),
+            buildings[3].ToJsonString());
+        Assert.Null(buildings[1]["queuePlace"]);
     }
 
     /// <summary>
@@ -387,20 +426,20 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
             "clock": 1000, "era": 1, "purse": 150, "chartered": false,
             "totals": {"coins": 150, "logs": 165, "planks": 8},
             "workers": {"provided": 8, "assigned": 7, "onTrips": 1, "free": 0},
-            "builders": {"slots": 2, "busy": 2},
+            "builders": {"slots": 2, "busy": 2, "queued": 0, "queueLength": 2},
             "research": {"activeId": "sharp_axes", "startedAt": 990, "endsAt": 1110, "needs": {}, "completed": ["storehouses", "trade_charter"]},
             "buildings": [
-              {"id": 1, "typeId": "house", "x": 0, "y": 0, "level": 2, "maxLevel": 2, "assignedWorkers": 0, "maxWorkers": 0, "phase": "Idle", "phaseStartedAt": 0, "phaseEndsAt": null, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": "NoRecipe", "store": {}, "storeLimits": {}, "needs": {}, "project": null, "paused": false},
-              {"id": 2, "typeId": "woodcutter", "x": 1, "y": 0, "level": 1, "maxLevel": 2, "assignedWorkers": 2, "maxWorkers": 2, "phase": "Producing", "phaseStartedAt": 990, "phaseEndsAt": 1005, "cycleLabor": 30, "laborRemaining": 30, "segmentStartedAt": 990, "stallReason": null, "store": {"logs": 12}, "storeLimits": {"logs": 140}, "needs": {}, "project": null, "paused": false},
-              {"id": 3, "typeId": "woodcutter", "x": 2, "y": 0, "level": 2, "maxLevel": 2, "assignedWorkers": 0, "maxWorkers": 3, "phase": "Producing", "phaseStartedAt": 980, "phaseEndsAt": null, "cycleLabor": 30, "laborRemaining": 18, "segmentStartedAt": 995, "stallReason": "NoWorkers", "store": {"logs": 5}, "storeLimits": {"logs": 160}, "needs": {}, "project": null, "paused": false},
-              {"id": 4, "typeId": "trading_post", "x": 3, "y": 0, "level": 1, "maxLevel": 1, "assignedWorkers": 1, "maxWorkers": 1, "phase": "Idle", "phaseStartedAt": 0, "phaseEndsAt": null, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": "MissingInput:planks", "store": {"logs": 3, "planks": 1}, "storeLimits": {"logs": 110, "planks": 70}, "needs": {}, "project": null, "paused": false},
-              {"id": 5, "typeId": "woodcutter", "x": 4, "y": 0, "level": 1, "maxLevel": 2, "assignedWorkers": 1, "maxWorkers": 2, "phase": "Idle", "phaseStartedAt": 0, "phaseEndsAt": null, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": "StorageFull:logs", "store": {"logs": 140}, "storeLimits": {"logs": 140}, "needs": {}, "project": null, "paused": false},
-              {"id": 6, "typeId": "woodcutter", "x": 0, "y": 2, "level": 1, "maxLevel": 2, "assignedWorkers": 0, "maxWorkers": 2, "phase": "Constructing", "phaseStartedAt": 0, "phaseEndsAt": null, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": null, "store": {}, "storeLimits": {"logs": 140}, "needs": {"logs": 10}, "project": "Construction", "paused": false},
-              {"id": 7, "typeId": "house", "x": 1, "y": 2, "level": 1, "maxLevel": 2, "assignedWorkers": 0, "maxWorkers": 0, "phase": "Upgrading", "phaseStartedAt": 995, "phaseEndsAt": 1040, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": null, "store": {}, "storeLimits": {}, "needs": {}, "project": null, "paused": false},
-              {"id": 8, "typeId": "study", "x": 3, "y": 2, "level": 1, "maxLevel": 1, "assignedWorkers": 0, "maxWorkers": 0, "phase": "Idle", "phaseStartedAt": 0, "phaseEndsAt": null, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": "NoRecipe", "store": {}, "storeLimits": {}, "needs": {}, "project": null, "paused": false},
-              {"id": 9, "typeId": "depot", "x": 4, "y": 2, "level": 1, "maxLevel": 1, "assignedWorkers": 0, "maxWorkers": 0, "phase": "Idle", "phaseStartedAt": 0, "phaseEndsAt": null, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": "NoRecipe", "store": {"planks": 4}, "storeLimits": {"logs": 200, "planks": 150}, "needs": {}, "project": null, "paused": false},
-              {"id": 10, "typeId": "post", "x": 0, "y": 4, "level": 1, "maxLevel": 1, "assignedWorkers": 2, "maxWorkers": 2, "phase": "Idle", "phaseStartedAt": 0, "phaseEndsAt": null, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": null, "store": {}, "storeLimits": {}, "needs": {}, "project": null, "paused": false},
-              {"id": 11, "typeId": "post", "x": 5, "y": 4, "level": 1, "maxLevel": 1, "assignedWorkers": 1, "maxWorkers": 2, "phase": "Idle", "phaseStartedAt": 0, "phaseEndsAt": null, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": null, "store": {}, "storeLimits": {}, "needs": {}, "project": null, "paused": false}
+              {"id": 1, "typeId": "house", "x": 0, "y": 0, "level": 2, "maxLevel": 2, "assignedWorkers": 0, "maxWorkers": 0, "phase": "Idle", "phaseStartedAt": 0, "phaseEndsAt": null, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": "NoRecipe", "store": {}, "storeLimits": {}, "needs": {}, "project": null, "paused": false, "queuePlace": null},
+              {"id": 2, "typeId": "woodcutter", "x": 1, "y": 0, "level": 1, "maxLevel": 2, "assignedWorkers": 2, "maxWorkers": 2, "phase": "Producing", "phaseStartedAt": 990, "phaseEndsAt": 1005, "cycleLabor": 30, "laborRemaining": 30, "segmentStartedAt": 990, "stallReason": null, "store": {"logs": 12}, "storeLimits": {"logs": 140}, "needs": {}, "project": null, "paused": false, "queuePlace": null},
+              {"id": 3, "typeId": "woodcutter", "x": 2, "y": 0, "level": 2, "maxLevel": 2, "assignedWorkers": 0, "maxWorkers": 3, "phase": "Producing", "phaseStartedAt": 980, "phaseEndsAt": null, "cycleLabor": 30, "laborRemaining": 18, "segmentStartedAt": 995, "stallReason": "NoWorkers", "store": {"logs": 5}, "storeLimits": {"logs": 160}, "needs": {}, "project": null, "paused": false, "queuePlace": null},
+              {"id": 4, "typeId": "trading_post", "x": 3, "y": 0, "level": 1, "maxLevel": 1, "assignedWorkers": 1, "maxWorkers": 1, "phase": "Idle", "phaseStartedAt": 0, "phaseEndsAt": null, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": "MissingInput:planks", "store": {"logs": 3, "planks": 1}, "storeLimits": {"logs": 110, "planks": 70}, "needs": {}, "project": null, "paused": false, "queuePlace": null},
+              {"id": 5, "typeId": "woodcutter", "x": 4, "y": 0, "level": 1, "maxLevel": 2, "assignedWorkers": 1, "maxWorkers": 2, "phase": "Idle", "phaseStartedAt": 0, "phaseEndsAt": null, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": "StorageFull:logs", "store": {"logs": 140}, "storeLimits": {"logs": 140}, "needs": {}, "project": null, "paused": false, "queuePlace": null},
+              {"id": 6, "typeId": "woodcutter", "x": 0, "y": 2, "level": 1, "maxLevel": 2, "assignedWorkers": 0, "maxWorkers": 2, "phase": "Constructing", "phaseStartedAt": 0, "phaseEndsAt": null, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": null, "store": {}, "storeLimits": {"logs": 140}, "needs": {"logs": 10}, "project": "Construction", "paused": false, "queuePlace": null},
+              {"id": 7, "typeId": "house", "x": 1, "y": 2, "level": 1, "maxLevel": 2, "assignedWorkers": 0, "maxWorkers": 0, "phase": "Upgrading", "phaseStartedAt": 995, "phaseEndsAt": 1040, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": null, "store": {}, "storeLimits": {}, "needs": {}, "project": null, "paused": false, "queuePlace": null},
+              {"id": 8, "typeId": "study", "x": 3, "y": 2, "level": 1, "maxLevel": 1, "assignedWorkers": 0, "maxWorkers": 0, "phase": "Idle", "phaseStartedAt": 0, "phaseEndsAt": null, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": "NoRecipe", "store": {}, "storeLimits": {}, "needs": {}, "project": null, "paused": false, "queuePlace": null},
+              {"id": 9, "typeId": "depot", "x": 4, "y": 2, "level": 1, "maxLevel": 1, "assignedWorkers": 0, "maxWorkers": 0, "phase": "Idle", "phaseStartedAt": 0, "phaseEndsAt": null, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": "NoRecipe", "store": {"planks": 4}, "storeLimits": {"logs": 200, "planks": 150}, "needs": {}, "project": null, "paused": false, "queuePlace": null},
+              {"id": 10, "typeId": "post", "x": 0, "y": 4, "level": 1, "maxLevel": 1, "assignedWorkers": 2, "maxWorkers": 2, "phase": "Idle", "phaseStartedAt": 0, "phaseEndsAt": null, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": null, "store": {}, "storeLimits": {}, "needs": {}, "project": null, "paused": false, "queuePlace": null},
+              {"id": 11, "typeId": "post", "x": 5, "y": 4, "level": 1, "maxLevel": 1, "assignedWorkers": 1, "maxWorkers": 2, "phase": "Idle", "phaseStartedAt": 0, "phaseEndsAt": null, "cycleLabor": 0, "laborRemaining": 0, "segmentStartedAt": 0, "stallReason": null, "store": {}, "storeLimits": {}, "needs": {}, "project": null, "paused": false, "queuePlace": null}
             ],
             "roads": [{"x": 1, "y": 1, "level": 2}, {"x": 2, "y": 1, "level": 1}, {"x": 2, "y": 2, "level": 1}],
             "trips": [{"id": 1, "sourceId": 9, "targetId": 4, "itemId": "planks", "quantity": 2, "departedAt": 995, "arrivesAt": 1012, "remaining": 0, "leg": "ToTarget"}],

@@ -89,7 +89,7 @@ public sealed class RoadCommandsContractTests(ApiFactory factory) : IClassFixtur
             """[{"x":0,"y":2,"level":1},{"x":1,"y":1,"level":1},{"x":2,"y":1,"level":2},{"x":3,"y":1,"level":1},{"x":3,"y":2,"level":1}]""",
             snapshot["city"]!["roads"]!.ToJsonString());
         Assert.Equal(10L, (long)snapshot["city"]!["purse"]!);
-        Assert.Equal("""{"slots":2,"busy":0}""", snapshot["city"]!["builders"]!.ToJsonString());
+        Assert.Equal("""{"slots":2,"busy":0,"queued":0,"queueLength":0}""", snapshot["city"]!["builders"]!.ToJsonString());
         Assert.Equal(1, store.SaveCount);
         LedgerEntry cost = Assert.Single(store.Ledger);
         Assert.Equal((LedgerReason.CostRoad, "coins", -10L, 10L, _requestId), (cost.Reason, cost.Item.Value, cost.Delta, cost.BalanceAfter, cost.RefId));

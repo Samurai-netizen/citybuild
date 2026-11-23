@@ -53,7 +53,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
         Assert.Equal((versionBefore + 1, 0L), (row.StateVersion, row.ClockSeconds));
         Assert.Equal(row.StateVersion, (long)snapshot["stateVersion"]!);
         Assert.Equal("coins 850", await StockAsync(Database, city));
-        Assert.Equal("""{"slots":2,"busy":1}""", snapshot["city"]!["builders"]!.ToJsonString());
+        Assert.Equal("""{"slots":2,"busy":1,"queued":0,"queueLength":0}""", snapshot["city"]!["builders"]!.ToJsonString());
         Assert.Equal(("Upgrade", """{"planks":20}"""), ((string)snapshot["city"]!["buildings"]![1]!["project"]!, snapshot["city"]!["buildings"]![1]!["needs"]!.ToJsonString()));
         Assert.Equal("2 woodcutter L1 Idle - target 0 workers 0", await BuildingAsync(Database, city, 2));
         CityProjectNeedRow need = await db.CityProjectNeeds.AsNoTracking().SingleAsync(TestContext.Current.CancellationToken);

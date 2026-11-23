@@ -53,11 +53,11 @@ public sealed class PlaceBuildingContractTests(ApiFactory factory) : IClassFixtu
         Assert.Equal((_requestId, 1L), ((string)snapshot["requestId"]!, (long)snapshot["stateVersion"]!));
         Assert.Equal(920, (long)snapshot["city"]!["purse"]!);
         Assert.Equal("""{"coins":920,"logs":0,"planks":0}""", snapshot["city"]!["totals"]!.ToJsonString());
-        Assert.Equal("""{"slots":2,"busy":1}""", snapshot["city"]!["builders"]!.ToJsonString());
+        Assert.Equal("""{"slots":2,"busy":1,"queued":0,"queueLength":0}""", snapshot["city"]!["builders"]!.ToJsonString());
         Assert.Equal(
             """[{"id":1,"typeId":"woodcutter","x":2,"y":3,"level":1,"maxLevel":2,"assignedWorkers":0,"maxWorkers":2,"phase":"Constructing",""" +
             """ "phaseStartedAt":0,"phaseEndsAt":60,"cycleLabor":0,"laborRemaining":0,"segmentStartedAt":0,"stallReason":null,""".TrimStart() +
-            """ "store":{},"storeLimits":{"logs":40},"needs":{},"project":null,"paused":false}]""".TrimStart(),
+            """ "store":{},"storeLimits":{"logs":40},"needs":{},"project":null,"paused":false,"queuePlace":null}]""".TrimStart(),
             snapshot["city"]!["buildings"]!.ToJsonString());
 
         Assert.Equal(1, store.SaveCount);

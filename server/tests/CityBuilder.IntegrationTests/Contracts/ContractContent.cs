@@ -61,7 +61,7 @@ internal static class ContractContent
         {
           "contentVersion": "contract-2",
           "rules": {
-            "gridWidth": 6, "gridHeight": 5, "builderSlots": 2, "researchSlots": 1,
+            "gridWidth": 6, "gridHeight": 5, "builderSlots": 2, "builderQueueLength": 2, "researchSlots": 1,
             "minCycleSeconds": 5, "maxLaborReductionPermille": 400,
             "groundTileMillis": 6000, "crossingSpeedPermille": 300, "minWalkSeconds": 3, "maxWalkBonusPermille": 250,
             "tripCarryLimit": 8, "maxRouteStops": 5, "maxStopActions": 2, "maxDeliveryLines": 12
