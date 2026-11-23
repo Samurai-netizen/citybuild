@@ -3,7 +3,7 @@
 > The design of the full Era I (M1-01, CR-0011). **Every number is a first pass for the balance simulator (M1-15)**, not a promise.
 > M1-02 copies it into a new content file under `server/content/`; from then on the JSON is the source of truth and this file is updated in
 > the same commit as the JSON (as `23` was for M0). `23` stays the record of M0 (`mvp-3`).
-> The map, the Chronicle, merchant orders and decorations: `29-era1-chronicle.md`. Russian and English names: `29` → Names (M1-01 part D).
+> The map, the Chronicle, merchant orders and decorations: `29-era1-chronicle.md`. Russian and English names: `32-era1-names.md`.
 > Rules behind the numbers: `22`, `24` (small-integer ratios), `25` (effects, Era I durations 10 min–8 h).
 
 ## Global rules (changes from `23`)
@@ -105,4 +105,4 @@ A node may have several effects (`masonry`, `open_fields`); `04` gets that rule 
 
 ## Starting city
 purse 1000 coins · era 1 · area A of the map · no buildings, no goods, no research · the Chronicle at chapter 1 · default town name
-(`29` → Names) · city clock 0.
+(`32`) · city clock 0.

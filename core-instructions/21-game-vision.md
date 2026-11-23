@@ -6,8 +6,8 @@ You staff production chains with your own people, trade with real players, and c
 
 ## Premise and voice (M1)
 The Duke grants you, his steward, a river crossing and a year to turn it into a town; earn the **Town Charter** and it becomes a free
-town. Four advisors speak for the systems: the master builder, the merchant, the scribe and the courier master (names and portraits:
-`28`, `docs/assets/STYLE.md`). They appear in the tutorial, in the Chronicle and when something finishes, one or two lines at a time, and
+town. Four advisors speak for the systems: the master builder, the merchant, the scribe and the courier master (names: `32`; portraits:
+, `docs/assets/STYLE.md`). They appear in the tutorial, in the Chronicle and when something finishes, one or two lines at a time, and
 never nag. The game is Russian first, English second (G30).
 
 ## Player fantasy
@@ -74,7 +74,7 @@ what is blocked, what is waiting for goods, where the goods are, which research 
 
 ## Tone
 Friendly, lightly humorous names and descriptions with a light historical flavour, never snarky toward the player. Russian text is
-written as Russian, not translated word for word (`28` → names).
+written as Russian, not translated word for word (`32`).
 No dark patterns: no fake urgency, no punishing timers, and no loss of progress for being away (only a cap on production: couriers rest
 when their stamina is spent, and production stops when stores fill or inputs run out). Re-energizing is one free tap, never a countdown or a nag. Orders and the caravan
 never expire with a penalty; a skipped one simply makes room for the next.

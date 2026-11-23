@@ -42,7 +42,8 @@ are in `docs/` (map: `docs/README.md`). Entry points: `AGENTS.md` (any AI tool),
 | `25-eras-and-research.md` | Progression | Eras, research rules, major vs minor mechanics |
 | `26-open-market.md` | Anything cross-player | Market design + what M0 must already respect |
 | `28-era1-content.md` | M1 content, game numbers of Era I | Items, buildings and levels, recipes, roads, research (first-pass numbers) |
-| `29-era1-chronicle.md` | The map, the Chronicle, orders, decorations | The Era I map, chapters and goals, order tables, decorations, names |
+| `29-era1-chronicle.md` | The map, the Chronicle, orders, decorations | The Era I map, chapters and goals, order tables, decorations |
+| `32-era1-names.md` | Russian and English names of Era I | Game-name candidates, the town, advisors, merchants, items, buildings, research, chapters |
 | `27-asset-pipeline.md` | A task needs a model, picture, sound or font | Who makes assets (not the coder), asset requests, placeholders, acceptance |
 
 ## Scope and words (30–31)

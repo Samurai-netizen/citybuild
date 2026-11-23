@@ -36,7 +36,7 @@ y  0   FFFFFF..RRRRW..SSS      BBBBBBBBBBBBBCCCCC
 Goal conditions the engine checks (M1-04): `TownNamed` · `BuildingCount(type, minLevel, n)` · `Produced(item, n)` (since the chapter
 opened) · `ResearchDone(id)` · `RoadTiles(kind, n)` · `RoutesSet(n)` · `OrdersFulfilled(n)` · `CaravansFulfilled(n)` (both since the city
 began); `Produced(coins, n)` counts only the Trading Post's recipe. Rewards: coins (`c`), a decoration (a name after a goal is that goal's
-reward), a story line (every goal has one, said by an advisor; texts in part D).
+reward), a story line (every goal has one, said by an advisor; written with the strings in M1-07, `32` → Lines).
 
 | Ch | Name, when | Goals (in order shown; any order to complete) and rewards | Final event |
 |---|---|---|---|
@@ -51,7 +51,7 @@ reward), a story line (every goal has one, said by an advisor; texts in part D).
 1 000 starting coins pay for everything chapter 1 asks (M1-15 checks it; golden #3 in M1-04 walks it).
 
 ## Merchant orders and the caravan
-- **Merchants** (one per kind of goods; names in Names below): `woodmonger` (logs, planks) · `stone_dealer` (stone, cut_stone) ·
+- **Merchants** (one per kind of goods; names in `32`): `woodmonger` (logs, planks) · `stone_dealer` (stone, cut_stone) ·
   `miller_buyer` (grain, flour) · `baker_buyer` (bread) · `quartermaster` (the Duke's man: any two kinds) · `river_trader` (the caravan).
 - **Order price** = Σ (amount × reference price, `28`) × markup ‰ ÷ 1000, rounded down. A merchant offers only goods the city can make
   (its buildings unlocked).
@@ -88,4 +88,4 @@ until placed; put away, it returns there (G42).
 
 ## Names
 Russian and English names of the game, the town, the advisors, the merchants and every item, building, research, chapter and decoration:
-M1-01 part D (pending). Ids above are final; display names are content strings (localization keys, M1-07).
+`32-era1-names.md`. Ids above are final; display names are content strings (localization keys, M1-07).

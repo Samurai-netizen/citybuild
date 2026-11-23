@@ -7,7 +7,7 @@
 ## Resume point
 - **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M1-01 Design lock for Era I · branch `task/M1-01-design-lock` · log `docs/build-log/2026/2026-11-23-01-M1-01.md`
-- **Part / step:** parts A decisions · B design files · C `28` content · D names · E STYLE.md · F asset requests; A, B, C done and approved
+- **Part / step:** parts A decisions · B design files · C `28` content · D names · E STYLE.md · F asset requests; A, B, C done and approved; D written (`32`), awaiting the owner's name pick and words
 - **Last completed:** CR-0009-T2 (PR #103, merged 2026-11-18). CR-0011 (the M1 plan) approved by the owner 2026-11-23.
 - **Next step:** part D: names and words (game-name candidates checked in RuStore and Google Play; `29` → Names). Also open: the owner's [MANUAL]
   click-through of the metrics report (`tools/README.md` → MetricsReport).
