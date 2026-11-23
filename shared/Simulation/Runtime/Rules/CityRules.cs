@@ -116,8 +116,7 @@ namespace CityBuilder.Simulation.Rules
                 return MutationResult.Rejected(MutationErrorCode.BuildingBusy);
             }
 
-            BuildingDefinition definition = CityQueries.DefinitionOf(content, building.TypeId);
-            if (building.Level >= definition.MaxLevel)
+            if (building.Level >= CityQueries.MaxLevel(city, content, building.TypeId))
             {
                 return MutationResult.Rejected(MutationErrorCode.MaxLevel);
             }
@@ -127,7 +126,7 @@ namespace CityBuilder.Simulation.Rules
                 return MutationResult.Rejected(MutationErrorCode.NoFreeBuilder);
             }
 
-            BuildingLevelDefinition nextLevel = definition.GetLevel(building.Level + 1);
+            BuildingLevelDefinition nextLevel = CityQueries.DefinitionOf(content, building.TypeId).GetLevel(building.Level + 1);
             long coins = Costs.CoinsOf(content, nextLevel.UpgradeCost);
             if (city.Purse < coins)
             {
@@ -337,7 +336,7 @@ namespace CityBuilder.Simulation.Rules
         private static bool IsTileTaken(CityState city, int x, int y) => CityQueries.TileAt(city, x, y) != TileContent.Ground;
 
         /// <summary>Whether a builder slot is free for one more construction or upgrade (<see cref="CityQueries.BuildersBusy"/> below the content's slots).</summary>
-        private static bool HasFreeBuilder(CityState city, GameContent content) => CityQueries.BuildersBusy(city) < content.Rules.BuilderSlots;
+        private static bool HasFreeBuilder(CityState city, GameContent content) => CityQueries.BuildersBusy(city) < CityQueries.BuilderSlots(city, content);
 
         /// <summary>Whether the city has completed every prerequisite of a research node.</summary>
         private static bool HasCompletedAll(CityState city, ResearchDefinition node)

@@ -17,7 +17,7 @@ internal static class ContentFixture
     /// labor, a store of 20 wood and 80 boards; it costs 40 gold and 10 wood), a depot (warehouse: 100 wood and 100 boards, then 200 each), a
     /// post (courier station: 2 then 3 couriers carrying 5 then 8, stamina 600 then 1 200 s) and a school (the science building, one per
     /// city); research carpentry → better_saws (−250 ‰ camp, −100 ‰ workshop) → warehouses (era 2, +50 wood, +40 boards), tallying (percent
-    /// amounts, after carpentry), boots (walks 100 ‰ faster), guild (hut max level +1, +1 builder slot) → charter (grants the charter); walking 4 000 ms per ground tile, crossings at 250 ‰, a path (2 000 ms, 2 gold)
+    /// amounts, after carpentry), boots (walks 100 ‰ faster), tallying → guild (hut max level +1, +1 builder slot) → charter (grants the charter); walking 4 000 ms per ground tile, crossings at 250 ‰, a path (2 000 ms, 2 gold)
     /// and a paved path (1 000 ms, 6 gold); presets all (100 %) and half (50 %); trips carry 6; routes of up to 6 stops with 3 actions each;
     /// a new city starts with 100 gold.
     /// </summary>
@@ -181,7 +181,7 @@ internal static class ContentFixture
             },
             new ResearchData
             {
-                Id = "guild", Name = "Guild", Era = 1, Cost = new() { ["gold"] = 40 }, DurationSeconds = 60,
+                Id = "guild", Name = "Guild", Era = 1, Cost = new() { ["gold"] = 20 }, DurationSeconds = 60, Prerequisites = ["tallying"],
                 Effects =
                 [
                     new ResearchEffectData { Type = "maxLevelBonus", Building = "hut", Amount = 1 },

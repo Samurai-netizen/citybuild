@@ -116,7 +116,7 @@ public sealed class GameContentFactoryTests
 
         Assert.Equal(["boards", "gold", "wood"], content.Items.Select(item => item.Id.Value));
         Assert.Equal(["depot", "hut", "lumber_camp", "post", "school", "workshop"], content.Buildings.Select(building => building.Id.Value));
-        Assert.Equal(["better_saws", "boots", "carpentry", "tallying", "warehouses"], content.Research.Select(node => node.Id.Value));
+        Assert.Equal(["better_saws", "boots", "carpentry", "charter", "guild", "tallying", "warehouses"], content.Research.Select(node => node.Id.Value));
     }
 
     /// <summary>Eras are sorted by number whatever order the file lists them in.</summary>
@@ -189,8 +189,8 @@ public sealed class GameContentFactoryTests
 
         BuildingDefinition hut = BuildingOf(ContentAssert.Valid(data), "hut");
 
-        Assert.Equal(2, hut.MaxLevel);
-        Assert.Equal([1, 2], hut.Levels.Select(level => level.Level));
+        Assert.Equal(3, hut.MaxLevel);
+        Assert.Equal([1, 2, 3], hut.Levels.Select(level => level.Level));
         Assert.Equal(5, hut.GetLevel(2).WorkersProvided);
         Assert.Equal([("gold", 20L), ("wood", 5L)], hut.GetLevel(2).UpgradeCost.Select(line => (line.Item.Value, line.Quantity)));
         Assert.Equal(8L, hut.GetLevel(2).UpgradeSeconds);
@@ -199,7 +199,7 @@ public sealed class GameContentFactoryTests
     /// <summary>A level number outside 1..max is a programmer error and throws.</summary>
     [Theory]
     [InlineData(0)]
-    [InlineData(3)]
+    [InlineData(4)]
     [InlineData(-1)]
     public void GetLevel_NumberOutsideOneToMaxLevel_Throws(int level)
     {
@@ -286,7 +286,7 @@ public sealed class GameContentFactoryTests
 
         ContentAssert.Valid(data);
 
-        Assert.Equal([2, 1], Building(data, "hut").Levels!.Select(level => level!.Level));
+        Assert.Equal([3, 2, 1], Building(data, "hut").Levels!.Select(level => level!.Level));
     }
 
     /// <summary>A building type of the content by id; throws when it doesn't exist.</summary>

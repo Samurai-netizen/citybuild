@@ -132,20 +132,72 @@ namespace CityBuilder.Simulation.State
         /// <param name="city">The city.</param>
         /// <param name="content">The game content.</param>
         /// <returns>The number of builder slots.</returns>
-        public static int BuilderSlots(CityState city, GameContent content) => content.Rules.BuilderSlots;
+        public static int BuilderSlots(CityState city, GameContent content)
+        {
+            long slots = content.Rules.BuilderSlots;
+            IReadOnlyList<ResearchId> completed = city.CompletedResearch;
+            for (int index = 0; index < completed.Count; index++)
+            {
+                IReadOnlyList<ResearchEffect> effects = ResearchOf(content, completed[index]).Effects;
+                for (int effectIndex = 0; effectIndex < effects.Count; effectIndex++)
+                {
+                    if (effects[effectIndex] is BuilderSlotBonusEffect bonus)
+                    {
+                        slots = checked(slots + bonus.Amount);
+                    }
+                }
+            }
+
+            return checked((int)slots);
+        }
 
         /// <summary>A building type's max level: its base max level plus every completed <see cref="MaxLevelBonusEffect"/> for it (<c>04</c> section 8).</summary>
         /// <param name="city">The city.</param>
         /// <param name="content">The game content.</param>
         /// <param name="type">A building type of the content.</param>
         /// <returns>The highest level a building of the type may reach now.</returns>
-        public static int MaxLevel(CityState city, GameContent content, BuildingTypeId type) => DefinitionOf(content, type).MaxLevel;
+        public static int MaxLevel(CityState city, GameContent content, BuildingTypeId type)
+        {
+            BuildingDefinition definition = DefinitionOf(content, type);
+            long level = definition.BaseMaxLevel;
+            IReadOnlyList<ResearchId> completed = city.CompletedResearch;
+            for (int index = 0; index < completed.Count; index++)
+            {
+                IReadOnlyList<ResearchEffect> effects = ResearchOf(content, completed[index]).Effects;
+                for (int effectIndex = 0; effectIndex < effects.Count; effectIndex++)
+                {
+                    if (effects[effectIndex] is MaxLevelBonusEffect bonus && bonus.Building == type)
+                    {
+                        level = checked(level + bonus.Amount);
+                    }
+                }
+            }
+
+            // Content rule (LevelCapRules): the bonuses never pass the last level, so this cast is exact.
+            return (int)level;
+        }
 
         /// <summary>Whether a completed node has a <see cref="GrantCharterEffect"/>: the city is chartered (<c>25</c>, the end of Era I).</summary>
         /// <param name="city">The city.</param>
         /// <param name="content">The game content.</param>
         /// <returns>True from the charter node's completion second on.</returns>
-        public static bool IsChartered(CityState city, GameContent content) => false;
+        public static bool IsChartered(CityState city, GameContent content)
+        {
+            IReadOnlyList<ResearchId> completed = city.CompletedResearch;
+            for (int index = 0; index < completed.Count; index++)
+            {
+                IReadOnlyList<ResearchEffect> effects = ResearchOf(content, completed[index]).Effects;
+                for (int effectIndex = 0; effectIndex < effects.Count; effectIndex++)
+                {
+                    if (effects[effectIndex] is GrantCharterEffect)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
 
         /// <summary>
         /// How much of a good a building has reserved: the output of its own running cycle (frozen ones included), which will enter its store

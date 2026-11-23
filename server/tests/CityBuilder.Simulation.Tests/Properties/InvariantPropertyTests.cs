@@ -90,6 +90,14 @@ public sealed class InvariantPropertyTests(ITestOutputHelper output)
         InvariantObservation observation = InvariantObservation.For(contentName);
         output.WriteLine($"{contentName}: {observation.CountsText()}");
 
+        if (contentName == "fixture-m1")
+        {
+            // The variant exists for M1-02's effects; the plain fixture covers the rest (PropertyContent).
+            observation.AssertAtLeast("steps with a research builder slot in use", 100);
+            observation.AssertAtLeast("buildings above their base max level", 100);
+            return;
+        }
+
         observation.AssertAtLeast("steps that spent", 1000);
         observation.AssertAtLeast("steps asked to go back in time", PropertyContent.Seeds);
         observation.AssertAtLeast("stores ending with a good exactly at its limit", 1000);

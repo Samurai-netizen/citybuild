@@ -117,9 +117,10 @@ public sealed class ContentEra1EffectTests
     /// <summary>A max level bonus on a type with no level above its base max level is a bad target (<see cref="ContentErrorCode.InvalidEffectTarget"/>).</summary>
     [Fact]
     public void Create_MaxLevelBonusOnATypeWithoutALockedLevel_ReportsInvalidEffectTarget() =>
-        ContentAssert.Errors(
+        ContentAssert.SingleError(
             ValidWith(data => Research(data, "guild").Effects![0]!.Building = "lumber_camp"),
-            (ContentErrorCode.InvalidEffectTarget, "research[guild].effects[#0].building"));
+            ContentErrorCode.InvalidEffectTarget,
+            "research[guild].effects[#0].building");
 
     /// <summary>A max level bonus on a building type that doesn't exist gives one <see cref="ContentErrorCode.UnknownReference"/>.</summary>
     [Fact]

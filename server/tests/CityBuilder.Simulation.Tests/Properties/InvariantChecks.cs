@@ -356,14 +356,20 @@ internal sealed class InvariantChecks
         return stray is null ? null : $"courier {stray.StationId}/{stray.Slot} has no station";
     }
 
-    /// <summary>Invariant 10: busy builders within the slots; a research starts only when none runs, and the running one is not completed.</summary>
+    /// <summary>
+    /// Invariant 10: busy builders within the slots (the content's plus the <c>builderSlotBonus</c>es of completed research, summed here
+    /// independently of <c>CityQueries.BuilderSlots</c>); a research starts only when none runs, and the running one is not completed.
+    /// </summary>
     private string? Slots(InvariantStep step)
     {
         int busy = CityQueries.BuildersBusy(step.After);
-        CountIf(busy == _content.Rules.BuilderSlots, "steps with every builder busy");
-        if (busy > _content.Rules.BuilderSlots)
+        long slots = _content.Rules.BuilderSlots
+            + step.After.CompletedResearch.Sum(id => Research(id).Effects.OfType<BuilderSlotBonusEffect>().Sum(bonus => bonus.Amount));
+        CountIf(busy == slots, "steps with every builder busy");
+        CountIf(busy > _content.Rules.BuilderSlots, "steps with a research builder slot in use");
+        if (busy > slots)
         {
-            return $"{busy} builders busy, the city has {_content.Rules.BuilderSlots}";
+            return $"{busy} builders busy, the city has {slots}";
         }
 
         if (step.Operation is CityOperation.StartResearch && step.Mutation is not null)
@@ -386,6 +392,19 @@ internal sealed class InvariantChecks
     /// </summary>
     private string? Unlocks(InvariantStep step)
     {
+        foreach (Building building in step.After.Buildings)
+        {
+            BuildingDefinition definition = ContentLookup.Definition(_content, building.TypeId);
+            long cap = definition.BaseMaxLevel + step.After.CompletedResearch.Sum(id =>
+                Research(id).Effects.OfType<MaxLevelBonusEffect>().Where(bonus => bonus.Building == building.TypeId).Sum(bonus => bonus.Amount));
+            int level = building.Phase == BuildingPhase.Upgrading ? building.TargetLevel : building.Level;
+            CountIf(level > definition.BaseMaxLevel, "buildings above their base max level");
+            if (level > cap)
+            {
+                return $"building {building.Id} ({building.TypeId}) is at level {level}, above its max level {cap}";
+            }
+        }
+
         if (step.Mutation is not null && step.Operation is CityOperation.StartTrip { Amount.Mode: { } mode } trip)
         {
             _count("trips with a percentage or exact amount");

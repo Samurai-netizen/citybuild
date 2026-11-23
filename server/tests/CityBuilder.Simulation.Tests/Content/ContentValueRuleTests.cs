@@ -55,7 +55,7 @@ public sealed class ContentValueRuleTests
         ["rules.researchSlots"] = data => RulesOf(data).ResearchSlots = 2,
         ["rules.gridWidth"] = data => RulesOf(data).GridWidth = GameContentFactory.MaxStoredSmallValue + 1,
         ["rules.gridHeight"] = data => RulesOf(data).GridHeight = int.MaxValue,
-        ["buildings[hut].levels[2].workersProvided"] = data => Level(data, "hut", 2).WorkersProvided = GameContentFactory.MaxStoredSmallValue + 1,
+        ["buildings[hut].levels[3].workersProvided"] = data => Level(data, "hut", 3).WorkersProvided = GameContentFactory.MaxStoredSmallValue + 1,
         ["buildings[lumber_camp].levels[2].maxWorkers"] = data =>
         {
             // The labor grows with the workers, so the only broken rule is the limit: not the shortest cycle.
@@ -105,7 +105,7 @@ public sealed class ContentValueRuleTests
         GameContentData data = Valid();
         RulesOf(data).GridWidth = GameContentFactory.MaxStoredSmallValue;
         RulesOf(data).GridHeight = GameContentFactory.MaxStoredSmallValue;
-        Level(data, "hut", 2).WorkersProvided = GameContentFactory.MaxStoredSmallValue;
+        Level(data, "hut", 3).WorkersProvided = GameContentFactory.MaxStoredSmallValue;
 
         Assert.True(GameContentFactory.Create(data).IsValid);
     }

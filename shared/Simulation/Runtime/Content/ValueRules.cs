@@ -104,12 +104,13 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
-        /// <summary>Costs are at least zero; build and upgrade times, recipe amounts and labor are greater than zero.</summary>
+        /// <summary>Costs are at least zero; build and upgrade times, recipe amounts, labor and the base max level are greater than zero.</summary>
         private static void CheckBuilding(BuildingDefinition building, ContentErrorList errors)
         {
             string path = ContentPaths.Building(building);
             AtLeastZero(building.Cost, path + ".cost", errors);
             Positive(building.BuildSeconds, path + ".buildSeconds", errors);
+            Positive(building.BaseMaxLevel, path + ".baseMaxLevel", errors);
             if (building.MaxPerCity.HasValue)
             {
                 Positive(building.MaxPerCity.Value, path + ".maxPerCity", errors);
@@ -135,7 +136,10 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
-        /// <summary>The cost is at least zero, the duration greater than zero, a labor reduction 1 to 1000 permille, a storage bonus greater than zero.</summary>
+        /// <summary>
+        /// The cost is at least zero, the duration greater than zero, a labor reduction and a walk bonus 1 to 1000 permille, a storage, max
+        /// level or builder slot bonus greater than zero.
+        /// </summary>
         private static void CheckResearch(ResearchDefinition node, ContentErrorList errors)
         {
             string path = ContentPaths.Research(node);
@@ -156,6 +160,12 @@ namespace CityBuilder.Simulation.Content
                     case WalkSpeedBonusEffect walk:
                         Positive(walk.Permille, effectPath + ".permille", errors);
                         AtMostOneThousand(walk.Permille, effectPath + ".permille", errors);
+                        break;
+                    case MaxLevelBonusEffect levels:
+                        Positive(levels.Amount, effectPath + ".amount", errors);
+                        break;
+                    case BuilderSlotBonusEffect slots:
+                        Positive(slots.Amount, effectPath + ".amount", errors);
                         break;
                 }
             }

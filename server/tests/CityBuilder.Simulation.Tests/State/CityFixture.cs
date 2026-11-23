@@ -21,7 +21,11 @@ internal static class CityFixture
     /// for the era check of placement; and <c>mint</c>, a producer of the currency (5 gold per 20 labor, up to 2 workers, no store), whose
     /// output goes into the purse.
     /// </summary>
-    public static GameContent TestContent { get; } = ContentAssert.Valid(ContentFixture.ValidWith(data =>
+    public static GameContent TestContent { get; } = ContentAssert.Valid(ContentFixture.ValidWith(Extend));
+
+    /// <summary>The four additions of <see cref="TestContent"/> to the valid fixture data, also for its property variant.</summary>
+    /// <param name="data">The fixture data to change.</param>
+    public static void Extend(GameContentData data)
     {
         // "!" reaches into the valid fixture, which sets the building list and every building's levels (ContentFixture.Valid).
         ContentFixture.Level(data, "lumber_camp", 2).MaxWorkers = 4;
@@ -57,7 +61,7 @@ internal static class CityFixture
             BuildSeconds = 5,
             Levels = [new BuildingLevelData { Level = 1, WorkersProvided = 4 }],
         });
-    }));
+    }
 
     /// <summary>
     /// A city at <paramref name="clock"/> (default 1000) in era 1. The next building id defaults to one above the highest id, the next trip id
