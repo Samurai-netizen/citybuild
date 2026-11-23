@@ -2,6 +2,7 @@
 
 using System;
 using CityBuilder.Client.Presentation.Build;
+using CityBuilder.Client.Tests.EditMode.Core;
 using CityBuilder.Simulation;
 using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.State;
@@ -129,6 +130,17 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Build
             Assert.That(coinsShort.Hint, Is.EqualTo(BuildHint.CannotAfford));
             Assert.That(coinsShort.HintText, Is.EqualTo("Not enough Coins"));
             Assert.That(exact.Hint, Is.EqualTo(BuildHint.None), "exactly the coins are affordable");
+        }
+
+        /// <summary>Every builder busy with room in the queue (CR-0013): the hint says the building will wait in the queue.</summary>
+        [Test]
+        public void AllBuildersBusyWithRoomInTheQueue_HintsQueued()
+        {
+            _content = CityTestData.Content(builderQueueLength: 2);
+            CityState bothBusy = BuildMenuTestData.City(700, 40, 10, Array.Empty<string>(), 2);
+
+            Assert.That(Card("house", bothBusy).Hint, Is.EqualTo(BuildHint.Queued));
+            Assert.That(Card("house", bothBusy).HintText, Is.EqualTo("Builders busy: it will wait in the queue"));
         }
 
         /// <summary>Every builder busy: the hint says so (two builders in the content), even when the stock would cover the cost.</summary>

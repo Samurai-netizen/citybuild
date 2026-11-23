@@ -29,6 +29,19 @@ namespace CityBuilder.Client.Tests.EditMode.Core
             return built.Content!;
         }
 
+        /// <summary>
+        /// The fixture content with a builder queue of <paramref name="builderQueueLength"/> places (CR-0013): the fixture was recorded before
+        /// the queue, so its rules have none.
+        /// </summary>
+        public static GameContent Content(int builderQueueLength)
+        {
+            string json = Fixtures.Read("content.json").Replace("\"builderSlots\":2,", "\"builderSlots\":2,\"builderQueueLength\":" + builderQueueLength + ",");
+            ContentResponseDto dto = new ApiJson().Deserialize<ContentResponseDto>(json)!;
+            GameContentResult built = GameContentFactory.Create(ContentMapper.ToData(dto));
+            Assert.That(built.IsValid, Is.True, "The content fixture with a queue must be valid.");
+            return built.Content!;
+        }
+
         /// <summary>The decoded answer in the fixture file <paramref name="name"/>.</summary>
         public static CitySnapshotDto Dto(string name)
         {

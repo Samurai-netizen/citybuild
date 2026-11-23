@@ -76,6 +76,25 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Hud
             Assert.That(model.BuildersText, Is.EqualTo("1 / 2"));
         }
 
+        /// <summary>Queued orders (CR-0013) follow the builders: <c>2 / 2 · 1 queued</c>; none queued shows nothing more.</summary>
+        [Test]
+        public void Builders_WithAQueuedOrder_ShowTheQueue()
+        {
+            CityState city = HudTestData.City(
+                0,
+                700,
+                40,
+                10,
+                new[]
+                {
+                    HudTestData.Constructing(1, 1),
+                    HudTestData.Constructing(2, 2),
+                    new Building(3, new BuildingTypeId("house"), 3, 0, 1, 0, BuildingPhase.Queued, 0, null, 0, 0, 0, 0, queuedOrder: 1),
+                });
+
+            Assert.That(new HudModel(_content, city, ConnectionState.Connected).BuildersText, Is.EqualTo("2 / 2 · 1 queued"));
+        }
+
         /// <summary>The era badge is the era's name from the content.</summary>
         [Test]
         public void EraName_IsFromTheContent()

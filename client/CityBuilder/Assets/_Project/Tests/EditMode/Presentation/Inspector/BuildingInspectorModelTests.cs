@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using CityBuilder.Client.Presentation.Inspector;
 using CityBuilder.Client.Presentation.Ui;
+using CityBuilder.Client.Tests.EditMode.Core;
 using CityBuilder.Client.Tests.EditMode.Presentation.Hud;
 using CityBuilder.Simulation;
 using CityBuilder.Simulation.Content;
@@ -82,7 +83,8 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Inspector
 
             return new Building(
                 building.Id, building.TypeId, building.X, building.Y, building.Level, building.AssignedWorkers, building.Phase, building.PhaseStartedAt,
-                building.PhaseEndsAt, building.TargetLevel, building.CycleLabor, building.LaborRemaining, building.SegmentStartedAt, store, building.Needs);
+                building.PhaseEndsAt, building.TargetLevel, building.CycleLabor, building.LaborRemaining, building.SegmentStartedAt, store, building.Needs,
+                queuedOrder: building.QueuedOrder);
         }
 
         /// <summary>An idle building of <paramref name="typeId"/> with id 1 at <paramref name="level"/> with <paramref name="workers"/> workers.</summary>
@@ -371,6 +373,46 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Inspector
             BuildingInspectorModel poor = Model(new[] { BusySawmill(), Cottage() }, coins: 100, planks: 0);
             Assert.That(poor.UpgradeNote, Is.EqualTo("Not enough Coins"));
             Assert.That(poor.CanUpgrade, Is.False);
+        }
+
+        /// <summary>A queued construction (CR-0013) says it waits for a builder, with its place in the queue.</summary>
+        [Test]
+        public void Status_QueuedConstruction_SaysQueuedWithItsPlace()
+        {
+            var queued = new Building(1, new BuildingTypeId("house"), 0, 0, 1, 0, BuildingPhase.Queued, 0, null, 0, 0, 0, 0, queuedOrder: 4);
+            var earlier = new Building(2, new BuildingTypeId("house"), 1, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, queuedOrder: 3);
+
+            BuildingInspectorModel model = Model(new[] { queued, earlier });
+
+            Assert.That((model.StatusText, model.TimeText), Is.EqualTo(("Queued (2)", string.Empty)));
+            Assert.That(model.CanUpgrade, Is.False);
+        }
+
+        /// <summary>A building whose upgrade is queued (CR-0013) keeps its status and says the upgrade is queued, with its place.</summary>
+        [Test]
+        public void Upgrade_Queued_SaysQueuedWithItsPlace()
+        {
+            Building sawmill = BusySawmill();
+            var queuedSawmill = new Building(
+                1, sawmill.TypeId, 0, 0, 1, 3, BuildingPhase.Producing, 0, sawmill.PhaseEndsAt, 0, 180, 180, 0, queuedOrder: 1);
+
+            BuildingInspectorModel model = Model(new[] { queuedSawmill, Cottage() });
+
+            Assert.That(model.StatusText, Is.EqualTo("Producing"));
+            Assert.That((model.CanUpgrade, model.UpgradeNote), Is.EqualTo((false, "Upgrade queued (1)")));
+        }
+
+        /// <summary>With every builder busy and room in the queue (CR-0013), the upgrade stays possible: the server queues it.</summary>
+        [Test]
+        public void Upgrade_AllBuildersBusyWithRoomInTheQueue_IsPossible()
+        {
+            _content = CityTestData.Content(builderQueueLength: 2);
+            var site1 = new Building(2, new BuildingTypeId("house"), 1, 0, 1, 0, BuildingPhase.Constructing, 0, 100, 0, 0, 0, 0);
+            var site2 = new Building(3, new BuildingTypeId("house"), 2, 0, 1, 0, BuildingPhase.Constructing, 0, 100, 0, 0, 0, 0);
+
+            BuildingInspectorModel model = Model(new[] { BusySawmill(), site1, site2 }, planks: 0);
+
+            Assert.That((model.CanUpgrade, model.UpgradeNote), Is.EqualTo((true, string.Empty)));
         }
 
         /// <summary>No free builder comes before missing items, as the server checks.</summary>
