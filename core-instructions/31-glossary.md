@@ -93,6 +93,23 @@ Use these names in code, docs and UI text. Consistent words keep Claude and the 
 | Order / escrow | A buy or sell order and the goods or coins it locks | `MarketOrder`, `Escrow` |
 | Mailbox | Deliveries to a player from others' actions, applied at their next settle | `MailboxDelivery` |
 | Guild | Player co-op group (Era II) | `Guild` |
+| Steward | The player: the Duke's steward who founds the town (M1 premise, `21`) | — (story only) |
+| Advisor | One of four characters who speak for a system: master builder, merchant, scribe, courier master (`21`, `28`) | *(planned, M1)* `AdvisorId` |
+| Chronicle | The five chapters of goals with rewards that lead through Era I to the Town Charter (`22`) | *(planned, M1)* `Chronicle` |
+| Chapter | One part of the Chronicle; it opens when every goal of the one before is claimed | *(planned, M1)* `ChapterDefinition` |
+| Goal | A condition the engine checks from the city, with a one-time reward the player claims | *(planned, M1)* `GoalDefinition`, `ClaimGoal` |
+| Reward | What a claimed goal gives: coins, a decoration or a story line; never goods | *(planned, M1)* `GoalReward` |
+| Town Charter | The last research of Era I; it completes the era and the Chronicle (`25`) | *(planned, M1)* `GrantCharter` |
+| Merchant order | An NPC request at the Trading Post's order board: one to three goods for a price above the recipe. Not a market "Order" | *(planned, M1)* `MerchantOrder`, `FulfilOrder`, `DismissOrder` |
+| Order board | The Trading Post's three merchant order slots and the caravan | *(planned, M1)* |
+| Caravan | One bigger merchant order a day; it stays until the next one arrives | *(planned, M1)* |
+| Terrain | A tile's ground: grass, forest, rock, fertile soil or water, from the content map | *(planned, M1)* `Terrain` |
+| Mist | Map land beyond the city's border: visible, not usable until Land Survey opens it | *(planned, M1)* |
+| Bridge | A road kind that crosses water, unlocked by research | *(planned, M1)* |
+| Decoration | A placed item that only looks good: no production, walked around | *(planned, M1)* `DecorationId` |
+| Move / Demolish | Put a finished building on another tile for free / remove it for half its coins back (`22` → Ownership) | *(planned, M1)* `MoveBuilding`, `DemolishBuilding` |
+| Town name | The name the player gives the town | *(planned, M1)* `RenameTown` |
+| Cancel research | Stop a running research: half its coins back, no goods back | *(planned, M1)* `CancelResearch` |
 
 ## Process words
 | Term | Meaning |

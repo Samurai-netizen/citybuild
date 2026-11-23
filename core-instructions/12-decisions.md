@@ -47,6 +47,11 @@ Never silently reverse a decision; add a new row that supersedes it. New ids con
 | G37 | M1 D14: assets are made by another AI model from asset requests; the owner runs it and delivers the files (W18) | The owner's instruction of 2026-11-16 | Accepted (owner, 2026-11-23) |
 | G38 | M1 D15: after the Town Charter the town keeps running (orders, decorations, upgrades) and a closing chapter says Era II is coming | No dead end for the fastest testers | Accepted (owner, 2026-11-23) |
 | G39 | M1 D16: research can be cancelled: 50 % of its coins back, no goods back | A wrong tap on a 4-hour research must not hurt | Accepted (owner, 2026-11-23) |
+| G40 | G7 refined: the Trading Post (its recipe, merchant orders and the caravan) is the only **recurring** coin faucet; Chronicle rewards are one-time and finite; refunds (demolish, cancel research) return at most half | Orders and goals add coins (CR-0011); their bound keeps G7's purpose | Proposed (M1-01 part B, for the owner) |
+| G41 | Move is free and instant for a finished building (store, workers and level go with it); demolish returns half its coins, loses its store's goods, frees its workers; the Town Hall can't be demolished | Ownership without an exploit (no refund above the cost) and without a builder wait | Proposed (M1-01 part B, for the owner) |
+| G42 | Chronicle rewards are coins, decorations and story, never goods (goods live in buildings, G10); decorations take a tile and are walked around like buildings | No question of which store gets a reward; one walking rule | Proposed (M1-01 part B, for the owner) |
+| G43 | Terrain: forest and rock hold nothing; a Woodcutter's Hut needs forest beside it, a Quarry rock beside it, a Farm stands on fertile soil; water only under bridges; terrain never runs out | Simple rules a player sees on the map; no depletion bookkeeping | Proposed (M1-01 part B, for the owner) |
+| G44 | The caravan stays until the next one arrives (24 h); a merchant order in a slot never expires, it is fulfilled or dismissed | No countdowns (`21` → Tone) | Proposed (M1-01 part B, for the owner) |
 
 ## Engineering
 

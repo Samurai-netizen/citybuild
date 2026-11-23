@@ -30,14 +30,21 @@ Prove the spine: server-authoritative, deterministic, real-time production with 
 `docs/HANDOFF-M0.md`. Golden #1 on a dev build is met only in part: the macOS player reached the city over HTTP (M0-82), and #1 passes over HTTP in the
 tests; playing #1 through in a player on a screen or a phone is the owner's check (`docs/BUILD.md`).
 
-## M1 — Era I complete (≈ 4–5 weeks) ← next
-Make the first 3–5 days worth playing.
-- Full Era I content: ~8 items (wood, stone, grain/flour/bread chains), ~10 buildings, ~12 research nodes in
-  3–4 branches, building levels up to 3–4, Land Survey expansions, more builder slots via research.
-- Remaining research effect types (`25`): max level, land, slots.
-- Guest accounts (device-bound, upgradable to platform sign-in later) replacing dev login.
-- Tutorial for the first 15 minutes, notifications (construction/research done, storage full, couriers resting), first art pass.
-**Exit:** 5–10 external playtesters play Era I for 7 days; the balance simulator matches observed pacing within ±25 %.
+## M1 — Era I complete: from a tech demo to a game (≈ 9–12 weeks) ← next
+Plan: `docs/plan/M1-PLAN.md` (18 tasks, approved 2026-11-23, CR-0011; decisions G24–G39). Content: `28-era1-content.md`.
+Make Era I worth playing and put it in front of real players.
+- **Purpose:** a premise, four advisors and the **Chronicle** (five chapters of goals with rewards) leading to the **Town Charter**.
+- **Content:** the full Era I: three chains (wood, stone, bread), about 13 buildings with three levels, 14–16 research nodes in four
+  branches, the remaining effect types (`25`: max level, land, builder slots, bridge, charter), a landmark.
+- **Variety and map:** merchant orders and a daily caravan at the Trading Post; terrain that matters, mist and Land Survey.
+- **Ownership and feel:** town name, move, demolish, decorations, cancel research; music, sound, animation, moments, townsfolk.
+- **First session and return:** a guided chapter 1; local notifications from the timers.
+- **Product (moved from M3):** Russian first, English second; a UI skin and settings; guest accounts with recovery and deletion
+  (replacing dev login); a hosted server in a Russian cloud with managed PostgreSQL; a release Android build; server-side analytics
+  (CR-0009) and a client error report; a privacy policy and a **RuStore closed alpha**.
+**Exit:** 10 or more external testers play the RuStore alpha for 7 days; no P0 or P1 open; the balance simulator matches the observed
+pacing within ±25 %; crash-free sessions ≥ 99 %; cold start to the town ≤ 6 s and a stable 30 fps on the reference phone, a Google
+Pixel 5 (G32). Full Definition of Done: the plan's §2.
 
 ## M2 — Era II: era transition, open market, guilds (≈ 6–8 weeks)
 The game becomes multiplayer. This is the riskiest milestone.
@@ -51,8 +58,9 @@ The game becomes multiplayer. This is the riskiest milestone.
 the order book is never empty for basic goods (NPC liquidity works).
 
 ## M3 — Soft-launch readiness (≈ 4 weeks)
-Server container image (moved from M0), cloud hosting with managed PostgreSQL, CD pipeline, Unity tests in CI, crash reporting, metrics and alerts, Play Integrity / App Attest,
-GDPR export/delete, store compliance, analytics (funnel, retention, stall reasons; the recording and the funnel report are built in M0 by CR-0009, with no SDK and no outside service), Redis only if measurements demand it.
+Hosting, the release build, guest accounts with deletion and server-side analytics moved to M1 (G24). Left here: CD pipeline, Unity
+tests in CI, metrics and alerts, Play Integrity / App Attest, data export, store compliance beyond RuStore, iOS, Redis only if
+measurements demand it.
 Monetization v1 within the rules in `22` (cosmetics, slots, capped speed-ups); server-side IAP validation.
 **Exit:** soft launch in 1–2 test countries with Eras I–II.
 

@@ -1,6 +1,6 @@
 # CR-0009 — Player metrics: what players did, how many reached each checkpoint, where they stop
 
-- **Status:** In progress
+- **Status:** Done
 - **Type:** Feature (analytics and dev tooling)
 - **Requested by:** owner · **Date:** 2026-11-16
 - **Milestone / era:** M0 / Era I (brings a part of M3 forward, see the next line)
