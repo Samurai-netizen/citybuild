@@ -29,7 +29,8 @@ internal static class CityCopy
         city.Couriers.Select(Of),
         city.Routes,
         city.DeliveryLines,
-        city.NextLineId);
+        city.NextLineId,
+        city.NextQueuedOrder);
 
     /// <summary>A copy of the trip: every stored value (a trip changes at the end of each leg).</summary>
     public static Trip Of(Trip trip) => new(
@@ -63,5 +64,6 @@ internal static class CityCopy
         building.SegmentStartedAt,
         building.Store.ToArray(),
         building.Needs.ToArray(),
-        building.Paused);
+        building.Paused,
+        building.QueuedOrder);
 }
