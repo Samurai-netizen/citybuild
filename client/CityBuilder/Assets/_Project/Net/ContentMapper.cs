@@ -58,6 +58,7 @@ namespace CityBuilder.Client.Net
                 GridWidth = rules.GridWidth,
                 GridHeight = rules.GridHeight,
                 BuilderSlots = rules.BuilderSlots,
+                BuilderQueueLength = rules.BuilderQueueLength,
                 ResearchSlots = rules.ResearchSlots,
                 MinCycleSeconds = rules.MinCycleSeconds,
                 MaxLaborReductionPermille = rules.MaxLaborReductionPermille,

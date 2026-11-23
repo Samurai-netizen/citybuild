@@ -11,7 +11,7 @@ namespace CityBuilder.Client.Net
     {
         /// <summary>Creates the DTO. Newtonsoft calls this constructor with the JSON members of the same names, so the object is never half filled.</summary>
         [JsonConstructor]
-        public ContentRulesDto(int gridWidth, int gridHeight, int builderSlots, int researchSlots, long minCycleSeconds, int maxLaborReductionPermille, long groundTileMillis, int crossingSpeedPermille, long minWalkSeconds, int maxWalkBonusPermille, long tripCarryLimit, int maxRouteStops, int maxStopActions, int maxDeliveryLines, string? routeBuilding, int timeScale)
+        public ContentRulesDto(int gridWidth, int gridHeight, int builderSlots, int researchSlots, long minCycleSeconds, int maxLaborReductionPermille, long groundTileMillis, int crossingSpeedPermille, long minWalkSeconds, int maxWalkBonusPermille, long tripCarryLimit, int maxRouteStops, int maxStopActions, int maxDeliveryLines, string? routeBuilding, int timeScale, int builderQueueLength = 0)
         {
             GridWidth = gridWidth;
             GridHeight = gridHeight;
@@ -29,6 +29,7 @@ namespace CityBuilder.Client.Net
             MaxDeliveryLines = maxDeliveryLines;
             RouteBuilding = routeBuilding;
             TimeScale = timeScale;
+            BuilderQueueLength = builderQueueLength;
         }
 
         /// <summary>Tiles per row.</summary>
@@ -39,6 +40,10 @@ namespace CityBuilder.Client.Net
 
         /// <summary>Builder slots every city has.</summary>
         public int BuilderSlots { get; }
+
+        /// <summary>How many constructions and upgrades may wait for a free builder (CR-0013); 0 when the answer has none (no queue); left out when 0, so answers recorded before the queue read and write back unchanged.</summary>
+        [JsonProperty(Required = Required.Default, DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public int BuilderQueueLength { get; }
 
         /// <summary>Research slots every city has.</summary>
         public int ResearchSlots { get; }

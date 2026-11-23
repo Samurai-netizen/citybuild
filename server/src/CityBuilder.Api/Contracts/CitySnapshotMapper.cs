@@ -162,32 +162,7 @@ public static class CitySnapshotMapper
             ToAmounts(building.Needs),
             building.IsConstructionSite ? "Construction" : building.HasUpgradeWaiting ? "Upgrade" : null,
             building.Paused,
-            QueuePlace(state, building));
-    }
-
-    /// <summary>
-    /// The place of a building's queued order in the builder queue (CR-0013): 1 plus the queued orders made before it; null without one.
-    /// </summary>
-    /// <param name="state">The city.</param>
-    /// <param name="building">The building.</param>
-    /// <returns>The place, from 1, or null.</returns>
-    private static int? QueuePlace(CityState state, Building building)
-    {
-        if (building.QueuedOrder == 0)
-        {
-            return null;
-        }
-
-        int place = 1;
-        foreach (Building other in state.Buildings)
-        {
-            if (other.QueuedOrder > 0 && other.QueuedOrder < building.QueuedOrder)
-            {
-                place++;
-            }
-        }
-
-        return place;
+            building.QueuedOrder > 0 ? CityQueries.QueuePlace(state, building) : null);
     }
 
     /// <summary>Every item's city total (<see cref="CityQueries.Totals"/>), by item id, 0 included.</summary>

@@ -121,10 +121,10 @@ namespace CityBuilder.Client.Presentation.City
         /// shows before the server says it is (<c>09</c> "UX rules").
         /// </summary>
         /// <param name="phase">What the building is doing.</param>
-        /// <returns>True for <see cref="BuildingPhase.Constructing"/> and <see cref="BuildingPhase.Upgrading"/>.</returns>
+        /// <returns>True for <see cref="BuildingPhase.Constructing"/>, <see cref="BuildingPhase.Queued"/> (CR-0013) and <see cref="BuildingPhase.Upgrading"/>.</returns>
         public static bool ShowsConstructionSite(BuildingPhase phase)
         {
-            return phase == BuildingPhase.Constructing || phase == BuildingPhase.Upgrading;
+            return phase == BuildingPhase.Constructing || phase == BuildingPhase.Queued || phase == BuildingPhase.Upgrading;
         }
 
         /// <summary>
@@ -184,7 +184,7 @@ namespace CityBuilder.Client.Presentation.City
         /// <returns>The height in thousandths.</returns>
         public static int HeightPermille(int level, BuildingPhase phase)
         {
-            if (phase == BuildingPhase.Constructing)
+            if (phase == BuildingPhase.Constructing || phase == BuildingPhase.Queued)
             {
                 return ConstructionHeightPermille;
             }

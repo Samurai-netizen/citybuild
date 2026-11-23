@@ -173,10 +173,15 @@ namespace CityBuilder.Client.Presentation.Hud
             return Fraction(CityQueries.FreeWorkers(city, content), CityQueries.WorkersProvided(city, content));
         }
 
-        /// <summary><c>1 / 2</c>: the builders at work, out of the builder slots of the rules.</summary>
+        /// <summary>
+        /// <c>1 / 2</c>: the builders at work, out of the city's builder slots (research included); with orders in the builder queue,
+        /// <c>2 / 2 · 1 queued</c> (CR-0013).
+        /// </summary>
         private static string BuildersTextFor(GameContent content, CityState city)
         {
-            return Fraction(CityQueries.BuildersBusy(city), content.Rules.BuilderSlots);
+            string text = Fraction(CityQueries.BuildersBusy(city), CityQueries.BuilderSlots(city, content));
+            int queued = CityQueries.QueuedOrders(city);
+            return queued == 0 ? text : text + " · " + queued.ToString(System.Globalization.CultureInfo.InvariantCulture) + " queued";
         }
 
         /// <summary>The notice while couriers rest (<c>2 couriers resting</c>, CR-0008-T2 part E); empty when none does.</summary>

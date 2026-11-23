@@ -207,7 +207,7 @@ namespace CityBuilder.Client.Presentation.Inspector
                 NeedsText = NeedsTextFor(content, city, building, definition),
                 TripsText = TripsTextFor(content, city, building.Id),
                 CouriersText = CouriersTextFor(content, city, building, level),
-                HasRouteEditor = definition.Kind == BuildingKind.CourierStation && building.Phase != BuildingPhase.Constructing
+                HasRouteEditor = definition.Kind == BuildingKind.CourierStation && building.IsBuilt
                     && building.AssignedWorkers > 0,
                 Queues = QueuesFor(content, city, building),
                 HasReenergize = NeedsReenergize(content, city, building, level),
@@ -285,7 +285,7 @@ namespace CityBuilder.Client.Presentation.Inspector
             GameContent content, CityState city, Building building, BuildingDefinition definition, bool? pendingPause, CommandAvailability availability)
         {
             bool station = definition.Kind == BuildingKind.CourierStation;
-            HasPause = (station || definition.Kind == BuildingKind.Producer) && building.Phase != BuildingPhase.Constructing;
+            HasPause = (station || definition.Kind == BuildingKind.Producer) && building.IsBuilt;
             if (!HasPause)
             {
                 return;
@@ -325,7 +325,7 @@ namespace CityBuilder.Client.Presentation.Inspector
             CommandAvailability availability)
         {
             bool station = content.TryGetBuilding(building.TypeId, out BuildingDefinition? definition) && definition!.Kind == BuildingKind.CourierStation;
-            HasStepper = (level.Recipe != null || (station && level.MaxWorkers > 0)) && building.Phase != BuildingPhase.Constructing;
+            HasStepper = (level.Recipe != null || (station && level.MaxWorkers > 0)) && building.IsBuilt;
             if (!HasStepper)
             {
                 return;
@@ -436,12 +436,19 @@ namespace CityBuilder.Client.Presentation.Inspector
                 return "Upgrade requested…";
             }
 
-            if (building.Phase == BuildingPhase.Constructing || building.Phase == BuildingPhase.Upgrading || building.HasUpgradeWaiting)
+            if (building.HasUpgradeQueued)
+            {
+                return "Upgrade queued (" + Number(CityQueries.QueuePlace(city, building)) + ")";
+            }
+
+            if (!building.IsBuilt || building.Phase == BuildingPhase.Upgrading || building.HasUpgradeWaiting)
             {
                 return "Busy until the current job is done";
             }
 
-            if (CityQueries.BuildersBusy(city) >= content.Rules.BuilderSlots)
+            // With every builder busy the server queues the upgrade while the queue has room (CR-0013).
+            if (CityQueries.BuildersBusy(city) >= CityQueries.BuilderSlots(city, content)
+                && CityQueries.QueuedOrders(city) >= content.Rules.BuilderQueueLength)
             {
                 return "All builders are busy";
             }
@@ -469,6 +476,8 @@ namespace CityBuilder.Client.Presentation.Inspector
                     return "Under construction";
                 case BuildingPhase.Upgrading:
                     return "Upgrading to level " + Number(building.TargetLevel);
+                case BuildingPhase.Queued:
+                    return "Queued (" + Number(CityQueries.QueuePlace(city, building)) + ")";
             }
 
             StallReason? reason = StallReason.Of(city, content, building);
@@ -572,7 +581,7 @@ namespace CityBuilder.Client.Presentation.Inspector
             }
 
             if (definition.Kind == BuildingKind.Science
-                && building.Phase != BuildingPhase.Constructing
+                && building.IsBuilt
                 && city.ActiveResearch != null
                 && city.ActiveResearch.IsWaiting
                 && city.ActiveResearch.Needs.Count > 0)
@@ -635,7 +644,7 @@ namespace CityBuilder.Client.Presentation.Inspector
         /// </summary>
         private static string CouriersTextFor(GameContent content, CityState city, Building station, BuildingLevelDefinition level)
         {
-            if (station.Phase == BuildingPhase.Constructing || !content.TryGetBuilding(station.TypeId, out BuildingDefinition? definition)
+            if (!station.IsBuilt || !content.TryGetBuilding(station.TypeId, out BuildingDefinition? definition)
                 || definition!.Kind != BuildingKind.CourierStation)
             {
                 return string.Empty;
@@ -677,7 +686,7 @@ namespace CityBuilder.Client.Presentation.Inspector
         /// </summary>
         private static IReadOnlyList<CourierQueueModel> QueuesFor(GameContent content, CityState city, Building station)
         {
-            if (station.Phase == BuildingPhase.Constructing || !content.TryGetBuilding(station.TypeId, out BuildingDefinition? definition)
+            if (!station.IsBuilt || !content.TryGetBuilding(station.TypeId, out BuildingDefinition? definition)
                 || definition!.Kind != BuildingKind.CourierStation)
             {
                 return Array.Empty<CourierQueueModel>();
@@ -757,7 +766,7 @@ namespace CityBuilder.Client.Presentation.Inspector
         /// <summary>Whether a built courier station has a courier that rests or whose stamina is below the level's full stamina.</summary>
         private static bool NeedsReenergize(GameContent content, CityState city, Building station, BuildingLevelDefinition level)
         {
-            if (station.Phase == BuildingPhase.Constructing || !content.TryGetBuilding(station.TypeId, out BuildingDefinition? definition)
+            if (!station.IsBuilt || !content.TryGetBuilding(station.TypeId, out BuildingDefinition? definition)
                 || definition!.Kind != BuildingKind.CourierStation)
             {
                 return false;
@@ -817,7 +826,7 @@ namespace CityBuilder.Client.Presentation.Inspector
         /// <summary>True when <paramref name="building"/> is built and holds at least one good in its store.</summary>
         private static bool HasStoredGoods(Building building)
         {
-            if (building.Phase == BuildingPhase.Constructing || building.Store.Count == 0)
+            if (!building.IsBuilt || building.Store.Count == 0)
             {
                 return false;
             }

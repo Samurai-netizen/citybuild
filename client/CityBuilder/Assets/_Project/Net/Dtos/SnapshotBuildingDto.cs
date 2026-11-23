@@ -11,7 +11,7 @@ namespace CityBuilder.Client.Net
     {
         /// <summary>Creates the DTO. Newtonsoft calls this constructor with the JSON members of the same names, so the object is never half filled.</summary>
         [JsonConstructor]
-        public SnapshotBuildingDto(int id, string typeId, int x, int y, int level, int assignedWorkers, int maxWorkers, BuildingPhaseDto phase, long phaseStartedAt, long? phaseEndsAt, long cycleLabor, long laborRemaining, long segmentStartedAt, string? stallReason, Dictionary<string, long> store, Dictionary<string, long> storeLimits, Dictionary<string, long> needs, string? project, bool paused = false)
+        public SnapshotBuildingDto(int id, string typeId, int x, int y, int level, int assignedWorkers, int maxWorkers, BuildingPhaseDto phase, long phaseStartedAt, long? phaseEndsAt, long cycleLabor, long laborRemaining, long segmentStartedAt, string? stallReason, Dictionary<string, long> store, Dictionary<string, long> storeLimits, Dictionary<string, long> needs, string? project, bool paused = false, int? queuePlace = null)
         {
             Id = id;
             TypeId = typeId;
@@ -32,6 +32,7 @@ namespace CityBuilder.Client.Net
             Needs = needs;
             Project = project;
             Paused = paused;
+            QueuePlace = queuePlace;
         }
 
         /// <summary>The building's id, counted from 1 in this city.</summary>
@@ -93,5 +94,9 @@ namespace CityBuilder.Client.Net
 
         /// <summary>Whether the player paused the building (CR-0008 amendment 2, D23); false for every building that can't be paused.</summary>
         public bool Paused { get; }
+
+        /// <summary>The place of its queued order in the builder queue, 1 starting next (CR-0013); null without one or when the answer has none, and then left out.</summary>
+        [JsonProperty(Required = Required.Default, NullValueHandling = NullValueHandling.Ignore)]
+        public int? QueuePlace { get; }
     }
 }

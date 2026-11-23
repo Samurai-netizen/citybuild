@@ -147,10 +147,14 @@ namespace CityBuilder.Client.Presentation.Build
             return "Requires: " + researchName;
         }
 
-        /// <summary>The first warning in the server's order: no free builder, then a cost the stock does not cover.</summary>
+        /// <summary>
+        /// The first warning in the server's order: no free builder (and no room in the queue), then a cost the stock does not cover; with
+        /// every builder busy and room in the queue, the coins are still checked, else the card says it will be queued (CR-0013).
+        /// </summary>
         private static BuildHint HintFor(GameContent content, CityState city, BuildingDefinition definition)
         {
-            if (CityQueries.BuildersBusy(city) >= content.Rules.BuilderSlots)
+            bool queued = CityQueries.BuildersBusy(city) >= CityQueries.BuilderSlots(city, content);
+            if (queued && CityQueries.QueuedOrders(city) >= content.Rules.BuilderQueueLength)
             {
                 return BuildHint.NoFreeBuilder;
             }
@@ -165,7 +169,7 @@ namespace CityBuilder.Client.Presentation.Build
                 }
             }
 
-            return BuildHint.None;
+            return queued ? BuildHint.Queued : BuildHint.None;
         }
 
         /// <summary>The words of <paramref name="hint"/>; for a missing cost they name every item the stock lacks.</summary>
@@ -175,6 +179,8 @@ namespace CityBuilder.Client.Presentation.Build
             {
                 case BuildHint.NoFreeBuilder:
                     return "All builders are busy";
+                case BuildHint.Queued:
+                    return "Builders busy: it will wait in the queue";
                 case BuildHint.CannotAfford:
                     var missing = new StringBuilder();
                     IReadOnlyList<ItemQuantity> cost = definition.Cost;

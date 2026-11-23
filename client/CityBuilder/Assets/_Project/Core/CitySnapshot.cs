@@ -78,7 +78,8 @@ namespace CityBuilder.Client.Core
                     building.SegmentStartedAt,
                     new List<KeyValuePair<ItemId, long>>(building.Store),
                     new List<KeyValuePair<ItemId, long>>(building.Needs),
-                    building.Paused));
+                    building.Paused,
+                    building.QueuedOrder));
             }
 
             // The research changes in place when a delivery fills its needs or starts its timer (CR-0008), so it is copied too; so are trips,
@@ -103,7 +104,7 @@ namespace CityBuilder.Client.Core
 
             return new CityState(
                 _city.Clock, _city.Era, _city.NextBuildingId, _city.Purse, buildings, _city.CompletedResearch, researchCopy, _city.Roads, trips,
-                _city.NextTripId, couriers, _city.Routes, _city.DeliveryLines, _city.NextLineId);
+                _city.NextTripId, couriers, _city.Routes, _city.DeliveryLines, _city.NextLineId, _city.NextQueuedOrder);
         }
     }
 }

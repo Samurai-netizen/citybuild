@@ -11,8 +11,11 @@ namespace CityBuilder.Client.Presentation.Build
         /// <summary>Nothing to warn about.</summary>
         None,
 
-        /// <summary>Every builder slot is busy with a construction or an upgrade.</summary>
+        /// <summary>Every builder slot is busy with a construction or an upgrade, and the builder queue is full (or there is none).</summary>
         NoFreeBuilder,
+
+        /// <summary>Every builder slot is busy, but the builder queue has room: the building will wait there for a builder (CR-0013).</summary>
+        Queued,
 
         /// <summary>The stock does not cover the cost.</summary>
         CannotAfford,

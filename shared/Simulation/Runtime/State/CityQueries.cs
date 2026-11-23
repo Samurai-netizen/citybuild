@@ -129,6 +129,34 @@ namespace CityBuilder.Simulation.State
         }
 
         /// <summary>
+        /// The place of a building's queued order in the builder queue (CR-0013): 1 plus the queued orders made before it, so 1 starts next; 0
+        /// when the building has no queued order.
+        /// </summary>
+        /// <param name="city">The city.</param>
+        /// <param name="building">A building of the city.</param>
+        /// <returns>The place, from 1, or 0.</returns>
+        public static int QueuePlace(CityState city, Building building)
+        {
+            if (building.QueuedOrder == 0)
+            {
+                return 0;
+            }
+
+            int place = 1;
+            IReadOnlyList<Building> buildings = city.Buildings;
+            for (int index = 0; index < buildings.Count; index++)
+            {
+                int order = buildings[index].QueuedOrder;
+                if (order > 0 && order < building.QueuedOrder)
+                {
+                    place++;
+                }
+            }
+
+            return place;
+        }
+
+        /// <summary>
         /// The orders waiting in the builder queue (CR-0013, <c>04</c> section 8): queued constructions and queued upgrades. They take no
         /// builder slot; at most <see cref="GameRules.BuilderQueueLength"/> wait.
         /// </summary>

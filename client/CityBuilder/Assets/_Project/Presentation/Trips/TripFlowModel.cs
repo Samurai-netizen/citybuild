@@ -172,7 +172,7 @@ namespace CityBuilder.Client.Presentation.Trips
         /// <returns>True when the building exists in the city and holds at least one good in its store.</returns>
         public bool StartFrom(int sourceBuildingId)
         {
-            if (_city == null || !_city.TryGetBuilding(sourceBuildingId, out Building? source) || source!.Phase == BuildingPhase.Constructing)
+            if (_city == null || !_city.TryGetBuilding(sourceBuildingId, out Building? source) || !source!.IsBuilt)
             {
                 return false;
             }
