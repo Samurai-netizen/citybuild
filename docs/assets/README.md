@@ -7,7 +7,7 @@ AI coders make no game assets; another AI model, run by the owner, makes them fr
 |---|---|
 | `docs/assets/TEMPLATE.md` | The form of a request. `/asset-request <TASK-ID>` fills it (Claude Code) |
 | `docs/assets/requests/AR-<TASK-ID>.md` | One request per task tagged `[ASSETS]`; one row per file to deliver *(the first ones: M1-01)* |
-| `docs/assets/STYLE.md` | The look and sound every request points to *(planned, M1-01; until then `art/README.md` → Style guide)* |
+| `docs/assets/STYLE.md` | The look and sound every request points to (M1-01): 3D, UI, portraits, audio, effects |
 | `docs/assets/LICENSES.md` | Every delivered file: who or what made it, when, under which terms *(starts with the first delivery)* |
 
 ## For the owner: from a request to the game

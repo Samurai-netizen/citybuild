@@ -372,7 +372,7 @@ Out of scope: rotating buildings, storing a building in an inventory, decoration
 #### M1-07 — Russian localization, UI skin, settings · [S] [ASSETS] [MANUAL]
 ```text
 Every text the player sees comes from a string table, in Russian first; the UI wears one medieval skin; a settings screen exists.
-Read first: 09 → UI rules and UX rules (OD-16 … OD-18); docs/how-to/add-ui-screen.md; docs/assets/STYLE.md → UI; 28 → Names;
+Read first: 09 → UI rules and UX rules (OD-16 … OD-18); docs/how-to/add-ui-screen.md; docs/assets/STYLE.md → UI; 32 (names);
 14 → approved dependencies (no localization package without the owner: plain JSON tables are the default).
 Parts:
  A. Strings. Tests first (EditMode): every key used in code and UXML exists in ru and en (a scan test); no player-facing literal is
