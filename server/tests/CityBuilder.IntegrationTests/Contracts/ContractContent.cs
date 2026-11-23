@@ -29,7 +29,7 @@ internal static class ContractContent
     /// <summary>The building type <c>depot</c>: a warehouse holding 100 logs and 100 planks.</summary>
     public static readonly BuildingTypeId Depot = new("depot");
 
-    /// <summary>The building type <c>house</c>: level 1 provides 3 workers, level 2 provides 5.</summary>
+    /// <summary>The building type <c>house</c>: level 1 provides 3 workers, level 2 provides 5; level 3 (7) needs <see cref="Guild"/> (base max level 2).</summary>
     public static readonly BuildingTypeId House = new("house");
 
     /// <summary>The building type <c>woodcutter</c>: a raw producer of logs (labor 30), 2 workers at level 1 and 3 at level 2.</summary>
@@ -44,11 +44,17 @@ internal static class ContractContent
     /// <summary>The research <c>storehouses</c> (300 seconds, needs the trade charter): +100 logs and +50 planks in every store that holds them.</summary>
     public static readonly ResearchId Storehouses = new("storehouses");
 
+    /// <summary>The research <c>guild</c> (120 seconds): one more builder slot and the house's max level +1 (M1-02).</summary>
+    public static readonly ResearchId Guild = new("guild");
+
+    /// <summary>The research <c>charter</c> (30 seconds, needs the guild): grants the charter, the city is chartered (M1-02).</summary>
+    public static readonly ResearchId Charter = new("charter");
+
     /// <summary>The research <c>sharp_axes</c> (120 seconds): the woodcutter's labor −150 ‰.</summary>
     public static readonly ResearchId SharpAxes = new("sharp_axes");
 
     /// <summary>
-    /// The content file's text (CR-0008's model): one era, three items (coins the currency), a building of each kind, four research nodes,
+    /// The content file's text (CR-0008's model, M1-02's effects): one era, three items (coins the currency), a building of each kind, six research nodes,
     /// two road levels and two amount presets, out of order on purpose.
     /// </summary>
     public const string Json = """
@@ -116,8 +122,10 @@ internal static class ContractContent
               "cost": { "coins": 20 }, "buildSeconds": 10,
               "levels": [
                 { "level": 1, "workersProvided": 3 },
-                { "level": 2, "workersProvided": 5, "upgradeCost": { "logs": 15, "coins": 30 }, "upgradeSeconds": 40 }
-              ]
+                { "level": 2, "workersProvided": 5, "upgradeCost": { "logs": 15, "coins": 30 }, "upgradeSeconds": 40 },
+                { "level": 3, "workersProvided": 7, "upgradeCost": { "logs": 30, "coins": 60 }, "upgradeSeconds": 60 }
+              ],
+              "baseMaxLevel": 2
             }
           ],
           "research": [
@@ -140,6 +148,14 @@ internal static class ContractContent
             {
               "id": "tallies", "name": "Tallies", "era": 1, "cost": { "coins": 40 }, "durationSeconds": 60,
               "effects": [ { "type": "walkSpeedBonus", "permille": 100 }, { "type": "unlockAmountMode", "mode": "percent" } ]
+            },
+            {
+              "id": "guild", "name": "Guild", "era": 1, "cost": { "coins": 50 }, "durationSeconds": 120,
+              "effects": [ { "type": "builderSlotBonus", "amount": 1 }, { "type": "maxLevelBonus", "building": "house", "amount": 1 } ]
+            },
+            {
+              "id": "charter", "name": "Charter", "era": 1, "cost": { "coins": 10 }, "durationSeconds": 30, "prerequisites": ["guild"],
+              "effects": [ { "type": "grantCharter" } ]
             }
           ],
           "roads": [
