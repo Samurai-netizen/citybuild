@@ -59,7 +59,7 @@ public sealed class UpgradeBuildingContractTests(ApiFactory factory) : IClassFix
         Assert.Equal("""{"slots":2,"busy":2}""", snapshot["city"]!["builders"]!.ToJsonString());
         Assert.Equal("""{"provided":4,"assigned":0,"onTrips":0,"free":4}""", snapshot["city"]!["workers"]!.ToJsonString());
         Assert.Equal(
-            """{"id":1,"typeId":"house","x":0,"y":0,"level":1,"assignedWorkers":0,"maxWorkers":0,"phase":"Idle",""" +
+            """{"id":1,"typeId":"house","x":0,"y":0,"level":1,"maxLevel":2,"assignedWorkers":0,"maxWorkers":0,"phase":"Idle",""" +
             """ "phaseStartedAt":0,"phaseEndsAt":null,"cycleLabor":0,"laborRemaining":0,"segmentStartedAt":0,"stallReason":"NoRecipe",""".TrimStart() +
             """ "store":{},"storeLimits":{},"needs":{"logs":30},"project":"Upgrade","paused":false}""".TrimStart(),
             snapshot["city"]!["buildings"]![0]!.ToJsonString());

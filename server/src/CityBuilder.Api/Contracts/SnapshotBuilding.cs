@@ -10,6 +10,7 @@ namespace CityBuilder.Api.Contracts;
 /// <param name="X">The tile column, JSON <c>x</c>.</param>
 /// <param name="Y">The tile row, JSON <c>y</c>.</param>
 /// <param name="Level">The level now, JSON <c>level</c>, from 1; while upgrading it is still the level below the target.</param>
+/// <param name="MaxLevel">The highest level the building may reach now, JSON <c>maxLevel</c>: its type's base max level plus the completed <c>maxLevelBonus</c> research (M1-02).</param>
 /// <param name="AssignedWorkers">The workers assigned, JSON <c>assignedWorkers</c>; 0 for a house or a building under construction.</param>
 /// <param name="MaxWorkers">The most workers the building's level takes, JSON <c>maxWorkers</c>; 0 for houses.</param>
 /// <param name="Phase">What the building is doing, JSON <c>phase</c>: <c>Constructing</c>, <c>Upgrading</c>, <c>Idle</c> or <c>Producing</c>.</param>
@@ -35,6 +36,7 @@ public sealed record SnapshotBuilding(
     int X,
     int Y,
     int Level,
+    int MaxLevel,
     int AssignedWorkers,
     int MaxWorkers,
     string Phase,

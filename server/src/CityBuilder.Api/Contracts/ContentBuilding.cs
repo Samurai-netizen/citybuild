@@ -12,6 +12,7 @@ namespace CityBuilder.Api.Contracts;
 /// <param name="Cost">What placing a building of the type costs, JSON <c>cost</c>: item id to quantity, by item id; the coins are paid at once, the
 /// goods delivered to the construction site (CR-0008).</param>
 /// <param name="BuildSeconds">How long a new building is under construction, in seconds, JSON <c>buildSeconds</c>.</param>
+/// <param name="BaseMaxLevel">The highest level without research, JSON <c>baseMaxLevel</c>; <c>maxLevelBonus</c> effects raise it (M1-02).</param>
 /// <param name="Levels">The levels, JSON <c>levels</c>, by ascending level from 1; the last one is the max level.</param>
 public sealed record ContentBuilding(
     string Id,
@@ -23,4 +24,5 @@ public sealed record ContentBuilding(
     int? MaxPerCity,
     IReadOnlyDictionary<string, long> Cost,
     long BuildSeconds,
+    int BaseMaxLevel,
     IReadOnlyList<ContentBuildingLevel> Levels);

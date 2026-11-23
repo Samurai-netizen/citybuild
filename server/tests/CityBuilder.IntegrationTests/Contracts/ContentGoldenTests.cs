@@ -61,31 +61,34 @@ public sealed class ContentGoldenTests(ApiFactory factory) : IClassFixture<ApiFa
             {"id": "planks", "name": "Planks", "era": 1, "currency": false, "tradable": true}
           ],
           "buildings": [
-            {"id": "depot", "name": "Depot", "kind": "Warehouse", "era": 1, "availableAtStart": true, "unlockedBy": null, "maxPerCity": null, "cost": {"coins": 25, "logs": 5}, "buildSeconds": 20, "levels": [
+            {"id": "depot", "name": "Depot", "kind": "Warehouse", "era": 1, "availableAtStart": true, "unlockedBy": null, "maxPerCity": null, "cost": {"coins": 25, "logs": 5}, "buildSeconds": 20, "baseMaxLevel": 1, "levels": [
               {"level": 1, "maxWorkers": 0, "workersProvided": 0, "recipe": null, "storage": {"logs": 100, "planks": 100}, "carryLimit": null, "staminaSeconds": null, "upgradeCost": null, "upgradeSeconds": null}
             ]},
-            {"id": "house", "name": "Cottage", "kind": "House", "era": 1, "availableAtStart": true, "unlockedBy": null, "maxPerCity": null, "cost": {"coins": 20}, "buildSeconds": 10, "levels": [
+            {"id": "house", "name": "Cottage", "kind": "House", "era": 1, "availableAtStart": true, "unlockedBy": null, "maxPerCity": null, "cost": {"coins": 20}, "buildSeconds": 10, "baseMaxLevel": 2, "levels": [
               {"level": 1, "maxWorkers": 0, "workersProvided": 3, "recipe": null, "storage": null, "carryLimit": null, "staminaSeconds": null, "upgradeCost": null, "upgradeSeconds": null},
-              {"level": 2, "maxWorkers": 0, "workersProvided": 5, "recipe": null, "storage": null, "carryLimit": null, "staminaSeconds": null, "upgradeCost": {"coins": 30, "logs": 15}, "upgradeSeconds": 40}
+              {"level": 2, "maxWorkers": 0, "workersProvided": 5, "recipe": null, "storage": null, "carryLimit": null, "staminaSeconds": null, "upgradeCost": {"coins": 30, "logs": 15}, "upgradeSeconds": 40},
+              {"level": 3, "maxWorkers": 0, "workersProvided": 7, "recipe": null, "storage": null, "carryLimit": null, "staminaSeconds": null, "upgradeCost": {"coins": 60, "logs": 30}, "upgradeSeconds": 60}
             ]},
-            {"id": "post", "name": "Post", "kind": "CourierStation", "era": 1, "availableAtStart": true, "unlockedBy": null, "maxPerCity": null, "cost": {"coins": 35}, "buildSeconds": 25, "levels": [
+            {"id": "post", "name": "Post", "kind": "CourierStation", "era": 1, "availableAtStart": true, "unlockedBy": null, "maxPerCity": null, "cost": {"coins": 35}, "buildSeconds": 25, "baseMaxLevel": 1, "levels": [
               {"level": 1, "maxWorkers": 2, "workersProvided": 0, "recipe": null, "storage": null, "carryLimit": 6, "staminaSeconds": 900, "upgradeCost": null, "upgradeSeconds": null}
             ]},
-            {"id": "sawpit", "name": "Sawpit", "kind": "Producer", "era": 1, "availableAtStart": true, "unlockedBy": null, "maxPerCity": null, "cost": {"coins": 15}, "buildSeconds": 20, "levels": [
+            {"id": "sawpit", "name": "Sawpit", "kind": "Producer", "era": 1, "availableAtStart": true, "unlockedBy": null, "maxPerCity": null, "cost": {"coins": 15}, "buildSeconds": 20, "baseMaxLevel": 1, "levels": [
               {"level": 1, "maxWorkers": 1, "workersProvided": 0, "recipe": {"inputs": {}, "outputs": {"logs": 1, "planks": 1}, "labor": 60}, "storage": {"logs": 10, "planks": 10}, "carryLimit": null, "staminaSeconds": null, "upgradeCost": null, "upgradeSeconds": null}
             ]},
-            {"id": "study", "name": "Study", "kind": "Science", "era": 1, "availableAtStart": true, "unlockedBy": null, "maxPerCity": 1, "cost": {"coins": 30}, "buildSeconds": 15, "levels": [
+            {"id": "study", "name": "Study", "kind": "Science", "era": 1, "availableAtStart": true, "unlockedBy": null, "maxPerCity": 1, "cost": {"coins": 30}, "buildSeconds": 15, "baseMaxLevel": 1, "levels": [
               {"level": 1, "maxWorkers": 0, "workersProvided": 0, "recipe": null, "storage": null, "carryLimit": null, "staminaSeconds": null, "upgradeCost": null, "upgradeSeconds": null}
             ]},
-            {"id": "trading_post", "name": "Trading Post", "kind": "Producer", "era": 1, "availableAtStart": false, "unlockedBy": "trade_charter", "maxPerCity": null, "cost": {"coins": 90}, "buildSeconds": 60, "levels": [
+            {"id": "trading_post", "name": "Trading Post", "kind": "Producer", "era": 1, "availableAtStart": false, "unlockedBy": "trade_charter", "maxPerCity": null, "cost": {"coins": 90}, "buildSeconds": 60, "baseMaxLevel": 1, "levels": [
               {"level": 1, "maxWorkers": 1, "workersProvided": 0, "recipe": {"inputs": {"logs": 1, "planks": 2}, "outputs": {"coins": 6}, "labor": 90}, "storage": {"logs": 10, "planks": 20}, "carryLimit": null, "staminaSeconds": null, "upgradeCost": null, "upgradeSeconds": null}
             ]},
-            {"id": "woodcutter", "name": "Woodcutter", "kind": "Producer", "era": 1, "availableAtStart": true, "unlockedBy": null, "maxPerCity": null, "cost": {"coins": 40, "logs": 10}, "buildSeconds": 20, "levels": [
+            {"id": "woodcutter", "name": "Woodcutter", "kind": "Producer", "era": 1, "availableAtStart": true, "unlockedBy": null, "maxPerCity": null, "cost": {"coins": 40, "logs": 10}, "buildSeconds": 20, "baseMaxLevel": 2, "levels": [
               {"level": 1, "maxWorkers": 2, "workersProvided": 0, "recipe": {"inputs": {}, "outputs": {"logs": 1}, "labor": 30}, "storage": {"logs": 40}, "carryLimit": null, "staminaSeconds": null, "upgradeCost": null, "upgradeSeconds": null},
               {"level": 2, "maxWorkers": 3, "workersProvided": 0, "recipe": {"inputs": {}, "outputs": {"logs": 1}, "labor": 30}, "storage": {"logs": 60}, "carryLimit": null, "staminaSeconds": null, "upgradeCost": {"coins": 60, "planks": 5}, "upgradeSeconds": 45}
             ]}
           ],
           "research": [
+            {"id": "charter", "name": "Charter", "era": 1, "cost": {"coins": 10}, "durationSeconds": 30, "prerequisites": ["guild"], "effects": [{"type": "grantCharter", "building": null, "item": null, "permille": null, "amount": null, "mode": null}]},
+            {"id": "guild", "name": "Guild", "era": 1, "cost": {"coins": 50}, "durationSeconds": 120, "prerequisites": [], "effects": [{"type": "builderSlotBonus", "building": null, "item": null, "permille": null, "amount": 1, "mode": null}, {"type": "maxLevelBonus", "building": "house", "item": null, "permille": null, "amount": 1, "mode": null}]},
             {"id": "sharp_axes", "name": "Sharp Axes", "era": 1, "cost": {"coins": 80}, "durationSeconds": 120, "prerequisites": [], "effects": [{"type": "laborReduction", "building": "woodcutter", "item": null, "permille": 150, "amount": null, "mode": null}]},
             {"id": "storehouses", "name": "Storehouses", "era": 1, "cost": {"coins": 100, "logs": 20}, "durationSeconds": 300, "prerequisites": ["trade_charter"], "effects": [{"type": "storageCapBonus", "building": null, "item": "planks", "permille": null, "amount": 50, "mode": null}, {"type": "storageCapBonus", "building": null, "item": "logs", "permille": null, "amount": 100, "mode": null}]},
             {"id": "tallies", "name": "Tallies", "era": 1, "cost": {"coins": 40}, "durationSeconds": 60, "prerequisites": [], "effects": [{"type": "walkSpeedBonus", "building": null, "item": null, "permille": 100, "amount": null, "mode": null}, {"type": "unlockAmountMode", "building": null, "item": null, "permille": null, "amount": null, "mode": "percent"}]},

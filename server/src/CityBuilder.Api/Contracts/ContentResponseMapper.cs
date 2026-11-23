@@ -76,6 +76,7 @@ public static class ContentResponseMapper
         building.MaxPerCity,
         ToAmounts(building.Cost),
         building.BuildSeconds,
+        building.BaseMaxLevel,
         building.Levels.Select(ToLevel).ToArray());
 
     /// <summary>
@@ -119,6 +120,9 @@ public static class ContentResponseMapper
         StorageCapBonusEffect bonus => new ContentResearchEffect("storageCapBonus", null, bonus.Item.Value, null, bonus.Amount, null),
         UnlockAmountModeEffect mode => new ContentResearchEffect("unlockAmountMode", null, null, null, null, ModeText(mode.Mode)),
         WalkSpeedBonusEffect walk => new ContentResearchEffect("walkSpeedBonus", null, null, walk.Permille, null, null),
+        MaxLevelBonusEffect levels => new ContentResearchEffect("maxLevelBonus", levels.Building.Value, null, null, levels.Amount, null),
+        BuilderSlotBonusEffect slots => new ContentResearchEffect("builderSlotBonus", null, null, null, slots.Amount, null),
+        GrantCharterEffect => new ContentResearchEffect("grantCharter", null, null, null, null, null),
         _ => throw new InvalidOperationException($"Effect type {effect.GetType().Name} has no wire shape; add it to the contract."),
     };
 
