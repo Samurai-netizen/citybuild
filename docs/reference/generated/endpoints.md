@@ -77,6 +77,7 @@ The request and response bodies. The document types numbers as `integer` or `str
 | `maxPerCity` | `int32` | yes | yes |
 | `cost` | map of `int64` | yes | no |
 | `buildSeconds` | `int64` | yes | no |
+| `baseMaxLevel` | `int32` | yes | no |
 | `levels` | [ContentBuildingLevel](#contentbuildinglevel)[] | yes | no |
 
 ### ContentBuildingLevel
@@ -172,6 +173,7 @@ The request and response bodies. The document types numbers as `integer` or `str
 | `gridWidth` | `int32` | yes | no |
 | `gridHeight` | `int32` | yes | no |
 | `builderSlots` | `int32` | yes | no |
+| `builderQueueLength` | `int32` | yes | no |
 | `researchSlots` | `int32` | yes | no |
 | `minCycleSeconds` | `int64` | yes | no |
 | `maxLaborReductionPermille` | `int32` | yes | no |
@@ -266,6 +268,8 @@ The request and response bodies. The document types numbers as `integer` or `str
 |---|---|---|---|
 | `slots` | `int32` | yes | no |
 | `busy` | `int32` | yes | no |
+| `queued` | `int32` | yes | no |
+| `queueLength` | `int32` | yes | no |
 
 ### SnapshotBuilding
 
@@ -276,6 +280,7 @@ The request and response bodies. The document types numbers as `integer` or `str
 | `x` | `int32` | yes | no |
 | `y` | `int32` | yes | no |
 | `level` | `int32` | yes | no |
+| `maxLevel` | `int32` | yes | no |
 | `assignedWorkers` | `int32` | yes | no |
 | `maxWorkers` | `int32` | yes | no |
 | `phase` | `string` | yes | no |
@@ -290,6 +295,7 @@ The request and response bodies. The document types numbers as `integer` or `str
 | `needs` | map of `int64` | yes | no |
 | `project` | `string` | yes | yes |
 | `paused` | `boolean` | yes | no |
+| `queuePlace` | `int32` | yes | yes |
 
 ### SnapshotCity
 
@@ -298,6 +304,7 @@ The request and response bodies. The document types numbers as `integer` or `str
 | `clock` | `int64` | yes | no |
 | `era` | `int32` | yes | no |
 | `purse` | `int64` | yes | no |
+| `chartered` | `boolean` | yes | no |
 | `totals` | map of `int64` | yes | no |
 | `workers` | [SnapshotWorkers](#snapshotworkers) | yes | no |
 | `builders` | [SnapshotBuilders](#snapshotbuilders) | yes | no |

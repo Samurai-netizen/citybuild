@@ -7,11 +7,13 @@
 ## Resume point
 - **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M1-02 Full Era I content and the three new research effects · branch `task/M1-02-era1-content` · log `docs/build-log/2026/2026-11-23-02-M1-02.md`
-- **Part / step:** A1 effects done (checkpoint); next A2 builder queue (CR-0013) · B content · C server and client
+- **Part / step:** A1 effects and A2 builder queue (CR-0013) done (checkpoint, full run); next B content · C server and client
 - **Last completed:** M1-01 Design lock for Era I (PR #104, merged 2026-11-23).
-- **Next step:** part A2 (builder queue, CR-0013): the failing tests of the build log's A2 test list, then the full run (`quality.sh`). The `22`
-  edit is a protected file: ask the owner. Last green: the A1 checkpoint commit. Also open: the owner's
-  [MANUAL] click-through of the metrics report (`tools/README.md` → MetricsReport).
+- **Next step:** part B (content): the failing tests of the build log's part B test list, then `server/content/era1-content.json` (`era1-1`,
+  `builderQueueLength` 2). Waiting for the owner: the `22` paragraph on the builder queue and the new `content-golden-v3.json` (both
+  protected). Part C: the DB tests on the server's content expect no queue (`queueLength` 0) until it loads `era1-1`; the client fixtures
+  are re-recorded then. Last green: the A2 checkpoint commit. Also open: the owner's [MANUAL] click-through of the metrics report
+  (`tools/README.md` → MetricsReport).
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. The hosting provider (in M1-13).
 - **Known broken / do not touch:** the owner's local Unity edits (`client/CityBuilder/Assets/Settings/*.asset`, `ProjectSettings/ProjectSettings.asset`,
   `UnityConnectSettings.asset`): leave them uncommitted and don't report them (owner, 2026-11-18). They are hidden with

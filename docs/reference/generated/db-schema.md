@@ -8,8 +8,8 @@ Tables in alphabetical order. Each table's mapping is in `Persistence/Configurat
 
 | Table | Columns | Primary key | References |
 |---|---|---|---|
-| `cities` | 17 | `id` | `players` |
-| `city_buildings` | 15 | `city_id`, `building_id` | `cities` |
+| `cities` | 18 | `id` | `players` |
+| `city_buildings` | 16 | `city_id`, `building_id` | `cities` |
 | `city_courier_loads` | 6 | `city_id`, `station_id`, `slot`, `item_id`, `from_building_id` | `city_couriers` |
 | `city_couriers` | 8 | `city_id`, `station_id`, `slot` | `city_buildings` |
 | `city_delivery_lines` | 8 | `city_id`, `station_id`, `slot`, `line_id` | `city_couriers` |
@@ -38,6 +38,7 @@ Tables in alphabetical order. Each table's mapping is in `Persistence/Configurat
 | `last_settled_unix` | `bigint` | no | — |
 | `next_building_id` | `integer` | no | — |
 | `next_line_id` | `integer` | no | — |
+| `next_queued_order` | `integer` | no | — |
 | `next_trip_id` | `integer` | no | — |
 | `player_id` | `uuid` | no | — |
 | `purse` | `bigint` | no | — |
@@ -54,6 +55,7 @@ Tables in alphabetical order. Each table's mapping is in `Persistence/Configurat
 | `ux_cities_player_id` | unique index | `player_id` |
 | `ck_cities_era` | check | `era >= 1` |
 | `ck_cities_next_line_id` | check | `next_line_id >= 1` |
+| `ck_cities_next_queued_order` | check | `next_queued_order >= 1` |
 | `ck_cities_next_trip_id` | check | `next_trip_id >= 1` |
 | `ck_cities_purse` | check | `purse >= 0` |
 
@@ -71,6 +73,7 @@ Tables in alphabetical order. Each table's mapping is in `Persistence/Configurat
 | `phase` | `text` | no | — |
 | `phase_ends_at` | `bigint` | yes | — |
 | `phase_started_at` | `bigint` | yes | — |
+| `queued_order` | `integer` | yes | — |
 | `segment_started_at` | `bigint` | yes | — |
 | `target_level` | `smallint` | yes | — |
 | `type_id` | `text` | no | — |
@@ -85,7 +88,8 @@ Tables in alphabetical order. Each table's mapping is in `Persistence/Configurat
 | `ck_city_buildings_assigned_workers` | check | `assigned_workers >= 0` |
 | `ck_city_buildings_labor_remaining` | check | `labor_remaining >= 0` |
 | `ck_city_buildings_level` | check | `level >= 1` |
-| `ck_city_buildings_paused` | check | `NOT paused OR phase <> 'Constructing'` |
+| `ck_city_buildings_paused` | check | `NOT paused OR phase NOT IN ('Constructing', 'Queued')` |
+| `ck_city_buildings_queued_order` | check | `queued_order IS NULL OR queued_order >= 1` |
 | `ck_city_buildings_x` | check | `x >= 0` |
 | `ck_city_buildings_y` | check | `y >= 0` |
 
@@ -355,3 +359,4 @@ In the order they apply (`server/src/CityBuilder.Infrastructure/Persistence/Migr
 | 8 | `20261112012041_AddBuildingPaused` |
 | 9 | `20261117143301_TripWaitingLeg` |
 | 10 | `20261117184547_AddPlayerEvents` |
+| 11 | `20261123215944_AddBuilderQueue` |

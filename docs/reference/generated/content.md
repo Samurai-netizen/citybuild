@@ -14,6 +14,7 @@ Content version `mvp-3`. The starting city is in era 1 with 1000 `coins` and no 
 
 | Rule | Value |
 |---|---|
+| `builderQueueLength` | `0` |
 | `gridWidth` | `8` |
 | `gridHeight` | `8` |
 | `builderSlots` | `2` |

@@ -1,7 +1,6 @@
 using System.Net;
 using System.Text.Json.Nodes;
 using CityBuilder.Application.Cities;
-using CityBuilder.Infrastructure.Content;
 using CityBuilder.IntegrationTests.Content;
 using CityBuilder.Simulation.State;
 using Microsoft.AspNetCore.Mvc.Testing;
