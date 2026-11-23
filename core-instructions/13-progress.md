@@ -6,12 +6,12 @@
 
 ## Resume point
 - **State:** IDLE <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (CR-0009-T2 in review: branch `task/CR-0009-T2-report`, log `docs/build-log/2026/2026-11-17-05-CR-0009-T2.md`)
+- **Task:** — (branch `task/M1-01-design-lock` holds only the CR-0011 approval so far; `/start-task M1-01` continues on it)
 - **Part / step:** —
-- **Last completed:** CR-0009-T2 (player metrics: the report; PR #103, owner merges; then CR-0009 status Done)
-- **Next step:** owner: merge the CR-0009-T2 PR, click every header of the report page ([MANUAL], `tools/README.md` → MetricsReport),
-  approve the M1 CRs (CR-0011); then the first M1 task of `docs/plan/M1-PLAN.md` (`/start-task <ID>`).
-- **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. M1 CRs (CR-0011) to approve.
+- **Last completed:** CR-0009-T2 (PR #103, merged 2026-11-18). CR-0011 (the M1 plan) approved by the owner 2026-11-23.
+- **Next step:** `/start-task M1-01` (Opus, [PLAN]): also set CR-0009 to Done, `15` → Plan changes to Approved (protected: ask),
+  the owner's [MANUAL] click-through of the metrics report (`tools/README.md` → MetricsReport) is still open.
+- **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. The game's name (in M1-01), the hosting provider (in M1-13).
 - **Known broken / do not touch:** the owner's local Unity edits (`client/CityBuilder/Assets/Settings/*.asset`, `ProjectSettings/ProjectSettings.asset`,
   `UnityConnectSettings.asset`): leave them uncommitted and don't report them (owner, 2026-11-18). They are hidden with
   `git update-index --skip-worktree` in the owner's clone (undo: `--no-skip-worktree`).

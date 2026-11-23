@@ -1,6 +1,6 @@
 # CR-0011 — M1: from a tech demo to a game (direction and plan)
 
-- **Status:** Proposed
+- **Status:** Approved
 - **Type:** Design change
 - **Requested by:** owner · **Date:** 2026-11-16
 - **Milestone / era:** M1 / Era I
@@ -79,6 +79,12 @@ What does not change: the six pillars, the server's authority, the deterministic
 The tasks are the plan's: `M1-01` … `M1-18` (`docs/plan/M1-PLAN.md` §6). Before them, the rest of M0 (§3 of the plan).
 
 ## Owner approval
-- Approved on: — (the plan as a whole is still open: its §4 decisions).
+- Approved on: 2026-11-23, the plan as a whole with the recommendations of §4. The owner's words: "I approve it. Reference phone is
+  Google Pixel 5. Pick name later in M1-01. Hosting provider name is irrelevant to the building process, am i wrong?"
+  - Decision 9: the reference phone is the **Google Pixel 5** (Android 8.0+ stays the range).
+  - Decision 6: the game's name is picked in M1-01 from its candidates.
+  - Decision 10: the provider is chosen in M1-13 (its plan, part A); code before it stays provider-neutral. The Russian-cloud
+    recommendation (152-FZ) stands.
+  - M1-01 writes all 16 answers into `core-instructions/12-decisions.md` and the design files.
 - In part, 2026-11-17: the regrouping of the last M0 tasks (plan §3, decision 12), the owner's words: "now we will use M1 plan file instead of M0. The rest of the tasks are regrouped in M1 with references to M0 file".
 - Renumbered from CR-0009 on 2026-11-17: `main` already had CR-0009 (player metrics, PR #96).

@@ -1,7 +1,7 @@
 # M1 Plan — Era I complete: from a tech demo to a game
 
-**Plan status: Proposed (CR-0011); §3 (closing M0) approved 2026-11-17.** No M1 task may start before the owner approves this plan, and
-before M0 is closed (§3).
+**Plan status: Approved (CR-0011) on 2026-11-23, with the §4 recommendations; §3 (closing M0) approved 2026-11-17.** The owner's answers
+to §4 are in CR-0011 → Owner approval.
 Written 2026-11-16. It replaces the M1 paragraph of `core-instructions/10-milestones.md` once approved (task M1-01 edits that file).
 
 This plan has **18 tasks** (`M1-01` … `M1-18`). Each is several times bigger than an M0 task: one task is one PR and one to three
