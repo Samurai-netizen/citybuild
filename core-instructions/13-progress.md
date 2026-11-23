@@ -20,7 +20,7 @@
   `bash scripts/dev/quality.sh` (as CI; `08` → Test tiers) · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` (remaining tasks grouped in `docs/plan/M1-PLAN.md` §3) · tasks done: 87 / 88 (M0-71 skipped) · next milestone: `docs/plan/M1-PLAN.md` (Proposed, CR-0011)
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` (remaining tasks grouped in `docs/plan/M1-PLAN.md` §3) · tasks done: 87 / 88 (M0-71 skipped) · next milestone: `docs/plan/M1-PLAN.md` (approved 2026-11-23, CR-0011)
 
 | Area | State | Notes |
 |---|---|---|
