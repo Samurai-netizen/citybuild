@@ -5,12 +5,12 @@
 > This file is loaded into every session: Milestone-table notes are task ids and PR numbers only (≤ ~100 characters per row).
 
 ## Resume point
-- **State:** IDLE <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (branch `task/M1-01-design-lock` holds only the CR-0011 approval so far; `/start-task M1-01` continues on it)
-- **Part / step:** —
+- **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** M1-01 Design lock for Era I · branch `task/M1-01-design-lock` · log `docs/build-log/2026/2026-11-23-01-M1-01.md`
+- **Part / step:** parts A decisions · B design files · C `28` content · D names · E STYLE.md · F asset requests; now: plan presented ([PLAN])
 - **Last completed:** CR-0009-T2 (PR #103, merged 2026-11-18). CR-0011 (the M1 plan) approved by the owner 2026-11-23.
-- **Next step:** `/start-task M1-01` (Opus, [PLAN]): also set CR-0009 to Done, `15` → Plan changes to Approved (protected: ask),
-  the owner's [MANUAL] click-through of the metrics report (`tools/README.md` → MetricsReport) is still open.
+- **Next step:** wait for the owner's approval of the plan (build log → Owner input), then part A. Also open: the owner's [MANUAL]
+  click-through of the metrics report (`tools/README.md` → MetricsReport).
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. The game's name (in M1-01), the hosting provider (in M1-13).
 - **Known broken / do not touch:** the owner's local Unity edits (`client/CityBuilder/Assets/Settings/*.asset`, `ProjectSettings/ProjectSettings.asset`,
   `UnityConnectSettings.asset`): leave them uncommitted and don't report them (owner, 2026-11-18). They are hidden with

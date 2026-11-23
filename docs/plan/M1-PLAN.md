@@ -181,7 +181,7 @@ Status values: `Todo` · `In progress` · `In review` · `Done` · `Blocked` · 
 
 | ID | Phase | Task | Tags | Status |
 |---|---|---|---|---|
-| M1-01 | A | Design lock for Era I, style guide, master asset list | O PLAN MANUAL | Todo |
+| M1-01 | A | Design lock for Era I, style guide, master asset list | O PLAN MANUAL | In progress |
 | M1-02 | B | Full Era I content and the three new research effects | O PLAN | Todo |
 | M1-03 | B | The map: terrain, placement rules, land expansion | O PLAN ASSETS | Todo |
 | M1-04 | B | The Chronicle: goals, chapters, rewards | O PLAN ASSETS | Todo |
