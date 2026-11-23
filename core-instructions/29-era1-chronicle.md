@@ -48,7 +48,7 @@ reward), a story line (every goal has one, said by an advisor; written with the 
 | 6 | A Free Town (epilogue, G38) | fulfil 25 orders 500c · fulfil 7 caravans 500c · every building type at level 3 · Bench · Era II is coming (story) | — (no end) |
 
 39 goals in chapters 1–5; their coins add up to 7 100 over the era, a one-time faucet (G40). Chapter 1's 450 coins and the
-1 000 starting coins pay for everything chapter 1 asks (M1-15 checks it; golden #3 in M1-04 walks it).
+1 000 starting coins pay for everything chapter 1 asks (M1-15 checks it; M1-04's scripted player walks it).
 
 ## Merchant orders and the caravan
 - **Merchants** (one per kind of goods; names in `32`): `woodmonger` (logs, planks) · `stone_dealer` (stone, cut_stone) ·

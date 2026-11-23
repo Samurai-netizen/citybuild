@@ -245,7 +245,7 @@ Out of scope: code, content JSON, any asset file.
 #### M1-02 — Full Era I content and the three new research effects · [O] [PLAN]
 ```text
 The whole Era I of 28-era1-content.md runs in the engine, on the server and in today's generic client UI, with placeholder models.
-Read first: 28 (all); 04 §3–§9 and §14 (labor, recipes, research, effects, invariants); 25 → Effect types; 19 → "New engine rule or
+Read first: 28 (all), 29 and 32 where they name ids; 04 §3–§9 and §14 (labor, recipes, research, effects, invariants); 25 → Effect types; 19 → "New engine rule or
 effect type" and "Content-only change"; docs/how-to/add-research-effect.md; docs/how-to/add-building-or-item.md.
 Parts:
  A. Effects. Tests first: MaxLevelBonus raises one type's level cap and an upgrade past the old cap is accepted only after it;
@@ -271,7 +271,7 @@ Out of scope: terrain, goals, orders, final numbers (M1-15), art.
 #### M1-03 — The map: terrain, placement rules, land expansion · [O] [PLAN] [ASSETS]
 ```text
 The town stands on land with forest, rock, fertile soil and water; raw producers need their terrain; research opens more land.
-Read first: 28 → Map; 04 §16–§17 (paths, roads) and §12 (performance); 06 (city tables); 05 → snapshot and PlaceBuilding;
+Read first: 29 → Map; 04 §16–§17 (paths, roads) and §12 (performance); 06 (city tables); 05 → snapshot and PlaceBuilding;
 docs/how-to/add-migration.md; 09 → City view.
 Parts:
  A. Engine. Tests first: a Woodcutter is refused without forest beside it, a Quarry without rock, a Farm off fertile soil (one error
@@ -287,7 +287,7 @@ Parts:
     unsurveyed land, the reveal when land opens, hints. Visuals are checked by the [MANUAL] list in client/README.md.
 Assets: AR-M1-03 (terrain tiles and variants, mist, bridge, survey stakes). Placeholders: tinted flat tiles.
 Full run: after part A and at the finish.
-Acceptance: the tutorial town of 28 can be laid out on the map; a 7-day scripted run with every expansion stays inside the performance
+Acceptance: the tutorial town of 29 can be laid out on the map; a 7-day scripted run with every expansion stays inside the performance
 budget; golden #1–#3 still pass (their content has no terrain).
 Out of scope: more than one map, terrain bonuses, 2 × 2 buildings.
 ```
@@ -296,10 +296,10 @@ Out of scope: more than one map, terrain bonuses, 2 × 2 buildings.
 ```text
 The player always has a next goal, sees its progress, and claims a reward for it. Chapter 1's goals are the script of the tutorial
 (M1-10 adds the guiding).
-Read first: 28 → Chronicle; 04 §8 (commands), §10 (invariants), §13 (mailbox seam: untouched); 05 → Commands and errors;
+Read first: 29 → The Chronicle; 04 §8 (commands), §10 (invariants), §13 (mailbox seam: untouched); 05 → Commands and errors;
 docs/how-to/add-command.md; 07 → threat table; 19 → "New command".
 Parts:
- A. Engine. Tests first: each condition kind of 28 becomes true at the exact second it is met, also in the middle of a long absence
+ A. Engine. Tests first: each condition kind of 29 becomes true at the exact second it is met, also in the middle of a long absence
     (split invariance: one Advance or many give the same completion time and order); counters (produced, delivered, fulfilled) never go
     down and survive upgrades, moves and demolition; a goal completes once; chapter N+1 opens only when chapter N's goals are done;
     content validation refuses a goal that nothing in the content can satisfy. Then build: goal content, counters in state, completion
@@ -316,17 +316,17 @@ Assets: AR-M1-04 (chapter illustrations, seal and reward icons, the Chronicle bu
 Full run: after part A and at the finish.
 Acceptance: a scripted player finishes all five chapters over HTTP; the ledger audit reports zero mismatches; no goal can be claimed
 twice under 50 concurrent claims.
-Out of scope: daily or repeating goals, goods as rewards unless 28 says where they land, achievements beyond the chapters.
+Out of scope: daily or repeating goals, goods as rewards unless 29 says where they land, achievements beyond the chapters.
 ```
 
 #### M1-05 — Merchant orders and the daily caravan · [O] [PLAN] [ASSETS]
 ```text
 The Trading Post shows three orders from named merchants and one caravan a day; fulfilling them is the varied way to earn coins.
-Read first: 28 → Orders; 22 → Trading Post; 24 → Sources and sinks; 04 §2 (time, presence) and §18 (deliveries); 02 rule 6;
+Read first: 29 → Merchant orders and the caravan; 22 → Trading Post; 24 → Sources and sinks; 04 §2 (time, presence) and §18 (deliveries); 02 rule 6;
 docs/how-to/add-command.md.
 Parts:
  A. Generator. Tests first: the same city and order number always give the same order (fixed vectors in the test); an order asks only
-    for goods the city has unlocked; its price is inside the band of 28 relative to the plain selling recipe; a refilled slot appears at
+    for goods the city has unlocked; its price is inside the band of 29 relative to the plain selling recipe; a refilled slot appears at
     the exact second after its wait, also during an absence, the same for one Advance or many; the caravan appears once per server day
     (the day boundary is content data) and leaves without any penalty; no float, no clock, no System.Random (architecture test).
     Then build: the seeded integer function (spec'd in 04 with its constants), order tables in content, orders in state.
@@ -348,7 +348,7 @@ Out of scope: player-to-player trade (Era II, 26), order chains, bargaining, rep
 #### M1-06 — Town management: name, move, demolish, decorations, cancel research · [O] [ASSETS]
 ```text
 The town is the player's own: it has a name, mistakes can be undone, and it can be made pretty.
-Read first: 28 → Decorations and the rules for move, demolish and cancel; 04 §8 and §18 (what happens to a store, couriers and routes
+Read first: 29 → Decorations; 22 → Ownership (move, demolish); 25 → cancelling research; 04 §8 and §18 (what happens to a store, couriers and routes
 when a building goes); 05 → Commands; docs/how-to/add-command.md.
 Parts:
  A. Engine. Tests first: demolishing returns the share of 28 in coins, refuses while goods are inside unless confirmed (then the goods
@@ -444,7 +444,7 @@ Out of scope: making or editing any asset; Era II looks.
 ```text
 A new player is led through chapter 1 by an advisor and leaves the first session with a running chain, a research under way and a
 reason to return.
-Read first: 28 → Chapter 1; 24 → Goals 1–4; the M1-04 Chronicle view-models; docs/how-to/add-ui-screen.md.
+Read first: 29 → The Chronicle (chapter 1); 32 → Lines; 24 → Goals 1–4; the M1-04 Chronicle view-models; docs/how-to/add-ui-screen.md.
 Parts:
  A. First-session numbers. Tests first: a BalanceSim scenario "first session" (a scripted new player who follows the goals) asserts the
     targets of 24 as rewritten in M1-01: first reward inside the first minute, something finishes every 30–90 s for 10 minutes, first
@@ -548,7 +548,7 @@ Out of scope: iOS, tablets' own layouts, app bundles with on-demand assets.
 #### M1-15 — Balance for a week of Era I · [O] [MANUAL] decision
 ```text
 The numbers make Era I a good week: never stuck, never done in an afternoon.
-Read first: 24 (all); 28; docs/how-to/run-balance-simulator.md; the M0 balance report.
+Read first: 24 (all); 28; 29; docs/how-to/run-balance-simulator.md; the M0 balance report.
 Parts:
  A. Simulator. Tests first: strategies handle the new buildings, terrain, goals (they claim) and orders (they fulfil the best paying
     one they can); a run is deterministic; the new metrics are computed correctly on a tiny fixture (time to each chapter, to the Town
