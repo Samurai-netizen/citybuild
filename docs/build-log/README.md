@@ -11,6 +11,7 @@ Rules: `core-instructions/17-documentation-system.md` §4.
 
 ## Entries
 <!-- entries: newest first -->
+- [BL-20261123-02 · M1-02 · Full Era I content and the three new research effects](2026/2026-11-23-02-M1-02.md) — In progress
 - [BL-20261123-01 · M1-01 · Design lock for Era I, style guide, master asset list](2026/2026-11-23-01-M1-01.md) — Done
 - [BL-20261117-05 · CR-0009-T2 · Player metrics: the report](2026/2026-11-17-05-CR-0009-T2.md) — Done
 - [BL-20261117-04 · CR-0009-T1 · Player metrics: recording](2026/2026-11-17-04-CR-0009-T1.md) — Done

@@ -5,12 +5,12 @@
 > This file is loaded into every session: Milestone-table notes are task ids and PR numbers only (≤ ~100 characters per row).
 
 ## Resume point
-- **State:** IDLE <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (M1-01 in review: branch `task/M1-01-design-lock`, log `docs/build-log/2026/2026-11-23-01-M1-01.md`)
-- **Part / step:** —
-- **Last completed:** M1-01 Design lock for Era I (PR #104, the owner merges). CR-0009-T2 (PR #103, merged 2026-11-18).
-- **Next step:** M1-02 Full Era I content and the three new research effects (`/start-task M1-02` after M1-01 merges). Also open: the owner's [MANUAL]
-  click-through of the metrics report (`tools/README.md` → MetricsReport).
+- **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** M1-02 Full Era I content and the three new research effects · branch `task/M1-02-era1-content` · log `docs/build-log/2026/2026-11-23-02-M1-02.md`
+- **Part / step:** start (write-ahead done); parts A effects · B content · C server and client
+- **Last completed:** M1-01 Design lock for Era I (PR #104, merged 2026-11-23).
+- **Next step:** `[PLAN]`: the owner approves the plan (build log → Session 1, Owner input), then part A tests first. Also open: the owner's
+  [MANUAL] click-through of the metrics report (`tools/README.md` → MetricsReport).
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. The hosting provider (in M1-13).
 - **Known broken / do not touch:** the owner's local Unity edits (`client/CityBuilder/Assets/Settings/*.asset`, `ProjectSettings/ProjectSettings.asset`,
   `UnityConnectSettings.asset`): leave them uncommitted and don't report them (owner, 2026-11-18). They are hidden with
