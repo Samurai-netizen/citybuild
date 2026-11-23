@@ -6,7 +6,10 @@
 > M0's English names (`mvp-content.json`) are kept.
 
 ## The game
-Working title **CityBuilder** until the owner picks a name (G29). Candidates, checked 2026-11-23 by web search for a game of the same
+**Погост / Pogost**: the owner's pick, 2026-11-23 (G29). In Old Rus a *pogost* was a trading and tax settlement where the prince's
+men gathered tribute: the town the player builds. In modern Russian the word mostly means a rural churchyard; the store page and the
+first screen should show the trading-town sense. Checked 2026-11-23 like the candidates: no game of that name in RuStore or Google Play
+(nearest: *Pogostuck*, a PC game). Code, repo and ids keep `CityBuilder`. The candidates shown before the pick, checked 2026-11-23 by web search for a game of the same
 name in RuStore and Google Play (only the names were sent). A web search doesn't replace the stores' own search and is not a trademark
 check: the pick is searched once more in both stores before the RuStore listing (M1-17).
 
