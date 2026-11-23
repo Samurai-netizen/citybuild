@@ -31,7 +31,8 @@ Prove the spine: server-authoritative, deterministic, real-time production with 
 tests; playing #1 through in a player on a screen or a phone is the owner's check (`docs/BUILD.md`).
 
 ## M1 — Era I complete: from a tech demo to a game (≈ 9–12 weeks) ← next
-Plan: `docs/plan/M1-PLAN.md` (18 tasks, approved 2026-11-23, CR-0011; decisions G24–G39). Content: `28-era1-content.md`.
+Plan: `docs/plan/M1-PLAN.md` (18 tasks, approved 2026-11-23, CR-0011; decisions G24–G39).
+Content: `28-era1-content.md`, `29-era1-chronicle.md`, names `32-era1-names.md`.
 Make Era I worth playing and put it in front of real players.
 - **Purpose:** a premise, four advisors and the **Chronicle** (five chapters of goals with rewards) leading to the **Town Charter**.
 - **Content:** the full Era I: three chains (wood, stone, bread), about 13 buildings with three levels, 14–16 research nodes in four

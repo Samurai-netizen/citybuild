@@ -20,13 +20,13 @@ day. Taps are decisions, never progress. No mechanic rewards tapping speed.
 ## The town and the Chronicle · Era I
 - **Premise:** the Duke grants the player, his steward, a river crossing to turn into a town. Earning the **Town Charter** (the last
   research of Era I) makes it a free town, the door to Era II. Four **advisors** speak in one or two lines: the master builder (building,
-  land), the merchant (trade, orders), the scribe (research, the Chronicle) and the courier master (logistics). Names: `28`.
+  land), the merchant (trade, orders), the scribe (research, the Chronicle) and the courier master (logistics). Names: `32`.
 - **The Chronicle** has five chapters of six to eight **goals**. A goal is a condition the engine checks from the city (a building at a
   level, goods produced or delivered, a research done, road tiles, an order fulfilled) and a **reward**: coins, a decoration, or a line
   of the town's story. Progress is computed, never sent by the client; the player **claims** a done goal with a command, and the coins
   go through the ledger. A chapter opens when every goal of the previous one is claimed; its last goal is a visible event (the first
-  caravan, the bridge, the windmill, the Town Hall, the Charter). Chapter 1 is the tutorial (`21` → First session).
-- Goals and rewards are content data (`28`). Rewards are one-time and finite: they are not a recurring coin source (`24`).
+  sale, the first caravan, the bridge, the windmill, the Charter; `29`). Chapter 1 is the tutorial (`21` → First session).
+- Goals and rewards are content data (`29`). Rewards are one-time and finite: they are not a recurring coin source (`24`).
 - **After the Charter** (until Era II exists) the town keeps running: orders, decorations and upgrades go on, and a closing chapter
   says Era II is coming (G38).
 
@@ -78,7 +78,7 @@ and outputs land when it ends.
 - Buildings take 1 tile in Eras I–III, and some industrial buildings take 2×2 later. A road tile takes a tile too.
 - **Placement matters from Era I:** distances, roads and the layout decide how fast goods move between buildings.
 - **Terrain (M1):** every tile is grass, forest, rock, fertile soil or water, from one hand-made map that is the same for every player
-  (`28`). Forest and rock hold no building or road; a Woodcutter's Hut needs a forest tile beside it (4 directions), a Quarry a rock
+  (`29`). Forest and rock hold no building or road; a Woodcutter's Hut needs a forest tile beside it (4 directions), a Quarry a rock
   tile beside it, a Farm stands on fertile soil. Water blocks building and walking, except where a **bridge** (a road kind, by research)
   crosses it. Terrain never runs out and never changes.
 - The start is a plot of about 10×10 (8×8 in M0). Land beyond the border lies under **mist**: visible, not usable. **Land Survey**
@@ -103,7 +103,7 @@ walking speed). Completing every node in an era starts the next era. A running r
 delivered goods do not (G39). Full rules: `25`.
 
 ## Ownership · Era I (minor mechanics, M1)
-- **Town name:** the player names the town (a default name is given, `28`); it can be renamed. Other players may see it from Era II, so
+- **Town name:** the player names the town (a default name is given, `32`); it can be renamed. Other players may see it from Era II, so
   it passes a length and word check.
 - **Move:** a finished building moves to another free tile it may stand on, at once and for free, with its store, workers and level. Not
   while it is a construction site or upgrading. Routes keep the building as a stop; walkers find the new way.

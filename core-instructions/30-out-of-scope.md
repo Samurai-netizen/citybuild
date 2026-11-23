@@ -5,7 +5,8 @@ If a prompt seems to need any of these, stop and ask instead of building it.
 M1 is `docs/plan/M1-PLAN.md` (its §9 is the source of this list); what M0 left out and M1 builds is in `10` → M1.
 
 ## Gameplay
-- More than the Era I content of `28-era1-content.md` (items, buildings, levels, research, map, chapters, orders, decorations)
+- More than the Era I content of `28-era1-content.md` and `29-era1-chronicle.md`
+  (items, buildings, levels, research, map, chapters, orders, decorations)
 - Era transitions and any Era II+ content (designed in `25`, built in M2); after the Town Charter the town only keeps running (G38)
 - Research effect types beyond those `25` marks M0 or M1; a second research slot; speeding research up
 - More than one map; maps per player; terrain that runs out or changes; multi-tile buildings; adjacency bonuses

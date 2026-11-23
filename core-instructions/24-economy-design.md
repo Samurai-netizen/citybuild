@@ -9,7 +9,7 @@
 4. Bottlenecks can be understood from the UI alone (stall reasons, net rates, free workers, stores, what a project still needs, where the
    couriers are).
 5. (M1) Era I takes 5–8 days for a player with 3–5 check-ins a day, and the Chronicle paces it: chapter 1 in the first session,
-   chapter 2 on day 1, chapter 3 by day 2–3, chapter 4 by day 4–5, chapter 5 (the Charter) on day 5–8. Numbers: `28`, tuned in M1-15.
+   chapter 2 on day 1, chapter 3 by day 2–3, chapter 4 by day 4–5, chapter 5 (the Charter) on day 5–8. Numbers: `29`, tuned in M1-15.
 6. (Era II+) A healthy market: prices are stable over weeks, newer players have goods veterans want, and no item can be cornered.
 
 ## Scarce resources and the decisions they create
@@ -63,7 +63,7 @@ So a check-in a few times a day keeps a city running, and a weekend away costs o
 
 ## Orders and the caravan (M1)
 - An order's price per good is above the plain Trading Post recipe, so an order is always worth more than selling the same goods to the
-  recipe; the caravan's bonus is larger. Order tables per chapter ask only for goods the city can already make (`28`).
+  recipe; the caravan's bonus is larger. Order tables per chapter ask only for goods the city can already make (`29`).
 - Orders keep old goods useful: later chapters still ask for logs and planks, so every chain has a buyer.
 - A slot's refill wait and the caravan's 24 h bound the coins per day from orders; the simulator (M1-15) checks that orders add
   20–40 % to a balanced player's coins, not more.

@@ -94,7 +94,7 @@ Use these names in code, docs and UI text. Consistent words keep Claude and the 
 | Mailbox | Deliveries to a player from others' actions, applied at their next settle | `MailboxDelivery` |
 | Guild | Player co-op group (Era II) | `Guild` |
 | Steward | The player: the Duke's steward who founds the town (M1 premise, `21`) | — (story only) |
-| Advisor | One of four characters who speak for a system: master builder, merchant, scribe, courier master (`21`, `28`) | *(planned, M1)* `AdvisorId` |
+| Advisor | One of four characters who speak for a system: master builder, merchant, scribe, courier master (`21`, `32`) | *(planned, M1)* `AdvisorId` |
 | Chronicle | The five chapters of goals with rewards that lead through Era I to the Town Charter (`22`) | *(planned, M1)* `Chronicle` |
 | Chapter | One part of the Chronicle; it opens when every goal of the one before is claimed | *(planned, M1)* `ChapterDefinition` |
 | Goal | A condition the engine checks from the city, with a one-time reward the player claims | *(planned, M1)* `GoalDefinition`, `ClaimGoal` |
