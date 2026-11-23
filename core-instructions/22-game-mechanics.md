@@ -14,7 +14,21 @@ Everything below is a proposal that serves those pillars. Detail: eras and resea
 
 ## Core loop
 **Choose research → unlock → build → staff with workers → route the goods → wait → return → reassign, trade, upgrade → fund the next research.**
-Taps are decisions, never progress. No mechanic rewards tapping speed.
+Around it, from M1 (owner, CR-0011): the **Chronicle** always names the next goal, and **merchant orders** ask for different goods every
+day. Taps are decisions, never progress. No mechanic rewards tapping speed.
+
+## The town and the Chronicle · Era I
+- **Premise:** the Duke grants the player, his steward, a river crossing to turn into a town. Earning the **Town Charter** (the last
+  research of Era I) makes it a free town, the door to Era II. Four **advisors** speak in one or two lines: the master builder (building,
+  land), the merchant (trade, orders), the scribe (research, the Chronicle) and the courier master (logistics). Names: `32`.
+- **The Chronicle** has five chapters of six to eight **goals**. A goal is a condition the engine checks from the city (a building at a
+  level, goods produced or delivered, a research done, road tiles, an order fulfilled) and a **reward**: coins, a decoration, or a line
+  of the town's story. Progress is computed, never sent by the client; the player **claims** a done goal with a command, and the coins
+  go through the ledger. A chapter opens when every goal of the previous one is claimed; its last goal is a visible event (the first
+  sale, the first caravan, the bridge, the windmill, the Charter; `29`). Chapter 1 is the tutorial (`21` → First session).
+- Goals and rewards are content data (`29`). Rewards are one-time and finite: they are not a recurring coin source (`24`).
+- **After the Charter** (until Era II exists) the town keeps running: orders, decorations and upgrades go on, and a closing chapter
+  says Era II is coming (G38).
 
 ## Items and recipes · Era I
 Everything countable is an item: raw (logs, stone, grain), processed (planks, flour) and goods (bread, tools…).
@@ -60,10 +74,15 @@ and outputs land when it ends.
   upgrade or research still needs before anything goes into the building's store.
 - Later eras replace couriers with carts, wagons and finally cargo trucks, and bring better roads (`25`).
 
-## Grid and land · Era I
+## Grid, terrain and land · Era I
 - Buildings take 1 tile in Eras I–III, and some industrial buildings take 2×2 later. A road tile takes a tile too.
 - **Placement matters from Era I:** distances, roads and the layout decide how fast goods move between buildings.
-- The start is a small plot (8×8 in M0, about 10×10 in 1.0). **Land Survey** research adds rows and columns.
+- **Terrain (M1):** every tile is grass, forest, rock, fertile soil or water, from one hand-made map that is the same for every player
+  (`29`). Forest and rock hold no building or road; a Woodcutter's Hut needs a forest tile beside it (4 directions), a Quarry a rock
+  tile beside it, a Farm stands on fertile soil. Water blocks building and walking, except where a **bridge** (a road kind, by research)
+  crosses it. Terrain never runs out and never changes.
+- The start is a plot of about 10×10 (8×8 in M0). Land beyond the border lies under **mist**: visible, not usable. **Land Survey**
+  research opens more of the map.
 - In Era V, power coverage adds a second reason to place buildings carefully.
 
 ## Storage, builders, offline · Era I
@@ -80,11 +99,30 @@ and outputs land when it ends.
 ## Research · Era I (main progression)
 Each era has a research tree. Pick a node, pay its coins, have its goods delivered to the **science building** (one per city), and wait
 (minutes early, days late). Effects: new building types, efficiency, storage, slots, land, level caps, and logistics (amount options,
-walking speed). Completing every node in an era starts the next era. Full rules: `25`.
+walking speed). Completing every node in an era starts the next era. A running research can be **cancelled**: half its coins come back,
+delivered goods do not (G39). Full rules: `25`.
+
+## Ownership · Era I (minor mechanics, M1)
+- **Town name:** the player names the town (a default name is given, `32`); it can be renamed. Other players may see it from Era II, so
+  it passes a length and word check.
+- **Move:** a finished building moves to another free tile it may stand on, at once and for free, with its store, workers and level. Not
+  while it is a construction site or upgrading. Routes keep the building as a stop; walkers find the new way.
+- **Demolish:** a finished building is removed after a confirmation that lists what is lost: half the coins paid for it come back, its
+  store's goods are lost, its workers become free. A Cottage only if its workers can leave (enough free workers); the science building not
+  while a research runs; the Town Hall never.
+- **Decorations** take a tile like a building, produce nothing and are walked around. They come as Chronicle rewards or for coins (a sink,
+  `24`); they can be moved and put away for free.
 
 ## Trading Post (NPC merchants) · Era I
 The Trading Post sells goods to NPC merchants for coins, using a fixed recipe and workers. Its goods are delivered to its store, and its
-coins go straight to the purse. It is the **only coin source**. Its rates set a price floor for the player market.
+coins go straight to the purse. It is the **only recurring coin source** (G7; Chronicle rewards are one-time). Its rates set a price floor
+for the player market.
+- **Merchant orders (M1):** the Trading Post has an **order board** with three slots. An order names a merchant, one to three goods the city
+  can already make, and a price above the plain recipe. The player fulfils it from the Trading Post's store (no workers needed) or
+  dismisses it; an empty slot refills after a wait. Orders come from content tables through a seeded integer function of the city and the
+  order's number, so the server and every replay agree (`02` rule 6).
+- **The caravan:** once a day a caravan brings one bigger order with a better reward. It stays until the next one arrives; a skipped
+  caravan costs nothing (`21` → Tone).
 
 ## Era-gated major mechanics (summary — details in `25`)
 | Era | Mechanic | One line |
@@ -100,7 +138,8 @@ coins go straight to the purse. It is the **only coin source**. Its rates set a 
 | VI | Megaprojects | Multi-week guild or server projects (e.g. a launch site) built from many players' goods |
 
 ## Notifications (platform feature, not era-gated)
-Construction done, research done, storage full, couriers resting, and (Era II) order filled.
+Construction done, research done, storage full, couriers resting, the caravan, and (Era II) order filled. In M1 they are **local**: the
+client schedules them from the timers it already predicts; there is no push server (G31). Each kind has a setting.
 
 ## Monetization (later milestone, constrained by the market)
 Because goods are tradable, anything that boosts production also turns into market power.

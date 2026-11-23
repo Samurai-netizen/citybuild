@@ -6,12 +6,12 @@
 
 ## Resume point
 - **State:** IDLE <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (CR-0009-T2 in review: branch `task/CR-0009-T2-report`, log `docs/build-log/2026/2026-11-17-05-CR-0009-T2.md`)
+- **Task:** — (M1-01 in review: branch `task/M1-01-design-lock`, log `docs/build-log/2026/2026-11-23-01-M1-01.md`)
 - **Part / step:** —
-- **Last completed:** CR-0009-T2 (player metrics: the report; PR #103, owner merges; then CR-0009 status Done)
-- **Next step:** owner: merge the CR-0009-T2 PR, click every header of the report page ([MANUAL], `tools/README.md` → MetricsReport),
-  approve the M1 CRs (CR-0011); then the first M1 task of `docs/plan/M1-PLAN.md` (`/start-task <ID>`).
-- **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. M1 CRs (CR-0011) to approve.
+- **Last completed:** M1-01 Design lock for Era I (PR #104, the owner merges). CR-0009-T2 (PR #103, merged 2026-11-18).
+- **Next step:** M1-02 Full Era I content and the three new research effects (`/start-task M1-02` after M1-01 merges). Also open: the owner's [MANUAL]
+  click-through of the metrics report (`tools/README.md` → MetricsReport).
+- **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. The hosting provider (in M1-13).
 - **Known broken / do not touch:** the owner's local Unity edits (`client/CityBuilder/Assets/Settings/*.asset`, `ProjectSettings/ProjectSettings.asset`,
   `UnityConnectSettings.asset`): leave them uncommitted and don't report them (owner, 2026-11-18). They are hidden with
   `git update-index --skip-worktree` in the owner's clone (undo: `--no-skip-worktree`).
@@ -20,7 +20,7 @@
   `bash scripts/dev/quality.sh` (as CI; `08` → Test tiers) · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
-**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` (remaining tasks grouped in `docs/plan/M1-PLAN.md` §3) · tasks done: 87 / 88 (M0-71 skipped) · next milestone: `docs/plan/M1-PLAN.md` (Proposed, CR-0011)
+**M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` (remaining tasks grouped in `docs/plan/M1-PLAN.md` §3) · tasks done: 87 / 88 (M0-71 skipped) · next milestone: `docs/plan/M1-PLAN.md` (approved 2026-11-23, CR-0011)
 
 | Area | State | Notes |
 |---|---|---|

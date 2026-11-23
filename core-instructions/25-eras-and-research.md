@@ -20,12 +20,14 @@ There are no XP points, player levels or city levels. A city progresses in three
 When unsure, treat it as major and put it in the next era. The game stays simple early and gets deep later.
 **Logistics** (goods kept in building stores, trips, couriers, routes and roads) is a major mechanic in **Era I's base set** (owner,
 CR-0008): players have it from the start. Only its minor parts come by research: amount options, walking speed, and faster roads.
+The **Chronicle**, **merchant orders with the daily caravan** and **terrain** join Era I's base set the same way (owner, CR-0011, G25–G27).
+Move, demolish, decorations, the town name and cancelling research are minor mechanics (G28, G39).
 
 ## Era roadmap (proposal — the owner can reorder)
 
 | # | Era | New goods (examples) | Major mechanics added | Target length* |
 |---|---|---|---|---|
-| I | Early Middle Ages | logs, planks, stone, grain, flour, bread | **Base set:** grid building, production chains, workers, building levels, storage in buildings, builders, research at the science building, **logistics** (trips, couriers and routes, roads), Trading Post (NPC buyers) | 3–5 days |
+| I | Early Middle Ages | logs, planks, stone, grain, flour, bread | **Base set:** grid building, production chains, workers, building levels, storage in buildings, builders, research at the science building, **logistics** (trips, couriers and routes, roads), Trading Post (NPC buyers), **the Chronicle**, **merchant orders and the caravan**, **terrain** (M1) | 5–8 days (M1) |
 | II | High Middle Ages | iron ore, iron, tools, wool, cloth, ale | **Open market** (player trading) · **Guilds** (co-op groups, shared projects) | 1–2 weeks |
 | III | Renaissance & Discovery | glass, paper, dyes, spices, fine clothes | **Population classes & needs** (citizens consume goods to grow) · **Expeditions** (timed voyages for exotic goods) | 2–3 weeks |
 | IV | Industrial Age | coal, steel, machine parts, textiles | **Fuel & machines** (optional fuel input speeds buildings up) · **Production lines** (switchable recipes, larger 2×2 factories) | 3–5 weeks |
@@ -40,10 +42,10 @@ CR-0008): players have it from the start. Only its minor parts come by research:
 - **"Complete everything" must not become a wall.** No single node may take more than about ¼ of the era's target length.
   Total research time is roughly 60–70 % of the target; the rest is coin and material gating.
 - **Each era's tree has 3–4 branches** (e.g. Production, Construction, Trade, Civic) so the player chooses an order,
-  even though everything is eventually required.
+  even though everything is eventually required. Era I has four: Production, Construction, Trade, Logistics (`28`).
 - **Research needs no workers.** Workers are for production and carrying; research is paid for in coins and goods. It happens at the
   **science building** (one per city): its coins are paid when it starts, and its goods are delivered there before its timer runs.
-- **Durations grow by era:** I 10 min–4 h · II 1–12 h · III 4–24 h · IV 8–48 h · V+ 1–3 days.
+- **Durations grow by era:** I 10 min–8 h (M1, `28`) · II 1–12 h · III 4–24 h · IV 8–48 h · V+ 1–3 days.
 - **Slots:** one research slot at the start; at most one more from research in a later era (minor mechanic).
 
 ## Effect types
@@ -54,9 +56,12 @@ CR-0008): players have it from the start. Only its minor parts come by research:
 | `StorageCapBonus(item, +n)` | Storehouses → a higher limit for logs and planks in every building's store | yes |
 | `UnlockAmountMode(mode)` | Tally Sticks → any percentage in courier actions (Era I); an Era II node → exact numbers | yes (CR-0008-T1) |
 | `WalkSpeedBonus(‰)` | Sturdy Boots → walkers 20 % faster | yes (CR-0008-T1) |
-| `MaxLevelBonus(type, +n)` | Timber Framing → Cottage max level 3 | later |
-| `LandExpansion(+rows, +cols)` | Land Survey I → grid 10 × 10 | later |
-| `BuilderSlots(+n)`, `ResearchSlots(+n)` | Guild of Masons → +1 builder | later |
+| `MaxLevelBonus(type, +n)` | Timber Framing → Cottage max level 3 | M1 (M1-02) |
+| `LandExpansion(area)` | Land Survey I → opens the next area of the map (M1: from the mist, `22` → Grid, terrain and land) | M1 (M1-02, M1-03) |
+| `BuilderSlots(+n)` | Guild of Masons → +1 builder | M1 (M1-02) |
+| `ResearchSlots(+n)` | a later era only (Slots rule above) | later |
+| `UnlockRoadKind(kind)` | Bridge Building → bridges over water | M1 (M1-03) |
+| `GrantCharter` | Town Charter → Era I is complete | M1 (M1-02) |
 | `UnlockRecipe(type, recipe)` | used once Era IV production lines exist | later |
 
 ## Logistics through the eras
@@ -71,6 +76,12 @@ Each era moves goods the same way, with more capacity and speed: the same routes
 
 The courier's stamina replaces a fixed offline production cap (`22`, `24`); later carriers bring their own stamina.
 
+## The end of Era I: the Town Charter (M1)
+- **Town Charter** is the last node of Era I's tree: it needs every other node. Its completion ends the Chronicle's last chapter and
+  marks the city "chartered" (deterministic, inside `Advance`).
+- Until Era II exists, nothing else happens: the town keeps running, orders and the caravan go on, decorations and upgrades stay, and a
+  closing chapter says Era II is coming (G38). When Era II ships, a chartered city enters it by the transition below.
+
 ## Era transition (built when Era II exists)
 - It triggers at the exact clock time the era's last research completes (inside `Advance`, so it is deterministic).
 - `city.Era` increments, the next tree becomes available, and the era's major mechanics unlock with a short guided intro.
@@ -84,4 +95,5 @@ The courier's stamina replaces a fixed offline production cap (`22`, `24`); late
 A tree view per era: nodes show cost, duration, effect and status (Locked / Available / In progress / Done).
 There is a progress ring in the HUD, and the welcome-back report lists the research that completed, with what it does (built in M0-53).
 Built in M0 (M0-52, one row of cards since CR-0007; a branched tree comes with later eras): nodes in prerequisite order, a **Finance** button that is off with its reason, and the rule "complete all to advance" greyed out while no later era exists (`09`, Research screen).
-Cancelling research is not in M0. Decide in M1 (proposal: cancel refunds 50 %).
+**Cancelling research** (M1, G39): a running research can be cancelled with a confirmation; half its coins come back (rounded down,
+through the ledger), goods already delivered to the science building do not; the slot is free at once.

@@ -4,6 +4,12 @@
 A city that grows from a muddy medieval village into a space-age metropolis through **research and planning, not tapping**.
 You staff production chains with your own people, trade with real players, and come back to a city that has visibly moved forward in time.
 
+## Premise and voice (M1)
+The Duke grants you, his steward, a river crossing and a year to turn it into a town; earn the **Town Charter** and it becomes a free
+town. Four advisors speak for the systems: the master builder, the merchant, the scribe and the courier master (names: `32`; portraits:
+, `docs/assets/STYLE.md`). They appear in the tutorial, in the Chronicle and when something finishes, one or two lines at a time, and
+never nag. The game is Russian first, English second (G30).
+
 ## Player fantasy
 "I'm the planner and the merchant." The satisfaction comes from three things:
 - a chain that hums: logs into planks into coins into the next invention;
@@ -15,7 +21,8 @@ You staff production chains with your own people, trade with real players, and c
 
 | Session | Length | What happens |
 |---|---|---|
-| Check-in | 1–3 min, several times a day | Welcome-back report → re-energize the couriers → reassign workers → send goods where they are short → queue a build, upgrade or research → leave |
+| First session (M1) | 10–15 min, once | Chapter 1 of the Chronicle, guided by an advisor: place, staff, carry, sell, research. Something finishes every 30–90 s in the first 10 minutes |
+| Check-in | 1–3 min, several times a day | Welcome-back report → re-energize the couriers → claim goals, fill an order → reassign workers → send goods where they are short → queue a build, upgrade or research → leave |
 | Planning | 10–20 min, a few times a week | Choose the research path, lay out new land and roads, set courier routes, rebalance chains, (Era II+) place market orders |
 | Milestone | Rare | Era transition: a ceremony, a new look, new mechanics with a short guided intro |
 
@@ -35,6 +42,10 @@ what is blocked, what is waiting for goods, where the goods are, which research 
   tile centre with 90° turns, faster on roads and slowly across a building, with their load shown; resting couriers stand at their station.
 - **Status at a glance:** a progress ring under each building, and bubbles for no workers, missing input
   (item icon), storage full, waiting for goods, construction and upgrade. Stalled buildings desaturate slightly.
+- **Terrain and mist (M1):** forest, rock, fertile soil and water make the map readable at a glance; land beyond the border lies under
+  mist until surveyed.
+- **Life and moments (M1):** townsfolk and animals when nothing is tapped; music and ambience; a sound and a visible answer for every
+  action; a short moment for every finished building, research, order and chapter.
 - **Day/night and weather** are cosmetic and follow the device's local time.
 
 ## Key screens
@@ -52,14 +63,21 @@ what is blocked, what is waiting for goods, where the goods are, which research 
    produced and consumed per item, coins earned, constructions and research completed; its main button **Re-energize couriers**.
 7. **Route editor.** A courier's stops in order, tapped on the map; per stop its take and put actions (item and amount); the path and
    each walk's time drawn on the map. **Road mode** in the build menu: drag a line of road tiles, see the cost, confirm.
-8. **Era transition.** A full-screen moment: before/after skyline, the new mechanics, and the first new research.
-9. **Market (Era II).** Items, order book, my orders, price history (`26`).
-10. **Guild (Era II).** Members, projects, contributions.
+8. **Chronicle (M1).** The current chapter's goals with progress and rewards, a **Claim** button on each done goal, the next goal pinned
+   in the HUD, and the town's story so far.
+9. **Order board (M1).** The Trading Post's three merchant orders and the caravan: who asks, what, how much of it is in the store, the
+   reward, **Fulfil** and **Dismiss**, and when an empty slot refills.
+10. **Settings (M1).** Language, music, sound, each notification kind, the account (recovery, deletion), the town name.
+11. **Era transition.** A full-screen moment: before/after skyline, the new mechanics, and the first new research.
+12. **Market (Era II).** Items, order book, my orders, price history (`26`).
+13. **Guild (Era II).** Members, projects, contributions.
 
 ## Tone
-Friendly, lightly humorous names and descriptions with a light historical flavour, never snarky toward the player.
+Friendly, lightly humorous names and descriptions with a light historical flavour, never snarky toward the player. Russian text is
+written as Russian, not translated word for word (`32`).
 No dark patterns: no fake urgency, no punishing timers, and no loss of progress for being away (only a cap on production: couriers rest
-when their stamina is spent, and production stops when stores fill or inputs run out). Re-energizing is one free tap, never a countdown or a nag.
+when their stamina is spent, and production stops when stores fill or inputs run out). Re-energizing is one free tap, never a countdown or a nag. Orders and the caravan
+never expire with a penalty; a skipped one simply makes room for the next.
 
 ## What "done" looks like for 1.0
 Eras I–III fully playable (about 25 items, about 30 buildings, 45–55 research nodes), open market and guilds,

@@ -46,8 +46,8 @@ Generated docs (`docs/reference/generated/**`) are never edited by hand; change 
 `Bug`. P0 bugs (build broken, data loss, security) may be fixed immediately, but still get a CR file afterwards.
 
 ## Plan changes
-The M0 plan (`docs/plan/M0-PLAN.md`) is approved as a whole. The M1 plan (`docs/plan/M1-PLAN.md`) is **Proposed** until the owner
-approves it (CR-0011; its §3, closing M0, was approved 2026-11-17): none of its tasks may start before that. Splitting a task, reordering independent tasks, or
+The M0 plan (`docs/plan/M0-PLAN.md`) is approved as a whole. The M1 plan (`docs/plan/M1-PLAN.md`) is approved as a whole (CR-0011,
+2026-11-23; its §3, closing M0, on 2026-11-17). Splitting a task, reordering independent tasks, or
 marking a task `Skipped` is a decision: log it in the build log and in "Deviations from the plan" in `13`, and
 tell the owner in the report. Adding a task is G-Scope.
 

@@ -47,7 +47,8 @@ Git LFS for art is decided in M1 (`.gitattributes`).
 
 ## Style guide
 
-**The look** follows `core-instructions/21-game-vision.md` → "The look". Chunky low-poly "toy block" buildings: every box has a
+**The look** follows `core-instructions/21-game-vision.md` → "The look". The style guide of every asset (3D, UI, portraits, audio) is
+`docs/assets/STYLE.md` (M1-01); this section is its 3D contract. Chunky low-poly "toy block" buildings: every box has a
 small bevel that catches the light, faces are flat-shaded, and the palette is warm. Era I is timber, thatch and plaster. The
 reference game (Tap Tap Builder) gives the cheerful, readable feel. The designs are our own, and each era will get its own set.
 
