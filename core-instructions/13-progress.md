@@ -7,7 +7,7 @@
 ## Resume point
 - **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M1-01 Design lock for Era I · branch `task/M1-01-design-lock` · log `docs/build-log/2026/2026-11-23-01-M1-01.md`
-- **Part / step:** parts A decisions · B design files · C `28` content · D names · E STYLE.md · F asset requests; A done (G24–G39); B approved; now: C (`28` content)
+- **Part / step:** parts A decisions · B design files · C `28` content · D names · E STYLE.md · F asset requests; A done (G24–G39); C written (`28`, `29`), awaiting the owner's words
 - **Last completed:** CR-0009-T2 (PR #103, merged 2026-11-18). CR-0011 (the M1 plan) approved by the owner 2026-11-23.
 - **Next step:** part C: `core-instructions/28-era1-content.md` (spec part C). Also open: the owner's [MANUAL]
   click-through of the metrics report (`tools/README.md` → MetricsReport).

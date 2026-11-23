@@ -45,7 +45,7 @@ Move, demolish, decorations, the town name and cancelling research are minor mec
   even though everything is eventually required. Era I has four: Production, Construction, Trade, Logistics (`28`).
 - **Research needs no workers.** Workers are for production and carrying; research is paid for in coins and goods. It happens at the
   **science building** (one per city): its coins are paid when it starts, and its goods are delivered there before its timer runs.
-- **Durations grow by era:** I 10 min–4 h · II 1–12 h · III 4–24 h · IV 8–48 h · V+ 1–3 days.
+- **Durations grow by era:** I 10 min–8 h (M1, `28`) · II 1–12 h · III 4–24 h · IV 8–48 h · V+ 1–3 days.
 - **Slots:** one research slot at the start; at most one more from research in a later era (minor mechanic).
 
 ## Effect types

@@ -30,7 +30,7 @@
 |---|---|
 | Trading Post: NPC merchants buy goods for coins (the **only recurring** coin faucet) | Construction and upgrade costs: coins at once, goods used up when they are delivered |
 | (M1) Merchant orders and the caravan, at the Trading Post: a price above the plain recipe for the goods asked; three orders and one caravan at a time, refilled after a wait, so their coins per day are bounded | (M1) Decorations bought for coins |
-| (M1) Chronicle rewards: coins and decorations, one-time and finite (about 35 goals in Era I) | (M1) Goods lost on demolish; half the coins of a demolished building or a cancelled research are lost |
+| (M1) Chronicle rewards: coins and decorations, one-time and finite (39 goals in Era I, 7 100 coins, `29`) | (M1) Goods lost on demolish; half the coins of a demolished building or a cancelled research are lost |
 | Raw producers make goods from nothing | Research costs, **the largest coin sink**, growing each era (goods delivered to the science building) |
 | Starting grant, era charter grants, half the coins of a demolished building or a cancelled research (a refund, never a gain) | Recipe inputs (processing) |
 | — | Roads: coins per tile and per upgrade |

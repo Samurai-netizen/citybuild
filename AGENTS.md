@@ -36,9 +36,9 @@ Then check the repo state (`git status`, branch, last commits) and that hooks ar
 | tests (always: the test-first loop and the test tiers) | `core-instructions/08-testing-strategy.md` |
 | models, pictures, audio, fonts | `core-instructions/27-asset-pipeline.md`, `docs/assets/README.md` |
 | anything under `client/` | `core-instructions/09-unity-client.md` |
-| game numbers | `core-instructions/23-mvp-content.md`, `server/content/*.json` |
+| game numbers | M0: `core-instructions/23-mvp-content.md`; Era I (M1): `28-era1-content.md`, `29-era1-chronicle.md`; `server/content/*.json` |
 | game design questions | `core-instructions/22-game-mechanics.md` (owner's pillars are fixed) |
-| scope | `core-instructions/10-milestones.md`, `core-instructions/30-out-of-scope.md`; M1: `docs/plan/M1-PLAN.md` (Proposed) |
+| scope | `core-instructions/10-milestones.md`, `core-instructions/30-out-of-scope.md`; M1: `docs/plan/M1-PLAN.md` (approved, CR-0011) |
 | all files | `core-instructions/README.md` (index), `docs/README.md` (docs map) |
 
 ## The loop (details in `16`)

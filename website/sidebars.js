@@ -48,7 +48,7 @@ const handbook = [
     page('core-instructions/README.md', 'Specs index'),
     spec('31'),
   ]),
-  chapter('Game design', [spec('22'), spec('21'), spec('20'), spec('25'), spec('24'), folder('Balance reports', 'docs/balance'), spec('26'), spec('23')]),
+  chapter('Game design', [spec('22'), spec('21'), spec('20'), spec('25'), spec('24'), folder('Balance reports', 'docs/balance'), spec('28'), spec('29'), spec('26'), spec('23')]),
   chapter('Architecture', [
     spec('03'),
     page('docs/architecture/overview.md', 'Overview (as built)'),
