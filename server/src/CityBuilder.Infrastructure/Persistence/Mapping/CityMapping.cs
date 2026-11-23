@@ -23,6 +23,9 @@ public static class CityMapping
     /// <summary>The <c>phase</c> text of <see cref="BuildingPhase.Idle"/>.</summary>
     private const string _idle = "Idle";
 
+    /// <summary>The <c>phase</c> text of <see cref="BuildingPhase.Queued"/> (CR-0013).</summary>
+    private const string _queued = "Queued";
+
     /// <summary>The <c>phase</c> text of <see cref="BuildingPhase.Producing"/>.</summary>
     private const string _producing = "Producing";
 
@@ -61,6 +64,7 @@ public static class CityMapping
             Purse = state.Purse,
             NextTripId = state.NextTripId,
             NextLineId = state.NextLineId,
+            NextQueuedOrder = state.NextQueuedOrder,
             ResearchId = active?.Id.Value,
             ResearchStartedAt = active?.StartedAt,
             ResearchEndsAt = active?.EndsAt,
@@ -204,7 +208,8 @@ public static class CityMapping
                 ToRoutes(rows),
                 rows.DeliveryLines.Select(row => new DeliveryLine(
                     row.LineId, row.StationId, row.Slot, row.SourceId, row.TargetId, new ItemId(row.ItemId), row.Quantity)),
-                city.NextLineId);
+                city.NextLineId,
+                city.NextQueuedOrder);
             IEnumerable<KeyValuePair<ResearchId, long>> completedAt =
                 rows.Research.Select(row => new KeyValuePair<ResearchId, long>(new ResearchId(row.ResearchId), row.CompletedAt));
 
@@ -220,9 +225,9 @@ public static class CityMapping
     /// <summary>
     /// The building's row. Its nullable columns are null exactly when the phase doesn't use them, where the engine keeps 0: Constructing
     /// uses the start and the end, except a construction site (no timer yet, CR-0008), which uses neither; Upgrading the start, the end and the
-    /// target level; Idle none; Producing the start, the cycle labor, the labor remaining and the segment start, and the end unless the cycle
+    /// target level; Idle and Queued none; Producing the start, the cycle labor, the labor remaining and the segment start, and the end unless the cycle
     /// is frozen (no workers). A cycle can start at clock 0, so 0 is a real value, never a stand-in for null. Its store and needs are rows of
-    /// their own.
+    /// their own. A queued order (CR-0013) goes into <c>queued_order</c>, null for a building without one.
     /// </summary>
     /// <param name="cityId">The city's id.</param>
     /// <param name="building">The building.</param>
@@ -241,13 +246,14 @@ public static class CityMapping
             Level = checked((short)building.Level),
             AssignedWorkers = checked((short)building.AssignedWorkers),
             Phase = PhaseText(phase),
-            PhaseStartedAt = phase == BuildingPhase.Idle || building.IsConstructionSite ? null : building.PhaseStartedAt,
+            PhaseStartedAt = phase is BuildingPhase.Idle or BuildingPhase.Queued || building.IsConstructionSite ? null : building.PhaseStartedAt,
             PhaseEndsAt = building.PhaseEndsAt,
             TargetLevel = phase == BuildingPhase.Upgrading ? checked((short)building.TargetLevel) : null,
             CycleLabor = producing ? building.CycleLabor : null,
             LaborRemaining = producing ? building.LaborRemaining : null,
             SegmentStartedAt = producing ? building.SegmentStartedAt : null,
             Paused = building.Paused,
+            QueuedOrder = building.QueuedOrder > 0 ? building.QueuedOrder : null,
         };
     }
 
@@ -268,9 +274,9 @@ public static class CityMapping
         bool site = phase == BuildingPhase.Constructing && !row.PhaseStartedAt.HasValue && !row.PhaseEndsAt.HasValue;
         bool endRequired = (phase is BuildingPhase.Constructing or BuildingPhase.Upgrading) && !site;
         bool columnsMatchPhase =
-            row.PhaseStartedAt.HasValue == (phase != BuildingPhase.Idle && !site)
+            row.PhaseStartedAt.HasValue == (phase is not (BuildingPhase.Idle or BuildingPhase.Queued) && !site)
             && (row.PhaseEndsAt.HasValue || !endRequired)
-            && (!row.PhaseEndsAt.HasValue || phase != BuildingPhase.Idle)
+            && (!row.PhaseEndsAt.HasValue || phase is not (BuildingPhase.Idle or BuildingPhase.Queued))
             && row.TargetLevel.HasValue == (phase == BuildingPhase.Upgrading)
             && row.CycleLabor.HasValue == producing
             && row.LaborRemaining.HasValue == producing
@@ -296,7 +302,8 @@ public static class CityMapping
             row.SegmentStartedAt ?? 0,
             store.Where(stock => stock.Quantity > 0).Select(stock => new KeyValuePair<ItemId, long>(new ItemId(stock.ItemId), stock.Quantity)),
             needs.Select(need => new KeyValuePair<ItemId, long>(new ItemId(need.ItemId), need.Quantity)),
-            row.Paused);
+            row.Paused,
+            row.QueuedOrder ?? 0);
     }
 
     /// <summary>
@@ -338,6 +345,7 @@ public static class CityMapping
         BuildingPhase.Upgrading => _upgrading,
         BuildingPhase.Idle => _idle,
         BuildingPhase.Producing => _producing,
+        BuildingPhase.Queued => _queued,
         _ => throw new ArgumentOutOfRangeException(nameof(phase), phase, "Not a defined building phase."),
     };
 
@@ -351,6 +359,7 @@ public static class CityMapping
         _upgrading => BuildingPhase.Upgrading,
         _idle => BuildingPhase.Idle,
         _producing => BuildingPhase.Producing,
+        _queued => BuildingPhase.Queued,
         _ => throw new ArgumentException($"Building {row.BuildingId}: the phase '{row.Phase}' is not one of the defined phases."),
     };
 

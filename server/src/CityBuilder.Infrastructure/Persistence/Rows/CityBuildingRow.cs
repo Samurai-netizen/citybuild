@@ -50,4 +50,7 @@ public sealed class CityBuildingRow
 
     /// <summary><c>paused</c>: whether the player paused the building (CR-0008 D23); never while constructing.</summary>
     public bool Paused { get; set; }
+
+    /// <summary><c>queued_order</c>: the building's place in the builder queue (CR-0013), 1 or more; null when it has no queued order.</summary>
+    public int? QueuedOrder { get; set; }
 }

@@ -65,6 +65,10 @@ namespace CityBuilder.Infrastructure.Persistence.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("phase_started_at");
 
+                    b.Property<int?>("QueuedOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("queued_order");
+
                     b.Property<long?>("SegmentStartedAt")
                         .HasColumnType("bigint")
                         .HasColumnName("segment_started_at");
@@ -101,7 +105,9 @@ namespace CityBuilder.Infrastructure.Persistence.Migrations
 
                             t.HasCheckConstraint("ck_city_buildings_level", "level >= 1");
 
-                            t.HasCheckConstraint("ck_city_buildings_paused", "NOT paused OR phase <> 'Constructing'");
+                            t.HasCheckConstraint("ck_city_buildings_paused", "NOT paused OR phase NOT IN ('Constructing', 'Queued')");
+
+                            t.HasCheckConstraint("ck_city_buildings_queued_order", "queued_order IS NULL OR queued_order >= 1");
 
                             t.HasCheckConstraint("ck_city_buildings_x", "x >= 0");
 
@@ -438,6 +444,10 @@ namespace CityBuilder.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("next_line_id");
 
+                    b.Property<int>("NextQueuedOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("next_queued_order");
+
                     b.Property<int>("NextTripId")
                         .HasColumnType("integer")
                         .HasColumnName("next_trip_id");
@@ -483,6 +493,8 @@ namespace CityBuilder.Infrastructure.Persistence.Migrations
                             t.HasCheckConstraint("ck_cities_era", "era >= 1");
 
                             t.HasCheckConstraint("ck_cities_next_line_id", "next_line_id >= 1");
+
+                            t.HasCheckConstraint("ck_cities_next_queued_order", "next_queued_order >= 1");
 
                             t.HasCheckConstraint("ck_cities_next_trip_id", "next_trip_id >= 1");
 
