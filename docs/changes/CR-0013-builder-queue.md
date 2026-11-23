@@ -1,6 +1,6 @@
 # CR-0013 — Builder queue
 
-- **Status:** Proposed
+- **Status:** Approved
 - **Type:** Design change
 - **Requested by:** owner · **Date:** 2026-11-23
 - **Milestone / era:** M1 (built in M1-02, part A, owner 2026-11-23: "option 2") / Era I
@@ -76,7 +76,7 @@ completes, or a research adds a builder slot. The inspector shows "Queued (n)", 
 - **Alternative C:** the queue length scales with builder slots (one place per slot). That is more generous after Guild of Masons, but
   harder to explain. Left to M1-15 (balance) as a content number.
 
-## Open questions for the owner (answer with the approval)
+## Open questions for the owner (answered 2026-11-23: both as recommended)
 1. **Cancel:** recommended **not in this CR**. M1-06 adds demolish and cancel-research (refund 500 ‰, G39, G41); a queued order's cancel
    joins it there, with a full refund because no builder worked on it. The alternative is a `CancelQueuedOrder` command now (a new
    command, error code and client button).
@@ -85,6 +85,8 @@ completes, or a research adds a builder slot. The inspector shows "Queued (n)", 
 ## Tasks (filled in after approval)
 | ID | Title | Model | Status |
 |---|---|---|---|
+| M1-02 (part A2) | The builder queue, built inside M1-02 (owner, 2026-11-23: "option 2") | O | In progress |
 
 ## Owner approval
-- Approved on: — (quote the owner's words)
+- Approved on: 2026-11-23. To "approve it as written, or with changes?" and the two open questions, the owner answered "1. ok. 2. ok":
+  approved as written, no cancel in this CR (it joins M1-06), queue length 2 in Era I.
