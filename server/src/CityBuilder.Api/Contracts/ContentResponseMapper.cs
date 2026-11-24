@@ -5,7 +5,7 @@ namespace CityBuilder.Api.Contracts;
 /// <summary>
 /// Maps the validated <see cref="GameContent"/> to the <see cref="ContentResponse"/> of <c>GET /api/v1/content</c>. It only renames and
 /// reshapes: every number comes from the content, and the lists keep the engine's order (eras by number, the rest by id in ordinal order),
-/// so the same content always gives the same response text. The wire names of the closed sets (building kinds, effect types) are written
+/// so the same content always gives the same response text. The wire names of the closed sets (building kinds, effect types, sites, terrain letters) are written
 /// here on purpose, so renaming an engine enum member can't change the contract unnoticed.
 /// </summary>
 public static class ContentResponseMapper
@@ -30,7 +30,9 @@ public static class ContentResponseMapper
             content.Buildings.Select(ToBuilding).ToArray(),
             content.Research.Select(ToResearch).ToArray(),
             content.RoadLevels.Select(level => new ContentRoadLevel(level.Level, level.Name, level.TileMillis, ToAmounts(level.Cost))).ToArray(),
-            content.AmountPresets.Select(preset => new ContentAmountPreset(preset.Id.Value, preset.Name, preset.Percent)).ToArray());
+            content.AmountPresets.Select(preset => new ContentAmountPreset(preset.Id.Value, preset.Name, preset.Percent)).ToArray(),
+            content.Map is null ? null : ToMap(content.Map),
+            content.Bridge is null ? null : new ContentBridge(content.Bridge.Name, content.Bridge.TileMillis, ToAmounts(content.Bridge.Cost)));
     }
 
     /// <summary>Maps the rules, adding the server's time scale.</summary>
@@ -78,7 +80,53 @@ public static class ContentResponseMapper
         ToAmounts(building.Cost),
         building.BuildSeconds,
         building.BaseMaxLevel,
+        building.Site switch
+        {
+            BuildingSite.Any => null,
+            BuildingSite.NearForest => "nearForest",
+            BuildingSite.NearRock => "nearRock",
+            BuildingSite.FertileSoil => "fertileSoil",
+            _ => throw new InvalidOperationException($"Building site {building.Site} has no wire name; add it to the contract."),
+        },
         building.Levels.Select(ToLevel).ToArray());
+
+    /// <summary>Maps the map back to the content file's rows: one terrain letter and one area letter per tile, row by row from y = 0.</summary>
+    /// <param name="map">The map.</param>
+    /// <returns>Its response object.</returns>
+    private static ContentMap ToMap(MapDefinition map)
+    {
+        var tiles = new string[map.Height];
+        var areas = new string[map.Height];
+        for (int y = 0; y < map.Height; y++)
+        {
+            var terrainRow = new char[map.Width];
+            var areaRow = new char[map.Width];
+            for (int x = 0; x < map.Width; x++)
+            {
+                terrainRow[x] = TerrainLetter(map.TerrainAt(x, y));
+                areaRow[x] = map.AreaAt(x, y);
+            }
+
+            tiles[y] = new string(terrainRow);
+            areas[y] = new string(areaRow);
+        }
+
+        return new ContentMap(map.Id, map.StartArea.ToString(), map.RoughTileMillis, tiles, areas);
+    }
+
+    /// <summary>The letter of a terrain in <c>map.tiles</c>, as the content file spells it.</summary>
+    /// <param name="terrain">The terrain.</param>
+    /// <returns><c>.</c>, <c>F</c>, <c>R</c>, <c>S</c> or <c>W</c>.</returns>
+    /// <exception cref="InvalidOperationException">The terrain has no letter (an engine change that forgot the contract).</exception>
+    private static char TerrainLetter(Terrain terrain) => terrain switch
+    {
+        Terrain.Grass => '.',
+        Terrain.Forest => 'F',
+        Terrain.Rock => 'R',
+        Terrain.Soil => 'S',
+        Terrain.Water => 'W',
+        _ => throw new InvalidOperationException($"Terrain {terrain} has no letter; add it to the contract."),
+    };
 
     /// <summary>
     /// Maps one level; level 1 has no upgrade, so its upgrade cost and time are null rather than an empty cost and 0 seconds. A level without a
@@ -116,14 +164,16 @@ public static class ContentResponseMapper
     /// <returns>Its response object.</returns>
     private static ContentResearchEffect ToEffect(ResearchEffect effect) => effect switch
     {
-        UnlockBuildingEffect unlock => new ContentResearchEffect("unlockBuilding", unlock.Building.Value, null, null, null, null),
-        LaborReductionEffect labor => new ContentResearchEffect("laborReduction", labor.Building.Value, null, labor.Permille, null, null),
-        StorageCapBonusEffect bonus => new ContentResearchEffect("storageCapBonus", null, bonus.Item.Value, null, bonus.Amount, null),
-        UnlockAmountModeEffect mode => new ContentResearchEffect("unlockAmountMode", null, null, null, null, ModeText(mode.Mode)),
-        WalkSpeedBonusEffect walk => new ContentResearchEffect("walkSpeedBonus", null, null, walk.Permille, null, null),
-        MaxLevelBonusEffect levels => new ContentResearchEffect("maxLevelBonus", levels.Building.Value, null, null, levels.Amount, null),
-        BuilderSlotBonusEffect slots => new ContentResearchEffect("builderSlotBonus", null, null, null, slots.Amount, null),
-        GrantCharterEffect => new ContentResearchEffect("grantCharter", null, null, null, null, null),
+        UnlockBuildingEffect unlock => new ContentResearchEffect("unlockBuilding", unlock.Building.Value, null, null, null, null, null),
+        LaborReductionEffect labor => new ContentResearchEffect("laborReduction", labor.Building.Value, null, labor.Permille, null, null, null),
+        StorageCapBonusEffect bonus => new ContentResearchEffect("storageCapBonus", null, bonus.Item.Value, null, bonus.Amount, null, null),
+        UnlockAmountModeEffect mode => new ContentResearchEffect("unlockAmountMode", null, null, null, null, ModeText(mode.Mode), null),
+        WalkSpeedBonusEffect walk => new ContentResearchEffect("walkSpeedBonus", null, null, walk.Permille, null, null, null),
+        MaxLevelBonusEffect levels => new ContentResearchEffect("maxLevelBonus", levels.Building.Value, null, null, levels.Amount, null, null),
+        BuilderSlotBonusEffect slots => new ContentResearchEffect("builderSlotBonus", null, null, null, slots.Amount, null, null),
+        GrantCharterEffect => new ContentResearchEffect("grantCharter", null, null, null, null, null, null),
+        OpenLandEffect land => new ContentResearchEffect("openLand", null, null, null, null, null, land.Area.ToString()),
+        UnlockBridgeEffect => new ContentResearchEffect("unlockBridge", null, null, null, null, null, null),
         _ => throw new InvalidOperationException($"Effect type {effect.GetType().Name} has no wire shape; add it to the contract."),
     };
 
