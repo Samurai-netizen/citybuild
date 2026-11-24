@@ -103,7 +103,8 @@ namespace CityBuilder.Client.Presentation.City
         /// Calling it again replaces the earlier ground and buildings (a new city size); <see cref="ShowCity"/> then fills the buildings.
         /// </summary>
         /// <param name="grid">The grid from the content's rules.</param>
-        public void ShowGrid(CityGrid grid)
+        /// <param name="map">The content's map, whose terrain the ground shows (M1-03); null when every tile is grass.</param>
+        public void ShowGrid(CityGrid grid, MapDefinition? map = null)
         {
             _ground?.Destroy();
             _buildings?.Destroy();
@@ -112,7 +113,7 @@ namespace CityBuilder.Client.Presentation.City
             _walkers = null;
             Grid = grid;
             Selection = new TileSelection(grid);
-            _ground = new GroundTiles(grid, Selection, transform);
+            _ground = new GroundTiles(grid, Selection, transform, map);
             _buildings = new CityView(grid, transform, Camera.transform);
             _ghosts = new PlacementGhosts(grid, transform);
             Rig = new CityCameraRig(Camera, grid, Selection);

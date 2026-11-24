@@ -318,7 +318,7 @@ namespace CityBuilder.Client.Presentation.Bootstrap
                 _ = new PredictionWatch(_cityStore, _displayCity, content, () => sender.Pending.Count > 0, ClientLog.Warning);
             }
 
-            _world!.ShowGrid(new CityGrid(content.Rules.GridWidth, content.Rules.GridHeight));
+            _world!.ShowGrid(new CityGrid(content.Rules.GridWidth, content.Rules.GridHeight), content.Map);
             _world.DisplayNow = () => displayClock.PreciseNow;
             _displayCity.Changed += ShowBuildings;
             CreateHud(content);

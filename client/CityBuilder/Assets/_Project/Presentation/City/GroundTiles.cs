@@ -2,10 +2,12 @@
 
 using System;
 using System.Collections.Generic;
+using CityBuilder.Simulation.Content;
 using CityBuilder.Simulation.Map;
 using CityBuilder.Simulation.State;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using Terrain = CityBuilder.Simulation.Content.Terrain;
 
 namespace CityBuilder.Client.Presentation.City
 {
@@ -68,8 +70,35 @@ namespace CityBuilder.Client.Presentation.City
         /// <summary>The state the markers show.</summary>
         private readonly TileSelection _selection;
 
-        /// <summary>The materials this object created, destroyed with it. The first two are the chessboard greens of the cube fallback, and stay null when tile models are used.</summary>
-        private readonly Material?[] _materials = new Material?[7];
+        /// <summary>
+        /// The materials this object created, destroyed with it. The first two are the chessboard greens of the cube fallback, and stay null when
+        /// tile models are used; from <see cref="TerrainTintSlot"/> on, one flat tint per terrain and the bridge's placeholder, made when first needed (M1-03).
+        /// </summary>
+        private readonly Material?[] _materials = new Material?[TerrainTintSlot + TerrainCount + 1];
+
+        /// <summary>The first slot of <see cref="_materials"/> that holds a terrain's placeholder tint, by the terrain's number.</summary>
+        private const int TerrainTintSlot = 7;
+
+        /// <summary>The number of terrains (grass, forest, rock, soil, water).</summary>
+        private const int TerrainCount = 5;
+
+        /// <summary>The slot of <see cref="_materials"/> that holds the bridge's placeholder colour.</summary>
+        private const int BridgeTintSlot = TerrainTintSlot + TerrainCount;
+
+        /// <summary>The colour of the bridge's placeholder deck while its model is missing: wood.</summary>
+        private static readonly Color BridgeTint = new Color(0.55f, 0.38f, 0.22f);
+
+        /// <summary>The name of a bridge tile's child that holds the bridge (M1-03).</summary>
+        public const string BridgeChildName = "Bridge";
+
+        /// <summary>The map whose terrain each tile shows (M1-03); null for content without a map, where every tile is grass.</summary>
+        private readonly MapDefinition? _map;
+
+        /// <summary>Whether each tile shows a bridge now, row by row (M1-03).</summary>
+        private readonly bool[] _bridges;
+
+        /// <summary>Scratch bridges for the next <see cref="ShowRoads"/> call, row by row (M1-03).</summary>
+        private readonly bool[] _scratchBridges;
 
         /// <summary>Pooled step markers that draw a preview path across the map (CR-0008).</summary>
         private readonly List<GameObject> _pathMarkers = new List<GameObject>();
@@ -120,9 +149,10 @@ namespace CityBuilder.Client.Presentation.City
         /// <param name="grid">The grid to cover.</param>
         /// <param name="selection">The state the markers show; this object listens to it until <see cref="Destroy"/>.</param>
         /// <param name="parent">The transform the ground hangs under.</param>
-        /// <exception cref="ArgumentNullException">An argument is null.</exception>
-        public GroundTiles(CityGrid grid, TileSelection selection, Transform parent)
-            : this(grid, selection, parent, Resources.Load<GameObject>(BuildingLooks.GrassTilePath), LoadVariants())
+        /// <param name="map">The map whose terrain the tiles show (M1-03), or null when every tile is grass.</param>
+        /// <exception cref="ArgumentNullException">An argument other than <paramref name="map"/> is null.</exception>
+        public GroundTiles(CityGrid grid, TileSelection selection, Transform parent, MapDefinition? map = null)
+            : this(grid, selection, parent, Resources.Load<GameObject>(BuildingLooks.GrassTilePath), LoadVariants(), map)
         {
         }
 
@@ -133,10 +163,11 @@ namespace CityBuilder.Client.Presentation.City
         /// <param name="grid">The grid to cover.</param>
         /// <param name="selection">The state the markers show; this object listens to it until <see cref="Destroy"/>.</param>
         /// <param name="parent">The transform the ground hangs under.</param>
-        /// <param name="tileModel">The model of one tile, whose top is the ground plane, or null for cube blocks.</param>
-        /// <exception cref="ArgumentNullException">An argument other than <paramref name="tileModel"/> is null.</exception>
-        public GroundTiles(CityGrid grid, TileSelection selection, Transform parent, GameObject? tileModel)
-            : this(grid, selection, parent, tileModel, null)
+        /// <param name="tileModel">The model of one tile, whose top is the ground plane, or null for cube blocks (and flat tinted blocks for the other terrains).</param>
+        /// <param name="map">The map whose terrain the tiles show (M1-03), or null when every tile is grass.</param>
+        /// <exception cref="ArgumentNullException">An argument other than <paramref name="tileModel"/> and <paramref name="map"/> is null.</exception>
+        public GroundTiles(CityGrid grid, TileSelection selection, Transform parent, GameObject? tileModel, MapDefinition? map = null)
+            : this(grid, selection, parent, tileModel, null, map)
         {
         }
 
@@ -150,8 +181,9 @@ namespace CityBuilder.Client.Presentation.City
         /// <param name="parent">The transform the ground hangs under.</param>
         /// <param name="tileModel">The model of one tile, whose top is the ground plane, or null for cube blocks.</param>
         /// <param name="variants">The grass variants by <see cref="GroundVariants.For"/>, any of them null, or null for none.</param>
-        /// <exception cref="ArgumentNullException">An argument other than the models is null.</exception>
-        private GroundTiles(CityGrid grid, TileSelection selection, Transform parent, GameObject? tileModel, GameObject?[]? variants)
+        /// <param name="map">The map whose terrain the tiles show (M1-03), or null when every tile is grass.</param>
+        /// <exception cref="ArgumentNullException">An argument other than the models and the map is null.</exception>
+        private GroundTiles(CityGrid grid, TileSelection selection, Transform parent, GameObject? tileModel, GameObject?[]? variants, MapDefinition? map)
         {
             _grid = grid ?? throw new ArgumentNullException(nameof(grid));
             _selection = selection ?? throw new ArgumentNullException(nameof(selection));
@@ -165,6 +197,9 @@ namespace CityBuilder.Client.Presentation.City
 
             _tileModel = tileModel;
             _variants = variants;
+            _map = map;
+            _bridges = new bool[grid.Width * grid.Height];
+            _scratchBridges = new bool[grid.Width * grid.Height];
             _tileObjects = new GameObject[grid.Width * grid.Height];
             _tileRenderers = new Renderer[grid.Width * grid.Height];
             _groundMaterials = new Material[grid.Width * grid.Height];
@@ -181,7 +216,7 @@ namespace CityBuilder.Client.Presentation.City
             {
                 for (int x = 0; x < grid.Width; x++)
                 {
-                    BuildTileAt(x, y, 0);
+                    BuildTileAt(x, y, 0, false);
                 }
             }
 
@@ -260,6 +295,7 @@ namespace CityBuilder.Client.Presentation.City
         public void ShowRoads(IReadOnlyList<RoadTile>? roads)
         {
             Array.Clear(_scratchRoadLevels, 0, _scratchRoadLevels.Length);
+            Array.Clear(_scratchBridges, 0, _scratchBridges.Length);
             if (roads != null)
             {
                 for (int i = 0; i < roads.Count; i++)
@@ -269,6 +305,7 @@ namespace CityBuilder.Client.Presentation.City
                     if (_grid.Contains(coord))
                     {
                         _scratchRoadLevels[road.Y * _grid.Width + road.X] = road.Level;
+                        _scratchBridges[road.Y * _grid.Width + road.X] = road.IsBridge;
                     }
                 }
             }
@@ -280,14 +317,16 @@ namespace CityBuilder.Client.Presentation.City
                 {
                     int index = y * _grid.Width + x;
                     int nextLevel = _scratchRoadLevels[index];
-                    if (_roadLevels[index] == nextLevel)
+                    bool nextBridge = _scratchBridges[index];
+                    if (_roadLevels[index] == nextLevel && _bridges[index] == nextBridge)
                     {
                         continue;
                     }
 
                     anyChanged = true;
                     _roadLevels[index] = nextLevel;
-                    BuildTileAt(x, y, nextLevel);
+                    _bridges[index] = nextBridge;
+                    BuildTileAt(x, y, nextLevel, nextBridge);
                 }
             }
 
@@ -306,6 +345,12 @@ namespace CityBuilder.Client.Presentation.City
                         continue;
                     }
 
+                    if (_bridges[index])
+                    {
+                        FaceBridge(_tileObjects[index].transform, HasRoad(x + 1, y) || HasRoad(x - 1, y), HasRoad(x, y + 1) || HasRoad(x, y - 1));
+                        continue;
+                    }
+
                     RoadArms.Show(
                         _tileObjects[index].transform,
                         HasRoad(x + 1, y),
@@ -316,6 +361,27 @@ namespace CityBuilder.Client.Presentation.City
             }
         }
 
+        /// <summary>
+        /// Turns a bridge tile's bridge so its ends meet its roads: along ±X when a road joins it on ±X and none on ±Y, else along ±Z (the model's
+        /// own direction), in world terms whatever the water tile's turn.
+        /// </summary>
+        /// <param name="tile">The bridge tile's object.</param>
+        /// <param name="roadOnX">Whether a road or bridge joins it on +X or −X.</param>
+        /// <param name="roadOnY">Whether a road or bridge joins it on +Y or −Y.</param>
+        private static void FaceBridge(Transform tile, bool roadOnX, bool roadOnY)
+        {
+            Transform? bridge = tile.Find(BridgeChildName);
+            if (bridge == null)
+            {
+                return;
+            }
+
+            GameObject? model = Resources.Load<GameObject>(GroundLooks.BridgePath);
+            Quaternion own = model != null ? model.transform.localRotation : Quaternion.identity;
+            float turn = roadOnX && !roadOnY ? 90f : 0f;
+            bridge.rotation = tile.parent.rotation * Quaternion.Euler(0f, turn, 0f) * own;
+        }
+
         /// <summary>Whether the tile at (<paramref name="x"/>, <paramref name="y"/>) is inside the grid and shows a road.</summary>
         private bool HasRoad(int x, int y)
         {
@@ -323,8 +389,12 @@ namespace CityBuilder.Client.Presentation.City
             return _grid.Contains(coord) && _roadLevels[y * _grid.Width + x] > 0;
         }
 
-        /// <summary>Builds or replaces the tile object at (<paramref name="x"/>, <paramref name="y"/>) for road <paramref name="roadLevel"/> (0 = grass).</summary>
-        private void BuildTileAt(int x, int y, int roadLevel)
+        /// <summary>
+        /// Builds or replaces the tile object at (<paramref name="x"/>, <paramref name="y"/>) for road <paramref name="roadLevel"/> (0 = none): a
+        /// road model on land, else the tile's terrain (<see cref="GroundLooks"/>, M1-03), with the bridge on top when <paramref name="bridge"/>.
+        /// Without models: cubes, chessboard grass and a flat tint per other terrain.
+        /// </summary>
+        private void BuildTileAt(int x, int y, int roadLevel, bool bridge)
         {
             var tile = new GridCoordinate(x, y);
             int index = y * _grid.Width + x;
@@ -333,12 +403,18 @@ namespace CityBuilder.Client.Presentation.City
                 PlaceholderArt.Destroy(_tileObjects[index]);
             }
 
+            Terrain terrain = _map?.TerrainAt(x, y) ?? Terrain.Grass;
             GameObject? model = null;
-            bool turnGrass = false;
-            if (roadLevel > 0 && _tileModel != null)
+            int turns = -1;
+            if (roadLevel > 0 && !bridge && _tileModel != null)
             {
                 string roadPath = RoadArms.PathOf(roadLevel, RoadArms.VariantFor(x, y));
                 model = Resources.Load<GameObject>(roadPath) ?? Resources.Load<GameObject>(RoadArms.PathOf(roadLevel, 0)) ?? _tileModel;
+            }
+            else if (_tileModel != null && terrain != Terrain.Grass)
+            {
+                model = Resources.Load<GameObject>(GroundLooks.ModelPathFor(terrain, x, y));
+                turns = GroundLooks.QuarterTurnsFor(terrain, x, y);
             }
             else if (_tileModel != null)
             {
@@ -351,7 +427,7 @@ namespace CityBuilder.Client.Presentation.City
                         model = variant;
                     }
 
-                    turnGrass = true;
+                    turns = GroundVariants.RotationFor(x, y);
                 }
             }
 
@@ -361,9 +437,9 @@ namespace CityBuilder.Client.Presentation.City
                 instance = Object.Instantiate(model, Root.transform, false);
                 instance.name = "Tile " + tile;
                 instance.transform.localPosition = _grid.ToWorldCenter(tile);
-                if (turnGrass)
+                if (turns >= 0)
                 {
-                    instance.transform.localRotation = Quaternion.Euler(0f, 90f * GroundVariants.RotationFor(x, y), 0f) * instance.transform.localRotation;
+                    instance.transform.localRotation = Quaternion.Euler(0f, 90f * turns, 0f) * instance.transform.localRotation;
                 }
 
                 _tileRenderers[index] = instance.GetComponentInChildren<Renderer>();
@@ -372,7 +448,14 @@ namespace CityBuilder.Client.Presentation.City
             {
                 instance = CreateBlock("Tile " + tile, TileFill, TileThickness, -TileThickness * 0.5f, _grid.ToWorldCenter(tile));
                 _tileRenderers[index] = instance.GetComponent<Renderer>();
-                _tileRenderers[index].sharedMaterial = (x + y) % 2 == 0 ? _materials[0]! : _materials[1]!;
+                _tileRenderers[index].sharedMaterial = terrain == Terrain.Grass || (roadLevel > 0 && !bridge)
+                    ? ((x + y) % 2 == 0 ? _materials[0]! : _materials[1]!)
+                    : TintOf(terrain);
+            }
+
+            if (bridge)
+            {
+                AddBridge(instance.transform);
             }
 
             _tileObjects[index] = instance;
@@ -382,6 +465,40 @@ namespace CityBuilder.Client.Presentation.City
             {
                 _tileRenderers[index].sharedMaterial = hint == TileHint.Occupied ? _materials[5]! : _materials[4]!;
             }
+        }
+
+        /// <summary>
+        /// Puts the bridge on a water tile as its <see cref="BridgeChildName"/> child: the art's bridge model, or a flat wooden deck while it is
+        /// missing; <see cref="FaceBridge"/> turns it toward its roads.
+        /// </summary>
+        /// <param name="tile">The water tile's object.</param>
+        private void AddBridge(Transform tile)
+        {
+            GameObject? model = Resources.Load<GameObject>(GroundLooks.BridgePath);
+            GameObject bridge;
+            if (model != null)
+            {
+                bridge = Object.Instantiate(model, tile, false);
+            }
+            else
+            {
+                bridge = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                PlaceholderArt.Destroy(bridge.GetComponent<Collider>());
+                bridge.transform.SetParent(tile, false);
+                bridge.transform.localScale = new Vector3(0.6f, 0.05f, 1f);
+                bridge.transform.localPosition = new Vector3(0f, 0.025f, 0f);
+                bridge.GetComponent<Renderer>().sharedMaterial = _materials[BridgeTintSlot] ??= PlaceholderArt.CreateMaterial(BridgeTint);
+            }
+
+            bridge.name = BridgeChildName;
+            bridge.transform.rotation = tile.parent.rotation * bridge.transform.localRotation;
+        }
+
+        /// <summary>The flat tint material of <paramref name="terrain"/>'s placeholder tile, made when first needed.</summary>
+        private Material TintOf(Terrain terrain)
+        {
+            int slot = TerrainTintSlot + (int)terrain;
+            return _materials[slot] ??= PlaceholderArt.CreateMaterial(GroundLooks.PlaceholderColorFor(terrain));
         }
 
         /// <summary>The path steps shown on the ground now; empty when no path is shown (CR-0008).</summary>

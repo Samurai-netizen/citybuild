@@ -314,7 +314,8 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.City
                 foreach ((int x, int y) in new[] { (12, 5), (0, 0), (8, 0), (13, 3) })
                 {
                     Renderer tile = ground.Root.transform.Find("Tile " + new GridCoordinate(x, y)).GetComponent<Renderer>();
-                    Assert.That(tile.sharedMaterial.color, Is.EqualTo(GroundLooks.PlaceholderColorFor(map.TerrainAt(x, y))), x + "," + y);
+                    Vector4 difference = (Vector4)tile.sharedMaterial.color - (Vector4)GroundLooks.PlaceholderColorFor(map.TerrainAt(x, y));
+                    Assert.That(difference.magnitude, Is.LessThan(0.001f), x + "," + y + ": the terrain's tint");
                     Assert.That(tile.bounds.max.y, Is.EqualTo(0f).Within(0.01f));
                 }
             }
