@@ -323,7 +323,10 @@ is sent or stored. All values are integers, rounded down: seconds, permille (0..
   **bridge** (one level, `UnlockBridge` research, the bridge's cost and tile time). Forest and rock take `roughTileMillis` to cross; a walk
   never steps onto water without a bridge or onto land under mist. Content without a map is all grass and open.
 - **No path (M1-03):** when nothing joins two buildings, a new trip, line or route is refused (`NO_PATH`, §8). A walker whose next walk has
-  no path because a bridge was removed waits where it is (§18–§19, M1-03 part A2).
+  no path (a bridge was removed under it) is **blocked**: it waits where it is with its load and spends no stamina (§18–§19). Blocked
+  walkers try again in every start pass (§7), trips by id, then couriers by station and slot; the map changes only by a mutation (followed
+  by a zero-length advance) or a research completion (open land), both at a pass, so a blocked walker walks from the first second a path
+  exists. A walk already under way keeps its times. An advance keeps the walk times it searched until a research completes; then it searches them again.
 
 ## 18. Deliveries and trips (CR-0008, amendment 1: D14–D21)
 - `StartTrip` (§8) counts `Q` = the amount (§19) of the source store's stock **at the send**, at most the stock. Who carries it:
@@ -340,7 +343,10 @@ is sent or stored. All values are integers, rounded down: seconds, permille (0..
   first second the store has room (§7; it frees its worker when all is back). Otherwise, with `Remaining > 0` the worker walks back to the source
   (`ToSource`), takes `min(Remaining, stock, tripCarryLimit)` there (none: the trip ends), lowers `Remaining` and walks to the target again;
   after the last put the trip ends and the worker is free. A trip keeps its source, target and item; its load, rest, leg, departure and
-  arrival change at each end of a leg. A trip can't be cancelled in M0 (D18).
+  arrival change at each end of a leg. A trip can't be cancelled in M0 (D18). **Blocked (M1-03):** at the target with no walk back the
+  worker waits there (`BlockedAtTarget`, with what it would carry back); at the source with something to take but no walk to the target it
+  takes nothing and waits (`BlockedAtSource`; the goods stay in the store, and with nothing left to take the trip ends as usual). A
+  blocked leg keeps the departure and arrival of the walk that brought it there.
 - **A courier's lines** run as §19 describes; CancelDelivery (§8) removes one line or, with "all", every line and the route.
 
 ## 19. Couriers, routes and amounts (CR-0008)
@@ -352,8 +358,11 @@ is sent or stored. All values are integers, rounded down: seconds, permille (0..
 - **Routes need the `routeBuilding`** (content: the Scriptorium; none named: no gate) built, i.e. present and not `Constructing` (D15); a courier has a route or
   delivery lines, never both (D19).
 - **Courier states:** `AtStation` (ready, or without work) · `Walking` to stop `i` (on lines: `1` = the first line's source, `2` = its
-  target) · `Returning` home · `Resting` (no stamina). A courier `AtStation` with a route or a line and stamina > 0, whose station is
-  neither constructing, upgrading nor paused, leaves in step (5) of §6 for stop 1.
+  target) · `Returning` home · `Resting` (no stamina) · `Blocked` (M1-03): waiting at building `waitsAt` for a walk to stop `toStop`
+  (0: home), with no times. A courier `AtStation` with a route or a line and stamina > 0, whose station is
+  neither constructing, upgrading nor paused, leaves in step (5) of §6 for stop 1; when no walk joins them it is `Blocked` at its station.
+  Any walk a courier starts (to a stop, a line's source or target, or home, tired or not) with no path makes it `Blocked` where it is
+  (§17); it then walks from the second a path exists. Cancelling the line it waits to walk on stops it like a walking courier.
 - **A paused station** (D24): a courier walking to a stop arrives and does that stop (a route stop's actions; on a line, a take at the
   source takes nothing and a put at the target is done and ends the line), then gives back what it carries (a returned load) and walks
   home; a `Returning` or `Resting` courier goes on as before. Its route and lines stay; once unpaused it leaves from its station for

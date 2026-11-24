@@ -57,7 +57,7 @@ public sealed class SetRouteContractTests(ApiFactory factory) : IClassFixture<Ap
             """{"buildingId":3,"actions":[{"kind":"put","itemId":"logs","amount":"all"}]}]}]""",
             snapshot["city"]!["routes"]!.ToJsonString());
         Assert.Equal(
-            """[{"stationId":4,"slot":1,"state":"Walking","toStop":1,"departedAt":0,"arrivesAt":20,"stamina":14400,"load":[]}]""",
+            """[{"stationId":4,"slot":1,"state":"Walking","toStop":1,"departedAt":0,"arrivesAt":20,"stamina":14400,"load":[],"waitsAt":null}]""",
             snapshot["city"]!["couriers"]!.ToJsonString());
         Assert.Equal(1, store.SaveCount);
         Assert.Empty(store.Ledger);
@@ -83,7 +83,7 @@ public sealed class SetRouteContractTests(ApiFactory factory) : IClassFixture<Ap
 
         Assert.Equal(("""{"logs":20}""", """{"logs":15}"""), (snapshot["city"]!["buildings"]![1]!["store"]!.ToJsonString(), snapshot["city"]!["buildings"]![2]!["store"]!.ToJsonString()));
         Assert.Equal(
-            """[{"stationId":4,"slot":1,"state":"Walking","toStop":1,"departedAt":30,"arrivesAt":40,"stamina":14400,"load":[]}]""",
+            """[{"stationId":4,"slot":1,"state":"Walking","toStop":1,"departedAt":30,"arrivesAt":40,"stamina":14400,"load":[],"waitsAt":null}]""",
             snapshot["city"]!["couriers"]!.ToJsonString());
         Assert.Equal(35, (long)snapshot["city"]!["totals"]!["logs"]!);
         Assert.Equal("""{"logs":10}""", snapshot["settlement"]!["moved"]!.ToJsonString());
@@ -102,7 +102,7 @@ public sealed class SetRouteContractTests(ApiFactory factory) : IClassFixture<Ap
 
         Assert.Equal("[]", snapshot["city"]!["routes"]!.ToJsonString());
         Assert.Equal(
-            """[{"stationId":4,"slot":1,"state":"AtStation","toStop":0,"departedAt":null,"arrivesAt":null,"stamina":14400,"load":[]}]""",
+            """[{"stationId":4,"slot":1,"state":"AtStation","toStop":0,"departedAt":null,"arrivesAt":null,"stamina":14400,"load":[],"waitsAt":null}]""",
             snapshot["city"]!["couriers"]!.ToJsonString());
         Assert.Equal("""{"logs":30}""", snapshot["city"]!["buildings"]![1]!["store"]!.ToJsonString());
     }

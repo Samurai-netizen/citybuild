@@ -351,6 +351,7 @@ The request and response bodies. The document types numbers as `integer` or `str
 | `arrivesAt` | `int64` | yes | yes |
 | `stamina` | `int64` | yes | no |
 | `load` | [SnapshotCourierLoad](#snapshotcourierload)[] | yes | no |
+| `waitsAt` | `int32` | yes | yes |
 
 ### SnapshotCourierLoad
 

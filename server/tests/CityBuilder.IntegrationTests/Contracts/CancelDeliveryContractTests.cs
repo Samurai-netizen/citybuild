@@ -56,7 +56,7 @@ public sealed class CancelDeliveryContractTests(ApiFactory factory) : IClassFixt
         Assert.Equal("[]", snapshot["city"]!["trips"]!.ToJsonString());
         Assert.Equal("""{"logs":30}""", snapshot["city"]!["buildings"]![1]!["store"]!.ToJsonString());
         Assert.Equal(
-            """[{"stationId":4,"slot":1,"state":"Walking","toStop":1,"departedAt":0,"arrivesAt":20,"stamina":14400,"load":[]}]""",
+            """[{"stationId":4,"slot":1,"state":"Walking","toStop":1,"departedAt":0,"arrivesAt":20,"stamina":14400,"load":[],"waitsAt":null}]""",
             snapshot["city"]!["couriers"]!.ToJsonString());
     }
 

@@ -223,9 +223,9 @@ There is no "claim" command, because production and research complete on their o
     "trips": [ { "id": 9, "sourceId": 4, "targetId": 6, "itemId": "planks", "quantity": 10,
                  "departedAt": 123450, "arrivesAt": 123465, "remaining": 2, "leg": "ToTarget" } ],
     "couriers": [ { "stationId": 3, "slot": 1, "state": "Walking", "toStop": 2, "departedAt": 123440, "arrivesAt": 123470,
-                    "stamina": 7200, "load": [ { "itemId": "logs", "fromId": 4, "quantity": 10 } ] },
+                    "stamina": 7200, "load": [ { "itemId": "logs", "fromId": 4, "quantity": 10 } ], "waitsAt": null },
                   { "stationId": 3, "slot": 2, "state": "AtStation", "toStop": 0, "departedAt": null, "arrivesAt": null,
-                    "stamina": 7200, "load": [] } ],
+                    "stamina": 7200, "load": [], "waitsAt": null } ],
     "routes": [ { "stationId": 3, "slot": 2, "stops": [
                   { "buildingId": 4, "actions": [ { "kind": "take", "itemId": "logs", "amount": "all" } ] },
                   { "buildingId": 6, "actions": [ { "kind": "put", "itemId": "logs", "amount": "all" } ] } ] } ],
@@ -269,14 +269,16 @@ There is no "claim" command, because production and research complete on their o
 - **CR-0008**: `purse`, `totals`, `onTrips`, the research's `needs`, each building's `store`, `storeLimits`, `needs` and `project`,
   `trips` and the settlement's `delivered`, `moved`, `refunded` (part E), and `roads` (part D) are built, as above. `couriers` and
   `routes` follow `trips` in `city` (part G): `couriers` (`stationId`, `slot`, `state` `AtStation` · `Walking` · `Returning` ·
-  `Resting`, `toStop` (1-based, 0 unless walking to a stop), `departedAt`, `arrivesAt` (`null` unless walking or returning), `stamina`
-  (seconds left; spent only while the player is away, `04` §2), `load` [`itemId`, `fromId`, `quantity`]); `routes` (`stationId`, `slot`, `stops` as `set-route`
+  `Resting` · `Blocked` (M1-03), `toStop` (1-based, 0 unless walking to a stop), `departedAt`, `arrivesAt` (`null` unless walking or returning), `stamina`
+  (seconds left; spent only while the player is away, `04` §2), `load` [`itemId`, `fromId`, `quantity`], `waitsAt`, the building a
+  `Blocked` courier waits at for a path (M1-03; `toStop` is then the stop it walks to next, 0 for home), `null` in every other state); `routes` (`stationId`, `slot`, `stops` as `set-route`
   sends them, `kind` `take` or `put`), both sorted by (`stationId`, `slot`), loads by (`itemId`, `fromId`); a city without couriers or
   routes has `[]`. A courier's goods count in `totals`. **Amendment 1:** `deliveryLines` follow `routes` (`id`, `stationId`, `slot`,
   `sourceId`, `targetId`, `itemId`, `quantity`), by (`stationId`, `slot`, `id`); each courier's first line is the one it runs now (`toStop`
   1 = that line's source, 2 = its target). A trip has `remaining` (still in the source for later loads) and `leg` (`ToTarget` with a load,
   `ToSource` with `quantity` 0, or with the goods the target didn't take and `remaining` 0, and `Waiting` at the source with goods its full
-  store can't take yet, M0-C-3). The settlement's `courierSeconds` is the most stamina one courier spent in it
+  store can't take yet, M0-C-3, or waiting for a path, M1-03: `BlockedAtSource` with `quantity` 0, the goods still in the source, and
+  `BlockedAtTarget` with what it carries back; a blocked leg keeps the times of the walk that brought it there, `04` §18). The settlement's `courierSeconds` is the most stamina one courier spent in it
   (0 while the player was present) and `tiredCouriers` [`stationId`, `slot`, `at`] the couriers whose stamina ran out, by station and
   slot, each at the city second it did (part H; `04` §11).
   `stallReason` keeps its values; a courier station without couriers is `NoWorkers`, a warehouse or science building `NoRecipe`.
