@@ -73,10 +73,15 @@ public sealed class ContentContractTests(ApiFactory factory) : IClassFixture<Api
             }
         }
 
-        foreach ((JsonNode research, int r) in content["research"]!.AsArray().Select((node, index) => (node!, index)))
+        // A node may have no effect (Era I's Land Survey and Bridge Building, M1-02), so the content as a whole must have effects, and
+        // every effect of every node has the contract's shape.
+        (JsonNode Effect, string Path)[] effects = content["research"]!.AsArray()
+            .SelectMany((research, r) => Assert.IsType<JsonArray>(research!["effects"]).Select((effect, e) => (effect!, $"$.research[{r}].effects[{e}]")))
+            .ToArray();
+        Assert.NotEmpty(effects);
+        foreach ((JsonNode effect, string path) in effects)
         {
-            AssertEach(
-                research["effects"], "type:string building:string? item:string? permille:int? amount:int? mode:string?", $"$.research[{r}].effects");
+            JsonShape.AssertObject(effect, "type:string building:string? item:string? permille:int? amount:int? mode:string?", path);
         }
     }
 

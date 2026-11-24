@@ -53,7 +53,7 @@ public sealed class AssignWorkersContractTests(ApiFactory factory) : IClassFixtu
         JsonNode snapshot = response.Json();
         JsonShape.AssertObject(snapshot, "requestId:string stateVersion:int serverTimeUtc:string contentVersion:string city:object settlement:object", "$");
         Assert.Equal((_requestId, 1L), ((string)snapshot["requestId"]!, (long)snapshot["stateVersion"]!));
-        Assert.Equal("""{"coins":700,"logs":0,"planks":0}""", snapshot["city"]!["totals"]!.ToJsonString());
+        Assert.Equal("""{"bread":0,"coins":700,"cut_stone":0,"flour":0,"grain":0,"logs":0,"planks":0,"stone":0}""", snapshot["city"]!["totals"]!.ToJsonString());
         Assert.Equal("""{"provided":4,"assigned":2,"onTrips":0,"free":2}""", snapshot["city"]!["workers"]!.ToJsonString());
         Assert.Equal(
             """{"id":3,"typeId":"woodcutter","x":2,"y":0,"level":1,"maxLevel":2,"assignedWorkers":2,"maxWorkers":2,"phase":"Producing",""" +

@@ -164,7 +164,7 @@ public sealed class SetRouteContractTests(ApiFactory factory) : IClassFixture<Ap
             { 4, 1, Stops(Stop(2, take, take, take, take, take), Stop(3, put)), 422, "INVALID_ROUTE" },
             { 4, 1, Stops(Stop(2, take), Stop(2, take), Stop(3, put)), 422, "INVALID_ROUTE" },
             { 4, 1, Stops(Stop(2, take), Stop(9, put)), 404, "BUILDING_NOT_FOUND" },
-            { 4, 1, Stops(Stop(2, Action("take", "stone", "all")), Stop(3, put)), 422, "UNKNOWN_ITEM" },
+            { 4, 1, Stops(Stop(2, Action("take", "iron", "all")), Stop(3, put)), 422, "UNKNOWN_ITEM" },
             { 4, 1, Stops(Stop(2, Action("take", "coins", "all")), Stop(3, put)), 400, "INVALID_ARGUMENT" },
             { 4, 1, Stops(Stop(2, Action("take", "logs", "eighth")), Stop(3, put)), 400, "INVALID_ARGUMENT" },
             { 4, 1, Stops(Stop(2, Action("take", "logs", "50%")), Stop(3, put)), 422, "AMOUNT_MODE_LOCKED" },

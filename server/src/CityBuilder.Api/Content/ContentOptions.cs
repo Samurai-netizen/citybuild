@@ -8,7 +8,7 @@ public sealed class ContentOptions
 
     /// <summary>
     /// <c>Content:FilePath</c>, required: the content file, absolute or relative to the app's base directory (where the build copies
-    /// <c>server/content/*.json</c> into <c>content/</c>). The default in <c>appsettings.json</c> is <c>content/mvp-content.json</c>.
+    /// <c>server/content/*.json</c> into <c>content/</c>). The default in <c>appsettings.json</c> is <c>content/era1-content.json</c> (M1-02).
     /// </summary>
     public string FilePath { get; set; } = string.Empty;
 

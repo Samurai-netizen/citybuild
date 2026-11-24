@@ -55,7 +55,7 @@ public sealed class StartTripContractTests(ApiFactory factory) : IClassFixture<A
             snapshot["city"]!["trips"]!.ToJsonString());
         Assert.Equal("""{"provided":4,"assigned":0,"onTrips":1,"free":3}""", snapshot["city"]!["workers"]!.ToJsonString());
         Assert.Equal("""{"logs":20}""", snapshot["city"]!["buildings"]![1]!["store"]!.ToJsonString());
-        Assert.Equal("""{"coins":100,"logs":35,"planks":0}""", snapshot["city"]!["totals"]!.ToJsonString());
+        Assert.Equal("""{"bread":0,"coins":100,"cut_stone":0,"flour":0,"grain":0,"logs":35,"planks":0,"stone":0}""", snapshot["city"]!["totals"]!.ToJsonString());
         Assert.Equal(1, store.SaveCount);
         Assert.Empty(store.Ledger);
 
@@ -86,7 +86,7 @@ public sealed class StartTripContractTests(ApiFactory factory) : IClassFixture<A
         Assert.Equal(HttpStatusCode.OK, response.Status);
         JsonNode city = response.Json()["city"]!;
         Assert.Equal((0L, 10L), ((long)city["trips"]![0]!["departedAt"]!, (long)city["trips"]![0]!["arrivesAt"]!));
-        Assert.Equal("""{"coins":100,"logs":35,"planks":0}""", city["totals"]!.ToJsonString());
+        Assert.Equal("""{"bread":0,"coins":100,"cut_stone":0,"flour":0,"grain":0,"logs":35,"planks":0,"stone":0}""", city["totals"]!.ToJsonString());
     }
 
     /// <summary>
@@ -149,7 +149,7 @@ public sealed class StartTripContractTests(ApiFactory factory) : IClassFixture<A
     /// <param name="code">The expected code.</param>
     [Theory]
     [InlineData(9, 3, "logs", "all", HttpStatusCode.NotFound, "BUILDING_NOT_FOUND")]
-    [InlineData(2, 3, "stone", "all", (HttpStatusCode)422, "UNKNOWN_ITEM")]
+    [InlineData(2, 3, "iron", "all", (HttpStatusCode)422, "UNKNOWN_ITEM")]
     [InlineData(2, 3, "coins", "all", HttpStatusCode.BadRequest, "INVALID_ARGUMENT")]
     [InlineData(2, 3, "logs", "eighth", HttpStatusCode.BadRequest, "INVALID_ARGUMENT")]
     [InlineData(2, 3, "logs", "50%", (HttpStatusCode)422, "AMOUNT_MODE_LOCKED")]
