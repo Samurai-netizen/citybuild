@@ -1,4 +1,8 @@
 using CityBuilder.Simulation.Content;
+using CityBuilder.Simulation.Rules;
+using CityBuilder.Simulation.State;
+using CityBuilder.Simulation.Tests.Rules;
+using static CityBuilder.Simulation.Tests.State.CityFixture;
 
 namespace CityBuilder.Simulation.Tests.Content;
 
@@ -106,6 +110,25 @@ public sealed class Era1ContentTests
         Assert.Equal(_content.Research.Where(other => other.Id != charter).Select(other => other.Id).Order(), node.Prerequisites.Order());
         Assert.DoesNotContain(_content.Research, other => other.Prerequisites.Contains(charter));
         Assert.Equal([charter], _content.Research.Where(other => other.Effects.OfType<GrantCharterEffect>().Any()).Select(other => other.Id));
+    }
+
+    /// <summary>
+    /// The landmark is built in stages through the existing project rules (<c>04</c> §16): ordering the Town Hall's level 2 pays its 900 coins
+    /// at once and leaves an upgrade waiting for the stage's goods, bread included; the building keeps its level until they are in.
+    /// </summary>
+    [Fact]
+    public void UpgradeBuilding_TownHallAtLevel1_WaitsForTheSecondStagesGoods()
+    {
+        CityState city = City(purse: 1000, completedResearch: ["masonry"], buildings: [Idle(1, "town_hall", 3, 3)]);
+
+        RulesAssert.Ok(CityRules.UpgradeBuilding(city, _content, 1));
+
+        Assert.Equal(100, city.Purse);
+        Assert.True(city.TryGetBuilding(1, out Building? townHall));
+        Assert.Equal(1, townHall!.Level);
+        Assert.Equal(
+            [("bread", 40L), ("cut_stone", 60L), ("planks", 80L)],
+            townHall.Needs.Select(need => (need.Key.Value, need.Value)).OrderBy(need => need.Item1, StringComparer.Ordinal));
     }
 
     /// <summary>Every recipe of the content, with its building type.</summary>
