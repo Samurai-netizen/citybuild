@@ -31,7 +31,8 @@ namespace CityBuilder.Simulation.State
             bool loadFits = leg switch
             {
                 TripLeg.ToTarget => quantity >= 1,
-                TripLeg.ToSource => (quantity == 0 && remaining >= 1) || (quantity >= 1 && remaining == 0),
+                TripLeg.ToSource or TripLeg.BlockedAtTarget => (quantity == 0 && remaining >= 1) || (quantity >= 1 && remaining == 0),
+                TripLeg.BlockedAtSource => quantity == 0 && remaining >= 1,
                 TripLeg.Waiting => quantity >= 1 && remaining == 0,
                 _ => false,
             };

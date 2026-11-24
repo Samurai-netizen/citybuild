@@ -27,8 +27,9 @@ namespace CityBuilder.Simulation.State
         /// <param name="arrivesAt">When its walk ends: set exactly while walking or returning, after <paramref name="departedAt"/>.</param>
         /// <param name="stamina">Its stamina in seconds, at least 0.</param>
         /// <param name="loads">What it carries, in any order: each (good, building) once; null for nothing.</param>
+        /// <param name="waitsAt">The building it waits at while <see cref="CourierState.Blocked"/> (at least 1); 0 in every other state.</param>
         /// <exception cref="ArgumentException">The values don't form a courier; the message says which rule they break.</exception>
-        public Courier(int stationId, int slot, CourierState state, int toStop, long? departedAt, long? arrivesAt, long stamina, IEnumerable<CourierLoad>? loads = null)
+        public Courier(int stationId, int slot, CourierState state, int toStop, long? departedAt, long? arrivesAt, long stamina, IEnumerable<CourierLoad>? loads = null, int waitsAt = 0)
         {
             if (stationId < 1 || slot < 1 || stamina < 0)
             {
@@ -39,11 +40,12 @@ namespace CityBuilder.Simulation.State
             bool timesFit = walks
                 ? departedAt >= 0 && arrivesAt > departedAt
                 : !departedAt.HasValue && !arrivesAt.HasValue;
-            bool stopFits = state == CourierState.Walking ? toStop >= 1 : toStop == 0;
-            if (!timesFit || !stopFits)
+            bool stopFits = state == CourierState.Walking ? toStop >= 1 : state == CourierState.Blocked ? toStop >= 0 : toStop == 0;
+            bool waitFits = state == CourierState.Blocked ? waitsAt >= 1 : waitsAt == 0;
+            if (!timesFit || !stopFits || !waitFits)
             {
                 throw new ArgumentException(FormattableString.Invariant(
-                    $"Courier {stationId}/{slot} is {state}: a walk has a departure not below 0 and a later arrival, only a walk to a stop names it, and a courier that doesn't walk has neither."));
+                    $"Courier {stationId}/{slot} is {state}: a walk has a departure not below 0 and a later arrival, only a walk to a stop or a blocked courier names a stop, a courier that doesn't walk has no times, and only a blocked courier names the building it waits at."));
             }
 
             StationId = stationId;
@@ -53,6 +55,7 @@ namespace CityBuilder.Simulation.State
             DepartedAt = departedAt;
             ArrivesAt = arrivesAt;
             Stamina = stamina;
+            WaitsAt = waitsAt;
             _loads = SortedLoads(loads, stationId, slot);
             Loads = _loads.AsReadOnly();
         }
@@ -68,6 +71,9 @@ namespace CityBuilder.Simulation.State
 
         /// <summary>The stop (1-based) of its route it walks to while <see cref="CourierState.Walking"/>; 0 otherwise.</summary>
         public int ToStop { get; private set; }
+
+        /// <summary>The building it waits at while <see cref="CourierState.Blocked"/> (M1-03); 0 in every other state.</summary>
+        public int WaitsAt { get; private set; }
 
         /// <summary>When its walk started, in city-clock seconds; null when it doesn't walk.</summary>
         public long? DepartedAt { get; private set; }
