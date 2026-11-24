@@ -95,7 +95,7 @@ public sealed class RoadCommandsContractTests(ApiFactory factory) : IClassFixtur
         JsonNode snapshot = response.Json();
         Assert.Equal((_requestId, 1L), ((string)snapshot["requestId"]!, (long)snapshot["stateVersion"]!));
         Assert.Equal(
-            """[{"x":4,"y":6,"level":1},{"x":5,"y":5,"level":1},{"x":6,"y":5,"level":2},{"x":7,"y":5,"level":1},{"x":7,"y":6,"level":1}]""",
+            """[{"x":4,"y":6,"level":1,"kind":"road"},{"x":5,"y":5,"level":1,"kind":"road"},{"x":6,"y":5,"level":2,"kind":"road"},{"x":7,"y":5,"level":1,"kind":"road"},{"x":7,"y":6,"level":1,"kind":"road"}]""",
             snapshot["city"]!["roads"]!.ToJsonString());
         Assert.Equal(10L, (long)snapshot["city"]!["purse"]!);
         Assert.Equal("""{"slots":2,"busy":0,"queued":0,"queueLength":2}""", snapshot["city"]!["builders"]!.ToJsonString());
@@ -118,7 +118,7 @@ public sealed class RoadCommandsContractTests(ApiFactory factory) : IClassFixtur
 
         Assert.Equal(HttpStatusCode.OK, response.Status);
         JsonNode city = response.Json()["city"]!;
-        Assert.Equal("""[{"x":5,"y":5,"level":2},{"x":6,"y":5,"level":2},{"x":7,"y":5,"level":1}]""", city["roads"]!.ToJsonString());
+        Assert.Equal("""[{"x":5,"y":5,"level":2,"kind":"road"},{"x":6,"y":5,"level":2,"kind":"road"},{"x":7,"y":5,"level":1,"kind":"road"}]""", city["roads"]!.ToJsonString());
         Assert.Equal(5L, (long)city["purse"]!);
         LedgerEntry cost = Assert.Single(store.Ledger);
         Assert.Equal((LedgerReason.CostRoad, "coins", -15L, 5L), (cost.Reason, cost.Item.Value, cost.Delta, cost.BalanceAfter));
@@ -135,7 +135,7 @@ public sealed class RoadCommandsContractTests(ApiFactory factory) : IClassFixtur
 
         Assert.Equal(HttpStatusCode.OK, response.Status);
         JsonNode city = response.Json()["city"]!;
-        Assert.Equal("""[{"x":7,"y":5,"level":1}]""", city["roads"]!.ToJsonString());
+        Assert.Equal("""[{"x":7,"y":5,"level":1,"kind":"road"}]""", city["roads"]!.ToJsonString());
         Assert.Equal(20L, (long)city["purse"]!);
         Assert.Equal(1, store.SaveCount);
         Assert.Empty(store.Ledger);

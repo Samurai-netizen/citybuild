@@ -46,6 +46,7 @@ public static class CitySnapshotMapper
                 state.Era,
                 state.Purse,
                 CityQueries.IsChartered(state, content),
+                OpenAreas(state, content),
                 ToTotals(state, content),
                 new SnapshotWorkers(
                     CityQueries.WorkersProvided(state, content),
@@ -56,7 +57,7 @@ public static class CitySnapshotMapper
                     CityQueries.BuilderSlots(state, content), CityQueries.BuildersBusy(state), CityQueries.QueuedOrders(state), content.Rules.BuilderQueueLength),
                 ToResearch(state),
                 state.Buildings.OrderBy(building => building.Id).Select(building => ToBuilding(state, content, building)).ToArray(),
-                state.Roads.OrderBy(road => road.X).ThenBy(road => road.Y).Select(road => new SnapshotRoad(road.X, road.Y, road.Level)).ToArray(),
+                state.Roads.OrderBy(road => road.X).ThenBy(road => road.Y).Select(road => new SnapshotRoad(road.X, road.Y, road.Level, road.IsBridge ? "bridge" : "road")).ToArray(),
                 state.Trips.OrderBy(trip => trip.Id)
                     .Select(trip => new SnapshotTrip(
                         trip.Id, trip.SourceId, trip.TargetId, trip.Item.Value, trip.Quantity, trip.DepartedAt, trip.ArrivesAt, trip.Remaining, trip.Leg.ToString()))
@@ -94,6 +95,15 @@ public static class CitySnapshotMapper
             courier.Stamina,
             courier.Loads.OrderBy(part => part.Item.Value, StringComparer.Ordinal).ThenBy(part => part.FromId)
                 .Select(part => new SnapshotCourierLoad(part.Item.Value, part.FromId, part.Quantity)).ToArray());
+
+    /// <summary>The map's areas the city may use, by letter; none for content without a map (M1-03).</summary>
+    /// <param name="state">The city.</param>
+    /// <param name="content">The content.</param>
+    /// <returns>The area letters as one-letter strings.</returns>
+    private static string[] OpenAreas(CityState state, GameContent content) =>
+        content.Map is null
+            ? []
+            : [.. content.Map.AreaLetters.Where(area => CityQueries.IsAreaOpen(state, content, area)).Order().Select(area => area.ToString())];
 
     /// <summary>A route as <c>set-route</c> sends it: the stops in order, each action's kind as <c>take</c> or <c>put</c> and its amount's text.</summary>
     /// <param name="route">The route.</param>

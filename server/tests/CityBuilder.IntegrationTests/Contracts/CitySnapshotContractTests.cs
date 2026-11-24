@@ -180,7 +180,14 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
             activeResearch: null,
             [new RoadTile(11, 5, 1), new RoadTile(12, 5, 1, isBridge: true)]);
         var store = new FakeCityStore();
-        store.Add(new CityAggregate(Guid.NewGuid(), _playerId, state, [], _settledAt.ToUnixTimeSeconds(), stateVersion: 1, "era1-2"));
+        store.Add(new CityAggregate(
+            Guid.NewGuid(),
+            _playerId,
+            state,
+            state.CompletedResearch.Select(id => new KeyValuePair<ResearchId, long>(id, 0)),
+            _settledAt.ToUnixTimeSeconds(),
+            stateVersion: 1,
+            "era1-2"));
         await using WebApplicationFactory<Program> server = store.Serve(factory, new FakeTimeProvider(_settledAt));
 
         JsonNode city = (await ApiClient.GetAsync(server, "/api/v1/city", _playerId)).Json()["city"]!;

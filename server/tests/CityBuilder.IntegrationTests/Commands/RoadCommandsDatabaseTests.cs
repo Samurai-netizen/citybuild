@@ -63,7 +63,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
 
         Factory.Clock.Advance(TimeSpan.FromMinutes(1));
         JsonNode later = (await ApiClient.GetAsync(Factory, "/api/v1/city", player)).Json();
-        Assert.Equal("""[{"x":6,"y":6,"level":1},{"x":7,"y":6,"level":1},{"x":8,"y":6,"level":1}]""", later["city"]!["roads"]!.ToJsonString());
+        Assert.Equal("""[{"x":6,"y":6,"level":1,"kind":"road"},{"x":7,"y":6,"level":1,"kind":"road"},{"x":8,"y":6,"level":1,"kind":"road"}]""", later["city"]!["roads"]!.ToJsonString());
     }
 
     /// <summary>Upgrading two Dirt paths stores them at level 2 and pays 30 coins (15 a tile) as one <c>COST_ROAD</c> row.</summary>

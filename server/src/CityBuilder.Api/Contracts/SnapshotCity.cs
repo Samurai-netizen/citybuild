@@ -6,6 +6,8 @@ namespace CityBuilder.Api.Contracts;
 /// <param name="Era">The city's era number, JSON <c>era</c>.</param>
 /// <param name="Purse">The coins, JSON <c>purse</c>: the currency, in no building (CR-0008).</param>
 /// <param name="Chartered">Whether the town charter is granted, JSON <c>chartered</c>: a completed <c>grantCharter</c> node, the end of Era I (M1-02).</param>
+/// <param name="OpenAreas">The map's areas the city may use, JSON <c>openAreas</c>: one capital letter each, by letter; the start area and every
+/// area an <c>openLand</c> research opened. Empty for content without a map, where every tile is open (M1-03).</param>
 /// <param name="Totals">Every item's city total, JSON <c>totals</c>: item id to quantity, by item id, 0 included; a good's total adds every store
 /// and every load on the way, the currency's is the purse (CR-0008).</param>
 /// <param name="Workers">The workers, JSON <c>workers</c>.</param>
@@ -23,6 +25,7 @@ public sealed record SnapshotCity(
     int Era,
     long Purse,
     bool Chartered,
+    IReadOnlyList<string> OpenAreas,
     IReadOnlyDictionary<string, long> Totals,
     SnapshotWorkers Workers,
     SnapshotBuilders Builders,
