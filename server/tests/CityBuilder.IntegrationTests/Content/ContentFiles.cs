@@ -8,6 +8,12 @@ internal static class ContentFiles
     /// <summary>The copy of <c>server/content/mvp-content.json</c> that the Api build puts into this test project's output too.</summary>
     public static string RealMvpContentPath { get; } = Path.Combine(AppContext.BaseDirectory, "content", "mvp-content.json");
 
+    /// <summary>
+    /// The copy of <c>server/content/era1-content.json</c> (content version <c>era1-1</c>, M1-02) in this project's output: the server's
+    /// default content since M1-02.
+    /// </summary>
+    public static string RealEra1ContentPath { get; } = Path.Combine(AppContext.BaseDirectory, "content", "era1-content.json");
+
     /// <summary>The real content as a JSON tree that a test may change, for example to break one value.</summary>
     public static JsonNode ReadRealMvpContent() =>
         JsonNode.Parse(File.ReadAllText(RealMvpContentPath)) ?? throw new InvalidOperationException("The real content file holds null.");

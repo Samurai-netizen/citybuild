@@ -20,13 +20,17 @@ public sealed class ContentStartupTests(ApiFactory factory) : IClassFixture<ApiF
     /// <summary>Deletes this test's content files.</summary>
     public void Dispose() => _files.Dispose();
 
-    /// <summary>With the default configuration the server serves the real content, from one load that every request shares.</summary>
+    /// <summary>
+    /// With the default configuration the server serves the Era I content (<c>server/content/era1-content.json</c>, M1-02), from one load
+    /// that every request shares.
+    /// </summary>
     [Fact]
-    public void Start_DefaultConfiguration_ServesTheRealContent()
+    public void Start_DefaultConfiguration_ServesTheEra1Content()
     {
         IContentProvider provider = factory.Services.GetRequiredService<IContentProvider>();
 
-        Assert.Equal(ContentFileLoader.Load(ContentFiles.RealMvpContentPath).ContentVersion, provider.Content.ContentVersion);
+        Assert.Equal("era1-1", provider.Content.ContentVersion);
+        Assert.Equal(ContentFileLoader.Load(ContentFiles.RealEra1ContentPath).ContentVersion, provider.Content.ContentVersion);
         // One load for the whole server: every request sees the same instance.
         Assert.Same(provider, factory.Services.GetRequiredService<IContentProvider>());
     }
