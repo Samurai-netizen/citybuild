@@ -160,23 +160,30 @@ internal static partial class EraOneLoop
         Simulator.Advance(city, Content, 0);
     }
 
-    /// <summary>The engine's mutation for a command act.</summary>
+    /// <summary>The engine's mutation for a command act on the loop's content.</summary>
     /// <param name="city">The city.</param>
     /// <param name="act">The act.</param>
     /// <returns>The engine's answer; on success the city has changed.</returns>
-    private static MutationResult Mutate(CityState city, LoopAct act) => act switch
+    private static MutationResult Mutate(CityState city, LoopAct act) => Mutate(city, Content, act);
+
+    /// <summary>The engine's mutation for a command act on <paramref name="content"/> (also the Era I charter player's, M1-02).</summary>
+    /// <param name="city">The city.</param>
+    /// <param name="content">The content the city runs on.</param>
+    /// <param name="act">The act.</param>
+    /// <returns>The engine's answer; on success the city has changed.</returns>
+    public static MutationResult Mutate(CityState city, GameContent content, LoopAct act) => act switch
     {
-        PlaceAct place => CityRules.PlaceBuilding(city, Content, new BuildingTypeId(place.Type), place.X, place.Y),
-        UpgradeAct upgrade => CityRules.UpgradeBuilding(city, Content, upgrade.BuildingId),
-        AssignAct assign => CityRules.AssignWorkers(city, Content, assign.BuildingId, assign.Workers),
-        ResearchAct research => CityRules.StartResearch(city, Content, new ResearchId(research.ResearchId)),
-        TripAct trip => TripRules.StartTrip(city, Content, trip.SourceId, trip.TargetId, new ItemId(trip.ItemId), Amount.Preset(new AmountPresetId(trip.Amount))),
-        RouteAct route => CourierRules.SetRoute(city, Content, route.StationId, route.Slot,
+        PlaceAct place => CityRules.PlaceBuilding(city, content, new BuildingTypeId(place.Type), place.X, place.Y),
+        UpgradeAct upgrade => CityRules.UpgradeBuilding(city, content, upgrade.BuildingId),
+        AssignAct assign => CityRules.AssignWorkers(city, content, assign.BuildingId, assign.Workers),
+        ResearchAct research => CityRules.StartResearch(city, content, new ResearchId(research.ResearchId)),
+        TripAct trip => TripRules.StartTrip(city, content, trip.SourceId, trip.TargetId, new ItemId(trip.ItemId), Amount.Preset(new AmountPresetId(trip.Amount))),
+        RouteAct route => CourierRules.SetRoute(city, content, route.StationId, route.Slot,
         [
             new RouteStop(route.FromId, [new RouteAction(RouteActionKind.Take, new ItemId(route.ItemId), Amount.Preset(new AmountPresetId("all")))]),
             new RouteStop(route.ToId, [new RouteAction(RouteActionKind.Put, new ItemId(route.ItemId), Amount.Preset(new AmountPresetId("all")))]),
         ]),
-        PauseAct pause => CityRules.SetPaused(city, Content, pause.BuildingId, pause.Paused),
+        PauseAct pause => CityRules.SetPaused(city, content, pause.BuildingId, pause.Paused),
         ReenergizeAct => CourierRules.ReenergizeCouriers(city, Content),
         _ => throw new ArgumentOutOfRangeException(nameof(act), act, "Not a command."),
     };
