@@ -149,6 +149,31 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             }
         }
 
+        /// <summary>
+        /// The map survives the mapping (M1-03): the engine's content has the 18 × 14 map with the river on column 12 and the start area A,
+        /// the bridge, the raw producers' sites, and the research that opens area B and allows bridges.
+        /// </summary>
+        [Test]
+        public async Task Load_TheRealAnswer_KeepsTheMapTheBridgeAndTheSites()
+        {
+            _transport.Answer(200, Fixtures.Read("content.json"));
+
+            GameContent content = (await _service.LoadAsync(CancellationToken.None)).Content!;
+
+            MapDefinition map = content.Map!;
+            Assert.That((map.Id, map.Width, map.Height, map.StartArea, map.RoughTileMillis), Is.EqualTo(("crossing", 18, 14, 'A', 10000L)));
+            Assert.That((map.TerrainAt(12, 5), map.TerrainAt(0, 0), map.TerrainAt(8, 0), map.TerrainAt(13, 3)),
+                Is.EqualTo((Terrain.Water, Terrain.Forest, Terrain.Rock, Terrain.Soil)));
+            Assert.That((map.AreaAt(5, 5), map.AreaAt(0, 0), map.AreaAt(17, 0)), Is.EqualTo(('A', 'B', 'C')));
+            Assert.That((content.Bridge!.Name, content.Bridge.TileMillis), Is.EqualTo(("Bridge", 1500L)));
+            Assert.That(content.TryGetBuilding(new BuildingTypeId("woodcutter"), out BuildingDefinition? woodcutter), Is.True);
+            Assert.That(woodcutter!.Site, Is.EqualTo(BuildingSite.NearForest));
+            Assert.That(content.TryGetResearch(new ResearchId("land_survey"), out ResearchDefinition? survey), Is.True);
+            Assert.That(survey!.Effects.OfType<OpenLandEffect>().Single().Area, Is.EqualTo('B'));
+            Assert.That(content.TryGetResearch(new ResearchId("bridge_building"), out ResearchDefinition? bridges), Is.True);
+            Assert.That(bridges!.Effects.Single(), Is.TypeOf<UnlockBridgeEffect>());
+        }
+
         /// <summary>The mapper writes the content file's spelling of a kind (<c>house</c>, <c>courierStation</c>), not the response's.</summary>
         [Test]
         public void Mapper_WritesTheContentFilesKindSpelling()

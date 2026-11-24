@@ -42,6 +42,22 @@ namespace CityBuilder.Client.Tests.EditMode.Core
         }
 
         /// <summary>
+        /// The content the answer <paramref name="dto"/> was recorded with, by its content version: the Era I map answer (<c>content.json</c>,
+        /// M1-03) or the M0 one (<c>content-mvp-2.json</c>); a version no content fixture has fails the test.
+        /// </summary>
+        public static GameContent ContentOf(CitySnapshotDto dto)
+        {
+            if (dto.ContentVersion == "mvp-2")
+            {
+                return SnapshotsContent();
+            }
+
+            GameContent content = Content();
+            Assert.That(dto.ContentVersion, Is.EqualTo(content.ContentVersion), "no content fixture has this answer's content version");
+            return content;
+        }
+
+        /// <summary>
         /// The fixture content with a builder queue of <paramref name="builderQueueLength"/> places (CR-0013): the Era I fixture has two (M1-02),
         /// so 0 gives the rules without a queue.
         /// </summary>

@@ -76,6 +76,33 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(_json.Serialize(snapshot), Is.EqualTo(text));
         }
 
+        /// <summary>
+        /// An Era I answer (M1-03) reads its map members: each road says its kind, the city lists its open areas (the start area only), and it
+        /// says whether it is chartered.
+        /// </summary>
+        [Test]
+        public void PlaceRoads_ShowsTheRoadKindsAndTheOpenAreas()
+        {
+            CitySnapshotDto snapshot = _json.Deserialize<CitySnapshotDto>(Fixtures.Read("snapshot-command-place-roads.json"));
+
+            Assert.That(
+                snapshot.City.Roads.ConvertAll(road => (road.X, road.Y, road.Kind)),
+                Is.EqualTo(new[] { (10, 5, (RoadKindDto?)RoadKindDto.Road), (11, 5, (RoadKindDto?)RoadKindDto.Road) }));
+            Assert.That(snapshot.City.OpenAreas, Is.EqualTo(new[] { "A" }));
+            Assert.That(snapshot.City.Chartered, Is.False);
+            Assert.That((snapshot.City.Builders.Queued, snapshot.City.Builders.QueueLength), Is.EqualTo((0, 2)));
+        }
+
+        /// <summary>An M0 answer has no road kinds and no open areas: they read as <c>null</c> (every tile open, every road a road).</summary>
+        [Test]
+        public void AnM0Answer_HasNoRoadKindsOrOpenAreas()
+        {
+            const string roads = "\"roads\":[{\"x\":1,\"y\":3,\"level\":2}]";
+            CitySnapshotDto snapshot = _json.Deserialize<CitySnapshotDto>(Fixtures.Read("snapshot-city-start.json").Replace("\"roads\":[]", roads));
+
+            Assert.That((snapshot.City.OpenAreas, snapshot.City.Chartered, snapshot.City.Roads[0].Kind), Is.EqualTo(((List<string>)null, (bool?)null, (RoadKindDto?)null)));
+        }
+
         /// <summary>A command's snapshot carries the command's request id, and the replay of a command is the same text and so the same snapshot.</summary>
         [Test]
         public void PlaceBuilding_CarriesTheRequestId_AndItsReplayIsIdentical()

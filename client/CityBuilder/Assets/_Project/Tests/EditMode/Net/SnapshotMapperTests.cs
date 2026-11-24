@@ -28,13 +28,13 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         [Test]
         public void ToSnapshot_EveryRealAnswer_GivesTheServersDerivedValues()
         {
-            // The server derived these values with the content of the run that recorded them (M1-02 decision 28).
-            GameContent content = CityTestData.SnapshotsContent();
+            // The server derived these values with the content of the run that recorded them (M1-02 decision 28; M1-03: by content version).
             string[] names = Fixtures.Names("snapshot-");
             Assert.That(names, Is.Not.Empty);
 
             foreach (string name in names)
             {
+                GameContent content = CityTestData.ContentOf(CityTestData.Dto(name));
                 SnapshotCityDto dto = CityTestData.Dto(name).City;
                 CityState city = CityTestData.Snapshot(name).CopyCity();
 
@@ -74,10 +74,27 @@ namespace CityBuilder.Client.Tests.EditMode.Net
                     name);
 
                 Assert.That(
-                    city.Roads.Select(road => (road.X, road.Y, road.Level)),
-                    Is.EqualTo(dto.Roads.Select(road => (road.X, road.Y, road.Level))),
+                    city.Roads.Select(road => (road.X, road.Y, road.Level, road.IsBridge)),
+                    Is.EqualTo(dto.Roads.Select(road => (road.X, road.Y, road.Level, road.Kind == RoadKindDto.Bridge))),
                     name);
             }
+        }
+
+        /// <summary>
+        /// A bridge in the answer (road kind <c>bridge</c>, M1-03) reaches the engine's city as a bridge tile, so the client's walks cross the
+        /// river where the server's do; a road stays a road.
+        /// </summary>
+        [Test]
+        public void ToSnapshot_ABridge_IsABridgeTile()
+        {
+            const string recorded = "{\"x\":11,\"y\":5,\"level\":1,\"kind\":\"road\"}";
+            string text = Fixtures.Read("snapshot-command-place-roads.json");
+            Assert.That(text, Does.Contain(recorded), "the fixture changed: update this test");
+            CitySnapshotDto dto = new ApiJson().Deserialize<CitySnapshotDto>(text.Replace(recorded, "{\"x\":12,\"y\":5,\"level\":1,\"kind\":\"bridge\"}"))!;
+
+            CityState city = SnapshotMapper.ToSnapshot(dto).Value!.CopyCity();
+
+            Assert.That(city.Roads.Select(road => (road.X, road.Y, road.IsBridge)), Is.EqualTo(new[] { (10, 5, false), (12, 5, true) }));
         }
 
         /// <summary>The answer's roads reach the engine's city with their tiles and levels, so the client's map is the server's (CR-0008).</summary>
