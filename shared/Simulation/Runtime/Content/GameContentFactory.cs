@@ -48,6 +48,7 @@ namespace CityBuilder.Simulation.Content
             WalkRules.Check(draft, errors);
             BuildingRules.Check(draft, errors);
             ReferenceRules.Check(draft, errors);
+            MapRules.Check(draft, errors);
             LevelCapRules.Check(draft, errors);
             EraRules.Check(draft, errors);
             UnlockRules.Check(draft, errors);

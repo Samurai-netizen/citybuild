@@ -98,7 +98,7 @@ public sealed class ContentMapTests
         ["bridge value"] = (data => Research(data, "carpentry").Effects!.Last()!.Item = "wood", ContentErrorCode.UnexpectedValue,
             "research[carpentry].effects[#1].item"),
         ["bridge time"] = (data => data.Bridge!.TileMillis = 4000, ContentErrorCode.RoadNotFaster, "bridge.tileMillis"),
-        ["bridge goods"] = (data => data.Bridge!.Cost!["wood"] = 2, ContentErrorCode.InvalidCurrencyUse, "bridge.cost"),
+        ["bridge goods"] = (data => data.Bridge!.Cost!["wood"] = 2, ContentErrorCode.InvalidCurrencyUse, "bridge.cost.wood"),
         ["bridge without unlock"] = (data => Research(data, "carpentry").Effects!.RemoveAt(1), ContentErrorCode.BuildingUnreachable, "bridge"),
         ["unlock without bridge"] = (data => data.Bridge = null, ContentErrorCode.MissingValue, "bridge"),
         ["site without map"] = (data => data.Map = null, ContentErrorCode.MissingValue, "map"),
@@ -117,8 +117,11 @@ public sealed class ContentMapTests
         ContentAssert.SingleError(MapContentFixture.ValidWith(change), code, path);
     }
 
-    /// <summary>A grid of another size than the map's rows gives one <see cref="ContentErrorCode.MapMismatch"/> on the rows.</summary>
+    /// <summary>A grid of another size than the map gives one <see cref="ContentErrorCode.MapMismatch"/> on each list's first row.</summary>
     [Fact]
     public void Create_GridOfAnotherSize_ReportsMapMismatch() =>
-        ContentAssert.SingleError(MapContentFixture.ValidWith(data => data.Rules!.GridWidth = 7), ContentErrorCode.MapMismatch, "map.tiles[#0]");
+        ContentAssert.Errors(
+            MapContentFixture.ValidWith(data => data.Rules!.GridWidth = 7),
+            (ContentErrorCode.MapMismatch, "map.tiles[#0]"),
+            (ContentErrorCode.MapMismatch, "map.areas[#0]"));
 }

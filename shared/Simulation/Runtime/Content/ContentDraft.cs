@@ -22,8 +22,12 @@ namespace CityBuilder.Simulation.Content
             List<BuildingDefinition> buildings,
             List<ResearchDefinition> research,
             List<RoadLevelDefinition> roadLevels,
-            List<AmountPresetDefinition> amountPresets)
+            List<AmountPresetDefinition> amountPresets,
+            MapDefinition? map,
+            BridgeDefinition? bridge)
         {
+            Map = map;
+            Bridge = bridge;
             ContentVersion = contentVersion;
             Rules = rules;
             StartingCity = startingCity;
@@ -54,6 +58,12 @@ namespace CityBuilder.Simulation.Content
                 ResearchById.TryAdd(node.Id, node);
             }
         }
+
+        /// <summary>The map, or null for content without one (M1-03).</summary>
+        public MapDefinition? Map { get; }
+
+        /// <summary>The bridge, or null for content without one (M1-03).</summary>
+        public BridgeDefinition? Bridge { get; }
 
         /// <summary>The content's version label, such as <c>mvp-1</c>; not checked beyond being present.</summary>
         public string ContentVersion { get; }
@@ -105,6 +115,6 @@ namespace CityBuilder.Simulation.Content
 
         /// <summary>The validated content. Call it only when no rule reported an error.</summary>
         public GameContent ToContent() =>
-            new GameContent(ContentVersion, Rules, StartingCity, Eras, Items, Buildings, Research, RoadLevels, AmountPresets);
+            new GameContent(ContentVersion, Rules, StartingCity, Eras, Items, Buildings, Research, RoadLevels, AmountPresets, Map, Bridge);
     }
 }

@@ -7,7 +7,7 @@ using static CityBuilder.Simulation.Tests.State.CityFixture;
 namespace CityBuilder.Simulation.Tests.Content;
 
 /// <summary>
-/// The server's Era I content, <c>server/content/era1-content.json</c> (content version <c>era1-1</c>, M1-02), against
+/// The server's Era I content, <c>server/content/era1-content.json</c> (content version <c>era1-2</c> since M1-03), against
 /// <c>core-instructions/28-era1-content.md</c>: it loads and passes every content rule, every recipe input has a producer and every good a
 /// use, each chain step runs at the ratio <c>28</c> states (rates read from the content, never written here), every level 3 waits for the
 /// research <c>28</c> names, and the last research, the Town Charter, completes the era's tree.
@@ -17,11 +17,11 @@ public sealed class Era1ContentTests
     /// <summary>The content under test, read and checked once (the test fails with every error if it is not valid).</summary>
     private static readonly GameContent _content = ContentAssert.Valid(ContentFile.ReadServer("era1-content.json"));
 
-    /// <summary>The file loads as a valid content with the version <c>era1-1</c>, one era, 8 goods and the currency, 13 building types and 16 nodes.</summary>
+    /// <summary>The file loads as a valid content with the version <c>era1-2</c>, one era, 8 goods and the currency, 13 building types and 16 nodes.</summary>
     [Fact]
     public void Load_Era1Content_IsValidWithTheCountsOf28()
     {
-        Assert.Equal("era1-1", _content.ContentVersion);
+        Assert.Equal("era1-2", _content.ContentVersion);
         Assert.Single(_content.Eras);
         Assert.Equal(8, _content.Items.Count);
         Assert.Equal(13, _content.Buildings.Count);
