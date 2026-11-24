@@ -8,7 +8,7 @@
 - **Style:** `docs/assets/STYLE.md` → The feel, UI (Icons), Portraits and illustrations, Effects · reference pictures: `art/previews/lineup_era1.png`,
   `art/previews/lineup_props.jpg`, `art/previews/ui_portrait.jpg`, the 25 M0 icons in `client/CityBuilder/Assets/_Project/Resources/UI/Icons/`
   (the icon look to match), and `docs/assets/ready-assets/AR-M1-05-models/AR-M1-05-preview.jpg` (the caravan wagon).
-- **Written:** 2026-11-24 by Claude Code / claude-opus-5-5 · **Sent to the owner:** — · **Delivered:** —
+- **Written:** 2026-11-24 by Claude Code / claude-opus-5-5 · **Sent to the owner:** 2026-11-24 · **Delivered:** 2026-11-24 (54 of 54, all accepted)
 
 ## How to deliver
 1. Put all 54 files **flat in one folder**: `docs/assets/ready-assets/BATCH-01-pictures/`. Name each file after its id: `<id>.png`,
@@ -104,4 +104,4 @@ only**: the game tints and animates these, so colour in the file gets in the way
 ## Sort log
 | Date | Files moved | Rejected | By |
 |---|---|---|---|
-| | | | |
+| 2026-11-24 | 54: 36 icons → `Resources/UI/Icons/`, 12 portraits → `Resources/UI/Portraits/` (new), 6 effects → `Art/Resources/Fx/` (new), each with a `.meta` | none (all 256 / 512 / 64 px PNG with alpha) | Claude Code / claude-opus-5-5 |

@@ -25,14 +25,8 @@ namespace CityBuilder.Client.Tests.EditMode.Art
             "carry_bread", "carry_cut_stone", "carry_flour", "carry_grain", "carry_stone",
         };
 
-        /// <summary>The UI icons (<c>item_</c>, <c>bld_</c>, <c>res_</c> and the id) still shown as initials tiles.</summary>
-        public static readonly string[] Icons =
-        {
-            "item_bread", "item_cut_stone", "item_flour", "item_grain", "item_stone",
-            "bld_bakery", "bld_farm", "bld_quarry", "bld_stonemason", "bld_town_hall", "bld_windmill",
-            "res_bridge_building", "res_guild_of_masons", "res_honest_scales", "res_land_survey", "res_masonry", "res_milling",
-            "res_open_fields", "res_stone_cutting", "res_timber_framing", "res_town_charter",
-        };
+        /// <summary>The UI icons (<c>item_</c>, <c>bld_</c>, <c>res_</c> and the id) still shown as initials tiles: none since BATCH-01 (2026-11-24).</summary>
+        public static readonly string[] Icons = System.Array.Empty<string>();
 
         /// <summary>Whether a name is on one of the lists.</summary>
         /// <param name="list">The list.</param>
