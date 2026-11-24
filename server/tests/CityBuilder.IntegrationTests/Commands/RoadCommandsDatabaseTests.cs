@@ -82,6 +82,30 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
     }
 
     /// <summary>
+    /// With Bridge Building researched, place-roads over the river (M1-03): the grass tile is a road and the water tile a bridge, stored as a
+    /// <c>city_roads</c> row of kind <c>bridge</c>; the coins are one <c>COST_ROAD</c> row of 5 + 60. Removing the bridge deletes its row and
+    /// refunds nothing; the road stays.
+    /// </summary>
+    [Fact]
+    public async Task Post_PlaceABridgeThenRemoveIt_StoresItsKindPaysOnceAndRefundsNothing()
+    {
+        (Guid player, Guid city) = await StoreHandBuiltAsync(Factory, "builder", 1000, [], ["bridge_building"], [House(1)]);
+
+        ApiResponse placed = await PostAsync(_place, player, _requestId, """[{"x":11,"y":5},{"x":12,"y":5}]""");
+
+        Assert.Equal(HttpStatusCode.OK, placed.Status);
+        Assert.Equal("(11,5) L1, (12,5) L1 bridge", await RoadsAsync(city));
+        Assert.Equal([$"coins -65 935 COST_ROAD command {_requestId}"], (await LedgerAsync(Database, city)).Select(Line));
+
+        ApiResponse removed = await PostAsync(_remove, player, Guid.CreateVersion7(), """[{"x":12,"y":5}]""");
+
+        Assert.Equal(HttpStatusCode.OK, removed.Status);
+        Assert.Equal("(11,5) L1", await RoadsAsync(city));
+        Assert.Single(await LedgerAsync(Database, city));
+        Assert.Equal("coins 935", await StockAsync(Database, city));
+    }
+
+    /// <summary>
     /// Removing a road deletes its row and nothing else: no coins back (CR-0008 D6), so no ledger row; the receipt is stored. The freed tile
     /// then takes a building.
     /// </summary>
@@ -319,11 +343,11 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
 
     /// <summary>A city's stored <c>city_roads</c> rows as text, by column then row, read by a context of the test's own.</summary>
     /// <param name="city">The city.</param>
-    /// <returns>For example <c>(6,6) L1, (8,6) L2</c>.</returns>
+    /// <returns>For example <c>(6,6) L1, (8,6) L2</c>, and <c>(12,5) L1 bridge</c> for a bridge.</returns>
     private async Task<string> RoadsAsync(Guid city)
     {
         await using CityBuilderDbContext db = Database.CreateContext();
         List<CityRoadRow> rows = await db.CityRoads.AsNoTracking().Where(row => row.CityId == city).ToListAsync(TestContext.Current.CancellationToken);
-        return string.Join(", ", rows.OrderBy(row => row.X).ThenBy(row => row.Y).Select(row => $"({row.X},{row.Y}) L{row.Level}"));
+        return string.Join(", ", rows.OrderBy(row => row.X).ThenBy(row => row.Y).Select(row => $"({row.X},{row.Y}) L{row.Level}" + (row.Kind == "road" ? string.Empty : " " + row.Kind)));
     }
 }
