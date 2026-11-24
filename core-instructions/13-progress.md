@@ -7,12 +7,11 @@
 ## Resume point
 - **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M1-03 The map: terrain, placement rules, land expansion · branch `task/M1-03-map-terrain` · log `docs/build-log/2026/2026-11-24-01-M1-03.md`
-- **Part / step:** A1 done (checkpoint C1, last commit `089bb0da`); next part B (server), then A2 (stuck walkers), then C (client)
+- **Part / step:** part B nearly done (last commit see git log); left: smoke.http on map tiles, docs 05/07/04 §8 + Docs impact rows, `/checkpoint`; then A2, then C
 - **Last completed:** A1: map, terrain rules, bridge, walks, `NO_PATH`, reset migration, docs 04/05/06/28/29.
-- **Next step:** part B: the test list in the build log; start with the 61 failing `int` tests (Era I layouts at 8 × 8 coordinates,
-  `GET /content` without the map), then OD-13 refusals, the snapshot's `openAreas` and road `kind`.
+- **Next step:** update `docs/api/smoke.http` (coordinates onto area A, e.g. +4,+4; woodcutter beside forest (4,3)), docs per build log "Part B progress", then `/checkpoint` part B.
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. The hosting provider (in M1-13).
-- **Known broken / do not touch:** `test.sh int`: 61 failures from A1's map (part B fixes them).  the owner's local Unity edits (`client/CityBuilder/Assets/Settings/*.asset`, `ProjectSettings/ProjectSettings.asset`,
+- **Known broken / do not touch:**   the owner's local Unity edits (`client/CityBuilder/Assets/Settings/*.asset`, `ProjectSettings/ProjectSettings.asset`,
   `UnityConnectSettings.asset`): leave them uncommitted and don't report them (owner, 2026-11-18). They are hidden with
   `git update-index --skip-worktree` in the owner's clone (undo: `--no-skip-worktree`). The untracked `docs/assets/ready-assets/` (asset
   deliveries for M1-03 … M1-17): leave it, never `git add docs` whole (owner, 2026-11-24).
