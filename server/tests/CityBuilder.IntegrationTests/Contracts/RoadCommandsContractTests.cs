@@ -45,7 +45,7 @@ public sealed class RoadCommandsContractTests(ApiFactory factory) : IClassFixtur
 
     /// <summary>
     /// Each endpoint with each tile list that no city could take (OD-13): none, 65 tiles, a tile twice, a negative column or row, a null tile,
-    /// and <c>tiles</c> null.
+    /// and <c>tiles</c> null; and place-roads with a tile past the map or on forest or rock (M1-03).
     /// </summary>
     public static TheoryData<string, string> BoundaryRefusals
     {
@@ -63,6 +63,15 @@ public sealed class RoadCommandsContractTests(ApiFactory factory) : IClassFixtur
                 {
                     data.Add(path, tiles);
                 }
+            }
+
+            // Tiles no road can ever take on the server's one map (M1-03): past it, on forest, on rock.
+            foreach (string tiles in new[]
+            {
+                """[{"x":18,"y":4}]""", """[{"x":4,"y":4},{"x":4,"y":14}]""", """[{"x":5,"y":5},{"x":2,"y":3}]""", """[{"x":9,"y":3}]""",
+            })
+            {
+                data.Add(_place, tiles);
             }
 
             return data;
@@ -180,8 +189,8 @@ public sealed class RoadCommandsContractTests(ApiFactory factory) : IClassFixtur
 
     /// <summary>
     /// A rule's refusal is Problem Details with the rule's code and status and the request id, and with no time elapsed nothing is saved. The
-    /// checks run over the whole list in the order of <c>04</c> §8: a tile outside the 18 × 14 grid is <c>OUT_OF_BOUNDS</c> also when an
-    /// occupied tile comes first; a building or a road in the way is <c>TILE_OCCUPIED</c>; 25 coins for five tiles with 20 is
+    /// checks run over the whole list in the order of <c>04</c> §8: a tile under mist is <c>LAND_CLOSED</c>; a water tile before the bridge
+    /// is researched is <c>BRIDGE_LOCKED</c> also after a free tile (M1-03); a building or a road in the way is <c>TILE_OCCUPIED</c>; 25 coins for five tiles with 20 is
     /// <c>INSUFFICIENT_RESOURCE</c>; a tile without a road is <c>ROAD_NOT_FOUND</c> also after a road at its last level; a road at its last
     /// level is <c>MAX_LEVEL</c>; 30 coins for two upgrades is <c>INSUFFICIENT_RESOURCE</c>.
     /// </summary>
@@ -190,8 +199,8 @@ public sealed class RoadCommandsContractTests(ApiFactory factory) : IClassFixtur
     /// <param name="status">The expected status.</param>
     /// <param name="code">The expected code.</param>
     [Theory]
-    [InlineData(_place, """[{"x":18,"y":4}]""", (HttpStatusCode)422, "OUT_OF_BOUNDS")]
-    [InlineData(_place, """[{"x":4,"y":4},{"x":4,"y":14}]""", (HttpStatusCode)422, "OUT_OF_BOUNDS")]
+    [InlineData(_place, """[{"x":5,"y":1}]""", (HttpStatusCode)422, "LAND_CLOSED")]
+    [InlineData(_place, """[{"x":11,"y":5},{"x":12,"y":5}]""", (HttpStatusCode)422, "BRIDGE_LOCKED")]
     [InlineData(_place, """[{"x":8,"y":8},{"x":4,"y":4}]""", HttpStatusCode.Conflict, "TILE_OCCUPIED")]
     [InlineData(_place, """[{"x":5,"y":5}]""", HttpStatusCode.Conflict, "TILE_OCCUPIED")]
     [InlineData(_place, """[{"x":8,"y":4},{"x":8,"y":5},{"x":8,"y":6},{"x":8,"y":7},{"x":8,"y":8}]""", (HttpStatusCode)422, "INSUFFICIENT_RESOURCE")]

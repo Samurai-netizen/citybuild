@@ -91,7 +91,7 @@ public sealed class ApiAttackContractTests(ApiFactory factory) : IClassFixture<A
     {
         (FakeCityStore store, WebApplicationFactory<Program> server) = Serve();
         await using WebApplicationFactory<Program> _ = server;
-        string body = Place("\"woodcutter\"", 2, 3);
+        string body = Place("\"woodcutter\"", 4, 3);
         body = body.Insert(1, new string(' ', _maxBodyBytes - body.Length));
 
         ApiResponse response = await ApiClient.PostAsync(server, _placeBuilding, _playerId, body);
@@ -253,7 +253,7 @@ public sealed class ApiAttackContractTests(ApiFactory factory) : IClassFixture<A
     {
         (FakeCityStore store, WebApplicationFactory<Program> server) = Serve();
         await using WebApplicationFactory<Program> _ = server;
-        string body = Place("\"woodcutter\"", 2, 3).Replace("\"x\":2", "\"x\":" + new string('[', 1000) + new string(']', 1000), StringComparison.Ordinal);
+        string body = Place("\"woodcutter\"", 4, 3).Replace("\"x\":4", "\"x\":" + new string('[', 1000) + new string(']', 1000), StringComparison.Ordinal);
 
         ApiResponse response = await ApiClient.PostAsync(server, _placeBuilding, _playerId, body);
 
@@ -277,7 +277,7 @@ public sealed class ApiAttackContractTests(ApiFactory factory) : IClassFixture<A
         (FakeCityStore store, WebApplicationFactory<Program> server) = Serve();
         await using WebApplicationFactory<Program> _ = server;
 
-        ApiResponse response = await ApiClient.PostAsync(server, _placeBuilding, _playerId, Place(typeId, 2, 3));
+        ApiResponse response = await ApiClient.PostAsync(server, _placeBuilding, _playerId, Place(typeId, 4, 3));
 
         AssertInvalidArgument(response);
         Assert.Equal(_requestId, (string)response.Json()["requestId"]!);
@@ -311,27 +311,73 @@ public sealed class ApiAttackContractTests(ApiFactory factory) : IClassFixture<A
     }
 
     /// <summary>
-    /// Coordinates past the 8 × 8 grid, up to the limits of <c>int</c> and past the stored <c>smallint</c>, are <c>OUT_OF_BOUNDS</c> (422) by
-    /// the rule (the content sets the grid's size), and nothing is saved: no building is stored at a wrapped tile.
+    /// Coordinates past the 18 × 14 map, up to the limits of <c>int</c> and past the stored <c>smallint</c>, can never be on it: the server runs
+    /// one map for every city (M1-03), so they are <c>INVALID_ARGUMENT</c> (400) before the city is locked (OD-13; before M1-03 the rule's
+    /// <c>OUT_OF_BOUNDS</c> after the lock), and no building is stored at a wrapped tile.
     /// </summary>
     /// <param name="x">The column.</param>
     /// <param name="y">The row.</param>
     [Theory]
-    [InlineData(8, 8)]
-    [InlineData(8, 0)]
+    [InlineData(18, 14)]
+    [InlineData(18, 0)]
+    [InlineData(0, 14)]
     [InlineData(0, int.MaxValue)]
     [InlineData(32767, 0)]
     [InlineData(32768, 0)]
     [InlineData(65538, 65538)]
-    public async Task Security_CoordinatesPastTheGrid_AreOutOfBoundsAndSaveNothing(int x, int y)
+    public async Task Security_CoordinatesPastTheMap_Are400BeforeTheCityIsLocked(int x, int y)
     {
         (FakeCityStore store, WebApplicationFactory<Program> server) = Serve();
         await using WebApplicationFactory<Program> _ = server;
 
         ApiResponse response = await ApiClient.PostAsync(server, _placeBuilding, _playerId, Place("\"woodcutter\"", x, y));
 
+        AssertInvalidArgument(response);
+        Assert.Equal(_requestId, (string)response.Json()["requestId"]!);
+        AssertNothingRan(store);
+    }
+
+    /// <summary>
+    /// A building on a tile where its type can never stand on the server's map (M1-03, OD-13) is <c>INVALID_ARGUMENT</c> (400) before the
+    /// city is locked: on water, forest or rock, a Woodcutter's Hut with no forest beside it, a Quarry with no rock beside it, a Farm off
+    /// fertile soil (also while the Farm is still locked: the tile is wrong for every city).
+    /// </summary>
+    /// <param name="typeId">The building type.</param>
+    /// <param name="x">The column.</param>
+    /// <param name="y">The row.</param>
+    [Theory]
+    [InlineData("house", 12, 5)]
+    [InlineData("house", 2, 3)]
+    [InlineData("house", 9, 3)]
+    [InlineData("woodcutter", 6, 6)]
+    [InlineData("quarry", 5, 5)]
+    [InlineData("farm", 5, 5)]
+    public async Task Security_BuildingWhereItsTypeCanNeverStand_Is400BeforeTheCityIsLocked(string typeId, int x, int y)
+    {
+        (FakeCityStore store, WebApplicationFactory<Program> server) = Serve();
+        await using WebApplicationFactory<Program> _ = server;
+
+        ApiResponse response = await ApiClient.PostAsync(server, _placeBuilding, _playerId, Place($"\"{typeId}\"", x, y));
+
+        AssertInvalidArgument(response);
+        Assert.Equal(_requestId, (string)response.Json()["requestId"]!);
+        AssertNothingRan(store);
+    }
+
+    /// <summary>
+    /// A tile that some city could use but this one can't yet is the rule's, after the lock: land under mist is <c>LAND_CLOSED</c> (422), and
+    /// nothing is saved.
+    /// </summary>
+    [Fact]
+    public async Task Security_BuildingOnClosedLand_IsTheRulesLandClosed()
+    {
+        (FakeCityStore store, WebApplicationFactory<Program> server) = Serve();
+        await using WebApplicationFactory<Program> _ = server;
+
+        ApiResponse response = await ApiClient.PostAsync(server, _placeBuilding, _playerId, Place("\"house\"", 5, 1));
+
         Assert.Equal(HttpStatusCode.UnprocessableEntity, response.Status);
-        Assert.Equal("OUT_OF_BOUNDS", (string)response.Json()["code"]!);
+        Assert.Equal("LAND_CLOSED", (string)response.Json()["code"]!);
         AssertNothingRan(store, lockedOnce: true);
     }
 
@@ -350,7 +396,7 @@ public sealed class ApiAttackContractTests(ApiFactory factory) : IClassFixture<A
             server,
             $"{_placeBuilding}?playerId={_otherPlayerId}",
             _playerId,
-            new StringContent(Place("\"woodcutter\"", 2, 3), Encoding.UTF8, "application/json"),
+            new StringContent(Place("\"woodcutter\"", 4, 3), Encoding.UTF8, "application/json"),
             headers);
 
         Assert.Equal(HttpStatusCode.OK, response.Status);
@@ -371,7 +417,7 @@ public sealed class ApiAttackContractTests(ApiFactory factory) : IClassFixture<A
         await using WebApplicationFactory<Program> _ = server;
 
         ApiResponse response = await ApiClient.PostAsync(
-            server, _placeBuilding, _playerId, new StringContent(Place("\"woodcutter\"", 2, 3), Encoding.UTF8, contentType), headers: null);
+            server, _placeBuilding, _playerId, new StringContent(Place("\"woodcutter\"", 4, 3), Encoding.UTF8, contentType), headers: null);
 
         Assert.Equal(HttpStatusCode.UnsupportedMediaType, response.Status);
         AssertNothingRan(store);
@@ -421,8 +467,8 @@ public sealed class ApiAttackContractTests(ApiFactory factory) : IClassFixture<A
     {
         string template = padIn switch
         {
-            "junk" => Place("\"woodcutter\"", 2, 3).Replace("}", ",\"junk\":\"{0}\"}", StringComparison.Ordinal),
-            "id" => Place("\"{0}\"", 2, 3),
+            "junk" => Place("\"woodcutter\"", 4, 3).Replace("}", ",\"junk\":\"{0}\"}", StringComparison.Ordinal),
+            "id" => Place("\"{0}\"", 4, 3),
             "name" => "{\"displayName\":\"{0}\"}",
             _ => throw new ArgumentOutOfRangeException(nameof(padIn), padIn, "No such padding."),
         };
