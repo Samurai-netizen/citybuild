@@ -7,9 +7,9 @@
 ## Resume point
 - **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M1-03 The map: terrain, placement rules, land expansion · branch `task/M1-03-map-terrain` · log `docs/build-log/2026/2026-11-24-01-M1-03.md`
-- **Part / step:** A1, B, A2 and the full run after A done; next part C (client)
-- **Last completed:** A2: stuck walkers (courier `Blocked` + `waitsAt`, trip legs `BlockedAtSource`/`BlockedAtTarget`), migration `BlockedWalkers`, snapshot, 04/05/06.
-- **Next step:** part C from the build log's test list (client terrain, hints, camera, mist, AR-M1-03); at the finish close CHANGELOG and the module pages.
+- **Part / step:** A1, B, A2, the full run after A and C (client) done (checkpoint C4); next the finish
+- **Last completed:** C: the client reads and draws the map (terrain, bridges, mist, hints, camera limits), AR-M1-03 accepted; Unity tests green.
+- **Next step:** the finish: module docs (Api, Application, Infrastructure, Simulation, Client.Net, Client.Presentation, DocTools), CHANGELOG, 12, 28/29, how-tos, `docs/testing`, the 7-day scripted run, `quality.sh`, `/finish-task`.
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. The hosting provider (in M1-13).
 - **Known broken / do not touch:**   the owner's local Unity edits (`client/CityBuilder/Assets/Settings/*.asset`, `ProjectSettings/ProjectSettings.asset`,
   `UnityConnectSettings.asset`): leave them uncommitted and don't report them (owner, 2026-11-18). They are hidden with
@@ -17,7 +17,7 @@
   deliveries for M1-03 … M1-17): leave it, never `git add docs` whole (owner, 2026-11-24).
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
 - **Verify with:** in the loop `bash scripts/dev/test.sh <area> [filter]`, at a checkpoint `bash scripts/dev/test.sh changed`, at the finish
-  `bash scripts/dev/quality.sh` (as CI; `08` → Test tiers) · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
+  `bash scripts/dev/quality.sh` (as CI; `08` → Test tiers) · `UNITY_EDITOR=/Applications/Unity/Hub/Editor/6000.3.25f1/Unity.app bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
 **M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` (remaining tasks grouped in `docs/plan/M1-PLAN.md` §3) · tasks done: 87 / 88 (M0-71 skipped) · next milestone: `docs/plan/M1-PLAN.md` (approved 2026-11-23, CR-0011)
