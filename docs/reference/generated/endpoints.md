@@ -64,6 +64,14 @@ The request and response bodies. The document types numbers as `integer` or `str
 | `name` | `string` | yes | no |
 | `percent` | `int32` | yes | no |
 
+### ContentBridge
+
+| Property | Type | Required | Null |
+|---|---|---|---|
+| `name` | `string` | yes | no |
+| `tileMillis` | `int64` | yes | no |
+| `cost` | map of `int64` | yes | no |
+
 ### ContentBuilding
 
 | Property | Type | Required | Null |
@@ -78,6 +86,7 @@ The request and response bodies. The document types numbers as `integer` or `str
 | `cost` | map of `int64` | yes | no |
 | `buildSeconds` | `int64` | yes | no |
 | `baseMaxLevel` | `int32` | yes | no |
+| `site` | `string` | yes | yes |
 | `levels` | [ContentBuildingLevel](#contentbuildinglevel)[] | yes | no |
 
 ### ContentBuildingLevel
@@ -112,6 +121,16 @@ The request and response bodies. The document types numbers as `integer` or `str
 | `currency` | `boolean` | yes | no |
 | `tradable` | `boolean` | yes | no |
 
+### ContentMap
+
+| Property | Type | Required | Null |
+|---|---|---|---|
+| `id` | `string` | yes | no |
+| `startArea` | `string` | yes | no |
+| `roughTileMillis` | `int64` | yes | no |
+| `tiles` | `string`[] | yes | no |
+| `areas` | `string`[] | yes | no |
+
 ### ContentRecipe
 
 | Property | Type | Required | Null |
@@ -142,6 +161,7 @@ The request and response bodies. The document types numbers as `integer` or `str
 | `permille` | `int32` | yes | yes |
 | `amount` | `int64` | yes | yes |
 | `mode` | `string` | yes | yes |
+| `area` | `string` | yes | yes |
 
 ### ContentResponse
 
@@ -156,6 +176,8 @@ The request and response bodies. The document types numbers as `integer` or `str
 | `research` | [ContentResearch](#contentresearch)[] | yes | no |
 | `roads` | [ContentRoadLevel](#contentroadlevel)[] | yes | no |
 | `amountPresets` | [ContentAmountPreset](#contentamountpreset)[] | yes | no |
+| `map` | [ContentMap](#contentmap) | yes | yes |
+| `bridge` | [ContentBridge](#contentbridge) | yes | yes |
 
 ### ContentRoadLevel
 
@@ -305,6 +327,7 @@ The request and response bodies. The document types numbers as `integer` or `str
 | `era` | `int32` | yes | no |
 | `purse` | `int64` | yes | no |
 | `chartered` | `boolean` | yes | no |
+| `openAreas` | `string`[] | yes | no |
 | `totals` | map of `int64` | yes | no |
 | `workers` | [SnapshotWorkers](#snapshotworkers) | yes | no |
 | `builders` | [SnapshotBuilders](#snapshotbuilders) | yes | no |
@@ -366,6 +389,7 @@ The request and response bodies. The document types numbers as `integer` or `str
 | `x` | `int32` | yes | no |
 | `y` | `int32` | yes | no |
 | `level` | `int32` | yes | no |
+| `kind` | `string` | yes | no |
 
 ### SnapshotRoute
 

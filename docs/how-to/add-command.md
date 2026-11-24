@@ -53,8 +53,10 @@ or return `null` when the command names no one content id (the road, route and c
 A list in the body becomes a list of a small record with properties, as the road commands' tiles are `CommandTile(X, Y)` (CR-0008-T1
 part D): the payload serializes properties, so a value tuple's fields would hash every list alike. Its order is part of the payload.
 `ValidateShape` refuses only what no city state could make valid: an id that can't be a content id (`ContentIds`, the format the content
-loader enforces; M0-30) and a negative coordinate (OD-13, M0-31), checked before the lock. Everything else is the rule's job: coordinates past
-the grid's width or height, which the content sets, are `OUT_OF_BOUNDS`, not a shape error. A renamed property or command type changes every stored hash, and an old request id then
+loader enforces; M0-30) and a negative coordinate (OD-13, M0-31), checked before the lock. A command that names tiles can also implement `ValidateOnContent(content)` (a default
+`null` on `ICityCommand`; M1-03): the server runs one map, so a tile past it or terrain its building or road can never use is
+`INVALID_ARGUMENT` before the lock too (`PlaceBuildingCommand`, `PlaceRoadsCommand`). Everything that depends on the city (land under
+mist, the bridge's research) stays the rule's job. A renamed property or command type changes every stored hash, and an old request id then
 conflicts, so pin the payload in a test.
 
 `UpgradeBuildingCommand` (M0-31) is the same with `BuildingId` as its data, `COST_UPGRADE` and a refund reason, `REFUND_UPGRADE`, for a
