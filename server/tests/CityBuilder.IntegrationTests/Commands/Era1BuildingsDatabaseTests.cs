@@ -31,6 +31,12 @@ public sealed class Era1BuildingsDatabaseTests(PostgresServer server) : Postgres
     /// <summary>The Era I content, as the server loads it.</summary>
     private static GameContent Content => CharterPlayer.Content;
 
+    /// <summary>The bridge of the tests' cities (M1-03): the east bank, where the Farm stands, is reached over it.</summary>
+    private static readonly RoadTile _bridge = new(12, 5, 1, isBridge: true);
+
+    /// <summary>The research that opens the east bank (area C) and unlocks the bridge, and nothing else the tests measure.</summary>
+    private static readonly string[] _mapResearch = ["bridge_building", "open_fields"];
+
     /// <summary>Every building type of the content.</summary>
     public static TheoryData<string> Types => [.. Content.Buildings.Select(building => building.Id.Value)];
 
@@ -69,9 +75,11 @@ public sealed class Era1BuildingsDatabaseTests(PostgresServer server) : Postgres
     {
         BuildingDefinition definition = Definition(type);
         string[] everyResearch = [.. Content.Research.Select(node => node.Id.Value)];
-        (Guid player, Guid city) = await StoreResearchedCityAsync(Factory, "builder", 10_000, everyResearch, House(1), House(2, x: 1), StockedWarehouse(definition.Cost));
+        (Guid player, Guid city) = await StoreHandBuiltAsync(
+            Factory, "builder", 10_000, [_bridge], everyResearch, [House(1), House(2, x: 1), StockedWarehouse(definition.Cost)]);
+        (int x, int y) = TileFor(definition);
 
-        await PostOkAsync(player, "place-building", $$"""{"requestId":"{{Guid.NewGuid()}}","buildingTypeId":"{{type}}","x":4,"y":4}""");
+        await PostOkAsync(player, "place-building", $$"""{"requestId":"{{Guid.NewGuid()}}","buildingTypeId":"{{type}}","x":{{x}},"y":{{y}}}""");
         await SendGoodsAsync(player, definition.Cost);
         Factory.Clock.Advance(_projectTime);
 
@@ -84,8 +92,8 @@ public sealed class Era1BuildingsDatabaseTests(PostgresServer server) : Postgres
     }
 
     /// <summary>
-    /// Each producer, idle at level 1 with the inputs of two cycles in its store and no research: given its level's workers, it makes the
-    /// outputs of two cycles in two cycles' time (goods into its store, coins into the purse).
+    /// Each producer, idle at level 1 with the inputs of two cycles in its store and only the map's research (<see cref="_mapResearch"/>):
+    /// given its level's workers, it makes the outputs of two cycles in two cycles' time (goods into its store, coins into the purse).
     /// </summary>
     /// <param name="type">The producer type.</param>
     /// <returns>A task that completes when the outputs are checked.</returns>
@@ -96,9 +104,11 @@ public sealed class Era1BuildingsDatabaseTests(PostgresServer server) : Postgres
         BuildingDefinition definition = Definition(type);
         BuildingLevelDefinition level = definition.GetLevel(1);
         RecipeDefinition recipe = level.Recipe!;
-        var producer = new Building(_subject, definition.Id, 4, 4, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0,
+        (int x, int y) = TileFor(definition);
+        var producer = new Building(_subject, definition.Id, x, y, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0,
             recipe.Inputs.Select(input => new KeyValuePair<ItemId, long>(input.Item, 2 * input.Quantity)));
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "producer", 0, House(1), House(2, x: 1), StockedWarehouse([]), producer);
+        (Guid player, Guid city) = await StoreHandBuiltAsync(
+            Factory, "producer", 0, [_bridge], _mapResearch, [House(1), House(2, x: 1), StockedWarehouse([]), producer]);
 
         await PostOkAsync(player, "assign-workers", $$"""{"requestId":"{{Guid.NewGuid()}}","buildingId":{{_subject}},"workers":{{level.MaxWorkers}}}""");
         Factory.Clock.Advance(TimeSpan.FromSeconds(2 * IntegerMath.CeilDiv(recipe.Labor, level.MaxWorkers)));
@@ -114,7 +124,7 @@ public sealed class Era1BuildingsDatabaseTests(PostgresServer server) : Postgres
     }
 
     /// <summary>
-    /// Each type with a second level, idle at level 1 without research: the upgrade answers 200 and pays its coins; its goods arrive by trips
+    /// Each type with a second level, idle at level 1 with only the map's research: the upgrade answers 200 and pays its coins; its goods arrive by trips
     /// (a courier station's own couriers carry them); within the hour it is at level 2.
     /// </summary>
     /// <param name="type">The building type.</param>
@@ -125,8 +135,10 @@ public sealed class Era1BuildingsDatabaseTests(PostgresServer server) : Postgres
     {
         BuildingDefinition definition = Definition(type);
         IReadOnlyList<ItemQuantity> cost = definition.GetLevel(2).UpgradeCost;
-        var idle = new Building(_subject, definition.Id, 4, 4, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
-        (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 10_000, House(1), House(2, x: 1), StockedWarehouse(cost), idle);
+        (int x, int y) = TileFor(definition);
+        var idle = new Building(_subject, definition.Id, x, y, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
+        (Guid player, Guid city) = await StoreHandBuiltAsync(
+            Factory, "upgrader", 10_000, [_bridge], _mapResearch, [House(1), House(2, x: 1), StockedWarehouse(cost), idle]);
 
         if (definition.Kind == BuildingKind.CourierStation)
         {
@@ -151,11 +163,25 @@ public sealed class Era1BuildingsDatabaseTests(PostgresServer server) : Postgres
         return definition;
     }
 
-    /// <summary>A level-1 warehouse (id 3) on (2, 0) holding exactly the goods of <paramref name="cost"/> (not its coins).</summary>
+    /// <summary>
+    /// The tile the building under test stands on, where its type may stand on the map (M1-03): a Woodcutter's Hut beside forest, a Quarry
+    /// beside rock, a Farm on the east bank's fertile soil, any other type on open grass.
+    /// </summary>
+    /// <param name="definition">The type.</param>
+    /// <returns>The tile.</returns>
+    private static (int X, int Y) TileFor(BuildingDefinition definition) => definition.Site switch
+    {
+        BuildingSite.NearForest => (4, 5),
+        BuildingSite.NearRock => (9, 4),
+        BuildingSite.FertileSoil => (13, 4),
+        _ => (8, 8),
+    };
+
+    /// <summary>A level-1 warehouse (id 3) on (6, 4) holding exactly the goods of <paramref name="cost"/> (not its coins).</summary>
     /// <param name="cost">A cost.</param>
     /// <returns>The building.</returns>
     private static Building StockedWarehouse(IReadOnlyList<ItemQuantity> cost) =>
-        new(3, new BuildingTypeId("warehouse"), 2, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0,
+        new(3, new BuildingTypeId("warehouse"), 6, 4, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0,
             cost.Where(amount => amount.Item != Content.Currency).Select(amount => new KeyValuePair<ItemId, long>(amount.Item, amount.Quantity)));
 
     /// <summary>The coins of a cost.</summary>

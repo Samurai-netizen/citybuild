@@ -18,7 +18,7 @@ namespace CityBuilder.IntegrationTests.Commands;
 /// <c>POST /api/v1/commands/place-roads</c>, <c>upgrade-roads</c> and <c>remove-roads</c> end to end on PostgreSQL over HTTP (CR-0008-T1 part
 /// D): the server's real content (an 8 × 8 grid; Dirt path, 5 coins a tile; Log road, 15 coins a tile to upgrade to, the last level),
 /// endpoints, pipeline and repositories, the server clock a <c>FakeTimeProvider</c> at <see cref="PostgresApiFactory.Start"/>. Each test
-/// stores a city built by hand at clock 0 (a house at (0,0), a woodcutter at (1,1); <see cref="HandBuiltCities.StoreCityWithRoadsAsync"/>)
+/// stores a city built by hand at clock 0 (a house at (4,4), a woodcutter at (5,5); <see cref="HandBuiltCities.StoreCityWithRoadsAsync"/>)
 /// and checks what was stored, not only the status: the <c>city_roads</c> rows, the stock, the ledger and the receipts.
 /// </summary>
 /// <param name="server">The run's PostgreSQL server.</param>
@@ -37,8 +37,8 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
     /// <summary>The request id most tests send.</summary>
     private static readonly Guid _requestId = new("1de9e700-0000-4000-8000-0000000004c1");
 
-    /// <summary>The roads of the refusal tests' city: a Dirt path at (2,2) and a Log road (the last level) at (4,2).</summary>
-    private static readonly RoadTile[] _twoRoads = [new RoadTile(2, 2, 1), new RoadTile(4, 2, 2)];
+    /// <summary>The roads of the refusal tests' city: a Dirt path at (6,6) and a Log road (the last level) at (8,6).</summary>
+    private static readonly RoadTile[] _twoRoads = [new RoadTile(6, 6, 1), new RoadTile(8, 6, 2)];
 
     /// <summary>
     /// Placing three roads stores three <c>city_roads</c> rows at level 1, pays 15 coins as one <c>COST_ROAD</c> row with the request id as
@@ -49,7 +49,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
     {
         (Guid player, Guid city) = await StoreCityAsync(Factory, "builder", 1000, House(1), Woodcutter(2, BuildingPhase.Idle, workers: 0));
 
-        ApiResponse response = await PostAsync(_place, player, _requestId, """[{"x":4,"y":2},{"x":2,"y":2},{"x":3,"y":2}]""");
+        ApiResponse response = await PostAsync(_place, player, _requestId, """[{"x":8,"y":6},{"x":6,"y":6},{"x":7,"y":6}]""");
 
         Assert.Equal(HttpStatusCode.OK, response.Status);
         Assert.Equal("(2,2) L1, (3,2) L1, (4,2) L1", await RoadsAsync(city));
@@ -63,7 +63,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
 
         Factory.Clock.Advance(TimeSpan.FromMinutes(1));
         JsonNode later = (await ApiClient.GetAsync(Factory, "/api/v1/city", player)).Json();
-        Assert.Equal("""[{"x":2,"y":2,"level":1},{"x":3,"y":2,"level":1},{"x":4,"y":2,"level":1}]""", later["city"]!["roads"]!.ToJsonString());
+        Assert.Equal("""[{"x":6,"y":6,"level":1},{"x":7,"y":6,"level":1},{"x":8,"y":6,"level":1}]""", later["city"]!["roads"]!.ToJsonString());
     }
 
     /// <summary>Upgrading two Dirt paths stores them at level 2 and pays 30 coins (15 a tile) as one <c>COST_ROAD</c> row.</summary>
@@ -71,9 +71,9 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
     public async Task Post_UpgradeTwoRoads_RaisesTheStoredLevelsAndPays()
     {
         (Guid player, Guid city) = await StoreCityWithRoadsAsync(
-            Factory, "builder", 1000, [new RoadTile(2, 2, 1), new RoadTile(3, 2, 1), new RoadTile(4, 2, 2)], House(1));
+            Factory, "builder", 1000, [new RoadTile(6, 6, 1), new RoadTile(7, 6, 1), new RoadTile(8, 6, 2)], House(1));
 
-        ApiResponse response = await PostAsync(_upgrade, player, _requestId, """[{"x":3,"y":2},{"x":2,"y":2}]""");
+        ApiResponse response = await PostAsync(_upgrade, player, _requestId, """[{"x":7,"y":6},{"x":6,"y":6}]""");
 
         Assert.Equal(HttpStatusCode.OK, response.Status);
         Assert.Equal("(2,2) L2, (3,2) L2, (4,2) L2", await RoadsAsync(city));
@@ -90,7 +90,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
     {
         (Guid player, Guid city) = await StoreCityWithRoadsAsync(Factory, "builder", 1000, _twoRoads, House(1));
 
-        ApiResponse response = await PostAsync(_remove, player, _requestId, """[{"x":4,"y":2}]""");
+        ApiResponse response = await PostAsync(_remove, player, _requestId, """[{"x":8,"y":6}]""");
 
         Assert.Equal(HttpStatusCode.OK, response.Status);
         Assert.Equal("(2,2) L1", await RoadsAsync(city));
@@ -99,12 +99,12 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
         Assert.Equal(RemoveRoadsCommand.Type, Assert.Single(await ReceiptsAsync(Database, player)).CommandType);
 
         ApiResponse place = await ApiClient.PostAsync(
-            Factory, "/api/v1/commands/place-building", player, $$"""{"requestId":"{{Guid.CreateVersion7()}}","buildingTypeId":"house","x":4,"y":2}""");
+            Factory, "/api/v1/commands/place-building", player, $$"""{"requestId":"{{Guid.CreateVersion7()}}","buildingTypeId":"house","x":8,"y":6}""");
         Assert.Equal(HttpStatusCode.OK, place.Status);
     }
 
     /// <summary>
-    /// A building can't be placed on a road (<c>04</c> §8, CR-0008): <c>place-building</c> on the Dirt path at (2,2) is <c>TILE_OCCUPIED</c>
+    /// A building can't be placed on a road (<c>04</c> §8, CR-0008): <c>place-building</c> on the Dirt path at (6,6) is <c>TILE_OCCUPIED</c>
     /// (409), and only its player event is stored (CR-0009).
     /// </summary>
     [Fact]
@@ -114,7 +114,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
         string stored = await StoredAsync(Factory, Database, player, city);
 
         ApiResponse response = await ApiClient.PostAsync(
-            Factory, "/api/v1/commands/place-building", player, $$"""{"requestId":"{{_requestId}}","buildingTypeId":"house","x":2,"y":2}""");
+            Factory, "/api/v1/commands/place-building", player, $$"""{"requestId":"{{_requestId}}","buildingTypeId":"house","x":6,"y":6}""");
 
         Assert.Equal((HttpStatusCode.Conflict, "TILE_OCCUPIED"), (response.Status, (string)response.Json()["code"]!));
         await AssertStoredWithRefusalsAsync(Factory, Database, player, city, stored, "TILE_OCCUPIED");
@@ -132,14 +132,14 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
     /// <param name="status">The expected status.</param>
     /// <param name="code">The expected code.</param>
     [Theory]
-    [InlineData(_place, """[{"x":0,"y":0}]""", 1000, HttpStatusCode.Conflict, "TILE_OCCUPIED")]
-    [InlineData(_place, """[{"x":5,"y":5},{"x":2,"y":2}]""", 1000, HttpStatusCode.Conflict, "TILE_OCCUPIED")]
-    [InlineData(_place, """[{"x":5,"y":5},{"x":8,"y":5}]""", 1000, (HttpStatusCode)422, "OUT_OF_BOUNDS")]
-    [InlineData(_place, """[{"x":5,"y":5},{"x":5,"y":6},{"x":5,"y":7}]""", 14, (HttpStatusCode)422, "INSUFFICIENT_RESOURCE")]
-    [InlineData(_upgrade, """[{"x":5,"y":5}]""", 1000, HttpStatusCode.NotFound, "ROAD_NOT_FOUND")]
-    [InlineData(_upgrade, """[{"x":4,"y":2}]""", 1000, (HttpStatusCode)422, "MAX_LEVEL")]
-    [InlineData(_upgrade, """[{"x":2,"y":2}]""", 14, (HttpStatusCode)422, "INSUFFICIENT_RESOURCE")]
-    [InlineData(_remove, """[{"x":2,"y":2},{"x":5,"y":5}]""", 1000, HttpStatusCode.NotFound, "ROAD_NOT_FOUND")]
+    [InlineData(_place, """[{"x":4,"y":4}]""", 1000, HttpStatusCode.Conflict, "TILE_OCCUPIED")]
+    [InlineData(_place, """[{"x":9,"y":9},{"x":6,"y":6}]""", 1000, HttpStatusCode.Conflict, "TILE_OCCUPIED")]
+    [InlineData(_place, """[{"x":9,"y":9},{"x":8,"y":5}]""", 1000, (HttpStatusCode)422, "OUT_OF_BOUNDS")]
+    [InlineData(_place, """[{"x":9,"y":9},{"x":9,"y":10},{"x":9,"y":11}]""", 14, (HttpStatusCode)422, "INSUFFICIENT_RESOURCE")]
+    [InlineData(_upgrade, """[{"x":9,"y":9}]""", 1000, HttpStatusCode.NotFound, "ROAD_NOT_FOUND")]
+    [InlineData(_upgrade, """[{"x":8,"y":6}]""", 1000, (HttpStatusCode)422, "MAX_LEVEL")]
+    [InlineData(_upgrade, """[{"x":6,"y":6}]""", 14, (HttpStatusCode)422, "INSUFFICIENT_RESOURCE")]
+    [InlineData(_remove, """[{"x":6,"y":6},{"x":9,"y":9}]""", 1000, HttpStatusCode.NotFound, "ROAD_NOT_FOUND")]
     public async Task Post_RuleRefuses_IsProblemAndStoresOnlyItsEvent(string path, string tiles, long coins, HttpStatusCode status, string code)
     {
         (Guid player, Guid city) = await StoreCityWithRoadsAsync(
@@ -162,13 +162,13 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
     /// <param name="tiles">The <c>tiles</c> JSON sent.</param>
     [Theory]
     [InlineData(_place, "[]")]
-    [InlineData(_place, """[{"x":5,"y":5},{"x":5,"y":5}]""")]
+    [InlineData(_place, """[{"x":9,"y":9},{"x":9,"y":9}]""")]
     [InlineData(_place, """[{"x":-1,"y":5}]""")]
     [InlineData(_upgrade, "[]")]
-    [InlineData(_upgrade, """[{"x":2,"y":2},{"x":2,"y":2}]""")]
+    [InlineData(_upgrade, """[{"x":6,"y":6},{"x":6,"y":6}]""")]
     [InlineData(_upgrade, """[{"x":2,"y":-2}]""")]
     [InlineData(_remove, "[]")]
-    [InlineData(_remove, """[{"x":2,"y":2},{"x":2,"y":2}]""")]
+    [InlineData(_remove, """[{"x":6,"y":6},{"x":6,"y":6}]""")]
     [InlineData(_remove, """[{"x":-2,"y":2}]""")]
     public async Task Security_TileListNoCityCouldTake_Is400AndStoresNothing(string path, string tiles)
     {
@@ -194,7 +194,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
         Factory.Clock.Advance(TimeSpan.FromMinutes(5));
         string stored = await StoredAsync(Factory, Database, player, city);
 
-        ApiResponse response = await PostAsync(_upgrade, player, _requestId, """[{"x":2,"y":2,"level":9}]""");
+        ApiResponse response = await PostAsync(_upgrade, player, _requestId, """[{"x":6,"y":6,"level":9}]""");
 
         Assert.Equal(HttpStatusCode.BadRequest, response.Status);
         Assert.Equal(stored, await StoredAsync(Factory, Database, player, city));
@@ -205,11 +205,11 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
     public async Task Post_SameRequestAgain_ReturnsTheSameBytesAndWritesNothing()
     {
         (Guid player, Guid city) = await StoreCityAsync(Factory, "builder", 1000, House(1));
-        ApiResponse first = await PostAsync(_place, player, _requestId, """[{"x":5,"y":5}]""");
+        ApiResponse first = await PostAsync(_place, player, _requestId, """[{"x":9,"y":9}]""");
         string stored = await StoredAsync(Factory, Database, player, city);
         Factory.Clock.Advance(TimeSpan.FromMinutes(1));
 
-        ApiResponse retry = await PostAsync(_place, player, _requestId, """[{"x":5,"y":5}]""");
+        ApiResponse retry = await PostAsync(_place, player, _requestId, """[{"x":9,"y":9}]""");
 
         Assert.Equal((HttpStatusCode.OK, HttpStatusCode.OK), (first.Status, retry.Status));
         Assert.Equal(first.Body, retry.Body);
@@ -221,10 +221,10 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
     public async Task Post_SameRequestIdWithOtherTiles_Is409AndWritesNothing()
     {
         (Guid player, Guid city) = await StoreCityAsync(Factory, "builder", 1000, House(1));
-        await PostAsync(_place, player, _requestId, """[{"x":5,"y":5}]""");
+        await PostAsync(_place, player, _requestId, """[{"x":9,"y":9}]""");
         string stored = await StoredAsync(Factory, Database, player, city);
 
-        ApiResponse response = await PostAsync(_place, player, _requestId, """[{"x":6,"y":5}]""");
+        ApiResponse response = await PostAsync(_place, player, _requestId, """[{"x":10,"y":9}]""");
 
         Assert.Equal((HttpStatusCode.Conflict, "IDEMPOTENCY_CONFLICT"), (response.Status, (string)response.Json()["code"]!));
         Assert.Equal(stored, await StoredAsync(Factory, Database, player, city));
@@ -240,7 +240,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
         (Guid player, Guid city) = await StoreCityAsync(Factory, "builder", 1000, House(1));
 
         ApiResponse[] responses = await Task.WhenAll(
-            PostAsync(_place, player, _requestId, """[{"x":5,"y":5}]"""), PostAsync(_place, player, _requestId, """[{"x":5,"y":5}]"""));
+            PostAsync(_place, player, _requestId, """[{"x":9,"y":9}]"""), PostAsync(_place, player, _requestId, """[{"x":9,"y":9}]"""));
 
         Assert.All(responses, response => Assert.Equal(HttpStatusCode.OK, response.Status));
         Assert.Equal(responses[0].Body, responses[1].Body);
@@ -259,7 +259,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
         (Guid player, Guid city) = await StoreCityAsync(Factory, "builder", 1000, House(1));
 
         ApiResponse[] responses = await Task.WhenAll(
-            PostAsync(_place, player, Guid.CreateVersion7(), """[{"x":5,"y":5}]"""), PostAsync(_place, player, Guid.CreateVersion7(), """[{"x":5,"y":5}]"""));
+            PostAsync(_place, player, Guid.CreateVersion7(), """[{"x":9,"y":9}]"""), PostAsync(_place, player, Guid.CreateVersion7(), """[{"x":9,"y":9}]"""));
 
         Assert.Equal(
             ["OK", "TILE_OCCUPIED"],
@@ -278,10 +278,10 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
     {
         (Guid owner, Guid ownerCity) = await StoreCityAsync(Factory, "owner", 1000, House(1));
         (Guid other, Guid otherCity) = await StoreCityAsync(Factory, "other", 1000, House(1));
-        await PostAsync(_place, owner, _requestId, """[{"x":5,"y":5}]""");
+        await PostAsync(_place, owner, _requestId, """[{"x":9,"y":9}]""");
         string ownerStored = await StoredAsync(Factory, Database, owner, ownerCity);
 
-        ApiResponse response = await PostAsync(_place, other, _requestId, """[{"x":6,"y":6},{"x":6,"y":7}]""");
+        ApiResponse response = await PostAsync(_place, other, _requestId, """[{"x":10,"y":10},{"x":10,"y":11}]""");
 
         Assert.Equal(HttpStatusCode.OK, response.Status);
         Assert.Equal("(6,6) L1, (6,7) L1", await RoadsAsync(otherCity));
@@ -299,7 +299,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
         (Guid player, Guid city) = await StoreCityAsync(Factory, "builder", 1000, House(1), Woodcutter(2, BuildingPhase.Producing, workers: 2));
         Factory.Clock.Advance(TimeSpan.FromSeconds(30));
 
-        ApiResponse response = await PostAsync(_place, player, _requestId, """[{"x":5,"y":5}]""");
+        ApiResponse response = await PostAsync(_place, player, _requestId, """[{"x":9,"y":9}]""");
 
         Assert.Equal(HttpStatusCode.OK, response.Status);
         Assert.Equal(30L, (long)response.Json()["city"]!["clock"]!);

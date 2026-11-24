@@ -24,7 +24,7 @@ public sealed class CommandRejectionDatabaseTests(PostgresServer server) : Postg
     private static readonly Guid _requestId = new("1de9e700-0000-4000-8000-0000000000c1");
 
     /// <summary>A house on the tile of the city's house (0, 0): refused with <c>TILE_OCCUPIED</c>.</summary>
-    private static readonly PlaceTestCommand _onTheHouse = new(_requestId, "house", 0, 0);
+    private static readonly PlaceTestCommand _onTheHouse = new(_requestId, "house", 4, 4);
 
     /// <summary>
     /// A rejection 10 minutes after the last settle commits the settlement: the city is saved once (version + 1) and ends exactly as its twin

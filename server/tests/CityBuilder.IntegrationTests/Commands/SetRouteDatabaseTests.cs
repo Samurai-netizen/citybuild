@@ -14,8 +14,8 @@ namespace CityBuilder.IntegrationTests.Commands;
 /// <summary>
 /// <c>POST /api/v1/commands/set-route</c> end to end on PostgreSQL over HTTP (CR-0008-T1 part G): the server's real content (a courier station
 /// level 1 takes 2 couriers carrying 10), endpoint, pipeline and repositories, the server clock a <c>FakeTimeProvider</c> at
-/// <see cref="PostgresApiFactory.Start"/>. Each test stores a city built by hand at clock 0 (house 1 at (0,0), woodcutter 2 at (1,1) with 30
-/// logs, warehouse 3 at (1,3), courier station 4 at (3,3)), staffs the station over HTTP and checks the stored rows: <c>city_couriers</c>,
+/// <see cref="PostgresApiFactory.Start"/>. Each test stores a city built by hand at clock 0 (house 1 at (4,4), woodcutter 2 at (5,5) with 30
+/// logs, warehouse 3 at (5,7), courier station 4 at (7,7)), staffs the station over HTTP and checks the stored rows: <c>city_couriers</c>,
 /// <c>city_courier_loads</c>, <c>city_route_actions</c>, the stores, the ledger and the receipts.
 /// </summary>
 /// <param name="server">The run's PostgreSQL server.</param>

@@ -30,7 +30,7 @@ public sealed class ApiAttackDatabaseTests(PostgresServer server) : PostgresTest
     private const string _requestId = "1de9e700-0000-4000-8000-0000000003b1";
 
     /// <summary>A valid body: a house (50 coins, 30 s) on tile (0, 0).</summary>
-    private const string _placeHouse = $$"""{"requestId":"{{_requestId}}","buildingTypeId":"house","x":0,"y":0}""";
+    private const string _placeHouse = $$"""{"requestId":"{{_requestId}}","buildingTypeId":"house","x":4,"y":4}""";
 
     /// <summary>
     /// A body with a field the client may not set is refused (400), whatever the field claims, and nothing is stored: not the elapsed five
@@ -66,11 +66,11 @@ public sealed class ApiAttackDatabaseTests(PostgresServer server) : PostgresTest
     /// </summary>
     /// <param name="body">The body.</param>
     [Theory]
-    [InlineData("""{"requestId":"' OR 1=1 --","buildingTypeId":"house","x":0,"y":0}""")]
+    [InlineData("""{"requestId":"' OR 1=1 --","buildingTypeId":"house","x":4,"y":4}""")]
     [InlineData($$"""{"requestId":"{{_requestId}}","buildingTypeId":"house","x":0,""")]
-    [InlineData($$"""{"requestId":"{{_requestId}}","buildingTypeId":"house","x":0,"x":1,"y":0}""")]
-    [InlineData($$"""{"requestId":"{{_requestId}}","buildingTypeId":"House","x":0,"y":0}""")]
-    [InlineData($$"""{"requestId":"{{_requestId}}","buildingTypeId":"house'; DELETE FROM cities; --","x":0,"y":0}""")]
+    [InlineData($$"""{"requestId":"{{_requestId}}","buildingTypeId":"house","x":0,"x":5,"y":4}""")]
+    [InlineData($$"""{"requestId":"{{_requestId}}","buildingTypeId":"House","x":4,"y":4}""")]
+    [InlineData($$"""{"requestId":"{{_requestId}}","buildingTypeId":"house'; DELETE FROM cities; --","x":4,"y":4}""")]
     public async Task Security_BodyOfTheWrongForm_Is400AndStoresNothing(string body)
     {
         (Guid player, Guid city) = await StoreStarterAsync("attacker");
@@ -93,7 +93,7 @@ public sealed class ApiAttackDatabaseTests(PostgresServer server) : PostgresTest
         (Guid player, Guid city) = await StoreStarterAsync("attacker");
         Factory.Clock.Advance(TimeSpan.FromMinutes(5));
         string stored = await StoredAsync(Factory, Database, player, city);
-        string body = $$"""{"requestId":"{{_requestId}}","buildingTypeId":"{{new string('a', 1_048_576)}}","x":0,"y":0}""";
+        string body = $$"""{"requestId":"{{_requestId}}","buildingTypeId":"{{new string('a', 1_048_576)}}","x":4,"y":4}""";
 
         ApiResponse response = await ApiClient.PostAsync(Factory, _path, player, body);
 

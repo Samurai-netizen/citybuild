@@ -21,6 +21,15 @@ namespace CityBuilder.IntegrationTests.Commands;
 internal static class HandBuiltCities
 {
     /// <summary>
+    /// The map column of the hand-built town's column 0 (M1-03): the town is a block of open grass in the Era I map's start area, from
+    /// (<see cref="Left"/>, <see cref="Top"/>), and each builder's <c>x</c> and row count from there.
+    /// </summary>
+    public const int Left = 4;
+
+    /// <summary>The map row of the hand-built town's row 0 (<see cref="Left"/>).</summary>
+    public const int Top = 4;
+
+    /// <summary>
     /// Stores a new player with a city at clock 0 on the server's content, era 1, no research, last settled at
     /// <see cref="PostgresApiFactory.Start"/>. The zero-length advance a command ends with runs first, so the stored city is canonical and a
     /// request with no time elapsed saves nothing of its own.
@@ -57,7 +66,7 @@ internal static class HandBuiltCities
         PostgresApiFactory factory, string name, long coins, RoadTile[] roads, params Building[] buildings) =>
         StoreHandBuiltAsync(factory, name, coins, roads, [], buildings);
 
-    /// <summary>Stores a new player with a city of the roads, the completed research and the buildings (the public helpers above say how).</summary>
+    /// <summary>Stores a new player with a city of the roads, the completed research and the buildings, as <see cref="StoreCityAsync"/> does.</summary>
     /// <param name="factory">The server on the test's database.</param>
     /// <param name="name">The player's dev name.</param>
     /// <param name="coins">The coins in the purse.</param>
@@ -65,7 +74,7 @@ internal static class HandBuiltCities
     /// <param name="completedResearch">The ids of the completed research.</param>
     /// <param name="buildings">The buildings.</param>
     /// <returns>The player and their city.</returns>
-    private static async Task<(Guid Player, Guid City)> StoreHandBuiltAsync(
+    public static async Task<(Guid Player, Guid City)> StoreHandBuiltAsync(
         PostgresApiFactory factory, string name, long coins, RoadTile[] roads, string[] completedResearch, Building[] buildings)
     {
         GameContent content = ContentOf(factory);
@@ -93,7 +102,7 @@ internal static class HandBuiltCities
     /// <param name="x">Its column.</param>
     /// <returns>The building.</returns>
     public static Building House(int id, int level = 1, int x = 0) =>
-        new(id, new BuildingTypeId("house"), x, 0, level, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
+        new(id, new BuildingTypeId("house"), Left + x, Top, level, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
 
     /// <summary>A house waiting in the builder queue as order <paramref name="order"/> (CR-0013) on row 2: level 1, no workers, no timer.</summary>
     /// <param name="id">Its id.</param>
@@ -101,7 +110,7 @@ internal static class HandBuiltCities
     /// <param name="x">Its column.</param>
     /// <returns>The building.</returns>
     public static Building QueuedHouse(int id, int order, int x = 0) =>
-        new(id, new BuildingTypeId("house"), x, 2, 1, 0, BuildingPhase.Queued, 0, null, 0, 0, 0, 0, queuedOrder: order);
+        new(id, new BuildingTypeId("house"), Left + x, Top + 2, 1, 0, BuildingPhase.Queued, 0, null, 0, 0, 0, 0, queuedOrder: order);
 
     /// <summary>
     /// A woodcutter on row 1 (60 labor a log at both levels; max workers 2 at level 1, 4 at level 2): <c>Constructing</c> from 0 to its 60
@@ -117,38 +126,38 @@ internal static class HandBuiltCities
     /// <param name="logs">The logs in its store (a store of 40 at level 1, 80 at level 2).</param>
     public static Building Woodcutter(int id, BuildingPhase phase, int workers, int x = 1, int level = 1, long logs = 0) => phase switch
     {
-        BuildingPhase.Constructing => new(id, new BuildingTypeId("woodcutter"), x, 1, 1, 0, phase, 0, 60, 0, 0, 0, 0, Goods(("logs", logs))),
-        BuildingPhase.Upgrading => new(id, new BuildingTypeId("woodcutter"), x, 1, 1, workers, phase, 0, 120, 2, 0, 0, 0, Goods(("logs", logs))),
-        BuildingPhase.Producing => new(id, new BuildingTypeId("woodcutter"), x, 1, level, workers, phase, 0, 60 / workers, 0, 60, 60, 0, Goods(("logs", logs))),
-        _ => new(id, new BuildingTypeId("woodcutter"), x, 1, level, workers, phase, 0, null, 0, 0, 0, 0, Goods(("logs", logs))),
+        BuildingPhase.Constructing => new(id, new BuildingTypeId("woodcutter"), Left + x, Top + 1, 1, 0, phase, 0, 60, 0, 0, 0, 0, Goods(("logs", logs))),
+        BuildingPhase.Upgrading => new(id, new BuildingTypeId("woodcutter"), Left + x, Top + 1, 1, workers, phase, 0, 120, 2, 0, 0, 0, Goods(("logs", logs))),
+        BuildingPhase.Producing => new(id, new BuildingTypeId("woodcutter"), Left + x, Top + 1, level, workers, phase, 0, 60 / workers, 0, 60, 60, 0, Goods(("logs", logs))),
+        _ => new(id, new BuildingTypeId("woodcutter"), Left + x, Top + 1, level, workers, phase, 0, null, 0, 0, 0, 0, Goods(("logs", logs))),
     };
 
     /// <summary>
-    /// A level-1 sawmill at (1,2) producing since clock 0 with 2 workers: 180 labor, ends at 90; its 2 logs are in the cycle, and its store
+    /// A level-1 sawmill at the town's (1,2) producing since clock 0 with 2 workers: 180 labor, ends at 90; its 2 logs are in the cycle, and its store
     /// (40 logs, 20 planks at level 1) holds <paramref name="logs"/> more.
     /// </summary>
     /// <param name="id">Its id.</param>
     /// <param name="logs">The logs in its store.</param>
     /// <returns>The building.</returns>
     public static Building Sawmill(int id, long logs = 0) =>
-        new(id, new BuildingTypeId("sawmill"), 1, 2, 1, 2, BuildingPhase.Producing, 0, 90, 0, 180, 180, 0, Goods(("logs", logs)));
+        new(id, new BuildingTypeId("sawmill"), Left + 1, Top + 2, 1, 2, BuildingPhase.Producing, 0, 90, 0, 180, 180, 0, Goods(("logs", logs)));
 
     /// <summary>
-    /// A level-1 trading post at (1,2) producing since clock 0 with 2 workers: 120 labor, ends at 60; its 2 planks are in the cycle, and its
+    /// A level-1 trading post at the town's (1,2) producing since clock 0 with 2 workers: 120 labor, ends at 60; its 2 planks are in the cycle, and its
     /// store (40 planks at level 1) holds <paramref name="planks"/> more.
     /// </summary>
     /// <param name="id">Its id.</param>
     /// <param name="planks">The planks in its store.</param>
     /// <returns>The building.</returns>
     public static Building TradingPost(int id, long planks = 0) =>
-        new(id, new BuildingTypeId("trading_post"), 1, 2, 1, 2, BuildingPhase.Producing, 0, 60, 0, 120, 120, 0, Goods(("planks", planks)));
+        new(id, new BuildingTypeId("trading_post"), Left + 1, Top + 2, 1, 2, BuildingPhase.Producing, 0, 60, 0, 120, 120, 0, Goods(("planks", planks)));
 
     /// <summary>A completed scriptorium (the science building, research happens there) on row 3.</summary>
     /// <param name="id">Its id.</param>
     /// <param name="x">Its column.</param>
     /// <returns>The building.</returns>
     public static Building Scriptorium(int id, int x = 0) =>
-        new(id, new BuildingTypeId("scriptorium"), x, 3, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
+        new(id, new BuildingTypeId("scriptorium"), Left + x, Top + 3, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
 
     /// <summary>A completed warehouse on row 3 (100 logs and 100 planks at level 1) holding the given goods.</summary>
     /// <param name="id">Its id.</param>
@@ -157,14 +166,14 @@ internal static class HandBuiltCities
     /// <param name="x">Its column.</param>
     /// <returns>The building.</returns>
     public static Building Warehouse(int id, long logs, long planks, int x = 1) =>
-        new(id, new BuildingTypeId("warehouse"), x, 3, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, Goods(("logs", logs), ("planks", planks)));
+        new(id, new BuildingTypeId("warehouse"), Left + x, Top + 3, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, Goods(("logs", logs), ("planks", planks)));
 
     /// <summary>A completed courier station on row 3 without workers (2 couriers carrying 10 at level 1; CR-0008-T1 part G).</summary>
     /// <param name="id">Its id.</param>
     /// <param name="x">Its column.</param>
     /// <returns>The building.</returns>
     public static Building CourierStation(int id, int x = 3) =>
-        new(id, new BuildingTypeId("courier_station"), x, 3, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
+        new(id, new BuildingTypeId("courier_station"), Left + x, Top + 3, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
 
     /// <summary>Goods as the engine's pairs, leaving out those at 0 (a store or a project's needs).</summary>
     /// <param name="goods">The goods and quantities.</param>

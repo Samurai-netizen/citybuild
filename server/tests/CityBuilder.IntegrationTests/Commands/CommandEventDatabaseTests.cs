@@ -24,7 +24,7 @@ public sealed class CommandEventDatabaseTests(PostgresServer server) : PostgresT
     /// <summary>A house on tile (0, 0) with the request id.</summary>
     /// <param name="requestId">The request id.</param>
     /// <returns>The body.</returns>
-    private static string PlaceHouse(Guid requestId) => $$"""{"requestId":"{{requestId}}","buildingTypeId":"house","x":0,"y":0}""";
+    private static string PlaceHouse(Guid requestId) => $$"""{"requestId":"{{requestId}}","buildingTypeId":"house","x":4,"y":4}""";
 
     /// <summary>An accepted command leaves one row: its type, the building type, <c>accepted</c>, no value, the settled city clock.</summary>
     [Fact]
