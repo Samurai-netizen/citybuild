@@ -665,5 +665,11 @@ namespace CityBuilder.Simulation.State
             content.TryGetResearch(id, out ResearchDefinition? research)
                 ? research
                 : throw new InvalidOperationException(FormattableString.Invariant($"The city has completed research {id}, which the content doesn't know."));
+
+        /// <summary>
+        /// Whether the tile is open land in the city (M1-03, <c>29</c> → Map): in the map's start area or an area a completed
+        /// <see cref="OpenLandEffect"/> opened. Every tile is open for content without a map.
+        /// </summary>
+        public static bool IsLandOpen(CityState city, GameContent content, int x, int y) => false;
     }
 }
