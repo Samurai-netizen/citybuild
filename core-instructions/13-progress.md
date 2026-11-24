@@ -8,7 +8,7 @@
 - **State:** IDLE <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** none · M1-02 in review (branch `task/M1-02-era1-content`, log `docs/build-log/2026/2026-11-23-02-M1-02.md`)
 - **Part / step:** —
-- **Last completed:** M1-02 Full Era I content and the three new research effects (PR open, 2026-11-24; the owner merges).
+- **Last completed:** M1-02 Full Era I content and the three new research effects (PR #105, 2026-11-24; the owner merges).
 - **Next step:** after the merge, `/start-task M1-03` (the map: terrain, placement rules, land expansion; [O] [PLAN] [ASSETS], its asset
   request is complete). On the merge, CR-0013's status becomes Done. Also open: the owner's [MANUAL] click-through of the metrics report
   (`tools/README.md` → MetricsReport).
