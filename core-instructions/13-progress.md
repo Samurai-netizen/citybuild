@@ -7,12 +7,13 @@
 ## Resume point
 - **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M1-02 Full Era I content and the three new research effects · branch `task/M1-02-era1-content` · log `docs/build-log/2026/2026-11-23-02-M1-02.md`
-- **Part / step:** A1 effects, A2 builder queue (CR-0013) and B content done (checkpoints); next C server and client
+- **Part / step:** A1, A2, B and C1 (server on Era I, HTTP tests, charter player) done (checkpoints); next C2 client
 - **Last completed:** M1-01 Design lock for Era I (PR #104, merged 2026-11-23).
-- **Next step:** part C: the failing tests of the build log's part C test list (Session 3), then point the server at
-  `server/content/era1-content.json` (`appsettings.json` → `Content:FilePath`), fix what fails (DB tests expecting `queueLength` 0,
-  client fixtures re-recorded), placeholders in the client. Then the finish (full run, perf budget, docs). Last green: the B checkpoint
-  commit. Also open: the owner's [MANUAL] click-through of the metrics report (`tools/README.md` → MetricsReport).
+- **Next step:** part C2 (client), the test list of the build log's Session 4: re-record `content.json` from the `era1-1` server, code-made
+  placeholders for missing models and icons with a pending list (`27`; `ArtModelsTests`, decision 22), run Unity with
+  `UNITY_EDITOR=/Applications/Unity/Hub/Editor/6000.3.25f1/Unity.app/Contents/MacOS/Unity`. Then the finish (perf budget with 13 types,
+  `docs/api/smoke.http` numbers, planned Docs impact rows, `quality.sh`). Last green: the C1 checkpoint commit. Also open: the owner's
+  [MANUAL] click-through of the metrics report (`tools/README.md` → MetricsReport).
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. The hosting provider (in M1-13).
 - **Known broken / do not touch:** the owner's local Unity edits (`client/CityBuilder/Assets/Settings/*.asset`, `ProjectSettings/ProjectSettings.asset`,
   `UnityConnectSettings.asset`): leave them uncommitted and don't report them (owner, 2026-11-18). They are hidden with
