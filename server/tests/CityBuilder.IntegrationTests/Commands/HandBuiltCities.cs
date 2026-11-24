@@ -33,6 +33,17 @@ internal static class HandBuiltCities
     public static Task<(Guid Player, Guid City)> StoreCityAsync(PostgresApiFactory factory, string name, long coins, params Building[] buildings) =>
         StoreCityWithRoadsAsync(factory, name, coins, [], buildings);
 
+    /// <summary>Stores a new player with a city as <see cref="StoreCityAsync"/> does, with research already completed (M1-02).</summary>
+    /// <param name="factory">The server on the test's database.</param>
+    /// <param name="name">The player's dev name.</param>
+    /// <param name="coins">The coins in the purse; goods are in the buildings' stores (CR-0008).</param>
+    /// <param name="completedResearch">The ids of the completed research.</param>
+    /// <param name="buildings">The buildings, with ids from 1 up; queued ones (CR-0013) with orders from 1 up.</param>
+    /// <returns>The player and their city.</returns>
+    public static Task<(Guid Player, Guid City)> StoreResearchedCityAsync(
+        PostgresApiFactory factory, string name, long coins, string[] completedResearch, params Building[] buildings) =>
+        StoreHandBuiltAsync(factory, name, coins, [], completedResearch, buildings);
+
     /// <summary>
     /// Stores a new player with a city as <see cref="StoreCityAsync"/> does, with roads on tiles no building stands on (CR-0008).
     /// </summary>
@@ -42,8 +53,20 @@ internal static class HandBuiltCities
     /// <param name="roads">The roads.</param>
     /// <param name="buildings">The buildings, with ids from 1 up; queued ones (CR-0013) with orders from 1 up.</param>
     /// <returns>The player and their city.</returns>
-    public static async Task<(Guid Player, Guid City)> StoreCityWithRoadsAsync(
-        PostgresApiFactory factory, string name, long coins, RoadTile[] roads, params Building[] buildings)
+    public static Task<(Guid Player, Guid City)> StoreCityWithRoadsAsync(
+        PostgresApiFactory factory, string name, long coins, RoadTile[] roads, params Building[] buildings) =>
+        StoreHandBuiltAsync(factory, name, coins, roads, [], buildings);
+
+    /// <summary>Stores a new player with a city of the roads, the completed research and the buildings (the public helpers above say how).</summary>
+    /// <param name="factory">The server on the test's database.</param>
+    /// <param name="name">The player's dev name.</param>
+    /// <param name="coins">The coins in the purse.</param>
+    /// <param name="roads">The roads.</param>
+    /// <param name="completedResearch">The ids of the completed research.</param>
+    /// <param name="buildings">The buildings.</param>
+    /// <returns>The player and their city.</returns>
+    private static async Task<(Guid Player, Guid City)> StoreHandBuiltAsync(
+        PostgresApiFactory factory, string name, long coins, RoadTile[] roads, string[] completedResearch, Building[] buildings)
     {
         GameContent content = ContentOf(factory);
         var state = new CityState(
@@ -52,13 +75,14 @@ internal static class HandBuiltCities
             nextBuildingId: buildings.Length + 1,
             purse: coins,
             buildings,
-            [],
+            completedResearch.Select(id => new ResearchId(id)),
             activeResearch: null,
             roads,
             nextQueuedOrder: buildings.Select(building => building.QueuedOrder).DefaultIfEmpty(0).Max() + 1);
         Simulator.Advance(state, content, 0);
         (Guid player, Guid city) = (Guid.NewGuid(), Guid.NewGuid());
-        var aggregate = new CityAggregate(city, player, state, [], PostgresApiFactory.Start.ToUnixTimeSeconds(), 0, content.ContentVersion);
+        var aggregate = new CityAggregate(
+            city, player, state, state.CompletedResearch.Select(id => new KeyValuePair<ResearchId, long>(id, 0)), PostgresApiFactory.Start.ToUnixTimeSeconds(), 0, content.ContentVersion);
         await StoreAsync(factory, new Player(player, name), aggregate);
         return (player, city);
     }

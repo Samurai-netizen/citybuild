@@ -244,13 +244,34 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
         await AssertRefusedAsync(player, city, 1, HttpStatusCode.Conflict, "BUILDING_BUSY");
     }
 
-    /// <summary>A building at its type's max level (a level-2 house) is <c>MAX_LEVEL</c> (422) and stores only its player event (CR-0009).</summary>
+    /// <summary>
+    /// A building at its type's max level is <c>MAX_LEVEL</c> (422) and stores only its player event (CR-0009): on the Era I content a level-2
+    /// house before Timber Framing, the research that raises its cap to level 3 (M1-02).
+    /// </summary>
     [Fact]
     public async Task Post_AtMaxLevel_Is422MaxLevelAndStoresOnlyItsEvent()
     {
         (Guid player, Guid city) = await StoreCityAsync(Factory, "upgrader", 1000, House(1, level: 2));
 
         await AssertRefusedAsync(player, city, 1, HttpStatusCode.UnprocessableEntity, "MAX_LEVEL");
+    }
+
+    /// <summary>
+    /// After Timber Framing (<c>maxLevelBonus</c> for the house, M1-02) the same level-2 house is ordered to level 3: its coins are paid and
+    /// it waits for the goods of that level.
+    /// </summary>
+    [Fact]
+    public async Task Post_AtBaseMaxLevelAfterItsResearch_OrdersLevel3()
+    {
+        (Guid player, Guid city) = await StoreResearchedCityAsync(Factory, "upgrader", 1000, ["timber_framing"], House(1, level: 2));
+
+        ApiResponse response = await UpgradeAsync(player, _requestId, 1);
+
+        Assert.Equal(HttpStatusCode.OK, response.Status);
+        Assert.Equal("coins 700", await StockAsync(Database, city));
+        Building house = (await LoadAsync(Factory, player)).State.Buildings.Single();
+        Assert.True(house.HasUpgradeWaiting);
+        Assert.Equal(["cut_stone 20", "planks 40"], house.Needs.Select(need => $"{need.Key} {need.Value}").Order(StringComparer.Ordinal));
     }
 
     /// <summary>
