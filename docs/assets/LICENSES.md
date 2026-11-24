@@ -59,5 +59,20 @@
 | `Art/Resources/Fx/fx_leaf.png` | AR-M1-08 via BATCH-01 | OpenAI ChatGPT ImageGen; sized and checked with Pillow by the owner | 2026-11-24 | [OpenAI terms](https://openai.com/policies/) |
 | `Art/Resources/Fx/fx_flour.png` | AR-M1-08 via BATCH-01 | OpenAI ChatGPT ImageGen; sized and checked with Pillow by the owner | 2026-11-24 | [OpenAI terms](https://openai.com/policies/) |
 | `Art/Resources/Fx/fx_chips.png` | AR-M1-08 via BATCH-01 | OpenAI ChatGPT ImageGen; sized and checked with Pillow by the owner | 2026-11-24 | [OpenAI terms](https://openai.com/policies/) |
+| `Art/Resources/Models/common/tile_forest.fbx` | AR-M1-03 | OpenAI Codex and Blender 4.3.2; trees adapted from the M0 tree meshes | 2026-11-23 | OpenAI account terms for generated output |
+| `Art/Resources/Models/common/tile_forest_b.fbx` | AR-M1-03 | OpenAI Codex and Blender 4.3.2; trees adapted from the M0 tree meshes | 2026-11-23 | OpenAI account terms for generated output |
+| `Art/Resources/Models/common/tile_forest_c.fbx` | AR-M1-03 | OpenAI Codex and Blender 4.3.2; trees adapted from the M0 tree meshes | 2026-11-23 | OpenAI account terms for generated output |
+| `Art/Resources/Models/common/tile_rock.fbx` | AR-M1-03 | OpenAI Codex and Blender 4.3.2 | 2026-11-23 | OpenAI account terms for generated output |
+| `Art/Resources/Models/common/tile_rock_b.fbx` | AR-M1-03 | OpenAI Codex and Blender 4.3.2 | 2026-11-23 | OpenAI account terms for generated output |
+| `Art/Resources/Models/common/tile_rock_c.fbx` | AR-M1-03 | OpenAI Codex and Blender 4.3.2 | 2026-11-23 | OpenAI account terms for generated output |
+| `Art/Resources/Models/common/tile_soil.fbx` | AR-M1-03 | OpenAI Codex and Blender 4.3.2 | 2026-11-23 | OpenAI account terms for generated output |
+| `Art/Resources/Models/common/tile_soil_b.fbx` | AR-M1-03 | OpenAI Codex and Blender 4.3.2 | 2026-11-23 | OpenAI account terms for generated output |
+| `Art/Resources/Models/common/tile_soil_c.fbx` | AR-M1-03 | OpenAI Codex and Blender 4.3.2 | 2026-11-23 | OpenAI account terms for generated output |
+| `Art/Resources/Models/common/tile_water.fbx` | AR-M1-03 | OpenAI Codex and Blender 4.3.2 | 2026-11-23 | OpenAI account terms for generated output |
+| `Art/Resources/Models/common/tile_water_b.fbx` | AR-M1-03 | OpenAI Codex and Blender 4.3.2 | 2026-11-23 | OpenAI account terms for generated output |
+| `Art/Resources/Models/common/road_bridge.fbx` | AR-M1-03 | OpenAI Codex and Blender 4.3.2 | 2026-11-23 | OpenAI account terms for generated output |
+| `Art/Resources/Models/common/mist_puff.fbx` | AR-M1-03 | OpenAI Codex and Blender 4.3.2 | 2026-11-23 | OpenAI account terms for generated output |
+| `Art/Resources/Models/common/mist_puff_b.fbx` | AR-M1-03 | OpenAI Codex and Blender 4.3.2 | 2026-11-23 | OpenAI account terms for generated output |
+| `Art/Resources/Models/common/survey_stake.fbx` | AR-M1-03 | OpenAI Codex and Blender 4.3.2 | 2026-11-23 | OpenAI account terms for generated output |
 
 Paths are under `client/CityBuilder/Assets/_Project/`.

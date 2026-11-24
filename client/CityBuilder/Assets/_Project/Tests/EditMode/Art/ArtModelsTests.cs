@@ -213,6 +213,40 @@ namespace CityBuilder.Client.Tests.EditMode.Art
             }
         }
 
+        /// <summary>
+        /// The map's models stay inside the triangle budgets of AR-M1-03: 1,000 per terrain tile, 2,000 for the bridge, 300 for a mist puff and the
+        /// survey stake.
+        /// </summary>
+        [Test]
+        public void TheMapModels_StayInsideTheirTriangleBudgets()
+        {
+            var budgets = new Dictionary<string, int>
+            {
+                [GroundLooks.BridgePath] = 2000,
+                [GroundLooks.MistPuffPath] = 300,
+                [GroundLooks.MistEdgePuffPath] = 300,
+                [GroundLooks.SurveyStakePath] = 300,
+            };
+            foreach (Terrain terrain in new[] { Terrain.Forest, Terrain.Rock, Terrain.Soil, Terrain.Water })
+            {
+                for (int x = 0; x < 18; x++)
+                {
+                    budgets[GroundLooks.ModelPathFor(terrain, x, 0)] = 1000;
+                }
+            }
+
+            foreach (KeyValuePair<string, int> budget in budgets)
+            {
+                int triangles = 0;
+                foreach (MeshFilter filter in Resources.Load<GameObject>(budget.Key).GetComponentsInChildren<MeshFilter>())
+                {
+                    triangles += filter.sharedMesh.triangles.Length / 3;
+                }
+
+                Assert.That(triangles, Is.InRange(1, budget.Value), budget.Key);
+            }
+        }
+
         /// <summary>A later era with no models of its own finds the Era I ones; a type or a level without a model finds none (and is logged once, 27).</summary>
         [Test]
         public void FindModel_ForALaterEra_KeepsTheEarlierModel_AndForAMissingOneIsNull()

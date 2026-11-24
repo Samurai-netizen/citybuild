@@ -14,6 +14,18 @@ namespace CityBuilder.Client.Presentation.City
     /// </summary>
     public static class GroundLooks
     {
+        /// <summary>The path, under <c>Resources</c>, of the bridge's model: a log deck over one water tile, its ends along ±Z (AR-M1-03).</summary>
+        public const string BridgePath = BuildingLooks.ModelsFolder + "/common/road_bridge";
+
+        /// <summary>The path, under <c>Resources</c>, of a mist puff over closed land (AR-M1-03).</summary>
+        public const string MistPuffPath = BuildingLooks.ModelsFolder + "/common/mist_puff";
+
+        /// <summary>The path, under <c>Resources</c>, of the flatter mist puff at the mist's edge (AR-M1-03).</summary>
+        public const string MistEdgePuffPath = BuildingLooks.ModelsFolder + "/common/mist_puff_b";
+
+        /// <summary>The path, under <c>Resources</c>, of the survey stake that marks the border of open land (AR-M1-03).</summary>
+        public const string SurveyStakePath = BuildingLooks.ModelsFolder + "/common/survey_stake";
+
         /// <summary>The forest tile models under <c>Models/common/</c>.</summary>
         private static readonly string[] ForestNames = { "tile_forest", "tile_forest_b", "tile_forest_c" };
 
