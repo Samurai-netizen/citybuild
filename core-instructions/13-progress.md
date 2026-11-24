@@ -5,11 +5,11 @@
 > This file is loaded into every session: Milestone-table notes are task ids and PR numbers only (≤ ~100 characters per row).
 
 ## Resume point
-- **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** M1-03 The map: terrain, placement rules, land expansion · branch `task/M1-03-map-terrain` · log `docs/build-log/2026/2026-11-24-01-M1-03.md`
-- **Part / step:** A1, B, A2, the full run after A and C (client) done (checkpoint C4); next the finish
-- **Last completed:** C: the client reads and draws the map (terrain, bridges, mist, hints, camera limits), AR-M1-03 accepted; Unity tests green.
-- **Next step:** the finish: module docs (Api, Application, Infrastructure, Simulation, Client.Net, Client.Presentation, DocTools), CHANGELOG, 12, 28/29, how-tos, `docs/testing`, the 7-day scripted run, `quality.sh`, `/finish-task`.
+- **State:** IDLE <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** — (M1-03 in review: branch `task/M1-03-map-terrain`, log `docs/build-log/2026/2026-11-24-01-M1-03.md`)
+- **Part / step:** —
+- **Last completed:** M1-03 The map: terrain, placement rules, land expansion (PR open; the owner's [MANUAL] map check in `client/README.md`).
+- **Next step:** after M1-03 is merged: `/start-task M1-04` (The Chronicle; [PLAN]: write ahead, then wait for the plan's approval).
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. The hosting provider (in M1-13).
 - **Known broken / do not touch:**   the owner's local Unity edits (`client/CityBuilder/Assets/Settings/*.asset`, `ProjectSettings/ProjectSettings.asset`,
   `UnityConnectSettings.asset`): leave them uncommitted and don't report them (owner, 2026-11-18). They are hidden with

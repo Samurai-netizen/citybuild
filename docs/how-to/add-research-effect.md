@@ -3,7 +3,7 @@
 An effect type is what completing a research node changes (`core-instructions/25-eras-and-research.md` → Effect types). M0 has five:
 `unlockBuilding`, `laborReduction`, `storageCapBonus` (every store's limit of a good), and since CR-0008 `unlockAmountMode` (a trip's or
 route's percentage or exact amount) and `walkSpeedBonus` (every walk shorter by a share). M1-02 added `maxLevelBonus` (a type's max level
-above its `baseMaxLevel`), `builderSlotBonus` and `grantCharter`. A node that only uses those is a content-only change
+above its `baseMaxLevel`), `builderSlotBonus` and `grantCharter`; M1-03 `openLand` (an `area` of the map) and `unlockBridge`. A node that only uses those is a content-only change
 (`add-building-or-item.md`).
 A new type needs engine code, content validation, tests and docs: recipe "New engine rule or effect type" in `core-instructions/19-change-recipes.md`
 is the checklist; this guide walks through it with an example.

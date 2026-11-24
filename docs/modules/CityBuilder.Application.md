@@ -60,6 +60,13 @@ need (`ICityRepository`, `IUnitOfWork`, `IContentProvider`, `ICommandReceiptRepo
 | `Cities/Settlement` | One settlement: the window's advance and the closing zero-length advance as one. Its `Id` (a UUID v7 per settlement), `Window`, `ClockBehindSeconds` (how far the server second was behind the last settled second; 0 unless `Window.IsClockBehind`), `ElapsedSeconds`, the totals of both advances (`Produced`, `Consumed`, `Delivered`, `Moved`, `Refunded`, `CompletedBuildings`, `CompletedResearch`, `EraChanged`), `CourierSeconds` (the larger of the two advances') and `TiredCouriers` (both, by station, slot and second), and `IsEmpty` (a tired courier makes it non-empty). `LedgerEntries(quantitiesBefore)` gives its ledger rows: per item in ordinal order `SETTLEMENT_PRODUCED`, `SETTLEMENT_REFUNDED`, `SETTLEMENT_CONSUMED` and `SETTLEMENT_DELIVERED` (the last two negative), each balance running on from the city total before; `ref_type` `settlement` (`LedgerRefType`), `ref_id` the id (`06`) |
 | `Audit/LedgerAuditor`, `Audit/ILedgerAuditSource` | The ledger audit (M0-64): `AuditAllAsync()` and `AuditCityAsync(cityId)` read each stored city with its ledger rows through the read-only port (no lock for update, no settle, no write) and give a `LedgerAuditReport` (`CitiesAudited`, `Mismatches`, `IsClean`). `Audit(AuditedCity, content)` is the pure check: the first row is `STARTING_GRANT`, each row's `balance_after` is the sum of the item's deltas up to it (from 0), and each item's delta sum is its city total (`CityQueries.Totals`; an item the content lacks counts against 0). A `LedgerMismatch` names the city, the `LedgerMismatchKind` (`MissingStartingGrant`, `BalanceChainBroken`, `TotalMismatch`), the item, the row and both numbers. `AuditedLedgerRow` is a row as stored, unchecked (reason null for one the server never writes, such as `DEV_ADJUST`). Registered by the Api with no endpoint; the source is `LedgerAuditSource` in Infrastructure. One city at a time; cross-player with the market (M2, `26`) |
 
+
+### The map (M1-03)
+`ICityCommand.ValidateOnContent(content)` (default null) is the check against the content, run by `CommandPipeline` after the shape check
+and before the city is read or locked (OD-13, decision 054): `PlaceBuildingCommand` refuses a tile past the map and a type where it can
+never stand (water, forest, rock, its site unmet); `PlaceRoadsCommand` a tile past the map and forest or rock. Both are
+`INVALID_ARGUMENT`; closed land and a locked bridge depend on the city and stay the engine's codes.
+
 ## Rules and invariants
 - May reference only `CityBuilder.Domain`, `CityBuilder.Simulation` and the BCL, never ASP.NET Core or EF Core
   (`03` dependency table). `CityBuilder.Application.Tests` checks the assembly's references.
@@ -143,4 +150,4 @@ back in time, so a clock behind is a last settled second ahead of now. The conte
   PostgreSQL (`CityBuilder.IntegrationTests`, `Auth/DevLoginDatabaseTests`, also its CR-0009 events: two at the first login, none at a
   later one, two in total for two first logins at once, none from a lost race).
 
-Last updated: CR-0009-T1
+Last updated: M1-03
