@@ -8,7 +8,7 @@ namespace CityBuilder.Simulation.Tests.Map;
 /// <summary>
 /// Maps for the path tests: the rule fixture's content (ground 4 000 ms, crossings at 250 ‰ so 16 000 ms, a path of 2 000 ms and a paved
 /// path of 1 000 ms) on a grid of any size, and cities drawn from text, one row per line from y = 0 down: <c>.</c> ground, <c>B</c> a
-/// building, <c>1</c> and <c>2</c> a road of that level.
+/// building, <c>1</c> and <c>2</c> a road of that level, <c>b</c> a bridge (M1-03).
 /// </summary>
 internal static class MapFixture
 {
@@ -23,7 +23,10 @@ internal static class MapFixture
     /// The city a map text draws: its buildings get ids from 1 in reading order (row by row, left to right), all huts, all idle; its roads
     /// the levels written.
     /// </summary>
-    public static CityState City(params string[] rows)
+    public static CityState City(params string[] rows) => CityWithResearch([], rows);
+
+    /// <summary>The city a map text draws (<see cref="City"/>), with the research named done.</summary>
+    public static CityState CityWithResearch(string[] completedResearch, params string[] rows)
     {
         var buildings = new List<Building>();
         var roads = new List<RoadTile>();
@@ -36,12 +39,13 @@ internal static class MapFixture
                     case 'B': buildings.Add(Idle(buildings.Count + 1, "hut", x, y)); break;
                     case '1': roads.Add(new RoadTile(x, y, 1)); break;
                     case '2': roads.Add(new RoadTile(x, y, 2)); break;
+                    case 'b': roads.Add(new RoadTile(x, y, 1, isBridge: true)); break;
                     case '.': break;
                     default: throw new ArgumentException($"Unknown map character '{rows[y][x]}'.", nameof(rows));
                 }
             }
         }
 
-        return State.CityFixture.City(buildings: [.. buildings], roads: [.. roads]);
+        return State.CityFixture.City(buildings: [.. buildings], roads: [.. roads], completedResearch: completedResearch);
     }
 }

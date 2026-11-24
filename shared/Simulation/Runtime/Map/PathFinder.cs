@@ -135,6 +135,16 @@ namespace CityBuilder.Simulation.Map
         }
 
         /// <summary>
+        /// Measures the best walk between two tiles like <see cref="Measure"/>, or says there is none (M1-03: water without a bridge or land
+        /// under mist lies between them).
+        /// </summary>
+        public bool TryMeasure(int fromX, int fromY, int toX, int toY, out WalkCost cost)
+        {
+            cost = Measure(fromX, fromY, toX, toY);
+            return true;
+        }
+
+        /// <summary>
         /// The tiles of the best walk from one tile to another on the loaded map, start and end included, in walking order (the path rule and
         /// its tie rule). For display and tests: it allocates the list it returns.
         /// </summary>
