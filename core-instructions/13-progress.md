@@ -7,7 +7,7 @@
 ## Resume point
 - **State:** AWAITING OWNER <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M1-03 The map: terrain, placement rules, land expansion · branch `task/M1-03-map-terrain` · log `docs/build-log/2026/2026-11-24-01-M1-03.md`
-- **Part / step:** before part A (parts: A engine, B server, C client) · the [PLAN] is with the owner
+- **Part / step:** before part A1 (parts: A1 engine map, A2 stuck walkers, B server, C client) · the [PLAN] is with the owner
 - **Last completed:** M1-02 merged (PR #105); CR-0013 Done.
 - **Next step:** record the owner's answers under "Owner input" and as decisions, then part A: the red tests of the test list (build log).
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. The hosting provider (in M1-13).
