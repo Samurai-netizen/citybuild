@@ -102,7 +102,7 @@ public sealed class PlaceBuildingContractTests(ApiFactory factory) : IClassFixtu
         await using WebApplicationFactory<Program> _ = server;
         await ApiClient.PostAsync(server, _path, _playerId, _placeWoodcutter);
 
-        ApiResponse response = await ApiClient.PostAsync(server, _path, _playerId, _placeWoodcutter.Replace("\"x\":4", "\"x\":5", StringComparison.Ordinal));
+        ApiResponse response = await ApiClient.PostAsync(server, _path, _playerId, _placeWoodcutter.Replace("\"y\":3", "\"y\":4", StringComparison.Ordinal));
 
         AssertProblem(response, HttpStatusCode.Conflict, "IDEMPOTENCY_CONFLICT", _requestId);
         Assert.Equal(1, store.SaveCount);
@@ -116,8 +116,8 @@ public sealed class PlaceBuildingContractTests(ApiFactory factory) : IClassFixtu
     /// <param name="code">The expected code.</param>
     [Theory]
     [InlineData($$"""{"requestId":"{{_requestId}}","buildingTypeId":"castle","x":2,"y":3}""", HttpStatusCode.UnprocessableEntity, "UNKNOWN_BUILDING_TYPE")]
-    [InlineData($$"""{"requestId":"{{_requestId}}","buildingTypeId":"trading_post","x":2,"y":3}""", HttpStatusCode.UnprocessableEntity, "BUILDING_LOCKED")]
-    [InlineData($$"""{"requestId":"{{_requestId}}","buildingTypeId":"woodcutter","x":18,"y":3}""", HttpStatusCode.UnprocessableEntity, "OUT_OF_BOUNDS")]
+    [InlineData($$"""{"requestId":"{{_requestId}}","buildingTypeId":"trading_post","x":5,"y":5}""", HttpStatusCode.UnprocessableEntity, "BUILDING_LOCKED")]
+    [InlineData($$"""{"requestId":"{{_requestId}}","buildingTypeId":"house","x":5,"y":1}""", HttpStatusCode.UnprocessableEntity, "LAND_CLOSED")]
     public async Task Post_RuleRefuses_IsProblemWithTheRulesCode(string body, HttpStatusCode status, string code)
     {
         (FakeCityStore store, WebApplicationFactory<Program> server) = Serve(_settledAt);

@@ -35,6 +35,16 @@ public interface ICityCommand
     string? ValidateShape();
 
     /// <summary>
+    /// Checks the command against the server's content before the city is locked (OD-13, M1-03): what no city could ever make valid on the
+    /// one map the server runs, such as a tile past the map or a building on water. The content is loaded once and is the same for every
+    /// city, so the answer never depends on a city; checks that do (land under mist, the bridge's research) stay <see cref="Apply"/>'s.
+    /// Called only after <see cref="ValidateShape"/> accepted the command. Most commands name no tile and check nothing here.
+    /// </summary>
+    /// <param name="content">The server's content.</param>
+    /// <returns><see langword="null"/> when no tile is wrong for every city, or what is wrong, for the <c>INVALID_ARGUMENT</c> detail.</returns>
+    string? ValidateOnContent(GameContent content) => null;
+
+    /// <summary>
     /// The content id this command is about, for the player metrics (CR-0009, the <c>detail</c> of its <c>command.&lt;type&gt;</c> event): a
     /// building type, a research node, an item. Only an id that exists in <paramref name="content"/> (or the type of a building the city
     /// has), through <see cref="Metrics.CommandEvents"/>; <see langword="null"/> when the command names none. Read on the settled city before

@@ -31,6 +31,31 @@ public sealed record PlaceRoadsCommand(Guid RequestId, IReadOnlyList<CommandTile
     /// <returns><see langword="null"/>, or what is wrong.</returns>
     public string? ValidateShape() => RoadTileList.ValidateShape(Tiles);
 
+    /// <summary>
+    /// Refuses a list with a tile no road can ever take on the server's map (M1-03, OD-13), before the city is locked: past the map, or on
+    /// forest or rock. Water is the rule's: a bridge stands there once the city has researched it.
+    /// </summary>
+    /// <param name="content">The server's content.</param>
+    /// <returns><see langword="null"/>, or what is wrong.</returns>
+    public string? ValidateOnContent(GameContent content)
+    {
+        ArgumentNullException.ThrowIfNull(content);
+        foreach ((int x, int y) in RoadTileList.ToEngine(Tiles))
+        {
+            if (x >= content.Rules.GridWidth || y >= content.Rules.GridHeight)
+            {
+                return $"Every tile must be on the map: it is {content.Rules.GridWidth} × {content.Rules.GridHeight} tiles.";
+            }
+
+            if (content.TerrainAt(x, y) is Terrain.Forest or Terrain.Rock)
+            {
+                return "No road stands on forest or rock.";
+            }
+        }
+
+        return null;
+    }
+
     /// <inheritdoc />
     public MutationResult Apply(CityState city, GameContent content) => RoadRules.PlaceRoads(city, content, RoadTileList.ToEngine(Tiles));
 

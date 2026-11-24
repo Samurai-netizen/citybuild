@@ -12,7 +12,7 @@ namespace CityBuilder.Application.Commands;
 
 /// <summary>
 /// The one way a command changes a city (<c>core-instructions/03-architecture.md</c>, request lifecycle; <c>05</c>, idempotency rules;
-/// <c>06</c>, write transaction pattern; ADR-0004). In order: the shape check (before the database); the city's transaction with its row
+/// <c>06</c>, write transaction pattern; ADR-0004). In order: the shape check and the check against the content (both before the database, OD-13); the city's transaction with its row
 /// lock (<see cref="ICityTransactionRunner"/>); the receipt of <c>(playerId, requestId)</c>: the same payload hash returns the stored response
 /// and another hash <c>IDEMPOTENCY_CONFLICT</c>, both before the settle and writing nothing; the settle; the mutation (<see cref="ICityCommand.Apply"/>);
 /// <c>session.start</c> when the command starts a session, the settlement's completions and then the command's player event (CR-0009), on a rule error and on success, in the same transaction; on a rule error the closing advance and
@@ -67,6 +67,11 @@ public sealed class CommandPipeline(
         if (command.ValidateShape() is { } shapeError)
         {
             return CommandResult.InvalidArgument(shapeError);
+        }
+
+        if (command.ValidateOnContent(_content.Content) is { } contentError)
+        {
+            return CommandResult.InvalidArgument(contentError);
         }
 
         byte[] payloadHash = CommandPayload.Hash(command);
