@@ -47,6 +47,13 @@ building per stop, the amount as the API's text, `take`/`put`; a load of a couri
 | `Persistence/CityBuilderDbContextDesignTimeFactory` | The context for the dotnet-ef tool, with a placeholder connection string, so `migrations add` needs no settings and never starts the server |
 | `Persistence/Migrations/` | The migrations dotnet-ef generated (`20261026193554_InitialCreate`; `20261027092603_ReceiptResponseAsJson`, M0-26: `command_receipts.response_json` from `jsonb` to `json`, its `Down` loses the stored formatting; `20261103215115_AddCityRoads`, CR-0008-T1 part D: the table `city_roads`, its `Down` drops it; `20261104032707_LogisticsStoresTripsAndReset`, part E: first deletes every ledger row, receipt, city and player (D10), then drops `city_inventory`, adds `cities.purse` and `next_trip_id` and the tables `city_stores`, `city_project_needs`, `city_research_needs` and `city_trips`; `20261104190147_AddCouriersAndRoutes`, part G: the tables `city_couriers`, `city_courier_loads` and `city_route_actions`, its `Down` drops them; `20261104234502_AddLastSeen`, part H: `cities.last_seen_unix`, set to `last_settled_unix` for stored cities; `20261111231311_AddDeliveryLines`, CR-0008-T3: `city_delivery_lines`, `city_trips.remaining` and `leg`, `cities.next_line_id`, stored rows get `ToTarget`, 0 and 1; `20261112012041_AddBuildingPaused`, CR-0008-T3: `city_buildings.paused`, false for stored rows, with the check `NOT paused OR phase <> 'Constructing'`; `20261117143301_TripWaitingLeg`, M0-C-3: the trips' quantity check allows a `ToSource` leg carrying goods back (`remaining = 0`) and the `Waiting` leg, its `Down` restores the old check; `20261117184547_AddPlayerEvents`, CR-0009-T1: the table `player_events` with its two indexes, the city clock check and the foreign key to `players` with cascade, its `Down` drops it; `20261123215944_AddBuilderQueue`, M1-02 (CR-0013): `city_buildings.queued_order` (null for stored rows) and `cities.next_queued_order` (1), their checks, and the pause check widened to `Queued`) and the model snapshot. Generated code: `.editorconfig` marks it, the doc checker skips it, nobody edits it by hand |
 
+
+### The map (M1-03)
+`city_roads.kind` (`road` or `bridge`; a bridge has level 1) and `city_couriers.waits_at` (a `Blocked` courier's building) are new
+columns; the trip legs `BlockedAtSource` and `BlockedAtTarget` fit the existing `leg` text. `CityMapping` reads an unknown road kind as a
+failed load. The migration `MapRoadKindAndReset` deletes every ledger row, receipt, city and player first (owner's choice: old cities don't
+fit the map); `BlockedWalkers` adds `waits_at` (`06`, `docs/how-to/add-migration.md`).
+
 ## Rules and invariants
 - May reference Application, Domain, Simulation, EF Core and Npgsql, never `CityBuilder.Api` (`03` dependency table).
   `InfrastructureDependencyTests` checks that the assembly has no reference to Api. The other cell of the table, "no ASP.NET endpoint
@@ -114,4 +121,4 @@ a ledger row planted by hand, with a `DEV_ADJUST` reason, found).
 - A deadlock (`40P01`) or a serialization failure isn't mapped to a conflict: with one row lock per transaction, taken first, neither can
   happen in M0. The market's lock ordering (M2, `06`) revisits it.
 
-Last updated: M1-02
+Last updated: M1-03

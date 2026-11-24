@@ -61,7 +61,8 @@ namespace CityBuilder.Simulation.Settlement
             BuildingTimerQueue timers = BuildingTimerQueue.Of(city);
             var walks = new WalkTimes(city, content);
             var couriers = new CourierArrivalSource(city, content, timers, walks, absentFrom);
-            IEventSource[] sources = { new ResearchTimerSource(), new BuildingTimerSource(timers), new TripArrivalSource(city, timers, walks), couriers };
+            var trips = new TripArrivalSource(city, timers, walks);
+            IEventSource[] sources = { new ResearchTimerSource(), new BuildingTimerSource(timers), trips, couriers };
             long? firstDueAt = NextDueAt(sources, city);
             if (firstDueAt < start)
             {
@@ -83,6 +84,7 @@ namespace CityBuilder.Simulation.Settlement
                 }
 
                 StartEligible(city, content, time, report, timers);
+                trips.StartBlocked(city, content, time);
                 couriers.StartWalks(city, time);
 
                 long? next = NextDueAt(sources, city);

@@ -6,11 +6,23 @@ namespace CityBuilder.Api.Contracts;
 /// </summary>
 /// <param name="StationId">The courier station's building id, JSON <c>stationId</c>.</param>
 /// <param name="Slot">The slot in the station, from 1, JSON <c>slot</c>; its route is the slot's.</param>
-/// <param name="State">What it does, JSON <c>state</c>: <c>AtStation</c>, <c>Walking</c>, <c>Returning</c> or <c>Resting</c>.</param>
-/// <param name="ToStop">The stop (1-based) it walks to while <c>Walking</c>, else 0, JSON <c>toStop</c>.</param>
+/// <param name="State">What it does, JSON <c>state</c>: <c>AtStation</c>, <c>Walking</c>, <c>Returning</c>, <c>Resting</c>, or <c>Blocked</c>
+/// (waiting at <c>waitsAt</c> for a path, M1-03).</param>
+/// <param name="ToStop">The stop (1-based) it walks to while <c>Walking</c>, or will walk to while <c>Blocked</c> (0: home), else 0, JSON
+/// <c>toStop</c>.</param>
 /// <param name="DepartedAt">The city-clock second its walk started, JSON <c>departedAt</c>; <c>null</c> when it doesn't walk.</param>
 /// <param name="ArrivesAt">The city-clock second its walk ends, JSON <c>arrivesAt</c>; <c>null</c> when it doesn't walk.</param>
 /// <param name="Stamina">Its stamina in seconds, JSON <c>stamina</c>; walks after the absence start spend it (part H).</param>
 /// <param name="Load">What it carries, JSON <c>load</c>, by item id, then the building each part came from.</param>
+/// <param name="WaitsAt">The building it waits at while <c>Blocked</c> (no walk to where it goes next, a removed bridge; M1-03), JSON
+/// <c>waitsAt</c>; <c>null</c> in every other state.</param>
 public sealed record SnapshotCourier(
-    int StationId, int Slot, string State, int ToStop, long? DepartedAt, long? ArrivesAt, long Stamina, IReadOnlyList<SnapshotCourierLoad> Load);
+    int StationId,
+    int Slot,
+    string State,
+    int ToStop,
+    long? DepartedAt,
+    long? ArrivesAt,
+    long Stamina,
+    IReadOnlyList<SnapshotCourierLoad> Load,
+    int? WaitsAt);

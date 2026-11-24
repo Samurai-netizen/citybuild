@@ -97,6 +97,27 @@ namespace CityBuilder.Client.Net
         /// <summary>422: the delivery line to cancel is not that courier's any more (CR-0008 D18).</summary>
         public const string DeliveryNotFound = "DELIVERY_NOT_FOUND";
 
+        /// <summary>422: a building or road on water, forest or rock (M1-03; the server refuses these tiles earlier as <c>INVALID_ARGUMENT</c>).</summary>
+        public const string TerrainBlocked = "TERRAIN_BLOCKED";
+
+        /// <summary>422: a building or road on land still under mist; a research opens its area (M1-03).</summary>
+        public const string LandClosed = "LAND_CLOSED";
+
+        /// <summary>422: a Woodcutter's Hut without forest beside its tile (M1-03).</summary>
+        public const string NeedsForest = "NEEDS_FOREST";
+
+        /// <summary>422: a Quarry without rock beside its tile (M1-03).</summary>
+        public const string NeedsRock = "NEEDS_ROCK";
+
+        /// <summary>422: a Farm off fertile soil (M1-03).</summary>
+        public const string NeedsFertileSoil = "NEEDS_FERTILE_SOIL";
+
+        /// <summary>422: a road on water before the research that unlocks the bridge (M1-03).</summary>
+        public const string BridgeLocked = "BRIDGE_LOCKED";
+
+        /// <summary>422: a trip, delivery or route between buildings no walk joins (M1-03).</summary>
+        public const string NoPath = "NO_PATH";
+
         /// <summary>409: the same request id was sent with a different command.</summary>
         public const string IdempotencyConflict = "IDEMPOTENCY_CONFLICT";
 

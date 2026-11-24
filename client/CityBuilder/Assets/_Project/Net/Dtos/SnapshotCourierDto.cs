@@ -12,7 +12,7 @@ namespace CityBuilder.Client.Net
         /// <summary>Creates the DTO. Newtonsoft calls this constructor with the JSON members of the same names, so the object is never half filled.</summary>
         [JsonConstructor]
         public SnapshotCourierDto(
-            int stationId, int slot, CourierStateDto state, int toStop, long? departedAt, long? arrivesAt, long stamina, List<SnapshotCourierLoadDto> load)
+            int stationId, int slot, CourierStateDto state, int toStop, long? departedAt, long? arrivesAt, long stamina, List<SnapshotCourierLoadDto> load, int? waitsAt)
         {
             StationId = stationId;
             Slot = slot;
@@ -22,6 +22,7 @@ namespace CityBuilder.Client.Net
             ArrivesAt = arrivesAt;
             Stamina = stamina;
             Load = load;
+            WaitsAt = waitsAt;
         }
 
         /// <summary>The courier station's building id.</summary>
@@ -33,7 +34,7 @@ namespace CityBuilder.Client.Net
         /// <summary>What it does.</summary>
         public CourierStateDto State { get; }
 
-        /// <summary>The stop (1-based) it walks to while walking, else 0.</summary>
+        /// <summary>The stop (1-based) it walks to while walking, or will walk to while blocked (0: home), else 0.</summary>
         public int ToStop { get; }
 
         /// <summary>The city-clock second its walk started; null when it doesn't walk.</summary>
@@ -49,5 +50,9 @@ namespace CityBuilder.Client.Net
 
         /// <summary>What it carries, by item id, then origin.</summary>
         public List<SnapshotCourierLoadDto> Load { get; }
+
+        /// <summary>The building it waits at while blocked (no walk to where it goes next, M1-03); null in every other state.</summary>
+        [JsonProperty(Required = Required.AllowNull)]
+        public int? WaitsAt { get; }
     }
 }

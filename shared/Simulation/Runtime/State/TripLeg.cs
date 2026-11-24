@@ -16,5 +16,19 @@ namespace CityBuilder.Simulation.State
         /// then the trip ends. No walk is under way; the departure and arrival stay those of the walk back.
         /// </summary>
         Waiting,
+
+        /// <summary>
+        /// At the source, about to fetch the next load, but no walk joins it to the target (a removed bridge, M1-03 decision 4): the worker
+        /// carries nothing, the goods to fetch stay in the source's store, and it takes its load and walks from the first second a path exists
+        /// (or ends the trip when nothing is left to take). The departure and arrival stay those of the walk that brought it there.
+        /// </summary>
+        BlockedAtSource,
+
+        /// <summary>
+        /// At the target after a delivery, but no walk joins it back to the source (M1-03 decision 4): it waits there with what it carries
+        /// back (nothing, with goods still to fetch, or the goods the target didn't take, with none) and walks back from the first second a
+        /// path exists. The departure and arrival stay those of the walk that brought it there.
+        /// </summary>
+        BlockedAtTarget,
     }
 }

@@ -25,7 +25,7 @@ namespace CityBuilder.IntegrationTests.Errors;
 public sealed class ExceptionHandlerTests(ApiFactory factory) : IClassFixture<ApiFactory>
 {
     /// <summary>A valid place-building body, so that what fails is not the body.</summary>
-    private const string _placeWoodcutter = """{"requestId":"0199a1b2-c3d4-7e5f-8a9b-00000000000a","buildingTypeId":"woodcutter","x":2,"y":3}""";
+    private const string _placeWoodcutter = """{"requestId":"0199a1b2-c3d4-7e5f-8a9b-00000000000a","buildingTypeId":"woodcutter","x":4,"y":3}""";
 
     /// <summary>The request id of <see cref="_placeWoodcutter"/>.</summary>
     private const string _requestId = "0199a1b2-c3d4-7e5f-8a9b-00000000000a";

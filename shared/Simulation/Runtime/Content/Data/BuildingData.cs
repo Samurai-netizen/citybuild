@@ -39,6 +39,9 @@ namespace CityBuilder.Simulation.Content.Data
         /// </summary>
         public int? BaseMaxLevel { get; set; }
 
+        /// <summary>Optional. Where the type may stand: <c>nearForest</c>, <c>nearRock</c> or <c>fertileSoil</c>; without it grass or fertile soil (M1-03).</summary>
+        public string? Site { get; set; }
+
         /// <summary>Required. The levels, numbered 1 to the max level, in any order.</summary>
         public List<BuildingLevelData?>? Levels { get; set; }
     }

@@ -36,5 +36,13 @@ namespace CityBuilder.Client.Net
         /// <summary>The city is chartered: Era I is complete (no member is set; M1-02).</summary>
         [EnumMember(Value = "grantCharter")]
         GrantCharter,
+
+        /// <summary>An area of the map opens (<c>area</c> is set; M1-03).</summary>
+        [EnumMember(Value = "openLand")]
+        OpenLand,
+
+        /// <summary>Bridges may be built on water (no member is set; M1-03).</summary>
+        [EnumMember(Value = "unlockBridge")]
+        UnlockBridge,
     }
 }

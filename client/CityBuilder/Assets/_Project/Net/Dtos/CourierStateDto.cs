@@ -23,5 +23,9 @@ namespace CityBuilder.Client.Net
         /// <summary>At its station without stamina, until it is re-energized (part H).</summary>
         [EnumMember(Value = "Resting")]
         Resting,
+
+        /// <summary>Waiting at a building for a path to where it goes next (a removed bridge, M1-03).</summary>
+        [EnumMember(Value = "Blocked")]
+        Blocked,
     }
 }

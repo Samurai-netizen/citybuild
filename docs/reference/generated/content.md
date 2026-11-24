@@ -8,15 +8,15 @@ Per-hour rates are at full staffing (the level's max workers) and without resear
 
 ## era1-content.json
 
-Content version `era1-1`. The starting city is in era 1 with 1000 `coins` and no buildings.
+Content version `era1-2`. The starting city is in era 1 with 1000 `coins` and no buildings.
 
 ### Rules
 
 | Rule | Value |
 |---|---|
 | `builderQueueLength` | `2` |
-| `gridWidth` | `8` |
-| `gridHeight` | `8` |
+| `gridWidth` | `18` |
+| `gridHeight` | `14` |
 | `builderSlots` | `2` |
 | `researchSlots` | `1` |
 | `minCycleSeconds` | `10` |
@@ -238,14 +238,14 @@ flowchart LR
 
 | Id | Name | Era | Cost | Duration | Prerequisites | Effects |
 |---|---|---|---|---|---|---|
-| `bridge_building` | Bridge Building | 1 | 500 `coins`, 40 `cut_stone`, 60 `planks` | 7200 s (2 h) | `stone_cutting` | — |
+| `bridge_building` | Bridge Building | 1 | 500 `coins`, 40 `cut_stone`, 60 `planks` | 7200 s (2 h) | `stone_cutting` | unlocks the bridge (a road on water) |
 | `frame_saw` | Frame Saw | 1 | 400 `coins`, 30 `planks` | 3600 s (1 h) | `sharp_axes` | 20 % less labor for `sawmill` |
 | `guild_of_masons` | Guild of Masons | 1 | 60 `bread`, 1500 `coins`, 120 `cut_stone` | 21600 s (6 h) | `masonry` | +1 builder slot |
 | `honest_scales` | Honest Scales | 1 | 600 `coins`, 60 `planks` | 7200 s (2 h) | `trade_charter` | 20 % less labor for `trading_post` |
-| `land_survey` | Land Survey | 1 | 700 `coins`, 40 `planks`, 40 `stone` | 10800 s (3 h) | `sturdy_boots` | — |
+| `land_survey` | Land Survey | 1 | 700 `coins`, 40 `planks`, 40 `stone` | 10800 s (3 h) | `sturdy_boots` | opens land: area B |
 | `masonry` | Masonry | 1 | 1200 `coins`, 80 `cut_stone`, 100 `planks` | 18000 s (5 h) | `stone_cutting` | +1 max level for `quarry`; +1 max level for `stonemason`; +1 max level for `windmill`; +1 max level for `bakery`; +1 max level for `trading_post`; +1 max level for `courier_station`; +1 max level for `warehouse`; unlocks `town_hall` |
 | `milling` | Milling | 1 | 1000 `coins`, 60 `cut_stone`, 50 `grain`, 60 `planks` | 14400 s (4 h) | `open_fields` | unlocks `windmill`; unlocks `bakery` |
-| `open_fields` | Open Fields | 1 | 800 `coins`, 30 `cut_stone`, 60 `planks` | 10800 s (3 h) | `bridge_building` | unlocks `farm` |
+| `open_fields` | Open Fields | 1 | 800 `coins`, 30 `cut_stone`, 60 `planks` | 10800 s (3 h) | `bridge_building` | unlocks `farm`; opens land: area C |
 | `sharp_axes` | Sharpened Axes | 1 | 250 `coins` | 1800 s (30 min) | — | 20 % less labor for `woodcutter` |
 | `stone_cutting` | Stone Cutting | 1 | 400 `coins`, 40 `planks` | 2700 s (45 min) | `trade_charter` | unlocks `quarry`; unlocks `stonemason` |
 | `storehouses` | Storehouses | 1 | 300 `coins`, 50 `logs` | 2700 s (45 min) | `trade_charter` | +40 storage limit for `logs`; +40 storage limit for `planks`; +40 storage limit for `stone`; +40 storage limit for `cut_stone`; +40 storage limit for `grain`; +40 storage limit for `flour`; +40 storage limit for `bread` |

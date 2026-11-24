@@ -93,10 +93,10 @@ internal static class DatabaseCities
     {
         Building[] buildings =
         [
-            new(1, new BuildingTypeId("house"), 0, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
-            new(2, new BuildingTypeId("woodcutter"), 1, 0, 1, 2, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
-            new(3, new BuildingTypeId("sawmill"), 2, 0, 1, 2, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, [new(new ItemId("logs"), 40)]),
-            new(4, new BuildingTypeId("scriptorium"), 3, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
+            new(1, new BuildingTypeId("house"), 4, 4, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
+            new(2, new BuildingTypeId("woodcutter"), 5, 4, 1, 2, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
+            new(3, new BuildingTypeId("sawmill"), 6, 4, 1, 2, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, [new(new ItemId("logs"), 40)]),
+            new(4, new BuildingTypeId("scriptorium"), 7, 4, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
         ];
         var state = new CityState(0, era: 1, nextBuildingId: 5, purse: 600, buildings, [SharpAxes], new ActiveResearch(FrameSaw, 0, 3600));
         Simulator.Advance(state, content, 0);

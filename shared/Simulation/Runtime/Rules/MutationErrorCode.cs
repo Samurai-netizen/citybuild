@@ -107,5 +107,26 @@ namespace CityBuilder.Simulation.Rules
 
         /// <summary><c>DELIVERY_NOT_FOUND</c>: the delivery line to cancel is not one of that courier's lines (<c>04</c> section 8).</summary>
         DeliveryNotFound,
+
+        /// <summary>The tile is water, forest or rock: no building or road stands there (M1-03; a bridge goes on water, <see cref="BridgeLocked"/>).</summary>
+        TerrainBlocked,
+
+        /// <summary>The tile is on land still under mist: no research has opened its area yet (M1-03).</summary>
+        LandClosed,
+
+        /// <summary>The building type needs forest beside its tile, in one of the four directions, and there is none (M1-03).</summary>
+        NeedsForest,
+
+        /// <summary>The building type needs rock beside its tile, in one of the four directions, and there is none (M1-03).</summary>
+        NeedsRock,
+
+        /// <summary>The building type stands only on fertile soil (M1-03).</summary>
+        NeedsFertileSoil,
+
+        /// <summary>A road on water is a bridge, and no completed research unlocks the bridge yet (M1-03).</summary>
+        BridgeLocked,
+
+        /// <summary>No walk joins the buildings: water without a bridge or land under mist lies between them (M1-03).</summary>
+        NoPath,
     }
 }

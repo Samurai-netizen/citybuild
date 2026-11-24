@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using CityBuilder.Client.Net;
 using NUnit.Framework;
 
@@ -36,8 +38,8 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         {
             ContentResponseDto content = _json.Deserialize<ContentResponseDto>(Fixtures.Read("content.json"));
 
-            Assert.That(content.ContentVersion, Is.EqualTo("era1-1"));
-            Assert.That(content.Rules.GridWidth, Is.EqualTo(8));
+            Assert.That(content.ContentVersion, Is.EqualTo("era1-2"));
+            Assert.That((content.Rules.GridWidth, content.Rules.GridHeight), Is.EqualTo((18, 14)));
             Assert.That(content.Rules.TimeScale, Is.EqualTo(1));
             Assert.That(content.Rules.TripCarryLimit, Is.EqualTo(10L));
             Assert.That((content.Rules.MaxRouteStops, content.Rules.MaxStopActions), Is.EqualTo((8, 4)));
@@ -123,6 +125,70 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That((level.Type, level.Building, level.Amount), Is.EqualTo((ResearchEffectTypeDto.MaxLevelBonus, "house", (long?)1)));
             Assert.That((slot.Type, slot.Building, slot.Amount), Is.EqualTo((ResearchEffectTypeDto.BuilderSlotBonus, (string)null, (long?)1)));
             Assert.That((charter.Type, charter.Building, charter.Amount), Is.EqualTo((ResearchEffectTypeDto.GrantCharter, (string)null, (long?)null)));
+        }
+
+        /// <summary>
+        /// The map (M1-03) reads: 14 rows of 18 terrain letters and 18 area letters, the start area and the rough tile's walk; the river is
+        /// column 12, and the start area A is the middle of the map.
+        /// </summary>
+        [Test]
+        public void TheMap_IsRead()
+        {
+            ContentResponseDto content = _json.Deserialize<ContentResponseDto>(Fixtures.Read("content.json"));
+
+            ContentMapDto map = content.Map!;
+            Assert.That((map.Id, map.StartArea, map.RoughTileMillis), Is.EqualTo(("crossing", "A", 10000L)));
+            Assert.That(map.Tiles, Has.Count.EqualTo(14).And.All.Length.EqualTo(18));
+            Assert.That(map.Areas, Has.Count.EqualTo(14).And.All.Length.EqualTo(18));
+            Assert.That((map.Tiles[5][12], map.Areas[5][12], map.Areas[0][0], map.Areas[0][17]), Is.EqualTo(('W', 'A', 'B', 'C')));
+        }
+
+        /// <summary>The bridge (M1-03) reads: its name, its walk per tile and its cost per tile.</summary>
+        [Test]
+        public void TheBridge_IsRead()
+        {
+            ContentResponseDto content = _json.Deserialize<ContentResponseDto>(Fixtures.Read("content.json"));
+
+            ContentBridgeDto bridge = content.Bridge!;
+            Assert.That((bridge.Name, bridge.TileMillis), Is.EqualTo(("Bridge", 1500L)));
+            Assert.That(bridge.Cost, Is.EqualTo(new Dictionary<string, long> { ["coins"] = 60 }));
+        }
+
+        /// <summary>A building type's site (M1-03) reads: the three raw producers need their terrain, every other type has none.</summary>
+        [Test]
+        public void TheBuildings_ReadTheirSite()
+        {
+            ContentResponseDto content = _json.Deserialize<ContentResponseDto>(Fixtures.Read("content.json"));
+
+            Assert.That(content.Buildings.Find(b => b.Id == "woodcutter").Site, Is.EqualTo(BuildingSiteDto.NearForest));
+            Assert.That(content.Buildings.Find(b => b.Id == "quarry").Site, Is.EqualTo(BuildingSiteDto.NearRock));
+            Assert.That(content.Buildings.Find(b => b.Id == "farm").Site, Is.EqualTo(BuildingSiteDto.FertileSoil));
+            Assert.That(content.Buildings.Where(b => b.Site != null).Select(b => b.Id), Is.EquivalentTo(new[] { "woodcutter", "quarry", "farm" }));
+        }
+
+        /// <summary>The map's two effects (M1-03) read: a research opens an area by its letter, another allows bridges; other effects have no area.</summary>
+        [Test]
+        public void TheResearch_ReadsTheMapEffects()
+        {
+            ContentResponseDto content = _json.Deserialize<ContentResponseDto>(Fixtures.Read("content.json"));
+
+            ContentResearchEffectDto survey = content.Research.Find(r => r.Id == "land_survey").Effects[0];
+            ContentResearchEffectDto fields = content.Research.Find(r => r.Id == "open_fields").Effects.Find(e => e.Type == ResearchEffectTypeDto.OpenLand);
+            ContentResearchEffectDto bridge = content.Research.Find(r => r.Id == "bridge_building").Effects[0];
+            Assert.That((survey.Type, survey.Area), Is.EqualTo((ResearchEffectTypeDto.OpenLand, "B")));
+            Assert.That(fields.Area, Is.EqualTo("C"));
+            Assert.That((bridge.Type, bridge.Area), Is.EqualTo((ResearchEffectTypeDto.UnlockBridge, (string)null)));
+        }
+
+        /// <summary>The M0 answer has no map, no bridge, no site and no area: each reads as <c>null</c>.</summary>
+        [Test]
+        public void TheM0Content_HasNoMapBridgeSiteOrArea()
+        {
+            ContentResponseDto content = _json.Deserialize<ContentResponseDto>(Fixtures.Read("content-mvp-2.json"));
+
+            Assert.That((content.Map, content.Bridge), Is.EqualTo(((ContentMapDto)null, (ContentBridgeDto)null)));
+            Assert.That(content.Buildings.All(b => b.Site == null), Is.True);
+            Assert.That(content.Research.SelectMany(r => r.Effects).All(e => e.Area == null), Is.True);
         }
 
         /// <summary>A building type's <c>baseMaxLevel</c> (M1-02) reads: the cottage stops at 2 without research, the Town Hall at 3.</summary>

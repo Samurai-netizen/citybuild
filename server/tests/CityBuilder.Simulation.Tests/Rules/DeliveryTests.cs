@@ -199,8 +199,8 @@ public sealed class DeliveryTests
     {
         RouteStop[] stops = Stops((3, [(true, "wood", "all")]), (4, [(false, "wood", "all")]));
         CityState none = PostCity(wood: 0);
-        CityState site = PostCity(wood: 0, extra: [Constructing(5, "school", 7, 7, 990, 5000)]);
-        CityState built = PostCity(wood: 0, extra: [Idle(5, "school", 7, 7)]);
+        CityState site = PostCity(wood: 0, extra: [Constructing(5, "school", 4, 4, 990, 5000)]);
+        CityState built = PostCity(wood: 0, extra: [Idle(5, "school", 4, 4)]);
 
         Assert.Equal(MutationErrorCode.RoutesLocked, CourierRules.SetRoute(none, _gatedContent, 2, 1, stops).ErrorCode);
         Assert.Equal(MutationErrorCode.RoutesLocked, CourierRules.SetRoute(site, _gatedContent, 2, 1, stops).ErrorCode);

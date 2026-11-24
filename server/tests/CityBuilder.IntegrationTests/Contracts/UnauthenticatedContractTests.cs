@@ -81,7 +81,7 @@ public sealed class UnauthenticatedContractTests(ApiFactory factory) : IClassFix
             factory,
             "/api/v1/commands/place-building",
             playerId: null,
-            """{"requestId":"0199a1b2-c3d4-7e5f-8a9b-00000000000a","buildingTypeId":"woodcutter","x":2,"y":3}""");
+            """{"requestId":"0199a1b2-c3d4-7e5f-8a9b-00000000000a","buildingTypeId":"woodcutter","x":4,"y":3}""");
 
         AssertAuthenticationRequired(response);
     }

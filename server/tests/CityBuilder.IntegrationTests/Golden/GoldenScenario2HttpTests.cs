@@ -50,11 +50,11 @@ public sealed class GoldenScenario2HttpTests(PostgresServer server) : PostgresTe
         Assert.Equal(("""{"logs":148}""", """{"logs":98}"""), (report["produced"]!.ToJsonString(), report["moved"]!.ToJsonString()));
         Assert.Equal((14_045L, """[{"stationId":3,"slot":1,"at":15095}]"""), ((long)report["courierSeconds"]!, report["tiredCouriers"]!.ToJsonString()));
         Assert.Equal(
-            """{"stationId":3,"slot":1,"state":"Resting","toStop":0,"departedAt":null,"arrivesAt":null,"stamina":0,"load":[{"itemId":"logs","fromId":2,"quantity":10}]}""",
+            """{"stationId":3,"slot":1,"state":"Resting","toStop":0,"departedAt":null,"arrivesAt":null,"stamina":0,"load":[{"itemId":"logs","fromId":2,"quantity":10}],"waitsAt":null}""",
             Courier(looks[25000]).ToJsonString());
         Assert.Equal(("""{"logs":40}""", """{"logs":100}"""), (Store(looks[25000], 2), Store(looks[25000], 4)));
         Assert.Equal(
-            """{"stationId":3,"slot":1,"state":"Walking","toStop":1,"departedAt":25000,"arrivesAt":25005,"stamina":14400,"load":[{"itemId":"logs","fromId":2,"quantity":10}]}""",
+            """{"stationId":3,"slot":1,"state":"Walking","toStop":1,"departedAt":25000,"arrivesAt":25005,"stamina":14400,"load":[{"itemId":"logs","fromId":2,"quantity":10}],"waitsAt":null}""",
             Courier(looks[-25000]).ToJsonString());
         Assert.Equal(("Walking", 2, 25_015L), ((string)Courier(looks[25005])["state"]!, (int)Courier(looks[25005])["toStop"]!, (long)Courier(looks[25005])["arrivesAt"]!));
         Assert.All(looks.Where(look => Math.Abs(look.Key) >= 60).Select(look => look.Value), snapshot => Assert.Equal(440L, (long)snapshot["city"]!["purse"]!));

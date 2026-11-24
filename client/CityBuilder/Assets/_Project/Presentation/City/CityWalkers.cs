@@ -298,6 +298,11 @@ namespace CityBuilder.Client.Presentation.City
                     entry.DepartedAt = courier.DepartedAt!.Value;
                     entry.ArrivesAt = courier.ArrivesAt!.Value;
                 }
+                else if (courier.State == CourierState.Blocked && city.TryGetBuilding(courier.WaitsAt, out Building? waitsAt))
+                {
+                    // Waiting for a path where it stands (M1-03).
+                    entry.Path = WalkPath.Standing(waitsAt!.X, waitsAt.Y);
+                }
                 else
                 {
                     entry.Path = WalkPath.Standing(station.X, station.Y);
@@ -309,7 +314,7 @@ namespace CityBuilder.Client.Presentation.City
 
         /// <summary>
         /// Shows one trip's worker on its current leg: from the source to the target with a load, or back (empty for the next one, or with
-        /// what the target didn't take) (CR-0008 D21); a waiting worker stands at the source with its load (M0-C-3).
+        /// what the target didn't take) (CR-0008 D21); a waiting worker stands at the source with its load (M0-C-3), a blocked one where it waits (M1-03).
         /// </summary>
         private void ShowTrip(CityState city, Trip trip)
         {
@@ -320,13 +325,15 @@ namespace CityBuilder.Client.Presentation.City
 
             Entry entry = EntryFor(TripKey(trip.Id), false);
             entry.Seen = true;
-            if (trip.Leg == TripLeg.Waiting)
+            if (trip.Leg == TripLeg.Waiting || trip.Leg == TripLeg.BlockedAtSource || trip.Leg == TripLeg.BlockedAtTarget)
             {
                 if (!(entry.Planned && !entry.Walking))
                 {
+                    // Waiting at the source (M0-C-3, or for a path to the target), or at the target for a path back (M1-03).
+                    Building at = trip.Leg == TripLeg.BlockedAtTarget ? target! : source!;
                     entry.Planned = true;
                     entry.Walking = false;
-                    entry.Path = WalkPath.Standing(source!.X, source.Y);
+                    entry.Path = WalkPath.Standing(at.X, at.Y);
                 }
 
                 ShowLoad(entry, trip.Item.Value);

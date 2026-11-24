@@ -139,6 +139,27 @@ namespace CityBuilder.Client.Presentation.Feedback
                 case ApiErrorCodes.DeliveryNotFound:
                     message = "That delivery is already done";
                     return true;
+                case ApiErrorCodes.TerrainBlocked:
+                    message = "Nothing can be built on water, forest or rock";
+                    return true;
+                case ApiErrorCodes.LandClosed:
+                    message = "That land is still unexplored. Research opens it";
+                    return true;
+                case ApiErrorCodes.NeedsForest:
+                    message = "A Woodcutter's Hut needs forest next to it";
+                    return true;
+                case ApiErrorCodes.NeedsRock:
+                    message = "A Quarry needs rock next to it";
+                    return true;
+                case ApiErrorCodes.NeedsFertileSoil:
+                    message = "A Farm needs fertile soil";
+                    return true;
+                case ApiErrorCodes.BridgeLocked:
+                    message = "Research Bridge Building to build on water";
+                    return true;
+                case ApiErrorCodes.NoPath:
+                    message = "No path joins those buildings. Build a bridge or open the land";
+                    return true;
                 case ApiErrorCodes.IdempotencyConflict:
                     message = "That command was already used. Try again";
                     return true;

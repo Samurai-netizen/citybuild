@@ -10,7 +10,7 @@ namespace CityBuilder.Client.Presentation.Research
 {
     /// <summary>
     /// Words what a research does, from the research's effects and the content's names: <c>Unlocks Trading Post</c>, <c>Woodcutter's Hut: −20% labor</c>,
-    /// <c>+250 Logs storage</c>, <c>Cottage: +1 max level</c>, <c>+1 builder</c>, <c>Grants the Town Charter</c> (M1-02). The research screen's nodes (M0-52) and the welcome-back report (M0-53) share it, so a research reads the same
+    /// <c>+250 Logs storage</c>, <c>Cottage: +1 max level</c>, <c>+1 builder</c>, <c>Grants the Town Charter</c> (M1-02), <c>Opens new land</c>, <c>Unlocks Bridge</c> (M1-03). The research screen's nodes (M0-52) and the welcome-back report (M0-53) share it, so a research reads the same
     /// on both. No game number is written here: the numbers come from the effects. Pure code.
     /// </summary>
     public static class ResearchEffectText
@@ -57,6 +57,10 @@ namespace CityBuilder.Client.Presentation.Research
                     return "+" + builders.Amount.ToString(CultureInfo.InvariantCulture) + (builders.Amount == 1 ? " builder" : " builders");
                 case GrantCharterEffect _:
                     return "Grants the Town Charter";
+                case OpenLandEffect _:
+                    return "Opens new land";
+                case UnlockBridgeEffect _:
+                    return "Unlocks " + (content.Bridge?.Name ?? "bridges");
                 default:
                     return string.Empty;
             }

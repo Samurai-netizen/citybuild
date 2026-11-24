@@ -16,5 +16,12 @@ namespace CityBuilder.Simulation.State
 
         /// <summary>At its station without stamina, keeping its load, until re-energized (part H). No walk, no times.</summary>
         Resting,
+
+        /// <summary>
+        /// Waiting at building <see cref="Courier.WaitsAt"/> with its load because no walk joins it to where it goes next (a removed bridge,
+        /// M1-03 decision 4): to stop <see cref="Courier.ToStop"/> of its route or line, or home when that is 0. No walk, no times, no stamina
+        /// spent; it walks again from the first second a path exists.
+        /// </summary>
+        Blocked,
     }
 }

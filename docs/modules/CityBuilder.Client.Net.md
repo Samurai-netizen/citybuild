@@ -32,6 +32,13 @@ client directly (`.claude/rules/unity.md`). `GameRoot` builds it and runs the st
 | `ConnectionMonitor` | Polls `GET /city` into the `ClientCityStore` when the `PollScheduler` says so and turns every answer into a `ConnectionState` (`State`, `LastError`, `StateChanged`). `TickAsync` is called every frame (no task allocated when nothing is due; never throws: a cancel ends it quietly and anything unexpected is logged, CR-0004), `SetPaused` pauses and resumes the polling, `RequestPoll` asks for one now, `ReportCommandError` asks for one when a command's token was refused, or when it got no answer or a 5xx (`GameRoot` passes each command's error, M0-54, M0-55), so the new login, or the state turning Offline, does not wait for the next poll, `PollFinished` is raised when a poll that `TickAsync` began ends, whatever it found (M0-55), `PollAsync` polls whatever the scheduler says. `StateFor(error, duringLogin)` is the one table from failure to state |
 | `Dtos/*Dto` | The records of `05` as immutable classes: snapshot (`CitySnapshotDto` …), content (`ContentResponseDto` …), the dev login and the command bodies (`PlaceBuildingRequestDto`, `UpgradeBuildingRequestDto`, `AssignWorkersRequestDto`, `StartResearchRequestDto`, `StartTripRequestDto`, `RoadTileRequestDto`, `RoadTilesRequestDto`, `SetRouteRequestDto` with `RouteStopRequestDto` and `RouteActionRequestDto`, `CancelDeliveryRequestDto` and `SetPausedRequestDto`, CR-0008-T3; the snapshot's `deliveryLines`, a trip's `remaining` and `leg` (`ToTarget`, `ToSource`, and `Waiting` since M0-C-3), and a building's `paused`, required in the JSON); five enums (the building phase and kind, the research effect type, and since CR-0008-T1 part G the courier state and the route action kind) Content since M1-02: the effect types `maxLevelBonus`, `builderSlotBonus`, `grantCharter` and a building's optional `baseMaxLevel` (left out when absent), which `ContentMapper` passes to the engine. |
 
+
+### The map (M1-03)
+`ContentMapDto`, `ContentBridgeDto`, `BuildingSiteDto`, `RoadKindDto` and the effect types `openLand`, `unlockBridge` read the map; the
+snapshot's `openAreas`, `chartered`, a road's `kind` and a courier's `waitsAt`. `ContentMapper` builds the engine's `MapData` and bridge from
+them; `SnapshotMapper` builds bridges. New members are optional in the DTOs, so every older recorded answer still reads and writes back byte
+for byte (decision 21 of the M1-03 build log).
+
 ## Rules and invariants
 - Networking lives only in this assembly. It references `CityBuilder.Client.Core`, `CityBuilder.Simulation` (the content factory; asmdef references are not transitive) and Newtonsoft, nothing else of the project.
 - The asmdef sets `overrideReferences` and lists `Newtonsoft.Json.dll` under `precompiledReferences`. The package's DLL is
@@ -119,4 +126,4 @@ captured from the real server, and the round-trip test. A new error code: add it
   matching builds.
 - The real transport was walked against a running server once (M0-37 build log); it is not in CI (Unity tests are not).
 
-Last updated: M1-02
+Last updated: M1-03

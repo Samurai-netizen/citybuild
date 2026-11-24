@@ -15,6 +15,7 @@ public sealed class CityCourierConfiguration : IEntityTypeConfiguration<CityCour
             table.HasCheckConstraint("ck_city_couriers_slot", "slot >= 1");
             table.HasCheckConstraint("ck_city_couriers_to_stop", "to_stop >= 0");
             table.HasCheckConstraint("ck_city_couriers_stamina_seconds", "stamina_seconds >= 0");
+            table.HasCheckConstraint("ck_city_couriers_waits_at", "(state = 'Blocked') = (waits_at is not null)");
             table.HasCheckConstraint(
                 "ck_city_couriers_walk", "(departed_at is null and arrives_at is null) or (departed_at is not null and arrives_at is not null and departed_at >= 0 and arrives_at > departed_at)");
         });
@@ -28,6 +29,7 @@ public sealed class CityCourierConfiguration : IEntityTypeConfiguration<CityCour
         builder.Property(c => c.DepartedAt).HasColumnName("departed_at");
         builder.Property(c => c.ArrivesAt).HasColumnName("arrives_at");
         builder.Property(c => c.StaminaSeconds).HasColumnName("stamina_seconds");
+        builder.Property(c => c.WaitsAt).HasColumnName("waits_at");
 
         // The station owns its couriers: the rows go with it.
         builder.HasOne<CityBuildingRow>().WithMany().HasForeignKey(c => new { c.CityId, c.StationId })

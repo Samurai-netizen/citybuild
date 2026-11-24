@@ -6,20 +6,18 @@
 
 ## Resume point
 - **State:** IDLE <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** none · M1-02 in review (branch `task/M1-02-era1-content`, log `docs/build-log/2026/2026-11-23-02-M1-02.md`)
+- **Task:** — (M1-03 in review, PR #106: branch `task/M1-03-map-terrain`, log `docs/build-log/2026/2026-11-24-01-M1-03.md`)
 - **Part / step:** —
-- **Last completed:** M1-02 Full Era I content and the three new research effects (PR #105, 2026-11-24; the owner merges).
-- **Next step:** after the merge, `/start-task M1-03` (the map: terrain, placement rules, land expansion; [O] [PLAN] [ASSETS], its asset
-  request is complete). On the merge, CR-0013's status becomes Done. Also open: the owner's [MANUAL] click-through of the metrics report
-  (`tools/README.md` → MetricsReport).
+- **Last completed:** M1-03 The map: terrain, placement rules, land expansion (PR open; the owner's [MANUAL] map check in `client/README.md`).
+- **Next step:** after M1-03 is merged: `/start-task M1-04` (The Chronicle; [PLAN]: write ahead, then wait for the plan's approval).
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. The hosting provider (in M1-13).
-- **Known broken / do not touch:** the owner's local Unity edits (`client/CityBuilder/Assets/Settings/*.asset`, `ProjectSettings/ProjectSettings.asset`,
+- **Known broken / do not touch:**   the owner's local Unity edits (`client/CityBuilder/Assets/Settings/*.asset`, `ProjectSettings/ProjectSettings.asset`,
   `UnityConnectSettings.asset`): leave them uncommitted and don't report them (owner, 2026-11-18). They are hidden with
   `git update-index --skip-worktree` in the owner's clone (undo: `--no-skip-worktree`). The untracked `docs/assets/ready-assets/` (asset
   deliveries for M1-03 … M1-17): leave it, never `git add docs` whole (owner, 2026-11-24).
   CR-0008-T1: decision 38 lowered two property coverage floors (reported in the PR, G-Tests). (`ConnectionMonitorTests.Tick_WithNoPollDue_AllocatesNothing` failed once in a cold full run, flaky; build log M0-55; `PerformanceBudgetTests` fails when the machine is heavily loaded, re-run it alone: CR-0008-T1 build log, C3)
 - **Verify with:** in the loop `bash scripts/dev/test.sh <area> [filter]`, at a checkpoint `bash scripts/dev/test.sh changed`, at the finish
-  `bash scripts/dev/quality.sh` (as CI; `08` → Test tiers) · `UNITY_EDITOR=<Unity program> bash scripts/dev/test-unity.sh` (Editor closed)
+  `bash scripts/dev/quality.sh` (as CI; `08` → Test tiers) · `UNITY_EDITOR=/Applications/Unity/Hub/Editor/6000.3.25f1/Unity.app bash scripts/dev/test-unity.sh` (Editor closed)
 
 ## Milestone
 **M0 — vertical slice of Era I** · board: `docs/plan/M0-PLAN.md` (remaining tasks grouped in `docs/plan/M1-PLAN.md` §3) · tasks done: 87 / 88 (M0-71 skipped) · next milestone: `docs/plan/M1-PLAN.md` (approved 2026-11-23, CR-0011)

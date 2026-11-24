@@ -173,5 +173,8 @@ namespace CityBuilder.Simulation.Content
         /// good no reachable recipe makes (rule 16).
         /// </summary>
         ResearchUnreachable,
+
+        /// <summary>The map's rows don't match the grid: another number of rows than its height, or a row of another length than its width (M1-03).</summary>
+        MapMismatch,
     }
 }

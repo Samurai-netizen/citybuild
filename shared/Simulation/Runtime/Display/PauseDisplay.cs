@@ -16,7 +16,8 @@ namespace CityBuilder.Simulation.Display
         /// <summary>
         /// The city-clock second the last courier of a station is home: over its couriers walking to a stop, their arrival plus the walk from
         /// that stop home (with the city's walk bonus now); over its couriers walking home, their arrival. Null when none of them is out (all at
-        /// the station or resting). Meant for a paused station; for another it says when the couriers would be home if it were paused now.
+        /// the station or resting). A courier that waits for a path (blocked, M1-03), or walks to a stop with no walk home, has no second and
+        /// is left out. Meant for a paused station; for another it says when the couriers would be home if it were paused now.
         /// </summary>
         /// <param name="city">The city.</param>
         /// <param name="content">The game content.</param>
@@ -59,7 +60,13 @@ namespace CityBuilder.Simulation.Display
                     if (stop >= 0)
                     {
                         walks ??= new WalkTimes(city, content);
-                        home = checked(home + walks.Seconds(stop, station));
+                        if (!walks.TrySeconds(stop, station, out long back))
+                        {
+                            // No walk home from that stop (M1-03): it will wait there, so it has no second to show.
+                            continue;
+                        }
+
+                        home = checked(home + back);
                     }
                 }
 

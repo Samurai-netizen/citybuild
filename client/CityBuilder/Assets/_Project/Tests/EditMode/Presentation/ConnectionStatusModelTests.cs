@@ -83,14 +83,14 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation
         [Test]
         public async Task InvalidContent_IsFatal_AndListsTheErrorsWithTheirPaths()
         {
-            IReadOnlyList<ContentError> errors = await ErrorsOf(Fixtures.Read("content.json").Replace("\"gridWidth\":8", "\"gridWidth\":0"));
+            IReadOnlyList<ContentError> errors = await ErrorsOf(Fixtures.Read("content.json").Replace("\"builderSlots\":2,", "\"builderSlots\":0,"));
 
             ConnectionStatusModel model = ConnectionStatusModel.From(StartupOutcome.InvalidContent(errors));
 
             Assert.That(model.IsFatal, Is.True);
             Assert.That(model.Headline, Is.EqualTo("The game content from the server is invalid"));
             Assert.That(model.Details, Has.Count.EqualTo(1));
-            Assert.That(model.Details[0], Does.StartWith("rules.gridWidth: "));
+            Assert.That(model.Details[0], Does.StartWith("rules.builderSlots: "));
         }
 
         /// <summary>More than eight errors are cut to eight lines and a count of the rest.</summary>

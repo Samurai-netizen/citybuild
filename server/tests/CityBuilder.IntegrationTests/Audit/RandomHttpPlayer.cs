@@ -294,16 +294,16 @@ internal sealed class RandomHttpPlayer : IDisposable
     /// <returns>The steps in order.</returns>
     private static IEnumerable<(string Command, Func<Guid, object> Body)> Opening()
     {
-        yield return Place("house", 0, 2);
-        yield return Place("woodcutter", 0, 0);
-        yield return Place("scriptorium", 4, 0);
+        yield return Place("house", 4, 6);
+        yield return Place("woodcutter", 4, 4);
+        yield return Place("scriptorium", 8, 4);
         yield return Assign(2);
         yield return ("start-research", requestId => new { requestId, researchId = "trade_charter" });
-        yield return Place("sawmill", 2, 0);
+        yield return Place("sawmill", 6, 4);
         yield return Trip(2, 4, "logs");
         yield return Trip(2, 4, "logs");
         yield return Assign(4);
-        yield return Place("trading_post", 2, 2);
+        yield return Place("trading_post", 6, 6);
         for (int round = 0; round < 8; round++)
         {
             yield return Trip(2, 4, "logs");
@@ -317,7 +317,7 @@ internal sealed class RandomHttpPlayer : IDisposable
             yield return Trip(4, 5, "planks");
         }
 
-        yield return Place("courier_station", 3, 2);
+        yield return Place("courier_station", 7, 6);
         yield return Assign(6);
         yield return ("set-route", requestId => new
         {
@@ -364,9 +364,9 @@ internal sealed class RandomHttpPlayer : IDisposable
     /// <returns>1 or 2.</returns>
     private int Slot() => _random.Next(4) == 0 ? 2 : 1;
 
-    /// <summary>A tile coordinate on the 8 × 8 grid of the content.</summary>
-    /// <returns>0 to 7.</returns>
-    private int Coordinate() => _random.Next(8);
+    /// <summary>A tile coordinate of the 8 × 8 block of open grass in the Era I map's start area, from (4, 4) (M1-03).</summary>
+    /// <returns>4 to 11.</returns>
+    private int Coordinate() => 4 + _random.Next(8);
 
     /// <summary>
     /// An amount: mostly a preset (always allowed), otherwise a percentage or a number, which only research unlocks (refused until then;

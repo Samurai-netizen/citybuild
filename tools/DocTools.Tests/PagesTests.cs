@@ -42,6 +42,8 @@ public sealed class PagesTests
         Assert.Contains("+1 max level for `house`", text, StringComparison.Ordinal);
         Assert.Contains("+1 builder slot", text, StringComparison.Ordinal);
         Assert.Contains("grants the town charter", text, StringComparison.Ordinal);
+        Assert.Contains("opens land: area B", text, StringComparison.Ordinal);
+        Assert.Contains("unlocks the bridge", text, StringComparison.Ordinal);
         Assert.Contains("| `town_hall` | Town Hall | `House` | 1 | research `masonry` | 1 | 600 `coins`, 40 `cut_stone`, 60 `planks` | 600 s (10 min) | 3 | 3 |", text, StringComparison.Ordinal);
     }
 

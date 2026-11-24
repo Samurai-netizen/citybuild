@@ -1,9 +1,14 @@
 #nullable enable
 
+using System.Linq;
 using CityBuilder.Client.Presentation.City;
+using CityBuilder.Client.Tests.EditMode.Core;
+using CityBuilder.Simulation.Content;
+using CityBuilder.Simulation.State;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using Terrain = CityBuilder.Simulation.Content.Terrain;
 
 namespace CityBuilder.Client.Tests.EditMode.Presentation.City
 {
@@ -99,7 +104,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.City
         public void WithoutATileModel_TheGroundFallsBackToChessboardCubes()
         {
             var parent = new GameObject("Fallback parent");
-            var ground = new GroundTiles(_grid, new TileSelection(_grid), parent.transform, null);
+            var ground = new GroundTiles(_grid, new TileSelection(_grid), parent.transform, (GameObject?)null);
             try
             {
                 Color a = ground.Root.transform.Find("Tile (0, 0)").GetComponent<Renderer>().sharedMaterial.color;
@@ -263,6 +268,100 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.City
 
             Assert.That(_ground.ShownRoadLevelAt(new GridCoordinate(1, 1)), Is.EqualTo(0));
             Assert.That(BuildingViewFactory.FindByName(_ground.Root.transform.Find("Tile (1, 1)"), RoadArms.XPlus), Is.Null);
+        }
+
+        /// <summary>
+        /// On the Era I map (M1-03) each tile shows its terrain's model as <see cref="GroundLooks"/> picks it, turned by its quarter turns: the
+        /// river, a forest, a rock and a soil tile, and grass where the map has grass.
+        /// </summary>
+        [Test]
+        public void Build_OnAMap_EachTileShowsItsTerrainsModelAndTurn()
+        {
+            MapDefinition map = CityTestData.Content().Map!;
+            var grid = new CityGrid(map.Width, map.Height);
+            var parent = new GameObject("Map parent");
+            var ground = new GroundTiles(grid, new TileSelection(grid), parent.transform, map);
+            try
+            {
+                foreach ((int x, int y) in new[] { (12, 5), (0, 0), (8, 0), (13, 3), (5, 5) })
+                {
+                    Terrain terrain = map.TerrainAt(x, y);
+                    Transform tile = ground.Root.transform.Find("Tile " + new GridCoordinate(x, y));
+                    GameObject model = Resources.Load<GameObject>(GroundLooks.ModelPathFor(terrain, x, y));
+                    Mesh expected = model.GetComponentInChildren<MeshFilter>().sharedMesh;
+                    Assert.That(tile.GetComponentInChildren<MeshFilter>().sharedMesh, Is.SameAs(expected), terrain + " at " + x + "," + y);
+                    Quaternion turned = Quaternion.Euler(0f, 90f * GroundLooks.QuarterTurnsFor(terrain, x, y), 0f) * model.transform.localRotation;
+                    Assert.That(Quaternion.Angle(tile.localRotation, turned), Is.LessThan(0.01f), terrain + " turn");
+                }
+            }
+            finally
+            {
+                ground.Destroy();
+                Object.DestroyImmediate(parent);
+            }
+        }
+
+        /// <summary>Without tile models a map's tiles are flat blocks in their terrain's tint (the AR-M1-03 placeholder), with the top at the ground.</summary>
+        [Test]
+        public void Build_OnAMapWithoutModels_ShowsEachTerrainsTint()
+        {
+            MapDefinition map = CityTestData.Content().Map!;
+            var grid = new CityGrid(map.Width, map.Height);
+            var parent = new GameObject("Tint parent");
+            var ground = new GroundTiles(grid, new TileSelection(grid), parent.transform, null, map);
+            try
+            {
+                foreach ((int x, int y) in new[] { (12, 5), (0, 0), (8, 0), (13, 3) })
+                {
+                    Renderer tile = ground.Root.transform.Find("Tile " + new GridCoordinate(x, y)).GetComponent<Renderer>();
+                    Vector4 difference = (Vector4)tile.sharedMaterial.color - (Vector4)GroundLooks.PlaceholderColorFor(map.TerrainAt(x, y));
+                    Assert.That(difference.magnitude, Is.LessThan(0.001f), x + "," + y + ": the terrain's tint");
+                    Assert.That(tile.bounds.max.y, Is.EqualTo(0f).Within(0.01f));
+                }
+            }
+            finally
+            {
+                ground.Destroy();
+                Object.DestroyImmediate(parent);
+            }
+        }
+
+        /// <summary>
+        /// A bridge (M1-03) stands on its water tile: the river stays under it, the bridge model is the tile's <c>Bridge</c> child, turned so its
+        /// ends meet the roads on ±X, and the tile counts as a level 1 road; when the bridge goes, the bare river is back.
+        /// </summary>
+        [Test]
+        public void ShowRoads_ABridge_StandsOnItsWaterTileFacingItsRoads()
+        {
+            MapDefinition map = CityTestData.Content().Map!;
+            var grid = new CityGrid(map.Width, map.Height);
+            var parent = new GameObject("Bridge parent");
+            var ground = new GroundTiles(grid, new TileSelection(grid), parent.transform, map);
+            try
+            {
+                ground.ShowRoads(new[] { new RoadTile(11, 5, 1), new RoadTile(12, 5, 1, true), new RoadTile(13, 5, 1) });
+
+                Transform tile = ground.Root.transform.Find("Tile (12, 5)");
+                Mesh water = Resources.Load<GameObject>(GroundLooks.ModelPathFor(Terrain.Water, 12, 5)).GetComponentInChildren<MeshFilter>().sharedMesh;
+                Transform bridge = tile.Find("Bridge");
+                Assert.That(bridge, Is.Not.Null);
+                Assert.That(tile.GetComponentsInChildren<MeshFilter>().Select(filter => filter.sharedMesh), Does.Contain(water));
+                Quaternion model = Resources.Load<GameObject>(GroundLooks.BridgePath).transform.localRotation;
+                float east = Quaternion.Angle(bridge.rotation, Quaternion.Euler(0f, 90f, 0f) * model);
+                float west = Quaternion.Angle(bridge.rotation, Quaternion.Euler(0f, 270f, 0f) * model);
+                Assert.That(Mathf.Min(east, west), Is.LessThan(0.01f), "the ends along ±X");
+                Assert.That(ground.ShownRoadLevelAt(new GridCoordinate(12, 5)), Is.EqualTo(1));
+
+                ground.ShowRoads(null);
+
+                Assert.That(ground.Root.transform.Find("Tile (12, 5)").Find("Bridge"), Is.Null);
+                Assert.That(ground.ShownRoadLevelAt(new GridCoordinate(12, 5)), Is.EqualTo(0));
+            }
+            finally
+            {
+                ground.Destroy();
+                Object.DestroyImmediate(parent);
+            }
         }
     }
 }

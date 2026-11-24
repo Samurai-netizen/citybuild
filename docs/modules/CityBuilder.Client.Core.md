@@ -25,6 +25,11 @@ structure). It is **not** responsible for talking to the server (`CityBuilder.Cl
 | `ClientLog`, `UnityLogSink` | The game's logger: `ClientLog.Default` is `ClientLogger` at the build's level (`DefaultLevelFor`: Debug in the Editor and development builds, Warning in release) over `UnityLogSink`, the only runtime code that calls `UnityEngine.Debug` to log. `ClientLog.Debug/Info/Warning/Error/Exception` forward to `Default`, so code with no logger handed to it logs in one line. Nothing in them can be changed after the start |
 | `PredictionWatch` | A development check (M0-54): at each new snapshot it reports when the display's clock went back and, with no command on its way, when the snapshot differs from `Simulator.Advance` of the one before it, with the cities as JSON (`ToJson`: every stored value, the roads included since CR-0008-T1 part D, the purse, stores, needs, the research's needs and the trips since part E, the couriers and routes since part G, the delivery lines and each building's `paused` since CR-0008-T3; the clock-back report lists the city totals that fell). `GameRoot` makes it when `Debug.isDebugBuild`, reporting to `Debug.LogWarning`; it changes nothing the player sees |
 
+
+### The map (M1-03)
+`CitySnapshot` copies a stuck courier's `WaitsAt` with the rest of the city (roads are values and keep their bridge flag), so the display
+engine walks the same map as the server.
+
 ## Rules and invariants
 - References only `CityBuilder.Simulation` (`03` dependency table). The asmdef is not auto-referenced, so other assemblies must name it,
   and `overrideReferences` is on with no precompiled DLL listed, so Core cannot see Newtonsoft or any other package DLL by accident.
@@ -67,4 +72,4 @@ folder area follows the recipe "New project, assembly or folder area" in `core-i
 - `Time.realtimeSinceStartupAsDouble` may or may not count while the app is in the background, depending on the platform. The poll on resume
   (`PollScheduler`, M0-41) replaces the snapshot, so this lasts only until that answer arrives.
 
-Last updated: M1-02
+Last updated: M1-03

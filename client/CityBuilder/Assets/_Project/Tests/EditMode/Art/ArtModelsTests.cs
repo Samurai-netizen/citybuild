@@ -8,6 +8,7 @@ using CityBuilder.Simulation;
 using CityBuilder.Simulation.Content;
 using NUnit.Framework;
 using UnityEngine;
+using Terrain = CityBuilder.Simulation.Content.Terrain;
 
 namespace CityBuilder.Client.Tests.EditMode.Art
 {
@@ -155,6 +156,95 @@ namespace CityBuilder.Client.Tests.EditMode.Art
         {
             Assert.That(Resources.Load<GameObject>(BuildingLooks.GrassTilePath), Is.Not.Null, "grass");
             Assert.That(Resources.Load<GameObject>(BuildingLooks.DirtTilePath), Is.Not.Null, "dirt");
+        }
+
+        /// <summary>
+        /// The map's models of AR-M1-03 exist (M1-03): every model <see cref="GroundLooks"/> picks for every terrain, the bridge, both mist puffs
+        /// and the survey stake.
+        /// </summary>
+        [Test]
+        public void TheMapModels_Exist()
+        {
+            var paths = new SortedSet<string> { GroundLooks.BridgePath, GroundLooks.MistPuffPath, GroundLooks.MistEdgePuffPath, GroundLooks.SurveyStakePath };
+            foreach (Terrain terrain in new[] { Terrain.Forest, Terrain.Rock, Terrain.Soil, Terrain.Water })
+            {
+                for (int x = 0; x < 18; x++)
+                {
+                    for (int y = 0; y < 14; y++)
+                    {
+                        paths.Add(GroundLooks.ModelPathFor(terrain, x, y));
+                    }
+                }
+            }
+
+            Assert.That(paths, Has.Count.EqualTo(15));
+            foreach (string path in paths)
+            {
+                Assert.That(Resources.Load<GameObject>(path), Is.Not.Null, path);
+            }
+        }
+
+        /// <summary>
+        /// The terrain tiles sit edge to edge with the grass (AR-M1-03): a land tile's top is at y = 0 and a river's surface at y = -0.05, and
+        /// each fills its tile (1 × 1, centred on its pivot).
+        /// </summary>
+        [Test]
+        public void EveryTerrainTile_FillsItsTile_AtTheGroundsHeight()
+        {
+            foreach (Terrain terrain in new[] { Terrain.Forest, Terrain.Rock, Terrain.Soil, Terrain.Water })
+            {
+                for (int x = 0; x < 18; x++)
+                {
+                    string path = GroundLooks.ModelPathFor(terrain, x, 0);
+                    Bounds bounds = Resources.Load<GameObject>(path).GetComponentInChildren<MeshFilter>().sharedMesh.bounds;
+                    Assert.That(bounds.size.x, Is.EqualTo(1f).Within(0.02f), path);
+                    Assert.That(bounds.size.z, Is.EqualTo(1f).Within(0.02f), path);
+                    Assert.That(bounds.center.x, Is.EqualTo(0f).Within(0.02f), path);
+                    Assert.That(bounds.center.z, Is.EqualTo(0f).Within(0.02f), path);
+                    if (terrain == Terrain.Water)
+                    {
+                        Assert.That(bounds.max.y, Is.EqualTo(-0.05f).Within(0.01f), path);
+                    }
+                    else
+                    {
+                        Assert.That(bounds.min.y, Is.LessThan(0f), path + ": the slab reaches below the ground plane like the grass");
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// The map's models stay inside the triangle budgets of AR-M1-03: 1,000 per terrain tile, 2,000 for the bridge, 300 for a mist puff and the
+        /// survey stake.
+        /// </summary>
+        [Test]
+        public void TheMapModels_StayInsideTheirTriangleBudgets()
+        {
+            var budgets = new Dictionary<string, int>
+            {
+                [GroundLooks.BridgePath] = 2000,
+                [GroundLooks.MistPuffPath] = 300,
+                [GroundLooks.MistEdgePuffPath] = 300,
+                [GroundLooks.SurveyStakePath] = 300,
+            };
+            foreach (Terrain terrain in new[] { Terrain.Forest, Terrain.Rock, Terrain.Soil, Terrain.Water })
+            {
+                for (int x = 0; x < 18; x++)
+                {
+                    budgets[GroundLooks.ModelPathFor(terrain, x, 0)] = 1000;
+                }
+            }
+
+            foreach (KeyValuePair<string, int> budget in budgets)
+            {
+                int triangles = 0;
+                foreach (MeshFilter filter in Resources.Load<GameObject>(budget.Key).GetComponentsInChildren<MeshFilter>())
+                {
+                    triangles += filter.sharedMesh.triangles.Length / 3;
+                }
+
+                Assert.That(triangles, Is.InRange(1, budget.Value), budget.Key);
+            }
         }
 
         /// <summary>A later era with no models of its own finds the Era I ones; a type or a level without a model finds none (and is logged once, 27).</summary>

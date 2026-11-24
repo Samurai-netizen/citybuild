@@ -54,7 +54,7 @@ namespace CityBuilder.Simulation.Settlement
             while (index < trips.Count)
             {
                 Trip trip = trips[index];
-                if (trip.Leg != TripLeg.Waiting && trip.ArrivesAt == time && !EndLeg(city, content, trip, time, report))
+                if ((trip.Leg == TripLeg.ToTarget || trip.Leg == TripLeg.ToSource) && trip.ArrivesAt == time && !EndLeg(city, content, trip, time, report))
                 {
                     city.RemoveTripAt(index);
                     continue;
@@ -74,19 +74,28 @@ namespace CityBuilder.Simulation.Settlement
             if (trip.Leg == TripLeg.ToTarget)
             {
                 long left = Deliveries.Deliver(city, content, target, trip.Item, trip.Quantity, time, report, _timers);
-                if (left > 0)
-                {
-                    // The target is full: the sending ends and the worker carries the rest back (M0-C-3; never above the source's limit).
-                    trip.CarryBack(left, time, checked(time + _walks.Seconds(target, source)));
-                    return true;
-                }
-
-                if (trip.Remaining < 1)
+                if (left < 1 && trip.Remaining < 1)
                 {
                     return false;
                 }
 
-                trip.WalkBack(time, checked(time + _walks.Seconds(target, source)));
+                if (!_walks.TrySeconds(target, source, out long back))
+                {
+                    // No walk back (a removed bridge, M1-03 decision 4): the worker waits at the target with what is left.
+                    trip.BlockAtTarget(left);
+                    return true;
+                }
+
+                if (left > 0)
+                {
+                    // The target is full: the sending ends and the worker carries the rest back (M0-C-3; never above the source's limit).
+                    trip.CarryBack(left, time, checked(time + back));
+                }
+                else
+                {
+                    trip.WalkBack(time, checked(time + back));
+                }
+
                 return true;
             }
 
@@ -102,6 +111,15 @@ namespace CityBuilder.Simulation.Settlement
                 return true;
             }
 
+            return FetchNext(city, content, trip, source, target, time);
+        }
+
+        /// <summary>
+        /// The worker at the source takes the next load, at most the rest, the stock and the trip carry limit, and walks to the target; returns
+        /// false when there is none to take (the trip ends). With no walk to the target (M1-03 decision 4) it takes nothing and waits there.
+        /// </summary>
+        private bool FetchNext(CityState city, GameContent content, Trip trip, int source, int target, long time)
+        {
             Building store = city.Buildings[source];
             long load = Math.Min(Math.Min(trip.Remaining, store.GetStock(trip.Item)), content.Rules.TripCarryLimit);
             if (load < 1)
@@ -109,9 +127,66 @@ namespace CityBuilder.Simulation.Settlement
                 return false;
             }
 
+            if (!_walks.TrySeconds(source, target, out long walk))
+            {
+                if (trip.Leg != TripLeg.BlockedAtSource)
+                {
+                    trip.BlockAtSource();
+                }
+
+                return true;
+            }
+
             store.TakeFromStore(trip.Item, load);
-            trip.CarryOn(load, time, checked(time + _walks.Seconds(source, target)));
+            trip.CarryOn(load, time, checked(time + walk));
             return true;
+        }
+
+        /// <summary>
+        /// Blocked workers try again at <paramref name="time"/> (the start pass, M1-03 decision 4), in ascending trip id: one waiting at the
+        /// target walks back once a walk joins it to the source; one waiting at the source takes its load and walks once a walk joins it to the
+        /// target, or ends its trip when nothing is left to take. The map changes only by a mutation (before a zero-length advance) or a
+        /// research completion, both at a pass, so a walk starts at the first second it exists.
+        /// </summary>
+        public void StartBlocked(CityState city, GameContent content, long time)
+        {
+            IReadOnlyList<Trip> trips = city.Trips;
+            int index = 0;
+            while (index < trips.Count)
+            {
+                Trip trip = trips[index];
+                int source = city.IndexOfBuilding(trip.SourceId);
+                int target = city.IndexOfBuilding(trip.TargetId);
+                if (trip.Leg == TripLeg.BlockedAtTarget && _walks.TrySeconds(target, source, out long back))
+                {
+                    trip.ResumeToSource(time, checked(time + back));
+                    Due(trip.ArrivesAt);
+                }
+                else if (trip.Leg == TripLeg.BlockedAtSource)
+                {
+                    if (!FetchNext(city, content, trip, source, target, time))
+                    {
+                        city.RemoveTripAt(index);
+                        continue;
+                    }
+
+                    if (trip.Leg == TripLeg.ToTarget)
+                    {
+                        Due(trip.ArrivesAt);
+                    }
+                }
+
+                index++;
+            }
+        }
+
+        /// <summary>Moves the next end of a leg forward to <paramref name="arrivesAt"/> when it comes earlier.</summary>
+        private void Due(long arrivesAt)
+        {
+            if (!_nextDueAt.HasValue || arrivesAt < _nextDueAt.Value)
+            {
+                _nextDueAt = arrivesAt;
+            }
         }
 
         /// <summary>The earliest end of a leg of the city's trips, or null when it has none.</summary>
@@ -121,8 +196,8 @@ namespace CityBuilder.Simulation.Settlement
             IReadOnlyList<Trip> trips = city.Trips;
             for (int index = 0; index < trips.Count; index++)
             {
-                // A waiting trip walks nowhere: it puts its goods back in the start pass as room appears.
-                if (trips[index].Leg != TripLeg.Waiting && (!earliest.HasValue || trips[index].ArrivesAt < earliest.Value))
+                // A waiting or blocked trip walks nowhere: it puts its goods back, or walks again, in the start pass.
+                if ((trips[index].Leg == TripLeg.ToTarget || trips[index].Leg == TripLeg.ToSource) && (!earliest.HasValue || trips[index].ArrivesAt < earliest.Value))
                 {
                     earliest = trips[index].ArrivesAt;
                 }

@@ -28,4 +28,4 @@ as a CR. That's how the owner keeps control over what gets built (`core-instruct
 | [CR-0010](CR-0010-workflow-v2.md) | Workflow v2: tests first, focused test runs, a token budget, asset requests | Process | In progress |
 | [CR-0011](CR-0011-m1-real-game.md) | M1: from a tech demo to a game (direction and plan, `docs/plan/M1-PLAN.md`) | Design change | Approved |
 | [CR-0012](CR-0012-courier-stamina-research.md) | Courier stamina as a research (balance report 1, P3) | Design change | Approved |
-| [CR-0013](CR-0013-builder-queue.md) | Builder queue: orders wait for a free builder instead of being refused | Design change | Approved |
+| [CR-0013](CR-0013-builder-queue.md) | Builder queue: orders wait for a free builder instead of being refused | Design change | Done |

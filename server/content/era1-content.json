@@ -1,8 +1,8 @@
 {
-  "contentVersion": "era1-1",
+  "contentVersion": "era1-2",
   "rules": {
-    "gridWidth": 8,
-    "gridHeight": 8,
+    "gridWidth": 18,
+    "gridHeight": 14,
     "builderSlots": 2,
     "builderQueueLength": 2,
     "researchSlots": 1,
@@ -34,6 +34,44 @@
     { "level": 1, "name": "Dirt Path", "tileMillis": 2500, "cost": { "coins": 5 } },
     { "level": 2, "name": "Log Road", "tileMillis": 1500, "cost": { "coins": 15 } }
   ],
+  "map": {
+    "id": "crossing",
+    "startArea": "A",
+    "roughTileMillis": 10000,
+    "tiles": [
+      "FFFFFF..RRRRW..SSS",
+      "FF....FF..RRW.SSSS",
+      "FFFF......RRW.SSSS",
+      "FFFF.....RRRWSSSS.",
+      "F.FF........WSSSS.",
+      "FFFF........WSS.FF",
+      "F...........WSS.FF",
+      "FF..........WSSSS.",
+      "F...........W.SSSS",
+      "FF......F...W.SSSS",
+      "F......FF...W..SS.",
+      "FF..........W.....",
+      "..RR....FF..WRRR..",
+      ".RRRR..FFF..WRRR.."
+    ],
+    "areas": [
+      "BBBBBBBBBBBBBCCCCC",
+      "BBBBBBBBBBBBBCCCCC",
+      "BBAAAAAAAAAAACCCCC",
+      "BBAAAAAAAAAAACCCCC",
+      "BBAAAAAAAAAAACCCCC",
+      "BBAAAAAAAAAAACCCCC",
+      "BBAAAAAAAAAAACCCCC",
+      "BBAAAAAAAAAAACCCCC",
+      "BBAAAAAAAAAAACCCCC",
+      "BBAAAAAAAAAAACCCCC",
+      "BBAAAAAAAAAAACCCCC",
+      "BBAAAAAAAAAAACCCCC",
+      "BBBBBBBBBBBBBCCCCC",
+      "BBBBBBBBBBBBBCCCCC"
+    ]
+  },
+  "bridge": { "name": "Bridge", "tileMillis": 1500, "cost": { "coins": 60 } },
   "amountPresets": [
     { "id": "all", "name": "All", "percent": 100 },
     { "id": "half", "name": "Half", "percent": 50 },
@@ -58,6 +96,7 @@
     {
       "id": "woodcutter",
       "name": "Woodcutter's Hut",
+      "site": "nearForest",
       "kind": "producer",
       "era": 1,
       "availableAtStart": true,
@@ -121,6 +160,7 @@
     {
       "id": "quarry",
       "name": "Quarry",
+      "site": "nearRock",
       "kind": "producer",
       "era": 1,
       "availableAtStart": false,
@@ -184,6 +224,7 @@
     {
       "id": "farm",
       "name": "Farm",
+      "site": "fertileSoil",
       "kind": "producer",
       "era": 1,
       "availableAtStart": false,
@@ -454,7 +495,7 @@
       "cost": { "coins": 800, "planks": 60, "cut_stone": 30 },
       "durationSeconds": 10800,
       "prerequisites": ["bridge_building"],
-      "effects": [{ "type": "unlockBuilding", "building": "farm" }]
+      "effects": [{ "type": "unlockBuilding", "building": "farm" }, { "type": "openLand", "area": "C" }]
     },
     {
       "id": "milling",
@@ -547,7 +588,7 @@
       "cost": { "coins": 500, "planks": 60, "cut_stone": 40 },
       "durationSeconds": 7200,
       "prerequisites": ["stone_cutting"],
-      "effects": []
+      "effects": [{ "type": "unlockBridge" }]
     },
     {
       "id": "land_survey",
@@ -556,7 +597,7 @@
       "cost": { "coins": 700, "planks": 40, "stone": 40 },
       "durationSeconds": 10800,
       "prerequisites": ["sturdy_boots"],
-      "effects": []
+      "effects": [{ "type": "openLand", "area": "B" }]
     },
     {
       "id": "town_charter",

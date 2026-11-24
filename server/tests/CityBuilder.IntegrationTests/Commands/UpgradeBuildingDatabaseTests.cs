@@ -227,7 +227,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
         ApiResponse response = await UpgradeAsync(player, _requestId, 2);
 
         Assert.Equal((HttpStatusCode.Conflict, "BUILDING_BUSY"), (tooEarly.Status, (string)tooEarly.Json()["code"]!));
-        Assert.Contains("#2 woodcutter (1,1) L1 w0 Constructing 0..60", stored, StringComparison.Ordinal);
+        Assert.Contains("#2 woodcutter (5,5) L1 w0 Constructing 0..60", stored, StringComparison.Ordinal);
         Assert.Equal(HttpStatusCode.OK, response.Status);
         Assert.Equal("[2]", response.Json()["settlement"]!["completedBuildings"]!.ToJsonString());
         Assert.Equal("2 woodcutter L1 Producing 60-90 target 0 workers 2", await BuildingAsync(Database, city, 2));

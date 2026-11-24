@@ -35,6 +35,12 @@ public static class CityMapping
     /// <summary>The stored spelling of a put action (CR-0008), as the API writes it.</summary>
     private const string _put = "put";
 
+    /// <summary>The <c>city_roads.kind</c> of a road (M1-03).</summary>
+    private const string _roadKind = "road";
+
+    /// <summary>The <c>city_roads.kind</c> of a bridge (M1-03).</summary>
+    private const string _bridgeKind = "bridge";
+
     /// <summary>
     /// The city's rows as they are now. The <c>cities</c> row carries the aggregate's <see cref="CityAggregate.StateVersion"/>; its wall
     /// times (<c>created_at</c>, <c>updated_at</c>) are left at their default for the repository to set. Store rows exist only for the goods
@@ -132,6 +138,7 @@ public static class CityMapping
                 X = checked((short)road.X),
                 Y = checked((short)road.Y),
                 Level = checked((short)road.Level),
+                Kind = road.IsBridge ? _bridgeKind : _roadKind,
             })
             .ToList();
 
@@ -146,6 +153,7 @@ public static class CityMapping
                 DepartedAt = courier.DepartedAt,
                 ArrivesAt = courier.ArrivesAt,
                 StaminaSeconds = courier.Stamina,
+                WaitsAt = courier.State == CourierState.Blocked ? courier.WaitsAt : null,
             })
             .ToList();
         var courierLoads = state.Couriers
@@ -200,7 +208,7 @@ public static class CityMapping
                 rows.Buildings.Select(row => ToBuilding(row, stores[row.BuildingId], needs[row.BuildingId])),
                 rows.Research.Select(row => new ResearchId(row.ResearchId)),
                 ToActiveResearch(city, rows.ResearchNeeds),
-                rows.Roads.Select(row => new RoadTile(row.X, row.Y, row.Level)),
+                rows.Roads.Select(ToRoad),
                 rows.Trips.Select(row => new Trip(
                     row.TripId, row.SourceId, row.TargetId, new ItemId(row.ItemId), row.Quantity, row.DepartedAt, row.ArrivesAt, row.Remaining, ToLeg(row))),
                 city.NextTripId,
@@ -395,13 +403,15 @@ public static class CityMapping
                 nameof(CourierState.Walking) => CourierState.Walking,
                 nameof(CourierState.Returning) => CourierState.Returning,
                 nameof(CourierState.Resting) => CourierState.Resting,
+                nameof(CourierState.Blocked) => CourierState.Blocked,
                 _ => throw new ArgumentException($"Courier {row.StationId}/{row.Slot} has the state '{row.State}', which no courier has."),
             },
             row.ToStop,
             row.DepartedAt,
             row.ArrivesAt,
             row.StaminaSeconds,
-            loads[(row.StationId, row.Slot)].Select(load => new CourierLoad(new ItemId(load.ItemId), load.FromBuildingId, load.Quantity))));
+            loads[(row.StationId, row.Slot)].Select(load => new CourierLoad(new ItemId(load.ItemId), load.FromBuildingId, load.Quantity)),
+            row.WaitsAt ?? 0));
     }
 
     /// <summary>
@@ -478,6 +488,8 @@ public static class CityMapping
         nameof(TripLeg.ToTarget) => TripLeg.ToTarget,
         nameof(TripLeg.ToSource) => TripLeg.ToSource,
         nameof(TripLeg.Waiting) => TripLeg.Waiting,
+        nameof(TripLeg.BlockedAtSource) => TripLeg.BlockedAtSource,
+        nameof(TripLeg.BlockedAtTarget) => TripLeg.BlockedAtTarget,
         _ => throw new ArgumentException($"Trip {row.TripId} has the leg '{row.Leg}', which no trip has."),
     };
 
@@ -503,4 +515,12 @@ public static class CityMapping
             throw new InvalidOperationException($"The rows of city {cityId} include a row of another city.");
         }
     }
+
+    /// <summary>The road of a <c>city_roads</c> row: a bridge for the kind <c>bridge</c>; another kind fails the load.</summary>
+    private static RoadTile ToRoad(CityRoadRow row) => row.Kind switch
+    {
+        _roadKind => new RoadTile(row.X, row.Y, row.Level),
+        _bridgeKind => new RoadTile(row.X, row.Y, row.Level, isBridge: true),
+        _ => throw new InvalidOperationException($"The road at ({row.X}, {row.Y}) has the unknown kind '{row.Kind}'."),
+    };
 }

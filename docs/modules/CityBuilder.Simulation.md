@@ -147,6 +147,25 @@ table. Decisions: build log `docs/build-log/2026/2026-10-19-06-M0-16.md`, decisi
 | `Settlement.SettlementReport` | `ElapsedSeconds`, `Produced` and `Consumed` (production only, per item in ordinal order), `Delivered` (handed to projects), `Moved` (put into stores), `Refunded` (an upgrade's inputs given back at its last delivery) (CR-0008), `CompletedBuildings` (constructions and upgrades, ascending), `CompletedResearch` (ordinal), `EraChanged` (false until M2); `CourierSeconds` (the most stamina one courier spent) and `TiredCouriers` (`TiredCourier`: station, slot, second; by station and slot) (part H) |
 | `Settlement.SettlementWindow` | `Compute(lastSettledUnixSec, nowUnixSec)`: `ElapsedSeconds` (now minus the last settled second, never negative) and `NewLastSettledUnixSec` (now); with the clock behind (`IsClockBehind`) nothing elapses and the last settled second stays, so successive windows add up to the span from first to last. The engine never reads a clock: the server passes both seconds (`04` §1). An overflowing difference throws `OverflowException` |
 
+
+### The map (M1-03)
+- **Content:** `MapDefinition` (`Id`, `StartArea`, `RoughTileMillis`, `Width`, `Height`, `AreaLetters`, `TerrainAt(x, y)`, `AreaAt(x, y)`),
+  read from `map.tiles` and `map.areas` (rows of letters) by `MapReader`; `Terrain` (`Grass`, `Forest`, `Rock`, `Soil`, `Water`);
+  `BuildingSite` (`Any`, `NearForest`, `NearRock`, `FertileSoil`) on `BuildingDefinition.Site`; `BridgeDefinition` (`Name`, `TileMillis`,
+  `Cost`); the effects `OpenLandEffect` (`Area`) and `UnlockBridgeEffect`. `MapRules` is content rules 13b (the map against the grid, sites
+  and areas) and 13c (the bridge with its unlock). `GameContent.Map` and `.Bridge` are null for content without a map (every tile grass and
+  open: goldens #1–#3).
+- **Queries:** `CityQueries.IsLandOpen(city, content, x, y)` and `IsAreaOpen` (the start area plus completed `openLand` research: open land
+  is derived, never stored), `IsBridgeUnlocked`, `SiteError(content, type, x, y)` (`TerrainBlocked`, `NeedsForest`, `NeedsRock`,
+  `NeedsFertileSoil`; a site's forest or rock may lie under mist).
+- **Rules:** `CityRules.PlaceBuilding` and `RoadRules.PlaceRoads` check terrain, then open land (`LandClosed`), then (roads on water)
+  `BridgeLocked`; a road on water is a bridge (`RoadTile.IsBridge`, one level, `MaxLevel` on upgrade), removed like a road. Trips, lines and
+  routes with no walk are refused with `NoPath`.
+- **Walks:** `PathFinder` crosses forest and rock at `RoughTileMillis`, water only on a bridge, never closed land; `TryMeasure` says when no
+  walk exists. A walker whose next walk has none is stuck (`CourierState.Blocked` with `Courier.WaitsAt`; `TripLeg.BlockedAtSource`,
+  `BlockedAtTarget`) and tries again in every start pass; an advance's walk-time table (`WalkTimes`) is searched again after a research
+  completes (decisions G46–G48).
+
 ## Rules and invariants
 `.claude/rules/simulation.md` is the binding list (integers only, `CeilDiv` for durations, no `DateTime` or randomness, no iteration
 order that matters, `checked` arithmetic, results instead of exceptions for business rules). What is specific to this module:
@@ -317,4 +336,4 @@ too, but guards the Unity client's asmdefs and manifest, not the engine (see `do
   depend on `Dictionary` or `HashSet` order (`04` §9).
 - Content error messages are English text for content authors; only `ContentErrorCode` and `Path` are stable.
 
-Last updated: M1-02
+Last updated: M1-03

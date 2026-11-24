@@ -31,7 +31,8 @@ namespace CityBuilder.Simulation.State
             bool loadFits = leg switch
             {
                 TripLeg.ToTarget => quantity >= 1,
-                TripLeg.ToSource => (quantity == 0 && remaining >= 1) || (quantity >= 1 && remaining == 0),
+                TripLeg.ToSource or TripLeg.BlockedAtTarget => (quantity == 0 && remaining >= 1) || (quantity >= 1 && remaining == 0),
+                TripLeg.BlockedAtSource => quantity == 0 && remaining >= 1,
                 TripLeg.Waiting => quantity >= 1 && remaining == 0,
                 _ => false,
             };
@@ -105,6 +106,47 @@ namespace CityBuilder.Simulation.State
         internal void Wait()
         {
             Leg = TripLeg.Waiting;
+        }
+
+        /// <summary>
+        /// At the source with goods to fetch but no walk to the target (M1-03 decision 4): the worker waits there, carrying nothing; the times stay
+        /// those of the walk back.
+        /// </summary>
+        internal void BlockAtSource()
+        {
+            if (Quantity != 0 || Remaining < 1)
+            {
+                throw new InvalidOperationException(FormattableString.Invariant($"Trip {Id}: only an empty worker with goods to fetch waits at the source."));
+            }
+
+            Leg = TripLeg.BlockedAtSource;
+        }
+
+        /// <summary>
+        /// At the target after a delivery that left <paramref name="left"/> (0 or more), with no walk back (M1-03 decision 4): the worker waits
+        /// there with it; goods left end the sending, as in <see cref="CarryBack"/>. The times stay those of the walk there.
+        /// </summary>
+        internal void BlockAtTarget(long left)
+        {
+            if (left > 0)
+            {
+                Quantity = left;
+                Remaining = 0;
+            }
+            else
+            {
+                Quantity = 0;
+            }
+
+            Leg = TripLeg.BlockedAtTarget;
+        }
+
+        /// <summary>A worker waiting at the target walks back to the source with what it holds, from <paramref name="departedAt"/> (M1-03).</summary>
+        internal void ResumeToSource(long departedAt, long arrivesAt)
+        {
+            Leg = TripLeg.ToSource;
+            DepartedAt = departedAt;
+            ArrivesAt = arrivesAt;
         }
 
         /// <summary>Takes <paramref name="quantity"/> (at least 1, at most <see cref="Quantity"/>) off the load that goes back into the source.</summary>

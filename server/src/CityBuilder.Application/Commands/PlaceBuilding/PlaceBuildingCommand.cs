@@ -34,8 +34,8 @@ public sealed record PlaceBuildingCommand(Guid RequestId, string BuildingTypeId,
     /// <summary>
     /// Refuses what no city and no content could make valid, so it never locks or settles the city (M0-30; owner directive OD-13): a type id
     /// that can't be a content id (<see cref="ContentIds"/>: blank, too long, other characters) and a negative coordinate (the grid starts at
-    /// 0). An id of the right form is a question for the content (<c>UNKNOWN_BUILDING_TYPE</c>), and a coordinate past the grid's width or
-    /// height, which the content sets, is the rule's <c>OUT_OF_BOUNDS</c>.
+    /// 0). An id of the right form is a question for the content (<c>UNKNOWN_BUILDING_TYPE</c>), and a tile past the map is
+    /// <see cref="ValidateOnContent"/>'s.
     /// </summary>
     /// <returns><see langword="null"/>, or what is wrong.</returns>
     public string? ValidateShape()
@@ -46,6 +46,37 @@ public sealed record PlaceBuildingCommand(Guid RequestId, string BuildingTypeId,
         }
 
         return X >= 0 && Y >= 0 ? null : "x and y must not be negative: the grid starts at 0.";
+    }
+
+    /// <summary>
+    /// Refuses a tile where the type can never stand on the server's map (M1-03, OD-13), before the city is locked: past the map, or where
+    /// <see cref="CityQueries.SiteError"/> answers (water, forest or rock; a Woodcutter's Hut with no forest beside it, a Quarry with no rock
+    /// beside it, a Farm off fertile soil). An unknown type is the rule's <c>UNKNOWN_BUILDING_TYPE</c>, and land under mist its
+    /// <c>LAND_CLOSED</c>: some city could have opened it.
+    /// </summary>
+    /// <param name="content">The server's content.</param>
+    /// <returns><see langword="null"/>, or what is wrong.</returns>
+    public string? ValidateOnContent(GameContent content)
+    {
+        ArgumentNullException.ThrowIfNull(content);
+        if (X >= content.Rules.GridWidth || Y >= content.Rules.GridHeight)
+        {
+            return $"x and y must be on the map: it is {content.Rules.GridWidth} × {content.Rules.GridHeight} tiles.";
+        }
+
+        if (!content.TryGetBuilding(new BuildingTypeId(BuildingTypeId), out BuildingDefinition? definition))
+        {
+            return null;
+        }
+
+        return CityQueries.SiteError(content, definition, X, Y) switch
+        {
+            null => null,
+            MutationErrorCode.NeedsForest => "This building needs forest beside its tile.",
+            MutationErrorCode.NeedsRock => "This building needs rock beside its tile.",
+            MutationErrorCode.NeedsFertileSoil => "This building stands only on fertile soil.",
+            _ => "No building stands on water, forest or rock.",
+        };
     }
 
     /// <inheritdoc />

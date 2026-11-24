@@ -48,6 +48,12 @@ namespace CityBuilder.Simulation.Content
         /// <summary>The JSON name of <see cref="GrantCharterEffect"/>.</summary>
         private const string _effectGrantCharter = "grantCharter";
 
+        /// <summary>The JSON name of <see cref="OpenLandEffect"/>.</summary>
+        private const string _effectOpenLand = "openLand";
+
+        /// <summary>The JSON name of <see cref="UnlockBridgeEffect"/>.</summary>
+        private const string _effectUnlockBridge = "unlockBridge";
+
         /// <summary>The JSON name of <see cref="AmountMode.Percent"/>.</summary>
         private const string _modePercent = "percent";
 
@@ -59,11 +65,15 @@ namespace CityBuilder.Simulation.Content
         /// <summary>Reads the single values and reports their shape errors into <see cref="_errors"/>.</summary>
         private readonly FieldReader _fields;
 
+        /// <summary>Reads the map, the bridge and the sites (M1-03).</summary>
+        private readonly MapReader _map;
+
         /// <summary>Creates a reader that reports into the factory's error list.</summary>
         public ContentReader(ContentErrorList errors)
         {
             _errors = errors;
             _fields = new FieldReader(errors);
+            _map = new MapReader(errors, _fields);
         }
 
         /// <summary>The draft, or null when the data had shape errors (all of them are in the error list).</summary>
@@ -85,12 +95,14 @@ namespace CityBuilder.Simulation.Content
             List<AmountPresetDefinition> amountPresets = _fields.ReadList(
                 data.AmountPresets, "amountPresets", true, preset => preset.Id, ReadAmountPreset);
 
+            MapDefinition? map = _map.ReadMap(data.Map, rules);
+            BridgeDefinition? bridge = _map.ReadBridge(data.Bridge);
             if (_errors.Count > 0 || rules is null || startingCity is null)
             {
                 return null;
             }
 
-            return new ContentDraft(version, rules, startingCity, eras, items, buildings, research, roadLevels, amountPresets);
+            return new ContentDraft(version, rules, startingCity, eras, items, buildings, research, roadLevels, amountPresets, map, bridge);
         }
 
         /// <summary>Reports a missing required object (such as <c>rules</c>) and returns null for it.</summary>
@@ -230,12 +242,19 @@ namespace CityBuilder.Simulation.Content
                 case _effectGrantCharter:
                     AllowOnlyEffectFields(data, path, building: false, item: false, permille: false, amount: false, mode: false);
                     return new GrantCharterEffect();
+                case _effectOpenLand:
+                    AllowOnlyEffectFields(data, path, building: false, item: false, permille: false, amount: false, mode: false, area: true);
+                    char? area = _map.ReadLetter(data.Area, path + ".area");
+                    return area.HasValue ? new OpenLandEffect(area.Value) : null;
+                case _effectUnlockBridge:
+                    AllowOnlyEffectFields(data, path, building: false, item: false, permille: false, amount: false, mode: false);
+                    return new UnlockBridgeEffect();
                 default:
                     _fields.InvalidValue(
                         path + ".type",
                         $"'{data.Type}' is not an effect type: use '{_effectUnlockBuilding}', '{_effectLaborReduction}', '{_effectStorageCapBonus}', "
-                        + $"'{_effectUnlockAmountMode}', '{_effectWalkSpeedBonus}', '{_effectMaxLevelBonus}', '{_effectBuilderSlotBonus}' or "
-                        + $"'{_effectGrantCharter}'.");
+                        + $"'{_effectUnlockAmountMode}', '{_effectWalkSpeedBonus}', '{_effectMaxLevelBonus}', '{_effectBuilderSlotBonus}', "
+                        + $"'{_effectGrantCharter}', '{_effectOpenLand}' or '{_effectUnlockBridge}'.");
                     return null;
             }
         }
@@ -244,7 +263,8 @@ namespace CityBuilder.Simulation.Content
         /// Reports every value an effect of this type doesn't have: each effect type has its own values, and a value of another type is a
         /// mistake (a typo, or a half-changed effect), never silently ignored. The flags say which values the type has.
         /// </summary>
-        private void AllowOnlyEffectFields(ResearchEffectData data, string path, bool building, bool item, bool permille, bool amount, bool mode)
+        private void AllowOnlyEffectFields(
+            ResearchEffectData data, string path, bool building, bool item, bool permille, bool amount, bool mode, bool area = false)
         {
             string reason = $"An effect of type '{data.Type}' has no such value.";
             _fields.Unexpected(!building && data.Building is not null, path + ".building", reason);
@@ -252,6 +272,7 @@ namespace CityBuilder.Simulation.Content
             _fields.Unexpected(!permille && data.Permille is not null, path + ".permille", reason);
             _fields.Unexpected(!amount && data.Amount is not null, path + ".amount", reason);
             _fields.Unexpected(!mode && data.Mode is not null, path + ".mode", reason);
+            _fields.Unexpected(!area && data.Area is not null, path + ".area", reason);
         }
 
         /// <summary>The amount mode an <c>unlockAmountMode</c> effect names: <c>percent</c> or <c>exact</c> (a preset needs no research).</summary>
@@ -299,8 +320,9 @@ namespace CityBuilder.Simulation.Content
             ResearchId? unlockedBy = !availableAtStart && unlocks.TryGetValue(id.Value, out ResearchId research) ? research : (ResearchId?)null;
             IReadOnlyList<BuildingLevelDefinition> sortedLevels = ReadOnlyLists.From(levels.OrderBy(level => level.Level));
             int baseMaxLevel = data.BaseMaxLevel ?? sortedLevels.Count;
+            BuildingSite site = _map.ReadSite(data.Site, path + ".site");
             return new BuildingDefinition(
-                id.Value, name, kind, era, cost, buildSeconds, availableAtStart, maxPerCity, unlockedBy, sortedLevels, baseMaxLevel);
+                id.Value, name, kind, era, cost, buildSeconds, availableAtStart, maxPerCity, unlockedBy, sortedLevels, baseMaxLevel, site);
         }
 
         /// <summary>Reads <c>kind</c>: <c>house</c> or <c>producer</c>. A missing or unknown value is reported, and the stand-in is <see cref="BuildingKind.House"/>.</summary>

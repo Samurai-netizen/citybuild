@@ -200,6 +200,8 @@ public static class ContentPage
         MaxLevelBonusEffect bonus => $"+{PageFormat.Number(bonus.Amount)} max level for {MarkdownPage.Code(bonus.Building.Value)}",
         BuilderSlotBonusEffect slots => $"+{PageFormat.Number(slots.Amount)} builder slot" + (slots.Amount == 1 ? string.Empty : "s"),
         GrantCharterEffect => "grants the town charter (the era's last node)",
+        OpenLandEffect open => $"opens land: area {open.Area}",
+        UnlockBridgeEffect => "unlocks the bridge (a road on water)",
         _ => throw new InvalidOperationException(
             $"DocTools has no text for the research effect {effect.GetType().Name}: add it to ContentPage.Effect (tools/DocTools)."),
     };

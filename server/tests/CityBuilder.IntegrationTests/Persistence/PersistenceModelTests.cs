@@ -58,6 +58,7 @@ public sealed partial class PersistenceModelTests
         [
             ("city_id", "uuid", false), ("station_id", "integer", false), ("slot", "smallint", false), ("state", "text", false),
             ("to_stop", "smallint", false), ("departed_at", "bigint", true), ("arrives_at", "bigint", true), ("stamina_seconds", "bigint", false),
+            ("waits_at", "integer", true),
         ],
         ["city_courier_loads"] =
         [
@@ -70,7 +71,7 @@ public sealed partial class PersistenceModelTests
             ("action_index", "smallint", false), ("building_id", "integer", false), ("kind", "text", false), ("item_id", "text", false),
             ("amount", "text", false),
         ],
-        ["city_roads"] = [("city_id", "uuid", false), ("x", "smallint", false), ("y", "smallint", false), ("level", "smallint", false)],
+        ["city_roads"] = [("city_id", "uuid", false), ("x", "smallint", false), ("y", "smallint", false), ("level", "smallint", false), ("kind", "text", false)],
         ["command_receipts"] =
         [
             ("player_id", "uuid", false), ("request_id", "uuid", false), ("command_type", "text", false), ("payload_hash", "bytea", false),
@@ -214,12 +215,14 @@ public sealed partial class PersistenceModelTests
                 ("city_couriers", "ck_city_couriers_slot", "slot >= 1"),
                 ("city_couriers", "ck_city_couriers_stamina_seconds", "stamina_seconds >= 0"),
                 ("city_couriers", "ck_city_couriers_to_stop", "to_stop >= 0"),
+                ("city_couriers", "ck_city_couriers_waits_at", "(state = 'Blocked') = (waits_at is not null)"),
                 ("city_couriers", "ck_city_couriers_walk", "(departed_at is null and arrives_at is null) or (departed_at is not null and arrives_at is not null and departed_at >= 0 and arrives_at > departed_at)"),
                 ("city_delivery_lines", "ck_city_delivery_lines_buildings", "source_id <> target_id"),
                 ("city_delivery_lines", "ck_city_delivery_lines_quantity", "quantity > 0"),
                 ("city_delivery_lines", "ck_city_delivery_lines_slot", "slot >= 1"),
                 ("city_project_needs", "ck_city_project_needs_quantity", "quantity > 0"),
                 ("city_research_needs", "ck_city_research_needs_quantity", "quantity > 0"),
+                ("city_roads", "ck_city_roads_kind", "kind in ('road', 'bridge') and (kind = 'road' or level = 1)"),
                 ("city_roads", "ck_city_roads_level", "level >= 1"),
                 ("city_roads", "ck_city_roads_x", "x >= 0"),
                 ("city_roads", "ck_city_roads_y", "y >= 0"),
@@ -229,7 +232,7 @@ public sealed partial class PersistenceModelTests
                 ("city_route_actions", "ck_city_route_actions_stop_index", "stop_index >= 0"),
                 ("city_stores", "ck_city_stores_quantity", "quantity >= 0"),
                 ("city_trips", "ck_city_trips_arrives_at", "arrives_at > departed_at"),
-                ("city_trips", "ck_city_trips_quantity", "(leg = 'ToTarget' and quantity > 0) or (leg = 'ToSource' and ((quantity = 0 and remaining > 0) or (quantity > 0 and remaining = 0))) or (leg = 'Waiting' and quantity > 0 and remaining = 0)"),
+                ("city_trips", "ck_city_trips_quantity", "(leg = 'ToTarget' and quantity > 0) or (leg = 'ToSource' and ((quantity = 0 and remaining > 0) or (quantity > 0 and remaining = 0))) or (leg = 'Waiting' and quantity > 0 and remaining = 0) or (leg = 'BlockedAtSource' and quantity = 0 and remaining > 0) or (leg = 'BlockedAtTarget' and ((quantity = 0 and remaining > 0) or (quantity > 0 and remaining = 0)))"),
                 ("city_trips", "ck_city_trips_remaining", "remaining >= 0"),
                 ("player_events", "ck_player_events_city_clock", "city_clock >= 0"),
             ],

@@ -8,7 +8,8 @@ namespace CityBuilder.Simulation.Map
 {
     /// <summary>
     /// Finds walks on a city's map by the path rule of <c>core-instructions/04-simulation-model.md</c>, section 17: steps of one tile in four
-    /// directions inside the grid; among all walks the fewest crossings of other buildings, then the least <c>D</c>; among those the first in
+    /// directions inside the grid, never onto water without a bridge or land under mist (M1-03); among all walks the fewest crossings of other
+    /// buildings, then the least <c>D</c>; among those the first in
     /// step order (x+1, y+1, x−1, y−1). A search runs from the end (Dijkstra over the reversed steps), so every tile knows its best cost to the
     /// end; the path then follows, from the start, the first direction that stays on a best walk.
     /// The finder keeps its arrays for its whole life: make one, <see cref="Load"/> a city, then measure as many walks as needed without
@@ -31,6 +32,12 @@ namespace CityBuilder.Simulation.Map
         private readonly long[] _tileMillis;
         /// <summary>Whether a building stands on each tile, by tile index.</summary>
         private readonly bool[] _hasBuilding;
+
+        /// <summary>Whether a walker may step onto each tile, by tile index: open land that is not water, or a bridge (M1-03).</summary>
+        private readonly bool[] _walkable;
+
+        /// <summary>Whether each area letter (index letter − 'A') is open in the loaded city; filled by <see cref="Load"/>.</summary>
+        private readonly bool[] _areaOpen = new bool[26];
         /// <summary>The best crossings from each tile to the current search's end; valid where <see cref="_settled"/> is set.</summary>
         private readonly int[] _bestCrossings;
         /// <summary>The best <c>D</c> from each tile to the current search's end; valid where <see cref="_settled"/> is set.</summary>
@@ -67,6 +74,7 @@ namespace CityBuilder.Simulation.Map
             int tiles = checked(_width * _height);
             _tileMillis = new long[tiles];
             _hasBuilding = new bool[tiles];
+            _walkable = new bool[tiles];
             _bestCrossings = new int[tiles];
             _bestDouble = new long[tiles];
             _settled = new bool[tiles];
@@ -94,18 +102,42 @@ namespace CityBuilder.Simulation.Map
                 throw new ArgumentNullException(nameof(city));
             }
 
+            MapDefinition? map = _content.Map;
+            if (map is not null)
+            {
+                for (int letter = 0; letter < _areaOpen.Length; letter++)
+                {
+                    _areaOpen[letter] = CityQueries.IsAreaOpen(city, _content, (char)('A' + letter));
+                }
+            }
+
             long ground = _content.Rules.GroundTileMillis;
             for (int index = 0; index < _tileMillis.Length; index++)
             {
-                _tileMillis[index] = ground;
                 _hasBuilding[index] = false;
+                int x = index % _width;
+                int y = index / _width;
+                Terrain terrain = map is null ? Terrain.Grass : map.TerrainAt(x, y);
+                bool open = map is null || _areaOpen[map.AreaAt(x, y) - 'A'];
+                _walkable[index] = open && terrain != Terrain.Water;
+                _tileMillis[index] = terrain == Terrain.Forest || terrain == Terrain.Rock ? map!.RoughTileMillis : ground;
             }
 
             IReadOnlyList<RoadTile> roads = city.Roads;
             for (int index = 0; index < roads.Count; index++)
             {
                 RoadTile road = roads[index];
-                _tileMillis[IndexOf(road.X, road.Y)] = _content.GetRoadLevel(road.Level).TileMillis;
+                int tile = IndexOf(road.X, road.Y);
+                if (road.IsBridge)
+                {
+                    // A bridge exists only where the content has one (content rule 18 and the road rules).
+                    _tileMillis[tile] = _content.Bridge!.TileMillis;
+                    _walkable[tile] = true;
+                }
+                else
+                {
+                    _tileMillis[tile] = _content.GetRoadLevel(road.Level).TileMillis;
+                }
             }
 
             IReadOnlyList<Building> buildings = city.Buildings;
@@ -126,12 +158,34 @@ namespace CityBuilder.Simulation.Map
         /// <param name="toX">The end tile's column.</param>
         /// <param name="toY">The end tile's row.</param>
         /// <returns>The best walk's cost; zero crossings and 0 when the tiles are the same.</returns>
-        /// <exception cref="InvalidOperationException">No city was loaded.</exception>
+        /// <exception cref="InvalidOperationException">No city was loaded, or no walk joins the tiles (M1-03; see <see cref="TryMeasure"/>).</exception>
         /// <exception cref="ArgumentOutOfRangeException">A tile is outside the grid.</exception>
         public WalkCost Measure(int fromX, int fromY, int toX, int toY)
         {
+            if (!TryMeasure(fromX, fromY, toX, toY, out WalkCost cost))
+            {
+                throw new InvalidOperationException(FormattableString.Invariant(
+                    $"No walk joins ({fromX}, {fromY}) and ({toX}, {toY}): check with TryMeasure first."));
+            }
+
+            return cost;
+        }
+
+        /// <summary>
+        /// Measures the best walk between two tiles like <see cref="Measure"/>, or says there is none (M1-03: water without a bridge or land
+        /// under mist lies between them).
+        /// </summary>
+        public bool TryMeasure(int fromX, int fromY, int toX, int toY, out WalkCost cost)
+        {
             int start = Search(fromX, fromY, toX, toY);
-            return new WalkCost(_bestCrossings[start], _bestDouble[start]);
+            if (start < 0)
+            {
+                cost = default;
+                return false;
+            }
+
+            cost = new WalkCost(_bestCrossings[start], _bestDouble[start]);
+            return true;
         }
 
         /// <summary>
@@ -148,6 +202,11 @@ namespace CityBuilder.Simulation.Map
         public IReadOnlyList<(int X, int Y)> Route(int fromX, int fromY, int toX, int toY)
         {
             int current = Search(fromX, fromY, toX, toY);
+            if (current < 0)
+            {
+                throw new InvalidOperationException(FormattableString.Invariant($"No walk joins ({fromX}, {fromY}) and ({toX}, {toY})."));
+            }
+
             var tiles = new List<(int X, int Y)> { (fromX, fromY) };
             while (current != _searchEnd)
             {
@@ -159,7 +218,8 @@ namespace CityBuilder.Simulation.Map
         }
 
         /// <summary>
-        /// Runs the search from the end until the start's best cost is final; returns the start's tile index. Every tile on a best walk from the
+        /// Runs the search from the end until the start's best cost is final; returns the start's tile index, or −1 when no walk reaches it
+        /// (M1-03). Every tile on a best walk from the
         /// start has a smaller cost (each step costs more than nothing), so it is final too when the search stops.
         /// </summary>
         private int Search(int fromX, int fromY, int toX, int toY)
@@ -208,7 +268,7 @@ namespace CityBuilder.Simulation.Map
                     }
 
                     int neighbour = (neighbourY * _width) + neighbourX;
-                    if (!_settled[neighbour])
+                    if (!_settled[neighbour] && (_walkable[neighbour] || neighbour == start))
                     {
                         Offer(
                             neighbour,
@@ -218,7 +278,8 @@ namespace CityBuilder.Simulation.Map
                 }
             }
 
-            throw new InvalidOperationException("The grid is connected, so the search reaches every tile; this is a bug in the finder.");
+            // Water without a bridge or land under mist cuts the start off from the end (M1-03).
+            return -1;
         }
 
         /// <summary>

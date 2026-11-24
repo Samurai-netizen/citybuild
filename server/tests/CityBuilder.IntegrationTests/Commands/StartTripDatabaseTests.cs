@@ -39,7 +39,7 @@ public sealed class StartTripDatabaseTests(PostgresServer server) : PostgresTest
     [Fact]
     public async Task Post_TripToASite_StoresTheTripThenDeliversAndStartsTheBuild()
     {
-        Building site = new(2, new BuildingTypeId("sawmill"), 1, 2, 1, 0, BuildingPhase.Constructing, 0, null, 0, 0, 0, 0, null, Goods(("logs", 10)));
+        Building site = new(2, new BuildingTypeId("sawmill"), 5, 6, 1, 0, BuildingPhase.Constructing, 0, null, 0, 0, 0, 0, null, Goods(("logs", 10)));
         (Guid player, Guid city) = await StoreCityAsync(Factory, "carrier", 1000, House(1), site, Warehouse(3, logs: 30, planks: 0));
 
         ApiResponse response = await TripAsync(player, _requestId, 3, 2, "logs");

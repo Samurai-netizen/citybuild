@@ -73,10 +73,15 @@ One document, the same for every player: `contentVersion`; `rules` (`gridWidth`,
 `minWalkSeconds`, `maxWalkBonusPermille`, `tripCarryLimit`, `maxRouteStops`, `maxStopActions`, `maxDeliveryLines`, `routeBuilding`
 (a building type id, or `null` when routes need none), `timeScale`); `startingCity` (`era`,
 `purse`); `eras`; `items` (`id`, `name`, `era`, `currency`, `tradable`); `buildings` (`id`, `name`, `kind`, `era`, `availableAtStart`,
-`unlockedBy`, `maxPerCity`, `cost`, `buildSeconds`, `baseMaxLevel`: the highest level without research, M1-02), each with its `levels` (`maxWorkers`, `workersProvided`, `recipe` with `inputs`,
+`unlockedBy`, `maxPerCity`, `cost`, `buildSeconds`, `baseMaxLevel`: the highest level without research, M1-02, `site`: `nearForest`,
+`nearRock`, `fertileSoil` or `null` for anywhere, M1-03), each with its `levels` (`maxWorkers`, `workersProvided`, `recipe` with `inputs`,
 `outputs` and `labor`, `storage`, `carryLimit`, `staminaSeconds`, `upgradeCost`, `upgradeSeconds`); `research` (`cost`,
 `durationSeconds`, `prerequisites`, `effects`); `roads` (`level`, `name`, `tileMillis`, `cost`: to place at level 1, to upgrade to it
-above); and `amountPresets` (`id`, `name`, `percent`). The numbers are the content file's.
+above); `amountPresets` (`id`, `name`, `percent`); `map` (M1-03: `id`, `startArea`, `roughTileMillis`, `tiles` and `areas`, one string
+per row from y = 0, spelled as in the content file: `.` grass, `F` forest, `R` rock, `S` fertile soil, `W` water; an area letter per
+tile) and `bridge` (`name`, `tileMillis`, `cost`), each `null` for content without them. An effect has `area` (set for `openLand`; the
+types `openLand` and `unlockBridge` are M1-03's). The numbers are the content file's. The terrain is here, fetched once per
+`contentVersion`, never in the snapshot.
 - **Order:** eras by number; items, buildings, research and prerequisites by id (ordinal); levels by level. Item maps (costs, recipe sides,
   caps) are JSON objects from item id to quantity with keys in ordinal order. The same content gives the same text on every call.
 - **Nulls are written, never left out:** a `recipe` but a producer's; `storage` of a level without a store (houses, courier stations, the
@@ -110,8 +115,9 @@ There is no "claim" command, because production and research complete on their o
   stored snapshot, byte for byte, even when the city has changed since.
 - **Refusal:** Problem Details with the code's status from the table below, `code`, and `requestId` when the request had one. A rule's
   refusal commits the settlement of the elapsed time but stores no receipt (Idempotency rules).
-- `place-building` (`{ requestId, buildingTypeId, x, y }`) checks in the order of `04` §8: `UNKNOWN_BUILDING_TYPE`, `BUILDING_LOCKED`,
-  `OUT_OF_BOUNDS` (past the grid's width or height; a negative coordinate is `INVALID_ARGUMENT`), `TILE_OCCUPIED`, `NO_FREE_BUILDER`, `INSUFFICIENT_RESOURCE`. It pays the type's cost (`COST_PLACE` ledger rows) and
+- `place-building` (`{ requestId, buildingTypeId, x, y }`): before the lock (OD-13, M1-03) a negative coordinate, a tile past the map, and
+  a tile where the type can never stand (water, forest, rock; its `site` unmet) are `INVALID_ARGUMENT`; the server runs one map, so no
+  city could use them. Then, in the order of `04` §8: `UNKNOWN_BUILDING_TYPE`, `BUILDING_LOCKED`, `LAND_CLOSED` (M1-03, `04` §17), `TILE_OCCUPIED`, `NO_FREE_BUILDER`, `INSUFFICIENT_RESOURCE`. It pays the type's cost (`COST_PLACE` ledger rows) and
   the building appears with the next id, level 1, `Constructing` until the clock plus the type's build seconds. With every builder busy
   and room in the builder queue (CR-0013) it still pays and the building is `Queued` instead; `NO_FREE_BUILDER` then means the queue is full too.
 - `upgrade-building` (`{ requestId, buildingId }`) checks in the order of `04` §8: `BUILDING_NOT_FOUND` (the id is looked up in **your**
@@ -151,15 +157,17 @@ There is no "claim" command, because production and research complete on their o
   number (`"1"` … 12 digits, no leading zero). Any other text, and a percentage outside 1–100, is `INVALID_ARGUMENT` before the lock; an
   unknown preset id is `INVALID_ARGUMENT` from the rule; a mode the city hasn't researched is `AMOUNT_MODE_LOCKED`.
 - `place-roads`, `upgrade-roads`, `remove-roads` (`{ requestId, tiles: [{ x, y }] }`, CR-0008-T1 part D): 1 to 64 tiles, each once,
-  coordinates ≥ 0, else `INVALID_ARGUMENT` before the lock (a JSON `null` tile or list too). All or nothing, each check over the whole list
-  in the order of `04` §8: placing checks `OUT_OF_BOUNDS`, `TILE_OCCUPIED` (a building or a road), `INSUFFICIENT_RESOURCE` (the coins of
-  level 1 per tile; `COST_ROAD` ledger rows); upgrading `ROAD_NOT_FOUND` (also past the grid's edge), `MAX_LEVEL`, `INSUFFICIENT_RESOURCE`
+  coordinates ≥ 0, else `INVALID_ARGUMENT` before the lock (a JSON `null` tile or list too); `place-roads` also refuses a tile past the
+  map or on forest or rock there (M1-03, OD-13). All or nothing, each check over the whole list
+  in the order of `04` §8: placing checks `LAND_CLOSED`, `BRIDGE_LOCKED` (a water tile
+  before the bridge's research: a road on water is a bridge, M1-03), `TILE_OCCUPIED` (a building or a road), `INSUFFICIENT_RESOURCE` (the coins of
+  level 1 per tile, the bridge's per water tile; `COST_ROAD` ledger rows); upgrading `ROAD_NOT_FOUND` (also past the grid's edge), `MAX_LEVEL`, `INSUFFICIENT_RESOURCE`
   (each tile's next level's coins; `COST_ROAD` rows); removing `ROAD_NOT_FOUND`, and refunds nothing (no ledger rows). No builder slot, and
   the roads are there in the same response. The tiles' order is part of the payload: a retry sends them in the same order.
 - `start-trip` (`{ requestId, sourceId, targetId, itemId, amount }`, CR-0008-T1 part E): ids ≥ 1 and different, an item id of the
   content-id form, an amount as above, else `INVALID_ARGUMENT` before the lock. Then `BUILDING_NOT_FOUND`, `UNKNOWN_ITEM`,
-  `INVALID_ARGUMENT` (the currency, an unknown preset), `AMOUNT_MODE_LOCKED`, `ITEM_NOT_ACCEPTED`, then with a built courier station
-  `NO_FREE_COURIER` (every courier has a route), without one `INSUFFICIENT_WORKERS`, then `NOTHING_TO_CARRY`, `DELIVERY_QUEUE_FULL`. The
+  `INVALID_ARGUMENT` (the currency, an unknown preset), `AMOUNT_MODE_LOCKED`, `ITEM_NOT_ACCEPTED`, `NO_PATH` (no walk joins source and target, M1-03), then with
+  a built courier station `NO_FREE_COURIER` (every courier has a route; `NO_PATH` when only cut-off couriers are free), without one `INSUFFICIENT_WORKERS`, then `NOTHING_TO_CARRY`, `DELIVERY_QUEUE_FULL`. The
   amount is counted at the send (amendment 1, `04` §18): with a built courier station the engine picks a free courier and the delivery
   appears as its lines in `deliveryLines` (of at most its station level's `carryLimit`; nothing leaves the store yet); without one a free
   worker takes the first load (at most `tripCarryLimit`) and shuttles, shown in `trips` until the last load is delivered. It writes no
@@ -169,7 +177,7 @@ There is no "claim" command, because production and research complete on their o
   `INVALID_ARGUMENT` before the lock. Then `BUILDING_NOT_FOUND`, `INVALID_ARGUMENT` (not a courier station; the currency; an unknown
   preset), `INVALID_ROUTE` (slot above the station level's courier limit, 1 stop or more than `maxRouteStops`, more than `maxStopActions`, two
   consecutive stops at one building), `UNKNOWN_ITEM`, `AMOUNT_MODE_LOCKED`, then with 1 or more stops `ROUTES_LOCKED` (no built
-  `routeBuilding`, the Scriptorium) and `COURIER_BUSY` (the slot's courier has delivery lines). 0 stops clears the route; a missing `stops` (`null`) is
+  `routeBuilding`, the Scriptorium) and `COURIER_BUSY` (the slot's courier has delivery lines), `NO_PATH` (a leg no walk joins, M1-03). 0 stops clears the route; a missing `stops` (`null`) is
   `INVALID_ARGUMENT`. A slot may have a route without a courier. A new or cleared route stops the slot's courier: its load goes back to
   the buildings it came from and it stands at its station (a resting one keeps resting); the command's closing advance sends a courier
   at its station off to the first stop at once. It writes no ledger rows.
@@ -197,7 +205,7 @@ There is no "claim" command, because production and research complete on their o
   "requestId": "6f1c…", "stateVersion": 42, "serverTimeUtc": "2026-10-03T10:30:05Z", "contentVersion": "mvp-2",
   "city": {
     "clock": 123456, "era": 1,
-    "purse": 640, "chartered": false,
+    "purse": 640, "chartered": false, "openAreas": [ "A", "C" ],
     "totals": { "coins": 640, "logs": 41, "planks": 12 },
     "workers": { "provided": 8, "assigned": 6, "onTrips": 1, "free": 1 },
     "builders": { "slots": 2, "busy": 1, "queued": 0, "queueLength": 2 },
@@ -211,13 +219,13 @@ There is no "claim" command, because production and research complete on their o
         "store": { "logs": 37 }, "storeLimits": { "logs": 80, "planks": 60 }, "needs": {}, "project": null, "paused": false,
         "queuePlace": null }
     ],
-    "roads": [ { "x": 2, "y": 5, "level": 1 }, { "x": 3, "y": 5, "level": 2 } ],
+    "roads": [ { "x": 2, "y": 5, "level": 1, "kind": "road" }, { "x": 3, "y": 5, "level": 2, "kind": "road" } ],
     "trips": [ { "id": 9, "sourceId": 4, "targetId": 6, "itemId": "planks", "quantity": 10,
                  "departedAt": 123450, "arrivesAt": 123465, "remaining": 2, "leg": "ToTarget" } ],
     "couriers": [ { "stationId": 3, "slot": 1, "state": "Walking", "toStop": 2, "departedAt": 123440, "arrivesAt": 123470,
-                    "stamina": 7200, "load": [ { "itemId": "logs", "fromId": 4, "quantity": 10 } ] },
+                    "stamina": 7200, "load": [ { "itemId": "logs", "fromId": 4, "quantity": 10 } ], "waitsAt": null },
                   { "stationId": 3, "slot": 2, "state": "AtStation", "toStop": 0, "departedAt": null, "arrivesAt": null,
-                    "stamina": 7200, "load": [] } ],
+                    "stamina": 7200, "load": [], "waitsAt": null } ],
     "routes": [ { "stationId": 3, "slot": 2, "stops": [
                   { "buildingId": 4, "actions": [ { "kind": "take", "itemId": "logs", "amount": "all" } ] },
                   { "buildingId": 6, "actions": [ { "kind": "put", "itemId": "logs", "amount": "all" } ] } ] } ],
@@ -253,19 +261,24 @@ There is no "claim" command, because production and research complete on their o
 - `stallReason` is one of `null`, `"NoRecipe"`, `"NoWorkers"`, `"Paused"`, `"MissingInput:logs"` or `"StorageFull:planks"`. `phaseEndsAt` is `null` for a frozen cycle.
   `paused` (after `project`, amendment 2) is whether the player paused the building; `false` for every building that can't be paused.
 - Lists are sorted: buildings by `id`, completed research by `id` (ordinal), roads by `x`, then `y`, trips by `id`; item maps by item id.
-- `roads` lists every road tile with its level (CR-0008-T1 part D); a new city has none (`[]`).
+- `roads` lists every road tile with its level (CR-0008-T1 part D) and its `kind`: `road`, or `bridge` on water, always level 1 (M1-03); a
+  new city has none (`[]`).
+- `openAreas` (M1-03, derived from research, never stored): the map's area letters the city may build and walk on, by letter: the start
+  area and every area an `openLand` research opened; `[]` for content without a map.
 - Progress for display: `done = cycleLabor − (laborRemaining − (clientClock − segmentStartedAt) × assignedWorkers)`.
 - **CR-0008**: `purse`, `totals`, `onTrips`, the research's `needs`, each building's `store`, `storeLimits`, `needs` and `project`,
   `trips` and the settlement's `delivered`, `moved`, `refunded` (part E), and `roads` (part D) are built, as above. `couriers` and
   `routes` follow `trips` in `city` (part G): `couriers` (`stationId`, `slot`, `state` `AtStation` · `Walking` · `Returning` ·
-  `Resting`, `toStop` (1-based, 0 unless walking to a stop), `departedAt`, `arrivesAt` (`null` unless walking or returning), `stamina`
-  (seconds left; spent only while the player is away, `04` §2), `load` [`itemId`, `fromId`, `quantity`]); `routes` (`stationId`, `slot`, `stops` as `set-route`
+  `Resting` · `Blocked` (M1-03), `toStop` (1-based, 0 unless walking to a stop), `departedAt`, `arrivesAt` (`null` unless walking or returning), `stamina`
+  (seconds left; spent only while the player is away, `04` §2), `load` [`itemId`, `fromId`, `quantity`], `waitsAt`, the building a
+  `Blocked` courier waits at for a path (M1-03; `toStop` is then the stop it walks to next, 0 for home), `null` in every other state); `routes` (`stationId`, `slot`, `stops` as `set-route`
   sends them, `kind` `take` or `put`), both sorted by (`stationId`, `slot`), loads by (`itemId`, `fromId`); a city without couriers or
   routes has `[]`. A courier's goods count in `totals`. **Amendment 1:** `deliveryLines` follow `routes` (`id`, `stationId`, `slot`,
   `sourceId`, `targetId`, `itemId`, `quantity`), by (`stationId`, `slot`, `id`); each courier's first line is the one it runs now (`toStop`
   1 = that line's source, 2 = its target). A trip has `remaining` (still in the source for later loads) and `leg` (`ToTarget` with a load,
   `ToSource` with `quantity` 0, or with the goods the target didn't take and `remaining` 0, and `Waiting` at the source with goods its full
-  store can't take yet, M0-C-3). The settlement's `courierSeconds` is the most stamina one courier spent in it
+  store can't take yet, M0-C-3, or waiting for a path, M1-03: `BlockedAtSource` with `quantity` 0, the goods still in the source, and
+  `BlockedAtTarget` with what it carries back; a blocked leg keeps the times of the walk that brought it there, `04` §18). The settlement's `courierSeconds` is the most stamina one courier spent in it
   (0 while the player was present) and `tiredCouriers` [`stationId`, `slot`, `at`] the couriers whose stamina ran out, by station and
   slot, each at the city second it did (part H; `04` §11).
   `stallReason` keeps its values; a courier station without couriers is `NoWorkers`, a warehouse or science building `NoRecipe`.
@@ -282,10 +295,10 @@ There is no "claim" command, because production and research complete on their o
 | Code | HTTP | When |
 |---|---|---|
 | `AUTHENTICATION_REQUIRED` | 401 | Missing, invalid or expired token, or a token whose player has no city: log in again |
-| `INVALID_ARGUMENT` | 400 | Malformed JSON, unknown or missing field, bad GUID, body too large, a value no city could make valid (OD-13: a building id below 1, a negative coordinate, a negative worker count, a type, research or item id that can't be a content id, an amount of none of the three forms), workers on a building that takes none (a house, a warehouse, the science building), a trip to its own source or with the currency, an unknown amount preset (CR-0008) |
+| `INVALID_ARGUMENT` | 400 | Malformed JSON, unknown or missing field, bad GUID, body too large, a value no city could make valid (OD-13: a building id below 1, a negative coordinate, a tile past the map, a building where its type can never stand on the map or a road on forest or rock (M1-03), a negative worker count, a type, research or item id that can't be a content id, an amount of none of the three forms), workers on a building that takes none (a house, a warehouse, the science building), a trip to its own source or with the currency, an unknown amount preset (CR-0008) |
 | `UNKNOWN_BUILDING_TYPE` | 422 | Type id not in content |
 | `BUILDING_LOCKED` | 422 | Type of a later era than the city's, or not unlocked by research yet |
-| `OUT_OF_BOUNDS` | 422 | Coordinates past the grid's width or height (negative ones are `INVALID_ARGUMENT`) |
+| `OUT_OF_BOUNDS` | 422 | Coordinates past the grid's width or height; the engine's code, which the API answers before the lock as `INVALID_ARGUMENT` for `place-building` and `place-roads` (M1-03, OD-13) |
 | `TILE_OCCUPIED` | 409 | Tile already has a building (from CR-0008 also a road) |
 | `INSUFFICIENT_RESOURCE` | 422 | Cost not affordable (from CR-0008: its coins; goods are delivered later) |
 | `INSUFFICIENT_WORKERS` | 422 | Not enough free workers for the requested assignment (from CR-0008 also for a trip) |
@@ -311,6 +324,13 @@ There is no "claim" command, because production and research complete on their o
 | `ROUTES_LOCKED` | 422 | A route before the city has built the `routeBuilding`, the Scriptorium (CR-0008 D15) |
 | `COURIER_BUSY` | 422 | A route for a courier that still has delivery lines (CR-0008 D19); fewer station workers while a removed courier carries goods its store can't take back (M0-C-3) |
 | `DELIVERY_NOT_FOUND` | 422 | The line to cancel is not one of that courier's (CR-0008 D18) |
+| `TERRAIN_BLOCKED` | 422 | A building or road on water, forest or rock (M1-03; a road on water is a bridge, `BRIDGE_LOCKED`); the engine's code: the API refuses these tiles before the lock as `INVALID_ARGUMENT` (OD-13) |
+| `LAND_CLOSED` | 422 | A building or road on land still under mist: no research has opened its area (M1-03) |
+| `NEEDS_FOREST` | 422 | A Woodcutter's Hut (a type with the site `nearForest`) without forest beside its tile (M1-03); the engine's code, `INVALID_ARGUMENT` before the lock over the API |
+| `NEEDS_ROCK` | 422 | A Quarry (site `nearRock`) without rock beside its tile (M1-03); the engine's code, `INVALID_ARGUMENT` before the lock over the API |
+| `NEEDS_FERTILE_SOIL` | 422 | A Farm (site `fertileSoil`) off fertile soil (M1-03); the engine's code, `INVALID_ARGUMENT` before the lock over the API |
+| `BRIDGE_LOCKED` | 422 | A road on water before the research that unlocks the bridge (M1-03) |
+| `NO_PATH` | 422 | A trip, delivery or route between buildings no walk joins: water without a bridge or land under mist between them (M1-03) |
 | `IDEMPOTENCY_CONFLICT` | 409 | Same `requestId`, different payload |
 | `RATE_LIMITED` | 429 | Too many requests |
 | `CONCURRENCY_CONFLICT` | 409 | Lock timeout or version mismatch; safe to retry |

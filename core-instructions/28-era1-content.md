@@ -103,6 +103,8 @@ orders and the caravan; they are needed for level 3, the Town Hall and late rese
 Total research time about 39 h; the longest node (8 h) is under ¼ of five days (`25`). This is below the "research ≈ 60–70 % of the
 era" rule of `24`: with one slot and 3–5 check-ins a day, the rest of the week is gated by goods and builders. M1-15 checks the pacing.
 A node may have several effects (`masonry`, `open_fields`); `04` gets that rule in M1-02 if it doesn't hold today.
+As built (M1-03): "land: area B / C" is an `openLand` effect with that `area`, "unlock the bridge road kind" an `unlockBridge`
+effect; the bridge is the content's `bridge`; the raw producers' terrain is each type's `site` (`nearForest`, `nearRock`, `fertileSoil`).
 
 ## Starting city
 purse 1000 coins · era 1 · area A of the map · no buildings, no goods, no research · the Chronicle at chapter 1 · default town name

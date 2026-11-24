@@ -38,6 +38,10 @@ Both commands accept `--root` and a folder (the repository root). By default the
 | `Pages/PageFormat` | How the pages write numbers, durations and lists of goods (invariant culture, the same text on every machine) |
 | `Program` | The entry point: hands the arguments to `CommandLine` |
 
+
+### The map (M1-03)
+`ContentPage` words the effects `openLand` ("opens land: area X") and `unlockBridge`.
+
 ## Rules and invariants
 - **Deterministic:** the same repository gives the same bytes on every machine. Lines end in `\n`, files are UTF-8 without a BOM,
   everything is sorted ordinally or kept in its source order, and pages hold no timestamps and no absolute paths.
@@ -63,4 +67,4 @@ committed pages are current.
 - The browser tab of a generated page shows its file name: Docusaurus takes the tab title only from an H1 at the very top, and the
   notice comes first (build log M0-61, decision 5). The sidebar label is the H1.
 
-Last updated: M1-02
+Last updated: M1-03

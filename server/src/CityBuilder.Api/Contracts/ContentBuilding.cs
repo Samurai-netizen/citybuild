@@ -13,6 +13,8 @@ namespace CityBuilder.Api.Contracts;
 /// goods delivered to the construction site (CR-0008).</param>
 /// <param name="BuildSeconds">How long a new building is under construction, in seconds, JSON <c>buildSeconds</c>.</param>
 /// <param name="BaseMaxLevel">The highest level without research, JSON <c>baseMaxLevel</c>; <c>maxLevelBonus</c> effects raise it (M1-02).</param>
+/// <param name="Site">Where the type may stand on the map, JSON <c>site</c>: <c>nearForest</c> (beside a forest tile), <c>nearRock</c> (beside a
+/// rock tile), <c>fertileSoil</c> (on fertile soil), or <see langword="null"/> for any open grass or soil tile (M1-03).</param>
 /// <param name="Levels">The levels, JSON <c>levels</c>, by ascending level from 1; the last one is the max level.</param>
 public sealed record ContentBuilding(
     string Id,
@@ -25,4 +27,5 @@ public sealed record ContentBuilding(
     IReadOnlyDictionary<string, long> Cost,
     long BuildSeconds,
     int BaseMaxLevel,
+    string? Site,
     IReadOnlyList<ContentBuildingLevel> Levels);

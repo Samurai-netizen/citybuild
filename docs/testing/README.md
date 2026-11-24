@@ -116,6 +116,13 @@ flowchart LR
   each of the 13 types places and completes, each producer produces and each type with a second level upgrades. `EndToEnd/CharterPlayer`
   is a scripted player who researches the whole Era I tree up to the Town Charter: `CharterPlayerScriptTests` plays it on the engine
   alone, and `CharterHttpTests` plays it over HTTP with `FakeTimeProvider` and compares the stored city with the replay; the ledger auditor finds no mismatch.
+- The map (M1-03): the charter player bridges the river and farms the east bank; `EndToEnd/CharterBudgetTests` replays its first 7 days,
+  in which every expansion (`land_survey`, `open_fields`, `bridge_building`) completes, and holds every advance to the CI limit of `04` §12.
+  OD-13 refusals before the lock (a tile past the map, a building where its type can never stand, a road on forest or rock) are in
+  `Security/ApiAttackContractTests` and `ApiAttackDatabaseTests`; `LAND_CLOSED` and `BRIDGE_LOCKED` over HTTP in `Contracts/RoadCommandsContractTests`
+  (`NO_PATH` and stuck walkers on the engine: `Simulation.Tests` → `Rules/NoPathTests`, `Settlement/BlockedWalkerTests`); open areas, road
+  kinds and blocked walkers in the snapshot in `Contracts/CitySnapshotContractTests`. Server test layouts stand in area A (`HandBuiltCities`,
+  `DatabaseCommands.FreeX/FreeY`). A refusal by hand: `docs/api/smoke.http`.
 - The ledger audit (`Audit/`, M0-64): `LedgerAuditDatabaseTests` has three players play a long random game over HTTP (`RandomHttpPlayer`:
   a fixed opening, then every command and settles drawn from a seeded `Random` and the last snapshot, the clock moved by the test), then runs
   the server's `LedgerAuditor` over every city: zero mismatches, every command succeeded once, eight ledger reasons written. A refusal with

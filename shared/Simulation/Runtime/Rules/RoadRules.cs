@@ -15,15 +15,17 @@ namespace CityBuilder.Simulation.Rules
     public static class RoadRules
     {
         /// <summary>
-        /// Builds a level-1 road on every tile of the list and pays level 1's cost once per tile. The checks run over the whole list: every
-        /// tile in the grid, then every tile empty, then the total cost.
+        /// Builds a level-1 road on every tile of the list and pays level 1's cost once per tile; on a water tile the road is a bridge and
+        /// costs the bridge's cost (M1-03). The checks run over the whole list: every tile in the grid, then none on forest or rock, then
+        /// every tile on open land, then the bridge unlocked if a tile is water, then every tile empty, then the total cost.
         /// </summary>
         /// <param name="city">The city, settled to now.</param>
         /// <param name="content">The game content: the grid and the road levels.</param>
         /// <param name="tiles">The tiles, each once, at least one.</param>
         /// <returns>
         /// Ok, or the first failed check: <see cref="MutationErrorCode.InvalidArgument"/> (no tile, or a tile twice),
-        /// <see cref="MutationErrorCode.OutOfBounds"/>, <see cref="MutationErrorCode.TileOccupied"/> (a building or a road),
+        /// <see cref="MutationErrorCode.OutOfBounds"/>, <see cref="MutationErrorCode.TerrainBlocked"/>, <see cref="MutationErrorCode.LandClosed"/>,
+        /// <see cref="MutationErrorCode.BridgeLocked"/>, <see cref="MutationErrorCode.TileOccupied"/> (a building or a road),
         /// <see cref="MutationErrorCode.InsufficientResource"/>.
         /// </returns>
         /// <exception cref="ArgumentNullException">An argument is null.</exception>
@@ -44,6 +46,33 @@ namespace CityBuilder.Simulation.Rules
                 }
             }
 
+            // The map's rules (M1-03), each over the whole list before the next: the terrain never changes (OD-13 may refuse it before the
+            // lock), the land opens with research, and the bridge is unlocked by research.
+            for (int index = 0; index < tiles.Count; index++)
+            {
+                Terrain terrain = content.TerrainAt(tiles[index].X, tiles[index].Y);
+                if (terrain == Terrain.Forest || terrain == Terrain.Rock)
+                {
+                    return MutationResult.Rejected(MutationErrorCode.TerrainBlocked);
+                }
+            }
+
+            for (int index = 0; index < tiles.Count; index++)
+            {
+                if (!CityQueries.IsLandOpen(city, content, tiles[index].X, tiles[index].Y))
+                {
+                    return MutationResult.Rejected(MutationErrorCode.LandClosed);
+                }
+            }
+
+            for (int index = 0; index < tiles.Count; index++)
+            {
+                if (content.TerrainAt(tiles[index].X, tiles[index].Y) == Terrain.Water && !CityQueries.IsBridgeUnlocked(city, content))
+                {
+                    return MutationResult.Rejected(MutationErrorCode.BridgeLocked);
+                }
+            }
+
             for (int index = 0; index < tiles.Count; index++)
             {
                 if (CityQueries.TileAt(city, tiles[index].X, tiles[index].Y) != TileContent.Ground)
@@ -55,7 +84,9 @@ namespace CityBuilder.Simulation.Rules
             var cost = new ItemTotals();
             for (int index = 0; index < tiles.Count; index++)
             {
-                AddAmounts(cost, content.GetRoadLevel(1).Cost);
+                // A bridge is unlocked only where the content has one (content rule 18), so a water tile here has the bridge's cost.
+                bool bridge = content.TerrainAt(tiles[index].X, tiles[index].Y) == Terrain.Water;
+                AddAmounts(cost, bridge ? content.Bridge!.Cost : content.GetRoadLevel(1).Cost);
             }
 
             // Content rule 11 makes every road cost the currency only, so the cost is coins, paid from the purse.
@@ -68,7 +99,7 @@ namespace CityBuilder.Simulation.Rules
             city.PayFromPurse(coins);
             for (int index = 0; index < tiles.Count; index++)
             {
-                city.PlaceRoad(tiles[index].X, tiles[index].Y);
+                city.PlaceRoad(tiles[index].X, tiles[index].Y, content.TerrainAt(tiles[index].X, tiles[index].Y) == Terrain.Water);
             }
 
             return MutationResult.Applied(Costs.AsSpent(content, coins));
@@ -83,8 +114,8 @@ namespace CityBuilder.Simulation.Rules
         /// <param name="tiles">The tiles, each once, at least one.</param>
         /// <returns>
         /// Ok, or the first failed check: <see cref="MutationErrorCode.InvalidArgument"/> (no tile, or a tile twice),
-        /// <see cref="MutationErrorCode.RoadNotFound"/> (also for a tile outside the grid), <see cref="MutationErrorCode.MaxLevel"/>,
-        /// <see cref="MutationErrorCode.InsufficientResource"/>.
+        /// <see cref="MutationErrorCode.RoadNotFound"/> (also for a tile outside the grid), <see cref="MutationErrorCode.MaxLevel"/> (also a
+        /// bridge, which has one level), <see cref="MutationErrorCode.InsufficientResource"/>.
         /// </returns>
         /// <exception cref="ArgumentNullException">An argument is null.</exception>
         public static MutationResult UpgradeRoads(CityState city, GameContent content, IReadOnlyList<(int X, int Y)> tiles)
@@ -104,7 +135,7 @@ namespace CityBuilder.Simulation.Rules
             for (int index = 0; index < tiles.Count; index++)
             {
                 city.TryGetRoad(tiles[index].X, tiles[index].Y, out RoadTile road);
-                if (road.Level >= content.MaxRoadLevel)
+                if (road.IsBridge || road.Level >= content.MaxRoadLevel)
                 {
                     return MutationResult.Rejected(MutationErrorCode.MaxLevel);
                 }

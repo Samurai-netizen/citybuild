@@ -15,6 +15,7 @@ public sealed class CityRoadConfiguration : IEntityTypeConfiguration<CityRoadRow
             table.HasCheckConstraint("ck_city_roads_x", "x >= 0");
             table.HasCheckConstraint("ck_city_roads_y", "y >= 0");
             table.HasCheckConstraint("ck_city_roads_level", "level >= 1");
+            table.HasCheckConstraint("ck_city_roads_kind", "kind in ('road', 'bridge') and (kind = 'road' or level = 1)");
         });
 
         // One road per tile: the tile is the key.
@@ -23,6 +24,7 @@ public sealed class CityRoadConfiguration : IEntityTypeConfiguration<CityRoadRow
         builder.Property(r => r.X).HasColumnName("x").ValueGeneratedNever();
         builder.Property(r => r.Y).HasColumnName("y").ValueGeneratedNever();
         builder.Property(r => r.Level).HasColumnName("level");
+        builder.Property(r => r.Kind).HasColumnName("kind");
 
         // The city owns its roads: the rows go with it.
         builder.HasOne<CityRow>().WithMany().HasForeignKey(r => r.CityId)

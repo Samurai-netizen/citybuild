@@ -34,7 +34,7 @@ public sealed class LostResponseDatabaseTests(PostgresServer server) : PostgresT
     private static readonly Guid _requestId = new("1de9e700-0000-4000-8000-0000000005a1");
 
     /// <summary>The body of the sawmill placement, the one that costs two items.</summary>
-    private static string PlaceSawmill => $$"""{"requestId":"{{_requestId}}","buildingTypeId":"sawmill","x":3,"y":4}""";
+    private static string PlaceSawmill => $$"""{"requestId":"{{_requestId}}","buildingTypeId":"sawmill","x":7,"y":8}""";
 
     /// <summary>A placement whose response is lost: one sawmill, its two costs once, one receipt.</summary>
     [Fact]

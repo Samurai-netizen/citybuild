@@ -16,7 +16,7 @@ namespace CityBuilder.IntegrationTests.Commands;
 /// <summary>
 /// <c>POST /api/v1/commands/place-building</c> end to end on PostgreSQL over HTTP: the server's real content (house 50 coins and 30 s,
 /// woodcutter 80 coins and 60 s, sawmill 150 coins, 30 logs and 120 s, the trading post locked until <c>trade_charter</c>; 2 builders, an
-/// 8 × 8 grid), endpoint, pipeline and repositories, the server clock a <c>FakeTimeProvider</c> at <see cref="PostgresApiFactory.Start"/>. Each
+/// 18 × 14 map), endpoint, pipeline and repositories, the server clock a <c>FakeTimeProvider</c> at <see cref="PostgresApiFactory.Start"/>. Each
 /// player starts with the starter city (700 coins, 40 logs, 10 planks, nothing built). Every test checks what was stored, not only the
 /// status: the city, its buildings and stock, the ledger rows and the receipts.
 /// </summary>
@@ -41,7 +41,7 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
     {
         (Guid player, Guid city) = await StoreStarterAsync("builder");
 
-        ApiResponse response = await PlaceAsync(player, _requestId, "sawmill", 3, 4);
+        ApiResponse response = await PlaceAsync(player, _requestId, "sawmill", 7, 8);
 
         Assert.Equal(HttpStatusCode.OK, response.Status);
         JsonNode snapshot = response.Json();
@@ -55,7 +55,7 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
 
         CityBuildingRow building = await db.CityBuildings.AsNoTracking().SingleAsync(TestContext.Current.CancellationToken);
         Assert.Equal(
-            (1, "sawmill", (short)3, (short)4, (short)1, (short)0, "Constructing", (long?)null, (long?)null),
+            (1, "sawmill", (short)7, (short)8, (short)1, (short)0, "Constructing", (long?)null, (long?)null),
             (building.BuildingId, building.TypeId, building.X, building.Y, building.Level, building.AssignedWorkers, building.Phase,
                 building.PhaseStartedAt, building.PhaseEndsAt));
         CityProjectNeedRow need = await db.CityProjectNeeds.AsNoTracking().SingleAsync(TestContext.Current.CancellationToken);
@@ -69,7 +69,7 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
 
         CommandReceiptRow receipt = Assert.Single(await ReceiptsAsync(Database, player));
         Assert.Equal((_requestId, PlaceBuildingCommand.Type, response.Body), (receipt.RequestId, receipt.CommandType, receipt.ResponseJson));
-        Assert.Equal(CommandPayload.Hash(new PlaceBuildingCommand(_requestId, "sawmill", 3, 4)), receipt.PayloadHash);
+        Assert.Equal(CommandPayload.Hash(new PlaceBuildingCommand(_requestId, "sawmill", 7, 8)), receipt.PayloadHash);
     }
 
     /// <summary>
@@ -85,12 +85,12 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
     /// <param name="status">The expected status.</param>
     /// <param name="code">The expected code.</param>
     [Theory]
-    [InlineData(new string[0], "castle", 0, 0, HttpStatusCode.UnprocessableEntity, "UNKNOWN_BUILDING_TYPE")]
-    [InlineData(new string[0], "trading_post", 0, 0, HttpStatusCode.UnprocessableEntity, "BUILDING_LOCKED")]
-    [InlineData(new string[0], "house", 8, 0, HttpStatusCode.UnprocessableEntity, "OUT_OF_BOUNDS")]
-    [InlineData(new[] { "woodcutter 2 3" }, "house", 2, 3, HttpStatusCode.Conflict, "TILE_OCCUPIED")]
-    [InlineData(new[] { "house 0 0", "house 1 0", "house 2 0", "house 3 0" }, "house", 4, 0, HttpStatusCode.Conflict, "NO_FREE_BUILDER")]
-    [InlineData(new[] { "scriptorium 0 0" }, "scriptorium", 1, 0, HttpStatusCode.UnprocessableEntity, "BUILDING_LIMIT")]
+    [InlineData(new string[0], "castle", 4, 4, HttpStatusCode.UnprocessableEntity, "UNKNOWN_BUILDING_TYPE")]
+    [InlineData(new string[0], "trading_post", 4, 4, HttpStatusCode.UnprocessableEntity, "BUILDING_LOCKED")]
+    [InlineData(new string[0], "house", 5, 1, HttpStatusCode.UnprocessableEntity, "LAND_CLOSED")]
+    [InlineData(new[] { "woodcutter 4 5" }, "house", 4, 5, HttpStatusCode.Conflict, "TILE_OCCUPIED")]
+    [InlineData(new[] { "house 4 4", "house 5 4", "house 6 4", "house 7 4" }, "house", 8, 4, HttpStatusCode.Conflict, "NO_FREE_BUILDER")]
+    [InlineData(new[] { "scriptorium 4 4" }, "scriptorium", 5, 4, HttpStatusCode.UnprocessableEntity, "BUILDING_LIMIT")]
     public async Task Post_RuleRefuses_AnswersItsCodeAndStoresOnlyItsEvent(string[] before, string typeId, int x, int y, HttpStatusCode status, string code)
     {
         (Guid player, Guid city) = await StoreStarterAsync("builder");
@@ -119,11 +119,11 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
     public async Task Post_SameRequestAgain_ReturnsTheSameBytesAndWritesNothing()
     {
         (Guid player, Guid city) = await StoreStarterAsync("builder");
-        ApiResponse first = await PlaceAsync(player, _requestId, "house", 0, 0);
+        ApiResponse first = await PlaceAsync(player, _requestId, "house", 4, 4);
         string stored = await StoredAsync(Factory, Database, player, city);
         Factory.Clock.Advance(TimeSpan.FromMinutes(1));
 
-        ApiResponse retry = await PlaceAsync(player, _requestId, "house", 0, 0);
+        ApiResponse retry = await PlaceAsync(player, _requestId, "house", 4, 4);
 
         Assert.Equal((HttpStatusCode.OK, HttpStatusCode.OK), (first.Status, retry.Status));
         Assert.Equal(first.Body, retry.Body);
@@ -135,10 +135,10 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
     public async Task Post_SameRequestIdOnAnotherTile_Is409AndWritesNothing()
     {
         (Guid player, Guid city) = await StoreStarterAsync("builder");
-        await PlaceAsync(player, _requestId, "house", 0, 0);
+        await PlaceAsync(player, _requestId, "house", 4, 4);
         string stored = await StoredAsync(Factory, Database, player, city);
 
-        ApiResponse response = await PlaceAsync(player, _requestId, "house", 1, 0);
+        ApiResponse response = await PlaceAsync(player, _requestId, "house", 5, 4);
 
         Assert.Equal(HttpStatusCode.Conflict, response.Status);
         Assert.Equal("IDEMPOTENCY_CONFLICT", (string)response.Json()["code"]!);
@@ -154,7 +154,7 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
     {
         (Guid player, Guid city) = await StoreStarterAsync("builder");
 
-        ApiResponse[] responses = await Task.WhenAll(Enumerable.Range(0, 10).Select(_ => PlaceAsync(player, _requestId, "house", 0, 0)));
+        ApiResponse[] responses = await Task.WhenAll(Enumerable.Range(0, 10).Select(_ => PlaceAsync(player, _requestId, "house", 4, 4)));
 
         Assert.All(responses, response => Assert.Equal(HttpStatusCode.OK, response.Status));
         Assert.Single(responses.Select(response => response.Body).Distinct(StringComparer.Ordinal));
@@ -174,7 +174,7 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
         (Guid player, Guid city) = await HandBuiltCities.StoreCityAsync(Factory, "poor", 100, HandBuiltCities.House(1));
         string stored = await StoredAsync(Factory, Database, player, city);
 
-        ApiResponse response = await PlaceAsync(player, _requestId, "sawmill", 3, 4);
+        ApiResponse response = await PlaceAsync(player, _requestId, "sawmill", 7, 8);
 
         Assert.Equal(HttpStatusCode.UnprocessableEntity, response.Status);
         Assert.Equal("INSUFFICIENT_RESOURCE", (string)response.Json()["code"]!);
@@ -190,10 +190,10 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
     {
         (Guid first, Guid firstCity) = await StoreStarterAsync("first");
         (Guid second, Guid secondCity) = await StoreStarterAsync("second");
-        ApiResponse ofFirst = await PlaceAsync(first, _requestId, "house", 0, 0);
+        ApiResponse ofFirst = await PlaceAsync(first, _requestId, "house", 4, 4);
         string firstStored = await StoredAsync(Factory, Database, first, firstCity);
 
-        ApiResponse ofSecond = await PlaceAsync(second, _requestId, "house", 0, 0);
+        ApiResponse ofSecond = await PlaceAsync(second, _requestId, "house", 4, 4);
 
         Assert.Equal((HttpStatusCode.OK, HttpStatusCode.OK), (ofFirst.Status, ofSecond.Status));
         // The two snapshots are the same text (the same starter city, request and second; a snapshot names no player), so the stored rows
@@ -216,14 +216,14 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
         (Guid player, _) = await StoreStarterAsync("builder");
         for (int x = 0; x < 4; x++)
         {
-            await PlaceAsync(player, Guid.CreateVersion7(), "house", x, 0);
+            await PlaceAsync(player, Guid.CreateVersion7(), "house", 4 + x, 4);
         }
 
         Factory.Clock.Advance(TimeSpan.FromSeconds(29));
-        ApiResponse tooEarly = await PlaceAsync(player, Guid.CreateVersion7(), "woodcutter", 4, 0);
+        ApiResponse tooEarly = await PlaceAsync(player, Guid.CreateVersion7(), "woodcutter", 4, 5);
         Factory.Clock.Advance(TimeSpan.FromSeconds(1));
 
-        ApiResponse response = await PlaceAsync(player, _requestId, "woodcutter", 4, 0);
+        ApiResponse response = await PlaceAsync(player, _requestId, "woodcutter", 4, 5);
 
         Assert.Equal("NO_FREE_BUILDER", (string)tooEarly.Json()["code"]!);
         Assert.Equal(HttpStatusCode.OK, response.Status);
@@ -247,8 +247,8 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
     public async Task Get_AfterThePlacedProducerCompleted_ShowsItStaffed()
     {
         (Guid player, _) = await StoreStarterAsync("builder");
-        await PlaceAsync(player, Guid.CreateVersion7(), "house", 0, 0);
-        await PlaceAsync(player, _requestId, "woodcutter", 1, 0);
+        await PlaceAsync(player, Guid.CreateVersion7(), "house", 4, 4);
+        await PlaceAsync(player, _requestId, "woodcutter", 4, 5);
         Factory.Clock.Advance(TimeSpan.FromSeconds(60));
 
         JsonNode snapshot = (await ApiClient.GetAsync(Factory, "/api/v1/city", player)).Json();
@@ -274,7 +274,7 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
         string stored = await StoredAsync(Factory, Database, player, city);
 
         ApiResponse response = await ApiClient.PostAsync(
-            Factory, _path, player, $$$"""{"requestId":"{{{_requestId}}}","buildingTypeId":"house","x":0,"y":0,"cost":{"coins":0}}""");
+            Factory, _path, player, $$$"""{"requestId":"{{{_requestId}}}","buildingTypeId":"house","x":4,"y":4,"cost":{"coins":0}}""");
 
         Assert.Equal(HttpStatusCode.BadRequest, response.Status);
         Assert.Equal(stored, await StoredAsync(Factory, Database, player, city));

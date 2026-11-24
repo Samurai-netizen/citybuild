@@ -79,6 +79,15 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Research
             Assert.That(node.CostText, Is.EqualTo("Cost: 300 Coins, 50 Logs"));
         }
 
+        /// <summary>The map's effects have words (M1-03): a research that opens land, and the one that unlocks the bridge by its content name.</summary>
+        [Test]
+        public void Words_ForTheMapEffects()
+        {
+            Assert.That(Node("land_survey", City(5000)).EffectText, Is.EqualTo("Opens new land"));
+            Assert.That(Node("open_fields", City(5000)).EffectText, Is.EqualTo("Unlocks Farm, Opens new land"));
+            Assert.That(Node("bridge_building", City(5000)).EffectText, Is.EqualTo("Unlocks Bridge"));
+        }
+
         /// <summary>The Era I effects have words (M1-02): a level cap rise per type, a builder slot, and the charter.</summary>
         [Test]
         public void Words_ForTheEraIEffects()

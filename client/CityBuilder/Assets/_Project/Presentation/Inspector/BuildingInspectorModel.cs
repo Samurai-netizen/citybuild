@@ -616,7 +616,13 @@ namespace CityBuilder.Client.Presentation.Inspector
                 string item = Number(trip.Quantity) + " " + ItemText.ItemName(content, trip.Item);
                 string countdown = DurationText.Format(Math.Max(0, trip.ArrivesAt - city.Clock));
                 bool goingBack = trip.Leg == TripLeg.Waiting || (trip.Leg == TripLeg.ToSource && trip.Quantity > 0);
-                if (goingBack)
+                if (trip.Leg == TripLeg.BlockedAtSource || trip.Leg == TripLeg.BlockedAtTarget)
+                {
+                    // No walk joins the two buildings (a removed bridge, M1-03): the worker waits until a road or bridge gives it one.
+                    string other = BuildingNameOf(content, city, trip.SourceId == buildingId ? trip.TargetId : trip.SourceId);
+                    lines.Add("Delivery " + (trip.SourceId == buildingId ? "to " : "from ") + other + " stuck: no path");
+                }
+                else if (goingBack)
                 {
                     // What the target didn't take comes back to the source; the target has nothing more to wait for (M0-C-3).
                     if (trip.SourceId == buildingId)
@@ -796,6 +802,8 @@ namespace CityBuilder.Client.Presentation.Inspector
                     return "Returning";
                 case CourierState.Resting:
                     return "Resting";
+                case CourierState.Blocked:
+                    return "Stuck: no path";
                 default:
                     return "At station";
             }

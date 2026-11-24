@@ -27,6 +27,9 @@ namespace CityBuilder.Client.Presentation.City
         /// <summary>The ground, or null before <see cref="ShowGrid"/>.</summary>
         private GroundTiles? _ground;
 
+        /// <summary>The mist over closed land (M1-03); null before <see cref="ShowGrid"/>.</summary>
+        private MistView? _mist;
+
         /// <summary>The input reader, or null before <see cref="ShowGrid"/>.</summary>
         private CityInputReader? _input;
 
@@ -98,21 +101,28 @@ namespace CityBuilder.Client.Presentation.City
             sun.shadows = LightShadows.None;
         }
 
+        /// <summary>How many completed research the camera limits were last made for; -1 before the first city of a grid (M1-03).</summary>
+        private int _limitsResearchCount = -1;
+
         /// <summary>
         /// Builds the ground, the selection, the camera controls and the (empty) building views for a grid, and frames the camera on it.
         /// Calling it again replaces the earlier ground and buildings (a new city size); <see cref="ShowCity"/> then fills the buildings.
         /// </summary>
         /// <param name="grid">The grid from the content's rules.</param>
-        public void ShowGrid(CityGrid grid)
+        /// <param name="map">The content's map, whose terrain the ground shows (M1-03); null when every tile is grass.</param>
+        public void ShowGrid(CityGrid grid, MapDefinition? map = null)
         {
             _ground?.Destroy();
+            _mist?.Destroy();
             _buildings?.Destroy();
             _ghosts?.Destroy();
             _walkers?.Destroy();
             _walkers = null;
+            _limitsResearchCount = -1;
             Grid = grid;
             Selection = new TileSelection(grid);
-            _ground = new GroundTiles(grid, Selection, transform);
+            _ground = new GroundTiles(grid, Selection, transform, map);
+            _mist = new MistView(grid, transform);
             _buildings = new CityView(grid, transform, Camera.transform);
             _ghosts = new PlacementGhosts(grid, transform);
             Rig = new CityCameraRig(Camera, grid, Selection);
@@ -133,6 +143,36 @@ namespace CityBuilder.Client.Presentation.City
             }
 
             _walkers?.Show(city);
+            if (content != null && city.CompletedResearch.Count != _limitsResearchCount)
+            {
+                FollowOpenLand(city, content);
+            }
+        }
+
+        /// <summary>
+        /// The open land changed, or is shown for the first time (M1-03): the mist follows it (<see cref="MistView"/>, lifting where land
+        /// opened), and the camera's limits become the open land's rectangle
+        /// (<see cref="CameraLimits"/>); the first time the camera also frames it, later it only widens, so the view does not jump.
+        /// </summary>
+        /// <param name="city">The displayed city.</param>
+        /// <param name="content">The game content with the map.</param>
+        private void FollowOpenLand(CityState city, GameContent content)
+        {
+            bool first = _limitsResearchCount < 0;
+            _limitsResearchCount = city.CompletedResearch.Count;
+            _mist?.Show(city, content);
+            if (Rig == null)
+            {
+                return;
+            }
+
+            Rig.Model.SetLimits(CameraLimits.Of(city, content));
+            if (first)
+            {
+                Rig.Model.Frame(Camera.aspect);
+            }
+
+            Rig.Apply();
         }
 
         /// <summary>Paints the tiles green or red by their hints, or gives them their ground colour back (<see cref="GroundTiles.ShowHints"/>). Does nothing before <see cref="ShowGrid"/>.</summary>
@@ -169,12 +209,14 @@ namespace CityBuilder.Client.Presentation.City
         {
             _input?.Tick();
             _walkers?.Tick(Time.deltaTime, DisplayNow != null ? DisplayNow() : _shownClock);
+            _mist?.Tick(Time.deltaTime);
         }
 
         /// <summary>Unity calls it when the object is destroyed: the ground takes its listener off the selection, and the buildings' and ghosts' materials go.</summary>
         private void OnDestroy()
         {
             _ground?.Destroy();
+            _mist?.Destroy();
             _buildings?.Destroy();
             _ghosts?.Destroy();
             _walkers?.Destroy();

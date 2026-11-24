@@ -22,7 +22,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.City
         [SetUp]
         public void LoadContent()
         {
-            _content = CityTestData.Content();
+            _content = CityTestData.OpenGrassContent();
         }
 
         /// <summary>Three ground steps take 15 s (5 s a tile) and make a straight path of four tiles.</summary>

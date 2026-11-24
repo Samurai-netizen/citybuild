@@ -160,8 +160,8 @@ public sealed class ReenergizeCouriersContractTests(ApiFactory factory) : IClass
     }
 
     /// <summary>
-    /// The city of the tests at clock 0: 100 coins; house 1 at (0,0) (4 workers); woodcutter 2 at (2,0), idle without workers, with 30 logs in
-    /// its store; warehouse 3 at (2,2) with 5 logs; courier station 4 at (0,2) with 1 worker, courier 4/1 on the route woodcutter → warehouse:
+    /// The city of the tests at clock 0, on open grass of the start area: 100 coins; house 1 at (4,4) (4 workers); woodcutter 2 at (6,4), idle without workers, with 30 logs in
+    /// its store; warehouse 3 at (6,6) with 5 logs; courier station 4 at (4,6) with 1 worker, courier 4/1 on the route woodcutter → warehouse:
     /// resting with no stamina and 4 of the woodcutter's logs (26 left there), or walking to the woodcutter with all of its stamina.
     /// </summary>
     /// <param name="content">The server's content.</param>
@@ -172,10 +172,10 @@ public sealed class ReenergizeCouriersContractTests(ApiFactory factory) : IClass
         var logs = new ItemId("logs");
         Building[] buildings =
         [
-            new(1, new BuildingTypeId("house"), 0, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
-            new(2, new BuildingTypeId("woodcutter"), 2, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, [new(logs, resting ? 26 : 30)]),
-            new(3, new BuildingTypeId("warehouse"), 2, 2, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, [new(logs, 5)]),
-            new(4, new BuildingTypeId("courier_station"), 0, 2, 1, 1, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
+            new(1, new BuildingTypeId("house"), 4, 4, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
+            new(2, new BuildingTypeId("woodcutter"), 6, 4, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, [new(logs, resting ? 26 : 30)]),
+            new(3, new BuildingTypeId("warehouse"), 6, 6, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, [new(logs, 5)]),
+            new(4, new BuildingTypeId("courier_station"), 4, 6, 1, 1, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
         ];
         Courier courier = resting
             ? new Courier(4, 1, CourierState.Resting, 0, null, null, 0, [new CourierLoad(logs, 2, 4)])

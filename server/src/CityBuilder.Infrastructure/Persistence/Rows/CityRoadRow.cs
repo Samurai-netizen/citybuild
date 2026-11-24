@@ -17,4 +17,7 @@ public sealed class CityRoadRow
 
     /// <summary><c>level</c>: the road level, 1 or more (the content's road levels).</summary>
     public short Level { get; set; }
+
+    /// <summary><c>kind</c>: <c>road</c>, or <c>bridge</c> for a bridge on water, which has level 1 (M1-03).</summary>
+    public string Kind { get; set; } = "road";
 }

@@ -27,7 +27,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Inspector
         [SetUp]
         public void LoadContent()
         {
-            _content = HudTestData.Content();
+            _content = HudTestData.OpenGrassContent();
         }
 
         /// <summary>A producer and a courier station have the button, reading Pause; a house and a building under construction don't.</summary>

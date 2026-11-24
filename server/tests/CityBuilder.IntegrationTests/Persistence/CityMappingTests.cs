@@ -42,6 +42,21 @@ public sealed class CityMappingTests
     }
 
     /// <summary>
+    /// The blocked sample city (trips waiting at their source and target, couriers waiting for a stop and for home, M1-03) comes back from its
+    /// rows with every value equal; a waiting courier stores the building it waits at in <c>waits_at</c>, every other courier null.
+    /// </summary>
+    [Fact]
+    public void ToAggregate_OfToRows_GivesTheSameBlockedCity()
+    {
+        CityRows rows = CityMapping.ToRows(Blocked());
+
+        Assert.Equal(Describe(Blocked()), Describe(CityMapping.ToAggregate(rows)));
+        Assert.Equal([("BlockedAtSource", 1), ("BlockedAtTarget", 2), ("BlockedAtTarget", 3)], rows.Trips.Select(row => (row.Leg, row.TripId)));
+        Assert.Equal([("Blocked", (int?)ProducingId), ("Blocked", (int?)IdleId)], rows.Couriers.Select(row => (row.State, row.WaitsAt)));
+        Assert.All(CityMapping.ToRows(Full()).Couriers, row => Assert.Null(row.WaitsAt));
+    }
+
+    /// <summary>
     /// A queued order is stored in <c>queued_order</c>, null for every other building, the queued construction with the phase text
     /// <c>Queued</c> and no times; the next order goes into <c>cities.next_queued_order</c> (CR-0013).
     /// </summary>
@@ -164,6 +179,20 @@ public sealed class CityMappingTests
         Assert.Equal(
             [(CityId, (short)2, (short)1, (short)1), (CityId, (short)3, (short)1, (short)2), (CityId, (short)4, (short)0, (short)1)],
             rows.Roads.Select(row => (row.CityId, row.X, row.Y, row.Level)));
+    }
+
+    /// <summary>Every road of the engine is a <c>road</c> row; a bridge row comes back as a bridge and is written back as one (M1-03).</summary>
+    [Fact]
+    public void ToAggregate_BridgeRow_LoadsABridgeAndWritesItBack()
+    {
+        CityRows rows = CityMapping.ToRows(Full());
+        Assert.All(rows.Roads, row => Assert.Equal("road", row.Kind));
+        rows.Roads[0].Kind = "bridge";
+
+        CityAggregate loaded = CityMapping.ToAggregate(rows);
+
+        Assert.Contains(new RoadTile(2, 1, 1, isBridge: true), loaded.State.Roads);
+        Assert.Equal("bridge", CityMapping.ToRows(loaded).Roads.Single(row => (row.X, row.Y) == (2, 1)).Kind);
     }
 
     /// <summary>

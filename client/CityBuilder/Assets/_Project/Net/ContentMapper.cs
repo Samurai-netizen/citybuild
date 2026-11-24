@@ -47,6 +47,25 @@ namespace CityBuilder.Client.Net
                     Name = preset.Name,
                     Percent = preset.Percent,
                 }),
+                Map = response.Map == null ? null : ToData(response.Map),
+                Bridge = response.Bridge == null
+                    ? null
+                    : new BridgeData { Name = response.Bridge.Name, TileMillis = response.Bridge.TileMillis, Cost = Quantities(response.Bridge.Cost) },
+            };
+        }
+
+        /// <summary>The map in the content file's form: the same rows of terrain and area letters (M1-03).</summary>
+        /// <param name="map">The answer's map.</param>
+        /// <returns>The engine's map data.</returns>
+        private static MapData ToData(ContentMapDto map)
+        {
+            return new MapData
+            {
+                Id = map.Id,
+                StartArea = map.StartArea,
+                RoughTileMillis = map.RoughTileMillis,
+                Tiles = map.Tiles.ConvertAll(row => (string?)row),
+                Areas = map.Areas.ConvertAll(row => (string?)row),
             };
         }
 
@@ -94,6 +113,7 @@ namespace CityBuilder.Client.Net
                 Cost = Quantities(building.Cost),
                 BuildSeconds = building.BuildSeconds,
                 BaseMaxLevel = building.BaseMaxLevel,
+                Site = SiteText(building.Site),
                 Levels = building.Levels.ConvertAll(level => (BuildingLevelData?)ToData(level)),
             };
         }
@@ -145,6 +165,7 @@ namespace CityBuilder.Client.Net
                 Permille = effect.Permille,
                 Amount = effect.Amount,
                 Mode = effect.Mode,
+                Area = effect.Area,
             };
         }
 
@@ -180,6 +201,24 @@ namespace CityBuilder.Client.Net
             }
         }
 
+        /// <summary>The content file's spelling of a building site (the same as the response's), or <c>null</c> for a type without one (M1-03).</summary>
+        private static string? SiteText(BuildingSiteDto? site)
+        {
+            switch (site)
+            {
+                case null:
+                    return null;
+                case BuildingSiteDto.NearForest:
+                    return "nearForest";
+                case BuildingSiteDto.NearRock:
+                    return "nearRock";
+                case BuildingSiteDto.FertileSoil:
+                    return "fertileSoil";
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(site), site, "A building site the client does not know.");
+            }
+        }
+
         /// <summary>The content file's spelling of an effect type (the same as the response's).</summary>
         private static string EffectTypeText(ResearchEffectTypeDto type)
         {
@@ -201,6 +240,10 @@ namespace CityBuilder.Client.Net
                     return "builderSlotBonus";
                 case ResearchEffectTypeDto.GrantCharter:
                     return "grantCharter";
+                case ResearchEffectTypeDto.OpenLand:
+                    return "openLand";
+                case ResearchEffectTypeDto.UnlockBridge:
+                    return "unlockBridge";
                 default:
                     throw new ArgumentOutOfRangeException(nameof(type), type, "An effect type the client does not know.");
             }

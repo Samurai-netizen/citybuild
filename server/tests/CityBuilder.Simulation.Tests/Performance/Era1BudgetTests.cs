@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
+using CityBuilder.Simulation.Map;
 using CityBuilder.Simulation.Settlement;
 using CityBuilder.Simulation.State;
 using static CityBuilder.Simulation.Tests.Performance.Era1WorstCase;
@@ -33,13 +34,26 @@ public sealed class Era1BudgetTests(ITestOutputHelper output)
     private const long _ciLimitMicroseconds = 2_000_000;
 #endif
 
-    /// <summary>The built city has the shape of the case: all 64 tiles, all 13 types at their highest level, 108 couriers on routes, workers to spare.</summary>
+    /// <summary>
+    /// The built city has the shape of the case: 64 buildings, each where the map lets its type stand, all 13 types at their highest level,
+    /// 108 couriers on routes, workers to spare, and every route walkable.
+    /// </summary>
     [Fact]
     public void Build_Era1WorstCase_FillsTheMapWithEveryTypeAtItsHighestLevel()
     {
         CityState city = Build();
 
-        Assert.Equal(CaseContent.Rules.GridWidth * CaseContent.Rules.GridHeight, city.Buildings.Count);
+        Assert.Equal(64, city.Buildings.Count);
+        Assert.All(city.Buildings, building =>
+            Assert.Null(CityQueries.SiteError(CaseContent, CaseContent.Buildings.Single(type => type.Id == building.TypeId), building.X, building.Y)));
+        var paths = new PathFinder(CaseContent);
+        paths.Load(city);
+        Assert.All(Links, link =>
+        {
+            Building source = city.Buildings[link.Source - 1];
+            Building target = city.Buildings[link.Target - 1];
+            Assert.True(paths.TryMeasure(source.X, source.Y, target.X, target.Y, out _));
+        });
         Assert.Equal(CaseContent.Buildings.Count, city.Buildings.Select(building => building.TypeId).Distinct().Count());
         Assert.Equal(13, CaseContent.Buildings.Count);
         Assert.All(city.Buildings, building =>

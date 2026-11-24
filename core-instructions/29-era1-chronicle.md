@@ -31,6 +31,8 @@ y  0   FFFFFF..RRRRW..SSS      BBBBBBBBBBBBBCCCCC
 - **Area B** (`land_survey`): the rim, x 0–1 and y 0–1 and y 12–13 west of x 13: more forest and rock, room for houses.
 - **Area C** (`open_fields`): the east bank, x 13–17: 37 fertile soil tiles for farms. It is reached over a bridge.
 - Unopened areas lie under mist (`22`). A building needs every tile it stands on to be open; walkers may only walk open tiles.
+- As built (M1-03): the map is `map` in `server/content/era1-content.json` (`tiles` and `areas` as above, start area A); forest and rock
+  take 10 s per tile to cross (twice the ground); a forest or rock tile beside a site may lie under mist (`04` §17).
 
 ## The Chronicle
 Goal conditions the engine checks (M1-04): `TownNamed` · `BuildingCount(type, minLevel, n)` · `Produced(item, n)` (since the chapter

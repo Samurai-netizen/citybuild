@@ -90,13 +90,19 @@ namespace CityBuilder.Simulation.Rules
             var paths = new PathFinder(content);
             paths.Load(city);
             int bonus = CityQueries.WalkBonusPermille(city, content);
+            if (!paths.TryMeasure(source.X, source.Y, target.X, target.Y, out WalkCost walk))
+            {
+                return MutationResult.Rejected(MutationErrorCode.NoPath);
+            }
+
             Courier? courier = null;
             if (CityQueries.HasBuiltCourierStation(city, content))
             {
                 courier = CourierRules.PickFreeCourier(city, content, paths, source);
                 if (courier is null)
                 {
-                    return MutationResult.Rejected(MutationErrorCode.NoFreeCourier);
+                    // A free courier that no walk joins to the source can't take the trip either (M1-03).
+                    return MutationResult.Rejected(CourierRules.HasFreeCourier(city) ? MutationErrorCode.NoPath : MutationErrorCode.NoFreeCourier);
                 }
             }
             else if (CityQueries.FreeWorkers(city, content) < 1)
@@ -117,7 +123,7 @@ namespace CityBuilder.Simulation.Rules
             }
 
             long load = Math.Min(quantity, content.Rules.TripCarryLimit);
-            long seconds = paths.Measure(source.X, source.Y, target.X, target.Y).Seconds(bonus);
+            long seconds = walk.Seconds(bonus);
             source.TakeFromStore(item, load);
             city.AddTrip(sourceId, targetId, item, load, checked(city.Clock + seconds), checked(quantity - load));
             return MutationResult.Ok;

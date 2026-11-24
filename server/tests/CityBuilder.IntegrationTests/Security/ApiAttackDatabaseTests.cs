@@ -30,7 +30,7 @@ public sealed class ApiAttackDatabaseTests(PostgresServer server) : PostgresTest
     private const string _requestId = "1de9e700-0000-4000-8000-0000000003b1";
 
     /// <summary>A valid body: a house (50 coins, 30 s) on tile (0, 0).</summary>
-    private const string _placeHouse = $$"""{"requestId":"{{_requestId}}","buildingTypeId":"house","x":0,"y":0}""";
+    private const string _placeHouse = $$"""{"requestId":"{{_requestId}}","buildingTypeId":"house","x":4,"y":4}""";
 
     /// <summary>
     /// A body with a field the client may not set is refused (400), whatever the field claims, and nothing is stored: not the elapsed five
@@ -66,11 +66,11 @@ public sealed class ApiAttackDatabaseTests(PostgresServer server) : PostgresTest
     /// </summary>
     /// <param name="body">The body.</param>
     [Theory]
-    [InlineData("""{"requestId":"' OR 1=1 --","buildingTypeId":"house","x":0,"y":0}""")]
+    [InlineData("""{"requestId":"' OR 1=1 --","buildingTypeId":"house","x":4,"y":4}""")]
     [InlineData($$"""{"requestId":"{{_requestId}}","buildingTypeId":"house","x":0,""")]
-    [InlineData($$"""{"requestId":"{{_requestId}}","buildingTypeId":"house","x":0,"x":1,"y":0}""")]
-    [InlineData($$"""{"requestId":"{{_requestId}}","buildingTypeId":"House","x":0,"y":0}""")]
-    [InlineData($$"""{"requestId":"{{_requestId}}","buildingTypeId":"house'; DELETE FROM cities; --","x":0,"y":0}""")]
+    [InlineData($$"""{"requestId":"{{_requestId}}","buildingTypeId":"house","x":0,"x":5,"y":4}""")]
+    [InlineData($$"""{"requestId":"{{_requestId}}","buildingTypeId":"House","x":4,"y":4}""")]
+    [InlineData($$"""{"requestId":"{{_requestId}}","buildingTypeId":"house'; DELETE FROM cities; --","x":4,"y":4}""")]
     public async Task Security_BodyOfTheWrongForm_Is400AndStoresNothing(string body)
     {
         (Guid player, Guid city) = await StoreStarterAsync("attacker");
@@ -93,7 +93,7 @@ public sealed class ApiAttackDatabaseTests(PostgresServer server) : PostgresTest
         (Guid player, Guid city) = await StoreStarterAsync("attacker");
         Factory.Clock.Advance(TimeSpan.FromMinutes(5));
         string stored = await StoredAsync(Factory, Database, player, city);
-        string body = $$"""{"requestId":"{{_requestId}}","buildingTypeId":"{{new string('a', 1_048_576)}}","x":0,"y":0}""";
+        string body = $$"""{"requestId":"{{_requestId}}","buildingTypeId":"{{new string('a', 1_048_576)}}","x":4,"y":4}""";
 
         ApiResponse response = await ApiClient.PostAsync(Factory, _path, player, body);
 
@@ -126,27 +126,28 @@ public sealed class ApiAttackDatabaseTests(PostgresServer server) : PostgresTest
     }
 
     /// <summary>
-    /// Coordinates past the 8 × 8 grid (past the <c>smallint</c> columns the tile is stored in, and the limits of <c>int</c>) are
-    /// <c>OUT_OF_BOUNDS</c> (422) by the rule, and only the refusal's player event is stored (CR-0009): no building row at a wrapped or clipped tile, no cost paid.
+    /// Coordinates past the 18 × 14 map (past the <c>smallint</c> columns the tile is stored in, and the limits of <c>int</c>) can never be on
+    /// the server's one map, so they are <c>INVALID_ARGUMENT</c> (400) before the city is locked (OD-13, M1-03), five minutes after the last
+    /// settle, and nothing is stored, not even the five minutes: no building row at a wrapped or clipped tile, no cost paid.
     /// </summary>
     /// <param name="x">The column.</param>
     /// <param name="y">The row.</param>
     [Theory]
-    [InlineData(8, 0)]
+    [InlineData(18, 0)]
     [InlineData(32768, 0)]
     [InlineData(65536, 65536)]
     [InlineData(0, int.MaxValue)]
-    public async Task Security_CoordinatesPastTheGrid_AreOutOfBoundsAndStoreOnlyTheirEvent(int x, int y)
+    public async Task Security_CoordinatesPastTheMap_Are400AndStoreNothing(int x, int y)
     {
         (Guid player, Guid city) = await StoreStarterAsync("attacker");
+        Factory.Clock.Advance(TimeSpan.FromMinutes(5));
         string stored = await StoredAsync(Factory, Database, player, city);
 
         ApiResponse response = await ApiClient.PostAsync(
             Factory, _path, player, $$"""{"requestId":"{{_requestId}}","buildingTypeId":"house","x":{{x}},"y":{{y}}}""");
 
-        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.Status);
-        Assert.Equal("OUT_OF_BOUNDS", (string)response.Json()["code"]!);
-        await AssertStoredWithRefusalsAsync(Factory, Database, player, city, stored, "OUT_OF_BOUNDS");
+        Assert.Equal((HttpStatusCode.BadRequest, "INVALID_ARGUMENT"), (response.Status, (string)response.Json()["code"]!));
+        Assert.Equal(stored, await StoredAsync(Factory, Database, player, city));
     }
 
     /// <summary>

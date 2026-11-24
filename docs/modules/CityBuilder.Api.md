@@ -102,6 +102,15 @@ and the server time (event id 7000). In Development with the flag on, `DatabaseM
 applies the pending migrations before any request; the log names them (event id 2000), and an unreachable database stops the start with
 an `NpgsqlException` (`docs/how-to/add-migration.md`). No other environment ever migrates at startup.
 
+
+### The map (M1-03)
+`GET /content` carries `map` (`ContentMap`: id, start area, rough tile time, `tiles` and `areas` rows), `bridge` (`ContentBridge`), each
+building's `site` and an `openLand` effect's `area` (`ContentResponseMapper`; the effect types `openLand` and `unlockBridge`). The snapshot
+carries `openAreas` (`SnapshotCity`), each road's `kind` (`road` or `bridge`, `SnapshotRoad`), a courier's `Blocked` state with `waitsAt`
+and the trip legs `BlockedAtSource` and `BlockedAtTarget`. The terrain itself is in the content, fetched once per content version, never in
+a poll. `ErrorCatalogue` adds `TERRAIN_BLOCKED`, `LAND_CLOSED`, `NEEDS_FOREST`, `NEEDS_ROCK`, `NEEDS_FERTILE_SOIL`, `BRIDGE_LOCKED` and
+`NO_PATH`, all 422 (`05` → Errors).
+
 ## Rules and invariants
 - `TimeProvider` is registered once (`AddServerClock`): `TimeProvider.System`, or in Development with `Simulation:DevTimeScale` above 1 a
   `ScaledTimeProvider`. Game code, the repositories' timestamps and the token times get time only through it
@@ -213,4 +222,4 @@ player, city and starting grant, the same name again, two names, the token, two 
 - The rate limits are in memory, per process, in fixed windows (`07` → Known limitations).
 - A failed start is reported by the runtime as an unhandled exception in plain text on stderr, not as a JSON log line.
 
-Last updated: M1-02
+Last updated: M1-03

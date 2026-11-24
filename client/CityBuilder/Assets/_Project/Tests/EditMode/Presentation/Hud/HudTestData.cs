@@ -15,6 +15,9 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Hud
         /// <summary>The real content of the fixtures.</summary>
         public static GameContent Content() => CityTestData.Content();
 
+        /// <summary>The real content on an open grass map (M1-03), for flows laid out on the old 8 × 8 grass grid.</summary>
+        public static GameContent OpenGrassContent() => CityTestData.OpenGrassContent();
+
         /// <summary>
         /// A city of Era I at <paramref name="clock"/> with the given coins in the purse, goods in a warehouse
         /// (<see cref="CityTestData.GoodsStore"/>), buildings, completed research and running research; the next queued order is above every

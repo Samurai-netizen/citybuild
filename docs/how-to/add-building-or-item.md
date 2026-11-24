@@ -27,6 +27,8 @@ gets a new copy and hand-checked numbers.
 - Levels carry their number. Level 1 has no `upgradeCost` or `upgradeSeconds`; every level from 2 on has both: the cost and time to reach it.
 - `baseMaxLevel` (optional, M1-02) is the highest level without research; absent, every level is open. The levels above it open with a
   research's `maxLevelBonus` (`25` → Effect types; `04` §14 rule 13a).
+- `site` (optional, M1-03): where the type may stand on the map: `nearForest` (forest beside it, in one of the four directions), `nearRock`,
+  `fertileSoil`; absent, any open grass or soil. Content with a `map` checks each site can be met (`04` §14 rule 13b).
 - A building type says `"availableAtStart"`. A locked one is unlocked by exactly one research node's `unlockBuilding` effect.
 - **Stores** (CR-0008): goods live in building stores. Each level's `storage` lists the goods its store holds with a limit per good: a
   producer's every recipe good (a limit at least the recipe's quantity), a warehouse's the goods it collects. Houses, courier stations and

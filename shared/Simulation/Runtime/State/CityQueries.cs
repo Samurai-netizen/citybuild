@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using CityBuilder.Simulation.Content;
+using CityBuilder.Simulation.Rules;
 
 namespace CityBuilder.Simulation.State
 {
@@ -665,5 +666,98 @@ namespace CityBuilder.Simulation.State
             content.TryGetResearch(id, out ResearchDefinition? research)
                 ? research
                 : throw new InvalidOperationException(FormattableString.Invariant($"The city has completed research {id}, which the content doesn't know."));
+
+        /// <summary>
+        /// Whether the tile is open land in the city (M1-03, <c>29</c> → Map): in the map's start area or an area a completed
+        /// <see cref="OpenLandEffect"/> opened. Every tile is open for content without a map.
+        /// </summary>
+        public static bool IsLandOpen(CityState city, GameContent content, int x, int y)
+        {
+            MapDefinition? map = content.Map;
+            return map is null || IsAreaOpen(city, content, map.AreaAt(x, y));
+        }
+
+        /// <summary>
+        /// Whether an area of the content's map is open in the city: the start area always, any other once a completed research's
+        /// <see cref="OpenLandEffect"/> names it (M1-03). The caller has checked that the content has a map.
+        /// </summary>
+        public static bool IsAreaOpen(CityState city, GameContent content, char area)
+        {
+            if (area == content.Map!.StartArea)
+            {
+                return true;
+            }
+
+            IReadOnlyList<ResearchId> completed = city.CompletedResearch;
+            for (int index = 0; index < completed.Count; index++)
+            {
+                IReadOnlyList<ResearchEffect> effects = ResearchOf(content, completed[index]).Effects;
+                for (int effectIndex = 0; effectIndex < effects.Count; effectIndex++)
+                {
+                    if (effects[effectIndex] is OpenLandEffect open && open.Area == area)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>Whether a completed research of the city unlocks the bridge (<see cref="UnlockBridgeEffect"/>, M1-03).</summary>
+        public static bool IsBridgeUnlocked(CityState city, GameContent content)
+        {
+            IReadOnlyList<ResearchId> completed = city.CompletedResearch;
+            for (int index = 0; index < completed.Count; index++)
+            {
+                IReadOnlyList<ResearchEffect> effects = ResearchOf(content, completed[index]).Effects;
+                for (int effectIndex = 0; effectIndex < effects.Count; effectIndex++)
+                {
+                    if (effects[effectIndex] is UnlockBridgeEffect)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// The first rule of the map a building of the type breaks on the tile (M1-03, <c>04</c> section 8), or null when its terrain allows
+        /// it: <see cref="MutationErrorCode.TerrainBlocked"/> on water, forest or rock, then the type's site
+        /// (<see cref="MutationErrorCode.NeedsForest"/>, <see cref="MutationErrorCode.NeedsRock"/>, <see cref="MutationErrorCode.NeedsFertileSoil"/>).
+        /// It depends on the content only, never on the city, so the server can refuse it before it locks the city (OD-13).
+        /// The tile must be on the grid.
+        /// </summary>
+        public static MutationErrorCode? SiteError(GameContent content, BuildingDefinition building, int x, int y)
+        {
+            Terrain terrain = content.TerrainAt(x, y);
+            if (terrain != Terrain.Grass && terrain != Terrain.Soil)
+            {
+                return MutationErrorCode.TerrainBlocked;
+            }
+
+            switch (building.Site)
+            {
+                case BuildingSite.NearForest:
+                    return HasBeside(content, x, y, Terrain.Forest) ? (MutationErrorCode?)null : MutationErrorCode.NeedsForest;
+                case BuildingSite.NearRock:
+                    return HasBeside(content, x, y, Terrain.Rock) ? (MutationErrorCode?)null : MutationErrorCode.NeedsRock;
+                case BuildingSite.FertileSoil:
+                    return terrain == Terrain.Soil ? (MutationErrorCode?)null : MutationErrorCode.NeedsFertileSoil;
+                default:
+                    return null;
+            }
+        }
+
+        /// <summary>Whether a tile beside (<paramref name="x"/>, <paramref name="y"/>), in one of the four directions on the grid, has the terrain; it may be under mist.</summary>
+        private static bool HasBeside(GameContent content, int x, int y, Terrain terrain) =>
+            IsTerrain(content, x + 1, y, terrain) || IsTerrain(content, x, y + 1, terrain)
+            || IsTerrain(content, x - 1, y, terrain) || IsTerrain(content, x, y - 1, terrain);
+
+        /// <summary>Whether the tile is on the grid and has the terrain.</summary>
+        private static bool IsTerrain(GameContent content, int x, int y, Terrain terrain) =>
+            x >= 0 && y >= 0 && x < content.Rules.GridWidth && y < content.Rules.GridHeight && content.TerrainAt(x, y) == terrain;
     }
 }

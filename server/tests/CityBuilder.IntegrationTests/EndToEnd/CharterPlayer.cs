@@ -11,7 +11,7 @@ namespace CityBuilder.IntegrationTests.EndToEnd;
 /// A scripted player that plays the server's Era I content (<c>server/content/era1-content.json</c>, M1-02) from a new city to the last
 /// research, the Town Charter. It looks at the city every <see cref="TurnSeconds"/> and decides from the engine's state alone, so it is
 /// deterministic: it starts the next research of <see cref="_researchOrder"/> it can, places the next building of <see cref="_buildPlan"/>
-/// it can, staffs producers, and sends workers' trips (no courier station, so presence never matters) with the goods of every project
+/// it can, bridges the river once it may, staffs producers, and sends workers' trips (no courier station, so presence never matters) with the goods of every project
 /// (constructions and research), with each producer's inputs, and with full producers' outputs to the warehouse. <see cref="Script"/> plays
 /// it on the engine once and keeps every accepted act with its time; <see cref="CharterHttpTests"/> sends the same acts over HTTP.
 /// The player chooses ids and tiles; every number it acts on (costs, workers, limits, recipes) comes from the content.
@@ -48,15 +48,20 @@ internal static class CharterPlayer
     /// after it wait too. Houses are not in the plan: <see cref="NextPlacement"/> places one on the next of <see cref="_houseTiles"/>
     /// whenever the workers of the planned buildings would leave fewer than <see cref="_tripWorkers"/> free.
     /// </summary>
+    /// The tiles are on the Era I map (M1-03): area A west of the river, the Woodcutter's Huts beside forest, the Quarry beside rock, the Farm
+    /// on the east bank's fertile soil (area C, opened by Open Fields), reached over <see cref="_bridge"/>.
     private static readonly (string Type, int X, int Y)[] _buildPlan =
     [
-        ("scriptorium", 4, 4), ("woodcutter", 2, 2), ("sawmill", 3, 2), ("trading_post", 4, 2), ("warehouse", 3, 3), ("woodcutter", 2, 3),
-        ("sawmill", 4, 3), ("woodcutter", 2, 4), ("sawmill", 3, 4), ("quarry", 5, 2), ("stonemason", 5, 3), ("stonemason", 5, 4),
-        ("farm", 2, 5), ("windmill", 3, 5), ("bakery", 4, 5),
+        ("scriptorium", 4, 4), ("woodcutter", 4, 2), ("sawmill", 5, 2), ("trading_post", 6, 3), ("warehouse", 6, 4), ("woodcutter", 4, 3),
+        ("sawmill", 5, 3), ("woodcutter", 4, 5), ("sawmill", 5, 5), ("quarry", 8, 3), ("stonemason", 7, 4), ("stonemason", 8, 4),
+        ("farm", 13, 3), ("windmill", 10, 5), ("bakery", 9, 5),
     ];
 
-    /// <summary>The tiles of the houses, in the order the player uses them: the top two rows.</summary>
-    private static readonly (int X, int Y)[] _houseTiles = [.. Enumerable.Range(0, 16).Select(index => (index % 8, index / 8))];
+    /// <summary>The tiles of the houses, in the order the player uses them: rows 7 and 8 of area A, from column 2.</summary>
+    private static readonly (int X, int Y)[] _houseTiles = [.. Enumerable.Range(0, 16).Select(index => (2 + (index % 8), 7 + (index / 8)))];
+
+    /// <summary>The river tile the player bridges once Bridge Building is done, so walks reach the Farm (M1-03).</summary>
+    private static readonly (int X, int Y) _bridge = (12, 5);
 
     /// <summary>The script and the engine's city at its end, played once per test run.</summary>
     private static readonly Lazy<(IReadOnlyList<(long Time, LoopAct[] Acts)> Steps, CityState End)> _played = new(Play);
@@ -132,7 +137,7 @@ internal static class CharterPlayer
         return (steps, city);
     }
 
-    /// <summary>The acts the player would like to send now, most wanted first: research, staffing, project goods, inputs, overflow, building.</summary>
+    /// <summary>The acts the player would like to send now, most wanted first: research, staffing, project goods, inputs, overflow, building, the bridge.</summary>
     /// <param name="city">The city, settled to the turn's time.</param>
     /// <returns>The candidates; the engine may refuse any of them.</returns>
     private static IEnumerable<LoopAct> Candidates(CityState city)
@@ -150,6 +155,11 @@ internal static class CharterPlayer
         if (NextPlacement(city) is { } place)
         {
             yield return place;
+        }
+
+        if (CityQueries.IsBridgeUnlocked(city, Content) && !city.TryGetRoad(_bridge.X, _bridge.Y, out _) && city.Purse >= Coins(Content.Bridge!.Cost))
+        {
+            yield return new RoadAct(_bridge.X, _bridge.Y);
         }
     }
 

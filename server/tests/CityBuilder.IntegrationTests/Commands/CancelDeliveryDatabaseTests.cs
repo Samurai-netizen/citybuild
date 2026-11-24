@@ -12,8 +12,8 @@ namespace CityBuilder.IntegrationTests.Commands;
 /// <summary>
 /// Courier deliveries end to end on PostgreSQL over HTTP (CR-0008 amendment 1): <c>start-trip</c> in a city with a staffed courier station
 /// stores the courier's delivery lines and <c>cancel-delivery</c> deletes them, on the server's real content (a courier station level 1
-/// carries 10), endpoint, pipeline and repositories. The city is built by hand at clock 0: house 1 at (0,0), woodcutter 2 at (1,1) with 30
-/// logs, warehouse 3 at (1,3), courier station 4 at (3,3), staffed over HTTP. It checks the stored <c>city_delivery_lines</c> rows and
+/// carries 10), endpoint, pipeline and repositories. The city is built by hand at clock 0: house 1 at (4,4), woodcutter 2 at (5,5) with 30
+/// logs, warehouse 3 at (5,7), courier station 4 at (7,7), staffed over HTTP. It checks the stored <c>city_delivery_lines</c> rows and
 /// <c>cities.next_line_id</c>.
 /// </summary>
 /// <param name="server">The run's PostgreSQL server.</param>

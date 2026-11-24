@@ -11,12 +11,12 @@ Tables in alphabetical order. Each table's mapping is in `Persistence/Configurat
 | `cities` | 18 | `id` | `players` |
 | `city_buildings` | 16 | `city_id`, `building_id` | `cities` |
 | `city_courier_loads` | 6 | `city_id`, `station_id`, `slot`, `item_id`, `from_building_id` | `city_couriers` |
-| `city_couriers` | 8 | `city_id`, `station_id`, `slot` | `city_buildings` |
+| `city_couriers` | 9 | `city_id`, `station_id`, `slot` | `city_buildings` |
 | `city_delivery_lines` | 8 | `city_id`, `station_id`, `slot`, `line_id` | `city_couriers` |
 | `city_project_needs` | 4 | `city_id`, `building_id`, `item_id` | `city_buildings` |
 | `city_research` | 3 | `city_id`, `research_id` | `cities` |
 | `city_research_needs` | 3 | `city_id`, `item_id` | `cities` |
-| `city_roads` | 4 | `city_id`, `x`, `y` | `cities` |
+| `city_roads` | 5 | `city_id`, `x`, `y` | `cities` |
 | `city_route_actions` | 9 | `city_id`, `station_id`, `slot`, `stop_index`, `action_index` | `city_buildings` |
 | `city_stores` | 4 | `city_id`, `building_id`, `item_id` | `city_buildings` |
 | `city_trips` | 10 | `city_id`, `trip_id` | `cities` |
@@ -122,6 +122,7 @@ Tables in alphabetical order. Each table's mapping is in `Persistence/Configurat
 | `stamina_seconds` | `bigint` | no | — |
 | `state` | `text` | no | — |
 | `to_stop` | `smallint` | no | — |
+| `waits_at` | `integer` | yes | — |
 
 | Constraint or index | Kind | Definition |
 |---|---|---|
@@ -130,6 +131,7 @@ Tables in alphabetical order. Each table's mapping is in `Persistence/Configurat
 | `ck_city_couriers_slot` | check | `slot >= 1` |
 | `ck_city_couriers_stamina_seconds` | check | `stamina_seconds >= 0` |
 | `ck_city_couriers_to_stop` | check | `to_stop >= 0` |
+| `ck_city_couriers_waits_at` | check | `(state = 'Blocked') = (waits_at is not null)` |
 | `ck_city_couriers_walk` | check | `(departed_at is null and arrives_at is null) or (departed_at is not null and arrives_at is not null and departed_at >= 0 and arrives_at > departed_at)` |
 
 ## city_delivery_lines
@@ -202,12 +204,14 @@ Tables in alphabetical order. Each table's mapping is in `Persistence/Configurat
 | `city_id` | `uuid` | no | — |
 | `x` | `smallint` | no | — |
 | `y` | `smallint` | no | — |
+| `kind` | `text` | no | — |
 | `level` | `smallint` | no | — |
 
 | Constraint or index | Kind | Definition |
 |---|---|---|
 | `pk_city_roads` | primary key | `city_id`, `x`, `y` |
 | `fk_city_roads_cities_city_id` | foreign key | `city_id` → `cities` (`id`), on delete `Cascade` |
+| `ck_city_roads_kind` | check | `kind in ('road', 'bridge') and (kind = 'road' or level = 1)` |
 | `ck_city_roads_level` | check | `level >= 1` |
 | `ck_city_roads_x` | check | `x >= 0` |
 | `ck_city_roads_y` | check | `y >= 0` |
@@ -270,7 +274,7 @@ Tables in alphabetical order. Each table's mapping is in `Persistence/Configurat
 | `pk_city_trips` | primary key | `city_id`, `trip_id` |
 | `fk_city_trips_cities_city_id` | foreign key | `city_id` → `cities` (`id`), on delete `Cascade` |
 | `ck_city_trips_arrives_at` | check | `arrives_at > departed_at` |
-| `ck_city_trips_quantity` | check | `(leg = 'ToTarget' and quantity > 0) or (leg = 'ToSource' and ((quantity = 0 and remaining > 0) or (quantity > 0 and remaining = 0))) or (leg = 'Waiting' and quantity > 0 and remaining = 0)` |
+| `ck_city_trips_quantity` | check | `(leg = 'ToTarget' and quantity > 0) or (leg = 'ToSource' and ((quantity = 0 and remaining > 0) or (quantity > 0 and remaining = 0))) or (leg = 'Waiting' and quantity > 0 and remaining = 0) or (leg = 'BlockedAtSource' and quantity = 0 and remaining > 0) or (leg = 'BlockedAtTarget' and ((quantity = 0 and remaining > 0) or (quantity > 0 and remaining = 0)))` |
 | `ck_city_trips_remaining` | check | `remaining >= 0` |
 
 ## command_receipts
@@ -360,3 +364,5 @@ In the order they apply (`server/src/CityBuilder.Infrastructure/Persistence/Migr
 | 9 | `20261117143301_TripWaitingLeg` |
 | 10 | `20261117184547_AddPlayerEvents` |
 | 11 | `20261123215944_AddBuilderQueue` |
+| 12 | `20261124155710_MapRoadKindAndReset` |
+| 13 | `20261124203323_BlockedWalkers` |

@@ -39,5 +39,8 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Build
 
         /// <summary>The real content of the fixtures.</summary>
         public static GameContent Content() => CityTestData.Content();
+
+        /// <summary>The real content on an open grass map (M1-03), for flows laid out on the old 8 × 8 grass grid.</summary>
+        public static GameContent OpenGrassContent() => CityTestData.OpenGrassContent();
     }
 }

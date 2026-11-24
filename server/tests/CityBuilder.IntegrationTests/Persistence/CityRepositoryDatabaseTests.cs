@@ -81,6 +81,17 @@ public sealed class CityRepositoryDatabaseTests(PostgresServer server) : Postgre
         Assert.Equal(Describe(Saved(Queued())), Describe(await LoadAsync()));
     }
 
+    /// <summary>The blocked sample city (walkers that wait for a path, M1-03) loads with its blocked trips and couriers.</summary>
+    [Fact]
+    public async Task LoadForUpdateAsync_SavedBlockedCity_IsTheSameCity()
+    {
+        await AddPlayerAsync();
+
+        await SaveAsync(Blocked(), [], receipt: null);
+
+        Assert.Equal(Describe(Saved(Blocked())), Describe(await LoadAsync()));
+    }
+
     /// <summary>
     /// Times, labor and quantities beyond 32 bits (<see cref="SampleCities.BeyondThirtyTwoBits"/>) are stored and loaded unchanged: the city
     /// clock and last settled second, the phase times, the cycle labor, the stock and the completion clock are <c>bigint</c> on PostgreSQL.

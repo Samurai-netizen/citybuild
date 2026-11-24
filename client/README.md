@@ -255,3 +255,24 @@ each in landscape and in portrait. On each, look at:
 Tell the AI coder "mobile UI looks right", or which screen, phone and turn is wrong (a screenshot helps).
 
 Last updated: M0-59
+
+## [MANUAL] Look at the map (M1-03)
+The tests check which model each tile gets, the hints, the camera limits and the mist's tiles; only a person can say the map looks right. The
+server's dev database must be migrated (the M1-03 reset deletes old cities, so every player starts on the map). Nothing here is saved or committed.
+1. Start the server and the database as in `docs/testing/LOCAL-E2E.md`, open the **Bootstrap** scene and press **Play**.
+2. The camera frames the open land (area A, the middle of the map): forest on the west, rock to the north-east, the river running north to
+   south at column 12, fertile soil on the east bank beyond it. The terrain tiles (AR-M1-03) meet the grass edge to edge, with no gaps or
+   steps; the river surface sits a little below the grass. Pan: the camera stops a little past the open land.
+3. Mist covers the land around it (the far west strip, the north and south rows, the east bank); the tiles next to open land have flatter
+   puffs and a red-topped survey stake. The mist is quieter than the buildings.
+4. **Build** → **Woodcutter's Hut**: tiles beside forest show green, open grass without forest beside it and every forest, rock and river tile
+   show grey, the land under mist keeps its look. Tap a grey tile: the bar says why (needs forest, or nothing can be built there) and
+   **Place** is off. Do the same with the **Sawmill**: all open grass is green.
+5. **Roads**: drag a road onto forest, onto the mist and onto the river; each is refused with its reason (the river: research Bridge
+   Building first). Once **Bridge Building** is researched (dev time scale), a road across the river becomes a bridge (a log deck, turned to meet the
+   roads on both banks) and costs the bridge's price per water tile.
+6. Finish **Land Survey** or **Open Fields** (dev time scale): when the research completes, that area's mist rises and shrinks away in about a
+   second and a half, the stakes move to the new edge, and the camera may now pan over the new land without jumping.
+7. Remove the bridge while a courier or a delivery is on the far bank: it stands still where it waits, the inspector says "Stuck: no
+   path", and it walks on as soon as a bridge is back.
+8. Tell the AI coder "map looks right", or what looks wrong. Stop Play mode without saving the scene.

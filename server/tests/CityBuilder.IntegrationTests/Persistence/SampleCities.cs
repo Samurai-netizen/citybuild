@@ -197,6 +197,43 @@ internal static class SampleCities
         return new CityAggregate(CityId, PlayerId, state, [], 1_790_000_000, 3, "content-1");
     }
 
+    /// <summary>
+    /// A city with walkers that wait for a path (M1-03): trip 1 waits at its source (nothing carried, 5 logs to fetch), trip 2 at its target
+    /// with 3 logs to carry back, trip 3 at its target, empty, with 4 to fetch; the station's courier 1 waits at the woodcutter (4) for stop 2
+    /// of its route, courier 2 waits at the sawmill (3) to walk home, with 2 logs.
+    /// </summary>
+    public static CityAggregate Blocked()
+    {
+        Building[] buildings =
+        [
+            new(IdleId, new BuildingTypeId("sawmill"), 2, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, Goods(("logs", 2))),
+            new(ProducingId, new BuildingTypeId("woodcutter"), 3, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, Goods(("logs", 9))),
+            new(StationId, new BuildingTypeId("courier_station"), 3, 3, 1, 2, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
+        ];
+        var state = new CityState(
+            Clock,
+            era: 1,
+            nextBuildingId: 10,
+            purse: 50,
+            buildings,
+            [],
+            activeResearch: null,
+            trips:
+            [
+                new Trip(1, ProducingId, IdleId, new ItemId("logs"), 0, 380, 400, remaining: 5, leg: TripLeg.BlockedAtSource),
+                new Trip(2, ProducingId, IdleId, new ItemId("logs"), 3, 390, 410, remaining: 0, leg: TripLeg.BlockedAtTarget),
+                new Trip(3, ProducingId, IdleId, new ItemId("logs"), 0, 395, 415, remaining: 4, leg: TripLeg.BlockedAtTarget),
+            ],
+            nextTripId: 4,
+            couriers:
+            [
+                new Courier(StationId, 1, CourierState.Blocked, 2, null, null, 500, waitsAt: ProducingId),
+                new Courier(StationId, 2, CourierState.Blocked, 0, null, null, 300, [new CourierLoad(new ItemId("logs"), ProducingId, 2)], waitsAt: IdleId),
+            ],
+            routes: [Route(StationId, 1, (ProducingId, [(true, "logs", "all")]), (IdleId, [(false, "logs", "all")]))]);
+        return new CityAggregate(CityId, PlayerId, state, [], 1_790_000_000, 2, "content-1");
+    }
+
     /// <summary>A new city: clock 0, era 1, no coins, buildings or research, state version 0.</summary>
     public static CityAggregate Empty()
     {
@@ -226,9 +263,9 @@ internal static class SampleCities
                 $"store {Text(building.Store)} needs {Text(building.Needs)} queued {building.QueuedOrder}"),
             "roads " + string.Join(", ", state.Roads.Select(road => $"({road.X},{road.Y}) L{road.Level}")),
             "trips " + string.Join(", ", state.Trips.Select(trip =>
-                $"{trip.Id} {trip.SourceId}->{trip.TargetId} {trip.Item}={trip.Quantity} {trip.DepartedAt}..{trip.ArrivesAt}")),
+                $"{trip.Id} {trip.SourceId}->{trip.TargetId} {trip.Item}={trip.Quantity} {trip.DepartedAt}..{trip.ArrivesAt} {trip.Leg} remaining {trip.Remaining}")),
             .. state.Couriers.Select(courier =>
-                $"courier {courier.StationId}/{courier.Slot} {courier.State} to {courier.ToStop} {courier.DepartedAt}..{courier.ArrivesAt} " +
+                $"courier {courier.StationId}/{courier.Slot} {courier.State} to {courier.ToStop} {courier.DepartedAt}..{courier.ArrivesAt} waits at {courier.WaitsAt} " +
                 $"stamina {courier.Stamina} load " + string.Join(" ", courier.Loads.Select(part => $"{part.Item}@{part.FromId}={part.Quantity}"))),
             .. state.Routes.Select(route => $"route {route.StationId}/{route.Slot} " + string.Join(" ", route.Stops.Select(stop =>
                 $"{stop.BuildingId}[" + string.Join("; ", stop.Actions.Select(action => $"{action.Kind} {action.Item} {action.Amount}")) + "]"))),

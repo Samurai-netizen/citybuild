@@ -93,7 +93,8 @@ namespace CityBuilder.Client.Core
             foreach (Courier courier in _city.Couriers)
             {
                 couriers.Add(new Courier(
-                    courier.StationId, courier.Slot, courier.State, courier.ToStop, courier.DepartedAt, courier.ArrivesAt, courier.Stamina, courier.Loads));
+                    courier.StationId, courier.Slot, courier.State, courier.ToStop, courier.DepartedAt, courier.ArrivesAt, courier.Stamina, courier.Loads,
+                    courier.WaitsAt));
             }
 
             var trips = new List<Trip>(_city.Trips.Count);

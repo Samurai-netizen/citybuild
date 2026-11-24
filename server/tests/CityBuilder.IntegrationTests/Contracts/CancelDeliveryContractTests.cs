@@ -56,7 +56,7 @@ public sealed class CancelDeliveryContractTests(ApiFactory factory) : IClassFixt
         Assert.Equal("[]", snapshot["city"]!["trips"]!.ToJsonString());
         Assert.Equal("""{"logs":30}""", snapshot["city"]!["buildings"]![1]!["store"]!.ToJsonString());
         Assert.Equal(
-            """[{"stationId":4,"slot":1,"state":"Walking","toStop":1,"departedAt":0,"arrivesAt":20,"stamina":14400,"load":[]}]""",
+            """[{"stationId":4,"slot":1,"state":"Walking","toStop":1,"departedAt":0,"arrivesAt":20,"stamina":14400,"load":[],"waitsAt":null}]""",
             snapshot["city"]!["couriers"]!.ToJsonString());
     }
 
@@ -238,9 +238,9 @@ public sealed class CancelDeliveryContractTests(ApiFactory factory) : IClassFixt
     }
 
     /// <summary>
-    /// The city of the tests at clock 0: 100 coins; house 1 at (0,0); woodcutter 2 at (2,0) with 30 logs; warehouse 3 at (2,2) with 5 logs;
-    /// courier station 4 at (0,2) with 1 worker, courier 4/1 at the station with full stamina, and (<paramref name="withRoute"/>) a route
-    /// woodcutter → warehouse; Scriptorium 5 at (5,5).
+    /// The city of the tests at clock 0, on open grass of the start area: 100 coins; house 1 at (4,4); woodcutter 2 at (6,4) with 30 logs; warehouse 3 at (6,6) with 5 logs;
+    /// courier station 4 at (4,6) with 1 worker, courier 4/1 at the station with full stamina, and (<paramref name="withRoute"/>) a route
+    /// woodcutter → warehouse; Scriptorium 5 at (9,9).
     /// </summary>
     /// <param name="content">The server's content.</param>
     /// <param name="withRoute">Whether the courier has a route.</param>
@@ -251,11 +251,11 @@ public sealed class CancelDeliveryContractTests(ApiFactory factory) : IClassFixt
         var logs = new ItemId("logs");
         Building[] buildings =
         [
-            new(1, new BuildingTypeId("house"), 0, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
-            new(2, new BuildingTypeId("woodcutter"), 2, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, [new(logs, 30)]),
-            new(3, new BuildingTypeId("warehouse"), 2, 2, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, [new(logs, 5)]),
-            new(4, new BuildingTypeId("courier_station"), 0, 2, 1, 1, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
-            new(5, new BuildingTypeId("scriptorium"), 5, 5, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
+            new(1, new BuildingTypeId("house"), 4, 4, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
+            new(2, new BuildingTypeId("woodcutter"), 6, 4, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, [new(logs, 30)]),
+            new(3, new BuildingTypeId("warehouse"), 6, 6, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, [new(logs, 5)]),
+            new(4, new BuildingTypeId("courier_station"), 4, 6, 1, 1, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
+            new(5, new BuildingTypeId("scriptorium"), 9, 9, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
         ];
         Amount all = Amount.Preset(new AmountPresetId("all"));
         Route[] routes = withRoute

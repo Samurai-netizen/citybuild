@@ -10,7 +10,10 @@ namespace CityBuilder.IntegrationTests.EndToEnd;
 /// </summary>
 public sealed class CharterPlayerScriptTests
 {
-    /// <summary>The player completes the Town Charter, and with it every research of the era, within its limit of 14 days.</summary>
+    /// <summary>
+    /// The player completes the Town Charter, and with it every research of the era, within its limit of 14 days, on the map (M1-03): its
+    /// Farm stands on the east bank, reached over the bridge it built.
+    /// </summary>
     [Fact]
     public void Play_Era1Content_CompletesTheTownCharterAndTheWholeTree()
     {
@@ -20,6 +23,8 @@ public sealed class CharterPlayerScriptTests
             .Select(step => $"{step.Time}: {string.Join(", ", step.Acts.Select(act => act.ToString()))}")));
         Assert.Equal(CharterPlayer.Content.Research.Select(node => node.Id).Order(), end.CompletedResearch.Order());
         Assert.True(end.Clock <= CharterPlayer.LimitSeconds);
+        Assert.True(end.TryGetRoad(12, 5, out RoadTile bridge) && bridge.IsBridge);
+        Assert.Contains(end.Buildings, building => building.TypeId.Value == "farm" && building.X > 12 && building.IsBuilt);
     }
 
     /// <summary>Replaying the kept acts alone, as the server would receive them, gives the city the player ended with.</summary>

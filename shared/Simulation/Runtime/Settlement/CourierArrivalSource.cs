@@ -98,6 +98,12 @@ namespace CityBuilder.Simulation.Settlement
             for (int index = 0; index < couriers.Count; index++)
             {
                 Courier courier = couriers[index];
+                if (courier.State == CourierState.Blocked)
+                {
+                    TryWalkAgain(city, courier, time);
+                    continue;
+                }
+
                 if (courier.State != CourierState.AtStation || courier.Stamina < 1)
                 {
                     continue;
@@ -125,6 +131,29 @@ namespace CityBuilder.Simulation.Settlement
                 {
                     WalkTo(city, courier, station, line!.SourceId, 1, time);
                 }
+            }
+        }
+
+        /// <summary>
+        /// A blocked courier tries again at <paramref name="time"/> (M1-03 decision 4): from the building it waits at to stop
+        /// <see cref="Courier.ToStop"/> of its route or first line, or home when that is 0. With a walk it walks from now; without one it keeps
+        /// waiting. The map changes only by a mutation (before a zero-length advance) or a research completion, both at a pass, so a walk starts
+        /// at the first second it exists.
+        /// </summary>
+        private void TryWalkAgain(CityState city, Courier courier, long time)
+        {
+            int from = city.IndexOfBuilding(courier.WaitsAt);
+            if (courier.ToStop == 0)
+            {
+                WalkHome(city, courier, from, time);
+            }
+            else if (city.TryGetRoute(courier.StationId, courier.Slot, out Route? route))
+            {
+                WalkOn(city, courier, from, route, courier.ToStop, time);
+            }
+            else if (city.TryGetFirstLine(courier.StationId, courier.Slot, out DeliveryLine? line))
+            {
+                WalkTo(city, courier, from, courier.ToStop == 1 ? line.SourceId : line.TargetId, courier.ToStop, time);
             }
         }
 
@@ -181,10 +210,7 @@ namespace CityBuilder.Simulation.Settlement
             if (courier.Stamina < 1)
             {
                 // Tired: it did this stop's actions and walks home with what it carries (04 section 19).
-                int station = city.IndexOfBuilding(courier.StationId);
-                long home = checked(time + _walks.Seconds(building, station));
-                courier.ReturnHome(time, home);
-                _arrivals.Set(Key(city, courier), home);
+                WalkHome(city, courier, building, time);
                 return;
             }
 
@@ -292,29 +318,58 @@ namespace CityBuilder.Simulation.Settlement
         /// <summary>Whether a courier's station is paused (CR-0008 D24).</summary>
         private static bool IsStationPaused(CityState city, Courier courier) => city.Buildings[city.IndexOfBuilding(courier.StationId)].Paused;
 
-        /// <summary>Sends a courier from the building at <paramref name="fromIndex"/> home to its station, from now.</summary>
+        /// <summary>
+        /// Sends a courier from the building at <paramref name="fromIndex"/> home to its station, from now; with no walk there (M1-03 decision 4)
+        /// it waits where it is to walk home later.
+        /// </summary>
         private void WalkHome(CityState city, Courier courier, int fromIndex, long time)
         {
-            long home = checked(time + _walks.Seconds(fromIndex, city.IndexOfBuilding(courier.StationId)));
+            if (!_walks.TrySeconds(fromIndex, city.IndexOfBuilding(courier.StationId), out long seconds))
+            {
+                Block(city, courier, fromIndex, 0);
+                return;
+            }
+
+            long home = checked(time + seconds);
             courier.ReturnHome(time, home);
             _arrivals.Set(Key(city, courier), home);
         }
 
-        /// <summary>Sends a courier from the building at <paramref name="fromIndex"/> to building <paramref name="toId"/> as stop <paramref name="toStop"/> of its line, from now.</summary>
+        /// <summary>
+        /// Sends a courier from the building at <paramref name="fromIndex"/> to building <paramref name="toId"/> as stop <paramref name="toStop"/>
+        /// of its line, from now; with no walk there it waits where it is.
+        /// </summary>
         private void WalkTo(CityState city, Courier courier, int fromIndex, int toId, int toStop, long time)
         {
-            long arrivesAt = checked(time + _walks.Seconds(fromIndex, city.IndexOfBuilding(toId)));
+            if (!_walks.TrySeconds(fromIndex, city.IndexOfBuilding(toId), out long seconds))
+            {
+                Block(city, courier, fromIndex, toStop);
+                return;
+            }
+
+            long arrivesAt = checked(time + seconds);
             courier.WalkTo(toStop, time, arrivesAt);
             _arrivals.Set(Key(city, courier), arrivesAt);
         }
 
-        /// <summary>Sends a courier from the building at <paramref name="fromIndex"/> to stop <paramref name="toStop"/> of its route, from now.</summary>
-        private void WalkOn(CityState city, Courier courier, int fromIndex, Route route, int toStop, long time)
+        /// <summary>
+        /// Sends a courier from the building at <paramref name="fromIndex"/> to stop <paramref name="toStop"/> of its route, from now; with no
+        /// walk there it waits where it is.
+        /// </summary>
+        private void WalkOn(CityState city, Courier courier, int fromIndex, Route route, int toStop, long time) =>
+            WalkTo(city, courier, fromIndex, route.Stops[toStop - 1].BuildingId, toStop, time);
+
+        /// <summary>
+        /// The courier waits at the building at <paramref name="atIndex"/> for a walk to stop <paramref name="toStop"/> (0: home), M1-03 decision
+        /// 4; a courier that already waits there for the same stop stays as it is.
+        /// </summary>
+        private static void Block(CityState city, Courier courier, int atIndex, int toStop)
         {
-            int target = city.IndexOfBuilding(route.Stops[toStop - 1].BuildingId);
-            long arrivesAt = checked(time + _walks.Seconds(fromIndex, target));
-            courier.WalkTo(toStop, time, arrivesAt);
-            _arrivals.Set(Key(city, courier), arrivesAt);
+            int at = city.Buildings[atIndex].Id;
+            if (courier.State != CourierState.Blocked || courier.WaitsAt != at || courier.ToStop != toStop)
+            {
+                courier.Block(at, toStop);
+            }
         }
 
         /// <summary>A courier's key in the heap: its station's building index times <see cref="_slots"/>, plus its slot − 1.</summary>

@@ -384,11 +384,11 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
     private Task<ApiResponse> StartAsync(Guid player, Guid requestId, string researchId) =>
         ApiClient.PostAsync(Factory, _path, player, $$"""{"requestId":"{{requestId}}","researchId":"{{researchId}}"}""");
 
-    /// <summary>Places a trading post at (3,3), a free tile of every city of the tests, with a new request id.</summary>
+    /// <summary>Places a trading post at (7,7), a free tile of every city of the tests, with a new request id.</summary>
     /// <param name="player">The acting player.</param>
     /// <returns>The response.</returns>
     private Task<ApiResponse> PlaceTradingPostAsync(Guid player) => ApiClient.PostAsync(
-        Factory, "/api/v1/commands/place-building", player, $$"""{"requestId":"{{Guid.CreateVersion7()}}","buildingTypeId":"trading_post","x":3,"y":3}""");
+        Factory, "/api/v1/commands/place-building", player, $$"""{"requestId":"{{Guid.CreateVersion7()}}","buildingTypeId":"trading_post","x":7,"y":7}""");
 
     /// <summary>
     /// The stored research of a city as text, read by a context of the test's own: the city row's running research (id, start, end) or

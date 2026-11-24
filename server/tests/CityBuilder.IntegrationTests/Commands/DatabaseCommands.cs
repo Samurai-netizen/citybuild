@@ -20,13 +20,13 @@ namespace CityBuilder.IntegrationTests.Commands;
 /// </summary>
 internal static class DatabaseCommands
 {
-    /// <summary>A free tile of the frame saw city (column 0, row 1): its house, woodcutter and sawmill stand on row 0.</summary>
-    public const int FreeX = 0;
+    /// <summary>A free tile of the frame saw city (column 4, row 5): its house, woodcutter, sawmill and scriptorium stand on row 4.</summary>
+    public const int FreeX = 4;
 
     /// <summary>The row of <see cref="FreeX"/>.</summary>
-    public const int FreeY = 1;
+    public const int FreeY = 5;
 
-    /// <summary>The house of the frame saw city, on tile (0, 0): placing on it is <c>TILE_OCCUPIED</c>.</summary>
+    /// <summary>The house of the frame saw city, on tile (4, 4): placing on it is <c>TILE_OCCUPIED</c>.</summary>
     public const int HouseId = 1;
 
     /// <summary>A new player's frame saw city places a house here, the cheapest building of the server's content.</summary>

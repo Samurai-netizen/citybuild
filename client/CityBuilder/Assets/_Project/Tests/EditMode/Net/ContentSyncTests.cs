@@ -25,7 +25,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         private const string HeldVersion = "mvp-2";
 
         /// <summary>The content version of <c>content.json</c>, recorded from the Era I server (M1-02); the tests give it the version they need.</summary>
-        private const string FixtureContentVersion = "era1-1";
+        private const string FixtureContentVersion = "era1-2";
 
         /// <summary>The version the server moves to in these tests.</summary>
         private const string NewVersion = "mvp-3";

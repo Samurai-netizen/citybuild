@@ -36,8 +36,10 @@ public sealed class ContentContractTests(ApiFactory factory) : IClassFixture<Api
 
         JsonShape.AssertObject(
             content,
-            "contentVersion:string rules:object startingCity:object eras:array items:array buildings:array research:array roads:array amountPresets:array",
+            "contentVersion:string rules:object startingCity:object eras:array items:array buildings:array research:array roads:array amountPresets:array map:object bridge:object",
             "$");
+        JsonShape.AssertObject(content["map"], "id:string startArea:string roughTileMillis:int tiles:array areas:array", "$.map");
+        JsonShape.AssertObject(content["bridge"], "name:string tileMillis:int cost:object", "$.bridge");
         JsonShape.AssertObject(
             content["rules"],
             "gridWidth:int gridHeight:int builderSlots:int builderQueueLength:int researchSlots:int " +
@@ -49,7 +51,7 @@ public sealed class ContentContractTests(ApiFactory factory) : IClassFixture<Api
         AssertEach(content["items"], "id:string name:string era:int currency:bool tradable:bool", "$.items");
         AssertEach(
             content["buildings"],
-            "id:string name:string kind:string era:int availableAtStart:bool unlockedBy:string? maxPerCity:int? cost:object buildSeconds:int baseMaxLevel:int levels:array",
+            "id:string name:string kind:string era:int availableAtStart:bool unlockedBy:string? maxPerCity:int? cost:object buildSeconds:int baseMaxLevel:int site:string? levels:array",
             "$.buildings");
         AssertEach(
             content["research"],
@@ -81,13 +83,14 @@ public sealed class ContentContractTests(ApiFactory factory) : IClassFixture<Api
         Assert.NotEmpty(effects);
         foreach ((JsonNode effect, string path) in effects)
         {
-            JsonShape.AssertObject(effect, "type:string building:string? item:string? permille:int? amount:int? mode:string?", path);
+            JsonShape.AssertObject(effect, "type:string building:string? item:string? permille:int? amount:int? mode:string? area:string?", path);
         }
     }
 
     /// <summary>
     /// The contract writes its nulls: only a producer has a recipe, only a producer or a warehouse a store, only a courier station a carry limit
-    /// and stamina, level 1 has no upgrade, and an effect leaves the fields of other types null (CR-0008: the five kinds, two new effects).
+    /// and stamina, level 1 has no upgrade, and an effect leaves the fields of other types null (CR-0008: the five kinds, two new effects); a building that may stand
+    /// anywhere has a null site (M1-03).
     /// </summary>
     [Fact]
     public async Task Get_NotApplicableFields_AreNullNotMissing()
@@ -111,22 +114,27 @@ public sealed class ContentContractTests(ApiFactory factory) : IClassFixture<Api
                 Assert.Equal(!isFirst, level["upgradeSeconds"] is not null);
             }
 
+            // A building that may stand anywhere has no site (M1-03).
+            Assert.True(building["site"] is null || (string)building["site"]! is "nearForest" or "nearRock" or "fertileSoil", $"Unknown site {building["site"]}.");
+
             // A building that needs no research has no research to name.
             Assert.Equal(!(bool)building["availableAtStart"]!, building["unlockedBy"] is not null);
         }
 
         foreach (JsonNode effect in content["research"]!.AsArray().SelectMany(research => research!["effects"]!.AsArray()).Select(node => node!))
         {
-            (bool building, bool item, bool permille, bool amount, bool mode) = ((string)effect["type"]!) switch
+            (bool building, bool item, bool permille, bool amount, bool mode, bool area) = ((string)effect["type"]!) switch
             {
-                "unlockBuilding" => (true, false, false, false, false),
-                "laborReduction" => (true, false, true, false, false),
-                "storageCapBonus" => (false, true, false, true, false),
-                "unlockAmountMode" => (false, false, false, false, true),
-                "walkSpeedBonus" => (false, false, true, false, false),
-                "maxLevelBonus" => (true, false, false, true, false),
-                "builderSlotBonus" => (false, false, false, true, false),
-                "grantCharter" => (false, false, false, false, false),
+                "unlockBuilding" => (true, false, false, false, false, false),
+                "laborReduction" => (true, false, true, false, false, false),
+                "storageCapBonus" => (false, true, false, true, false, false),
+                "unlockAmountMode" => (false, false, false, false, true, false),
+                "walkSpeedBonus" => (false, false, true, false, false, false),
+                "maxLevelBonus" => (true, false, false, true, false, false),
+                "builderSlotBonus" => (false, false, false, true, false, false),
+                "grantCharter" => (false, false, false, false, false, false),
+                "openLand" => (false, false, false, false, false, true),
+                "unlockBridge" => (false, false, false, false, false, false),
                 var other => throw new InvalidOperationException($"Unknown effect type {other}."),
             };
             Assert.Equal(building, effect["building"] is not null);
@@ -134,6 +142,7 @@ public sealed class ContentContractTests(ApiFactory factory) : IClassFixture<Api
             Assert.Equal(permille, effect["permille"] is not null);
             Assert.Equal(amount, effect["amount"] is not null);
             Assert.Equal(mode, effect["mode"] is not null);
+            Assert.Equal(area, effect["area"] is not null);
         }
     }
 

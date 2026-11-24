@@ -143,7 +143,7 @@ namespace CityBuilder.Client.Net
             var roads = new List<RoadTile>(city.Roads.Count);
             foreach (SnapshotRoadDto road in city.Roads)
             {
-                roads.Add(new RoadTile(road.X, road.Y, road.Level));
+                roads.Add(new RoadTile(road.X, road.Y, road.Level, road.Kind == RoadKindDto.Bridge));
             }
 
             int highestTripId = 0;
@@ -153,7 +153,7 @@ namespace CityBuilder.Client.Net
                 highestTripId = Math.Max(highestTripId, trip.Id);
                 trips.Add(new Trip(
                     trip.Id, trip.SourceId, trip.TargetId, new ItemId(trip.ItemId), trip.Quantity, trip.DepartedAt, trip.ArrivesAt, trip.Remaining,
-                    trip.Leg == TripLegDto.ToSource ? TripLeg.ToSource : trip.Leg == TripLegDto.Waiting ? TripLeg.Waiting : TripLeg.ToTarget));
+                    ToTripLeg(trip.Leg)));
             }
 
             int highestLineId = 0;
@@ -220,7 +220,29 @@ namespace CityBuilder.Client.Net
             }
 
             return new Courier(
-                courier.StationId, courier.Slot, ToCourierState(courier.State), courier.ToStop, courier.DepartedAt, courier.ArrivesAt, courier.Stamina, loads);
+                courier.StationId, courier.Slot, ToCourierState(courier.State), courier.ToStop, courier.DepartedAt, courier.ArrivesAt, courier.Stamina, loads,
+                courier.WaitsAt ?? 0);
+        }
+
+        /// <summary>A trip's leg in the engine's form; the names match one to one (CR-0008, M0-C-3, M1-03).</summary>
+        /// <exception cref="ArgumentException">The leg is none the engine knows.</exception>
+        private static TripLeg ToTripLeg(TripLegDto leg)
+        {
+            switch (leg)
+            {
+                case TripLegDto.ToTarget:
+                    return TripLeg.ToTarget;
+                case TripLegDto.ToSource:
+                    return TripLeg.ToSource;
+                case TripLegDto.Waiting:
+                    return TripLeg.Waiting;
+                case TripLegDto.BlockedAtSource:
+                    return TripLeg.BlockedAtSource;
+                case TripLegDto.BlockedAtTarget:
+                    return TripLeg.BlockedAtTarget;
+                default:
+                    throw new ArgumentException("Unknown trip leg: " + leg);
+            }
         }
 
         /// <summary>A courier's state in the engine's form.</summary>
@@ -237,6 +259,8 @@ namespace CityBuilder.Client.Net
                     return CourierState.Returning;
                 case CourierStateDto.Resting:
                     return CourierState.Resting;
+                case CourierStateDto.Blocked:
+                    return CourierState.Blocked;
                 default:
                     throw new ArgumentException("Unknown courier state: " + state);
             }

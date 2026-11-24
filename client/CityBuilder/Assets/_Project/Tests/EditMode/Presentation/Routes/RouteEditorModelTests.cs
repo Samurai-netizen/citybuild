@@ -45,7 +45,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Routes
         [SetUp]
         public void Prepare()
         {
-            _content = HudTestData.Content();
+            _content = HudTestData.OpenGrassContent();
             _editor = new RouteEditorModel(_content, new CityGrid(8, 8));
         }
 
