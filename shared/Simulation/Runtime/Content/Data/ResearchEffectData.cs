@@ -29,5 +29,8 @@ namespace CityBuilder.Simulation.Content.Data
 
         /// <summary>The amount mode a research unlocks, <c>percent</c> or <c>exact</c> (<c>unlockAmountMode</c> only).</summary>
         public string? Mode { get; set; }
+
+        /// <summary>The area an <c>openLand</c> effect opens: a letter of the map's areas.</summary>
+        public string? Area { get; set; }
     }
 }

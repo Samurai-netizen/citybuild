@@ -34,8 +34,12 @@ namespace CityBuilder.Simulation.Content
             IEnumerable<BuildingDefinition> buildings,
             IEnumerable<ResearchDefinition> research,
             IEnumerable<RoadLevelDefinition> roadLevels,
-            IEnumerable<AmountPresetDefinition> amountPresets)
+            IEnumerable<AmountPresetDefinition> amountPresets,
+            MapDefinition? map = null,
+            BridgeDefinition? bridge = null)
         {
+            Map = map;
+            Bridge = bridge;
             ContentVersion = contentVersion ?? throw new ArgumentNullException(nameof(contentVersion));
             Rules = rules ?? throw new ArgumentNullException(nameof(rules));
             StartingCity = startingCity ?? throw new ArgumentNullException(nameof(startingCity));
@@ -71,6 +75,15 @@ namespace CityBuilder.Simulation.Content
                 _researchById.Add(node.Id, node);
             }
         }
+
+        /// <summary>The map (M1-03), or <see langword="null"/> for content without one: then every tile is grass and open.</summary>
+        public MapDefinition? Map { get; }
+
+        /// <summary>The bridge (M1-03), or <see langword="null"/> when the content has none.</summary>
+        public BridgeDefinition? Bridge { get; }
+
+        /// <summary>The terrain of a tile of the grid: the map's, or grass for content without a map.</summary>
+        public Terrain TerrainAt(int x, int y) => Map?.TerrainAt(x, y) ?? Terrain.Grass;
 
         /// <summary>The content's version, for example <c>mvp-1</c>. Snapshots carry it, so a client knows when to fetch the content again.</summary>
         public string ContentVersion { get; }

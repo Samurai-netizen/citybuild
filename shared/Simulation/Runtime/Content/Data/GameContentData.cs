@@ -37,5 +37,11 @@ namespace CityBuilder.Simulation.Content.Data
 
         /// <summary>Required. The amount presets every city may use for trips and routes, 1 to 8 (<c>04</c> section 19).</summary>
         public List<AmountPresetData?>? AmountPresets { get; set; }
+
+        /// <summary>Optional. The map: terrain and areas (M1-03). Without it every tile is grass and open.</summary>
+        public MapData? Map { get; set; }
+
+        /// <summary>Optional. The bridge, a road kind placed on water once a research unlocks it (M1-03).</summary>
+        public BridgeData? Bridge { get; set; }
     }
 }

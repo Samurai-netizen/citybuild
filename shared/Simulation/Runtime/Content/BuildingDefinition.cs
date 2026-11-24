@@ -22,8 +22,10 @@ namespace CityBuilder.Simulation.Content
             int? maxPerCity,
             ResearchId? unlockedByResearch,
             IReadOnlyList<BuildingLevelDefinition> levels,
-            int baseMaxLevel)
+            int baseMaxLevel,
+            BuildingSite site = BuildingSite.Any)
         {
+            Site = site;
             BaseMaxLevel = baseMaxLevel;
             Id = id;
             Name = name ?? throw new ArgumentNullException(nameof(name));
@@ -36,6 +38,9 @@ namespace CityBuilder.Simulation.Content
             UnlockedByResearch = unlockedByResearch;
             Levels = levels ?? throw new ArgumentNullException(nameof(levels));
         }
+
+        /// <summary>Where the type may stand on the map (M1-03): <see cref="BuildingSite.Any"/> for most types.</summary>
+        public BuildingSite Site { get; }
 
         /// <summary>The building type's id.</summary>
         public BuildingTypeId Id { get; }
