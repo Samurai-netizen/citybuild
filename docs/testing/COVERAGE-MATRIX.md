@@ -24,13 +24,14 @@ The focused rule tests below are the readable examples of the same rule.
 | 7 | Clock never decreases | `Observe_EveryStep_MovesTheClockByTheRequestedTimeOnly` | `Settlement/*` |
 | 8 | No production while building | `Observe_EveryStep_ProducesNothingBeforeConstructionOrDuringAnUpgrade` | `Rules/UpgradeBuildingTests` |
 | 9 | Worker limits, one courier per worker | `Observe_EveryStep_AssignsNoMoreWorkersThanProvidedOrAllowed` | `Rules/AssignWorkersTests`, `EngineRules/WorkerRuleTests`; HTTP `Security/WorkerLaborDatabaseTests` |
-| 10 | Builder slots, one research | `Observe_EveryStep_KeepsBuildersWithinTheSlotsAndOneResearch` | `Rules/StartResearchTests`; HTTP race `Security_TwoStartsAtOnce_StartExactlyOneResearch` |
+| 10 | Builder slots, one research | `Observe_EveryStep_KeepsBuildersWithinTheSlotsAndOneResearch` | `Rules/StartResearchTests`, `EngineRules/LevelCapAndBuilderSlotRuleTests` (the slots of `builderSlotBonus`, M1-02); HTTP race `Security_TwoStartsAtOnce_StartExactlyOneResearch` |
 | 11 | Labor accounting | `Observe_EveryStep_CompletesEachCycleWhenItsWorkerSecondsReachItsLabor` | `ApplyPermilleReductionTests`; HTTP `Security_MovingWorkersBetweenBuildings_NeverMakesMoreThanTheLaborAllows` |
 | 12 | Walks cross buildings only when they must | none (a map property, not a city step) | `Map/PathFinderTests` (never crosses with a way around, crosses once when walled in), `Map/PathFinderBruteForceTests` (random maps against brute force) |
-| 13 | Unlocks, prerequisites, amount modes | `Observe_EveryStep_NeverPlacesALockedBuildingOrSkipsAPrerequisite` | `Rules/PlaceBuildingTests`, `Rules/StartResearchTests`, `Rules/StartTripTests`, `Rules/SetRouteTests` |
+| 13 | Unlocks, prerequisites, amount modes | `Observe_EveryStep_NeverPlacesALockedBuildingOrSkipsAPrerequisite` | `Rules/PlaceBuildingTests`, `Rules/StartResearchTests`, `Rules/StartTripTests`, `Rules/SetRouteTests`; the level cap of `maxLevelBonus` (M1-02): `EngineRules/LevelCapAndBuilderSlotRuleTests`, HTTP `UpgradeBuildingDatabaseTests` |
 | 14 | Stamina only when absent; carry limits | `Observe_EveryStep_SpendsStaminaOnlyWhenAbsentAndKeepsLoadsWithinTheirLimits` | `Settlement/*` (absence), Application `ExecuteAsync_LongAbsence_SpendsStaminaFromTheGraceOn` |
 | 15 | Route or lines, line limits | `Observe_EveryStep_KeepsDeliveryLinesWithTheirCouriers` | `Rules/DeliveryTests`; HTTP `CancelDeliveryContractTests` (queue full, courier busy: M0-81) |
 | 16 | Paused buildings stay still | `Observe_EveryStep_KeepsPausedBuildingsStill` | `Rules/PauseTests`; HTTP `SetPausedContractTests` |
+| 17 | Builder queue: within its length, no free builder while an order waits, orders start in order (CR-0013) | `Observe_EveryStep_StartsQueuedOrdersInOrderWhenABuilderFrees` | `EngineRules/BuilderQueueRuleTests`, `Content/ContentBuilderQueueTests`; HTTP `BuilderQueueContractTests` |
 
 ## Error codes (`05` → Errors)
 Every code is held to the table and its shape by `Errors/ErrorCatalogueTests`, every engine code to its API code and status by
@@ -49,10 +50,10 @@ and the answer over HTTP (`CityBuilder.IntegrationTests`; `…DatabaseTests` run
 | `INSUFFICIENT_RESOURCE` | `PlaceBuildingTests`, `UpgradeBuildingTests`, `RoadRulesTests` | `PlaceBuildingDatabaseTests`, `StartResearchContractTests`, `RaceTests` |
 | `INSUFFICIENT_WORKERS` | `AssignWorkersTests`, `WorkerRuleTests`, `StartTripTests` | `AssignWorkersDatabaseTests`, `WorkerLaborDatabaseTests` |
 | `WORKER_LIMIT` | `AssignWorkersTests`, `UpgradeRuleTests` | `AssignWorkersContractTests`, `AssignWorkersDatabaseTests` |
-| `NO_FREE_BUILDER` | `PlaceBuildingTests`, `UpgradeBuildingTests` | `PlaceBuildingDatabaseTests`, `UpgradeBuildingDatabaseTests` |
+| `NO_FREE_BUILDER` | `PlaceBuildingTests`, `UpgradeBuildingTests`, `BuilderQueueRuleTests` (queue full) | `PlaceBuildingDatabaseTests`, `UpgradeBuildingDatabaseTests`, `BuilderQueueContractTests` |
 | `BUILDING_NOT_FOUND` | `AssignWorkersTests`, `UpgradeBuildingTests`, `PauseTests` | every command's `…ContractTests`; another player's ids: `Security_AnotherPlayersBuildings_OnEveryCommandThatNamesOne_Are404…` |
 | `BUILDING_BUSY` | `AssignWorkersTests`, `UpgradeBuildingTests`, `PauseTests` | `UpgradeBuildingContractTests`, `AssignWorkersContractTests`, `SetPausedContractTests` |
-| `MAX_LEVEL` | `UpgradeBuildingTests`, `RoadRulesTests` | `UpgradeBuildingDatabaseTests`, `RoadCommandsContractTests` |
+| `MAX_LEVEL` | `UpgradeBuildingTests`, `RoadRulesTests`, `LevelCapAndBuilderSlotRuleTests` | `UpgradeBuildingDatabaseTests` (also before Timber Framing, M1-02), `RoadCommandsContractTests` |
 | `UNKNOWN_RESEARCH` | `StartResearchTests` | `StartResearchContractTests`, `StartResearchDatabaseTests` |
 | `RESEARCH_LOCKED` | `StartResearchTests` | `StartResearchContractTests`, `StartResearchDatabaseTests` |
 | `RESEARCH_IN_PROGRESS` | `StartResearchTests` | `StartResearchContractTests`, `StartResearchDatabaseTests` (also raced) |
@@ -110,4 +111,4 @@ Every test `07` names was checked to exist (M0-81: 81 of 81). The rows below say
 - `COURIER_BUSY` from assign-workers (a removed courier carrying goods its store can't take back, M0-C-3) is held by the engine
   (`StoreLimitRuleTests`) and the shared error mapping, not by its own HTTP test.
 
-Last updated: M0-C
+Last updated: M1-02
