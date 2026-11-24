@@ -6,7 +6,7 @@
 
 ## Resume point
 - **State:** IDLE <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** — (M1-03 in review: branch `task/M1-03-map-terrain`, log `docs/build-log/2026/2026-11-24-01-M1-03.md`)
+- **Task:** — (M1-03 in review, PR #106: branch `task/M1-03-map-terrain`, log `docs/build-log/2026/2026-11-24-01-M1-03.md`)
 - **Part / step:** —
 - **Last completed:** M1-03 The map: terrain, placement rules, land expansion (PR open; the owner's [MANUAL] map check in `client/README.md`).
 - **Next step:** after M1-03 is merged: `/start-task M1-04` (The Chronicle; [PLAN]: write ahead, then wait for the plan's approval).
