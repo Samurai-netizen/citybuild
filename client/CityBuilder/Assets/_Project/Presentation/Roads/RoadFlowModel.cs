@@ -31,6 +31,15 @@ namespace CityBuilder.Client.Presentation.Roads
         /// <summary>The reason shown when a picked tile is outside the grid.</summary>
         public const string OutOfBoundsReason = "Outside the city";
 
+        /// <summary>The reason shown when a picked tile is forest or rock, where no road can be built (M1-03).</summary>
+        public const string TerrainBlockedReason = "No road on forest or rock";
+
+        /// <summary>The reason shown when a picked tile is land under mist (M1-03).</summary>
+        public const string LandClosedReason = "Land not surveyed";
+
+        /// <summary>The reason shown when a picked tile is water and bridges are not researched yet: the server's words for <c>BRIDGE_LOCKED</c> (M1-03).</summary>
+        public const string BridgeLockedReason = "Research Bridge Building to build on water";
+
         /// <summary>The reason shown when a picked tile has no road to upgrade or remove.</summary>
         public const string NoRoadReason = "No road on tile";
 
@@ -518,7 +527,7 @@ namespace CityBuilder.Client.Presentation.Roads
                 return;
             }
 
-            TotalCoins = checked(perTileCoins * _tiles.Count);
+            TotalCoins = PlaceCoins();
             string tileWord = _tiles.Count == 1 ? "1 tile" : _tiles.Count.ToString(CultureInfo.InvariantCulture) + " tiles";
             if (Phase == RoadPhase.Sending)
             {
@@ -557,7 +566,8 @@ namespace CityBuilder.Client.Presentation.Roads
                 return;
             }
 
-            PromptText = currentDef.Name + " · Level " + level.ToString(CultureInfo.InvariantCulture) + " " + tileWord;
+            string name = firstRoad.IsBridge && _content.Bridge != null ? _content.Bridge.Name : currentDef.Name;
+            PromptText = name + " · Level " + level.ToString(CultureInfo.InvariantCulture) + " " + tileWord;
             string? upgradeRefusal = UpgradeRefusalReason(out long upgradeCoins, out RoadLevelDefinition? nextDef);
             TotalCoins = upgradeCoins;
             if (nextDef != null)
@@ -568,7 +578,8 @@ namespace CityBuilder.Client.Presentation.Roads
             }
             else
             {
-                DetailText = FormatSpeedMillis(currentDef.TileMillis) + " · Highest road level";
+                long millis = firstRoad.IsBridge && _content.Bridge != null ? _content.Bridge.TileMillis : currentDef.TileMillis;
+                DetailText = FormatSpeedMillis(millis) + " · Highest road level";
             }
 
             HintText = upgradeRefusal ?? string.Empty;
@@ -576,7 +587,29 @@ namespace CityBuilder.Client.Presentation.Roads
             CanRemove = _availability.IsAllowed && EveryTileHasRoadReason() == null;
         }
 
-        /// <summary>The refusal reason for <c>place-roads</c> in <see cref="RoadRules.PlaceRoads"/> order, or empty when allowed.</summary>
+        /// <summary>
+        /// What the picked tiles cost to build, as the server prices them: a water tile the bridge's cost (M1-03), every other tile a level-1
+        /// road's.
+        /// </summary>
+        /// <returns>The coins.</returns>
+        private long PlaceCoins()
+        {
+            long road = CoinsOf(_content.GetRoadLevel(1).Cost);
+            long total = 0;
+            for (int i = 0; i < _tiles.Count; i++)
+            {
+                GridCoordinate tile = _tiles[i];
+                bool water = _grid.Contains(tile) && _content.Bridge != null && _content.TerrainAt(tile.X, tile.Y) == Terrain.Water;
+                total = checked(total + (water ? CoinsOf(_content.Bridge!.Cost) : road));
+            }
+
+            return total;
+        }
+
+        /// <summary>
+        /// The refusal reason for <c>place-roads</c> in <see cref="RoadRules.PlaceRoads"/> order, or empty when allowed: the connection, a
+        /// tile past the map, forest or rock, closed land, water without bridges (M1-03), an occupied tile, the coins.
+        /// </summary>
         private string PlaceRefusalReason()
         {
             if (!_availability.IsAllowed)
@@ -590,6 +623,35 @@ namespace CityBuilder.Client.Presentation.Roads
                 if (!_grid.Contains(tile))
                 {
                     return OutOfBoundsReason + " at " + tile;
+                }
+            }
+
+            // The map's checks (M1-03), each over the whole line before the next, as the server runs them.
+            for (int i = 0; i < _tiles.Count; i++)
+            {
+                GridCoordinate tile = _tiles[i];
+                Terrain terrain = _content.TerrainAt(tile.X, tile.Y);
+                if (terrain == Terrain.Forest || terrain == Terrain.Rock)
+                {
+                    return TerrainBlockedReason + " at " + tile;
+                }
+            }
+
+            for (int i = 0; i < _tiles.Count; i++)
+            {
+                GridCoordinate tile = _tiles[i];
+                if (!CityQueries.IsLandOpen(_city!, _content, tile.X, tile.Y))
+                {
+                    return LandClosedReason + " at " + tile;
+                }
+            }
+
+            for (int i = 0; i < _tiles.Count; i++)
+            {
+                GridCoordinate tile = _tiles[i];
+                if (_content.TerrainAt(tile.X, tile.Y) == Terrain.Water && !CityQueries.IsBridgeUnlocked(_city!, _content))
+                {
+                    return BridgeLockedReason;
                 }
             }
 
@@ -631,7 +693,7 @@ namespace CityBuilder.Client.Presentation.Roads
             {
                 GridCoordinate tile = _tiles[i];
                 _city!.TryGetRoad(tile.X, tile.Y, out RoadTile road);
-                if (road.Level >= _content.MaxRoadLevel)
+                if (road.IsBridge || road.Level >= _content.MaxRoadLevel)
                 {
                     return MaxLevelReason;
                 }
