@@ -74,7 +74,7 @@ namespace CityBuilder.Client.Presentation.City
         /// The materials this object created, destroyed with it. The first two are the chessboard greens of the cube fallback, and stay null when
         /// tile models are used; from <see cref="TerrainTintSlot"/> on, one flat tint per terrain and the bridge's placeholder, made when first needed (M1-03).
         /// </summary>
-        private readonly Material?[] _materials = new Material?[TerrainTintSlot + TerrainCount + 1];
+        private readonly Material?[] _materials = new Material?[BlockedHintSlot + 1];
 
         /// <summary>The first slot of <see cref="_materials"/> that holds a terrain's placeholder tint, by the terrain's number.</summary>
         private const int TerrainTintSlot = 7;
@@ -84,6 +84,12 @@ namespace CityBuilder.Client.Presentation.City
 
         /// <summary>The slot of <see cref="_materials"/> that holds the bridge's placeholder colour.</summary>
         private const int BridgeTintSlot = TerrainTintSlot + TerrainCount;
+
+        /// <summary>The slot of <see cref="_materials"/> that holds the colour of a tile the picked type can never use (M1-03).</summary>
+        private const int BlockedHintSlot = BridgeTintSlot + 1;
+
+        /// <summary>The colour of a tile the picked type can never use while the player picks where to build: a dull grey (M1-03).</summary>
+        private static readonly Color BlockedHintColor = new Color(0.35f, 0.33f, 0.33f);
 
         /// <summary>The colour of the bridge's placeholder deck while its model is missing: wood.</summary>
         private static readonly Color BridgeTint = new Color(0.55f, 0.38f, 0.22f);
@@ -224,6 +230,7 @@ namespace CityBuilder.Client.Presentation.City
             SelectionMarker = CreateMarker("Selection marker", _materials[3] = PlaceholderArt.CreateMaterial(SelectionColor), MarkerThickness);
             _materials[4] = PlaceholderArt.CreateMaterial(FreeHintColor);
             _materials[5] = PlaceholderArt.CreateMaterial(OccupiedHintColor);
+            _materials[BlockedHintSlot] = PlaceholderArt.CreateMaterial(BlockedHintColor);
             _materials[6] = PlaceholderArt.CreateMaterial(PathColor);
 
             _selection.Changed += ShowSelection;
@@ -243,7 +250,8 @@ namespace CityBuilder.Client.Presentation.City
         public int TileCount => _grid.Width * _grid.Height;
 
         /// <summary>
-        /// Paints the tiles by their hints while the player picks where to build: a free tile green, an occupied one red. <c>null</c> gives
+        /// Paints the tiles by their hints while the player picks where to build: a free tile green, an occupied one red, a blocked one grey, and
+        /// a closed one not at all (M1-03). <c>null</c> gives
         /// every tile its ground colour back. A tile whose hint did not change is not touched, so calling it each second allocates nothing.
         /// A hint array of the wrong size is a programming mistake.
         /// </summary>
@@ -268,10 +276,30 @@ namespace CityBuilder.Client.Presentation.City
                     }
 
                     _shownHints[index] = hint;
-                    _tileRenderers[index].sharedMaterial = hint == null
-                        ? _groundMaterials[index]
-                        : (hint == TileHint.Occupied ? _materials[5]! : _materials[4]!);
+                    _tileRenderers[index].sharedMaterial = hint == null ? _groundMaterials[index] : HintMaterial(hint.Value, index);
                 }
+            }
+        }
+
+        /// <summary>
+        /// The material a tile shows for <paramref name="hint"/>: green when free, red when occupied, grey when blocked; a closed tile keeps its
+        /// ground, under the mist (M1-03).
+        /// </summary>
+        /// <param name="hint">The tile's hint.</param>
+        /// <param name="index">The tile's index, row by row.</param>
+        /// <returns>The material.</returns>
+        private Material HintMaterial(TileHint hint, int index)
+        {
+            switch (hint)
+            {
+                case TileHint.Occupied:
+                    return _materials[5]!;
+                case TileHint.Blocked:
+                    return _materials[BlockedHintSlot]!;
+                case TileHint.Closed:
+                    return _groundMaterials[index];
+                default:
+                    return _materials[4]!;
             }
         }
 
@@ -463,7 +491,7 @@ namespace CityBuilder.Client.Presentation.City
             TileHint? hint = _shownHints[index];
             if (hint != null)
             {
-                _tileRenderers[index].sharedMaterial = hint == TileHint.Occupied ? _materials[5]! : _materials[4]!;
+                _tileRenderers[index].sharedMaterial = HintMaterial(hint.Value, index);
             }
         }
 

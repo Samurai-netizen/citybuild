@@ -60,7 +60,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Ui
         /// <summary>A placement flow with the sawmill and a free tile picked, so only the connection stands between the player and Place.</summary>
         private static PlacementFlowModel Placement()
         {
-            var flow = new PlacementFlowModel(BuildMenuTestData.Content(), new CityGrid(8, 8));
+            var flow = new PlacementFlowModel(BuildMenuTestData.OpenGrassContent(), new CityGrid(8, 8));
             flow.Update(BuildMenuTestData.StartCity());
             flow.SetType(new BuildingTypeId("sawmill"));
             flow.SetTile(new GridCoordinate(3, 4));
@@ -268,7 +268,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Ui
         [Test]
         public void Placement_Offline_BeforeATileIsPicked_HasNoHint()
         {
-            var flow = new PlacementFlowModel(BuildMenuTestData.Content(), new CityGrid(8, 8));
+            var flow = new PlacementFlowModel(BuildMenuTestData.OpenGrassContent(), new CityGrid(8, 8));
             flow.SetType(new BuildingTypeId("sawmill"));
 
             flow.SetCommandAvailability(CommandAvailability.For(ConnectionState.Offline));

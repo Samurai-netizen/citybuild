@@ -35,7 +35,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Build
         [SetUp]
         public void CreateFlow()
         {
-            _flow = new PlacementFlowModel(BuildMenuTestData.Content(), new CityGrid(8, 8));
+            _flow = new PlacementFlowModel(BuildMenuTestData.OpenGrassContent(), new CityGrid(8, 8));
             _flow.Update(BuildMenuTestData.StartCity());
             _changed = 0;
             _ended = 0;

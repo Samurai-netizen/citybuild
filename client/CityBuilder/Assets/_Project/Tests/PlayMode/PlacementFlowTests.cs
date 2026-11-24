@@ -81,7 +81,7 @@ namespace CityBuilder.Client.Tests.PlayMode
         /// <summary>Makes the client for the city in the fixture <paramref name="snapshotFile"/>.</summary>
         private IEnumerator CreateFlowFor(string snapshotFile)
         {
-            ContentResponseDto contentDto = new ApiJson().Deserialize<ContentResponseDto>(Fixture("content.json"))!;
+            ContentResponseDto contentDto = new ApiJson().Deserialize<ContentResponseDto>(OpenGrassContent.OnOpenGrass(Fixture("content.json")))!;
             GameContentResult built = GameContentFactory.Create(ContentMapper.ToData(contentDto));
             Assert.That(built.IsValid, Is.True);
             GameContent content = built.Content!;

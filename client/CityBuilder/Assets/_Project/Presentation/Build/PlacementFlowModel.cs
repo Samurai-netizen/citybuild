@@ -7,13 +7,14 @@ using CityBuilder.Client.Presentation.City;
 using CityBuilder.Client.Presentation.Ui;
 using CityBuilder.Simulation;
 using CityBuilder.Simulation.Content;
+using CityBuilder.Simulation.Rules;
 using CityBuilder.Simulation.State;
 
 namespace CityBuilder.Client.Presentation.Build
 {
     /// <summary>
     /// The placement flow without a screen (M0-46): pick a card, pick a tile, confirm, wait for the server. It holds which type and tile are
-    /// picked, a hint for every tile of the grid from the latest city (free or occupied), the words of the bar, and what each ending does:
+    /// picked, a hint for every tile of the grid from the latest city and the picked type (free, occupied, blocked or closed, M1-03), the words of the bar, and what each ending does:
     /// a success ends the flow, a failure keeps the card, drops the tile and keeps the error to show; while a command is on its way the picks are frozen. An occupied tile
     /// (red) can be picked, so the bar can say why, but it cannot be confirmed: nothing is sent for a tile the player was told is taken. That is
     /// a courtesy, not the rule: the server checks every command again (<c>09</c> UX rules). The model subtracts nothing and never creates a
@@ -37,6 +38,9 @@ namespace CityBuilder.Client.Presentation.Build
 
         /// <summary>The intent that was confirmed and has not ended; null when none is.</summary>
         private CommandIntent? _sending;
+
+        /// <summary>The city of the last <see cref="Update"/>, so a new pick can make its hints again; null before the first.</summary>
+        private CityState? _city;
 
         /// <summary>Whether a command may be sent now; allowed until <see cref="SetCommandAvailability"/> says otherwise.</summary>
         private CommandAvailability _availability = CommandAvailability.Allowed;
@@ -92,9 +96,9 @@ namespace CityBuilder.Client.Presentation.Build
 
         /// <summary>
         /// Whether <see cref="TryConfirm"/> can succeed: a type and a free tile are picked, nothing is on its way and the connection allows a
-        /// command. A tile the displayed city shows occupied (red) cannot be confirmed; if a snapshot occupies the picked tile, this turns false at once.
+        /// command. A tile the hints do not show free (occupied, blocked or closed) cannot be confirmed; if a snapshot occupies the picked tile, this turns false at once.
         /// </summary>
-        public bool CanConfirm => Phase == PlacementPhase.Confirming && _availability.IsAllowed && HintAt(Tile!.Value) != TileHint.Occupied;
+        public bool CanConfirm => Phase == PlacementPhase.Confirming && _availability.IsAllowed && HintAt(Tile!.Value) == TileHint.Free;
 
         /// <summary>Whether <see cref="Cancel"/> does anything: a command that was sent cannot be taken back.</summary>
         public bool CanCancel => Phase != PlacementPhase.Idle && Phase != PlacementPhase.Sending;
@@ -141,8 +145,22 @@ namespace CityBuilder.Client.Presentation.Build
                     return _availability.Reason;
                 }
 
-                bool occupied = Phase == PlacementPhase.Confirming && HintAt(Tile!.Value) == TileHint.Occupied;
-                return occupied ? "This tile is occupied" : string.Empty;
+                if (Phase != PlacementPhase.Confirming)
+                {
+                    return string.Empty;
+                }
+
+                switch (HintAt(Tile!.Value))
+                {
+                    case TileHint.Occupied:
+                        return "This tile is occupied";
+                    case TileHint.Closed:
+                        return SentenceOf(ApiErrorCodes.LandClosed);
+                    case TileHint.Blocked:
+                        return SentenceOf(BlockedCodeAt(Tile.Value));
+                    default:
+                        return string.Empty;
+                }
             }
         }
 
@@ -162,6 +180,11 @@ namespace CityBuilder.Client.Presentation.Build
             if (!typeId.HasValue)
             {
                 Tile = null;
+            }
+
+            if (_city != null)
+            {
+                MakeHints(_city);
             }
 
             Changed?.Invoke();
@@ -200,7 +223,8 @@ namespace CityBuilder.Client.Presentation.Build
         }
 
         /// <summary>
-        /// Makes the hints for <paramref name="city"/>: a tile with a building of any phase is occupied, the others are free. Raises
+        /// Makes the hints for <paramref name="city"/> (<see cref="MakeHints"/>): a tile with a building of any phase or a road is occupied,
+        /// and for a picked type a tile it can never use is blocked and one under mist closed; the others are free. Raises
         /// <see cref="Changed"/> only when a hint differs.
         /// </summary>
         /// <exception cref="ArgumentNullException"><paramref name="city"/> is null.</exception>
@@ -211,6 +235,22 @@ namespace CityBuilder.Client.Presentation.Build
                 throw new ArgumentNullException(nameof(city));
             }
 
+            _city = city;
+            if (MakeHints(city))
+            {
+                Changed?.Invoke();
+            }
+        }
+
+        /// <summary>
+        /// Makes the hints for <paramref name="city"/> and the picked type, in the server's order of checks (<c>CityRules.PlaceBuilding</c>):
+        /// a tile the type can never use is blocked, then a tile under mist is closed, then a tile with a building or road is occupied; with no
+        /// type picked only buildings and roads mark tiles (M1-03).
+        /// </summary>
+        /// <param name="city">The displayed city.</param>
+        /// <returns>Whether a hint differs from before.</returns>
+        private bool MakeHints(CityState city)
+        {
             Array.Clear(_scratch, 0, _scratch.Length);
             for (int index = 0; index < city.Buildings.Count; index++)
             {
@@ -230,6 +270,30 @@ namespace CityBuilder.Client.Presentation.Build
                 }
             }
 
+            BuildingDefinition? definition = null;
+            if (TypeId.HasValue)
+            {
+                _content.TryGetBuilding(TypeId.Value, out definition);
+            }
+
+            if (definition != null)
+            {
+                for (int y = 0; y < _grid.Height; y++)
+                {
+                    for (int x = 0; x < _grid.Width; x++)
+                    {
+                        if (CityQueries.SiteError(_content, definition, x, y).HasValue)
+                        {
+                            _scratch[y * _grid.Width + x] = TileHint.Blocked;
+                        }
+                        else if (!CityQueries.IsLandOpen(city, _content, x, y))
+                        {
+                            _scratch[y * _grid.Width + x] = TileHint.Closed;
+                        }
+                    }
+                }
+            }
+
             bool changed = false;
             for (int index = 0; !changed && index < _hints.Length; index++)
             {
@@ -238,13 +302,44 @@ namespace CityBuilder.Client.Presentation.Build
 
             if (!changed)
             {
-                return;
+                return false;
             }
 
             TileHint[] old = _hints;
             _hints = _scratch;
             _scratch = old;
-            Changed?.Invoke();
+            return true;
+        }
+
+        /// <summary>The code the server would refuse the picked type on the blocked tile <paramref name="tile"/> with: the terrain or the unmet site.</summary>
+        /// <param name="tile">A tile the hints mark blocked.</param>
+        /// <returns>The <see cref="ApiErrorCodes"/> code.</returns>
+        private string BlockedCodeAt(GridCoordinate tile)
+        {
+            if (!TypeId.HasValue || !_content.TryGetBuilding(TypeId.Value, out BuildingDefinition? definition))
+            {
+                return ApiErrorCodes.TerrainBlocked;
+            }
+
+            switch (CityQueries.SiteError(_content, definition, tile.X, tile.Y))
+            {
+                case MutationErrorCode.NeedsForest:
+                    return ApiErrorCodes.NeedsForest;
+                case MutationErrorCode.NeedsRock:
+                    return ApiErrorCodes.NeedsRock;
+                case MutationErrorCode.NeedsFertileSoil:
+                    return ApiErrorCodes.NeedsFertileSoil;
+                default:
+                    return ApiErrorCodes.TerrainBlocked;
+            }
+        }
+
+        /// <summary>The player's sentence for a server code (<see cref="FeedbackMessages"/>), the same words a refusal would show.</summary>
+        /// <param name="code">An <see cref="ApiErrorCodes"/> code.</param>
+        /// <returns>The sentence.</returns>
+        private static string SentenceOf(string code)
+        {
+            return FeedbackMessages.TryGetErrorMessage(code, out string message) ? message : code;
         }
 
         /// <summary>
