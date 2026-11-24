@@ -16,7 +16,7 @@ namespace CityBuilder.IntegrationTests.Commands;
 
 /// <summary>
 /// <c>POST /api/v1/commands/place-roads</c>, <c>upgrade-roads</c> and <c>remove-roads</c> end to end on PostgreSQL over HTTP (CR-0008-T1 part
-/// D): the server's real content (an 8 × 8 grid; Dirt path, 5 coins a tile; Log road, 15 coins a tile to upgrade to, the last level),
+/// D): the server's real content (the 18 × 14 map; Dirt path, 5 coins a tile; Log road, 15 coins a tile to upgrade to, the last level),
 /// endpoints, pipeline and repositories, the server clock a <c>FakeTimeProvider</c> at <see cref="PostgresApiFactory.Start"/>. Each test
 /// stores a city built by hand at clock 0 (a house at (4,4), a woodcutter at (5,5); <see cref="HandBuiltCities.StoreCityWithRoadsAsync"/>)
 /// and checks what was stored, not only the status: the <c>city_roads</c> rows, the stock, the ledger and the receipts.
@@ -52,13 +52,13 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
         ApiResponse response = await PostAsync(_place, player, _requestId, """[{"x":8,"y":6},{"x":6,"y":6},{"x":7,"y":6}]""");
 
         Assert.Equal(HttpStatusCode.OK, response.Status);
-        Assert.Equal("(2,2) L1, (3,2) L1, (4,2) L1", await RoadsAsync(city));
+        Assert.Equal("(6,6) L1, (7,6) L1, (8,6) L1", await RoadsAsync(city));
         Assert.Equal([$"coins -15 985 COST_ROAD command {_requestId}"], (await LedgerAsync(Database, city)).Select(Line));
         Assert.Equal("coins 985", await StockAsync(Database, city));
         CommandReceiptRow receipt = Assert.Single(await ReceiptsAsync(Database, player));
         Assert.Equal((_requestId, PlaceRoadsCommand.Type, response.Body), (receipt.RequestId, receipt.CommandType, receipt.ResponseJson));
         Assert.Equal(
-            CommandPayload.Hash(new PlaceRoadsCommand(_requestId, [new CommandTile(4, 2), new CommandTile(2, 2), new CommandTile(3, 2)])),
+            CommandPayload.Hash(new PlaceRoadsCommand(_requestId, [new CommandTile(8, 6), new CommandTile(6, 6), new CommandTile(7, 6)])),
             receipt.PayloadHash);
 
         Factory.Clock.Advance(TimeSpan.FromMinutes(1));
@@ -76,7 +76,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
         ApiResponse response = await PostAsync(_upgrade, player, _requestId, """[{"x":7,"y":6},{"x":6,"y":6}]""");
 
         Assert.Equal(HttpStatusCode.OK, response.Status);
-        Assert.Equal("(2,2) L2, (3,2) L2, (4,2) L2", await RoadsAsync(city));
+        Assert.Equal("(6,6) L2, (7,6) L2, (8,6) L2", await RoadsAsync(city));
         Assert.Equal([$"coins -30 970 COST_ROAD command {_requestId}"], (await LedgerAsync(Database, city)).Select(Line));
         Assert.Equal(UpgradeRoadsCommand.Type, Assert.Single(await ReceiptsAsync(Database, player)).CommandType);
     }
@@ -93,7 +93,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
         ApiResponse response = await PostAsync(_remove, player, _requestId, """[{"x":8,"y":6}]""");
 
         Assert.Equal(HttpStatusCode.OK, response.Status);
-        Assert.Equal("(2,2) L1", await RoadsAsync(city));
+        Assert.Equal("(6,6) L1", await RoadsAsync(city));
         Assert.Empty(await LedgerAsync(Database, city));
         Assert.Equal("coins 1000", await StockAsync(Database, city));
         Assert.Equal(RemoveRoadsCommand.Type, Assert.Single(await ReceiptsAsync(Database, player)).CommandType);
@@ -122,7 +122,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
 
     /// <summary>
     /// Every rule's refusal on the real server: the code, the status and the request id, and the city stored exactly as before (no time has
-    /// elapsed, so not even a settlement is written; only the refusal's player event, CR-0009). A house or a road in the way, a tile past the grid's edge (also after a free one), 15
+    /// elapsed, so not even a settlement is written; only the refusal's player event, CR-0009). A house or a road in the way, a tile under mist (also after a free one), 15
     /// coins for three tiles with 14, a tile without a road, a road at its last level, 15 coins for an upgrade with 14, and a remove list with a
     /// tile without a road.
     /// </summary>
@@ -134,7 +134,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
     [Theory]
     [InlineData(_place, """[{"x":4,"y":4}]""", 1000, HttpStatusCode.Conflict, "TILE_OCCUPIED")]
     [InlineData(_place, """[{"x":9,"y":9},{"x":6,"y":6}]""", 1000, HttpStatusCode.Conflict, "TILE_OCCUPIED")]
-    [InlineData(_place, """[{"x":9,"y":9},{"x":8,"y":5}]""", 1000, (HttpStatusCode)422, "OUT_OF_BOUNDS")]
+    [InlineData(_place, """[{"x":9,"y":9},{"x":5,"y":1}]""", 1000, (HttpStatusCode)422, "LAND_CLOSED")]
     [InlineData(_place, """[{"x":9,"y":9},{"x":9,"y":10},{"x":9,"y":11}]""", 14, (HttpStatusCode)422, "INSUFFICIENT_RESOURCE")]
     [InlineData(_upgrade, """[{"x":9,"y":9}]""", 1000, HttpStatusCode.NotFound, "ROAD_NOT_FOUND")]
     [InlineData(_upgrade, """[{"x":8,"y":6}]""", 1000, (HttpStatusCode)422, "MAX_LEVEL")]
@@ -244,7 +244,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
 
         Assert.All(responses, response => Assert.Equal(HttpStatusCode.OK, response.Status));
         Assert.Equal(responses[0].Body, responses[1].Body);
-        Assert.Equal("(5,5) L1", await RoadsAsync(city));
+        Assert.Equal("(9,9) L1", await RoadsAsync(city));
         Assert.Equal([$"coins -5 995 COST_ROAD command {_requestId}"], (await LedgerAsync(Database, city)).Select(Line));
         Assert.Single(await ReceiptsAsync(Database, player));
     }
@@ -264,7 +264,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
         Assert.Equal(
             ["OK", "TILE_OCCUPIED"],
             responses.Select(response => response.Status == HttpStatusCode.OK ? "OK" : (string)response.Json()["code"]!).Order(StringComparer.Ordinal));
-        Assert.Equal("(5,5) L1", await RoadsAsync(city));
+        Assert.Equal("(9,9) L1", await RoadsAsync(city));
         Assert.Single(await LedgerAsync(Database, city));
         Assert.Single(await ReceiptsAsync(Database, player));
     }
@@ -284,7 +284,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
         ApiResponse response = await PostAsync(_place, other, _requestId, """[{"x":10,"y":10},{"x":10,"y":11}]""");
 
         Assert.Equal(HttpStatusCode.OK, response.Status);
-        Assert.Equal("(6,6) L1, (6,7) L1", await RoadsAsync(otherCity));
+        Assert.Equal("(10,10) L1, (10,11) L1", await RoadsAsync(otherCity));
         Assert.Equal(ownerStored, await StoredAsync(Factory, Database, owner, ownerCity));
     }
 
@@ -319,7 +319,7 @@ public sealed class RoadCommandsDatabaseTests(PostgresServer server) : PostgresT
 
     /// <summary>A city's stored <c>city_roads</c> rows as text, by column then row, read by a context of the test's own.</summary>
     /// <param name="city">The city.</param>
-    /// <returns>For example <c>(2,2) L1, (4,2) L2</c>.</returns>
+    /// <returns>For example <c>(6,6) L1, (8,6) L2</c>.</returns>
     private async Task<string> RoadsAsync(Guid city)
     {
         await using CityBuilderDbContext db = Database.CreateContext();

@@ -36,7 +36,7 @@ public sealed class RaceTests(PostgresServer server) : PostgresTest(server)
     {
         (Guid player, Guid city) = await StoreAuditedCityAsync(90);
 
-        ApiResponse[] responses = await Task.WhenAll(PlaceHouseAsync(player, 3, 4), PlaceHouseAsync(player, 4, 4));
+        ApiResponse[] responses = await Task.WhenAll(PlaceHouseAsync(player, 7, 6), PlaceHouseAsync(player, 8, 6));
 
         Assert.Equal(["INSUFFICIENT_RESOURCE", "OK"], Outcomes(responses));
         Assert.Single((await LoadAsync(Factory, player)).State.Buildings);
@@ -55,11 +55,11 @@ public sealed class RaceTests(PostgresServer server) : PostgresTest(server)
     {
         (Guid player, Guid city) = await StoreAuditedCityAsync(1000);
 
-        ApiResponse[] responses = await Task.WhenAll(PlaceHouseAsync(player, 3, 4), PlaceHouseAsync(player, 3, 4));
+        ApiResponse[] responses = await Task.WhenAll(PlaceHouseAsync(player, 7, 6), PlaceHouseAsync(player, 7, 6));
 
         Assert.Equal(["OK", "TILE_OCCUPIED"], Outcomes(responses));
         Building house = Assert.Single((await LoadAsync(Factory, player)).State.Buildings);
-        Assert.Equal((3, 4), (house.X, house.Y));
+        Assert.Equal((7, 6), (house.X, house.Y));
         Assert.Equal("coins 950", await StockAsync(Database, city));
         Assert.Single(await LedgerAsync(Database, city), row => row.Reason == "COST_PLACE");
         Assert.Single(await ReceiptsAsync(Database, player));

@@ -126,27 +126,28 @@ public sealed class ApiAttackDatabaseTests(PostgresServer server) : PostgresTest
     }
 
     /// <summary>
-    /// Coordinates past the 8 × 8 grid (past the <c>smallint</c> columns the tile is stored in, and the limits of <c>int</c>) are
-    /// <c>OUT_OF_BOUNDS</c> (422) by the rule, and only the refusal's player event is stored (CR-0009): no building row at a wrapped or clipped tile, no cost paid.
+    /// Coordinates past the 18 × 14 map (past the <c>smallint</c> columns the tile is stored in, and the limits of <c>int</c>) can never be on
+    /// the server's one map, so they are <c>INVALID_ARGUMENT</c> (400) before the city is locked (OD-13, M1-03), five minutes after the last
+    /// settle, and nothing is stored, not even the five minutes: no building row at a wrapped or clipped tile, no cost paid.
     /// </summary>
     /// <param name="x">The column.</param>
     /// <param name="y">The row.</param>
     [Theory]
-    [InlineData(8, 0)]
+    [InlineData(18, 0)]
     [InlineData(32768, 0)]
     [InlineData(65536, 65536)]
     [InlineData(0, int.MaxValue)]
-    public async Task Security_CoordinatesPastTheGrid_AreOutOfBoundsAndStoreOnlyTheirEvent(int x, int y)
+    public async Task Security_CoordinatesPastTheMap_Are400AndStoreNothing(int x, int y)
     {
         (Guid player, Guid city) = await StoreStarterAsync("attacker");
+        Factory.Clock.Advance(TimeSpan.FromMinutes(5));
         string stored = await StoredAsync(Factory, Database, player, city);
 
         ApiResponse response = await ApiClient.PostAsync(
             Factory, _path, player, $$"""{"requestId":"{{_requestId}}","buildingTypeId":"house","x":{{x}},"y":{{y}}}""");
 
-        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.Status);
-        Assert.Equal("OUT_OF_BOUNDS", (string)response.Json()["code"]!);
-        await AssertStoredWithRefusalsAsync(Factory, Database, player, city, stored, "OUT_OF_BOUNDS");
+        Assert.Equal((HttpStatusCode.BadRequest, "INVALID_ARGUMENT"), (response.Status, (string)response.Json()["code"]!));
+        Assert.Equal(stored, await StoredAsync(Factory, Database, player, city));
     }
 
     /// <summary>
