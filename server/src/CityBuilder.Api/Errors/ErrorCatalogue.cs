@@ -146,6 +146,34 @@ public static class ErrorCatalogue
     public static readonly ApiError DeliveryNotFound = new(
         "DELIVERY_NOT_FOUND", StatusCodes.Status422UnprocessableEntity, "Delivery not found", "This courier has no such delivery line any more.");
 
+    /// <summary>The tile is water, forest or rock: no building or road stands there (M1-03).</summary>
+    public static readonly ApiError TerrainBlocked = new(
+        "TERRAIN_BLOCKED", StatusCodes.Status422UnprocessableEntity, "Terrain blocked", "Nothing can be built on water, forest or rock. A road on water is a bridge.");
+
+    /// <summary>The tile is on land no research has opened yet (M1-03).</summary>
+    public static readonly ApiError LandClosed = new(
+        "LAND_CLOSED", StatusCodes.Status422UnprocessableEntity, "Land not surveyed", "This land is still under mist. Research opens it.");
+
+    /// <summary>The type needs forest beside its tile (M1-03).</summary>
+    public static readonly ApiError NeedsForest = new(
+        "NEEDS_FOREST", StatusCodes.Status422UnprocessableEntity, "Needs forest", "This building needs a forest tile next to it.");
+
+    /// <summary>The type needs rock beside its tile (M1-03).</summary>
+    public static readonly ApiError NeedsRock = new(
+        "NEEDS_ROCK", StatusCodes.Status422UnprocessableEntity, "Needs rock", "This building needs a rock tile next to it.");
+
+    /// <summary>The type stands only on fertile soil (M1-03).</summary>
+    public static readonly ApiError NeedsFertileSoil = new(
+        "NEEDS_FERTILE_SOIL", StatusCodes.Status422UnprocessableEntity, "Needs fertile soil", "This building stands only on fertile soil.");
+
+    /// <summary>A road on water before the research that unlocks the bridge (M1-03).</summary>
+    public static readonly ApiError BridgeLocked = new(
+        "BRIDGE_LOCKED", StatusCodes.Status422UnprocessableEntity, "Bridge locked", "A road on water is a bridge, and bridges need research first.");
+
+    /// <summary>No walk joins the buildings: water without a bridge or land under mist lies between them (M1-03).</summary>
+    public static readonly ApiError NoPath = new(
+        "NO_PATH", StatusCodes.Status422UnprocessableEntity, "No path", "No way joins these buildings: build a bridge or open the land between them.");
+
     /// <summary>A request id that was used before with another command or payload.</summary>
     public static readonly ApiError IdempotencyConflict = new(
         "IDEMPOTENCY_CONFLICT", StatusCodes.Status409Conflict, "Request id already used",
@@ -194,7 +222,7 @@ public static class ErrorCatalogue
         AuthenticationRequired, InvalidArgument, UnknownBuildingType, BuildingLocked, OutOfBounds, TileOccupied, InsufficientResource,
         InsufficientWorkers, WorkerLimit, NoFreeBuilder, BuildingNotFound, BuildingBusy, MaxLevel, UnknownResearch, ResearchLocked,
         ResearchInProgress, ResearchCompleted, RoadNotFound, BuildingLimit, NoScienceBuilding, UnknownItem, AmountModeLocked, ItemNotAccepted,
-        NothingToCarry, InvalidRoute, NoFreeCourier, DeliveryQueueFull, RoutesLocked, CourierBusy, DeliveryNotFound, IdempotencyConflict, RateLimited, ConcurrencyConflict, InternalError, NotFound, MethodNotAllowed, UnsupportedMediaType,
+        NothingToCarry, InvalidRoute, NoFreeCourier, DeliveryQueueFull, RoutesLocked, CourierBusy, DeliveryNotFound, TerrainBlocked, LandClosed, NeedsForest, NeedsRock, NeedsFertileSoil, BridgeLocked, NoPath, IdempotencyConflict, RateLimited, ConcurrencyConflict, InternalError, NotFound, MethodNotAllowed, UnsupportedMediaType,
         UnsupportedClientVersion,
     ];
 
@@ -234,6 +262,13 @@ public static class ErrorCatalogue
         MutationErrorCode.RoutesLocked => RoutesLocked,
         MutationErrorCode.CourierBusy => CourierBusy,
         MutationErrorCode.DeliveryNotFound => DeliveryNotFound,
+        MutationErrorCode.TerrainBlocked => TerrainBlocked,
+        MutationErrorCode.LandClosed => LandClosed,
+        MutationErrorCode.NeedsForest => NeedsForest,
+        MutationErrorCode.NeedsRock => NeedsRock,
+        MutationErrorCode.NeedsFertileSoil => NeedsFertileSoil,
+        MutationErrorCode.BridgeLocked => BridgeLocked,
+        MutationErrorCode.NoPath => NoPath,
         _ => throw new InvalidOperationException($"No API error for the engine code {code}."),
     };
 }

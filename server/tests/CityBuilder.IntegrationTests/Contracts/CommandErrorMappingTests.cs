@@ -44,6 +44,13 @@ public sealed class CommandErrorMappingTests
         { MutationErrorCode.RoutesLocked, "ROUTES_LOCKED", 422 },
         { MutationErrorCode.CourierBusy, "COURIER_BUSY", 422 },
         { MutationErrorCode.DeliveryNotFound, "DELIVERY_NOT_FOUND", 422 },
+        { MutationErrorCode.TerrainBlocked, "TERRAIN_BLOCKED", 422 },
+        { MutationErrorCode.LandClosed, "LAND_CLOSED", 422 },
+        { MutationErrorCode.NeedsForest, "NEEDS_FOREST", 422 },
+        { MutationErrorCode.NeedsRock, "NEEDS_ROCK", 422 },
+        { MutationErrorCode.NeedsFertileSoil, "NEEDS_FERTILE_SOIL", 422 },
+        { MutationErrorCode.BridgeLocked, "BRIDGE_LOCKED", 422 },
+        { MutationErrorCode.NoPath, "NO_PATH", 422 },
     };
 
     /// <summary>Each engine code answers with the API code and status of the contract's table, and the type made from the code.</summary>
