@@ -33,7 +33,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Roads
         [SetUp]
         public void SetUp()
         {
-            _content = HudTestData.Content();
+            _content = HudTestData.OpenGrassContent();
             _grid = new CityGrid(_content.Rules.GridWidth, _content.Rules.GridHeight);
         }
 
@@ -93,9 +93,9 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Roads
             model.StartBuildMode();
 
             // Out of bounds.
-            model.SelectLine(new GridCoordinate(7, 0), new GridCoordinate(8, 0));
+            model.SelectLine(new GridCoordinate(17, 0), new GridCoordinate(18, 0));
             Assert.That(model.CanPlace, Is.False);
-            Assert.That(model.HintText, Is.EqualTo("Outside the city at (8, 0)"));
+            Assert.That(model.HintText, Is.EqualTo("Outside the city at (18, 0)"));
 
             // Occupied by a building at (0, 0).
             model.SelectLine(new GridCoordinate(0, 0), new GridCoordinate(1, 0));

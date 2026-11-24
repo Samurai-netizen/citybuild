@@ -33,7 +33,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Trips
         [SetUp]
         public void SetUp()
         {
-            _content = HudTestData.Content();
+            _content = HudTestData.OpenGrassContent();
             _grid = new CityGrid(_content.Rules.GridWidth, _content.Rules.GridHeight);
         }
 

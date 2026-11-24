@@ -42,5 +42,30 @@ namespace CityBuilder.Client.Net
         /// <summary>The amount mode it unlocks, <c>percent</c> or <c>exact</c> (unlock amount mode; CR-0008), else <c>null</c>.</summary>
         [JsonProperty(Required = Required.AllowNull)]
         public string? Mode { get; }
+
+        /// <summary>
+        /// The letter of the area it opens (open land; M1-03), else <c>null</c>. Set only when the answer has the member, and written back
+        /// only then, so the M0 answer, which has none, reads and writes back unchanged (decision 14 of M1-02).
+        /// </summary>
+        [JsonProperty(Required = Required.Default)]
+        public string? Area
+        {
+            get => _area;
+            private set
+            {
+                _area = value;
+                _hasArea = true;
+            }
+        }
+
+        /// <summary>The area letter read from the answer.</summary>
+        private string? _area;
+
+        /// <summary>Whether the answer had the <c>area</c> member (null or not).</summary>
+        private bool _hasArea;
+
+        /// <summary>Newtonsoft writes <see cref="Area"/> only when the answer had it.</summary>
+        /// <returns>Whether to write the member.</returns>
+        public bool ShouldSerializeArea() => _hasArea;
     }
 }

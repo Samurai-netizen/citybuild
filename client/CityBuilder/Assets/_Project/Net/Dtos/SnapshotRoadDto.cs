@@ -25,5 +25,9 @@ namespace CityBuilder.Client.Net
 
         /// <summary>The road level: 1 when placed, up to the content's last road level.</summary>
         public int Level { get; }
+
+        /// <summary>A road or a bridge (M1-03); <c>null</c> in an answer without kinds (a road), and then left out.</summary>
+        [JsonProperty(Required = Required.Default, NullValueHandling = NullValueHandling.Ignore)]
+        public RoadKindDto? Kind { get; private set; }
     }
 }

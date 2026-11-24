@@ -29,6 +29,53 @@ namespace CityBuilder.Client.Tests.EditMode.Core
             return built.Content!;
         }
 
+        /// <summary>The real content of the fixtures on an open grass map (<see cref="OnOpenGrass"/>), through the validating factory.</summary>
+        public static GameContent OpenGrassContent()
+        {
+            ContentResponseDto dto = new ApiJson().Deserialize<ContentResponseDto>(OnOpenGrass(Fixtures.Read("content.json")))!;
+            GameContentResult built = GameContentFactory.Create(ContentMapper.ToData(dto));
+            Assert.That(built.IsValid, Is.True, "The content fixture on open grass must be valid.");
+            return built.Content!;
+        }
+
+        /// <summary>
+        /// The content answer <paramref name="contentJson"/> on an open grass map (M1-03): every tile grass and in the start area A, but for the
+        /// last tile of the last two rows, which keep the areas B and C so the research that opens them stays valid. For tests laid out on the
+        /// old 8 × 8 grass grid whose subject is not the map: their walks and tiles mean what they did before the map.
+        /// </summary>
+        /// <param name="contentJson">A <c>GET /content</c> answer with a map.</param>
+        /// <returns>The same answer with the open grass map.</returns>
+        public static string OnOpenGrass(string contentJson)
+        {
+            string text = ReplaceRows(contentJson, "\"tiles\":[", (row, index, count) => new string('.', row.Length));
+            return ReplaceRows(text, "\"areas\":[", (row, index, count) =>
+            {
+                char last = index == count - 2 ? 'B' : index == count - 1 ? 'C' : 'A';
+                return new string('A', row.Length - 1) + last;
+            });
+        }
+
+        /// <summary>Replaces each quoted row of the JSON array that starts with <paramref name="key"/> by what <paramref name="rowFor"/> makes of it.</summary>
+        /// <param name="json">The JSON text.</param>
+        /// <param name="key">The array's member name with its opening bracket, as written: <c>"tiles":[</c>.</param>
+        /// <param name="rowFor">The new row from the old one, its index and the number of rows.</param>
+        /// <returns>The text with the new rows.</returns>
+        private static string ReplaceRows(string json, string key, Func<string, int, int, string> rowFor)
+        {
+            int start = json.IndexOf(key, StringComparison.Ordinal);
+            Assert.That(start, Is.GreaterThanOrEqualTo(0), "the content fixture has no map: " + key);
+            start += key.Length;
+            int end = json.IndexOf(']', start);
+            string[] rows = json.Substring(start, end - start).Split(',');
+            for (int index = 0; index < rows.Length; index++)
+            {
+                string row = rows[index].Trim('"');
+                rows[index] = "\"" + rowFor(row, index, rows.Length) + "\"";
+            }
+
+            return json.Substring(0, start) + string.Join(",", rows) + json.Substring(end);
+        }
+
         /// <summary>
         /// The content the snapshot fixtures were recorded with (<c>content-mvp-2.json</c>, the M0 answer kept byte for byte, M1-02 decision 28):
         /// for the tests that check a recorded snapshot against what the server derived from it.

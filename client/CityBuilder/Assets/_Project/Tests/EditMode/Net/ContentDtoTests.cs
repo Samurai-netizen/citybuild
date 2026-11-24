@@ -38,8 +38,8 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         {
             ContentResponseDto content = _json.Deserialize<ContentResponseDto>(Fixtures.Read("content.json"));
 
-            Assert.That(content.ContentVersion, Is.EqualTo("era1-1"));
-            Assert.That(content.Rules.GridWidth, Is.EqualTo(8));
+            Assert.That(content.ContentVersion, Is.EqualTo("era1-2"));
+            Assert.That((content.Rules.GridWidth, content.Rules.GridHeight), Is.EqualTo((18, 14)));
             Assert.That(content.Rules.TimeScale, Is.EqualTo(1));
             Assert.That(content.Rules.TripCarryLimit, Is.EqualTo(10L));
             Assert.That((content.Rules.MaxRouteStops, content.Rules.MaxStopActions), Is.EqualTo((8, 4)));

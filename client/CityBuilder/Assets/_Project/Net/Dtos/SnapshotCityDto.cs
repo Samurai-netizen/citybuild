@@ -37,6 +37,17 @@ namespace CityBuilder.Client.Net
         /// <summary>The coins: the currency, in no building (CR-0008).</summary>
         public long Purse { get; }
 
+        /// <summary>Whether the city holds its charter (Era I complete, M1-02); <c>null</c> in an answer without it, and then left out.</summary>
+        [JsonProperty(Required = Required.Default, NullValueHandling = NullValueHandling.Ignore)]
+        public bool? Chartered { get; private set; }
+
+        /// <summary>
+        /// The letters of the map's open areas, sorted (M1-03); empty for content without a map; <c>null</c> in an answer without the member,
+        /// and then left out.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, NullValueHandling = NullValueHandling.Ignore)]
+        public List<string>? OpenAreas { get; private set; }
+
         /// <summary>Item id to the city's total, every item of the content (stores, loads, the purse; CR-0008).</summary>
         public Dictionary<string, long> Totals { get; }
 

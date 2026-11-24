@@ -50,5 +50,13 @@ namespace CityBuilder.Client.Net
 
         /// <summary>The amount presets, by id (CR-0008).</summary>
         public List<ContentAmountPresetDto> AmountPresets { get; }
+
+        /// <summary>The map every city stands on (M1-03); <c>null</c> when the answer has none (every tile grass, every tile open), and then left out.</summary>
+        [JsonProperty(Required = Required.Default, NullValueHandling = NullValueHandling.Ignore)]
+        public ContentMapDto? Map { get; private set; }
+
+        /// <summary>The bridge (M1-03); <c>null</c> when the answer has none, and then left out.</summary>
+        [JsonProperty(Required = Required.Default, NullValueHandling = NullValueHandling.Ignore)]
+        public ContentBridgeDto? Bridge { get; private set; }
     }
 }

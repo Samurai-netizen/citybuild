@@ -36,7 +36,7 @@ namespace CityBuilder.Client.Tests.PlayMode
         public void CreateWalkers()
         {
             string json = File.ReadAllText(Path.Combine(Application.dataPath, "_Project/Tests/Fixtures", "content.json"));
-            ContentResponseDto dto = new ApiJson().Deserialize<ContentResponseDto>(json)!;
+            ContentResponseDto dto = new ApiJson().Deserialize<ContentResponseDto>(OpenGrassContent.OnOpenGrass(json))!;
             GameContentResult built = GameContentFactory.Create(ContentMapper.ToData(dto));
             Assert.That(built.IsValid, Is.True);
             _content = built.Content!;

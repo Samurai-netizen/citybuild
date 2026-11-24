@@ -62,6 +62,31 @@ namespace CityBuilder.Client.Net
         [JsonProperty(Required = Required.Default, NullValueHandling = NullValueHandling.Ignore)]
         public int? BaseMaxLevel { get; }
 
+        /// <summary>
+        /// The terrain the type needs (M1-03), or <c>null</c> when it may stand on any open land. Set only when the answer has the member, and
+        /// written back only then, so the M0 answer, which has none, reads and writes back unchanged.
+        /// </summary>
+        [JsonProperty(Required = Required.Default)]
+        public BuildingSiteDto? Site
+        {
+            get => _site;
+            private set
+            {
+                _site = value;
+                _hasSite = true;
+            }
+        }
+
+        /// <summary>The site read from the answer.</summary>
+        private BuildingSiteDto? _site;
+
+        /// <summary>Whether the answer had the <c>site</c> member (null or not).</summary>
+        private bool _hasSite;
+
+        /// <summary>Newtonsoft writes <see cref="Site"/> only when the answer had it.</summary>
+        /// <returns>Whether to write the member.</returns>
+        public bool ShouldSerializeSite() => _hasSite;
+
         /// <summary>The levels, by level.</summary>
         public List<ContentBuildingLevelDto> Levels { get; }
     }

@@ -52,7 +52,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation
             StartupOutcome outcome = await _flow.RunAsync(CancellationToken.None);
 
             Assert.That(outcome.Kind, Is.EqualTo(StartupResultKind.Connected));
-            Assert.That(outcome.Content!.ContentVersion, Is.EqualTo("era1-1"));
+            Assert.That(outcome.Content!.ContentVersion, Is.EqualTo("era1-2"));
             Assert.That(outcome.City!.City.Purse, Is.EqualTo(800L));
             Assert.That(_transport.Requests, Has.Count.EqualTo(3));
             Assert.That(_transport.Requests[0].Method + " " + _transport.Requests[0].Url, Is.EqualTo("POST http://localhost:8080/api/v1/auth/dev-login"));
@@ -216,7 +216,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation
         [Test]
         public async Task Run_WithInvalidContent_EndsAsInvalidContent_WithoutFetchingTheCity()
         {
-            string broken = Fixtures.Read("content.json").Replace("\"gridWidth\":8", "\"gridWidth\":0");
+            string broken = Fixtures.Read("content.json").Replace("\"builderSlots\":2,", "\"builderSlots\":0,");
             _transport.Answer(200, LoginAnswer).Answer(200, broken);
 
             StartupOutcome outcome = await _flow.RunAsync(CancellationToken.None);

@@ -82,8 +82,8 @@ namespace CityBuilder.Client.Tests.EditMode.Net
 
             GameContent content = (await _service.LoadAsync(CancellationToken.None)).Content!;
 
-            Assert.That(content.ContentVersion, Is.EqualTo("era1-1"));
-            Assert.That(content.Rules.GridWidth, Is.EqualTo(8));
+            Assert.That(content.ContentVersion, Is.EqualTo("era1-2"));
+            Assert.That((content.Rules.GridWidth, content.Rules.GridHeight), Is.EqualTo((18, 14)));
             Assert.That(content.Rules.BuilderSlots, Is.EqualTo(2));
             Assert.That(content.Rules.TripCarryLimit, Is.EqualTo(10L));
             Assert.That(content.StartingCity.Era, Is.EqualTo(1));
@@ -193,7 +193,10 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         [Test]
         public async Task Load_ContentWithRuleErrors_ListsEveryErrorAndHasNoContent()
         {
-            string broken = Fixtures.Read("content.json").Replace("\"gridWidth\":8", "\"gridWidth\":0").Replace("\"gridHeight\":8", "\"gridHeight\":-1");
+            // Two rules the map does not depend on (M1-03: a broken grid also breaks every map row).
+            string text = Fixtures.Read("content.json");
+            Assert.That(text, Does.Contain("\"builderSlots\":2,").And.Contain("\"minCycleSeconds\":10,"), "the fixture changed: update this test");
+            string broken = text.Replace("\"builderSlots\":2,", "\"builderSlots\":0,").Replace("\"minCycleSeconds\":10,", "\"minCycleSeconds\":-1,");
             _transport.Answer(200, broken);
 
             ContentLoadResult result = await _service.LoadAsync(CancellationToken.None);
@@ -202,7 +205,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(result.Content, Is.Null);
             Assert.That(result.ApiError, Is.Null);
             Assert.That(result.IsInvalidContent, Is.True);
-            Assert.That(result.ContentErrors.Select(error => error.Path), Is.EquivalentTo(new[] { "rules.gridWidth", "rules.gridHeight" }));
+            Assert.That(result.ContentErrors.Select(error => error.Path), Is.EquivalentTo(new[] { "rules.builderSlots", "rules.minCycleSeconds" }));
         }
 
         /// <summary>A building that points at an item the answer does not define is refused with a reference error naming where.</summary>

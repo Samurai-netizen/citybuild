@@ -68,7 +68,7 @@ namespace CityBuilder.Client.Tests.PlayMode
         [UnitySetUp]
         public IEnumerator CreateFlow()
         {
-            ContentResponseDto contentDto = new ApiJson().Deserialize<ContentResponseDto>(Fixture("content.json"))!;
+            ContentResponseDto contentDto = new ApiJson().Deserialize<ContentResponseDto>(OpenGrassContent.OnOpenGrass(Fixture("content.json")))!;
             GameContentResult built = GameContentFactory.Create(ContentMapper.ToData(contentDto));
             Assert.That(built.IsValid, Is.True);
             GameContent content = built.Content!;

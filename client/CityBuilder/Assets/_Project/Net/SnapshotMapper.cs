@@ -143,7 +143,7 @@ namespace CityBuilder.Client.Net
             var roads = new List<RoadTile>(city.Roads.Count);
             foreach (SnapshotRoadDto road in city.Roads)
             {
-                roads.Add(new RoadTile(road.X, road.Y, road.Level));
+                roads.Add(new RoadTile(road.X, road.Y, road.Level, road.Kind == RoadKindDto.Bridge));
             }
 
             int highestTripId = 0;
