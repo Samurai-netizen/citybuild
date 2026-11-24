@@ -74,8 +74,8 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
 
     /// <summary>
     /// Each rule refuses with its code and status, and a refusal with no time elapsed stores only its player event (CR-0009): the city, its
-    /// stock, ledger and receipts are as they were after the commands before it. The commands before it set the city up (a tile taken, both builders busy,
-    /// the one scriptorium a city may have). The starter's 1000 coins outlast what two builders can place, so the coins are short in
+    /// stock, ledger and receipts are as they were after the commands before it. The commands before it set the city up (a tile taken, both builders busy and
+    /// the builder queue full (CR-0013), the one scriptorium a city may have). The starter's 1000 coins outlast what the builders and the queue can take, so the coins are short in
     /// <see cref="Post_CoinsShort_Is422InsufficientResourceAndStoresOnlyItsEvent"/>.
     /// </summary>
     /// <param name="before">The placements that succeed first, as <c>type x y</c>.</param>
@@ -89,7 +89,7 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
     [InlineData(new string[0], "trading_post", 0, 0, HttpStatusCode.UnprocessableEntity, "BUILDING_LOCKED")]
     [InlineData(new string[0], "house", 8, 0, HttpStatusCode.UnprocessableEntity, "OUT_OF_BOUNDS")]
     [InlineData(new[] { "woodcutter 2 3" }, "house", 2, 3, HttpStatusCode.Conflict, "TILE_OCCUPIED")]
-    [InlineData(new[] { "house 0 0", "house 1 0" }, "house", 2, 0, HttpStatusCode.Conflict, "NO_FREE_BUILDER")]
+    [InlineData(new[] { "house 0 0", "house 1 0", "house 2 0", "house 3 0" }, "house", 4, 0, HttpStatusCode.Conflict, "NO_FREE_BUILDER")]
     [InlineData(new[] { "scriptorium 0 0" }, "scriptorium", 1, 0, HttpStatusCode.UnprocessableEntity, "BUILDING_LIMIT")]
     public async Task Post_RuleRefuses_AnswersItsCodeAndStoresOnlyItsEvent(string[] before, string typeId, int x, int y, HttpStatusCode status, string code)
     {
@@ -205,32 +205,36 @@ public sealed class PlaceBuildingDatabaseTests(PostgresServer server) : Postgres
     }
 
     /// <summary>
-    /// The settlement runs before the mutation: two houses (30 s) take both builders at clock 0; a second before they end a third placement is
-    /// <c>NO_FREE_BUILDER</c>, and at second 30 the settle completes both houses first, so the same placement gets a builder. The response
-    /// reports the two completions, and the stored city has the two houses <c>Idle</c> and the woodcutter constructing from clock 30.
+    /// The settlement runs before the mutation: four houses (30 s) at clock 0 take both builders and both places of the builder queue
+    /// (CR-0013); a second before the first two end a fifth placement is <c>NO_FREE_BUILDER</c>, and at second 30 the settle completes both
+    /// houses first and starts the two queued ones, so the same placement gets the freed place in the queue. The response reports the two
+    /// completions, and the stored city has the two houses <c>Idle</c>, the next two constructing from clock 30 and the woodcutter queued.
     /// </summary>
     [Fact]
-    public async Task Post_AfterAConstructionEndedInTheAbsence_UsesTheFreedBuilder()
+    public async Task Post_AfterAConstructionEndedInTheAbsence_UsesTheFreedQueuePlace()
     {
         (Guid player, _) = await StoreStarterAsync("builder");
-        await PlaceAsync(player, Guid.CreateVersion7(), "house", 0, 0);
-        await PlaceAsync(player, Guid.CreateVersion7(), "house", 1, 0);
+        for (int x = 0; x < 4; x++)
+        {
+            await PlaceAsync(player, Guid.CreateVersion7(), "house", x, 0);
+        }
+
         Factory.Clock.Advance(TimeSpan.FromSeconds(29));
-        ApiResponse tooEarly = await PlaceAsync(player, Guid.CreateVersion7(), "woodcutter", 2, 0);
+        ApiResponse tooEarly = await PlaceAsync(player, Guid.CreateVersion7(), "woodcutter", 4, 0);
         Factory.Clock.Advance(TimeSpan.FromSeconds(1));
 
-        ApiResponse response = await PlaceAsync(player, _requestId, "woodcutter", 2, 0);
+        ApiResponse response = await PlaceAsync(player, _requestId, "woodcutter", 4, 0);
 
         Assert.Equal("NO_FREE_BUILDER", (string)tooEarly.Json()["code"]!);
         Assert.Equal(HttpStatusCode.OK, response.Status);
         JsonNode snapshot = response.Json();
         Assert.Equal((1L, "[1,2]"), ((long)snapshot["settlement"]!["elapsedSeconds"]!, snapshot["settlement"]!["completedBuildings"]!.ToJsonString()));
-        Assert.Equal("""{"slots":2,"busy":1,"queued":0,"queueLength":0}""", snapshot["city"]!["builders"]!.ToJsonString());
+        Assert.Equal("""{"slots":2,"busy":2,"queued":1,"queueLength":2}""", snapshot["city"]!["builders"]!.ToJsonString());
 
         await using CityBuilderDbContext db = Database.CreateContext();
         List<CityBuildingRow> buildings = await db.CityBuildings.AsNoTracking().OrderBy(row => row.BuildingId).ToListAsync(TestContext.Current.CancellationToken);
         Assert.Equal(
-            ["1 house Idle", "2 house Idle", "3 woodcutter Constructing 30-90"],
+            ["1 house Idle", "2 house Idle", "3 house Constructing 30-60", "4 house Constructing 30-60", "5 woodcutter Queued"],
             buildings.Select(row => $"{row.BuildingId} {row.TypeId} {row.Phase}" + (row.Phase == "Constructing" ? $" {row.PhaseStartedAt}-{row.PhaseEndsAt}" : string.Empty)));
     }
 

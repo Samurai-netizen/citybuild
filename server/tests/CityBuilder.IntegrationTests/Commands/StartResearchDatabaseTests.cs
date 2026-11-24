@@ -119,8 +119,8 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
     /// Once a prerequisite is completed its follower can start: Storehouses after Trade Charter (600 s) pays its 300 coins as one
     /// <c>COST_RESEARCH</c> row with the request id as reference and waits at the scriptorium for its 50 logs (no start or end yet). The four
     /// workers bring them from the warehouse next door, 5 s away, 10 a load (CR-0008 D21): 40 at 605, and the first worker's second load of
-    /// the last 10 at 615, so the research runs from 615 to 3315 (CR-0008); when it completes the warehouse's limits of logs and planks rise
-    /// from 100 to 140.
+    /// the last 10 at 615, so the research runs from 615 to 3315 (CR-0008); when it completes the warehouse's limit of each of its seven goods
+    /// rises from 100 to 140.
     /// </summary>
     [Fact]
     public async Task Post_AfterItsPrerequisite_WaitsForItsGoodsAndRaisesTheLimitsWhenItCompletes()
@@ -150,11 +150,11 @@ public sealed class StartResearchDatabaseTests(PostgresServer server) : Postgres
             (await LedgerAsync(Database, city)).Where(row => row.RefId == _requestId.ToString()).Select(Line));
         Assert.Equal(50, (await LedgerAsync(Database, city)).Where(row => row.Reason == "SETTLEMENT_DELIVERED").Sum(row => -row.Delta));
         Assert.Equal("coins 550", await StockAsync(Database, city));
-        Assert.Equal("""{"logs":100,"planks":100}""", running["city"]!["buildings"]![2]!["storeLimits"]!.ToJsonString());
+        Assert.Equal("""{"bread":100,"cut_stone":100,"flour":100,"grain":100,"logs":100,"planks":100,"stone":100}""", running["city"]!["buildings"]![2]!["storeLimits"]!.ToJsonString());
 
         Factory.Clock.Advance(TimeSpan.FromSeconds(2700));
         JsonNode completed = (await ApiClient.GetAsync(Factory, "/api/v1/city", player)).Json();
-        Assert.Equal("""{"logs":140,"planks":140}""", completed["city"]!["buildings"]![2]!["storeLimits"]!.ToJsonString());
+        Assert.Equal("""{"bread":140,"cut_stone":140,"flour":140,"grain":140,"logs":140,"planks":140,"stone":140}""", completed["city"]!["buildings"]![2]!["storeLimits"]!.ToJsonString());
         Assert.Equal("none, completed: storehouses 3315, trade_charter 600", await ResearchAsync(city));
     }
 

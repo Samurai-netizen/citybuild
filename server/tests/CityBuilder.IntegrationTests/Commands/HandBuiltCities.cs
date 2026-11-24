@@ -28,7 +28,7 @@ internal static class HandBuiltCities
     /// <param name="factory">The server on the test's database.</param>
     /// <param name="name">The player's dev name.</param>
     /// <param name="coins">The coins in the purse; goods are in the buildings' stores (CR-0008).</param>
-    /// <param name="buildings">The buildings, with ids from 1 up.</param>
+    /// <param name="buildings">The buildings, with ids from 1 up; queued ones (CR-0013) with orders from 1 up.</param>
     /// <returns>The player and their city.</returns>
     public static Task<(Guid Player, Guid City)> StoreCityAsync(PostgresApiFactory factory, string name, long coins, params Building[] buildings) =>
         StoreCityWithRoadsAsync(factory, name, coins, [], buildings);
@@ -40,7 +40,7 @@ internal static class HandBuiltCities
     /// <param name="name">The player's dev name.</param>
     /// <param name="coins">The coins in the purse; goods are in the buildings' stores (CR-0008).</param>
     /// <param name="roads">The roads.</param>
-    /// <param name="buildings">The buildings, with ids from 1 up.</param>
+    /// <param name="buildings">The buildings, with ids from 1 up; queued ones (CR-0013) with orders from 1 up.</param>
     /// <returns>The player and their city.</returns>
     public static async Task<(Guid Player, Guid City)> StoreCityWithRoadsAsync(
         PostgresApiFactory factory, string name, long coins, RoadTile[] roads, params Building[] buildings)
@@ -54,7 +54,8 @@ internal static class HandBuiltCities
             buildings,
             [],
             activeResearch: null,
-            roads);
+            roads,
+            nextQueuedOrder: buildings.Select(building => building.QueuedOrder).DefaultIfEmpty(0).Max() + 1);
         Simulator.Advance(state, content, 0);
         (Guid player, Guid city) = (Guid.NewGuid(), Guid.NewGuid());
         var aggregate = new CityAggregate(city, player, state, [], PostgresApiFactory.Start.ToUnixTimeSeconds(), 0, content.ContentVersion);
@@ -69,6 +70,14 @@ internal static class HandBuiltCities
     /// <returns>The building.</returns>
     public static Building House(int id, int level = 1, int x = 0) =>
         new(id, new BuildingTypeId("house"), x, 0, level, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
+
+    /// <summary>A house waiting in the builder queue as order <paramref name="order"/> (CR-0013) on row 2: level 1, no workers, no timer.</summary>
+    /// <param name="id">Its id.</param>
+    /// <param name="order">Its place in the queue, from 1.</param>
+    /// <param name="x">Its column.</param>
+    /// <returns>The building.</returns>
+    public static Building QueuedHouse(int id, int order, int x = 0) =>
+        new(id, new BuildingTypeId("house"), x, 2, 1, 0, BuildingPhase.Queued, 0, null, 0, 0, 0, 0, queuedOrder: order);
 
     /// <summary>
     /// A woodcutter on row 1 (60 labor a log at both levels; max workers 2 at level 1, 4 at level 2): <c>Constructing</c> from 0 to its 60
