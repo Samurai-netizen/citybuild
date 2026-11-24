@@ -194,6 +194,36 @@ public sealed class BlockedWalkerTests
         Assert.Equal(TripLeg.BlockedAtTarget, new Trip(1, 2, 3, _logs, 5, 1000, 1100, leg: TripLeg.BlockedAtTarget).Leg);
     }
 
+    /// <summary>
+    /// Cancelling the line a blocked courier waits to walk on stops it, as it stops a walking one: its load goes back and it stands at its
+    /// station.
+    /// </summary>
+    [Fact]
+    public void CancelDelivery_TheLineABlockedCourierWaitsFor_StandsItAtItsStation()
+    {
+        CityState city = Town(
+            station: true,
+            lines: [Line(1, 6, 1, 2, 3, "logs", 10)],
+            couriers: [new Courier(6, 1, CourierState.Blocked, 2, null, null, 600, [new CourierLoad(_logs, 2, 10)], waitsAt: 2)],
+            woodcutterLogs: 0);
+
+        RulesAssert.Ok(CourierRules.CancelDelivery(city, _content, 6, 1, 1));
+
+        Courier courier = Assert.Single(city.Couriers);
+        Assert.Equal((CourierState.AtStation, 0), (courier.State, courier.WaitsAt));
+        Assert.Equal(10, city.Buildings[1].GetStock(_logs));
+        Assert.Empty(courier.Loads);
+    }
+
+    /// <summary>A blocked courier is restored only waiting at a building of the city, for a stop its route has (or home).</summary>
+    [Fact]
+    public void City_BlockedCourierAtAnUnknownBuildingOrForAMissingStop_IsRefused()
+    {
+        Assert.Throws<ArgumentException>(() => Town(station: true, route: true, couriers: [new Courier(6, 1, CourierState.Blocked, 2, null, null, 600, waitsAt: 9)]));
+        Assert.Throws<ArgumentException>(() => Town(station: true, route: true, couriers: [new Courier(6, 1, CourierState.Blocked, 3, null, null, 600, waitsAt: 2)]));
+        Assert.Equal(CourierState.Blocked, Town(station: true, route: true, couriers: [new Courier(6, 1, CourierState.Blocked, 0, null, null, 600, waitsAt: 3)]).Couriers[0].State);
+    }
+
     /// <summary>Places the bridge at (12, 5) and runs the zero-length advance that ends every city request.</summary>
     private static void PlaceBridge(CityState city)
     {

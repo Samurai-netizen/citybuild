@@ -130,6 +130,7 @@ namespace CityBuilder.Simulation.State
             }
 
             State = CourierState.Walking;
+            WaitsAt = 0;
             ToStop = toStop;
             DepartedAt = departedAt;
             ArrivesAt = arrivesAt;
@@ -166,6 +167,7 @@ namespace CityBuilder.Simulation.State
             }
 
             State = CourierState.Returning;
+            WaitsAt = 0;
             ToStop = 0;
             DepartedAt = departedAt;
             ArrivesAt = arrivesAt;
@@ -175,6 +177,7 @@ namespace CityBuilder.Simulation.State
         internal void StandAtStation()
         {
             State = CourierState.AtStation;
+            WaitsAt = 0;
             ToStop = 0;
             DepartedAt = null;
             ArrivesAt = null;
@@ -184,7 +187,26 @@ namespace CityBuilder.Simulation.State
         internal void Rest()
         {
             State = CourierState.Resting;
+            WaitsAt = 0;
             ToStop = 0;
+            DepartedAt = null;
+            ArrivesAt = null;
+        }
+
+        /// <summary>
+        /// No walk joins building <paramref name="waitsAt"/> to where it goes next (M1-03 decision 4): it waits there with its load, to walk to
+        /// stop <paramref name="toStop"/> (0: home) from the first second a path exists.
+        /// </summary>
+        internal void Block(int waitsAt, int toStop)
+        {
+            if (waitsAt < 1 || toStop < 0)
+            {
+                throw new InvalidOperationException(FormattableString.Invariant($"Courier {StationId}/{Slot}: can't wait at building {waitsAt} for stop {toStop}."));
+            }
+
+            State = CourierState.Blocked;
+            WaitsAt = waitsAt;
+            ToStop = toStop;
             DepartedAt = null;
             ArrivesAt = null;
         }

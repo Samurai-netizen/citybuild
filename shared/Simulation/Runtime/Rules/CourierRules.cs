@@ -229,7 +229,8 @@ namespace CityBuilder.Simulation.Rules
 
             bool first = index == city.FirstLineIndex(stationId, slot);
             city.RemoveLineAt(index);
-            if (first && courier.State == CourierState.Walking)
+            // A courier waiting for a path to that line's stop (M1-03) stops like one walking there; one waiting to walk home keeps waiting.
+            if (first && (courier.State == CourierState.Walking || (courier.State == CourierState.Blocked && courier.ToStop >= 1)))
             {
                 StopWorking(city, content, courier);
             }

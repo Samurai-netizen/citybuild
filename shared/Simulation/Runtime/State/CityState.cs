@@ -139,10 +139,17 @@ namespace CityBuilder.Simulation.State
 
                 bool onRoute = TryGetRoute(courier.StationId, courier.Slot, out Route? route) && courier.ToStop <= route.Stops.Count;
                 bool onLines = route is null && FirstLineIndex(courier.StationId, courier.Slot) >= 0 && courier.ToStop <= 2;
-                if (courier.State == CourierState.Walking && !onRoute && !onLines)
+                bool toStop = courier.State == CourierState.Walking || (courier.State == CourierState.Blocked && courier.ToStop >= 1);
+                if (toStop && !onRoute && !onLines)
                 {
                     throw new ArgumentException(
                         FormattableString.Invariant($"Courier {courier.StationId}/{courier.Slot} walks to stop {courier.ToStop}, which neither its slot's route nor its first delivery line has."), nameof(couriers));
+                }
+
+                if (courier.State == CourierState.Blocked)
+                {
+                    // A blocked courier waits at a building of the city (M1-03).
+                    RequireBuilding(courier.WaitsAt, nameof(couriers));
                 }
             }
 
