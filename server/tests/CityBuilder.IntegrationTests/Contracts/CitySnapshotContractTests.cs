@@ -96,7 +96,7 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
         {
             JsonShape.AssertObject(
                 couriers[index],
-                "stationId:int slot:int state:string toStop:int departedAt:int? arrivesAt:int? stamina:int load:array",
+                "stationId:int slot:int state:string toStop:int departedAt:int? arrivesAt:int? stamina:int load:array waitsAt:int?",
                 $"$.city.couriers[{index}]");
             JsonShape.AssertObject(couriers[index]!["load"]![0], "itemId:string fromId:int quantity:int", $"$.city.couriers[{index}].load[0]");
         }
@@ -194,6 +194,53 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
 
         Assert.Equal("""["A","C"]""", city["openAreas"]!.ToJsonString());
         Assert.Equal("""[{"x":11,"y":5,"level":1,"kind":"road"},{"x":12,"y":5,"level":1,"kind":"bridge"}]""", city["roads"]!.ToJsonString());
+    }
+
+    /// <summary>
+    /// Walkers that wait for a path (M1-03 decision 4) show where they wait: a courier <c>Blocked</c> with the building in <c>waitsAt</c> (null
+    /// for every other courier) and <c>toStop</c> 0 when it waits to walk home; a delivery's leg <c>BlockedAtTarget</c> or
+    /// <c>BlockedAtSource</c>, with the times of the walk that brought it there. No bridge crosses the river, so they stay blocked.
+    /// </summary>
+    [Fact]
+    public async Task Get_CityWithWalkersWithoutAPath_ShowsThemBlockedWhereTheyWait()
+    {
+        Building[] buildings =
+        [
+            new(1, new BuildingTypeId("house"), 5, 5, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
+            new(2, new BuildingTypeId("woodcutter"), 7, 9, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, [new(Logs, 20)]),
+            new(3, new BuildingTypeId("warehouse"), 14, 3, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, [new(Logs, 10)]),
+            new(4, new BuildingTypeId("courier_station"), 4, 6, 1, 1, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
+        ];
+        var state = new CityState(
+            clock: 1000,
+            era: 1,
+            nextBuildingId: 5,
+            purse: 10,
+            buildings,
+            [new ResearchId("bridge_building"), new ResearchId("open_fields"), new ResearchId("stone_cutting"), new ResearchId("trade_charter")],
+            activeResearch: null,
+            trips: [new Trip(1, 2, 3, Logs, 0, 900, 950, remaining: 20, leg: TripLeg.BlockedAtTarget)],
+            nextTripId: 2,
+            couriers: [new Courier(4, 1, CourierState.Blocked, 0, null, null, 600, [new CourierLoad(Logs, 2, 5)], waitsAt: 3)]);
+        var store = new FakeCityStore();
+        store.Add(new CityAggregate(
+            Guid.NewGuid(),
+            _playerId,
+            state,
+            state.CompletedResearch.Select(id => new KeyValuePair<ResearchId, long>(id, 0)),
+            _settledAt.ToUnixTimeSeconds(),
+            stateVersion: 1,
+            "era1-2"));
+        await using WebApplicationFactory<Program> server = store.Serve(factory, new FakeTimeProvider(_settledAt));
+
+        JsonNode city = (await ApiClient.GetAsync(server, "/api/v1/city", _playerId)).Json()["city"]!;
+
+        Assert.Equal(
+            """[{"id":1,"sourceId":2,"targetId":3,"itemId":"logs","quantity":0,"departedAt":900,"arrivesAt":950,"remaining":20,"leg":"BlockedAtTarget"}]""",
+            city["trips"]!.ToJsonString());
+        Assert.Equal(
+            """[{"stationId":4,"slot":1,"state":"Blocked","toStop":0,"departedAt":null,"arrivesAt":null,"stamina":600,"load":[{"itemId":"logs","fromId":2,"quantity":5}],"waitsAt":3}]""",
+            city["couriers"]!.ToJsonString());
     }
 
     /// <summary>
@@ -479,9 +526,9 @@ public sealed class CitySnapshotContractTests(ApiFactory factory) : IClassFixtur
             "roads": [{"x": 1, "y": 1, "level": 2, "kind": "road"}, {"x": 2, "y": 1, "level": 1, "kind": "road"}, {"x": 2, "y": 2, "level": 1, "kind": "road"}],
             "trips": [{"id": 1, "sourceId": 9, "targetId": 4, "itemId": "planks", "quantity": 2, "departedAt": 995, "arrivesAt": 1012, "remaining": 0, "leg": "ToTarget"}],
             "couriers": [
-              {"stationId": 10, "slot": 1, "state": "Walking", "toStop": 2, "departedAt": 995, "arrivesAt": 1020, "stamina": 900, "load": [{"itemId": "planks", "fromId": 9, "quantity": 1}]},
-              {"stationId": 10, "slot": 2, "state": "Resting", "toStop": 0, "departedAt": null, "arrivesAt": null, "stamina": 0, "load": [{"itemId": "logs", "fromId": 2, "quantity": 2}]},
-              {"stationId": 11, "slot": 1, "state": "Resting", "toStop": 0, "departedAt": null, "arrivesAt": null, "stamina": 0, "load": [{"itemId": "logs", "fromId": 5, "quantity": 3}]}
+              {"stationId": 10, "slot": 1, "state": "Walking", "toStop": 2, "departedAt": 995, "arrivesAt": 1020, "stamina": 900, "load": [{"itemId": "planks", "fromId": 9, "quantity": 1}], "waitsAt": null},
+              {"stationId": 10, "slot": 2, "state": "Resting", "toStop": 0, "departedAt": null, "arrivesAt": null, "stamina": 0, "load": [{"itemId": "logs", "fromId": 2, "quantity": 2}], "waitsAt": null},
+              {"stationId": 11, "slot": 1, "state": "Resting", "toStop": 0, "departedAt": null, "arrivesAt": null, "stamina": 0, "load": [{"itemId": "logs", "fromId": 5, "quantity": 3}], "waitsAt": null}
             ],
             "routes": [
               {"stationId": 10, "slot": 1, "stops": [{"buildingId": 9, "actions": [{"kind": "take", "itemId": "planks", "amount": "half"}]}, {"buildingId": 4, "actions": [{"kind": "put", "itemId": "planks", "amount": "all"}]}]},
