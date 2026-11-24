@@ -29,7 +29,7 @@ public sealed class ContentStartupTests(ApiFactory factory) : IClassFixture<ApiF
     {
         IContentProvider provider = factory.Services.GetRequiredService<IContentProvider>();
 
-        Assert.Equal("era1-1", provider.Content.ContentVersion);
+        Assert.Equal("era1-2", provider.Content.ContentVersion);
         Assert.Equal(ContentFileLoader.Load(ContentFiles.RealEra1ContentPath).ContentVersion, provider.Content.ContentVersion);
         // One load for the whole server: every request sees the same instance.
         Assert.Same(provider, factory.Services.GetRequiredService<IContentProvider>());

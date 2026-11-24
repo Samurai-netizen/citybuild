@@ -9,7 +9,7 @@ internal static class ContentFiles
     public static string RealMvpContentPath { get; } = Path.Combine(AppContext.BaseDirectory, "content", "mvp-content.json");
 
     /// <summary>
-    /// The copy of <c>server/content/era1-content.json</c> (content version <c>era1-1</c>, M1-02) in this project's output: the server's
+    /// The copy of <c>server/content/era1-content.json</c> (content version <c>era1-2</c>, M1-03) in this project's output: the server's
     /// default content since M1-02.
     /// </summary>
     public static string RealEra1ContentPath { get; } = Path.Combine(AppContext.BaseDirectory, "content", "era1-content.json");

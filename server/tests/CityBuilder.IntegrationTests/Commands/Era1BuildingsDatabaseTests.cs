@@ -50,7 +50,7 @@ public sealed class Era1BuildingsDatabaseTests(PostgresServer server) : Postgres
         JsonNode snapshot = await player.GetCityAsync();
 
         JsonNode city = snapshot["city"]!;
-        Assert.Equal("era1-1", (string)snapshot["contentVersion"]!);
+        Assert.Equal("era1-2", (string)snapshot["contentVersion"]!);
         Assert.Equal((1, 1000L, 0L), ((int)city["era"]!, (long)city["purse"]!, (long)city["clock"]!));
         Assert.All(city["totals"]!.AsObject().Where(total => total.Key != "coins"), total => Assert.Equal(0, (long)total.Value!));
         Assert.Empty(city["buildings"]!.AsArray());
