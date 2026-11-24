@@ -128,6 +128,7 @@ internal static partial class EraOneLoop
         }),
         PauseAct pause => ("set-paused", new { requestId, buildingId = pause.BuildingId, paused = pause.Paused }),
         ReenergizeAct => ("reenergize-couriers", new { requestId }),
+        RoadAct road => ("place-roads", new { requestId, tiles = new[] { new { x = road.X, y = road.Y } } }),
         _ => throw new ArgumentOutOfRangeException(nameof(act), act, "Not a command."),
     };
 
@@ -185,6 +186,7 @@ internal static partial class EraOneLoop
         ]),
         PauseAct pause => CityRules.SetPaused(city, content, pause.BuildingId, pause.Paused),
         ReenergizeAct => CourierRules.ReenergizeCouriers(city, Content),
+        RoadAct road => RoadRules.PlaceRoads(city, content, [(road.X, road.Y)]),
         _ => throw new ArgumentOutOfRangeException(nameof(act), act, "Not a command."),
     };
 
@@ -246,6 +248,11 @@ internal sealed record RouteAct(int StationId, int Slot, int FromId, int ToId, s
 /// <param name="BuildingId">The building.</param>
 /// <param name="Paused">Whether it is paused afterwards.</param>
 internal sealed record PauseAct(int BuildingId, bool Paused) : LoopAct;
+
+/// <summary>Place a road on one tile; on water it is a bridge (M1-03, the Era I charter player's crossing).</summary>
+/// <param name="X">The tile's column.</param>
+/// <param name="Y">The tile's row.</param>
+internal sealed record RoadAct(int X, int Y) : LoopAct;
 
 /// <summary>Refill every courier's stamina.</summary>
 internal sealed record ReenergizeAct : LoopAct;

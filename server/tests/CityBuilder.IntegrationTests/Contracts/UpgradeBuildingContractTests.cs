@@ -103,7 +103,7 @@ public sealed class UpgradeBuildingContractTests(ApiFactory factory) : IClassFix
     /// <param name="body">The second body.</param>
     [Theory]
     [InlineData(_path, $$"""{"requestId":"{{_requestId}}","buildingId":2}""")]
-    [InlineData("/api/v1/commands/place-building", $$"""{"requestId":"{{_requestId}}","buildingTypeId":"woodcutter","x":2,"y":3}""")]
+    [InlineData("/api/v1/commands/place-building", $$"""{"requestId":"{{_requestId}}","buildingTypeId":"woodcutter","x":4,"y":3}""")]
     public async Task Post_SameRequestIdWithAnotherPayload_Is409IdempotencyConflict(string path, string body)
     {
         (FakeCityStore store, WebApplicationFactory<Program> server) = Serve(_settledAt);

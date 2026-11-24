@@ -27,8 +27,8 @@ public sealed class CommandLogTests(ApiFactory factory) : IClassFixture<ApiFacto
     /// <summary>The instant the fake clock starts at, which is also when the cities were last settled.</summary>
     private static readonly DateTimeOffset _start = new(2026, 10, 29, 12, 0, 0, TimeSpan.Zero);
 
-    /// <summary>A woodcutter on a free tile of the starter city: accepted.</summary>
-    private static readonly string _placeWoodcutter = $$"""{"requestId":"{{_requestId}}","buildingTypeId":"woodcutter","x":2,"y":3}""";
+    /// <summary>A woodcutter on a free tile of the starter city with forest beside it: accepted.</summary>
+    private static readonly string _placeWoodcutter = $$"""{"requestId":"{{_requestId}}","buildingTypeId":"woodcutter","x":4,"y":3}""";
 
     /// <summary>The server's clock in a test; it starts at <see cref="_start"/>.</summary>
     private readonly FakeTimeProvider _clock = new(_start);
@@ -99,7 +99,7 @@ public sealed class CommandLogTests(ApiFactory factory) : IClassFixture<ApiFacto
         await using WebApplicationFactory<Program> server = Serve(logs);
 
         await ApiClient.PostAsync(
-            server, "/api/v1/commands/place-building", _playerId, $$"""{"requestId":"{{Guid.Empty}}","buildingTypeId":"woodcutter","x":2,"y":3}""");
+            server, "/api/v1/commands/place-building", _playerId, $$"""{"requestId":"{{Guid.Empty}}","buildingTypeId":"woodcutter","x":4,"y":3}""");
 
         Assert.Equal("INVALID_ARGUMENT", Assert.Single(logs.Events(5001)).Values["Code"]);
         Assert.Empty(logs.Events(6000));
@@ -119,7 +119,7 @@ public sealed class CommandLogTests(ApiFactory factory) : IClassFixture<ApiFacto
 
         await ApiClient.PostAsync(server, "/api/v1/commands/place-building", _playerId, _placeWoodcutter);
         await ApiClient.PostAsync(
-            server, "/api/v1/commands/place-building", _playerId, $$"""{"requestId":"{{_requestId}}","buildingTypeId":"woodcutter","x":3,"y":3}""");
+            server, "/api/v1/commands/place-building", _playerId, $$"""{"requestId":"{{_requestId}}","buildingTypeId":"woodcutter","x":4,"y":4}""");
 
         CapturingLogger.Entry replayed = Assert.Single(logs.Events(5002));
         Assert.Equal(("place-building", (object?)_requestId, (object?)_playerId), (replayed.Values["Command"], replayed.Values["RequestId"], replayed.Values["PlayerId"]));
