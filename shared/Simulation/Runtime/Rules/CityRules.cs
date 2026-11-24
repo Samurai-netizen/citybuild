@@ -28,7 +28,8 @@ namespace CityBuilder.Simulation.Rules
         /// <param name="y">The tile row.</param>
         /// <returns>
         /// Ok, or the first failed check: <see cref="MutationErrorCode.UnknownBuildingType"/>, <see cref="MutationErrorCode.BuildingLocked"/>
-        /// (a later era than the city's, or not unlocked yet), <see cref="MutationErrorCode.OutOfBounds"/>, <see cref="MutationErrorCode.TileOccupied"/>
+        /// (a later era than the city's, or not unlocked yet), <see cref="MutationErrorCode.OutOfBounds"/>, the map's rules (M1-03:
+        /// <see cref="MutationErrorCode.TerrainBlocked"/>, the site's <c>Needs…</c>, <see cref="MutationErrorCode.LandClosed"/>), <see cref="MutationErrorCode.TileOccupied"/>
         /// (a building or a road), <see cref="MutationErrorCode.BuildingLimit"/> (the type's <c>maxPerCity</c>),
         /// <see cref="MutationErrorCode.NoFreeBuilder"/> (every builder busy and the queue full), <see cref="MutationErrorCode.InsufficientResource"/> (the cost's coins).
         /// </returns>
@@ -51,6 +52,17 @@ namespace CityBuilder.Simulation.Rules
             if (x < 0 || y < 0 || x >= content.Rules.GridWidth || y >= content.Rules.GridHeight)
             {
                 return MutationResult.Rejected(MutationErrorCode.OutOfBounds);
+            }
+
+            MutationErrorCode? siteError = CityQueries.SiteError(content, definition, x, y);
+            if (siteError.HasValue)
+            {
+                return MutationResult.Rejected(siteError.Value);
+            }
+
+            if (!CityQueries.IsLandOpen(city, content, x, y))
+            {
+                return MutationResult.Rejected(MutationErrorCode.LandClosed);
             }
 
             if (IsTileTaken(city, x, y))
