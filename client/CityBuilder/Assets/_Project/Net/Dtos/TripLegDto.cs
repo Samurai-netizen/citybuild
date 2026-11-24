@@ -21,5 +21,13 @@ namespace CityBuilder.Client.Net
         /// <summary>At the source with goods its full store can't take yet; it puts them back as room appears (M0-C-3).</summary>
         [EnumMember(Value = "Waiting")]
         Waiting,
+
+        /// <summary>At the source for a path to the target, carrying nothing; the goods stay in the source's store (M1-03).</summary>
+        [EnumMember(Value = "BlockedAtSource")]
+        BlockedAtSource,
+
+        /// <summary>At the target for a path back to the source, with what it carries back (M1-03).</summary>
+        [EnumMember(Value = "BlockedAtTarget")]
+        BlockedAtTarget,
     }
 }

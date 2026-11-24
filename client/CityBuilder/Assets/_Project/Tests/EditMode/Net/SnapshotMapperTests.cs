@@ -147,6 +147,29 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That((city.Couriers[1].Slot, city.Couriers[1].State), Is.EqualTo((2, CourierState.AtStation)));
         }
 
+        /// <summary>
+        /// A courier waiting for a path home (M1-03) keeps its state, stop 0 (home) and the building it waits at; a blocked trip leg
+        /// keeps its name.
+        /// </summary>
+        [Test]
+        public void ToSnapshot_BlockedCourierAndTrip_AreKept()
+        {
+            string json = Fixtures.Read("snapshot-command-set-route.json")
+                .Replace(
+                    "\"state\":\"AtStation\",\"toStop\":0,\"departedAt\":null,\"arrivesAt\":null,\"stamina\":14400,\"load\":[],\"waitsAt\":null",
+                    "\"state\":\"Blocked\",\"toStop\":0,\"departedAt\":null,\"arrivesAt\":null,\"stamina\":14400,\"load\":[],\"waitsAt\":2")
+                .Replace(
+                    "\"trips\":[]",
+                    "\"trips\":[{\"id\":1,\"sourceId\":2,\"targetId\":4,\"itemId\":\"logs\",\"quantity\":0,\"departedAt\":800,\"arrivesAt\":810,\"remaining\":5,\"leg\":\"BlockedAtSource\"}]");
+            ApiResult<CitySnapshot> mapped = SnapshotMapper.ToSnapshot(new ApiJson().Deserialize<CitySnapshotDto>(json)!);
+
+            Assert.That(mapped.IsSuccess, Is.True, mapped.Error?.ToString());
+            CityState city = mapped.Value!.CopyCity();
+            Courier blocked = city.Couriers[1];
+            Assert.That((blocked.State, blocked.ToStop, blocked.WaitsAt), Is.EqualTo((CourierState.Blocked, 0, 2)));
+            Assert.That(city.Trips.Single().Leg, Is.EqualTo(TripLeg.BlockedAtSource));
+        }
+
         /// <summary>The running research and the completed list come along.</summary>
         [Test]
         public void ToSnapshot_Research_IsKept()

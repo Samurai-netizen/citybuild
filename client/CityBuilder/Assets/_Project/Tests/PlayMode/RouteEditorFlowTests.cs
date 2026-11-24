@@ -425,7 +425,7 @@ namespace CityBuilder.Client.Tests.PlayMode
             };
             var couriers = new List<SnapshotCourierDto>
             {
-                new SnapshotCourierDto(StationId, 1, CourierStateDto.AtStation, 0, null, null, 600, new List<SnapshotCourierLoadDto>()),
+                new SnapshotCourierDto(StationId, 1, CourierStateDto.AtStation, 0, null, null, 600, new List<SnapshotCourierLoadDto>(), null),
             };
             var routes = new List<SnapshotRouteDto>();
             if (withRoute)

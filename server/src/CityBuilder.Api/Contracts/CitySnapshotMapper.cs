@@ -94,7 +94,8 @@ public static class CitySnapshotMapper
             courier.ArrivesAt,
             courier.Stamina,
             courier.Loads.OrderBy(part => part.Item.Value, StringComparer.Ordinal).ThenBy(part => part.FromId)
-                .Select(part => new SnapshotCourierLoad(part.Item.Value, part.FromId, part.Quantity)).ToArray());
+                .Select(part => new SnapshotCourierLoad(part.Item.Value, part.FromId, part.Quantity)).ToArray(),
+            courier.State == CourierState.Blocked ? courier.WaitsAt : null);
 
     /// <summary>The map's areas the city may use, by letter; none for content without a map (M1-03).</summary>
     /// <param name="state">The city.</param>

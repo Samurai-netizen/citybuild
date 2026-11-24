@@ -15,6 +15,7 @@ namespace CityBuilder.Api.Contracts;
 /// <param name="ArrivesAt">The city-clock second the current leg ends, JSON <c>arrivesAt</c>: a delivery at the target or a pickup at the source;
 /// while waiting, the end of the walk back.</param>
 /// <param name="Remaining">How many are still to be fetched from the source by later loads, JSON <c>remaining</c>.</param>
-/// <param name="Leg">Which way the worker walks, JSON <c>leg</c>: <c>ToTarget</c>, <c>ToSource</c>, or <c>Waiting</c> at the source with goods
-/// its full store can't take yet (M0-C-3).</param>
+/// <param name="Leg">Which way the worker walks, JSON <c>leg</c>: <c>ToTarget</c>, <c>ToSource</c>, <c>Waiting</c> at the source with goods
+/// its full store can't take yet (M0-C-3), or waiting for a path (M1-03): <c>BlockedAtSource</c> (carrying nothing, the goods still in the
+/// source's store) or <c>BlockedAtTarget</c> (with what it carries back); a blocked leg keeps the times of the walk that brought it there.</param>
 public sealed record SnapshotTrip(int Id, int SourceId, int TargetId, string ItemId, long Quantity, long DepartedAt, long ArrivesAt, long Remaining, string Leg);
