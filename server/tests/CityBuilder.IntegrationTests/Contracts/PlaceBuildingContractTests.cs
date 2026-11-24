@@ -24,8 +24,8 @@ public sealed class PlaceBuildingContractTests(ApiFactory factory) : IClassFixtu
     /// <summary>The request id the tests send.</summary>
     private const string _requestId = "0199a1b2-c3d4-7e5f-8a9b-00000000000a";
 
-    /// <summary>A valid body: a woodcutter (80 coins, 60 s) on a free tile of the starter city.</summary>
-    private const string _placeWoodcutter = $$"""{"requestId":"{{_requestId}}","buildingTypeId":"woodcutter","x":2,"y":3}""";
+    /// <summary>A valid body: a woodcutter (80 coins, 60 s) on a free grass tile of the starter city with forest beside it (3,3).</summary>
+    private const string _placeWoodcutter = $$"""{"requestId":"{{_requestId}}","buildingTypeId":"woodcutter","x":4,"y":3}""";
 
     /// <summary>The server second the starter city was last settled at.</summary>
     private static readonly DateTimeOffset _settledAt = new(2026, 10, 26, 12, 0, 0, TimeSpan.Zero);
@@ -55,7 +55,7 @@ public sealed class PlaceBuildingContractTests(ApiFactory factory) : IClassFixtu
         Assert.Equal("""{"bread":0,"coins":920,"cut_stone":0,"flour":0,"grain":0,"logs":0,"planks":0,"stone":0}""", snapshot["city"]!["totals"]!.ToJsonString());
         Assert.Equal("""{"slots":2,"busy":1,"queued":0,"queueLength":2}""", snapshot["city"]!["builders"]!.ToJsonString());
         Assert.Equal(
-            """[{"id":1,"typeId":"woodcutter","x":2,"y":3,"level":1,"maxLevel":2,"assignedWorkers":0,"maxWorkers":2,"phase":"Constructing",""" +
+            """[{"id":1,"typeId":"woodcutter","x":4,"y":3,"level":1,"maxLevel":2,"assignedWorkers":0,"maxWorkers":2,"phase":"Constructing",""" +
             """ "phaseStartedAt":0,"phaseEndsAt":60,"cycleLabor":0,"laborRemaining":0,"segmentStartedAt":0,"stallReason":null,""".TrimStart() +
             """ "store":{},"storeLimits":{"logs":40},"needs":{},"project":null,"paused":false,"queuePlace":null}]""".TrimStart(),
             snapshot["city"]!["buildings"]!.ToJsonString());
@@ -102,7 +102,7 @@ public sealed class PlaceBuildingContractTests(ApiFactory factory) : IClassFixtu
         await using WebApplicationFactory<Program> _ = server;
         await ApiClient.PostAsync(server, _path, _playerId, _placeWoodcutter);
 
-        ApiResponse response = await ApiClient.PostAsync(server, _path, _playerId, _placeWoodcutter.Replace("\"x\":2", "\"x\":4", StringComparison.Ordinal));
+        ApiResponse response = await ApiClient.PostAsync(server, _path, _playerId, _placeWoodcutter.Replace("\"x\":4", "\"x\":5", StringComparison.Ordinal));
 
         AssertProblem(response, HttpStatusCode.Conflict, "IDEMPOTENCY_CONFLICT", _requestId);
         Assert.Equal(1, store.SaveCount);
@@ -117,7 +117,7 @@ public sealed class PlaceBuildingContractTests(ApiFactory factory) : IClassFixtu
     [Theory]
     [InlineData($$"""{"requestId":"{{_requestId}}","buildingTypeId":"castle","x":2,"y":3}""", HttpStatusCode.UnprocessableEntity, "UNKNOWN_BUILDING_TYPE")]
     [InlineData($$"""{"requestId":"{{_requestId}}","buildingTypeId":"trading_post","x":2,"y":3}""", HttpStatusCode.UnprocessableEntity, "BUILDING_LOCKED")]
-    [InlineData($$"""{"requestId":"{{_requestId}}","buildingTypeId":"woodcutter","x":8,"y":3}""", HttpStatusCode.UnprocessableEntity, "OUT_OF_BOUNDS")]
+    [InlineData($$"""{"requestId":"{{_requestId}}","buildingTypeId":"woodcutter","x":18,"y":3}""", HttpStatusCode.UnprocessableEntity, "OUT_OF_BOUNDS")]
     public async Task Post_RuleRefuses_IsProblemWithTheRulesCode(string body, HttpStatusCode status, string code)
     {
         (FakeCityStore store, WebApplicationFactory<Program> server) = Serve(_settledAt);
