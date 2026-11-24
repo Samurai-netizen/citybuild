@@ -7,9 +7,9 @@
 ## Resume point
 - **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M1-03 The map: terrain, placement rules, land expansion · branch `task/M1-03-map-terrain` · log `docs/build-log/2026/2026-11-24-01-M1-03.md`
-- **Part / step:** A1, B and A2 done (checkpoint C3); next the full run (`quality.sh`), then part C (client)
+- **Part / step:** A1, B, A2 and the full run after A done; next part C (client)
 - **Last completed:** A2: stuck walkers (courier `Blocked` + `waitsAt`, trip legs `BlockedAtSource`/`BlockedAtTarget`), migration `BlockedWalkers`, snapshot, 04/05/06.
-- **Next step:** `bash scripts/dev/quality.sh` once; then part C from the build log's test list (client terrain, hints, camera, mist, AR-M1-03).
+- **Next step:** part C from the build log's test list (client terrain, hints, camera, mist, AR-M1-03); at the finish close CHANGELOG and the module pages.
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. The hosting provider (in M1-13).
 - **Known broken / do not touch:**   the owner's local Unity edits (`client/CityBuilder/Assets/Settings/*.asset`, `ProjectSettings/ProjectSettings.asset`,
   `UnityConnectSettings.asset`): leave them uncommitted and don't report them (owner, 2026-11-18). They are hidden with

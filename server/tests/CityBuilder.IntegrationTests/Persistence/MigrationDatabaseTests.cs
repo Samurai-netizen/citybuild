@@ -21,7 +21,7 @@ public sealed class MigrationDatabaseTests(PostgresServer server) : PostgresTest
     /// The last migration before M1-03's reset (<c>MapRoadKindAndReset</c> deletes every player): a test that keeps data across a migration
     /// migrates only up to it (<c>docs/how-to/add-migration.md</c>).
     /// </summary>
-    private const string BeforeMapReset = "20261123215944_AddBuilderQueue";
+    private const string _beforeMapReset = "20261123215944_AddBuilderQueue";
 
     /// <summary>The tables of the M0 schema (<c>06</c>) and EF's migration history, by name.</summary>
     private static readonly string[] _tables =
@@ -102,7 +102,7 @@ public sealed class MigrationDatabaseTests(PostgresServer server) : PostgresTest
             "1, 60, 1790000123, 2, 800, 1, 3, 'mvp-2', now(), now());",
             cancellationToken);
 
-        await migrator.MigrateAsync(BeforeMapReset, cancellationToken: cancellationToken);
+        await migrator.MigrateAsync(_beforeMapReset, cancellationToken: cancellationToken);
 
         var city = await db.Cities.AsNoTracking().Select(row => new { row.LastSettledUnix, row.LastSeenUnix }).SingleAsync(cancellationToken);
         Assert.Equal((1_790_000_123L, 1_790_000_123L), (city.LastSettledUnix, city.LastSeenUnix));
@@ -193,7 +193,7 @@ public sealed class MigrationDatabaseTests(PostgresServer server) : PostgresTest
             "INSERT INTO players (id, dev_name, created_at) VALUES ('91a7e400-0000-4000-8000-000000000003', 'dev3', now());",
             cancellationToken);
 
-        await migrator.MigrateAsync(BeforeMapReset, cancellationToken: cancellationToken);
+        await migrator.MigrateAsync(_beforeMapReset, cancellationToken: cancellationToken);
 
         Assert.Equal("dev3", await db.Players.AsNoTracking().Select(row => row.DevName).SingleAsync(cancellationToken));
         Assert.Equal(0, await db.PlayerEvents.CountAsync(cancellationToken));
