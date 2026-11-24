@@ -1,8 +1,8 @@
 # Era I Content (M1) — items, buildings, recipes, research
 
 > The design of the full Era I (M1-01, CR-0011). **Every number is a first pass for the balance simulator (M1-15)**, not a promise.
-> M1-02 copies it into a new content file under `server/content/`; from then on the JSON is the source of truth and this file is updated in
-> the same commit as the JSON (as `23` was for M0). `23` stays the record of M0 (`mvp-3`).
+> M1-02 copied it into `server/content/era1-content.json` (content version `era1-1`); from then on the JSON is the source of truth and
+> this file is updated in the same commit as the JSON (as `23` was for M0). `23` stays the record of M0 (`mvp-3`).
 > The map, the Chronicle, merchant orders and decorations: `29-era1-chronicle.md`. Russian and English names: `32-era1-names.md`.
 > Rules behind the numbers: `22`, `24` (small-integer ratios), `25` (effects, Era I durations 10 min–8 h).
 
@@ -38,7 +38,7 @@ workers it provides. Store = the limit per item at L1 / L2 / L3.
 | id | Kind | Unlocked by | L1 | L2 | L3 (needs) | Workers | Store |
 |---|---|---|---|---|---|---|---|
 | `house` (Cottage) | house | start | 50c · 30 s | 120c + 30 logs · 90 s | 300c + 40 planks + 20 cut_stone · 300 s (`timber_framing`) | 4 / 6 / 9 | — |
-| `woodcutter` | producer | start | 80c · 60 s | 150c + 20 planks · 120 s | 350c + 40 planks + 10 cut_stone · 300 s (`timber_framing`) | 2 / 4 / 6 | logs 40 / 80 / 120 |
+| `woodcutter` | producer | start | 80c · 60 s | 150c + 20 planks · 120 s | 350c + 40 planks + 10 cut_stone · 300 s (`timber_framing`) | 2 / 4 / 5 | logs 40 / 80 / 120 |
 | `sawmill` | producer | start | 150c + 10 logs · 120 s | 250c + 30 planks · 180 s | 500c + 40 planks + 20 cut_stone · 420 s (`timber_framing`) | 3 / 6 / 9 | logs 40/80/120, planks 20/40/60 |
 | `quarry` | producer | `stone_cutting` | 120c + 20 planks · 90 s | 250c + 30 planks · 180 s | 450c + 30 planks + 20 cut_stone · 360 s (`masonry`) | 2 / 4 / 6 | stone 40 / 80 / 120 |
 | `stonemason` | producer | `stone_cutting` | 200c + 20 planks + 20 stone · 150 s | 350c + 40 planks · 240 s | 600c + 40 planks + 30 cut_stone · 480 s (`masonry`) | 3 / 6 / 9 | stone 40/80/120, cut_stone 20/40/60 |
@@ -53,6 +53,7 @@ workers it provides. Store = the limit per item at L1 / L2 / L3.
 
 One per city: `scriptorium`, `town_hall`. The Town Hall can't be demolished (G41); it is built in stages by its three levels.
 M0 numbers (L1, L2 of the first seven rows) are `mvp-3` unchanged.
+The Woodcutter's Hut has 5 workers at L3, not 6: with `sharp_axes` a cycle of 6 would take 8 s, below the minimum cycle (`04` §14 rule 7).
 
 ## Recipes (the same at every level; a level adds worker slots)
 
