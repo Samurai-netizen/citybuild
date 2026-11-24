@@ -1,6 +1,6 @@
 # CR-0013 — Builder queue
 
-- **Status:** Approved
+- **Status:** Done
 - **Type:** Design change
 - **Requested by:** owner · **Date:** 2026-11-23
 - **Milestone / era:** M1 (built in M1-02, part A, owner 2026-11-23: "option 2") / Era I

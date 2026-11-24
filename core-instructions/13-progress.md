@@ -5,13 +5,11 @@
 > This file is loaded into every session: Milestone-table notes are task ids and PR numbers only (≤ ~100 characters per row).
 
 ## Resume point
-- **State:** IDLE <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
-- **Task:** none · M1-02 in review (branch `task/M1-02-era1-content`, log `docs/build-log/2026/2026-11-23-02-M1-02.md`)
-- **Part / step:** —
-- **Last completed:** M1-02 Full Era I content and the three new research effects (PR #105, 2026-11-24; the owner merges).
-- **Next step:** after the merge, `/start-task M1-03` (the map: terrain, placement rules, land expansion; [O] [PLAN] [ASSETS], its asset
-  request is complete). On the merge, CR-0013's status becomes Done. Also open: the owner's [MANUAL] click-through of the metrics report
-  (`tools/README.md` → MetricsReport).
+- **State:** AWAITING OWNER <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
+- **Task:** M1-03 The map: terrain, placement rules, land expansion · branch `task/M1-03-map-terrain` · log `docs/build-log/2026/2026-11-24-01-M1-03.md`
+- **Part / step:** before part A (parts: A engine, B server, C client) · the [PLAN] is with the owner
+- **Last completed:** M1-02 merged (PR #105); CR-0013 Done.
+- **Next step:** record the owner's answers under "Owner input" and as decisions, then part A: the red tests of the test list (build log).
 - **Open questions for the owner:** 13 rows in `docs/owner-queue.md`. The hosting provider (in M1-13).
 - **Known broken / do not touch:** the owner's local Unity edits (`client/CityBuilder/Assets/Settings/*.asset`, `ProjectSettings/ProjectSettings.asset`,
   `UnityConnectSettings.asset`): leave them uncommitted and don't report them (owner, 2026-11-18). They are hidden with
