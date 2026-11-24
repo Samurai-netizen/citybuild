@@ -269,9 +269,9 @@ server's dev database must be migrated (the M1-03 reset deletes old cities, so e
    show grey, the land under mist keeps its look. Tap a grey tile: the bar says why (needs forest, or nothing can be built there) and
    **Place** is off. Do the same with the **Sawmill**: all open grass is green.
 5. **Roads**: drag a road onto forest, onto the mist and onto the river; each is refused with its reason (the river: research Bridge
-   Building first). With the `devtest` account's research done, a road across the river becomes a bridge (a log deck, turned to meet the
+   Building first). Once **Bridge Building** is researched (dev time scale), a road across the river becomes a bridge (a log deck, turned to meet the
    roads on both banks) and costs the bridge's price per water tile.
-6. Finish **Land Survey** or **Open Fields** (dev time scale): when the research completes, that area's mist rises and fades in about a
+6. Finish **Land Survey** or **Open Fields** (dev time scale): when the research completes, that area's mist rises and shrinks away in about a
    second and a half, the stakes move to the new edge, and the camera may now pan over the new land without jumping.
 7. Remove the bridge while a courier or a delivery is on the far bank: it stands still where it waits, the inspector says "Stuck: no
    path", and it walks on as soon as a bridge is back.
