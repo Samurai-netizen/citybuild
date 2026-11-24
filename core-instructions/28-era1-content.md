@@ -107,3 +107,30 @@ A node may have several effects (`masonry`, `open_fields`); `04` gets that rule 
 ## Starting city
 purse 1000 coins · era 1 · area A of the map · no buildings, no goods, no research · the Chronicle at chapter 1 · default town name
 (`32`) · city clock 0.
+
+## Golden scenario #3 — the bread chain with couriers (hand-checked; re-check whenever content changes)
+Content `content-golden-v3.json` (`era1-1`, frozen). It starts from a built city at t=0, since bread needs hours of research: done
+`trade_charter`, `stone_cutting`, `bridge_building`, `open_fields`, `milling`; purse 1000; idle level-1 buildings without workers: Cottages
+1–3 (0,7) (1,7) (2,7), Farm 4 (0,0), Windmill 5 (2,0), Bakery 6 (4,0), Courier Station 7 (2,1), Scriptorium 8 (7,7). No roads. Walks: station
+→ Farm 15 s, station → Windmill 5 s, Farm ↔ Windmill and Windmill ↔ Bakery 10 s. Actions: `t=0` workers Farm 2, Windmill 3, Bakery 2,
+station 2; route courier 1: Farm `take grain all`, Windmill `put grain all`; route courier 2: Windmill `take flour all`, Bakery `put flour
+all` · the player looks every 300 s up to 1500, so is never absent (stamina stays 14 400). Cycles: Farm 30 s, Windmill 60 s, Bakery 60 s.
+
+| t (s) | What happens | Farm grain | Windmill grain · flour | Bakery flour · bread | courier 1 · 2 carry |
+|---|---|---|---|---|---|
+| 0 | workers, routes; Farm starts (to 30); courier 1 leaves (Farm at 15), courier 2 (Windmill at 5) | 0 | 0 · 0 | 0 · 0 | 0 · 0 |
+| 30 | first grain (courier 1 found none at 15) | 1 | 0 · 0 | 0 · 0 | 0 · 0 |
+| 35 | courier 1 takes it (Windmill at 45) | 0 | 0 · 0 | 0 · 0 | 1 · 0 |
+| 45 | grain 1 at the Windmill | 0 | 1 · 0 | 0 · 0 | 0 · 0 |
+| 85 | the second grain: the Windmill starts (to 145) | 0 | 0 · 0 | 0 · 0 | 0 · 0 |
+| 145 | first flour; two grain in: it starts again (to 205); courier 2 takes the flour | 0 | 0 · 0 | 0 · 0 | 0 · 1 |
+| 155 | the Bakery gets it and starts (to 215) | 0 | 0 · 0 | 0 · 0 | 1 · 0 |
+| 215 | first bread; flour in: it starts again (to 275) | 0 | 0 · 0 | 0 · 1 | 1 · 0 |
+| 300 | look; steady: grain every 30 s, flour and bread every 60 s | 1 | 1 · 0 | 0 · 2 | 0 · 0 |
+| 600 | look | 1 | 1 · 0 | 0 · 7 | 0 · 0 |
+| 1355 | 20th bread: the store is full, `StorageFull:bread`; the flour waits | 0 | 0 · 0 | 1 · 20 | 1 · 0 |
+| 1500 | look | 1 | 1 · 0 | 3 · 20 | 0 · 0 |
+
+Check at 1500: grain made 50 = 1 + 1 + 48 milled (24 cycles); flour 23 = 20 baked + 3 waiting (the running cycle's flour is reserved);
+bread 20; coins 1000. Courier 1 is at the Farm at 15 + 20k and takes the grain of 30k on its next visit; courier 2 is at the Windmill at
+5 + 20k, the same second each flour is made.
