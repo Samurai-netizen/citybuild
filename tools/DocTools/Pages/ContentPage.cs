@@ -10,7 +10,8 @@ namespace CityBuilder.DocTools.Pages;
 /// <summary>
 /// <c>content.md</c>: every content file in <c>server/content/</c> as the server loads it (<see cref="ContentFileLoader"/>, so only valid
 /// content generates): the rules, eras, items, buildings with their levels, workers, recipes and per-hour rates at full staffing, roads,
-/// amount presets and the research tree. The M0 design copy and the golden scenario stay in <c>core-instructions/23-mvp-content.md</c>.
+/// amount presets and the research tree. The design copies and the golden tables stay in <c>core-instructions/23-mvp-content.md</c> (M0)
+/// and <c>28-era1-content.md</c> (Era I).
 /// </summary>
 public static class ContentPage
 {
@@ -70,13 +71,13 @@ public static class ContentPage
         WriteResearch(page, content);
     }
 
-    /// <summary>The buildings: one overview table, then one table of levels per building type.</summary>
+    /// <summary>The buildings: one overview table (with the max level before research, M1-02), then one table of levels per building type.</summary>
     /// <param name="page">The page.</param>
     /// <param name="content">The content.</param>
     private static void WriteBuildings(MarkdownPage page, GameContent content)
     {
         page.Heading(3, "Buildings")
-            .Table(["Id", "Name", "Kind", "Era", "Available", "Max per city", "Cost", "Build time", "Levels"],
+            .Table(["Id", "Name", "Kind", "Era", "Available", "Max per city", "Cost", "Build time", "Levels", "Max level without research"],
                 content.Buildings.Select(building => (IReadOnlyList<string>)
                 [
                     MarkdownPage.Code(building.Id.Value), MarkdownPage.Text(building.Name), MarkdownPage.Code(building.Kind.ToString()),
@@ -85,6 +86,7 @@ public static class ContentPage
                         : building.UnlockedByResearch is { } research ? "research " + MarkdownPage.Code(research.Value) : "—",
                     building.MaxPerCity is { } max ? PageFormat.Number(max) : "—",
                     PageFormat.Goods(building.Cost), PageFormat.Duration(building.BuildSeconds), PageFormat.Number(building.Levels.Count),
+                    PageFormat.Number(building.BaseMaxLevel),
                 ]));
 
         CityState city = CityFactory.CreateStarterCity(content);
@@ -195,6 +197,9 @@ public static class ContentPage
         StorageCapBonusEffect bonus => $"+{PageFormat.Number(bonus.Amount)} storage limit for {MarkdownPage.Code(bonus.Item.Value)}",
         UnlockAmountModeEffect mode => "unlocks the amount mode " + MarkdownPage.Code(mode.Mode.ToString()),
         WalkSpeedBonusEffect walk => $"{Permille(walk.Permille)} faster walking",
+        MaxLevelBonusEffect bonus => $"+{PageFormat.Number(bonus.Amount)} max level for {MarkdownPage.Code(bonus.Building.Value)}",
+        BuilderSlotBonusEffect slots => $"+{PageFormat.Number(slots.Amount)} builder slot" + (slots.Amount == 1 ? string.Empty : "s"),
+        GrantCharterEffect => "grants the town charter (the era's last node)",
         _ => throw new InvalidOperationException(
             $"DocTools has no text for the research effect {effect.GetType().Name}: add it to ContentPage.Effect (tools/DocTools)."),
     };
