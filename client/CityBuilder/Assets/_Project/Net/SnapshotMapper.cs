@@ -190,7 +190,23 @@ namespace CityBuilder.Client.Net
                 couriers,
                 routes,
                 lines,
-                highestLineId + 1);
+                highestLineId + 1,
+                NextQueuedOrder(buildings));
+        }
+
+        /// <summary>
+        /// The next queued order: one above the highest queue place. The answer gives each queued order's place, not the server's counter, and
+        /// the places keep the order the queue starts them in, which is all the display needs (CR-0013).
+        /// </summary>
+        private static int NextQueuedOrder(IReadOnlyList<Building> buildings)
+        {
+            int highest = 0;
+            foreach (Building building in buildings)
+            {
+                highest = Math.Max(highest, building.QueuedOrder);
+            }
+
+            return highest + 1;
         }
 
         /// <summary>One courier; the state names match the engine's one to one (CR-0008).</summary>
@@ -272,7 +288,8 @@ namespace CityBuilder.Client.Net
                 building.SegmentStartedAt,
                 ToQuantities(building.Store),
                 ToQuantities(building.Needs),
-                building.Paused);
+                building.Paused,
+                building.QueuePlace ?? 0);
         }
 
         /// <summary>The engine's phase of an answer's phase.</summary>
@@ -289,6 +306,8 @@ namespace CityBuilder.Client.Net
                     return BuildingPhase.Idle;
                 case BuildingPhaseDto.Producing:
                     return BuildingPhase.Producing;
+                case BuildingPhaseDto.Queued:
+                    return BuildingPhase.Queued;
                 default:
                     throw new ArgumentException("Unknown building phase: " + phase);
             }

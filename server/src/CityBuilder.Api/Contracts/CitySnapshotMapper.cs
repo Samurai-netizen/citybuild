@@ -45,13 +45,15 @@ public static class CitySnapshotMapper
                 state.Clock,
                 state.Era,
                 state.Purse,
+                CityQueries.IsChartered(state, content),
                 ToTotals(state, content),
                 new SnapshotWorkers(
                     CityQueries.WorkersProvided(state, content),
                     CityQueries.WorkersAssigned(state),
                     state.Trips.Count,
                     CityQueries.FreeWorkers(state, content)),
-                new SnapshotBuilders(content.Rules.BuilderSlots, CityQueries.BuildersBusy(state)),
+                new SnapshotBuilders(
+                    CityQueries.BuilderSlots(state, content), CityQueries.BuildersBusy(state), CityQueries.QueuedOrders(state), content.Rules.BuilderQueueLength),
                 ToResearch(state),
                 state.Buildings.OrderBy(building => building.Id).Select(building => ToBuilding(state, content, building)).ToArray(),
                 state.Roads.OrderBy(road => road.X).ThenBy(road => road.Y).Select(road => new SnapshotRoad(road.X, road.Y, road.Level)).ToArray(),
@@ -137,6 +139,7 @@ public static class CitySnapshotMapper
             building.X,
             building.Y,
             building.Level,
+            CityQueries.MaxLevel(state, content, building.TypeId),
             building.AssignedWorkers,
             definition.GetLevel(building.Level).MaxWorkers,
             building.Phase switch
@@ -145,6 +148,7 @@ public static class CitySnapshotMapper
                 BuildingPhase.Upgrading => "Upgrading",
                 BuildingPhase.Idle => "Idle",
                 BuildingPhase.Producing => "Producing",
+                BuildingPhase.Queued => "Queued",
                 _ => throw new InvalidOperationException($"Building phase {building.Phase} has no wire name; add it to the contract."),
             },
             building.PhaseStartedAt,
@@ -157,7 +161,8 @@ public static class CitySnapshotMapper
             ToStoreLimits(state, content, definition.GetLevel(building.Level), building),
             ToAmounts(building.Needs),
             building.IsConstructionSite ? "Construction" : building.HasUpgradeWaiting ? "Upgrade" : null,
-            building.Paused);
+            building.Paused,
+            building.QueuedOrder > 0 ? CityQueries.QueuePlace(state, building) : null);
     }
 
     /// <summary>Every item's city total (<see cref="CityQueries.Totals"/>), by item id, 0 included.</summary>

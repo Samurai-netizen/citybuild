@@ -14,6 +14,10 @@ public sealed class PagesTests
     private static readonly GameContent _content =
         ContentFileLoader.Load(Path.Combine(TestRepository.Root, "server", "content", "mvp-content.json"));
 
+    /// <summary>The Era I content (M1-02), with the effects and level caps M0 has none of.</summary>
+    private static readonly GameContent _era1 =
+        ContentFileLoader.Load(Path.Combine(TestRepository.Root, "server", "content", "era1-content.json"));
+
     /// <summary>The content page has a section for every building type and a row for every item and research node of the content.</summary>
     [Fact]
     public void ContentPage_EveryBuildingItemAndResearch_IsListed()
@@ -23,6 +27,22 @@ public sealed class PagesTests
         Assert.All(_content.Buildings, building => Assert.Contains($"#### {building.Name} ({building.Id.Value})", text, StringComparison.Ordinal));
         Assert.All(_content.Items, item => Assert.Contains($"| `{item.Id.Value}` | {item.Name} |", text, StringComparison.Ordinal));
         Assert.All(_content.Research, node => Assert.Contains($"| `{node.Id.Value}` | {node.Name} |", text, StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// The content page lists the Era I content too, and writes a sentence for each of its new effects (<c>maxLevelBonus</c>,
+    /// <c>builderSlotBonus</c>, <c>grantCharter</c>) and every type's base max level in the overview of the buildings.
+    /// </summary>
+    [Fact]
+    public void ContentPage_Era1Content_IsListedWithItsEffectsAndMaxLevels()
+    {
+        string text = ContentPage.Generate(TestRepository.Root).Text;
+
+        Assert.All(_era1.Research, node => Assert.Contains($"| `{node.Id.Value}` | {node.Name} |", text, StringComparison.Ordinal));
+        Assert.Contains("+1 max level for `house`", text, StringComparison.Ordinal);
+        Assert.Contains("+1 builder slot", text, StringComparison.Ordinal);
+        Assert.Contains("grants the town charter", text, StringComparison.Ordinal);
+        Assert.Contains("| `town_hall` | Town Hall | `House` | 1 | research `masonry` | 1 | 600 `coins`, 40 `cut_stone`, 60 `planks` | 600 s (10 min) | 3 | 3 |", text, StringComparison.Ordinal);
     }
 
     /// <summary>The errors page has one row per catalogue code, with its HTTP status.</summary>

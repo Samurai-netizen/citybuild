@@ -151,16 +151,16 @@ namespace CityBuilder.Client.Tests.PlayMode
             Assert.That(Q<Button>(ResearchScreen.ToggleName).text, Is.EqualTo("Research"));
         }
 
-        /// <summary>The header, the greyed-out rule and six nodes in one row of cards, each with its words.</summary>
+        /// <summary>The header, the greyed-out rule and the era's sixteen nodes in one row of cards, each with its words.</summary>
         [Test]
         public void ShowsTheEraHeaderTheRuleAndTheNodesInOneRow()
         {
-            Assert.That(Q<Label>(ResearchScreen.EraName).text, Is.EqualTo("Early Middle Ages — 0 / 6 researched"));
+            Assert.That(Q<Label>(ResearchScreen.EraName).text, Is.EqualTo("Early Middle Ages — 0 / 16 researched"));
             Assert.That(Q<Label>(ResearchScreen.RuleName).text, Is.EqualTo("Complete all to advance"));
             Assert.That(Q<Label>(ResearchScreen.RuleName).ClassListContains("research-rule--off"), Is.True);
             Assert.That(_screen.Root!.Query<VisualElement>(className: "research-row").ToList().Count, Is.EqualTo(1));
             List<VisualElement> nodes = Nodes();
-            Assert.That(nodes.Count, Is.EqualTo(6));
+            Assert.That(nodes.Count, Is.EqualTo(16), "the Era I tree (M1-02)");
             Assert.That(In(nodes[0], ResearchScreen.NodeNameName).text, Is.EqualTo("Sharpened Axes"));
             Assert.That(In(nodes[0], ResearchScreen.NodeCostName).text, Is.EqualTo("Cost: 250 Coins"));
             Assert.That(In(nodes[0], ResearchScreen.NodeTimeName).text, Is.EqualTo("Takes 30m"));

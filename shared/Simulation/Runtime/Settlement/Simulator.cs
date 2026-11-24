@@ -99,7 +99,8 @@ namespace CityBuilder.Simulation.Settlement
         }
 
         /// <summary>
-        /// Held goods go back where room has appeared (<see cref="HeldLoads.PutBackWhereRoom"/>, M0-C-3). Then the start rule (<c>04</c> section 6), one pass in ascending id order: an idle producer, not paused (CR-0008 D23), with at least 1 worker, every input in its own
+        /// First the builder queue (CR-0013, <c>04</c> section 6): while a builder is free, the queued order made first starts
+        /// (<see cref="StartQueuedOrders"/>). Then held goods go back where room has appeared (<see cref="HeldLoads.PutBackWhereRoom"/>, M0-C-3). Then the start rule (<c>04</c> section 6), one pass in ascending id order: an idle producer, not paused (CR-0008 D23), with at least 1 worker, every input in its own
         /// store and room there for every output that is not the currency (<c>stock + quantity ≤</c> the effective limit; an idle building
         /// reserves nothing) takes its inputs from its store and starts a cycle with the labor of now (research reductions included). A start
         /// touches only its own store, so a start never helps or hinders another building, and one pass starts everything that can start
@@ -108,7 +109,10 @@ namespace CityBuilder.Simulation.Settlement
         /// </summary>
         private static void StartEligible(CityState city, GameContent content, long time, SettlementReportBuilder report, BuildingTimerQueue timers)
         {
-            // Held goods first, so goods back in a store can feed a cycle that starts in this pass (M0-C-3).
+            // Queued orders first: a builder freed by a completion or a research at this second takes the next order at once (CR-0013).
+            StartQueuedOrders(city, content, time, report, timers);
+
+            // Held goods next, so goods back in a store can feed a cycle that starts in this pass (M0-C-3).
             HeldLoads.PutBackWhereRoom(city, content);
             IReadOnlyList<Building> buildings = city.Buildings;
             for (int index = 0; index < buildings.Count; index++)
@@ -134,6 +138,72 @@ namespace CityBuilder.Simulation.Settlement
                 // StartCycle with at least 1 worker (checked above) always sets an end, so PhaseEndsAt has a value here.
                 timers.Add(index, building.PhaseEndsAt!.Value);
             }
+        }
+
+        /// <summary>
+        /// Starts queued orders while a builder is free, lowest queued order first (the order they were made in, CR-0013). A construction
+        /// becomes a construction site when its cost has goods, otherwise it constructs from <paramref name="time"/>; an upgrade waits for the
+        /// goods of its cost, or starts (a running cycle ends and its inputs are refunded, as in <see cref="ProjectRules.StartUpgrade"/>). The
+        /// coins were paid when the order was queued. A started timer joins the advance's queue, in place of a running cycle's.
+        /// </summary>
+        private static void StartQueuedOrders(CityState city, GameContent content, long time, SettlementReportBuilder report, BuildingTimerQueue timers)
+        {
+            int next = IndexOfFirstQueued(city.Buildings);
+            if (next < 0)
+            {
+                return;
+            }
+
+            // The slots are counted only when something is queued: most passes of an advance have nothing to start.
+            int slots = CityQueries.BuilderSlots(city, content);
+            for (; next >= 0 && CityQueries.BuildersBusy(city) < slots; next = IndexOfFirstQueued(city.Buildings))
+            {
+
+                Building building = city.Buildings[next];
+                if (building.Phase == BuildingPhase.Queued)
+                {
+                    BuildingDefinition definition = CityQueries.DefinitionOf(content, building.TypeId);
+                    building.StartQueuedConstruction(Costs.GoodsOf(content, definition.Cost), time, checked(time + definition.BuildSeconds));
+                }
+                else
+                {
+                    building.LeaveUpgradeQueue();
+                    IReadOnlyList<ItemQuantity> goods = Costs.GoodsOf(content, CityQueries.DefinitionOf(content, building.TypeId).GetLevel(building.Level + 1).UpgradeCost);
+                    if (goods.Count > 0)
+                    {
+                        building.WaitForUpgrade(goods);
+                    }
+                    else
+                    {
+                        IReadOnlyList<ItemQuantity>? refunded = ProjectRules.StartUpgrade(city, content, building, time);
+                        if (refunded is not null)
+                        {
+                            report.AddRefunded(refunded);
+                        }
+                    }
+                }
+
+                if (building.PhaseEndsAt.HasValue)
+                {
+                    timers.Set(next, building.PhaseEndsAt.Value);
+                }
+            }
+        }
+
+        /// <summary>The index of the building with the lowest queued order, or −1 when nothing is queued (CR-0013).</summary>
+        private static int IndexOfFirstQueued(IReadOnlyList<Building> buildings)
+        {
+            int first = -1;
+            for (int index = 0; index < buildings.Count; index++)
+            {
+                int order = buildings[index].QueuedOrder;
+                if (order > 0 && (first < 0 || order < buildings[first].QueuedOrder))
+                {
+                    first = index;
+                }
+            }
+
+            return first;
         }
 
         /// <summary>The earliest time any event source has something due, or null when no source has anything left.</summary>

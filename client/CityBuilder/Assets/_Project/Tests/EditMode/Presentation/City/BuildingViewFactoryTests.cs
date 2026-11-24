@@ -167,15 +167,15 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.City
             Assert.That(view.StatusAnchor, Is.Null);
         }
 
-        /// <summary>A building of a type the art and the table don't know is drawn as the fallback box.</summary>
+        /// <summary>A building of a type the art and the table don't know is drawn as its placeholder box.</summary>
         [Test]
-        public void Create_ForAnUnknownType_UsesTheFallbackLook()
+        public void Create_ForAnUnknownType_UsesThePlaceholderLook()
         {
             BuildingView view = _factory.Create(Idle(1, "castle", 0, 0, 1), 1, _parent.transform);
 
             Assert.That(view.Model, Is.Null);
-            Assert.That(view.Look, Is.SameAs(BuildingLooks.Fallback));
-            Assert.That(view.PartCount, Is.EqualTo(BuildingLooks.Fallback.Parts.Count));
+            Assert.That(view.Look, Is.SameAs(BuildingLooks.Placeholder("castle")));
+            Assert.That(view.PartCount, Is.EqualTo(BuildingLooks.Placeholder("castle").Parts.Count));
         }
 
         /// <summary>Models of any type and level draw with the art's one shared material.</summary>

@@ -11,7 +11,7 @@ namespace CityBuilder.Client.Net
     {
         /// <summary>Creates the DTO. Newtonsoft calls this constructor with the JSON members of the same names, so the object is never half filled.</summary>
         [JsonConstructor]
-        public ContentBuildingDto(string id, string name, BuildingKindDto kind, int era, bool availableAtStart, string? unlockedBy, int? maxPerCity, Dictionary<string, long> cost, long buildSeconds, List<ContentBuildingLevelDto> levels)
+        public ContentBuildingDto(string id, string name, BuildingKindDto kind, int era, bool availableAtStart, string? unlockedBy, int? maxPerCity, Dictionary<string, long> cost, long buildSeconds, List<ContentBuildingLevelDto> levels, int? baseMaxLevel = null)
         {
             Id = id;
             Name = name;
@@ -22,6 +22,7 @@ namespace CityBuilder.Client.Net
             MaxPerCity = maxPerCity;
             Cost = cost;
             BuildSeconds = buildSeconds;
+            BaseMaxLevel = baseMaxLevel;
             Levels = levels;
         }
 
@@ -53,6 +54,13 @@ namespace CityBuilder.Client.Net
 
         /// <summary>Seconds construction takes.</summary>
         public long BuildSeconds { get; }
+
+        /// <summary>
+        /// The highest level without research (M1-02); <c>maxLevelBonus</c> effects raise it. Absent in answers recorded before it (the last
+        /// level then), and left out when absent, so those answers read and write back unchanged (decision 14).
+        /// </summary>
+        [JsonProperty(Required = Required.Default, NullValueHandling = NullValueHandling.Ignore)]
+        public int? BaseMaxLevel { get; }
 
         /// <summary>The levels, by level.</summary>
         public List<ContentBuildingLevelDto> Levels { get; }

@@ -247,6 +247,9 @@ namespace CityBuilder.Simulation.Content
                         case StorageCapBonusEffect bonus:
                             CheckStorageBonusTarget(draft, bonus, path + ".item", errors);
                             break;
+                        case MaxLevelBonusEffect levels:
+                            CheckMaxLevelBonusTarget(draft, levels, path + ".building", errors);
+                            break;
                     }
                 }
             }
@@ -267,6 +270,27 @@ namespace CityBuilder.Simulation.Content
             if (ItemExists(draft, bonus.Item, path, errors) && draft.ItemsById[bonus.Item].IsCurrency)
             {
                 errors.Add(ContentErrorCode.InvalidEffectTarget, path, bonus.Item.Value + " is the currency, which no store holds, so a storage bonus does nothing.");
+            }
+        }
+
+        /// <summary>
+        /// A max level bonus names an existing building type with a level above its base max level: on any other type it would open nothing
+        /// (<see cref="ContentErrorCode.InvalidEffectTarget"/>). A base max level outside 1..last is the value or level cap rules' to report.
+        /// </summary>
+        private static void CheckMaxLevelBonusTarget(ContentDraft draft, MaxLevelBonusEffect bonus, string path, ContentErrorList errors)
+        {
+            if (!BuildingExists(draft, bonus.Building, path, errors))
+            {
+                return;
+            }
+
+            BuildingDefinition building = draft.BuildingsById[bonus.Building];
+            if (LevelCapRules.HasLevelsOneToN(building) && building.BaseMaxLevel == building.MaxLevel)
+            {
+                errors.Add(
+                    ContentErrorCode.InvalidEffectTarget,
+                    path,
+                    bonus.Building.Value + " has no level above its base max level, so a max level bonus opens nothing.");
             }
         }
 

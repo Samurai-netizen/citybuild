@@ -29,6 +29,33 @@ namespace CityBuilder.Client.Tests.EditMode.Core
             return built.Content!;
         }
 
+        /// <summary>
+        /// The content the snapshot fixtures were recorded with (<c>content-mvp-2.json</c>, the M0 answer kept byte for byte, M1-02 decision 28):
+        /// for the tests that check a recorded snapshot against what the server derived from it.
+        /// </summary>
+        public static GameContent SnapshotsContent()
+        {
+            ContentResponseDto dto = new ApiJson().Deserialize<ContentResponseDto>(Fixtures.Read("content-mvp-2.json"))!;
+            GameContentResult built = GameContentFactory.Create(ContentMapper.ToData(dto));
+            Assert.That(built.IsValid, Is.True, "The snapshots' content fixture must be valid.");
+            return built.Content!;
+        }
+
+        /// <summary>
+        /// The fixture content with a builder queue of <paramref name="builderQueueLength"/> places (CR-0013): the Era I fixture has two (M1-02),
+        /// so 0 gives the rules without a queue.
+        /// </summary>
+        public static GameContent Content(int builderQueueLength)
+        {
+            const string recorded = "\"builderQueueLength\":2,";
+            Assert.That(Fixtures.Read("content.json"), Does.Contain(recorded), "the fixture's queue length");
+            string json = Fixtures.Read("content.json").Replace(recorded, "\"builderQueueLength\":" + builderQueueLength + ",");
+            ContentResponseDto dto = new ApiJson().Deserialize<ContentResponseDto>(json)!;
+            GameContentResult built = GameContentFactory.Create(ContentMapper.ToData(dto));
+            Assert.That(built.IsValid, Is.True, "The content fixture with a queue must be valid.");
+            return built.Content!;
+        }
+
         /// <summary>The decoded answer in the fixture file <paramref name="name"/>.</summary>
         public static CitySnapshotDto Dto(string name)
         {

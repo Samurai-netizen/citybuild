@@ -10,10 +10,12 @@ namespace CityBuilder.Client.Net
     {
         /// <summary>Creates the DTO. Newtonsoft calls this constructor with the JSON members of the same names, so the object is never half filled.</summary>
         [JsonConstructor]
-        public SnapshotBuildersDto(int slots, int busy)
+        public SnapshotBuildersDto(int slots, int busy, int queued = 0, int queueLength = 0)
         {
             Slots = slots;
             Busy = busy;
+            Queued = queued;
+            QueueLength = queueLength;
         }
 
         /// <summary>How many buildings may be under construction or upgrade at once.</summary>
@@ -21,5 +23,13 @@ namespace CityBuilder.Client.Net
 
         /// <summary>How many slots are in use now.</summary>
         public int Busy { get; }
+
+        /// <summary>How many orders wait in the builder queue (CR-0013); 0 when the answer has none, and left out when 0.</summary>
+        [JsonProperty(Required = Required.Default, DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public int Queued { get; }
+
+        /// <summary>How many orders the builder queue holds (CR-0013); 0 means no queue, and when the answer has none; left out when 0.</summary>
+        [JsonProperty(Required = Required.Default, DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public int QueueLength { get; }
     }
 }

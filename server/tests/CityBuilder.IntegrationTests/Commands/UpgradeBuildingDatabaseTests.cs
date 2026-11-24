@@ -53,7 +53,7 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
         Assert.Equal((versionBefore + 1, 0L), (row.StateVersion, row.ClockSeconds));
         Assert.Equal(row.StateVersion, (long)snapshot["stateVersion"]!);
         Assert.Equal("coins 850", await StockAsync(Database, city));
-        Assert.Equal("""{"slots":2,"busy":1}""", snapshot["city"]!["builders"]!.ToJsonString());
+        Assert.Equal("""{"slots":2,"busy":1,"queued":0,"queueLength":2}""", snapshot["city"]!["builders"]!.ToJsonString());
         Assert.Equal(("Upgrade", """{"planks":20}"""), ((string)snapshot["city"]!["buildings"]![1]!["project"]!, snapshot["city"]!["buildings"]![1]!["needs"]!.ToJsonString()));
         Assert.Equal("2 woodcutter L1 Idle - target 0 workers 0", await BuildingAsync(Database, city, 2));
         CityProjectNeedRow need = await db.CityProjectNeeds.AsNoTracking().SingleAsync(TestContext.Current.CancellationToken);
@@ -244,7 +244,10 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
         await AssertRefusedAsync(player, city, 1, HttpStatusCode.Conflict, "BUILDING_BUSY");
     }
 
-    /// <summary>A building at its type's max level (a level-2 house) is <c>MAX_LEVEL</c> (422) and stores only its player event (CR-0009).</summary>
+    /// <summary>
+    /// A building at its type's max level is <c>MAX_LEVEL</c> (422) and stores only its player event (CR-0009): on the Era I content a level-2
+    /// house before Timber Framing, the research that raises its cap to level 3 (M1-02).
+    /// </summary>
     [Fact]
     public async Task Post_AtMaxLevel_Is422MaxLevelAndStoresOnlyItsEvent()
     {
@@ -253,12 +256,34 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
         await AssertRefusedAsync(player, city, 1, HttpStatusCode.UnprocessableEntity, "MAX_LEVEL");
     }
 
-    /// <summary>With both builders on constructions, an upgrade of the idle house is <c>NO_FREE_BUILDER</c> (409) and stores only its player event (CR-0009).</summary>
+    /// <summary>
+    /// After Timber Framing (<c>maxLevelBonus</c> for the house, M1-02) the same level-2 house is ordered to level 3: its coins are paid and
+    /// it waits for the goods of that level.
+    /// </summary>
+    [Fact]
+    public async Task Post_AtBaseMaxLevelAfterItsResearch_OrdersLevel3()
+    {
+        (Guid player, Guid city) = await StoreResearchedCityAsync(Factory, "upgrader", 1000, ["timber_framing"], House(1, level: 2));
+
+        ApiResponse response = await UpgradeAsync(player, _requestId, 1);
+
+        Assert.Equal(HttpStatusCode.OK, response.Status);
+        Assert.Equal("coins 700", await StockAsync(Database, city));
+        Building house = (await LoadAsync(Factory, player)).State.Buildings.Single();
+        Assert.True(house.HasUpgradeWaiting);
+        Assert.Equal(["cut_stone 20", "planks 40"], house.Needs.Select(need => $"{need.Key} {need.Value}").Order(StringComparer.Ordinal));
+    }
+
+    /// <summary>
+    /// With both builders on constructions and the builder queue full (two houses waiting, CR-0013), an upgrade of the idle house is
+    /// <c>NO_FREE_BUILDER</c> (409) and stores only its player event (CR-0009).
+    /// </summary>
     [Fact]
     public async Task Post_EveryBuilderBusy_Is409NoFreeBuilderAndStoresOnlyItsEvent()
     {
         (Guid player, Guid city) = await StoreCityAsync(
-            Factory, "upgrader", 1000, House(1), Woodcutter(2, BuildingPhase.Constructing, workers: 0), Woodcutter(3, BuildingPhase.Constructing, workers: 0, x: 2));
+            Factory, "upgrader", 1000, House(1), Woodcutter(2, BuildingPhase.Constructing, workers: 0), Woodcutter(3, BuildingPhase.Constructing, workers: 0, x: 2),
+            QueuedHouse(4, order: 1), QueuedHouse(5, order: 2, x: 1));
 
         await AssertRefusedAsync(player, city, 1, HttpStatusCode.Conflict, "NO_FREE_BUILDER");
     }
@@ -346,22 +371,23 @@ public sealed class UpgradeBuildingDatabaseTests(PostgresServer server) : Postgr
     }
 
     /// <summary>
-    /// Two different upgrades at once with one builder free (the other on a construction): the city's lock puts them one after the other, so
-    /// exactly one is ordered (it waits for its logs and keeps its builder) and the other is <c>NO_FREE_BUILDER</c>; one upgrade, one cost
-    /// and one receipt are stored.
+    /// Two different upgrades at once with one place free for them (both builders on constructions and one of the two places of the builder
+    /// queue taken, CR-0013): the city's lock puts them one after the other, so exactly one is ordered (it takes the last place in the
+    /// queue) and the other is <c>NO_FREE_BUILDER</c>; one upgrade, one cost and one receipt are stored.
     /// </summary>
     [Fact]
-    public async Task Post_TwoUpgradesAtOnceWithOneFreeBuilder_ExactlyOneIsOrdered()
+    public async Task Post_TwoUpgradesAtOnceWithOnePlaceFree_ExactlyOneIsOrdered()
     {
         (Guid player, Guid city) = await StoreCityAsync(
-            Factory, "upgrader", 1000, House(1), House(2, x: 1), Woodcutter(3, BuildingPhase.Constructing, workers: 0, x: 2));
+            Factory, "upgrader", 1000, House(1), House(2, x: 1), Woodcutter(3, BuildingPhase.Constructing, workers: 0, x: 2),
+            Woodcutter(4, BuildingPhase.Constructing, workers: 0, x: 3), QueuedHouse(5, order: 1));
 
         ApiResponse[] responses = await Task.WhenAll(UpgradeAsync(player, Guid.CreateVersion7(), 1), UpgradeAsync(player, Guid.CreateVersion7(), 2));
 
         Assert.Equal(
             ["NO_FREE_BUILDER", "OK"],
             responses.Select(response => response.Status == HttpStatusCode.OK ? "OK" : (string)response.Json()["code"]!).Order(StringComparer.Ordinal));
-        Assert.Single((await LoadAsync(Factory, player)).State.Buildings, building => building.HasUpgradeWaiting);
+        Assert.Single((await LoadAsync(Factory, player)).State.Buildings, building => building.HasUpgradeQueued);
         Assert.Single(await ReceiptsAsync(Database, player));
         Assert.Equal("coins 880", await StockAsync(Database, city));
     }

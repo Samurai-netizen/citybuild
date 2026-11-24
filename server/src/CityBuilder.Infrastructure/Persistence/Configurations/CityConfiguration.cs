@@ -16,6 +16,7 @@ public sealed class CityConfiguration : IEntityTypeConfiguration<CityRow>
             table.HasCheckConstraint("ck_cities_purse", "purse >= 0");
             table.HasCheckConstraint("ck_cities_next_trip_id", "next_trip_id >= 1");
             table.HasCheckConstraint("ck_cities_next_line_id", "next_line_id >= 1");
+            table.HasCheckConstraint("ck_cities_next_queued_order", "next_queued_order >= 1");
         });
 
         builder.HasKey(c => c.Id).HasName("pk_cities");
@@ -29,6 +30,7 @@ public sealed class CityConfiguration : IEntityTypeConfiguration<CityRow>
         builder.Property(c => c.Purse).HasColumnName("purse");
         builder.Property(c => c.NextTripId).HasColumnName("next_trip_id");
         builder.Property(c => c.NextLineId).HasColumnName("next_line_id");
+        builder.Property(c => c.NextQueuedOrder).HasColumnName("next_queued_order");
         builder.Property(c => c.ResearchId).HasColumnName("research_id");
         builder.Property(c => c.ResearchStartedAt).HasColumnName("research_started_at");
         builder.Property(c => c.ResearchEndsAt).HasColumnName("research_ends_at");

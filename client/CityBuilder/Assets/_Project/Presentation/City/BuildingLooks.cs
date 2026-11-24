@@ -11,7 +11,8 @@ namespace CityBuilder.Client.Presentation.City
     /// model of the Era I art (CR-0005): <see cref="FindModel"/> loads the FBX for <c>(typeId, era, level)</c> by name from <c>Resources</c>, and
     /// <see cref="FindConstructionSite"/> the model of a building that is built or upgraded; a model for a later era is filed under that era's folder,
     /// and a type without one keeps its latest earlier model. The primitive looks of the table below (M0-44) are the fallback for a level without a
-    /// model; a type this table doesn't know gets <see cref="Fallback"/>, so a building from newer content is still drawn. The table is a code
+    /// model; a type this table doesn't know gets its <see cref="Placeholder"/>, a box in the tint of its id (<c>27</c> → Placeholders, M1-02), so
+    /// a building whose art has not arrived is still drawn and told apart; a missing model is logged once. The table is a code
     /// table, not an asset (M0-44 decision 1); it holds colours and shapes only, never a game number. Display only.
     /// </summary>
     public static class BuildingLooks
@@ -70,17 +71,15 @@ namespace CityBuilder.Client.Presentation.City
         /// <summary>The looks, filed by type id and era.</summary>
         private static readonly Dictionary<(string TypeId, int Era), BuildingLook> Table = CreateTable();
 
-        /// <summary>The look of a type the table doesn't know: a plain grey box.</summary>
-        public static readonly BuildingLook Fallback = new BuildingLook(
-            "unknown",
-            new[] { BuildingPart.Box(new Vector3(0f, 0.25f, 0f), new Vector3(0.5f, 0.5f, 0.5f), new Color(0.6f, 0.55f, 0.65f)) });
+        /// <summary>The placeholder looks made so far, by type id: made once each, so a view compares them by reference (a cache, never game state).</summary>
+        private static readonly Dictionary<string, BuildingLook> PlaceholderLooks = new Dictionary<string, BuildingLook>();
 
         /// <summary>The number of looks in the table.</summary>
         public static int Count => Table.Count;
 
         /// <summary>
-        /// The look for a building type in an era: the entry filed under that era, or else the latest earlier one, or else <see cref="Fallback"/>.
-        /// Allocates nothing.
+        /// The look for a building type in an era: the entry filed under that era, or else the latest earlier one, or else the type's
+        /// <see cref="Placeholder"/>. Allocates nothing after a type's first placeholder.
         /// </summary>
         /// <param name="typeId">The building type's id in the content.</param>
         /// <param name="era">The era to draw it in, at least 1.</param>
@@ -95,7 +94,26 @@ namespace CityBuilder.Client.Presentation.City
                 }
             }
 
-            return Fallback;
+            return Placeholder(typeId);
+        }
+
+        /// <summary>
+        /// The look of a type the table doesn't know: one box in the tint of its id (<see cref="Ui.Placeholders.TintOf"/>), the same object for
+        /// the same id. The code-made placeholder of <c>27</c> for a model that has not arrived.
+        /// </summary>
+        /// <param name="typeId">The building type's id in the content.</param>
+        /// <returns>The look; never null.</returns>
+        public static BuildingLook Placeholder(string typeId)
+        {
+            if (!PlaceholderLooks.TryGetValue(typeId, out BuildingLook? look))
+            {
+                look = new BuildingLook(
+                    "placeholder " + typeId,
+                    new[] { BuildingPart.Box(new Vector3(0f, 0.25f, 0f), new Vector3(0.5f, 0.5f, 0.5f), Ui.Placeholders.TintOf(typeId)) });
+                PlaceholderLooks.Add(typeId, look);
+            }
+
+            return look;
         }
 
         /// <summary>The path, under <c>Resources</c>, of the model of a building type at a level in one era: <c>Models/era1/house_l2</c>.</summary>
@@ -121,10 +139,10 @@ namespace CityBuilder.Client.Presentation.City
         /// shows before the server says it is (<c>09</c> "UX rules").
         /// </summary>
         /// <param name="phase">What the building is doing.</param>
-        /// <returns>True for <see cref="BuildingPhase.Constructing"/> and <see cref="BuildingPhase.Upgrading"/>.</returns>
+        /// <returns>True for <see cref="BuildingPhase.Constructing"/>, <see cref="BuildingPhase.Queued"/> (CR-0013) and <see cref="BuildingPhase.Upgrading"/>.</returns>
         public static bool ShowsConstructionSite(BuildingPhase phase)
         {
-            return phase == BuildingPhase.Constructing || phase == BuildingPhase.Upgrading;
+            return phase == BuildingPhase.Constructing || phase == BuildingPhase.Queued || phase == BuildingPhase.Upgrading;
         }
 
         /// <summary>
@@ -134,7 +152,7 @@ namespace CityBuilder.Client.Presentation.City
         /// <param name="typeId">The building type's id in the content.</param>
         /// <param name="era">The era to draw it in, at least 1.</param>
         /// <param name="level">The level, at least 1.</param>
-        /// <returns>The model, or null when the art has none for this type and level.</returns>
+        /// <returns>The model, or null when the art has none for this type and level (logged once, <c>27</c>).</returns>
         public static GameObject? FindModel(string typeId, int era, int level)
         {
             for (int candidate = era; candidate >= FirstEra; candidate--)
@@ -146,6 +164,7 @@ namespace CityBuilder.Client.Presentation.City
                 }
             }
 
+            Ui.Placeholders.ReportMissing("model", ModelPath(typeId, era, level));
             return null;
         }
 
@@ -184,7 +203,7 @@ namespace CityBuilder.Client.Presentation.City
         /// <returns>The height in thousandths.</returns>
         public static int HeightPermille(int level, BuildingPhase phase)
         {
-            if (phase == BuildingPhase.Constructing)
+            if (phase == BuildingPhase.Constructing || phase == BuildingPhase.Queued)
             {
                 return ConstructionHeightPermille;
             }

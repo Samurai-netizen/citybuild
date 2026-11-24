@@ -251,7 +251,7 @@ namespace CityBuilder.Client.Presentation.City
             _gaugeFillFilter!.sharedMesh = _art.GaugeMesh(step);
             _gaugeFillRenderer!.sharedMaterial = GaugeFull ? _art.GaugeFullMaterial : _art.FillMaterial(StatusRingKind.Storage);
             _gaugeFillRenderer.enabled = step > 0;
-            Texture2D? icon = UiIcons.ForItem(status.RingItem);
+            Texture2D? icon = status.RingItem == default ? null : UiIcons.ForItem(status.RingItem);
             _gaugeIcon!.sprite = icon == null ? null : _art.IconSprite(icon);
             _gaugeIcon.enabled = icon != null;
             GaugeStep = step;
@@ -274,7 +274,7 @@ namespace CityBuilder.Client.Presentation.City
             _bubbleGroup!.SetActive(true);
             _rim!.color = StatusArt.BubbleColor(status.Bubble);
             bool paused = status.Bubble == StatusBubbleKind.Paused;
-            Texture2D? icon = paused ? null : status.Bubble == StatusBubbleKind.NoWorkers ? UiIcons.Workers : UiIcons.ForItem(status.BubbleItem);
+            Texture2D? icon = paused ? null : status.Bubble == StatusBubbleKind.NoWorkers ? UiIcons.Workers : status.BubbleItem == default ? null : UiIcons.ForItem(status.BubbleItem);
             _icon!.sprite = icon == null ? null : _art.IconSprite(icon);
             _icon.enabled = icon != null;
             _strike!.enabled = status.Bubble == StatusBubbleKind.MissingInput;

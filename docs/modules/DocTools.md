@@ -18,7 +18,7 @@ Both commands accept `--root` and a folder (the repository root). By default the
 | Page | Made by | From |
 |---|---|---|
 | `configuration.md` | `ConfigurationPage` | the API's options classes (public, with a `SectionName` constant), their defaults and doc comments (`XmlDocs`, the API's XML doc file), `appsettings*.json` |
-| `content.md` | `ContentPage` | every `server/content/*.json` through `ContentFileLoader`; per-hour rates from the engine's `ProductionDisplay.PerHour` |
+| `content.md` | `ContentPage` | every `server/content/*.json` through `ContentFileLoader` (M0's `mvp-content.json`, Era I's `era1-content.json`); per-hour rates from the engine's `ProductionDisplay.PerHour`; each type's max level without research |
 | `db-schema.md` | `DbSchemaPage` | the design-time EF Core model of `CityBuilderDbContext` (no connection) and its migrations |
 | `endpoints.md` | `EndpointsPage` | the OpenAPI document the API's build writes, `server/src/CityBuilder.Api/obj/openapi/CityBuilder.Api.json` (`OpenApi/BuildTimeDocument` in the API) |
 | `errors.md` | `ErrorsPage` | `ErrorCatalogue.All` |
@@ -63,4 +63,4 @@ committed pages are current.
 - The browser tab of a generated page shows its file name: Docusaurus takes the tab title only from an H1 at the very top, and the
   notice comes first (build log M0-61, decision 5). The sidebar label is the H1.
 
-Last updated: M0-63
+Last updated: M1-02

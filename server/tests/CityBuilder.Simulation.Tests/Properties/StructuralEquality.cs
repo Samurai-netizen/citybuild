@@ -65,6 +65,7 @@ internal static class StructuralEquality
             fields.Add((prefix + "laborRemaining", Text(building.LaborRemaining)));
             fields.Add((prefix + "segmentStartedAt", Text(building.SegmentStartedAt)));
             fields.Add((prefix + "paused", building.Paused ? "true" : "false"));
+            fields.Add((prefix + "queuedOrder", Text(building.QueuedOrder)));
             fields.AddRange(building.Store.Select(stock => ($"{prefix}store[{stock.Key}]", Text(stock.Value))));
             fields.AddRange(building.Needs.Select(need => ($"{prefix}needs[{need.Key}]", Text(need.Value))));
         }
@@ -82,6 +83,7 @@ internal static class StructuralEquality
             $"trip {Text(trip.Id)}",
             $"{Text(trip.SourceId)}->{Text(trip.TargetId)} {trip.Item}={Text(trip.Quantity)} rest={Text(trip.Remaining)} {trip.Leg} {Text(trip.DepartedAt)}..{Text(trip.ArrivesAt)}")));
         fields.Add(("nextLineId", Text(city.NextLineId)));
+        fields.Add(("nextQueuedOrder", Text(city.NextQueuedOrder)));
         fields.AddRange(city.DeliveryLines.Select(line => (
             $"line {Text(line.Id)}",
             $"{Text(line.StationId)}/{Text(line.Slot)} {Text(line.SourceId)}->{Text(line.TargetId)} {line.Item}={Text(line.Quantity)}")));

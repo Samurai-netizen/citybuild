@@ -31,5 +31,12 @@ namespace CityBuilder.Simulation.State
         /// and <see cref="Building.PhaseEndsAt"/>, which is null while the cycle is frozen (no workers).
         /// </summary>
         Producing,
+
+        /// <summary>
+        /// Placed and paid, waiting in the builder queue for a free builder (CR-0013, <c>04</c> section 8): takes its tile and counts toward
+        /// <c>maxPerCity</c>, but uses no builder slot, provides no workers, has no store and accepts no deliveries. Level 1, no workers, and
+        /// <see cref="Building.QueuedOrder"/> at least 1; uses no timer field. It becomes <see cref="Constructing"/> when it starts.
+        /// </summary>
+        Queued,
     }
 }

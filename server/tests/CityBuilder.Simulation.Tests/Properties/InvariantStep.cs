@@ -38,6 +38,9 @@ internal enum Invariant
 
     /// <summary>Only producers and courier stations are paused, never while constructing; a paused producer starts no cycle; a paused station's couriers don't leave.</summary>
     Paused = 16,
+
+    /// <summary>At most the content's queue length waits; after every step no builder is free while an order waits; orders start in the order made (CR-0013).</summary>
+    BuilderQueue = 17,
 }
 
 /// <summary>

@@ -21,8 +21,10 @@ namespace CityBuilder.Simulation.Content
             bool isAvailableAtStart,
             int? maxPerCity,
             ResearchId? unlockedByResearch,
-            IReadOnlyList<BuildingLevelDefinition> levels)
+            IReadOnlyList<BuildingLevelDefinition> levels,
+            int baseMaxLevel)
         {
+            BaseMaxLevel = baseMaxLevel;
             Id = id;
             Name = name ?? throw new ArgumentNullException(nameof(name));
             Kind = kind;
@@ -68,8 +70,11 @@ namespace CityBuilder.Simulation.Content
         /// <summary>The levels in order: <c>Levels[0]</c> is level 1, and the last one is the max level.</summary>
         public IReadOnlyList<BuildingLevelDefinition> Levels { get; }
 
-        /// <summary>The highest level a building of this type can reach.</summary>
+        /// <summary>The highest level a building of this type can reach with every research: its last level.</summary>
         public int MaxLevel => Levels.Count;
+
+        /// <summary>The highest level reachable without research, 1 to <see cref="MaxLevel"/>; <c>maxLevelBonus</c> effects raise it (M1-02).</summary>
+        public int BaseMaxLevel { get; }
 
         /// <summary>The definition of one level.</summary>
         /// <param name="level">The level number, from 1 to <see cref="MaxLevel"/>.</param>

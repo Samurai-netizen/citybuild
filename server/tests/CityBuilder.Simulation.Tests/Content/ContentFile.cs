@@ -7,7 +7,8 @@ namespace CityBuilder.Simulation.Tests.Content;
 
 /// <summary>
 /// Reads a content file of this test project's <c>Fixtures/</c> folder into a valid <see cref="GameContent"/>, as the server reads its
-/// content file: the frozen golden contents and the performance budget's worst case.
+/// content file: the frozen golden contents, the performance budget's worst case and (M1-02) the server's
+/// own content files.
 /// </summary>
 internal static class ContentFile
 {
@@ -28,10 +29,14 @@ internal static class ContentFile
     public static GameContent Load(string fileName) => ContentAssert.Valid(Read(fileName));
 
     /// <summary>The data in <c>Fixtures/<paramref name="fileName"/></c>, read strictly but not checked yet, so a caller can complete it first.</summary>
-    public static GameContentData Read(string fileName)
-    {
-        string path = Path.Combine(RepositoryPaths.Root, "server", "tests", "CityBuilder.Simulation.Tests", "Fixtures", fileName);
-        return JsonSerializer.Deserialize<GameContentData>(File.ReadAllText(path), _options)
+    public static GameContentData Read(string fileName) =>
+        ReadPath(Path.Combine(RepositoryPaths.Root, "server", "tests", "CityBuilder.Simulation.Tests", "Fixtures", fileName));
+
+    /// <summary>The server's own content file <c>server/content/<paramref name="fileName"/></c> (M1-02), read strictly but not checked yet.</summary>
+    public static GameContentData ReadServer(string fileName) => ReadPath(Path.Combine(RepositoryPaths.Root, "server", "content", fileName));
+
+    /// <summary>The content data in the file at <paramref name="path"/>, read strictly.</summary>
+    private static GameContentData ReadPath(string path) =>
+        JsonSerializer.Deserialize<GameContentData>(File.ReadAllText(path), _options)
             ?? throw new InvalidOperationException($"{path} holds the JSON value null.");
-    }
 }

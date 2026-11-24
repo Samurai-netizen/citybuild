@@ -13,7 +13,7 @@ internal static class CityDump
     /// <summary>
     /// The city as text: a line with clock, era, next id and the purse, one per building (every stored field, its store and its needs), the
     /// completed research, the active research (with its needs), one per road and, once the city had a trip, the next trip id and one line per
-    /// trip under way (a city that never had one has next trip id 1), then one line per route and per courier (CR-0008-T1 part F). Two cities
+    /// trip under way (a city that never had one has next trip id 1; likewise the next queued order and a building's queued order, CR-0013), then one line per route and per courier (CR-0008-T1 part F). Two cities
     /// with the same text have the same stored values.
     /// </summary>
     public static string Describe(CityState city)
@@ -25,6 +25,11 @@ internal static class CityDump
             text.Append(CultureInfo.InvariantCulture, $"building {building.Id} {building.TypeId} ({building.X},{building.Y}) L{building.Level} ");
             text.Append(CultureInfo.InvariantCulture, $"w={building.AssignedWorkers} {building.Phase} {building.PhaseStartedAt}..{Time(building.PhaseEndsAt)} ");
             text.Append(CultureInfo.InvariantCulture, $"target={building.TargetLevel} labor={building.CycleLabor}/{building.LaborRemaining}@{building.SegmentStartedAt}{(building.Paused ? " paused" : string.Empty)}");
+            if (building.QueuedOrder > 0)
+            {
+                text.Append(CultureInfo.InvariantCulture, $" queued={building.QueuedOrder}");
+            }
+
             text.Append(" store:").Append(Amounts(building.Store)).Append(" needs:").Append(Amounts(building.Needs)).Append('\n');
         }
 
@@ -36,6 +41,11 @@ internal static class CityDump
         foreach (RoadTile road in city.Roads)
         {
             text.Append(CultureInfo.InvariantCulture, $"\nroad ({road.X},{road.Y}) L{road.Level}");
+        }
+
+        if (city.NextQueuedOrder > 1)
+        {
+            text.Append(CultureInfo.InvariantCulture, $"\nnext queued={city.NextQueuedOrder}");
         }
 
         if (city.NextTripId > 1)

@@ -1,6 +1,7 @@
 #nullable enable
 
 using System;
+using System.Linq;
 using CityBuilder.Client.Presentation.Build;
 using CityBuilder.Simulation;
 using CityBuilder.Simulation.Content;
@@ -76,7 +77,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Build
         {
             var menu = new BuildMenuModel(_content, BuildMenuTestData.City(0, 0, 0, Array.Empty<string>(), 2));
 
-            Assert.That(menu.Cards[0].Hint, Is.Not.EqualTo(BuildHint.None));
+            Assert.That(menu.Cards.Single(card => card.TypeId == Sawmill).Hint, Is.Not.EqualTo(BuildHint.None));
             Assert.That(menu.TryToggle(Sawmill), Is.True);
             Assert.That(menu.Selected, Is.EqualTo(Sawmill));
         }

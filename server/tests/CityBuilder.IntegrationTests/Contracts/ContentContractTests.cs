@@ -40,7 +40,7 @@ public sealed class ContentContractTests(ApiFactory factory) : IClassFixture<Api
             "$");
         JsonShape.AssertObject(
             content["rules"],
-            "gridWidth:int gridHeight:int builderSlots:int researchSlots:int " +
+            "gridWidth:int gridHeight:int builderSlots:int builderQueueLength:int researchSlots:int " +
             "minCycleSeconds:int maxLaborReductionPermille:int groundTileMillis:int crossingSpeedPermille:int minWalkSeconds:int " +
             "maxWalkBonusPermille:int tripCarryLimit:int maxRouteStops:int maxStopActions:int maxDeliveryLines:int routeBuilding:string? timeScale:int",
             "$.rules");
@@ -49,7 +49,7 @@ public sealed class ContentContractTests(ApiFactory factory) : IClassFixture<Api
         AssertEach(content["items"], "id:string name:string era:int currency:bool tradable:bool", "$.items");
         AssertEach(
             content["buildings"],
-            "id:string name:string kind:string era:int availableAtStart:bool unlockedBy:string? maxPerCity:int? cost:object buildSeconds:int levels:array",
+            "id:string name:string kind:string era:int availableAtStart:bool unlockedBy:string? maxPerCity:int? cost:object buildSeconds:int baseMaxLevel:int levels:array",
             "$.buildings");
         AssertEach(
             content["research"],
@@ -73,10 +73,15 @@ public sealed class ContentContractTests(ApiFactory factory) : IClassFixture<Api
             }
         }
 
-        foreach ((JsonNode research, int r) in content["research"]!.AsArray().Select((node, index) => (node!, index)))
+        // A node may have no effect (Era I's Land Survey and Bridge Building, M1-02), so the content as a whole must have effects, and
+        // every effect of every node has the contract's shape.
+        (JsonNode Effect, string Path)[] effects = content["research"]!.AsArray()
+            .SelectMany((research, r) => Assert.IsType<JsonArray>(research!["effects"]).Select((effect, e) => (effect!, $"$.research[{r}].effects[{e}]")))
+            .ToArray();
+        Assert.NotEmpty(effects);
+        foreach ((JsonNode effect, string path) in effects)
         {
-            AssertEach(
-                research["effects"], "type:string building:string? item:string? permille:int? amount:int? mode:string?", $"$.research[{r}].effects");
+            JsonShape.AssertObject(effect, "type:string building:string? item:string? permille:int? amount:int? mode:string?", path);
         }
     }
 
@@ -119,6 +124,9 @@ public sealed class ContentContractTests(ApiFactory factory) : IClassFixture<Api
                 "storageCapBonus" => (false, true, false, true, false),
                 "unlockAmountMode" => (false, false, false, false, true),
                 "walkSpeedBonus" => (false, false, true, false, false),
+                "maxLevelBonus" => (true, false, false, true, false),
+                "builderSlotBonus" => (false, false, false, true, false),
+                "grantCharter" => (false, false, false, false, false),
                 var other => throw new InvalidOperationException($"Unknown effect type {other}."),
             };
             Assert.Equal(building, effect["building"] is not null);

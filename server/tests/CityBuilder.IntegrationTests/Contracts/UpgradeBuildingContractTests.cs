@@ -56,12 +56,12 @@ public sealed class UpgradeBuildingContractTests(ApiFactory factory) : IClassFix
         JsonShape.AssertObject(snapshot, "requestId:string stateVersion:int serverTimeUtc:string contentVersion:string city:object settlement:object", "$");
         Assert.Equal((_requestId, 1L), ((string)snapshot["requestId"]!, (long)snapshot["stateVersion"]!));
         Assert.Equal(580, (long)snapshot["city"]!["purse"]!);
-        Assert.Equal("""{"slots":2,"busy":2}""", snapshot["city"]!["builders"]!.ToJsonString());
+        Assert.Equal("""{"slots":2,"busy":2,"queued":0,"queueLength":2}""", snapshot["city"]!["builders"]!.ToJsonString());
         Assert.Equal("""{"provided":4,"assigned":0,"onTrips":0,"free":4}""", snapshot["city"]!["workers"]!.ToJsonString());
         Assert.Equal(
-            """{"id":1,"typeId":"house","x":0,"y":0,"level":1,"assignedWorkers":0,"maxWorkers":0,"phase":"Idle",""" +
+            """{"id":1,"typeId":"house","x":0,"y":0,"level":1,"maxLevel":2,"assignedWorkers":0,"maxWorkers":0,"phase":"Idle",""" +
             """ "phaseStartedAt":0,"phaseEndsAt":null,"cycleLabor":0,"laborRemaining":0,"segmentStartedAt":0,"stallReason":"NoRecipe",""".TrimStart() +
-            """ "store":{},"storeLimits":{},"needs":{"logs":30},"project":"Upgrade","paused":false}""".TrimStart(),
+            """ "store":{},"storeLimits":{},"needs":{"logs":30},"project":"Upgrade","paused":false,"queuePlace":null}""".TrimStart(),
             snapshot["city"]!["buildings"]![0]!.ToJsonString());
 
         Assert.Equal(1, store.SaveCount);

@@ -53,7 +53,7 @@ namespace CityBuilder.Simulation.Content
 
         /// <summary>
         /// The grid, the slots, the minimum cycle and the base caps are greater than zero; exactly one research slot; the labor
-        /// reduction limit is 0 to 1000 permille.
+        /// reduction limit is 0 to 1000 permille; the builder queue's length is 0 to 32767 (CR-0013).
         /// </summary>
         private static void CheckRules(GameRules rules, ContentErrorList errors)
         {
@@ -62,6 +62,8 @@ namespace CityBuilder.Simulation.Content
             AtMostStoredSmallValue(rules.GridWidth, "rules.gridWidth", errors);
             AtMostStoredSmallValue(rules.GridHeight, "rules.gridHeight", errors);
             Positive(rules.BuilderSlots, "rules.builderSlots", errors);
+            AtLeastZero(rules.BuilderQueueLength, "rules.builderQueueLength", errors);
+            AtMostStoredSmallValue(rules.BuilderQueueLength, "rules.builderQueueLength", errors);
             Positive(rules.ResearchSlots, "rules.researchSlots", errors);
             if (rules.ResearchSlots > _supportedResearchSlots)
             {
@@ -104,12 +106,13 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
-        /// <summary>Costs are at least zero; build and upgrade times, recipe amounts and labor are greater than zero.</summary>
+        /// <summary>Costs are at least zero; build and upgrade times, recipe amounts, labor and the base max level are greater than zero.</summary>
         private static void CheckBuilding(BuildingDefinition building, ContentErrorList errors)
         {
             string path = ContentPaths.Building(building);
             AtLeastZero(building.Cost, path + ".cost", errors);
             Positive(building.BuildSeconds, path + ".buildSeconds", errors);
+            Positive(building.BaseMaxLevel, path + ".baseMaxLevel", errors);
             if (building.MaxPerCity.HasValue)
             {
                 Positive(building.MaxPerCity.Value, path + ".maxPerCity", errors);
@@ -135,7 +138,10 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
-        /// <summary>The cost is at least zero, the duration greater than zero, a labor reduction 1 to 1000 permille, a storage bonus greater than zero.</summary>
+        /// <summary>
+        /// The cost is at least zero, the duration greater than zero, a labor reduction and a walk bonus 1 to 1000 permille, a storage, max
+        /// level or builder slot bonus greater than zero.
+        /// </summary>
         private static void CheckResearch(ResearchDefinition node, ContentErrorList errors)
         {
             string path = ContentPaths.Research(node);
@@ -156,6 +162,12 @@ namespace CityBuilder.Simulation.Content
                     case WalkSpeedBonusEffect walk:
                         Positive(walk.Permille, effectPath + ".permille", errors);
                         AtMostOneThousand(walk.Permille, effectPath + ".permille", errors);
+                        break;
+                    case MaxLevelBonusEffect levels:
+                        Positive(levels.Amount, effectPath + ".amount", errors);
+                        break;
+                    case BuilderSlotBonusEffect slots:
+                        Positive(slots.Amount, effectPath + ".amount", errors);
                         break;
                 }
             }

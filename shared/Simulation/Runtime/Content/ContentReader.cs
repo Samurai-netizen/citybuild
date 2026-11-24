@@ -39,6 +39,15 @@ namespace CityBuilder.Simulation.Content
         /// <summary>The JSON name of <see cref="WalkSpeedBonusEffect"/>.</summary>
         private const string _effectWalkSpeedBonus = "walkSpeedBonus";
 
+        /// <summary>The JSON name of <see cref="MaxLevelBonusEffect"/>.</summary>
+        private const string _effectMaxLevelBonus = "maxLevelBonus";
+
+        /// <summary>The JSON name of <see cref="BuilderSlotBonusEffect"/>.</summary>
+        private const string _effectBuilderSlotBonus = "builderSlotBonus";
+
+        /// <summary>The JSON name of <see cref="GrantCharterEffect"/>.</summary>
+        private const string _effectGrantCharter = "grantCharter";
+
         /// <summary>The JSON name of <see cref="AmountMode.Percent"/>.</summary>
         private const string _modePercent = "percent";
 
@@ -92,7 +101,7 @@ namespace CityBuilder.Simulation.Content
             return null;
         }
 
-        /// <summary>Reads the global rules; every value is required but the route building.</summary>
+        /// <summary>Reads the global rules; every value is required but the route building and the builder queue's length (0 when left out).</summary>
         private GameRules ReadRules(GameRulesData data, string path) =>
             new GameRules(
                 _fields.RequireInt(data.GridWidth, path + ".gridWidth"),
@@ -110,7 +119,8 @@ namespace CityBuilder.Simulation.Content
                 _fields.RequireInt(data.MaxStopActions, path + ".maxStopActions"),
                 _fields.RequireInt(data.MaxDeliveryLines, path + ".maxDeliveryLines"),
                 data.RouteBuilding is null ? (BuildingTypeId?)null
-                    : _fields.RequireId(data.RouteBuilding, path + ".routeBuilding", text => new BuildingTypeId(text)));
+                    : _fields.RequireId(data.RouteBuilding, path + ".routeBuilding", text => new BuildingTypeId(text)),
+                data.BuilderQueueLength ?? 0);
 
         /// <summary>Reads the starting city: its era number and stock (the map may be empty).</summary>
         private StartingCityDefinition ReadStartingCity(StartingCityData data, string path) =>
@@ -209,11 +219,23 @@ namespace CityBuilder.Simulation.Content
                 case _effectWalkSpeedBonus:
                     AllowOnlyEffectFields(data, path, building: false, item: false, permille: true, amount: false, mode: false);
                     return new WalkSpeedBonusEffect(_fields.RequireInt(data.Permille, path + ".permille"));
+                case _effectMaxLevelBonus:
+                    AllowOnlyEffectFields(data, path, building: true, item: false, permille: false, amount: true, mode: false);
+                    BuildingTypeId? raised = _fields.RequireId(data.Building, path + ".building", text => new BuildingTypeId(text));
+                    long levels = _fields.RequireLong(data.Amount, path + ".amount");
+                    return raised.HasValue ? new MaxLevelBonusEffect(raised.Value, levels) : null;
+                case _effectBuilderSlotBonus:
+                    AllowOnlyEffectFields(data, path, building: false, item: false, permille: false, amount: true, mode: false);
+                    return new BuilderSlotBonusEffect(_fields.RequireLong(data.Amount, path + ".amount"));
+                case _effectGrantCharter:
+                    AllowOnlyEffectFields(data, path, building: false, item: false, permille: false, amount: false, mode: false);
+                    return new GrantCharterEffect();
                 default:
                     _fields.InvalidValue(
                         path + ".type",
                         $"'{data.Type}' is not an effect type: use '{_effectUnlockBuilding}', '{_effectLaborReduction}', '{_effectStorageCapBonus}', "
-                        + $"'{_effectUnlockAmountMode}' or '{_effectWalkSpeedBonus}'.");
+                        + $"'{_effectUnlockAmountMode}', '{_effectWalkSpeedBonus}', '{_effectMaxLevelBonus}', '{_effectBuilderSlotBonus}' or "
+                        + $"'{_effectGrantCharter}'.");
                     return null;
             }
         }
@@ -276,7 +298,9 @@ namespace CityBuilder.Simulation.Content
 
             ResearchId? unlockedBy = !availableAtStart && unlocks.TryGetValue(id.Value, out ResearchId research) ? research : (ResearchId?)null;
             IReadOnlyList<BuildingLevelDefinition> sortedLevels = ReadOnlyLists.From(levels.OrderBy(level => level.Level));
-            return new BuildingDefinition(id.Value, name, kind, era, cost, buildSeconds, availableAtStart, maxPerCity, unlockedBy, sortedLevels);
+            int baseMaxLevel = data.BaseMaxLevel ?? sortedLevels.Count;
+            return new BuildingDefinition(
+                id.Value, name, kind, era, cost, buildSeconds, availableAtStart, maxPerCity, unlockedBy, sortedLevels, baseMaxLevel);
         }
 
         /// <summary>Reads <c>kind</c>: <c>house</c> or <c>producer</c>. A missing or unknown value is reported, and the stand-in is <see cref="BuildingKind.House"/>.</summary>

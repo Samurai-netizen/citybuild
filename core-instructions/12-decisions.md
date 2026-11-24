@@ -52,6 +52,7 @@ Never silently reverse a decision; add a new row that supersedes it. New ids con
 | G42 | Chronicle rewards are coins, decorations and story, never goods (goods live in buildings, G10); decorations take a tile and are walked around like buildings | No question of which store gets a reward; one walking rule | Accepted (owner, 2026-11-23) |
 | G43 | Terrain: forest and rock hold nothing; a Woodcutter's Hut needs forest beside it, a Quarry rock beside it, a Farm stands on fertile soil; water only under bridges; terrain never runs out | Simple rules a player sees on the map; no depletion bookkeeping | Accepted (owner, 2026-11-23) |
 | G44 | The caravan stays until the next one arrives (24 h); a merchant order in a slot never expires, it is fulfilled or dismissed | No countdowns (`21` → Tone) | Accepted (owner, 2026-11-23) |
+| G45 | Builder queue (CR-0013, built in M1-02): with every builder busy, a placement or upgrade waits in a queue of `builderQueueLength` places (Era I: 2), paid when queued, and starts at the second a builder frees; `NO_FREE_BUILDER` only when the queue is full too | Fits the check-in rhythm of `21` (no coming back just to press build); a research's extra builder starts a waiting order at once; a bought builder slot stays worth having | Accepted (owner, 2026-11-23) |
 
 ## Engineering
 

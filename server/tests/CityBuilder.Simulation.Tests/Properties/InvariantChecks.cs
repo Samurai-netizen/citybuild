@@ -57,6 +57,41 @@ internal sealed class InvariantChecks
         Report(Invariant.StaminaAndLoads, step, Stamina(step) ?? Loads(step));
         Report(Invariant.DeliveryLines, step, Lines(step.After));
         Report(Invariant.Paused, step, Paused(step));
+        Report(Invariant.BuilderQueue, step, Queue(step));
+    }
+
+    /// <summary>
+    /// Invariant 17 (CR-0013): at most <c>builderQueueLength</c> orders wait; after every step (which ends with an advance) no builder is free
+    /// while an order waits; and the orders a step started were all made before every order still waiting. The free builders are counted
+    /// from the phases and the slot bonuses here, independently of the engine's queries.
+    /// </summary>
+    private string? Queue(InvariantStep step)
+    {
+        Building[] waiting = [.. step.After.Buildings.Where(building => building.QueuedOrder > 0)];
+        CountIf(waiting.Length > 0, "steps with a queued order");
+        CountIf(waiting.Length > 0 && waiting.Length == _content.Rules.BuilderQueueLength, "steps with a full builder queue");
+        if (waiting.Length > _content.Rules.BuilderQueueLength)
+        {
+            return $"{waiting.Length} orders queued, the queue holds {_content.Rules.BuilderQueueLength}";
+        }
+
+        int busy = step.After.Buildings.Count(building =>
+            building.Phase is BuildingPhase.Constructing or BuildingPhase.Upgrading
+            || (building.Phase is BuildingPhase.Idle or BuildingPhase.Producing && building.Needs.Count > 0));
+        long slots = _content.Rules.BuilderSlots
+            + step.After.CompletedResearch.Sum(id => Research(id).Effects.OfType<BuilderSlotBonusEffect>().Sum(bonus => bonus.Amount));
+        if (waiting.Length > 0 && busy < slots)
+        {
+            return $"order {waiting.Min(building => building.QueuedOrder)} waits while {slots - busy} builders are free";
+        }
+
+        int[] started = [.. step.Before.Buildings
+            .Where(building => building.QueuedOrder > 0 && step.After.TryGetBuilding(building.Id, out Building? after) && after.QueuedOrder == 0)
+            .Select(building => building.QueuedOrder)];
+        CountIf(started.Length > 0, "steps that started a queued order");
+        return started.Length > 0 && waiting.Length > 0 && started.Max() > waiting.Min(building => building.QueuedOrder)
+            ? $"order {started.Max()} started before order {waiting.Min(building => building.QueuedOrder)}"
+            : null;
     }
 
     /// <summary>
@@ -356,14 +391,20 @@ internal sealed class InvariantChecks
         return stray is null ? null : $"courier {stray.StationId}/{stray.Slot} has no station";
     }
 
-    /// <summary>Invariant 10: busy builders within the slots; a research starts only when none runs, and the running one is not completed.</summary>
+    /// <summary>
+    /// Invariant 10: busy builders within the slots (the content's plus the <c>builderSlotBonus</c>es of completed research, summed here
+    /// independently of <c>CityQueries.BuilderSlots</c>); a research starts only when none runs, and the running one is not completed.
+    /// </summary>
     private string? Slots(InvariantStep step)
     {
         int busy = CityQueries.BuildersBusy(step.After);
-        CountIf(busy == _content.Rules.BuilderSlots, "steps with every builder busy");
-        if (busy > _content.Rules.BuilderSlots)
+        long slots = _content.Rules.BuilderSlots
+            + step.After.CompletedResearch.Sum(id => Research(id).Effects.OfType<BuilderSlotBonusEffect>().Sum(bonus => bonus.Amount));
+        CountIf(busy == slots, "steps with every builder busy");
+        CountIf(busy > _content.Rules.BuilderSlots, "steps with a research builder slot in use");
+        if (busy > slots)
         {
-            return $"{busy} builders busy, the city has {_content.Rules.BuilderSlots}";
+            return $"{busy} builders busy, the city has {slots}";
         }
 
         if (step.Operation is CityOperation.StartResearch && step.Mutation is not null)
@@ -386,6 +427,19 @@ internal sealed class InvariantChecks
     /// </summary>
     private string? Unlocks(InvariantStep step)
     {
+        foreach (Building building in step.After.Buildings)
+        {
+            BuildingDefinition definition = ContentLookup.Definition(_content, building.TypeId);
+            long cap = definition.BaseMaxLevel + step.After.CompletedResearch.Sum(id =>
+                Research(id).Effects.OfType<MaxLevelBonusEffect>().Where(bonus => bonus.Building == building.TypeId).Sum(bonus => bonus.Amount));
+            int level = building.Phase == BuildingPhase.Upgrading ? building.TargetLevel : building.Level;
+            CountIf(level > definition.BaseMaxLevel, "buildings above their base max level");
+            if (level > cap)
+            {
+                return $"building {building.Id} ({building.TypeId}) is at level {level}, above its max level {cap}";
+            }
+        }
+
         if (step.Mutation is not null && step.Operation is CityOperation.StartTrip { Amount.Mode: { } mode } trip)
         {
             _count("trips with a percentage or exact amount");

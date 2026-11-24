@@ -107,8 +107,7 @@ public sealed class ContentGraphRuleTests
     [Fact]
     public void Create_UpgradeWithLessCurrencyThanTheOneBelow_ReportsUpgradeCostDecrease()
     {
-        GameContentData data = ValidWith(data => Building(data, "hut").Levels!.Add(
-            new BuildingLevelData { Level = 3, WorkersProvided = 6, UpgradeCost = new() { ["gold"] = 15, ["wood"] = 5 }, UpgradeSeconds = 9 }));
+        GameContentData data = ValidWith(data => Level(data, "hut", 3).UpgradeCost = new() { ["gold"] = 15, ["wood"] = 10 });
 
         ContentAssert.SingleError(data, ContentErrorCode.UpgradeCostDecrease, "buildings[hut].levels[3].upgradeCost");
     }
@@ -164,11 +163,14 @@ public sealed class ContentGraphRuleTests
 
         ContentAssert.Errors(
             data,
+            (ContentErrorCode.BuildingUnreachable, "buildings[hut].levels[3]"),
             (ContentErrorCode.BuildingUnreachable, "buildings[workshop]"),
             (ContentErrorCode.BuildingUnreachable, "buildings[post].levels[2]"),
             (ContentErrorCode.ResearchUnreachable, "research[carpentry]"),
             (ContentErrorCode.ResearchUnreachable, "research[better_saws]"),
             (ContentErrorCode.ResearchUnreachable, "research[tallying]"),
+            (ContentErrorCode.ResearchUnreachable, "research[guild]"),
+            (ContentErrorCode.ResearchUnreachable, "research[charter]"),
             (ContentErrorCode.ResearchUnreachable, "research[warehouses]"));
     }
 

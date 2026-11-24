@@ -173,6 +173,30 @@ internal static class SampleCities
     /// </summary>
     public const long LastSeen = 1_789_999_900;
 
+    /// <summary>The id of the queued construction in <see cref="Queued"/> (CR-0013).</summary>
+    public const int QueuedConstructionId = 3;
+
+    /// <summary>The id of the producing building whose upgrade is queued in <see cref="Queued"/> (CR-0013).</summary>
+    public const int QueuedUpgradeId = 4;
+
+    /// <summary>
+    /// A city with a builder queue (CR-0013): two buildings under construction keep both builders busy, a woodcutter waits in the queue as
+    /// order 5 (id 3), and the upgrade of a producing woodcutter (id 4) waits as order 4; the next queued order is 6 (orders 1 to 3 have
+    /// started).
+    /// </summary>
+    public static CityAggregate Queued()
+    {
+        Building[] buildings =
+        [
+            new(1, new BuildingTypeId("cottage"), 0, 0, 1, 0, BuildingPhase.Constructing, 400, 700, 0, 0, 0, 0),
+            new(2, new BuildingTypeId("cottage"), 1, 0, 1, 0, BuildingPhase.Constructing, 400, 800, 0, 0, 0, 0),
+            new(QueuedConstructionId, new BuildingTypeId("woodcutter"), 2, 0, 1, 0, BuildingPhase.Queued, 0, null, 0, 0, 0, 0, queuedOrder: 5),
+            new(QueuedUpgradeId, new BuildingTypeId("woodcutter"), 3, 0, 1, 2, BuildingPhase.Producing, 300, 440, 0, 120, 80, 400, Goods(("logs", 7)), queuedOrder: 4),
+        ];
+        var state = new CityState(Clock, 1, 5, 40, buildings, [], activeResearch: null, nextQueuedOrder: 6);
+        return new CityAggregate(CityId, PlayerId, state, [], 1_790_000_000, 3, "content-1");
+    }
+
     /// <summary>A new city: clock 0, era 1, no coins, buildings or research, state version 0.</summary>
     public static CityAggregate Empty()
     {
@@ -189,7 +213,7 @@ internal static class SampleCities
         IEnumerable<string> lines =
         [
             $"city {city.CityId} player {city.PlayerId} settled {city.LastSettledUnixSec} seen {city.LastSeenUnixSec} version {city.StateVersion} content {city.ContentVersion}",
-            $"clock {state.Clock}, era {state.Era}, next id {state.NextBuildingId}, purse {state.Purse}, next trip {state.NextTripId}",
+            $"clock {state.Clock}, era {state.Era}, next id {state.NextBuildingId}, purse {state.Purse}, next trip {state.NextTripId}, next queued {state.NextQueuedOrder}",
             "research done " + string.Join(", ", city.ResearchCompletedAt.Select(done => $"{done.Key}@{done.Value}")),
             "research done (state) " + string.Join(", ", state.CompletedResearch),
             state.ActiveResearch is null
@@ -199,7 +223,7 @@ internal static class SampleCities
                 $"#{building.Id} {building.TypeId} ({building.X},{building.Y}) L{building.Level} w{building.AssignedWorkers} {building.Phase} " +
                 $"{building.PhaseStartedAt}..{building.PhaseEndsAt?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "frozen"} " +
                 $"target {building.TargetLevel} labor {building.CycleLabor}/{building.LaborRemaining} segment {building.SegmentStartedAt} " +
-                $"store {Text(building.Store)} needs {Text(building.Needs)}"),
+                $"store {Text(building.Store)} needs {Text(building.Needs)} queued {building.QueuedOrder}"),
             "roads " + string.Join(", ", state.Roads.Select(road => $"({road.X},{road.Y}) L{road.Level}")),
             "trips " + string.Join(", ", state.Trips.Select(trip =>
                 $"{trip.Id} {trip.SourceId}->{trip.TargetId} {trip.Item}={trip.Quantity} {trip.DepartedAt}..{trip.ArrivesAt}")),

@@ -211,7 +211,7 @@ namespace CityBuilder.Client.Presentation.Routes
         public bool AddStop(int buildingId)
         {
             if (Phase != RouteEditorPhase.Editing || _city == null || !_city.TryGetBuilding(buildingId, out Building? building)
-                || building!.Phase == BuildingPhase.Constructing)
+                || !building!.IsBuilt)
             {
                 return Refuse("Only finished buildings can be a stop");
             }
@@ -494,7 +494,7 @@ namespace CityBuilder.Client.Presentation.Routes
         /// <summary>Whether <paramref name="slot"/> of <paramref name="stationId"/> is a built courier station's slot that has a courier.</summary>
         private bool IsEditableSlot(int stationId, int slot)
         {
-            if (_city == null || !_city.TryGetBuilding(stationId, out Building? station) || station!.Phase == BuildingPhase.Constructing
+            if (_city == null || !_city.TryGetBuilding(stationId, out Building? station) || !station!.IsBuilt
                 || !_content.TryGetBuilding(station.TypeId, out BuildingDefinition? definition) || definition!.Kind != BuildingKind.CourierStation)
             {
                 return false;

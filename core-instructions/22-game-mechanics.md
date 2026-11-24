@@ -91,6 +91,9 @@ and outputs land when it ends.
 - Placing a building pays its coins and takes a builder; the building is a **construction site** until its goods are delivered, then its
   build timer runs. A building that costs only coins starts at once.
 - Builder slots limit how many constructions or upgrades run at once. More slots come from research.
+- When every builder is busy, a placement or upgrade still goes through into a short **builder queue** (Era I: 2 places, CR-0013): its
+  coins are paid at once, and it starts at the exact second a builder frees up, in the order made. A queued upgrade's building keeps
+  working. With the queue full too, the order is refused. An extra builder slot stays worth having: queued orders still wait.
 - **Timers always run in real time.** While the player is away, couriers keep working for as long as their **stamina** lasts (the Courier
   Station's level sets it), then walk home and rest. One button re-energizes them when the player returns. While the game is open,
   couriers never tire. Production stops on its own when a store is full or its inputs run out. This rewards checking in a few times a day

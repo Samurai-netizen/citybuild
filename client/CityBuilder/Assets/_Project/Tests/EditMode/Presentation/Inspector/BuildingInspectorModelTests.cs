@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using CityBuilder.Client.Presentation.Inspector;
 using CityBuilder.Client.Presentation.Ui;
+using CityBuilder.Client.Tests.EditMode.Core;
 using CityBuilder.Client.Tests.EditMode.Presentation.Hud;
 using CityBuilder.Simulation;
 using CityBuilder.Simulation.Content;
@@ -82,7 +83,8 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Inspector
 
             return new Building(
                 building.Id, building.TypeId, building.X, building.Y, building.Level, building.AssignedWorkers, building.Phase, building.PhaseStartedAt,
-                building.PhaseEndsAt, building.TargetLevel, building.CycleLabor, building.LaborRemaining, building.SegmentStartedAt, store, building.Needs);
+                building.PhaseEndsAt, building.TargetLevel, building.CycleLabor, building.LaborRemaining, building.SegmentStartedAt, store, building.Needs,
+                queuedOrder: building.QueuedOrder);
         }
 
         /// <summary>An idle building of <paramref name="typeId"/> with id 1 at <paramref name="level"/> with <paramref name="workers"/> workers.</summary>
@@ -373,14 +375,57 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Inspector
             Assert.That(poor.CanUpgrade, Is.False);
         }
 
+        /// <summary>A queued construction (CR-0013) says it waits for a builder, with its place in the queue.</summary>
+        [Test]
+        public void Status_QueuedConstruction_SaysQueuedWithItsPlace()
+        {
+            var queued = new Building(1, new BuildingTypeId("house"), 0, 0, 1, 0, BuildingPhase.Queued, 0, null, 0, 0, 0, 0, queuedOrder: 4);
+            var earlier = new Building(2, new BuildingTypeId("house"), 1, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, queuedOrder: 3);
+
+            BuildingInspectorModel model = Model(new[] { queued, earlier });
+
+            Assert.That((model.StatusText, model.TimeText), Is.EqualTo(("Queued (2)", string.Empty)));
+            Assert.That(model.CanUpgrade, Is.False);
+        }
+
+        /// <summary>A building whose upgrade is queued (CR-0013) keeps its status and says the upgrade is queued, with its place.</summary>
+        [Test]
+        public void Upgrade_Queued_SaysQueuedWithItsPlace()
+        {
+            Building sawmill = BusySawmill();
+            var queuedSawmill = new Building(
+                1, sawmill.TypeId, 0, 0, 1, 3, BuildingPhase.Producing, 0, sawmill.PhaseEndsAt, 0, 180, 180, 0, queuedOrder: 1);
+
+            BuildingInspectorModel model = Model(new[] { queuedSawmill, Cottage() });
+
+            Assert.That(model.StatusText, Is.EqualTo("Producing"));
+            Assert.That((model.CanUpgrade, model.UpgradeNote), Is.EqualTo((false, "Upgrade queued (1)")));
+        }
+
+        /// <summary>With every builder busy and room in the queue (CR-0013), the upgrade stays possible: the server queues it.</summary>
+        [Test]
+        public void Upgrade_AllBuildersBusyWithRoomInTheQueue_IsPossible()
+        {
+            _content = CityTestData.Content(builderQueueLength: 2);
+            var site1 = new Building(2, new BuildingTypeId("house"), 1, 0, 1, 0, BuildingPhase.Constructing, 0, 100, 0, 0, 0, 0);
+            var site2 = new Building(3, new BuildingTypeId("house"), 2, 0, 1, 0, BuildingPhase.Constructing, 0, 100, 0, 0, 0, 0);
+
+            BuildingInspectorModel model = Model(new[] { BusySawmill(), site1, site2 }, planks: 0);
+
+            Assert.That((model.CanUpgrade, model.UpgradeNote), Is.EqualTo((true, string.Empty)));
+        }
+
         /// <summary>No free builder comes before missing items, as the server checks.</summary>
         [Test]
         public void Upgrade_WithAllBuildersBusy_SaysSoBeforeMissingItems()
         {
             var site1 = new Building(2, new BuildingTypeId("house"), 1, 0, 1, 0, BuildingPhase.Constructing, 0, 100, 0, 0, 0, 0);
             var site2 = new Building(3, new BuildingTypeId("house"), 2, 0, 1, 0, BuildingPhase.Constructing, 0, 100, 0, 0, 0, 0);
+            // The Era I content has a builder queue of two (CR-0013): only a full queue leaves no builder (M1-02).
+            var waiting1 = new Building(4, new BuildingTypeId("house"), 3, 0, 1, 0, BuildingPhase.Queued, 0, null, 0, 0, 0, 0, queuedOrder: 1);
+            var waiting2 = new Building(5, new BuildingTypeId("house"), 4, 0, 1, 0, BuildingPhase.Queued, 0, null, 0, 0, 0, 0, queuedOrder: 2);
 
-            BuildingInspectorModel model = Model(new[] { BusySawmill(), site1, site2 }, planks: 0);
+            BuildingInspectorModel model = Model(new[] { BusySawmill(), site1, site2, waiting1, waiting2 }, planks: 0);
 
             Assert.That(model.UpgradeNote, Is.EqualTo("All builders are busy"));
             Assert.That(model.CanUpgrade, Is.False);
@@ -412,6 +457,21 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Inspector
             Assert.That(model.UpgradeNote, Is.Empty);
         }
 
+        /// <summary>
+        /// The highest level is the city's after its research (M1-02): a level-2 sawmill is at its highest before Timber Framing, and offers
+        /// level 3 after it, as the server's <c>MAX_LEVEL</c> check does.
+        /// </summary>
+        [Test]
+        public void Upgrade_AfterTheResearchThatRaisesTheCap_OffersTheNextLevel()
+        {
+            CityState city = HudTestData.City(0, 5000, 0, 100, new[] { Idle("sawmill", 3, level: 2), Cottage() }, new[] { "sharp_axes", "frame_saw", "timber_framing" });
+
+            BuildingInspectorModel model = BuildingInspectorModel.Create(_content, city, city.Buildings[0], Nothing, CommandAvailability.Allowed)!;
+
+            Assert.That(model.LevelText, Is.EqualTo("Level 2 of 3"));
+            Assert.That(model.UpgradeTitle, Is.EqualTo("Upgrade to level 3"));
+        }
+
         /// <summary>An upgrade on its way turns the button off with a note, so a second tap cannot ask again.</summary>
         [Test]
         public void Upgrade_Pending_IsOffWithANote()
@@ -427,7 +487,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Inspector
         [Test]
         public void Create_UnknownTypeOrLevel_ReturnsNull()
         {
-            CityState city = HudTestData.City(0, 700, 40, 10, new[] { Idle("sawmill", 0, level: 3) });
+            CityState city = HudTestData.City(0, 700, 40, 10, new[] { Idle("sawmill", 0, level: 4) });
             var unknown = new Building(2, new BuildingTypeId("castle"), 5, 5, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
 
             Assert.That(BuildingInspectorModel.Create(_content, city, city.Buildings[0], Nothing, CommandAvailability.Allowed), Is.Null);

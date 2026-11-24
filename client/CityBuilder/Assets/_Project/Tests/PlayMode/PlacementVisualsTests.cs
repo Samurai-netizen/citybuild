@@ -192,7 +192,7 @@ namespace CityBuilder.Client.Tests.PlayMode
             yield return null;
 
             _world.Ghosts!.TryGetGhost(_sender.Pending[0].RequestId, out GameObject? ghost);
-            Assert.That(ghost!.transform.childCount, Is.EqualTo(BuildingLooks.Fallback.Parts.Count));
+            Assert.That(ghost!.transform.childCount, Is.EqualTo(BuildingLooks.Placeholder("castle").Parts.Count));
         }
 
         /// <summary>A ghost is not a building: the building views stay empty.</summary>

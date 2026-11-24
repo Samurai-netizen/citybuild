@@ -4,7 +4,7 @@ using CityBuilder.Simulation.Tests.Content;
 namespace CityBuilder.Simulation.Tests.Golden;
 
 /// <summary>
-/// The frozen content files of the golden scenarios (<c>08</c>): copies of <c>server/content/mvp-content.json</c> that never change, so a
+/// The frozen content files of the golden scenarios (<c>08</c>): copies of a server content file that never change, so a
 /// balance change can't rewrite a golden expectation. A content change that should reach a golden scenario gets a new file and new,
 /// hand-checked expectations.
 /// </summary>
@@ -15,4 +15,10 @@ internal static class GoldenContent
     /// scenarios #1 and #2, read as it was frozen (it never had the offline cap that CR-0008-T1 part H removed).
     /// </summary>
     public static GameContent V2 { get; } = ContentAssert.Valid(ContentFile.Read("content-golden-v2.json"));
+
+    /// <summary>
+    /// <c>Fixtures/content-golden-v3.json</c>: the Era I content <c>era1-1</c> of M1-02 (<c>core-instructions/28-era1-content.md</c>), for
+    /// golden scenario #3, frozen as it was copied from <c>server/content/era1-content.json</c>.
+    /// </summary>
+    public static GameContent V3 { get; } = ContentAssert.Valid(ContentFile.Read("content-golden-v3.json"));
 }

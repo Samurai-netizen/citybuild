@@ -28,7 +28,8 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         [Test]
         public void ToSnapshot_EveryRealAnswer_GivesTheServersDerivedValues()
         {
-            GameContent content = CityTestData.Content();
+            // The server derived these values with the content of the run that recorded them (M1-02 decision 28).
+            GameContent content = CityTestData.SnapshotsContent();
             string[] names = Fixtures.Names("snapshot-");
             Assert.That(names, Is.Not.Empty);
 
@@ -254,6 +255,27 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That((house.Phase, house.Level, house.TargetLevel), Is.EqualTo((BuildingPhase.Idle, 2, 0)));
         }
 
+        /// <summary>
+        /// Queued orders (CR-0013): a queued construction keeps its phase, and each queue place becomes the engine's queued order, so the order
+        /// they start in is kept; the next order is one above the last place.
+        /// </summary>
+        [Test]
+        public void ToSnapshot_QueuedOrders_KeepTheirPlacesAsTheOrder()
+        {
+            CitySnapshotDto dto = CityTestData.Dto("snapshot-city-start.json");
+            dto.City.Buildings.Clear();
+            dto.City.Buildings.Add(Building(1, "house", 0, 0, 0, 0, BuildingPhaseDto.Idle, 0, null, 0, 0, 0, null, queuePlace: 2));
+            dto.City.Buildings.Add(Building(2, "woodcutter", 1, 0, 0, 2, BuildingPhaseDto.Queued, 0, null, 0, 0, 0, null, queuePlace: 1));
+
+            CityState city = SnapshotMapper.ToSnapshot(dto).Value!.CopyCity();
+
+            Assert.That(city.TryGetBuilding(1, out Building? house), Is.True);
+            Assert.That(city.TryGetBuilding(2, out Building? woodcutter), Is.True);
+            Assert.That((house!.Phase, house.QueuedOrder, house.HasUpgradeQueued), Is.EqualTo((BuildingPhase.Idle, 2, true)));
+            Assert.That((woodcutter!.Phase, woodcutter.QueuedOrder), Is.EqualTo((BuildingPhase.Queued, 1)));
+            Assert.That(city.NextQueuedOrder, Is.EqualTo(3));
+        }
+
         /// <summary>A city without buildings gets the first building id.</summary>
         [Test]
         public void ToSnapshot_NoBuildings_NextIdIsOne()
@@ -355,14 +377,14 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(store.Snapshot!.StateVersion, Is.EqualTo(10L));
         }
 
-        /// <summary>A level-1 building's answer with the given values and no store, limits, needs or project.</summary>
+        /// <summary>A level-1 building's answer with the given values and no store, limits, needs or project; with <paramref name="queuePlace"/> it is queued (CR-0013).</summary>
         private static SnapshotBuildingDto Building(
             int id, string typeId, int x, int y, int assigned, int max, BuildingPhaseDto phase, long started, long? ends, long cycle, long remaining,
-            long segment, string? stall)
+            long segment, string? stall, int? queuePlace = null)
         {
             return new SnapshotBuildingDto(
                 id, typeId, x, y, 1, assigned, max, phase, started, ends, cycle, remaining, segment, stall, new Dictionary<string, long>(),
-                new Dictionary<string, long>(), new Dictionary<string, long>(), null);
+                new Dictionary<string, long>(), new Dictionary<string, long>(), null, queuePlace: queuePlace);
         }
 
         /// <summary><paramref name="dto"/> with another research block.</summary>

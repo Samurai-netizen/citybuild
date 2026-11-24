@@ -32,6 +32,63 @@ public sealed class CityMappingTests
         Assert.Equal(Describe(city), Describe(loaded));
     }
 
+    /// <summary>The queued sample city (a queued construction and a queued upgrade, CR-0013) comes back from its rows with every value equal.</summary>
+    [Fact]
+    public void ToAggregate_OfToRows_GivesTheSameQueuedCity()
+    {
+        CityAggregate city = Queued();
+
+        Assert.Equal(Describe(city), Describe(CityMapping.ToAggregate(CityMapping.ToRows(city))));
+    }
+
+    /// <summary>
+    /// A queued order is stored in <c>queued_order</c>, null for every other building, the queued construction with the phase text
+    /// <c>Queued</c> and no times; the next order goes into <c>cities.next_queued_order</c> (CR-0013).
+    /// </summary>
+    [Fact]
+    public void ToRows_QueuedCity_WritesTheQueuedOrdersAndTheNextOrder()
+    {
+        CityRows rows = CityMapping.ToRows(Queued());
+
+        Assert.Equal(6, rows.City.NextQueuedOrder);
+        Assert.Equal([null, null, 5, 4], rows.Buildings.OrderBy(row => row.BuildingId).Select(row => row.QueuedOrder));
+        CityBuildingRow queued = rows.Buildings.Single(row => row.BuildingId == QueuedConstructionId);
+        Assert.Equal(("Queued", (long?)null, (long?)null, (short?)null), (queued.Phase, queued.PhaseStartedAt, queued.PhaseEndsAt, queued.TargetLevel));
+    }
+
+    /// <summary>A city without a queue stores no queued order and next queued order 1.</summary>
+    [Fact]
+    public void ToRows_FullCity_StoresNoQueuedOrder()
+    {
+        CityRows rows = CityMapping.ToRows(Full());
+
+        Assert.Equal(1, rows.City.NextQueuedOrder);
+        Assert.All(rows.Buildings, row => Assert.Null(row.QueuedOrder));
+    }
+
+    /// <summary>Queue rows that break a rule are rejected on load (CR-0013): a queued construction without an order, an order on a constructing building, an order at or above the next one.</summary>
+    [Theory]
+    [InlineData("queued without an order")]
+    [InlineData("order on a constructing building")]
+    [InlineData("order not below the next")]
+    [InlineData("queued with a start")]
+    public void ToAggregate_BrokenQueueRow_Throws(string breakage)
+    {
+        CityRows rows = CityMapping.ToRows(Queued());
+        // The row of the building with the id, to break it.
+        CityBuildingRow Building(int id) => rows.Buildings.Single(building => building.BuildingId == id);
+        switch (breakage)
+        {
+            case "queued without an order": Building(QueuedConstructionId).QueuedOrder = null; break;
+            case "order on a constructing building": Building(1).QueuedOrder = 2; break;
+            case "order not below the next": rows.City.NextQueuedOrder = 5; break;
+            case "queued with a start": Building(QueuedConstructionId).PhaseStartedAt = 10; break;
+            default: throw new ArgumentOutOfRangeException(nameof(breakage), breakage, "Not a breakage of this test.");
+        }
+
+        Assert.Throws<InvalidOperationException>(() => CityMapping.ToAggregate(rows));
+    }
+
     /// <summary>The <c>cities</c> row carries every stored value of the city, its running research included, and leaves the wall times to the repository.</summary>
     [Fact]
     public void ToRows_FullCity_FillsTheCityRow()

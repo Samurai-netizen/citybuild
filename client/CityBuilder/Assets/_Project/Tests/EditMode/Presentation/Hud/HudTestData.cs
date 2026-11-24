@@ -1,5 +1,6 @@
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 using CityBuilder.Client.Tests.EditMode.Core;
 using CityBuilder.Simulation;
@@ -16,7 +17,8 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Hud
 
         /// <summary>
         /// A city of Era I at <paramref name="clock"/> with the given coins in the purse, goods in a warehouse
-        /// (<see cref="CityTestData.GoodsStore"/>), buildings, completed research and running research.
+        /// (<see cref="CityTestData.GoodsStore"/>), buildings, completed research and running research; the next queued order is above every
+    /// building's (CR-0013).
         /// </summary>
         public static CityState City(
             long clock,
@@ -35,7 +37,13 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Hud
 
             var all = new List<Building>(buildings);
             all.AddRange(CityTestData.GoodsStore(logs, planks));
-            return new CityState(clock, 1, 100, coins, all, completed, active);
+            int nextQueuedOrder = 1;
+            foreach (Building building in all)
+            {
+                nextQueuedOrder = Math.Max(nextQueuedOrder, building.QueuedOrder + 1);
+            }
+
+            return new CityState(clock, 1, 100, coins, all, completed, active, nextQueuedOrder: nextQueuedOrder);
         }
 
         /// <summary>A finished cottage, which provides workers.</summary>

@@ -10,6 +10,8 @@
 # later, and a command sent before its building is done is refused (send it when `GET /city` shows the state the note names). So by hand,
 # check the course (coins paid, sites waiting, trips carrying, stores filling), not the table's seconds: the exact table over HTTP is the
 # integration test `GoldenScenario1HttpTests` (`docs/testing/README.md`). Waiting longer only moves the numbers on.
+# The server runs the Era I content (`era1-1`, M1-02): the walk's costs and times are golden #1's, but the purse starts at 1000 (golden #1:
+# 800, the frozen `mvp-2`) and the Trading Post's site waits for 5 planks (10), so every purse below is 200 above the table's.
 
 @baseUrl = http://localhost:8080
 @displayName = devtest
@@ -31,7 +33,7 @@ Content-Type: application/json
 GET {{baseUrl}}/api/v1/content
 Authorization: Bearer {{token}}
 
-### Your city, settled to now (starter city since CR-0008: purse 800, no goods, no buildings, clock 0)
+### Your city, settled to now (starter city since CR-0008: purse 1000, no goods, no buildings, clock 0)
 GET {{baseUrl}}/api/v1/city
 Authorization: Bearer {{token}}
 
@@ -42,14 +44,14 @@ Content-Type: application/json
 
 { "requestId": "{{$guid}}", "buildingTypeId": "house", "x": 0, "y": 2 }
 
-### Golden t=0: Woodcutter's Hut 2 at (0, 0), 80 coins, 60 s; purse 670
+### Golden t=0: Woodcutter's Hut 2 at (0, 0), 80 coins, 60 s; purse 870
 POST {{baseUrl}}/api/v1/commands/place-building
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 { "requestId": "{{$guid}}", "buildingTypeId": "woodcutter", "x": 0, "y": 0 }
 
-### Golden t=30 (Cottage 1 done): the Scriptorium 3 at (4, 0), the science building, 100 coins, 30 s; purse 570
+### Golden t=30 (Cottage 1 done): the Scriptorium 3 at (4, 0), the science building, 100 coins, 30 s; purse 770
 POST {{baseUrl}}/api/v1/commands/place-building
 Authorization: Bearer {{token}}
 Content-Type: application/json
@@ -70,7 +72,7 @@ Content-Type: application/json
 
 { "requestId": "{{$guid}}", "buildingTypeId": "sawmill", "x": 2, "y": 0 }
 
-### Golden t=60: Cottage 5 at (1, 2); purse 220
+### Golden t=60: Cottage 5 at (1, 2); purse 420
 POST {{baseUrl}}/api/v1/commands/place-building
 Authorization: Bearer {{token}}
 Content-Type: application/json
@@ -85,7 +87,7 @@ Content-Type: application/json
 
 { "requestId": "{{$guid}}", "sourceId": 2, "targetId": 4, "itemId": "logs", "amount": "all" }
 
-### Golden t=660 (Trade Charter done): Trading Post 6 at (2, 2), 200 coins; a site waiting for 10 planks; purse 20
+### Golden t=660 (Trade Charter done): Trading Post 6 at (2, 2), 200 coins; a site waiting for 5 planks; purse 220
 POST {{baseUrl}}/api/v1/commands/place-building
 Authorization: Bearer {{token}}
 Content-Type: application/json

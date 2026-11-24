@@ -21,7 +21,8 @@ namespace CityBuilder.Simulation.Content
             int maxRouteStops,
             int maxStopActions,
             int maxDeliveryLines,
-            BuildingTypeId? routeBuilding)
+            BuildingTypeId? routeBuilding,
+            int builderQueueLength)
         {
             GridWidth = gridWidth;
             GridHeight = gridHeight;
@@ -38,7 +39,14 @@ namespace CityBuilder.Simulation.Content
             MaxStopActions = maxStopActions;
             MaxDeliveryLines = maxDeliveryLines;
             RouteBuilding = routeBuilding;
+            BuilderQueueLength = builderQueueLength;
         }
+
+        /// <summary>
+        /// How many constructions and upgrades may wait for a free builder (CR-0013, <c>04</c> section 8), 0 to 32767; 0 (the default) means no
+        /// queue: with every builder busy an order is refused.
+        /// </summary>
+        public int BuilderQueueLength { get; }
 
         /// <summary>The grid's width in tiles: x runs from 0 to <c>GridWidth − 1</c>.</summary>
         public int GridWidth { get; }

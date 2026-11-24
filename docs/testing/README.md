@@ -112,6 +112,10 @@ flowchart LR
   clock through the actions and the table's rows and checks each row's snapshot (as one line of text, so a failure names the row), the
   stored city against the replay (`SampleCities.Describe`), and the ledger against the city's totals. If a row fails there but the engine's golden
   test passes, the difference is in the server. The same requests by hand: `docs/api/smoke.http`.
+- The Era I content over HTTP (M1-02): `Commands/Era1BuildingsDatabaseTests` checks the starting city of `28` for a new player, and that
+  each of the 13 types places and completes, each producer produces and each type with a second level upgrades. `EndToEnd/CharterPlayer`
+  is a scripted player who researches the whole Era I tree up to the Town Charter: `CharterPlayerScriptTests` plays it on the engine
+  alone, and `CharterHttpTests` plays it over HTTP with `FakeTimeProvider` and compares the stored city with the replay; the ledger auditor finds no mismatch.
 - The ledger audit (`Audit/`, M0-64): `LedgerAuditDatabaseTests` has three players play a long random game over HTTP (`RandomHttpPlayer`:
   a fixed opening, then every command and settles drawn from a seeded `Random` and the last snapshot, the clock moved by the test), then runs
   the server's `LedgerAuditor` over every city: zero mismatches, every command succeeded once, eight ledger reasons written. A refusal with

@@ -119,11 +119,14 @@ namespace CityBuilder.Simulation.Content
                     else if (level < building.MaxLevel)
                     {
                         BuildingLevelDefinition next = building.GetLevel(level + 1);
+                        string reason = level >= Cap(building)
+                            ? "no research node that can be done raises its max level"
+                            : "the upgrade needs " + Missing(next.UpgradeCost) + ", which no reachable recipe makes";
                         errors.Add(
                             ContentErrorCode.BuildingUnreachable,
                             ContentPaths.Level(building, next),
-                            building.Id.Value + " can never be upgraded to level " + next.Level.ToString(CultureInfo.InvariantCulture) + inEra
-                            + ": the upgrade needs " + Missing(next.UpgradeCost) + ", which no reachable recipe makes.");
+                            building.Id.Value + " can never be upgraded to level " + next.Level.ToString(CultureInfo.InvariantCulture) + inEra + ": "
+                            + reason + ".");
                     }
                 }
 
@@ -136,7 +139,22 @@ namespace CityBuilder.Simulation.Content
                 }
             }
 
-            /// <summary>Builds the type, then upgrades it while the next level's cost can be paid; returns whether its level rose.</summary>
+            /// <summary>
+            /// The type's max level with the nodes done so far: its base max level plus their <see cref="MaxLevelBonusEffect"/>s, at most its
+            /// last level (as <c>CityQueries.MaxLevel</c> in a city).
+            /// </summary>
+            private int Cap(BuildingDefinition building)
+            {
+                long cap = building.BaseMaxLevel;
+                foreach (ResearchDefinition node in _draft.Research.Where(node => _done.Contains(node.Id)))
+                {
+                    cap += node.Effects.OfType<MaxLevelBonusEffect>().Where(bonus => bonus.Building == building.Id).Sum(bonus => bonus.Amount);
+                }
+
+                return (int)System.Math.Min(cap, building.MaxLevel);
+            }
+
+            /// <summary>Builds the type, then upgrades it while the next level's cost can be paid (up to its max level); returns whether its level rose.</summary>
             private bool Build(BuildingDefinition building)
             {
                 bool built = _levels.TryGetValue(building.Id, out int level);
@@ -146,7 +164,7 @@ namespace CityBuilder.Simulation.Content
                     level = 1;
                 }
 
-                while (level >= 1 && level < building.MaxLevel && CanPay(building.GetLevel(level + 1).UpgradeCost))
+                while (level >= 1 && level < Cap(building) && CanPay(building.GetLevel(level + 1).UpgradeCost))
                 {
                     level++;
                 }

@@ -80,6 +80,16 @@ public sealed class InvariantPropertyTests(ITestOutputHelper output)
         Holds(contentName, Invariant.Paused);
 
     /// <summary>
+    /// Invariant 17 (CR-0013): at most the queue length waits, no builder is free while an order waits after a step, and orders start in the
+    /// order they were made.
+    /// </summary>
+    /// <param name="contentName">The content the seeds run with.</param>
+    [Theory]
+    [MemberData(nameof(PropertyContent.Names), MemberType = typeof(PropertyContent))]
+    public void Observe_EveryStep_StartsQueuedOrdersInOrderWhenABuilderFrees(string contentName) =>
+        Holds(contentName, Invariant.BuilderQueue);
+
+    /// <summary>
     /// The seeds exercise every check: each counted case happened at least a floor number of times, so a check that never fires can't pass
     /// for one that holds. The counts are printed.
     /// </summary>
@@ -89,6 +99,17 @@ public sealed class InvariantPropertyTests(ITestOutputHelper output)
     {
         InvariantObservation observation = InvariantObservation.For(contentName);
         output.WriteLine($"{contentName}: {observation.CountsText()}");
+
+        if (contentName == "fixture-m1")
+        {
+            // The variant exists for M1-02's effects; the plain fixture covers the rest (PropertyContent).
+            observation.AssertAtLeast("steps with a research builder slot in use", 100);
+            observation.AssertAtLeast("buildings above their base max level", 100);
+            observation.AssertAtLeast("steps with a queued order", 100);
+            observation.AssertAtLeast("steps with a full builder queue", 100);
+            observation.AssertAtLeast("steps that started a queued order", 100);
+            return;
+        }
 
         observation.AssertAtLeast("steps that spent", 1000);
         observation.AssertAtLeast("steps asked to go back in time", PropertyContent.Seeds);

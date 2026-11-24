@@ -73,6 +73,8 @@ A changed engine runs `sim` and `app`; changed content runs `sim`, `int` and `do
   and deliveries to a construction site; built in CR-0008-T1 part E, in the engine and over HTTP, on `content-golden-v2.json`, and
   `content-golden-v1.json` is gone) and adds #2 (a courier route, a road, an absence, tired couriers, re-energize), in `23`, in the engine
   and over HTTP (part H; over HTTP only the script's own requests are sent, as every request is presence).
+  M1-02 adds #3 (the bread chain with couriers, Era I content `era1-1`), in `28`, on `content-golden-v3.json`, in the engine only: it
+  starts from a built city with research done, which no request can make.
 - **Property tests:** seeded random cities and random elapsed splits (fixed seeds, ≥ 500 cases each), covering
   determinism, split invariance, timer invariance, conservation, non-negativity, caps, worker limits, labor accounting,
   builder/research slots. Print the seed and the operation list on failure. CR-0008: conservation over stores, loads, deliveries and

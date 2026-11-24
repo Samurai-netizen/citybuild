@@ -7,9 +7,9 @@ A new effect type or a new rule needs engine code instead: recipe "New engine ru
 ## What you change
 | What | Where |
 |---|---|
-| The data | `server/content/mvp-content.json`, the only content file. Nothing under `src/` changes |
-| The content version | `contentVersion` in the same file: every change gets a new one (`mvp-1` → `mvp-2`), so clients refetch `GET /content` (`05`) |
-| The design numbers (during M0) | `core-instructions/23-mvp-content.md`, in the same commit: the JSON is the source of truth, `23` describes it |
+| The data | a file in `server/content/`: `era1-content.json` (Era I, M1) or `mvp-content.json` (M0's record); the server loads the one `Content:FilePath` names (`appsettings.json`). Nothing under `src/` changes |
+| The content version | `contentVersion` in the same file: every change gets a new one (`mvp-1` → `mvp-2`, `era1-1` → `era1-2`), so clients refetch `GET /content` (`05`) |
+| The design numbers | `core-instructions/28-era1-content.md` for Era I (`23-mvp-content.md` for M0), in the same commit: the JSON is the source of truth, the page describes it |
 | History | one line in `CHANGELOG.md`; a balance note in the build log entry |
 | Generated reference | `docs/reference/generated/content.md`: `dotnet run --project tools/DocTools -- generate`, commit the page (CI fails when it is stale) |
 | Balance check | the balance simulator, `run-balance-simulator.md` *(planned, M0-67)* |
@@ -25,6 +25,8 @@ gets a new copy and hand-checked numbers.
 - Item amounts are objects keyed by item id: `"cost": { "coins": 150, "logs": 10 }`. A cost's coins are paid at once; its goods are
   delivered to the site later by walkers (CR-0008), so a goods cost makes the player plan a trip.
 - Levels carry their number. Level 1 has no `upgradeCost` or `upgradeSeconds`; every level from 2 on has both: the cost and time to reach it.
+- `baseMaxLevel` (optional, M1-02) is the highest level without research; absent, every level is open. The levels above it open with a
+  research's `maxLevelBonus` (`25` → Effect types; `04` §14 rule 13a).
 - A building type says `"availableAtStart"`. A locked one is unlocked by exactly one research node's `unlockBuilding` effect.
 - **Stores** (CR-0008): goods live in building stores. Each level's `storage` lists the goods its store holds with a limit per good: a
   producer's every recipe good (a limit at least the recipe's quantity), a warehouse's the goods it collects. Houses, courier stations and

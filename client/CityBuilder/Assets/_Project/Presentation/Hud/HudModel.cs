@@ -152,7 +152,10 @@ namespace CityBuilder.Client.Presentation.Hud
             }
         }
 
-        /// <summary>One chip for every item that belongs to the city's era or an earlier one, in the content's order.</summary>
+        /// <summary>
+        /// One chip for every item that belongs to the city's era or an earlier one: the currency first (the purse), then the others in the
+        /// content's order (the server sends them by id, so without this Bread would come before Coins in Era I; M1-02).
+        /// </summary>
         private static IReadOnlyList<ItemChipModel> MakeChips(GameContent content, CityState city)
         {
             var chips = new List<ItemChipModel>();
@@ -160,7 +163,15 @@ namespace CityBuilder.Client.Presentation.Hud
             {
                 if (item.Era <= city.Era)
                 {
-                    chips.Add(ItemChipModel.Create(content, city, item));
+                    ItemChipModel chip = ItemChipModel.Create(content, city, item);
+                    if (item.IsCurrency)
+                    {
+                        chips.Insert(0, chip);
+                    }
+                    else
+                    {
+                        chips.Add(chip);
+                    }
                 }
             }
 
@@ -173,10 +184,15 @@ namespace CityBuilder.Client.Presentation.Hud
             return Fraction(CityQueries.FreeWorkers(city, content), CityQueries.WorkersProvided(city, content));
         }
 
-        /// <summary><c>1 / 2</c>: the builders at work, out of the builder slots of the rules.</summary>
+        /// <summary>
+        /// <c>1 / 2</c>: the builders at work, out of the city's builder slots (research included); with orders in the builder queue,
+        /// <c>2 / 2 · 1 queued</c> (CR-0013).
+        /// </summary>
         private static string BuildersTextFor(GameContent content, CityState city)
         {
-            return Fraction(CityQueries.BuildersBusy(city), content.Rules.BuilderSlots);
+            string text = Fraction(CityQueries.BuildersBusy(city), CityQueries.BuilderSlots(city, content));
+            int queued = CityQueries.QueuedOrders(city);
+            return queued == 0 ? text : text + " · " + queued.ToString(System.Globalization.CultureInfo.InvariantCulture) + " queued";
         }
 
         /// <summary>The notice while couriers rest (<c>2 couriers resting</c>, CR-0008-T2 part E); empty when none does.</summary>

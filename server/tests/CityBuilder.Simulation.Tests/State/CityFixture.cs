@@ -21,7 +21,11 @@ internal static class CityFixture
     /// for the era check of placement; and <c>mint</c>, a producer of the currency (5 gold per 20 labor, up to 2 workers, no store), whose
     /// output goes into the purse.
     /// </summary>
-    public static GameContent TestContent { get; } = ContentAssert.Valid(ContentFixture.ValidWith(data =>
+    public static GameContent TestContent { get; } = ContentAssert.Valid(ContentFixture.ValidWith(Extend));
+
+    /// <summary>The four additions of <see cref="TestContent"/> to the valid fixture data, also for its property variant.</summary>
+    /// <param name="data">The fixture data to change.</param>
+    public static void Extend(GameContentData data)
     {
         // "!" reaches into the valid fixture, which sets the building list and every building's levels (ContentFixture.Valid).
         ContentFixture.Level(data, "lumber_camp", 2).MaxWorkers = 4;
@@ -57,11 +61,12 @@ internal static class CityFixture
             BuildSeconds = 5,
             Levels = [new BuildingLevelData { Level = 1, WorkersProvided = 4 }],
         });
-    }));
+    }
 
     /// <summary>
     /// A city at <paramref name="clock"/> (default 1000) in era 1. The next building id defaults to one above the highest id, the next trip id
-    /// to one above the highest trip's, the next line id to one above the highest line's; the purse to 0; the roads, trips, couriers, routes
+    /// to one above the highest trip's, the next line id to one above the highest line's, the next queued order to one above the highest
+    /// building's (CR-0013); the purse to 0; the roads, trips, couriers, routes
     /// and delivery lines to nothing. Goods live in the buildings' stores
     /// (the building helpers' <c>store</c>), on trips and with couriers.
     /// </summary>
@@ -78,7 +83,8 @@ internal static class CityFixture
         int? nextTripId = null,
         Courier[]? couriers = null,
         Route[]? routes = null,
-        DeliveryLine[]? lines = null)
+        DeliveryLine[]? lines = null,
+        int? nextQueuedOrder = null)
     {
         buildings ??= [];
         trips ??= [];
@@ -98,7 +104,8 @@ internal static class CityFixture
             couriers,
             routes,
             lines,
-            lines.Length == 0 ? 1 : lines.Max(line => line.Id) + 1);
+            lines.Length == 0 ? 1 : lines.Max(line => line.Id) + 1,
+            nextQueuedOrder ?? (buildings.Length == 0 ? 1 : buildings.Max(building => building.QueuedOrder) + 1));
     }
 
     /// <summary>A delivery line of courier <paramref name="stationId"/>/<paramref name="slot"/>: up to <paramref name="quantity"/> of a good from one building to another.</summary>
@@ -135,11 +142,23 @@ internal static class CityFixture
 
     /// <summary>
     /// An idle building in canonical form: phase start 0, and no end, target level or cycle; with <paramref name="needs"/> its upgrade waits for
-    /// those goods.
+    /// those goods, with <paramref name="queuedOrder"/> above 0 its upgrade waits in the builder queue (CR-0013).
     /// </summary>
     public static Building Idle(
-        int id, string type, int x, int y, int level = 1, int workers = 0, (string Item, long Quantity)[]? store = null, (string Item, long Quantity)[]? needs = null) =>
-        new(id, new BuildingTypeId(type), x, y, level, workers, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, Pairs(store), Pairs(needs));
+        int id,
+        string type,
+        int x,
+        int y,
+        int level = 1,
+        int workers = 0,
+        (string Item, long Quantity)[]? store = null,
+        (string Item, long Quantity)[]? needs = null,
+        int queuedOrder = 0) =>
+        new(id, new BuildingTypeId(type), x, y, level, workers, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, Pairs(store), Pairs(needs), queuedOrder: queuedOrder);
+
+    /// <summary>A construction waiting in the builder queue (CR-0013) as order <paramref name="order"/>: level 1, no workers, timer, store or needs.</summary>
+    public static Building Queued(int id, string type, int x, int y, int order) =>
+        new(id, new BuildingTypeId(type), x, y, 1, 0, BuildingPhase.Queued, 0, null, 0, 0, 0, 0, queuedOrder: order);
 
     /// <summary>A building under construction from <paramref name="startedAt"/> to <paramref name="endsAt"/>, level 1 and no workers.</summary>
     public static Building Constructing(int id, string type, int x, int y, long startedAt, long endsAt) =>
@@ -156,7 +175,7 @@ internal static class CityFixture
 
     /// <summary>
     /// A producing building whose cycle started at <paramref name="cycleStartedAt"/>; <paramref name="endsAt"/> null means frozen; with
-    /// <paramref name="needs"/> its upgrade waits for those goods.
+    /// <paramref name="needs"/> its upgrade waits for those goods, with <paramref name="queuedOrder"/> above 0 in the builder queue (CR-0013).
     /// </summary>
     public static Building Producing(
         int id,
@@ -171,9 +190,10 @@ internal static class CityFixture
         long segmentStartedAt,
         long? endsAt,
         (string Item, long Quantity)[]? store = null,
-        (string Item, long Quantity)[]? needs = null) =>
+        (string Item, long Quantity)[]? needs = null,
+        int queuedOrder = 0) =>
         new(id, new BuildingTypeId(type), x, y, level, workers, BuildingPhase.Producing, cycleStartedAt, endsAt, 0, cycleLabor, laborRemaining, segmentStartedAt,
-            Pairs(store), Pairs(needs));
+            Pairs(store), Pairs(needs), queuedOrder: queuedOrder);
 
     /// <summary>Item and quantity pairs as the engine's, or null for none.</summary>
     public static KeyValuePair<ItemId, long>[]? Pairs((string Item, long Quantity)[]? amounts) =>

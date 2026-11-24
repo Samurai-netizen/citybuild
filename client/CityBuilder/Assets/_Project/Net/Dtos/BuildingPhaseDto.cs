@@ -23,5 +23,9 @@ namespace CityBuilder.Client.Net
         /// <summary>The building has a production cycle running.</summary>
         [EnumMember(Value = "Producing")]
         Producing,
+
+        /// <summary>The building is placed and paid and waits in the builder queue for a free builder (CR-0013); it does nothing yet.</summary>
+        [EnumMember(Value = "Queued")]
+        Queued,
     }
 }

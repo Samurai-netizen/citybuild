@@ -62,9 +62,11 @@ full or its inputs run out (§6), and goods move only with walkers (§18, §19).
 | `Upgrading` | No production; uses a builder slot; level rises at end | `PhaseStartedAt`, `PhaseEndsAt`, `TargetLevel` |
 | `Idle` | Ready, not producing | — |
 | `Producing` | Inputs consumed, outputs reserved | `CycleLabor`, `LaborRemaining`, `SegmentStartedAt`, `PhaseEndsAt` (null if frozen) |
+| `Queued` | Placed and paid, waiting in the **builder queue** (CR-0013, §8): takes its tile and counts toward `maxPerCity`; no builder slot, no workers, no store, accepts no deliveries | — (`QueuedOrder` ≥ 1) |
 
 Fields a phase doesn't use are 0 (`PhaseEndsAt` null), and `Producing` keeps the cycle's start in `PhaseStartedAt`, so equal situations are
-equal field by field. An `Idle` or `Producing` building may also have an **upgrade waiting for goods** (§16): it keeps working.
+equal field by field. An `Idle` or `Producing` building may also have an **upgrade waiting for goods** (§16): it keeps working. It may
+instead have a **queued upgrade** (CR-0013): `QueuedOrder` ≥ 1, no needs yet; it keeps working too.
 **Paused** is a flag beside the phase (CR-0008 D23), only on a producer or a courier station: a paused producer starts no cycle (§6), a
 paused station's couriers go home and stay there (§19). It changes nothing else: the store stays open to walkers (D25), timers run, and
 it stays through an upgrade.
@@ -80,7 +82,10 @@ courier station; D23) · `NoWorkers` (idle producer, courier station without cou
   `ActiveResearch.EndsAt = t + Duration` (at once when the node costs coins only). Research needs no workers.
 - On completion, the node is added to `CompletedResearch` and its effects apply at that moment:
   `UnlockBuilding(type)`, `LaborReduction(type, ‰)`, `StorageCapBonus(item, +n)` (raises the limit of the item in every store that holds
-  it, §16), `UnlockAmountMode(mode)` (§19), `WalkSpeedBonus(‰)` (§17) (M0 set; more types in `25`).
+  it, §16), `UnlockAmountMode(mode)` (§19), `WalkSpeedBonus(‰)` (§17) (M0 set); since M1-02 `MaxLevelBonus(type, +n)` (a type's max level
+  is its `baseMaxLevel` plus the bonuses, §8), `BuilderSlots(+n)` (builder slots = `builderSlots` + the bonuses, §8) and `GrantCharter`
+  (the city is **chartered**, `25`). All are derived from `CompletedResearch`: nothing is stored. A node may have several effects. More
+  types in `25`.
 - A cycle that starts from that second on uses the effects (completion comes before starts, §6), and so does a walk. Running cycles keep
   their labor, walks their arrival.
 - **Era transition** *(planned: built with Era II, `25`)*: when every research node of the current era is completed, `Era += 1` at that
@@ -96,8 +101,8 @@ purse, then `Idle`. `Constructing` → `Idle` plus auto-staffing. `Upgrading` �
 **Delivery rule:** a walker that arrives with goods fills the building's waiting project first (§16), then its store up to its room; what
 is left stays with a courier or goes back to a trip's source (§18).
 **Ordering at the same `t`:** (1) research completion → (2) building completions in ascending `Id` → (3) trip arrivals in ascending trip
-id → (4) courier arrivals in ascending (station `Id`, slot) → (5) starts: cycles in ascending `Id`, then couriers leaving their station in
-ascending (station `Id`, slot). Each step is fully applied before the next one. This order is visible to players.
+id → (4) courier arrivals in ascending (station `Id`, slot) → (5) starts: queued orders while a builder is free, lowest `QueuedOrder` first
+(§8, CR-0013), then cycles in ascending `Id`, then couriers leaving their station in ascending (station `Id`, slot). Each step is fully applied before the next one. This order is visible to players.
 
 ## 7. The algorithm
 ```
@@ -124,9 +129,9 @@ once per advance and kept (§17).
 ## 8. Mutations (all happen at `city.Clock`, after settling)
 | Mutation | Checks (error code) | Effect |
 |---|---|---|
-| PlaceBuilding | type known (`UNKNOWN_BUILDING_TYPE`), of the city's era or earlier and unlocked (`BUILDING_LOCKED`), in bounds (`OUT_OF_BOUNDS`), tile free of buildings and roads (`TILE_OCCUPIED`), below the type's `maxPerCity` (`BUILDING_LIMIT`), free builder (`NO_FREE_BUILDER`), the cost's coins (`INSUFFICIENT_RESOURCE`) | pay the coins, `Id = NextBuildingId++`, `Constructing`; its project needs the cost's goods (§16); with none, the timer runs from now for the build seconds |
-| UpgradeBuilding | exists (`BUILDING_NOT_FOUND`), Idle/Producing without a waiting upgrade (`BUILDING_BUSY`), level < max (`MAX_LEVEL`), free builder (`NO_FREE_BUILDER`), the next level's coins (`INSUFFICIENT_RESOURCE`) | pay the coins; with no goods in the upgrade cost the upgrade starts now (below); otherwise the building keeps working with an upgrade waiting for those goods (§16) |
-| AssignWorkers | exists (`BUILDING_NOT_FOUND`), a producer or courier station (`INVALID_ARGUMENT`), not Constructing (`BUILDING_BUSY`), `0 ≤ n ≤ MaxWorkers` of the current level, also while upgrading (`WORKER_LIMIT`), the increase `n − assigned` ≤ free (`INSUFFICIENT_WORKERS`); a station's removed couriers' loads all fit back into their stores (`COURIER_BUSY`, M0-C-3) | set `n`; a producer gets the labor segment update (§3); a station gains couriers at its station or loses its highest slots (§19) |
+| PlaceBuilding | type known (`UNKNOWN_BUILDING_TYPE`), of the city's era or earlier and unlocked (`BUILDING_LOCKED`), in bounds (`OUT_OF_BOUNDS`), tile free of buildings and roads (`TILE_OCCUPIED`), below the type's `maxPerCity` (`BUILDING_LIMIT`), free builder or room in the builder queue (`NO_FREE_BUILDER`), the cost's coins (`INSUFFICIENT_RESOURCE`) | pay the coins, `Id = NextBuildingId++`, `Constructing`; its project needs the cost's goods (§16); with none, the timer runs from now for the build seconds. With no free builder: `Queued` with `QueuedOrder = NextQueuedOrder++` (CR-0013) |
+| UpgradeBuilding | exists (`BUILDING_NOT_FOUND`), Idle/Producing without a waiting or queued upgrade (`BUILDING_BUSY`), level < the type's max level now (`MAX_LEVEL`; base max level + completed `MaxLevelBonus`, §5), free builder or room in the builder queue (`NO_FREE_BUILDER`), the next level's coins (`INSUFFICIENT_RESOURCE`) | pay the coins; with no goods in the upgrade cost the upgrade starts now (below); otherwise the building keeps working with an upgrade waiting for those goods (§16). With no free builder the upgrade is queued (`QueuedOrder = NextQueuedOrder++`, CR-0013) and the building keeps working |
+| AssignWorkers | exists (`BUILDING_NOT_FOUND`), a producer or courier station (`INVALID_ARGUMENT`), not Constructing or Queued (`BUILDING_BUSY`), `0 ≤ n ≤ MaxWorkers` of the current level, also while upgrading (`WORKER_LIMIT`), the increase `n − assigned` ≤ free (`INSUFFICIENT_WORKERS`); a station's removed couriers' loads all fit back into their stores (`COURIER_BUSY`, M0-C-3) | set `n`; a producer gets the labor segment update (§3); a station gains couriers at its station or loses its highest slots (§19) |
 | StartResearch | known (`UNKNOWN_RESEARCH`), not done (`RESEARCH_COMPLETED`), slot free (`RESEARCH_IN_PROGRESS`), prerequisites + current era (`RESEARCH_LOCKED`), a completed science building (`NO_SCIENCE_BUILDING`), the coins (`INSUFFICIENT_RESOURCE`) | pay the coins, fill the slot; the goods are delivered to the science building, then the timer runs (§5) |
 | PlaceRoads(tiles) | every tile in bounds (`OUT_OF_BOUNDS`), without a building or road (`TILE_OCCUPIED`), the coins of level 1 for every tile (`INSUFFICIENT_RESOURCE`) | pay, a level-1 road on every tile (§17) |
 | UpgradeRoads(tiles) | every tile has a road (`ROAD_NOT_FOUND`) below the last road level (`MAX_LEVEL`), the coins of every next level (`INSUFFICIENT_RESOURCE`) | pay, every road one level up |
@@ -134,12 +139,18 @@ once per advance and kept (§17).
 | StartTrip(source, target, item, amount) | both buildings exist (`BUILDING_NOT_FOUND`), item known (`UNKNOWN_ITEM`) and not the currency (`INVALID_ARGUMENT`), amount allowed (§19: `INVALID_ARGUMENT` for an unknown preset, `AMOUNT_MODE_LOCKED`), the target accepts the item (`ITEM_NOT_ACCEPTED`: its waiting project needs it or its store holds it); with a built courier station a free courier (`NO_FREE_COURIER`), else a free worker (`INSUFFICIENT_WORKERS`); the amount gives at least 1 (`NOTHING_TO_CARRY`); the courier's queue has room for the lines (`DELIVERY_QUEUE_FULL`) | a courier gets the delivery's lines, or a worker takes the first load and walks (§18) |
 | SetRoute(station, slot, stops) | station exists (`BUILDING_NOT_FOUND`) and is a courier station (`INVALID_ARGUMENT`), slot 1..MaxWorkers of its level, 0 or 2..`maxRouteStops` stops, 1..`maxStopActions` actions per stop, no two consecutive stops (last and first included) at one building (`INVALID_ROUTE`), every stop's building exists (`BUILDING_NOT_FOUND`), every item known (`UNKNOWN_ITEM`) and not the currency (`INVALID_ARGUMENT`), every amount allowed (as StartTrip); with 1 or more stops: a built `routeBuilding` (`ROUTES_LOCKED`) and no delivery lines on the slot's courier (`COURIER_BUSY`) | replace the slot's route (0 stops clears it); the slot's courier, if any, returns its load and starts again from its station (§19) |
 | CancelDelivery(station, slot, line or all) | station exists (`BUILDING_NOT_FOUND`) and is a courier station (`INVALID_ARGUMENT`), the slot has a courier (`INVALID_ARGUMENT`), the line is one of its lines (`DELIVERY_NOT_FOUND`); "all" always applies | remove the line, or every line and the route; a courier whose running line or route went returns its load and starts again from its station (§19) |
-| SetPaused(building, paused) | exists (`BUILDING_NOT_FOUND`), a producer or courier station (`INVALID_ARGUMENT`), not Constructing (`BUILDING_BUSY`) | set the flag (the same value again changes nothing); a running cycle runs on; a station's couriers act as §19 says |
+| SetPaused(building, paused) | exists (`BUILDING_NOT_FOUND`), a producer or courier station (`INVALID_ARGUMENT`), not Constructing or Queued (`BUILDING_BUSY`) | set the flag (the same value again changes nothing); a running cycle runs on; a station's couriers act as §19 says |
 | ReenergizeCouriers | — | every courier's stamina is its station level's; resting couriers are at their station again, ready to leave (§19) |
 
 **Starting an upgrade** (at once, or when its last good arrives): a running cycle (frozen or not) ends without output and its inputs go back
 into the building's store (they always fit: a running cycle's inputs are reserved, §16); the building is `Upgrading` to `TargetLevel = Level + 1` for that level's upgrade seconds; a
-courier station's couriers stop (§19). **Builders busy** = `Constructing` + `Upgrading` + upgrades waiting for goods.
+courier station's couriers stop (§19). **Builders busy** = `Constructing` + `Upgrading` + upgrades waiting for goods; a free builder means busy < builder slots
+(`builderSlots` + completed `BuilderSlots`, §5).
+**Builder queue** (CR-0013): with no free builder, a placement or upgrade that passes every other check is queued while fewer than
+`builderQueueLength` orders wait; its coins are paid then, so it can't fail later. Queued orders are not busy builders. At every start
+step (§6, step 5) they start while a builder is free, lowest `QueuedOrder` first (the order they were made in): a construction as a
+construction site, or with its timer from then when its cost has no goods; an upgrade waits for its goods, or starts (above). So an order
+starts at the exact second a construction or upgrade completes or a research adds a slot. Cancelling a queued order is M1-06.
 Checks run in the listed order; the first failure is returned and changes nothing; a list of tiles or stops is applied all or nothing. An
 applied mutation names what it paid and refunded (the ledger rows of `06`). "Current era" means the node's era equals the city's, and a
 frozen cycle counts as running (its inputs are refunded). Workers on a house, a warehouse or the science building are `INVALID_ARGUMENT`.
@@ -175,6 +186,8 @@ frozen cycle counts as running (its inputs are refunded). Workers on a house, a 
     slot, two different buildings and a quantity of 1..that station level's carry limit; a removed courier leaves no lines (§18).
 16. Only producers and courier stations are paused, never while constructing; a paused producer starts no cycle; a courier of a paused
     station never leaves its station (D23, D24).
+17. At most `builderQueueLength` orders are queued; after every advance no builder is free while an order is queued; queued orders start
+    in the order they were made (CR-0013).
 
 Which tests hold each invariant, error code and threat: `docs/testing/COVERAGE-MATRIX.md` (M0-81).
 
@@ -194,7 +207,7 @@ Worst case (CR-0008): an 8×8 city of 26 houses at level 2 (156 workers) and 38 
 every route between two adjacent buildings, Sturdy Boots done (4 s walks): one settlement after a long absence covers the grace and the
 stamina, about 7,300 arrivals per courier, ≈ 1.1 M events. Producers add less per tile than couriers (a 10 s cycle at best). Target:
 < 500 ms on a dev machine in Release (CI uses a generous limit: 2 s in Release). Measured in CR-0008-T1 part I: 1,105,952 arrivals in one
-settlement, **308 ms** median in Release (Apple A18 Pro); the producer case (64 producers, 8 h) 47 ms. Above the target: the 005 fallback
+settlement, **308 ms** median in Release (Apple A18 Pro); the producer case (64 producers, 8 h) 47 ms. Era I (M1-02): all 13 types at their highest level on the 8×8 map, 18 producers and 108 couriers on the three chains, 191 ms for 8 h away and 106 ms for 7 days after it. Above the target: the 005 fallback
 in `12`. The test and the measured numbers: `docs/modules/CityBuilder.Simulation.md` → Tests → `Performance/`.
 
 ## 13. Planned extension — external deliveries (not in M0)
@@ -209,7 +222,8 @@ first (required values present, ids `[a-z][a-z0-9_]*` of at most 64 characters, 
 quantities, durations, milliseconds and labor ≤ 10¹²; grid size and worker counts ≤ 32767, the `smallint` columns of `06`; `maxRouteStops`
 2..16 and `maxStopActions` 1..8, the API's list limits), then every rule, and lists every error with a stable code (`docs/modules/CityBuilder.Simulation.md`).
 1. Recipe and bonus amounts, labor, durations, store limits, tile times, carry limits, stamina, grid size and slots > 0; cost and starting
-   amounts ≥ 0; an effect's permille 1..1000; `MaxLaborReductionPermille` 0..1000; exactly one research slot (§5).
+   amounts ≥ 0; an effect's permille 1..1000; `MaxLaborReductionPermille` 0..1000; exactly one research slot (§5); `builderQueueLength`
+   0..32767, 0 when absent (no queue, CR-0013).
 2. Ids are unique per kind; era numbers are 1..n; every reference (era, item, building type, research node) exists.
 3. Levels are 1..max. A house level provides ≥ 1 worker and nothing else; a producer level has ≥ 1 worker slot, a recipe with an output and
    a store; a courier station level has ≥ 1 worker slot, a carry limit and stamina; a warehouse level has a store; a science building level
@@ -232,6 +246,9 @@ quantities, durations, milliseconds and labor ≤ 10¹²; grid size and worker c
     Σ walk bonuses ≤ `MaxWalkBonusPermille` (≤ 900).
 13. **Routes and amounts:** 1..8 amount presets with unique ids and a percentage 1..100; `tripCarryLimit` ≥ 1; `maxDeliveryLines` 1..100;
     `routeBuilding`, when given, names a known building type (without it routes need no building); an `UnlockAmountMode` names `percent` or `exact`.
+13a. **Level caps** (M1-02): a type's `baseMaxLevel` (absent: its last level) is 1..its last level, and the `MaxLevelBonus`es of all research
+    never raise it past the last level (`LevelCapMismatch`); a `MaxLevelBonus` names a type with a level above its base max level
+    (`InvalidEffectTarget`); a `MaxLevelBonus` or `BuilderSlots` amount is > 0.
 
 The **graph rules** (M0-70) run only when every rule above passed, so they never repeat an error already reported:
 
@@ -241,8 +258,8 @@ The **graph rules** (M0-70) run only when every rule above passed, so they never
     (`output × maxWorkers / labor`) and needs no more of any input for each such output; from level 3, an upgrade costs at least as much
     currency, and as many goods in all, as the upgrade below it (the build cost is not an upgrade).
 16. **Everything can be reached, era by era:** playing from the start (the purse, the types available at the start), a type is built once
-    it is unlocked, of this era or an earlier one, and its cost can be paid; it rises a level while that upgrade can be paid; a recipe runs
-    once a house can be built and its inputs can be had; a node of this era is done once the science building can be built, its
+    it is unlocked, of this era or an earlier one, and its cost can be paid; it rises a level while that upgrade can be paid and the level is within its max level with the done nodes (M1-02); a recipe
+    runs once a house can be built and its inputs can be had; a node of this era is done once the science building can be built, its
     prerequisites are done and its cost can be paid. Each era repeats until nothing new is reached. Every building type and level of the
     era, and every node of the era, must have been reached. Only which things can exist counts, not amounts or time; balance is BalanceSim's.
 

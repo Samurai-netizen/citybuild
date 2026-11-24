@@ -14,7 +14,7 @@ namespace CityBuilder.Simulation.State
     {
         /// <summary>
         /// The workers the city's houses provide: the sum of their level's workers over every completed house. A house still constructing
-        /// provides none; an upgrading house provides its current level's workers until the upgrade completes.
+        /// or queued provides none; an upgrading house provides its current level's workers until the upgrade completes.
         /// </summary>
         /// <param name="city">The city.</param>
         /// <param name="content">The game content.</param>
@@ -26,7 +26,7 @@ namespace CityBuilder.Simulation.State
             for (int index = 0; index < buildings.Count; index++)
             {
                 Building building = buildings[index];
-                if (building.Phase != BuildingPhase.Constructing)
+                if (building.IsBuilt)
                 {
                     // Producers provide 0 workers at every level (content rule 3), so summing every completed building counts the houses only.
                     provided = checked(provided + DefinitionOf(content, building.TypeId).GetLevel(building.Level).WorkersProvided);
@@ -73,7 +73,7 @@ namespace CityBuilder.Simulation.State
             IReadOnlyList<Building> buildings = city.Buildings;
             for (int index = 0; index < buildings.Count; index++)
             {
-                if (buildings[index].Phase != BuildingPhase.Constructing && DefinitionOf(content, buildings[index].TypeId).Kind == BuildingKind.CourierStation)
+                if (buildings[index].IsBuilt && DefinitionOf(content, buildings[index].TypeId).Kind == BuildingKind.CourierStation)
                 {
                     return true;
                 }
@@ -100,7 +100,7 @@ namespace CityBuilder.Simulation.State
             IReadOnlyList<Building> buildings = city.Buildings;
             for (int index = 0; index < buildings.Count; index++)
             {
-                if (buildings[index].TypeId == needed.Value && buildings[index].Phase != BuildingPhase.Constructing)
+                if (buildings[index].TypeId == needed.Value && buildings[index].IsBuilt)
                 {
                     return true;
                 }
@@ -129,6 +129,126 @@ namespace CityBuilder.Simulation.State
         }
 
         /// <summary>
+        /// The place of a building's queued order in the builder queue (CR-0013): 1 plus the queued orders made before it, so 1 starts next; 0
+        /// when the building has no queued order.
+        /// </summary>
+        /// <param name="city">The city.</param>
+        /// <param name="building">A building of the city.</param>
+        /// <returns>The place, from 1, or 0.</returns>
+        public static int QueuePlace(CityState city, Building building)
+        {
+            if (building.QueuedOrder == 0)
+            {
+                return 0;
+            }
+
+            int place = 1;
+            IReadOnlyList<Building> buildings = city.Buildings;
+            for (int index = 0; index < buildings.Count; index++)
+            {
+                int order = buildings[index].QueuedOrder;
+                if (order > 0 && order < building.QueuedOrder)
+                {
+                    place++;
+                }
+            }
+
+            return place;
+        }
+
+        /// <summary>
+        /// The orders waiting in the builder queue (CR-0013, <c>04</c> section 8): queued constructions and queued upgrades. They take no
+        /// builder slot; at most <see cref="GameRules.BuilderQueueLength"/> wait.
+        /// </summary>
+        /// <param name="city">The city.</param>
+        /// <returns>The number of queued orders.</returns>
+        public static int QueuedOrders(CityState city)
+        {
+            int queued = 0;
+            IReadOnlyList<Building> buildings = city.Buildings;
+            for (int index = 0; index < buildings.Count; index++)
+            {
+                if (buildings[index].QueuedOrder > 0)
+                {
+                    queued++;
+                }
+            }
+
+            return queued;
+        }
+
+        /// <summary>The builder slots: the content's plus every completed <see cref="BuilderSlotBonusEffect"/> (<c>04</c> section 8).</summary>
+        /// <param name="city">The city.</param>
+        /// <param name="content">The game content.</param>
+        /// <returns>The number of builder slots.</returns>
+        public static int BuilderSlots(CityState city, GameContent content)
+        {
+            long slots = content.Rules.BuilderSlots;
+            IReadOnlyList<ResearchId> completed = city.CompletedResearch;
+            for (int index = 0; index < completed.Count; index++)
+            {
+                IReadOnlyList<ResearchEffect> effects = ResearchOf(content, completed[index]).Effects;
+                for (int effectIndex = 0; effectIndex < effects.Count; effectIndex++)
+                {
+                    if (effects[effectIndex] is BuilderSlotBonusEffect bonus)
+                    {
+                        slots = checked(slots + bonus.Amount);
+                    }
+                }
+            }
+
+            return checked((int)slots);
+        }
+
+        /// <summary>A building type's max level: its base max level plus every completed <see cref="MaxLevelBonusEffect"/> for it (<c>04</c> section 8).</summary>
+        /// <param name="city">The city.</param>
+        /// <param name="content">The game content.</param>
+        /// <param name="type">A building type of the content.</param>
+        /// <returns>The highest level a building of the type may reach now.</returns>
+        public static int MaxLevel(CityState city, GameContent content, BuildingTypeId type)
+        {
+            BuildingDefinition definition = DefinitionOf(content, type);
+            long level = definition.BaseMaxLevel;
+            IReadOnlyList<ResearchId> completed = city.CompletedResearch;
+            for (int index = 0; index < completed.Count; index++)
+            {
+                IReadOnlyList<ResearchEffect> effects = ResearchOf(content, completed[index]).Effects;
+                for (int effectIndex = 0; effectIndex < effects.Count; effectIndex++)
+                {
+                    if (effects[effectIndex] is MaxLevelBonusEffect bonus && bonus.Building == type)
+                    {
+                        level = checked(level + bonus.Amount);
+                    }
+                }
+            }
+
+            // Content rule (LevelCapRules): the bonuses never pass the last level, so this cast is exact.
+            return (int)level;
+        }
+
+        /// <summary>Whether a completed node has a <see cref="GrantCharterEffect"/>: the city is chartered (<c>25</c>, the end of Era I).</summary>
+        /// <param name="city">The city.</param>
+        /// <param name="content">The game content.</param>
+        /// <returns>True from the charter node's completion second on.</returns>
+        public static bool IsChartered(CityState city, GameContent content)
+        {
+            IReadOnlyList<ResearchId> completed = city.CompletedResearch;
+            for (int index = 0; index < completed.Count; index++)
+            {
+                IReadOnlyList<ResearchEffect> effects = ResearchOf(content, completed[index]).Effects;
+                for (int effectIndex = 0; effectIndex < effects.Count; effectIndex++)
+                {
+                    if (effects[effectIndex] is GrantCharterEffect)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// How much of a good a building has reserved: the output of its own running cycle (frozen ones included), which will enter its store
         /// when the cycle completes, plus that cycle's inputs, which come back into the store if an upgrade ends the cycle (<c>04</c> section 16;
         /// M0-C-3: so the refund always fits). Derived from the phase, never stored. An idle building reserves nothing.
@@ -150,7 +270,7 @@ namespace CityBuilder.Simulation.State
 
         /// <summary>
         /// A building store's effective limit for a good (<c>04</c> section 16): its level's limit plus the <see cref="StorageCapBonusEffect"/>s
-        /// of the city's completed research for that good.
+        /// of the city's completed research for that good. A queued construction has no store yet (CR-0013).
         /// </summary>
         /// <param name="city">The city, whose completed research raises the limits.</param>
         /// <param name="content">The game content.</param>
@@ -160,6 +280,13 @@ namespace CityBuilder.Simulation.State
         /// <returns>True when the building's store holds the good at its level.</returns>
         public static bool TryGetEffectiveLimit(CityState city, GameContent content, Building building, ItemId item, out long limit)
         {
+            // A queued construction has no store yet (CR-0013): it holds and accepts nothing.
+            if (building.Phase == BuildingPhase.Queued)
+            {
+                limit = 0;
+                return false;
+            }
+
             if (!DefinitionOf(content, building.TypeId).GetLevel(building.Level).TryGetStorageLimit(item, out limit))
             {
                 return false;
@@ -283,7 +410,7 @@ namespace CityBuilder.Simulation.State
             for (int index = 0; index < buildings.Count; index++)
             {
                 Building building = buildings[index];
-                if (building.Phase != BuildingPhase.Constructing && DefinitionOf(content, building.TypeId).Kind == BuildingKind.Science)
+                if (building.IsBuilt && DefinitionOf(content, building.TypeId).Kind == BuildingKind.Science)
                 {
                     return building;
                 }
@@ -318,7 +445,7 @@ namespace CityBuilder.Simulation.State
             ActiveResearch? research = city.ActiveResearch;
             return research is not null
                 && research.IsWaiting
-                && building.Phase != BuildingPhase.Constructing
+                && building.IsBuilt
                 && DefinitionOf(content, building.TypeId).Kind == BuildingKind.Science
                 ? research.Needs.TryGetValue(item, out long need) ? need : 0
                 : 0;

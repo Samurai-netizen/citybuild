@@ -21,18 +21,28 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(_json.Serialize(content), Is.EqualTo(text));
         }
 
+        /// <summary>The M0 answer the snapshot fixtures go with (no queue, no base max level) still reads and writes back byte for byte (decision 14).</summary>
+        [Test]
+        public void TheM0ContentFixture_ReadsAndWritesBackToTheSameText()
+        {
+            string text = Fixtures.Read("content-mvp-2.json");
+
+            Assert.That(_json.Serialize(_json.Deserialize<ContentResponseDto>(text)), Is.EqualTo(text));
+        }
+
         /// <summary>The rules and the starter city carry the numbers of the content file; quantities are <see cref="long"/>.</summary>
         [Test]
         public void TheRulesAndTheStartingCity_AreRead()
         {
             ContentResponseDto content = _json.Deserialize<ContentResponseDto>(Fixtures.Read("content.json"));
 
-            Assert.That(content.ContentVersion, Is.EqualTo("mvp-2"));
+            Assert.That(content.ContentVersion, Is.EqualTo("era1-1"));
             Assert.That(content.Rules.GridWidth, Is.EqualTo(8));
             Assert.That(content.Rules.TimeScale, Is.EqualTo(1));
             Assert.That(content.Rules.TripCarryLimit, Is.EqualTo(10L));
             Assert.That((content.Rules.MaxRouteStops, content.Rules.MaxStopActions), Is.EqualTo((8, 4)));
-            Assert.That(content.StartingCity.Purse, Is.EqualTo(800L));
+            Assert.That(content.StartingCity.Purse, Is.EqualTo(1000L));
+            Assert.That(content.Rules.BuilderQueueLength, Is.EqualTo(2));
             Assert.That(content.Items.Find(item => item.Id == "coins").Currency, Is.True);
             Assert.That(content.Items.Find(item => item.Id == "logs").Currency, Is.False);
             Assert.That(content.AmountPresets.ConvertAll(preset => preset.Id + "=" + preset.Percent), Is.EqualTo(new[] { "all=100", "half=50", "quarter=25" }));
@@ -99,6 +109,31 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That((mode.Type, mode.Mode, mode.Item), Is.EqualTo((ResearchEffectTypeDto.UnlockAmountMode, "percent", (string)null)));
             Assert.That((walk.Type, walk.Permille, walk.Mode), Is.EqualTo((ResearchEffectTypeDto.WalkSpeedBonus, (int?)200, (string)null)));
             Assert.That(content.Research.Find(r => r.Id == "frame_saw").Prerequisites, Is.EqualTo(new[] { "sharp_axes" }));
+        }
+
+        /// <summary>The three effects of Era I (M1-02) read: a level cap rise for a type, a builder slot, and the charter, each with only its members set.</summary>
+        [Test]
+        public void TheResearch_ReadsTheEraIEffects()
+        {
+            ContentResponseDto content = _json.Deserialize<ContentResponseDto>(Fixtures.Read("content.json"));
+
+            ContentResearchEffectDto level = content.Research.Find(r => r.Id == "timber_framing").Effects[0];
+            ContentResearchEffectDto slot = content.Research.Find(r => r.Id == "guild_of_masons").Effects[0];
+            ContentResearchEffectDto charter = content.Research.Find(r => r.Id == "town_charter").Effects[0];
+            Assert.That((level.Type, level.Building, level.Amount), Is.EqualTo((ResearchEffectTypeDto.MaxLevelBonus, "house", (long?)1)));
+            Assert.That((slot.Type, slot.Building, slot.Amount), Is.EqualTo((ResearchEffectTypeDto.BuilderSlotBonus, (string)null, (long?)1)));
+            Assert.That((charter.Type, charter.Building, charter.Amount), Is.EqualTo((ResearchEffectTypeDto.GrantCharter, (string)null, (long?)null)));
+        }
+
+        /// <summary>A building type's <c>baseMaxLevel</c> (M1-02) reads: the cottage stops at 2 without research, the Town Hall at 3.</summary>
+        [Test]
+        public void TheBuildings_ReadTheirBaseMaxLevel()
+        {
+            ContentResponseDto content = _json.Deserialize<ContentResponseDto>(Fixtures.Read("content.json"));
+
+            Assert.That(content.Buildings.Find(b => b.Id == "house").BaseMaxLevel, Is.EqualTo(2));
+            Assert.That(content.Buildings.Find(b => b.Id == "town_hall").BaseMaxLevel, Is.EqualTo(3));
+            Assert.That(content.Buildings.Find(b => b.Id == "scriptorium").BaseMaxLevel, Is.EqualTo(1));
         }
     }
 }
