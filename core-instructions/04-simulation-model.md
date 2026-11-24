@@ -207,7 +207,7 @@ Worst case (CR-0008): an 8×8 city of 26 houses at level 2 (156 workers) and 38 
 every route between two adjacent buildings, Sturdy Boots done (4 s walks): one settlement after a long absence covers the grace and the
 stamina, about 7,300 arrivals per courier, ≈ 1.1 M events. Producers add less per tile than couriers (a 10 s cycle at best). Target:
 < 500 ms on a dev machine in Release (CI uses a generous limit: 2 s in Release). Measured in CR-0008-T1 part I: 1,105,952 arrivals in one
-settlement, **308 ms** median in Release (Apple A18 Pro); the producer case (64 producers, 8 h) 47 ms. Above the target: the 005 fallback
+settlement, **308 ms** median in Release (Apple A18 Pro); the producer case (64 producers, 8 h) 47 ms. Era I (M1-02): all 13 types at their highest level on the 8×8 map, 18 producers and 108 couriers on the three chains, 191 ms for 8 h away and 106 ms for 7 days after it. Above the target: the 005 fallback
 in `12`. The test and the measured numbers: `docs/modules/CityBuilder.Simulation.md` → Tests → `Performance/`.
 
 ## 13. Planned extension — external deliveries (not in M0)

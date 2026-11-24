@@ -283,6 +283,10 @@ order that matters, `checked` arithmetic, results instead of exceptions for busi
   Boots done), restored at clock 1000. `CourierBudgetTests` settles it once after 30 000 s with the player away from 300 s: every courier
   tires at 30 100 and rests, the report names all 152 and 28 800 courier seconds (1,105,952 arrivals), and the median of 5 timed runs
   stays within 2 s in Release (6 s in Debug). Measured: **Release 308 ms** (291–348), Debug 1.8 s (decision 67).
+  `Era1WorstCase` (M1-02) is the Era I case: `era1-content.json` on its 8 × 8 map with all 13 types at their highest level, every node
+  done, 18 producers fully staffed, 108 couriers on the links of the three chains, 25 houses. `Era1BudgetTests` settles it 8 h and then
+  7 days with the player away (every good made and moved; every courier tired at the end) within the same CI limits. Measured, Release,
+  median of 5: **191 ms** (8 h) and **106 ms** (7 d).
   `Content/ContentFile` reads a fixture file as the server does, for the golden and the performance contents.
 - `SimulationDependencyTests`: the compiled assembly references exactly `netstandard` and is built for `netstandard2.1`.
 - `SimulationPackageTests`: the files only Unity sees. The asmdef (`noEngineReferences`, no references, no platform or define
