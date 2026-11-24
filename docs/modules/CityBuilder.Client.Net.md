@@ -105,6 +105,8 @@ captured from the real server, and the round-trip test. A new error code: add it
   and gave the ten other snapshots the two empty lists `couriers` and `routes` where the server now writes them (decision 56). `INSUFFICIENT_WORKERS`, `MAX_LEVEL`, `CONCURRENCY_CONFLICT` and
   `INTERNAL_ERROR` could not be provoked by hand and have no fixture. To refresh them, redo that run (`docs/api/smoke.http` lists the
   requests) and copy the answers; a changed contract changes the round-trip tests first.
+  M1-02 took `content.json` again from an `era1-1` API on a throwaway PostgreSQL container (decision 23); the snapshot and error files
+  are still the `mvp-2` answers, which read and write back unchanged (decision 14).
 - The asmdef itself is guarded by `ClientAssemblyTests` and the error code list by `ClientErrorCodesTests`, both in
   `server/tests/CityBuilder.Simulation.Tests`, run with `dotnet test server/CityBuilder.slnx --filter "Category!=Integration"`.
 
@@ -117,4 +119,4 @@ captured from the real server, and the round-trip test. A new error code: add it
   matching builds.
 - The real transport was walked against a running server once (M0-37 build log); it is not in CI (Unity tests are not).
 
-Last updated: M0-82
+Last updated: M1-02

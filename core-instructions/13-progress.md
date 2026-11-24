@@ -7,7 +7,7 @@
 ## Resume point
 - **State:** IN PROGRESS <!-- IDLE | IN PROGRESS | BLOCKED | AWAITING OWNER -->
 - **Task:** M1-02 Full Era I content and the three new research effects · branch `task/M1-02-era1-content` · log `docs/build-log/2026/2026-11-23-02-M1-02.md`
-- **Part / step:** A1, A2, B and C1 (server on Era I, HTTP tests, charter player) done (checkpoints); next C2 client
+- **Part / step:** A1, A2, B and C1 done (checkpoints); C2 client in progress: `content.json` re-recorded (era1-1), placeholders + pending list, client DTO fix (decision 27); Unity run pending
 - **Last completed:** M1-01 Design lock for Era I (PR #104, merged 2026-11-23).
 - **Next step:** part C2 (client), the test list of the build log's Session 4: re-record `content.json` from the `era1-1` server, code-made
   placeholders for missing models and icons with a pending list (`27`; `ArtModelsTests`, decision 22), run Unity with

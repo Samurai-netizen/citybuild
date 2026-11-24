@@ -43,13 +43,27 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.City
             Assert.That(BuildingLooks.Get(BuildingLooks.House, 3), Is.SameAs(BuildingLooks.Get(BuildingLooks.House, 1)));
         }
 
-        /// <summary>A type the table doesn't know is drawn as the fallback box, in any era.</summary>
+        /// <summary>
+        /// A type the table doesn't know is drawn as its placeholder, in any era: one box in the tint of its id (<c>27</c> → Placeholders), the
+        /// same object each time. M1-02 changed this test: before, every unknown type shared one grey box (<c>Fallback</c>).
+        /// </summary>
         [TestCase("castle", 1)]
         [TestCase("castle", 4)]
         [TestCase("house", 0)]
-        public void Get_ForAnUnknownTypeOrEra_ReturnsTheFallback(string typeId, int era)
+        public void Get_ForAnUnknownTypeOrEra_ReturnsThePlaceholderOfItsId(string typeId, int era)
         {
-            Assert.That(BuildingLooks.Get(typeId, era), Is.SameAs(BuildingLooks.Fallback));
+            BuildingLook look = BuildingLooks.Get(typeId, era);
+
+            Assert.That(look, Is.SameAs(BuildingLooks.Placeholder(typeId)));
+            Assert.That(look.Parts.Count, Is.EqualTo(1));
+            Assert.That(look.Parts[0].Color, Is.EqualTo(CityBuilder.Client.Presentation.Ui.Placeholders.TintOf(typeId)));
+        }
+
+        /// <summary>Two types without a look get placeholders of different tints, so a quarry and a farm can be told apart.</summary>
+        [Test]
+        public void Placeholder_OfTwoTypes_HasDifferentTints()
+        {
+            Assert.That(BuildingLooks.Placeholder("quarry").Parts[0].Color, Is.Not.EqualTo(BuildingLooks.Placeholder("farm").Parts[0].Color));
         }
 
         /// <summary>Every part's middle lies over its one-tile footprint (a tile is a unit wide) and above the ground.</summary>

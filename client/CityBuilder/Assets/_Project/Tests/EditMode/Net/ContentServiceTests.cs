@@ -82,17 +82,17 @@ namespace CityBuilder.Client.Tests.EditMode.Net
 
             GameContent content = (await _service.LoadAsync(CancellationToken.None)).Content!;
 
-            Assert.That(content.ContentVersion, Is.EqualTo("mvp-2"));
+            Assert.That(content.ContentVersion, Is.EqualTo("era1-1"));
             Assert.That(content.Rules.GridWidth, Is.EqualTo(8));
             Assert.That(content.Rules.BuilderSlots, Is.EqualTo(2));
             Assert.That(content.Rules.TripCarryLimit, Is.EqualTo(10L));
             Assert.That(content.StartingCity.Era, Is.EqualTo(1));
-            Assert.That(content.StartingCity.Purse, Is.EqualTo(800L));
+            Assert.That(content.StartingCity.Purse, Is.EqualTo(1000L));
             Assert.That(content.Currency.Value, Is.EqualTo("coins"));
             Assert.That(content.AmountPresets.Select(preset => preset.Id.Value), Is.EqualTo(new[] { "all", "half", "quarter" }));
             Assert.That(content.TryGetEra(1, out EraDefinition? era), Is.True);
             Assert.That(era!.Name, Is.EqualTo("Early Middle Ages"));
-            Assert.That(content.Items.Select(item => item.Id.Value), Is.EqualTo(new[] { "coins", "logs", "planks" }));
+            Assert.That(content.Items.Select(item => item.Id.Value), Is.EqualTo(new[] { "coins", "logs", "planks", "stone", "cut_stone", "grain", "flour", "bread" }));
         }
 
         /// <summary>Buildings keep their kind, recipe and levels: a house has no recipe, a sawmill has one, and a gated type names its research.</summary>
@@ -118,6 +118,18 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(content.TryGetBuilding(new BuildingTypeId("trading_post"), out BuildingDefinition? post), Is.True);
             Assert.That(post!.IsAvailableAtStart, Is.False);
             Assert.That(post.UnlockedByResearch!.Value.Value, Is.EqualTo("trade_charter"));
+        }
+
+        /// <summary>A type's base max level survives the mapping (M1-02): the cottage has three levels and reaches two without research.</summary>
+        [Test]
+        public async Task Load_TheRealAnswer_KeepsTheBaseMaxLevel()
+        {
+            _transport.Answer(200, Fixtures.Read("content.json"));
+
+            GameContent content = (await _service.LoadAsync(CancellationToken.None)).Content!;
+
+            Assert.That(content.TryGetBuilding(new BuildingTypeId("house"), out BuildingDefinition? house), Is.True);
+            Assert.That((house!.MaxLevel, house.BaseMaxLevel), Is.EqualTo((3, 2)));
         }
 
         /// <summary>Every effect type the answer holds survives the mapping, which the factory proves by accepting the research that uses it.</summary>

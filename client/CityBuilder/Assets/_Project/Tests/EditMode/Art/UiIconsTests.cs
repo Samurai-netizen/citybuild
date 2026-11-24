@@ -14,7 +14,8 @@ namespace CityBuilder.Client.Tests.EditMode.Art
 {
     /// <summary>
     /// The UI icons (CR-0005-T4): every item, building type and research node of the content has a picture a player build finds by name, so a
-    /// content id added without an icon fails here instead of showing an empty square, and the three fixed icons exist.
+    /// content id added without an icon fails here instead of showing an empty square, and the fixed icons exist. An id on the pending list
+    /// (<see cref="PendingAssets.Icons"/>, M1-02) shows its code-made initials tile instead (<c>27</c> → Placeholders), and only such an id may.
     /// </summary>
     public sealed class UiIconsTests
     {
@@ -54,25 +55,62 @@ namespace CityBuilder.Client.Tests.EditMode.Art
             }
         }
 
-        /// <summary>Every item has an icon.</summary>
+        /// <summary>Every item has its picture, or its initials tile while it is pending.</summary>
         [TestCaseSource(nameof(ItemIds))]
         public void EveryItem_HasAnIcon(string id)
         {
-            Assert.That(UiIcons.ForItem(new ItemId(id)), Is.Not.Null, id);
+            AssertPictureOrPending(UiIcons.ForItem(new ItemId(id)), UiIcons.ItemPrefix + id);
         }
 
-        /// <summary>Every building type has an icon.</summary>
+        /// <summary>Every building type has its picture, or its initials tile while it is pending.</summary>
         [TestCaseSource(nameof(BuildingTypeIds))]
         public void EveryBuildingType_HasAnIcon(string id)
         {
-            Assert.That(UiIcons.ForBuilding(new BuildingTypeId(id)), Is.Not.Null, id);
+            AssertPictureOrPending(UiIcons.ForBuilding(new BuildingTypeId(id)), UiIcons.BuildingPrefix + id);
         }
 
-        /// <summary>Every research node has an icon, for the research screen (M0-52).</summary>
+        /// <summary>Every research node has its picture for the research screen (M0-52), or its initials tile while it is pending.</summary>
         [TestCaseSource(nameof(ResearchIds))]
         public void EveryResearchNode_HasAnIcon(string id)
         {
-            Assert.That(UiIcons.ForResearch(new ResearchId(id)), Is.Not.Null, id);
+            AssertPictureOrPending(UiIcons.ForResearch(new ResearchId(id)), UiIcons.ResearchPrefix + id);
+        }
+
+        /// <summary>The pending list names only icons of the content's ids, each once (the tests above fail on one whose file has arrived).</summary>
+        [Test]
+        public void ThePendingIcons_AreIconsOfTheContent()
+        {
+            var names = new HashSet<string>();
+            foreach (string id in ItemIds())
+            {
+                names.Add(UiIcons.ItemPrefix + id);
+            }
+
+            foreach (string id in BuildingTypeIds())
+            {
+                names.Add(UiIcons.BuildingPrefix + id);
+            }
+
+            foreach (string id in ResearchIds())
+            {
+                names.Add(UiIcons.ResearchPrefix + id);
+            }
+
+            Assert.That(PendingAssets.Icons, Is.Unique);
+            foreach (string name in PendingAssets.Icons)
+            {
+                Assert.That(names.Contains(name), Is.True, name);
+            }
+        }
+
+        /// <summary>An icon is the file's picture unless its name is pending; a pending one is the initials tile, never a file.</summary>
+        /// <param name="icon">The icon found.</param>
+        /// <param name="name">The icon's file name without the extension.</param>
+        private static void AssertPictureOrPending(Texture2D icon, string name)
+        {
+            Assert.That(icon, Is.Not.Null, name);
+            bool pending = PendingAssets.Contains(PendingAssets.Icons, name);
+            Assert.That(UiIcons.IsPlaceholder(icon), Is.EqualTo(pending), pending ? name + " has arrived: take it off the pending list" : name + " has no picture");
         }
 
         /// <summary>The icons of workers, builders, couriers and research exist.</summary>
@@ -85,14 +123,21 @@ namespace CityBuilder.Client.Tests.EditMode.Art
             Assert.That(UiIcons.Couriers, Is.Not.Null);
         }
 
-        /// <summary>A content id with no file gives null, not an exception, and asking again gives null again.</summary>
+        /// <summary>
+        /// A content id with no file gives its initials tile made in code (<c>27</c> → Placeholders), not null or an exception; asking again
+        /// gives the same tile. M1-02 changed this test: before, a missing file gave null and the view kept its text.
+        /// </summary>
         [Test]
-        public void UnknownId_GivesNull()
+        public void UnknownId_GivesItsInitialsTile()
         {
-            Assert.That(UiIcons.ForItem(new ItemId("no_such_item")), Is.Null);
-            Assert.That(UiIcons.ForItem(new ItemId("no_such_item")), Is.Null);
-            Assert.That(UiIcons.ForBuilding(new BuildingTypeId("no_such_type")), Is.Null);
-            Assert.That(UiIcons.ForResearch(new ResearchId("no_such_node")), Is.Null);
+            Texture2D item = UiIcons.ForItem(new ItemId("no_such_item"));
+
+            Assert.That(UiIcons.IsPlaceholder(item), Is.True);
+            Assert.That(item.name, Does.Contain("no_such_item"));
+            Assert.That(UiIcons.ForItem(new ItemId("no_such_item")), Is.SameAs(item));
+            Assert.That(UiIcons.IsPlaceholder(UiIcons.ForBuilding(new BuildingTypeId("no_such_type"))), Is.True);
+            Assert.That(UiIcons.IsPlaceholder(UiIcons.ForResearch(new ResearchId("no_such_node"))), Is.True);
+            Assert.That(UiIcons.IsPlaceholder(UiIcons.ForItem(new ItemId("coins"))), Is.False, "a picture that exists is the file");
         }
 
         /// <summary>The same icon comes back each time (one loaded picture, no copies).</summary>

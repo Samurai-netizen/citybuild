@@ -473,6 +473,11 @@ namespace CityBuilder.Client.Presentation.City
             {
                 model = Resources.Load<GameObject>(ModelFolder + CarryPrefix + item);
                 _loadModels.Add(item, model);
+                if (model == null)
+                {
+                    // The walker carries the plain box of SetLoad until the model arrives (27 → Placeholders).
+                    Ui.Placeholders.ReportMissing("carry model", CarryPrefix + item);
+                }
             }
 
             entry.View.SetLoad(item, model, _fallbackMaterial);

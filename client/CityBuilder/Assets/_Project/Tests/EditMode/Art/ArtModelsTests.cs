@@ -39,7 +39,10 @@ namespace CityBuilder.Client.Tests.EditMode.Art
             }
         }
 
-        /// <summary>Every level a building type can reach has a model in the type's own era.</summary>
+        /// <summary>
+        /// Every level a building type can reach has a model in the type's own era, except the levels on the pending list (<see cref="PendingAssets.Models"/>),
+        /// which the client draws as code-made placeholders (<c>27</c> → Placeholders, M1-02 decision 22).
+        /// </summary>
         [TestCaseSource(nameof(BuildingTypeIds))]
         public void EveryReachableLevel_HasAModel_InTheTypesEra(string typeId)
         {
@@ -47,12 +50,17 @@ namespace CityBuilder.Client.Tests.EditMode.Art
 
             for (int level = 1; level <= building!.MaxLevel; level++)
             {
+                if (PendingAssets.Contains(PendingAssets.Models, ModelName(typeId, level)))
+                {
+                    continue;
+                }
+
                 GameObject? model = Resources.Load<GameObject>(BuildingLooks.ModelPath(typeId, building.Era, level));
                 Assert.That(model, Is.Not.Null, typeId + " level " + level + " (" + BuildingLooks.ModelPath(typeId, building.Era, level) + ")");
             }
         }
 
-        /// <summary>Every building model has the anchors for the status bubble and for the door.</summary>
+        /// <summary>Every building model has the anchors for the status bubble and for the door (a pending level has no model yet).</summary>
         [TestCaseSource(nameof(BuildingTypeIds))]
         public void EveryBuildingModel_HasTheStatusAndDoorAnchors(string typeId)
         {
@@ -60,11 +68,65 @@ namespace CityBuilder.Client.Tests.EditMode.Art
 
             for (int level = 1; level <= building!.MaxLevel; level++)
             {
+                if (PendingAssets.Contains(PendingAssets.Models, ModelName(typeId, level)))
+                {
+                    continue;
+                }
+
                 GameObject model = BuildingLooks.FindModel(typeId, building.Era, level)!;
                 Assert.That(BuildingViewFactory.FindByName(model.transform, BuildingView.StatusAnchorName), Is.Not.Null, typeId + " level " + level);
                 Assert.That(BuildingViewFactory.FindByName(model.transform, BuildingView.DoorAnchorName), Is.Not.Null, typeId + " level " + level);
             }
         }
+
+        /// <summary>
+        /// The pending list holds only models the content needs and the art lacks: each is a level its type can reach, and none has a file. A
+        /// delivered model must leave the list, so the tests above check it.
+        /// </summary>
+        [Test]
+        public void ThePendingModels_AreReachableLevelsWithoutAModel()
+        {
+            GameContent content = LoadContent();
+            var reachable = new Dictionary<string, string>();
+            foreach (BuildingDefinition building in content.Buildings)
+            {
+                for (int level = 1; level <= building.MaxLevel; level++)
+                {
+                    reachable[ModelName(building.Id.Value, level)] = BuildingLooks.ModelPath(building.Id.Value, building.Era, level);
+                }
+            }
+
+            Assert.That(PendingAssets.Models, Is.Unique);
+            foreach (string name in PendingAssets.Models)
+            {
+                Assert.That(reachable.TryGetValue(name, out string? path), Is.True, name + " is a reachable level of the content");
+                Assert.That(Resources.Load<GameObject>(path!), Is.Null, name + " has arrived: take it off the pending list");
+            }
+        }
+
+        /// <summary>The pending carried goods are goods of the content (not the currency) without a <c>carry_</c> model.</summary>
+        [Test]
+        public void ThePendingCarryModels_AreGoodsWithoutAModel()
+        {
+            var goods = new HashSet<string>();
+            foreach (ItemDefinition item in LoadContent().Items)
+            {
+                if (!item.IsCurrency)
+                {
+                    goods.Add(CityWalkers.CarryPrefix + item.Id.Value);
+                }
+            }
+
+            Assert.That(PendingAssets.CarryModels, Is.Unique);
+            foreach (string name in PendingAssets.CarryModels)
+            {
+                Assert.That(goods.Contains(name), Is.True, name + " is a good of the content");
+                Assert.That(Resources.Load<GameObject>(CityWalkers.ModelFolder + name), Is.Null, name + " has arrived: take it off the pending list");
+            }
+        }
+
+        /// <summary>The name of a building model without its folder: <c>house_l2</c>.</summary>
+        private static string ModelName(string typeId, int level) => typeId + "_l" + level;
 
         /// <summary>The Sawmill, which the view will turn the wheel of, has a <c>Wheel</c> at both levels.</summary>
         [TestCase(1)]
@@ -95,7 +157,7 @@ namespace CityBuilder.Client.Tests.EditMode.Art
             Assert.That(Resources.Load<GameObject>(BuildingLooks.DirtTilePath), Is.Not.Null, "dirt");
         }
 
-        /// <summary>A later era with no models of its own finds the Era I ones; a type or a level without a model finds none.</summary>
+        /// <summary>A later era with no models of its own finds the Era I ones; a type or a level without a model finds none (and is logged once, 27).</summary>
         [Test]
         public void FindModel_ForALaterEra_KeepsTheEarlierModel_AndForAMissingOneIsNull()
         {
@@ -284,7 +346,7 @@ namespace CityBuilder.Client.Tests.EditMode.Art
 
         /// <summary>
         /// The walkers (CR-0008-T2 part D): the courier and the worker exist with moving legs and arms, the courier has the <c>Anchor_Load</c> its load sits on,
-        /// and every good except the currency has a <c>carry_&lt;item&gt;</c> model for it.
+        /// and every good except the currency has a <c>carry_&lt;item&gt;</c> model for it, except the pending ones (<see cref="PendingAssets.CarryModels"/>).
         /// </summary>
         [Test]
         public void TheWalkers_AndEveryCarriedGood_HaveModels()
@@ -298,7 +360,7 @@ namespace CityBuilder.Client.Tests.EditMode.Art
             Assert.That(BuildingViewFactory.FindByName(courier.transform, WalkerView.LoadAnchorName), Is.Not.Null);
             foreach (ItemDefinition item in LoadContent().Items)
             {
-                if (!item.IsCurrency)
+                if (!item.IsCurrency && !PendingAssets.Contains(PendingAssets.CarryModels, CityWalkers.CarryPrefix + item.Id.Value))
                 {
                     Assert.That(Resources.Load<GameObject>(CityWalkers.ModelFolder + CityWalkers.CarryPrefix + item.Id.Value), Is.Not.Null, "carry model of " + item.Id.Value);
                 }

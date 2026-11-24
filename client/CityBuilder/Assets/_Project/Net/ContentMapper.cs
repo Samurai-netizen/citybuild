@@ -93,6 +93,7 @@ namespace CityBuilder.Client.Net
                 MaxPerCity = building.MaxPerCity,
                 Cost = Quantities(building.Cost),
                 BuildSeconds = building.BuildSeconds,
+                BaseMaxLevel = building.BaseMaxLevel,
                 Levels = building.Levels.ConvertAll(level => (BuildingLevelData?)ToData(level)),
             };
         }
@@ -194,6 +195,12 @@ namespace CityBuilder.Client.Net
                     return "unlockAmountMode";
                 case ResearchEffectTypeDto.WalkSpeedBonus:
                     return "walkSpeedBonus";
+                case ResearchEffectTypeDto.MaxLevelBonus:
+                    return "maxLevelBonus";
+                case ResearchEffectTypeDto.BuilderSlotBonus:
+                    return "builderSlotBonus";
+                case ResearchEffectTypeDto.GrantCharter:
+                    return "grantCharter";
                 default:
                     throw new ArgumentOutOfRangeException(nameof(type), type, "An effect type the client does not know.");
             }

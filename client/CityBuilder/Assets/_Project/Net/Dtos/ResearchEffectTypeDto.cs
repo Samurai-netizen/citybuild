@@ -24,5 +24,17 @@ namespace CityBuilder.Client.Net
         /// <summary>Every walk gets shorter by a share in permille (<c>permille</c> is set; CR-0008).</summary>
         [EnumMember(Value = "walkSpeedBonus")]
         WalkSpeedBonus,
+
+        /// <summary>The highest level of a building type rises by an amount (<c>building</c> and <c>amount</c> are set; M1-02).</summary>
+        [EnumMember(Value = "maxLevelBonus")]
+        MaxLevelBonus,
+
+        /// <summary>The city gets more builder slots (<c>amount</c> is set; M1-02).</summary>
+        [EnumMember(Value = "builderSlotBonus")]
+        BuilderSlotBonus,
+
+        /// <summary>The city is chartered: Era I is complete (no member is set; M1-02).</summary>
+        [EnumMember(Value = "grantCharter")]
+        GrantCharter,
     }
 }
