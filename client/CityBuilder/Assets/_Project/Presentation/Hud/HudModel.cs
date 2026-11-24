@@ -152,7 +152,10 @@ namespace CityBuilder.Client.Presentation.Hud
             }
         }
 
-        /// <summary>One chip for every item that belongs to the city's era or an earlier one, in the content's order.</summary>
+        /// <summary>
+        /// One chip for every item that belongs to the city's era or an earlier one: the currency first (the purse), then the others in the
+        /// content's order (the server sends them by id, so without this Bread would come before Coins in Era I; M1-02).
+        /// </summary>
         private static IReadOnlyList<ItemChipModel> MakeChips(GameContent content, CityState city)
         {
             var chips = new List<ItemChipModel>();
@@ -160,7 +163,15 @@ namespace CityBuilder.Client.Presentation.Hud
             {
                 if (item.Era <= city.Era)
                 {
-                    chips.Add(ItemChipModel.Create(content, city, item));
+                    ItemChipModel chip = ItemChipModel.Create(content, city, item);
+                    if (item.IsCurrency)
+                    {
+                        chips.Insert(0, chip);
+                    }
+                    else
+                    {
+                        chips.Add(chip);
+                    }
                 }
             }
 

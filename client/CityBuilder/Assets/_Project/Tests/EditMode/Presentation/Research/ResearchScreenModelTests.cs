@@ -33,10 +33,10 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Research
         [Test]
         public void Header_CountsResearchedNodes()
         {
-            Assert.That(ResearchScreenModel.Create(_content, City(), null, CommandAvailability.Allowed).HeaderText, Is.EqualTo("Early Middle Ages — 0 / 6 researched"));
+            Assert.That(ResearchScreenModel.Create(_content, City(), null, CommandAvailability.Allowed).HeaderText, Is.EqualTo("Early Middle Ages — 0 / 16 researched"));
             Assert.That(
                 ResearchScreenModel.Create(_content, City(new[] { "sharp_axes" }), null, CommandAvailability.Allowed).HeaderText,
-                Is.EqualTo("Early Middle Ages — 1 / 6 researched"));
+                Is.EqualTo("Early Middle Ages — 1 / 16 researched"));
         }
 
         /// <summary>A node that is running is not counted as researched.</summary>
@@ -45,7 +45,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Research
         {
             CityState city = City(new[] { "sharp_axes" }, HudTestData.Research("trade_charter", 900, 1500));
 
-            Assert.That(ResearchScreenModel.Create(_content, city, null, CommandAvailability.Allowed).HeaderText, Is.EqualTo("Early Middle Ages — 1 / 6 researched"));
+            Assert.That(ResearchScreenModel.Create(_content, city, null, CommandAvailability.Allowed).HeaderText, Is.EqualTo("Early Middle Ages — 1 / 16 researched"));
         }
 
         /// <summary>The rule is worded as the owner words it, and is greyed out while the content has no later era (every M0 content).</summary>
@@ -64,12 +64,17 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Research
         {
             ResearchScreenModel model = ResearchScreenModel.Create(_content, City(), null, CommandAvailability.Allowed);
 
-            Assert.That(model.ColumnCount, Is.EqualTo(2));
-            Assert.That(model.Nodes.Count, Is.EqualTo(6));
+            // The Era I tree (M1-02): 16 nodes in six columns, the Town Charter alone in the last.
+            Assert.That(model.ColumnCount, Is.EqualTo(6));
+            Assert.That(model.Nodes.Count, Is.EqualTo(16));
             Assert.That(
                 model.Nodes.Select(node => node.Id),
-                Is.EqualTo(new[] { "sharp_axes", "sturdy_boots", "trade_charter", "frame_saw", "storehouses", "tally_sticks" }));
-            Assert.That(model.Nodes.Select(node => node.Column), Is.EqualTo(new[] { 0, 0, 0, 1, 1, 1 }));
+                Is.EqualTo(new[]
+                {
+                    "sharp_axes", "sturdy_boots", "trade_charter", "frame_saw", "honest_scales", "land_survey", "stone_cutting", "storehouses",
+                    "tally_sticks", "bridge_building", "masonry", "timber_framing", "guild_of_masons", "open_fields", "milling", "town_charter",
+                }));
+            Assert.That(model.Nodes.Select(node => node.Column), Is.EqualTo(new[] { 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 4, 5 }));
         }
 
         /// <summary>The nodes carry the status the city gives them.</summary>
@@ -84,8 +89,9 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Research
                 model.Nodes.Select(node => node.Id + " " + node.Status),
                 Is.EqualTo(new[]
                 {
-                    "sharp_axes Done", "sturdy_boots Available", "trade_charter InProgress", "frame_saw Available", "storehouses Locked",
-                    "tally_sticks Locked",
+                    "sharp_axes Done", "sturdy_boots Available", "trade_charter InProgress", "frame_saw Available", "honest_scales Locked",
+                    "land_survey Locked", "stone_cutting Locked", "storehouses Locked", "tally_sticks Locked", "bridge_building Locked",
+                    "masonry Locked", "timber_framing Locked", "guild_of_masons Locked", "open_fields Locked", "milling Locked", "town_charter Locked",
                 }));
         }
 

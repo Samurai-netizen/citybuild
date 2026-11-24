@@ -143,10 +143,14 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Build
             Assert.That(Card("house", bothBusy).HintText, Is.EqualTo("Builders busy: it will wait in the queue"));
         }
 
-        /// <summary>Every builder busy: the hint says so (two builders in the content), even when the stock would cover the cost.</summary>
+        /// <summary>
+        /// Every builder busy with no queue in the rules: the hint says so (two builders in the content), even when the stock would cover the
+        /// cost. The Era I fixture has a queue (M1-02), so the test takes the rules without one.
+        /// </summary>
         [Test]
         public void AllBuildersBusy_HintsNoFreeBuilder()
         {
+            _content = CityTestData.Content(builderQueueLength: 0);
             CityState oneBusy = BuildMenuTestData.City(700, 40, 10, Array.Empty<string>(), 1);
             CityState bothBusy = BuildMenuTestData.City(700, 40, 10, Array.Empty<string>(), 2);
 
@@ -155,10 +159,11 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Build
             Assert.That(Card("house", bothBusy).HintText, Is.EqualTo("All builders are busy"));
         }
 
-        /// <summary>The builder is the first hint, as on the server (it checks the builder before the cost).</summary>
+        /// <summary>The builder is the first hint, as on the server (it checks the builder before the cost); rules without a queue (M1-02).</summary>
         [Test]
         public void NoBuilderAndNoMoney_HintsTheBuilderFirst()
         {
+            _content = CityTestData.Content(builderQueueLength: 0);
             CityState city = BuildMenuTestData.City(0, 0, 0, Array.Empty<string>(), 2);
 
             Assert.That(Card("house", city).Hint, Is.EqualTo(BuildHint.NoFreeBuilder));

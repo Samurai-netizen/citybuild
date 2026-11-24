@@ -75,7 +75,7 @@ namespace CityBuilder.Client.Tests.PlayMode
         {
             List<VisualElement> chips = Chips();
 
-            Assert.That(chips.Count, Is.EqualTo(3));
+            Assert.That(chips.Count, Is.EqualTo(8), "the eight goods of Era I, the purse first (M1-02)");
             Assert.That(chips[0].Q<Label>(HudView.ChipStockName).text, Is.EqualTo("700"));
             Assert.That(chips[0].Q<Label>(HudView.ChipCapName).style.display.value, Is.EqualTo(DisplayStyle.None));
             Assert.That(chips[1].Q<Label>(HudView.ChipStockName).text, Is.EqualTo("0"), "a new city has no goods (CR-0008 D2)");

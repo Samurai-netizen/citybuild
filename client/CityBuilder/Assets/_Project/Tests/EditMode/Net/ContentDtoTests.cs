@@ -21,6 +21,15 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(_json.Serialize(content), Is.EqualTo(text));
         }
 
+        /// <summary>The M0 answer the snapshot fixtures go with (no queue, no base max level) still reads and writes back byte for byte (decision 14).</summary>
+        [Test]
+        public void TheM0ContentFixture_ReadsAndWritesBackToTheSameText()
+        {
+            string text = Fixtures.Read("content-mvp-2.json");
+
+            Assert.That(_json.Serialize(_json.Deserialize<ContentResponseDto>(text)), Is.EqualTo(text));
+        }
+
         /// <summary>The rules and the starter city carry the numbers of the content file; quantities are <see cref="long"/>.</summary>
         [Test]
         public void TheRulesAndTheStartingCity_AreRead()

@@ -21,8 +21,11 @@ namespace CityBuilder.Client.Tests.EditMode.Net
     /// </summary>
     public sealed class ContentSyncTests
     {
-        /// <summary>The content version of <c>content.json</c> and of the fixture snapshots.</summary>
+        /// <summary>The content version of the fixture snapshots, which the sync holds at the start.</summary>
         private const string HeldVersion = "mvp-2";
+
+        /// <summary>The content version of <c>content.json</c>, recorded from the Era I server (M1-02); the tests give it the version they need.</summary>
+        private const string FixtureContentVersion = "era1-1";
 
         /// <summary>The version the server moves to in these tests.</summary>
         private const string NewVersion = "mvp-3";
@@ -114,7 +117,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         /// <summary>A <c>GET /content</c> answer of the version <paramref name="version"/>.</summary>
         private static string ContentOf(string version)
         {
-            return Fixtures.Read("content.json").Replace("\"contentVersion\":\"" + HeldVersion + "\"", "\"contentVersion\":\"" + version + "\"");
+            return Fixtures.Read("content.json").Replace("\"contentVersion\":\"" + FixtureContentVersion + "\"", "\"contentVersion\":\"" + version + "\"");
         }
 
         /// <summary>Gives the sync the answer of <c>GET /city</c> that the wire holds next, the way the monitor does.</summary>

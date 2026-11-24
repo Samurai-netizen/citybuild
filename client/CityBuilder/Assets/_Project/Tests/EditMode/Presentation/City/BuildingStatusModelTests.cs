@@ -163,7 +163,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.City
         [Test]
         public void Describe_UnknownType_HasNoBubbleAndDoesNotThrow()
         {
-            var unknown = new Building(1, new BuildingTypeId("windmill"), 0, 0, 1, 2, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
+            var unknown = new Building(1, new BuildingTypeId("castle"), 0, 0, 1, 2, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
 
             BuildingStatus status = Describe(unknown);
 

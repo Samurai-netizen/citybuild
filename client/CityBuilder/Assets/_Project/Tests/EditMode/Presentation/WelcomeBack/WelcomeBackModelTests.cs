@@ -230,7 +230,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.WelcomeBack
                 {
                     "Sharpened Axes — Woodcutter's Hut: −20% labor",
                     "Trade Charter — Unlocks Trading Post",
-                    "Storehouses — +40 Logs storage, +40 Planks storage",
+                    "Storehouses — +40 Logs storage, +40 Planks storage, +40 Stone storage, +40 Cut Stone storage, +40 Grain storage, +40 Flour storage, +40 Bread storage",
                 }));
         }
 

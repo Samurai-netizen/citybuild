@@ -28,7 +28,8 @@ namespace CityBuilder.Client.Tests.EditMode.Net
         [Test]
         public void ToSnapshot_EveryRealAnswer_GivesTheServersDerivedValues()
         {
-            GameContent content = CityTestData.Content();
+            // The server derived these values with the content of the run that recorded them (M1-02 decision 28).
+            GameContent content = CityTestData.SnapshotsContent();
             string[] names = Fixtures.Names("snapshot-");
             Assert.That(names, Is.Not.Empty);
 

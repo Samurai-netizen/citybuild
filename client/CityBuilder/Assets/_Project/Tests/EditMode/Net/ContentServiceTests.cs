@@ -92,7 +92,7 @@ namespace CityBuilder.Client.Tests.EditMode.Net
             Assert.That(content.AmountPresets.Select(preset => preset.Id.Value), Is.EqualTo(new[] { "all", "half", "quarter" }));
             Assert.That(content.TryGetEra(1, out EraDefinition? era), Is.True);
             Assert.That(era!.Name, Is.EqualTo("Early Middle Ages"));
-            Assert.That(content.Items.Select(item => item.Id.Value), Is.EqualTo(new[] { "coins", "logs", "planks", "stone", "cut_stone", "grain", "flour", "bread" }));
+            Assert.That(content.Items.Select(item => item.Id.Value), Is.EqualTo(new[] { "bread", "coins", "cut_stone", "flour", "grain", "logs", "planks", "stone" }));
         }
 
         /// <summary>Buildings keep their kind, recipe and levels: a house has no recipe, a sawmill has one, and a gated type names its research.</summary>

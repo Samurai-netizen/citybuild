@@ -78,7 +78,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Roads
             Assert.That(model.Phase, Is.EqualTo(RoadPhase.Confirming));
             Assert.That(model.Tiles.Count, Is.EqualTo(3));
             Assert.That(model.TotalCoins, Is.EqualTo(15), "3 tiles * 5 coins");
-            Assert.That(model.PromptText, Is.EqualTo("Build Dirt path (3 tiles)?"));
+            Assert.That(model.PromptText, Is.EqualTo("Build Dirt Path (3 tiles)?"));
             Assert.That(model.DetailText, Does.StartWith("Cost: 15 Coins"));
             Assert.That(model.CanPlace, Is.True);
             Assert.That(model.HintText, Is.Empty);

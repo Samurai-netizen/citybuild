@@ -43,9 +43,9 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Hud
                 research);
         }
 
-        /// <summary>The chips are the items of the city's era in the content's order, named by the content.</summary>
+        /// <summary>The chips are the items of the city's era, named by the content: the currency first, then the content's order (M1-02).</summary>
         [Test]
-        public void Chips_AreTheItemsOfTheEra_InContentOrder()
+        public void Chips_AreTheItemsOfTheEra_TheCurrencyFirstThenInContentOrder()
         {
             var model = new HudModel(_content, WorkingCity(), ConnectionState.Connected);
 
@@ -55,7 +55,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Hud
                 names.Add(chip.Name);
             }
 
-            Assert.That(names, Is.EqualTo(new[] { "Coins", "Logs", "Planks" }));
+            Assert.That(names, Is.EqualTo(new[] { "Coins", "Bread", "Cut Stone", "Flour", "Grain", "Logs", "Planks", "Stone" }));
         }
 
         /// <summary>Workers are free out of provided: 8 provided by two cottages, 5 held by the woodcutter and the sawmill.</summary>

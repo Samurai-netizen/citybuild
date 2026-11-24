@@ -421,8 +421,11 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Inspector
         {
             var site1 = new Building(2, new BuildingTypeId("house"), 1, 0, 1, 0, BuildingPhase.Constructing, 0, 100, 0, 0, 0, 0);
             var site2 = new Building(3, new BuildingTypeId("house"), 2, 0, 1, 0, BuildingPhase.Constructing, 0, 100, 0, 0, 0, 0);
+            // The Era I content has a builder queue of two (CR-0013): only a full queue leaves no builder (M1-02).
+            var waiting1 = new Building(4, new BuildingTypeId("house"), 3, 0, 1, 0, BuildingPhase.Queued, 0, null, 0, 0, 0, 0, queuedOrder: 1);
+            var waiting2 = new Building(5, new BuildingTypeId("house"), 4, 0, 1, 0, BuildingPhase.Queued, 0, null, 0, 0, 0, 0, queuedOrder: 2);
 
-            BuildingInspectorModel model = Model(new[] { BusySawmill(), site1, site2 }, planks: 0);
+            BuildingInspectorModel model = Model(new[] { BusySawmill(), site1, site2, waiting1, waiting2 }, planks: 0);
 
             Assert.That(model.UpgradeNote, Is.EqualTo("All builders are busy"));
             Assert.That(model.CanUpgrade, Is.False);
@@ -454,6 +457,21 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Inspector
             Assert.That(model.UpgradeNote, Is.Empty);
         }
 
+        /// <summary>
+        /// The highest level is the city's after its research (M1-02): a level-2 sawmill is at its highest before Timber Framing, and offers
+        /// level 3 after it, as the server's <c>MAX_LEVEL</c> check does.
+        /// </summary>
+        [Test]
+        public void Upgrade_AfterTheResearchThatRaisesTheCap_OffersTheNextLevel()
+        {
+            CityState city = HudTestData.City(0, 5000, 0, 100, new[] { Idle("sawmill", 3, level: 2), Cottage() }, new[] { "sharp_axes", "frame_saw", "timber_framing" });
+
+            BuildingInspectorModel model = BuildingInspectorModel.Create(_content, city, city.Buildings[0], Nothing, CommandAvailability.Allowed)!;
+
+            Assert.That(model.LevelText, Is.EqualTo("Level 2 of 3"));
+            Assert.That(model.UpgradeTitle, Is.EqualTo("Upgrade to level 3"));
+        }
+
         /// <summary>An upgrade on its way turns the button off with a note, so a second tap cannot ask again.</summary>
         [Test]
         public void Upgrade_Pending_IsOffWithANote()
@@ -469,7 +487,7 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Inspector
         [Test]
         public void Create_UnknownTypeOrLevel_ReturnsNull()
         {
-            CityState city = HudTestData.City(0, 700, 40, 10, new[] { Idle("sawmill", 0, level: 3) });
+            CityState city = HudTestData.City(0, 700, 40, 10, new[] { Idle("sawmill", 0, level: 4) });
             var unknown = new Building(2, new BuildingTypeId("castle"), 5, 5, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0);
 
             Assert.That(BuildingInspectorModel.Create(_content, city, city.Buildings[0], Nothing, CommandAvailability.Allowed), Is.Null);

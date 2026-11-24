@@ -199,7 +199,7 @@ namespace CityBuilder.Client.Presentation.Inspector
                 BuildingId = building.Id,
                 TypeId = building.TypeId,
                 Name = definition.Name,
-                LevelText = "Level " + Number(building.Level) + " of " + Number(definition.MaxLevel),
+                LevelText = "Level " + Number(building.Level) + " of " + Number(CityQueries.MaxLevel(city, content, building.TypeId)),
                 StatusText = StatusTextFor(content, city, building),
                 TimeText = TimeTextFor(city, building),
                 RecipeText = RecipeTextFor(content, level),
@@ -387,7 +387,8 @@ namespace CityBuilder.Client.Presentation.Inspector
             bool upgradePending,
             CommandAvailability availability)
         {
-            if (building.Level >= definition.MaxLevel)
+            // The highest level is the city's, after its research (M1-02: maxLevelBonus), the same check as the server's MAX_LEVEL.
+            if (building.Level >= CityQueries.MaxLevel(city, content, building.TypeId))
             {
                 UpgradeTitle = "Highest level reached";
                 UpgradeNote = upgradePending ? "Upgrade requested…" : string.Empty;

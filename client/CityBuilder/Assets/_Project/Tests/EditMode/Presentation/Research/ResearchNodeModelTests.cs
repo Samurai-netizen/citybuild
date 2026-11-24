@@ -75,8 +75,19 @@ namespace CityBuilder.Client.Tests.EditMode.Presentation.Research
         {
             ResearchNodeModel node = Node("storehouses", City(500, 100, 0, new[] { "trade_charter" }));
 
-            Assert.That(node.EffectText, Is.EqualTo("+40 Logs storage, +40 Planks storage"));
+            Assert.That(node.EffectText, Is.EqualTo("+40 Logs storage, +40 Planks storage, +40 Stone storage, +40 Cut Stone storage, +40 Grain storage, +40 Flour storage, +40 Bread storage"));
             Assert.That(node.CostText, Is.EqualTo("Cost: 300 Coins, 50 Logs"));
+        }
+
+        /// <summary>The Era I effects have words (M1-02): a level cap rise per type, a builder slot, and the charter.</summary>
+        [Test]
+        public void Words_ForTheEraIEffects()
+        {
+            Assert.That(Node("guild_of_masons", City(5000)).EffectText, Is.EqualTo("+1 builder"));
+            Assert.That(Node("town_charter", City(5000)).EffectText, Is.EqualTo("Grants the Town Charter"));
+            Assert.That(
+                Node("timber_framing", City(5000)).EffectText,
+                Is.EqualTo("Cottage: +1 max level, Woodcutter's Hut: +1 max level, Sawmill: +1 max level, Farm: +1 max level"));
         }
 
         /// <summary>A walk-speed bonus and an amount-mode unlock name their effects (CR-0008).</summary>
