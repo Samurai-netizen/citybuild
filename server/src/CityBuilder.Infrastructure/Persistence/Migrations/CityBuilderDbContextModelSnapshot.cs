@@ -332,6 +332,11 @@ namespace CityBuilder.Infrastructure.Persistence.Migrations
                         .HasColumnType("smallint")
                         .HasColumnName("y");
 
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("kind");
+
                     b.Property<short>("Level")
                         .HasColumnType("smallint")
                         .HasColumnName("level");
@@ -341,6 +346,8 @@ namespace CityBuilder.Infrastructure.Persistence.Migrations
 
                     b.ToTable("city_roads", null, t =>
                         {
+                            t.HasCheckConstraint("ck_city_roads_kind", "kind in ('road', 'bridge') and (kind = 'road' or level = 1)");
+
                             t.HasCheckConstraint("ck_city_roads_level", "level >= 1");
 
                             t.HasCheckConstraint("ck_city_roads_x", "x >= 0");

@@ -35,6 +35,12 @@ public static class CityMapping
     /// <summary>The stored spelling of a put action (CR-0008), as the API writes it.</summary>
     private const string _put = "put";
 
+    /// <summary>The <c>city_roads.kind</c> of a road (M1-03).</summary>
+    private const string _roadKind = "road";
+
+    /// <summary>The <c>city_roads.kind</c> of a bridge (M1-03).</summary>
+    private const string _bridgeKind = "bridge";
+
     /// <summary>
     /// The city's rows as they are now. The <c>cities</c> row carries the aggregate's <see cref="CityAggregate.StateVersion"/>; its wall
     /// times (<c>created_at</c>, <c>updated_at</c>) are left at their default for the repository to set. Store rows exist only for the goods
@@ -132,6 +138,7 @@ public static class CityMapping
                 X = checked((short)road.X),
                 Y = checked((short)road.Y),
                 Level = checked((short)road.Level),
+                Kind = road.IsBridge ? _bridgeKind : _roadKind,
             })
             .ToList();
 
@@ -200,7 +207,7 @@ public static class CityMapping
                 rows.Buildings.Select(row => ToBuilding(row, stores[row.BuildingId], needs[row.BuildingId])),
                 rows.Research.Select(row => new ResearchId(row.ResearchId)),
                 ToActiveResearch(city, rows.ResearchNeeds),
-                rows.Roads.Select(row => new RoadTile(row.X, row.Y, row.Level)),
+                rows.Roads.Select(ToRoad),
                 rows.Trips.Select(row => new Trip(
                     row.TripId, row.SourceId, row.TargetId, new ItemId(row.ItemId), row.Quantity, row.DepartedAt, row.ArrivesAt, row.Remaining, ToLeg(row))),
                 city.NextTripId,
@@ -503,4 +510,12 @@ public static class CityMapping
             throw new InvalidOperationException($"The rows of city {cityId} include a row of another city.");
         }
     }
+
+    /// <summary>The road of a <c>city_roads</c> row: a bridge for the kind <c>bridge</c>; another kind fails the load.</summary>
+    private static RoadTile ToRoad(CityRoadRow row) => row.Kind switch
+    {
+        _roadKind => new RoadTile(row.X, row.Y, row.Level),
+        _bridgeKind => new RoadTile(row.X, row.Y, row.Level, isBridge: true),
+        _ => throw new InvalidOperationException($"The road at ({row.X}, {row.Y}) has the unknown kind '{row.Kind}'."),
+    };
 }
