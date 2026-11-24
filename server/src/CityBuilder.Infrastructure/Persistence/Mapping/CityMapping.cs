@@ -153,6 +153,7 @@ public static class CityMapping
                 DepartedAt = courier.DepartedAt,
                 ArrivesAt = courier.ArrivesAt,
                 StaminaSeconds = courier.Stamina,
+                WaitsAt = courier.State == CourierState.Blocked ? courier.WaitsAt : null,
             })
             .ToList();
         var courierLoads = state.Couriers
@@ -402,13 +403,15 @@ public static class CityMapping
                 nameof(CourierState.Walking) => CourierState.Walking,
                 nameof(CourierState.Returning) => CourierState.Returning,
                 nameof(CourierState.Resting) => CourierState.Resting,
+                nameof(CourierState.Blocked) => CourierState.Blocked,
                 _ => throw new ArgumentException($"Courier {row.StationId}/{row.Slot} has the state '{row.State}', which no courier has."),
             },
             row.ToStop,
             row.DepartedAt,
             row.ArrivesAt,
             row.StaminaSeconds,
-            loads[(row.StationId, row.Slot)].Select(load => new CourierLoad(new ItemId(load.ItemId), load.FromBuildingId, load.Quantity))));
+            loads[(row.StationId, row.Slot)].Select(load => new CourierLoad(new ItemId(load.ItemId), load.FromBuildingId, load.Quantity)),
+            row.WaitsAt ?? 0));
     }
 
     /// <summary>
@@ -485,6 +488,8 @@ public static class CityMapping
         nameof(TripLeg.ToTarget) => TripLeg.ToTarget,
         nameof(TripLeg.ToSource) => TripLeg.ToSource,
         nameof(TripLeg.Waiting) => TripLeg.Waiting,
+        nameof(TripLeg.BlockedAtSource) => TripLeg.BlockedAtSource,
+        nameof(TripLeg.BlockedAtTarget) => TripLeg.BlockedAtTarget,
         _ => throw new ArgumentException($"Trip {row.TripId} has the leg '{row.Leg}', which no trip has."),
     };
 

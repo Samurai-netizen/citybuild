@@ -185,6 +185,10 @@ namespace CityBuilder.Infrastructure.Persistence.Migrations
                         .HasColumnType("smallint")
                         .HasColumnName("to_stop");
 
+                    b.Property<int?>("WaitsAt")
+                        .HasColumnType("integer")
+                        .HasColumnName("waits_at");
+
                     b.HasKey("CityId", "StationId", "Slot")
                         .HasName("pk_city_couriers");
 
@@ -195,6 +199,8 @@ namespace CityBuilder.Infrastructure.Persistence.Migrations
                             t.HasCheckConstraint("ck_city_couriers_stamina_seconds", "stamina_seconds >= 0");
 
                             t.HasCheckConstraint("ck_city_couriers_to_stop", "to_stop >= 0");
+
+                            t.HasCheckConstraint("ck_city_couriers_waits_at", "(state = 'Blocked') = (waits_at is not null)");
 
                             t.HasCheckConstraint("ck_city_couriers_walk", "(departed_at is null and arrives_at is null) or (departed_at is not null and arrives_at is not null and departed_at >= 0 and arrives_at > departed_at)");
                         });
@@ -587,7 +593,7 @@ namespace CityBuilder.Infrastructure.Persistence.Migrations
                         {
                             t.HasCheckConstraint("ck_city_trips_arrives_at", "arrives_at > departed_at");
 
-                            t.HasCheckConstraint("ck_city_trips_quantity", "(leg = 'ToTarget' and quantity > 0) or (leg = 'ToSource' and ((quantity = 0 and remaining > 0) or (quantity > 0 and remaining = 0))) or (leg = 'Waiting' and quantity > 0 and remaining = 0)");
+                            t.HasCheckConstraint("ck_city_trips_quantity", "(leg = 'ToTarget' and quantity > 0) or (leg = 'ToSource' and ((quantity = 0 and remaining > 0) or (quantity > 0 and remaining = 0))) or (leg = 'Waiting' and quantity > 0 and remaining = 0) or (leg = 'BlockedAtSource' and quantity = 0 and remaining > 0) or (leg = 'BlockedAtTarget' and ((quantity = 0 and remaining > 0) or (quantity > 0 and remaining = 0)))");
 
                             t.HasCheckConstraint("ck_city_trips_remaining", "remaining >= 0");
                         });
