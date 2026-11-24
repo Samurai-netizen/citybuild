@@ -98,6 +98,9 @@ namespace CityBuilder.Client.Presentation.City
             sun.shadows = LightShadows.None;
         }
 
+        /// <summary>How many completed research the camera limits were last made for; -1 before the first city of a grid (M1-03).</summary>
+        private int _limitsResearchCount = -1;
+
         /// <summary>
         /// Builds the ground, the selection, the camera controls and the (empty) building views for a grid, and frames the camera on it.
         /// Calling it again replaces the earlier ground and buildings (a new city size); <see cref="ShowCity"/> then fills the buildings.
@@ -111,6 +114,7 @@ namespace CityBuilder.Client.Presentation.City
             _ghosts?.Destroy();
             _walkers?.Destroy();
             _walkers = null;
+            _limitsResearchCount = -1;
             Grid = grid;
             Selection = new TileSelection(grid);
             _ground = new GroundTiles(grid, Selection, transform, map);
@@ -134,6 +138,34 @@ namespace CityBuilder.Client.Presentation.City
             }
 
             _walkers?.Show(city);
+            if (content != null && city.CompletedResearch.Count != _limitsResearchCount)
+            {
+                FollowOpenLand(city, content);
+            }
+        }
+
+        /// <summary>
+        /// The open land changed, or is shown for the first time (M1-03): the camera's limits become the open land's rectangle
+        /// (<see cref="CameraLimits"/>); the first time the camera also frames it, later it only widens, so the view does not jump.
+        /// </summary>
+        /// <param name="city">The displayed city.</param>
+        /// <param name="content">The game content with the map.</param>
+        private void FollowOpenLand(CityState city, GameContent content)
+        {
+            bool first = _limitsResearchCount < 0;
+            _limitsResearchCount = city.CompletedResearch.Count;
+            if (Rig == null)
+            {
+                return;
+            }
+
+            Rig.Model.SetLimits(CameraLimits.Of(city, content));
+            if (first)
+            {
+                Rig.Model.Frame(Camera.aspect);
+            }
+
+            Rig.Apply();
         }
 
         /// <summary>Paints the tiles green or red by their hints, or gives them their ground colour back (<see cref="GroundTiles.ShowHints"/>). Does nothing before <see cref="ShowGrid"/>.</summary>
