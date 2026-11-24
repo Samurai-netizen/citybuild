@@ -86,6 +86,11 @@ namespace CityBuilder.Simulation.Rules
                 return MutationResult.Rejected(MutationErrorCode.CourierBusy);
             }
 
+            if (stops.Count > 0 && !IsRouteWalkable(city, content, station, stops))
+            {
+                return MutationResult.Rejected(MutationErrorCode.NoPath);
+            }
+
             if (stops.Count == 0)
             {
                 city.ClearRoute(stationId, slot);
@@ -236,6 +241,44 @@ namespace CityBuilder.Simulation.Rules
             return MutationResult.Ok;
         }
 
+        /// <summary>Whether the city has a courier without a route, which may carry delivery lines (whether a walk reaches it or not).</summary>
+        internal static bool HasFreeCourier(CityState city)
+        {
+            IReadOnlyList<Courier> couriers = city.Couriers;
+            for (int index = 0; index < couriers.Count; index++)
+            {
+                if (!city.TryGetRoute(couriers[index].StationId, couriers[index].Slot, out _))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Whether a walk joins every leg of a route (M1-03): the station to the first stop, each stop to the next, the last stop back to the
+        /// station. The stops' buildings exist (checked before).
+        /// </summary>
+        private static bool IsRouteWalkable(CityState city, GameContent content, Building station, IReadOnlyList<RouteStop> stops)
+        {
+            var paths = new PathFinder(content);
+            paths.Load(city);
+            Building previous = station;
+            for (int index = 0; index <= stops.Count; index++)
+            {
+                Building next = index < stops.Count ? city.Buildings[city.IndexOfBuilding(stops[index].BuildingId)] : station;
+                if (!paths.TryMeasure(previous.X, previous.Y, next.X, next.Y, out _))
+                {
+                    return false;
+                }
+
+                previous = next;
+            }
+
+            return true;
+        }
+
         /// <summary>
         /// The courier a new delivery from <paramref name="source"/> goes to (<c>04</c> section 18, CR-0008 D17): among the couriers without a
         /// route, the one with the fewest delivery lines, then the shortest walk from its station to the source, then the lowest station id and
@@ -270,7 +313,12 @@ namespace CityBuilder.Simulation.Rules
 
                 Building station = city.Buildings[city.IndexOfBuilding(courier.StationId)];
                 int lines = city.CountLines(courier.StationId, courier.Slot);
-                long seconds = paths.Measure(station.X, station.Y, source.X, source.Y).Seconds(bonus);
+                if (!paths.TryMeasure(station.X, station.Y, source.X, source.Y, out WalkCost walk))
+                {
+                    continue;
+                }
+
+                long seconds = walk.Seconds(bonus);
                 if (best is null || lines < bestLines || (lines == bestLines && seconds < bestSeconds))
                 {
                     best = courier;
