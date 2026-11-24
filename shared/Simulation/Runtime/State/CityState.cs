@@ -493,8 +493,11 @@ namespace CityBuilder.Simulation.State
         /// <summary>Ends the trip at <paramref name="index"/> in <see cref="Trips"/>: it arrived, and the caller has delivered its goods.</summary>
         internal void RemoveTripAt(int index) => _trips.RemoveAt(index);
 
-        /// <summary>Puts a level-1 road on an empty tile. The caller checks that the tile has neither a road nor a building.</summary>
-        internal void PlaceRoad(int x, int y)
+        /// <summary>
+        /// Puts a level-1 road, or a bridge (M1-03), on an empty tile. The caller checks that the tile has neither a road nor a building, and
+        /// that a bridge stands on water.
+        /// </summary>
+        internal void PlaceRoad(int x, int y, bool isBridge = false)
         {
             int index = FindRoad(x, y);
             if (index >= 0 || TryGetBuildingAt(x, y, out _))
@@ -502,7 +505,7 @@ namespace CityBuilder.Simulation.State
                 throw new InvalidOperationException(FormattableString.Invariant($"The tile ({x}, {y}) is not empty; the caller must check it first."));
             }
 
-            _roads.Insert(~index, new RoadTile(x, y, 1));
+            _roads.Insert(~index, new RoadTile(x, y, 1, isBridge));
         }
 
         /// <summary>Sets the level of the road on a tile. The caller checks that the tile has a road and that the content has the level.</summary>
