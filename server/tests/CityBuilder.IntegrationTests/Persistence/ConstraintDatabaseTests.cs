@@ -115,6 +115,24 @@ public sealed class ConstraintDatabaseTests(PostgresServer server) : PostgresTes
         Assert.Equal((_checkViolation, "ck_city_couriers_walk"), (error.SqlState, error.ConstraintName));
     }
 
+    /// <summary>A courier that waits without the building it waits at breaks <c>ck_city_couriers_waits_at</c> (M1-03).</summary>
+    [Fact]
+    public async Task SaveChangesAsync_BlockedCourierWithoutItsBuilding_ViolatesTheWaitsAtCheck()
+    {
+        PostgresException error = await InsertFullCityFailsAsync(rows => rows.Couriers[1].State = "Blocked");
+
+        Assert.Equal((_checkViolation, "ck_city_couriers_waits_at"), (error.SqlState, error.ConstraintName));
+    }
+
+    /// <summary>A trip that waits at its source carrying goods breaks <c>ck_city_trips_quantity</c>: it takes its load only when it walks (M1-03).</summary>
+    [Fact]
+    public async Task SaveChangesAsync_TripBlockedAtSourceWithALoad_IsRefused()
+    {
+        PostgresException error = await InsertFullCityFailsAsync(rows => rows.Trips[0].Leg = "BlockedAtSource");
+
+        Assert.Equal((_checkViolation, "ck_city_trips_quantity"), (error.SqlState, error.ConstraintName));
+    }
+
     /// <summary>A load part of 0 breaks <c>quantity &gt; 0</c> of <c>city_courier_loads</c> (CR-0008).</summary>
     [Fact]
     public async Task SaveChangesAsync_EmptyCourierLoad_ViolatesTheQuantityCheck()

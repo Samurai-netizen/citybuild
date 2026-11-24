@@ -30,4 +30,7 @@ public sealed class CityCourierRow
 
     /// <summary><c>stamina_seconds</c>: its stamina, at least 0.</summary>
     public long StaminaSeconds { get; set; }
+
+    /// <summary>The building the courier waits at while blocked (no walk to where it goes next, M1-03); null in every other state.</summary>
+    public int? WaitsAt { get; set; }
 }
