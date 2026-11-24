@@ -317,10 +317,10 @@ public sealed class SetRouteContractTests(ApiFactory factory) : IClassFixture<Ap
     }
 
     /// <summary>
-    /// The city of the tests at clock 0: 100 coins; house 1 at (0,0) (4 workers); woodcutter 2 at (2,0), idle without workers, with 30 logs in
-    /// its store; warehouse 3 at (2,2) with 5 logs; courier station 4 at (0,2) with 1 worker, courier 4/1 at the station with full stamina,
+    /// The city of the tests at clock 0, on open grass of the start area: 100 coins; house 1 at (4,4) (4 workers); woodcutter 2 at (6,4), idle without workers, with 30 logs in
+    /// its store; warehouse 3 at (6,6) with 5 logs; courier station 4 at (4,6) with 1 worker, courier 4/1 at the station with full stamina,
     /// or (<paramref name="walking"/>) on the warehouse route, walking to the warehouse with 4 of the woodcutter's logs (26 left there);
-    /// Scriptorium 5 at (5,5), built, unless <paramref name="scriptorium"/> is false.
+    /// Scriptorium 5 at (9,9), built, unless <paramref name="scriptorium"/> is false.
     /// </summary>
     /// <param name="content">The server's content.</param>
     /// <param name="walking">Whether the courier walks.</param>
@@ -331,11 +331,11 @@ public sealed class SetRouteContractTests(ApiFactory factory) : IClassFixture<Ap
         var logs = new ItemId("logs");
         Building[] buildings =
         [
-            new(1, new BuildingTypeId("house"), 0, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
-            new(2, new BuildingTypeId("woodcutter"), 2, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, [new(logs, walking ? 26 : 30)]),
-            new(3, new BuildingTypeId("warehouse"), 2, 2, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, [new(logs, 5)]),
-            new(4, new BuildingTypeId("courier_station"), 0, 2, 1, 1, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
-            .. scriptorium ? [new Building(5, new BuildingTypeId("scriptorium"), 5, 5, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0)] : Array.Empty<Building>(),
+            new(1, new BuildingTypeId("house"), 4, 4, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
+            new(2, new BuildingTypeId("woodcutter"), 6, 4, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, [new(logs, walking ? 26 : 30)]),
+            new(3, new BuildingTypeId("warehouse"), 6, 6, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, [new(logs, 5)]),
+            new(4, new BuildingTypeId("courier_station"), 4, 6, 1, 1, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
+            .. scriptorium ? [new Building(5, new BuildingTypeId("scriptorium"), 9, 9, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0)] : Array.Empty<Building>(),
         ];
         Courier courier = walking
             ? new Courier(4, 1, CourierState.Walking, 2, 0, 10, 14_400, [new CourierLoad(logs, 2, 4)])

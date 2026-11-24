@@ -287,8 +287,8 @@ public sealed class StartTripContractTests(ApiFactory factory) : IClassFixture<A
     }
 
     /// <summary>
-    /// The city of the tests at clock 0: 100 coins; house 1 at (0,0) (4 workers, none assigned); woodcutter 2 at (2,0), idle without workers,
-    /// with 30 logs in its store; warehouse 3 at (2,2) with <paramref name="warehouseLogs"/> logs. The tile between them is free: 10 s.
+    /// The city of the tests at clock 0, on open grass of the start area: 100 coins; house 1 at (4,4) (4 workers, none assigned); woodcutter 2 at (6,4), idle without workers,
+    /// with 30 logs in its store; warehouse 3 at (6,6) with <paramref name="warehouseLogs"/> logs. The tile between them is free: 10 s.
     /// </summary>
     /// <param name="content">The server's content.</param>
     /// <param name="warehouseLogs">The logs in the warehouse's store.</param>
@@ -297,9 +297,9 @@ public sealed class StartTripContractTests(ApiFactory factory) : IClassFixture<A
     {
         Building[] buildings =
         [
-            new(1, new BuildingTypeId("house"), 0, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
-            new(2, new BuildingTypeId("woodcutter"), 2, 0, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, [new(new ItemId("logs"), 30)]),
-            new(3, new BuildingTypeId("warehouse"), 2, 2, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0,
+            new(1, new BuildingTypeId("house"), 4, 4, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0),
+            new(2, new BuildingTypeId("woodcutter"), 6, 4, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, [new(new ItemId("logs"), 30)]),
+            new(3, new BuildingTypeId("warehouse"), 6, 6, 1, 0, BuildingPhase.Idle, 0, null, 0, 0, 0, 0,
                 warehouseLogs > 0 ? [new(new ItemId("logs"), warehouseLogs)] : []),
         ];
         var state = new CityState(0, era: 1, nextBuildingId: 4, purse: 100, buildings, [], activeResearch: null);
