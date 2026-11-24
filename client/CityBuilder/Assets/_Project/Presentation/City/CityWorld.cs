@@ -27,6 +27,9 @@ namespace CityBuilder.Client.Presentation.City
         /// <summary>The ground, or null before <see cref="ShowGrid"/>.</summary>
         private GroundTiles? _ground;
 
+        /// <summary>The mist over closed land (M1-03); null before <see cref="ShowGrid"/>.</summary>
+        private MistView? _mist;
+
         /// <summary>The input reader, or null before <see cref="ShowGrid"/>.</summary>
         private CityInputReader? _input;
 
@@ -110,6 +113,7 @@ namespace CityBuilder.Client.Presentation.City
         public void ShowGrid(CityGrid grid, MapDefinition? map = null)
         {
             _ground?.Destroy();
+            _mist?.Destroy();
             _buildings?.Destroy();
             _ghosts?.Destroy();
             _walkers?.Destroy();
@@ -118,6 +122,7 @@ namespace CityBuilder.Client.Presentation.City
             Grid = grid;
             Selection = new TileSelection(grid);
             _ground = new GroundTiles(grid, Selection, transform, map);
+            _mist = new MistView(grid, transform);
             _buildings = new CityView(grid, transform, Camera.transform);
             _ghosts = new PlacementGhosts(grid, transform);
             Rig = new CityCameraRig(Camera, grid, Selection);
@@ -145,7 +150,8 @@ namespace CityBuilder.Client.Presentation.City
         }
 
         /// <summary>
-        /// The open land changed, or is shown for the first time (M1-03): the camera's limits become the open land's rectangle
+        /// The open land changed, or is shown for the first time (M1-03): the mist follows it (<see cref="MistView"/>, lifting where land
+        /// opened), and the camera's limits become the open land's rectangle
         /// (<see cref="CameraLimits"/>); the first time the camera also frames it, later it only widens, so the view does not jump.
         /// </summary>
         /// <param name="city">The displayed city.</param>
@@ -154,6 +160,7 @@ namespace CityBuilder.Client.Presentation.City
         {
             bool first = _limitsResearchCount < 0;
             _limitsResearchCount = city.CompletedResearch.Count;
+            _mist?.Show(city, content);
             if (Rig == null)
             {
                 return;
@@ -202,12 +209,14 @@ namespace CityBuilder.Client.Presentation.City
         {
             _input?.Tick();
             _walkers?.Tick(Time.deltaTime, DisplayNow != null ? DisplayNow() : _shownClock);
+            _mist?.Tick(Time.deltaTime);
         }
 
         /// <summary>Unity calls it when the object is destroyed: the ground takes its listener off the selection, and the buildings' and ghosts' materials go.</summary>
         private void OnDestroy()
         {
             _ground?.Destroy();
+            _mist?.Destroy();
             _buildings?.Destroy();
             _ghosts?.Destroy();
             _walkers?.Destroy();
