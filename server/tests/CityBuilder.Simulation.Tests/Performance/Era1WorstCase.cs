@@ -5,9 +5,10 @@ using CityBuilder.Simulation.Tests.Content;
 namespace CityBuilder.Simulation.Tests.Performance;
 
 /// <summary>
-/// The Era I case of the performance budget (<c>04</c> section 12, M1-02): the largest map of the game's content
-/// (<c>server/content/era1-content.json</c>, <c>era1-1</c>: 8 × 8) filled with all 13 building types, every research node done, each building
-/// at its highest level. Row by row: the Scriptorium, the Town Hall and a Warehouse; 18 producers (4 woodcutters, 2 sawmills, a trading post,
+/// The Era I case of the performance budget (<c>04</c> section 12, M1-02, M1-03): the largest map of the game's content
+/// (<c>server/content/era1-content.json</c>, <c>era1-2</c>: the 18 × 14 map of <c>29</c>, every area open, a bridge on every river tile)
+/// with 64 buildings of all 13 types, every research node done, each building at its highest level. Each building takes the first free tile in
+/// reading order where its type may stand (open grass or soil, its site met): the Scriptorium, the Town Hall and a Warehouse; 18 producers (4 woodcutters, 2 sawmills, a trading post,
 /// 2 quarries, a stonemason, 4 farms, 2 windmills, 2 bakeries), each with its most workers (119); 18 courier stations with 6 couriers each
 /// (108, 43 200 s of stamina); 25 houses. The houses and the Town Hall provide 237 workers, so 10 stay free. Every courier carries one link of
 /// the three chains (<see cref="Links"/>), the couriers dealt over the links in turn; the processors start with a full store of their input,
@@ -83,6 +84,7 @@ internal static class Era1WorstCase
     {
         string[] types = [.. _fixedTiles, .. Enumerable.Repeat("courier_station", Stations), .. Enumerable.Repeat("house", _houses)];
         int width = CaseContent.Rules.GridWidth;
+        var taken = new bool[width * CaseContent.Rules.GridHeight];
         var buildings = new List<Building>();
         var couriers = new List<Courier>();
         var routes = new List<Route>();
@@ -96,8 +98,9 @@ internal static class Era1WorstCase
             KeyValuePair<ItemId, long>[]? store = _startingInput.TryGetValue(types[index], out (string Item, long Quantity) input)
                 ? [new KeyValuePair<ItemId, long>(new ItemId(input.Item), input.Quantity)]
                 : null;
-            buildings.Add(new Building(
-                id, definition.Id, index % width, index / width, top.Level, workers, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, store));
+            (int x, int y) = FirstFreeTile(definition, taken);
+            taken[(y * width) + x] = true;
+            buildings.Add(new Building(id, definition.Id, x, y, top.Level, workers, BuildingPhase.Idle, 0, null, 0, 0, 0, 0, store));
             if (definition.Kind != BuildingKind.CourierStation)
             {
                 continue;
@@ -117,7 +120,31 @@ internal static class Era1WorstCase
 
         ResearchId[] research = [.. CaseContent.Research.Select(node => node.Id)];
         return new CityState(
-            Clock, 1, buildings.Count + 1, 0, buildings, research, activeResearch: null, couriers: couriers, routes: routes);
+            Clock, 1, buildings.Count + 1, 0, buildings, research, activeResearch: null, couriers: couriers, routes: routes, roads: Bridges());
+    }
+
+    /// <summary>The first tile in reading order that is not taken and where a building of the type may stand (every area is open).</summary>
+    private static (int X, int Y) FirstFreeTile(BuildingDefinition definition, bool[] taken)
+    {
+        int width = CaseContent.Rules.GridWidth;
+        for (int index = 0; index < taken.Length; index++)
+        {
+            if (!taken[index] && CityQueries.SiteError(CaseContent, definition, index % width, index / width) is null)
+            {
+                return (index % width, index / width);
+            }
+        }
+
+        throw new InvalidOperationException("The map has no tile left for " + definition.Id.Value + ".");
+    }
+
+    /// <summary>A bridge on every water tile of the map, so the east bank is joined all along the river.</summary>
+    private static RoadTile[] Bridges()
+    {
+        MapDefinition map = CaseContent.Map!;
+        return [.. Enumerable.Range(0, map.Width * map.Height)
+            .Where(index => map.TerrainAt(index % map.Width, index / map.Width) == Terrain.Water)
+            .Select(index => new RoadTile(index % map.Width, index / map.Width, 1, isBridge: true))];
     }
 
     /// <summary>A building type of the content.</summary>
