@@ -38,6 +38,13 @@ Every error is Problem Details with the code in its `code` extension (`core-inst
 | `ROUTES_LOCKED` | 422 | Routes locked | Build a Scriptorium first; until then couriers make one-time deliveries. | `urn:citybuilder:error:routes-locked` |
 | `COURIER_BUSY` | 422 | Courier busy | This courier is busy: it still has deliveries, or carries goods its store can't take back yet. | `urn:citybuilder:error:courier-busy` |
 | `DELIVERY_NOT_FOUND` | 422 | Delivery not found | This courier has no such delivery line any more. | `urn:citybuilder:error:delivery-not-found` |
+| `TERRAIN_BLOCKED` | 422 | Terrain blocked | Nothing can be built on water, forest or rock. A road on water is a bridge. | `urn:citybuilder:error:terrain-blocked` |
+| `LAND_CLOSED` | 422 | Land not surveyed | This land is still under mist. Research opens it. | `urn:citybuilder:error:land-closed` |
+| `NEEDS_FOREST` | 422 | Needs forest | This building needs a forest tile next to it. | `urn:citybuilder:error:needs-forest` |
+| `NEEDS_ROCK` | 422 | Needs rock | This building needs a rock tile next to it. | `urn:citybuilder:error:needs-rock` |
+| `NEEDS_FERTILE_SOIL` | 422 | Needs fertile soil | This building stands only on fertile soil. | `urn:citybuilder:error:needs-fertile-soil` |
+| `BRIDGE_LOCKED` | 422 | Bridge locked | A road on water is a bridge, and bridges need research first. | `urn:citybuilder:error:bridge-locked` |
+| `NO_PATH` | 422 | No path | No way joins these buildings: build a bridge or open the land between them. | `urn:citybuilder:error:no-path` |
 | `IDEMPOTENCY_CONFLICT` | 409 | Request id already used | This requestId was used before with another command or payload; a new command needs a new requestId. | `urn:citybuilder:error:idempotency-conflict` |
 | `RATE_LIMITED` | 429 | Too many requests | Too many requests; wait for the number of seconds in the Retry-After header and try again. | `urn:citybuilder:error:rate-limited` |
 | `CONCURRENCY_CONFLICT` | 409 | Request conflict | Another request got in the way of this one and nothing was committed; send it again with the same requestId. | `urn:citybuilder:error:concurrency-conflict` |

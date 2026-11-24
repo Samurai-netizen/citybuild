@@ -16,7 +16,7 @@ Tables in alphabetical order. Each table's mapping is in `Persistence/Configurat
 | `city_project_needs` | 4 | `city_id`, `building_id`, `item_id` | `city_buildings` |
 | `city_research` | 3 | `city_id`, `research_id` | `cities` |
 | `city_research_needs` | 3 | `city_id`, `item_id` | `cities` |
-| `city_roads` | 4 | `city_id`, `x`, `y` | `cities` |
+| `city_roads` | 5 | `city_id`, `x`, `y` | `cities` |
 | `city_route_actions` | 9 | `city_id`, `station_id`, `slot`, `stop_index`, `action_index` | `city_buildings` |
 | `city_stores` | 4 | `city_id`, `building_id`, `item_id` | `city_buildings` |
 | `city_trips` | 10 | `city_id`, `trip_id` | `cities` |
@@ -202,12 +202,14 @@ Tables in alphabetical order. Each table's mapping is in `Persistence/Configurat
 | `city_id` | `uuid` | no | — |
 | `x` | `smallint` | no | — |
 | `y` | `smallint` | no | — |
+| `kind` | `text` | no | — |
 | `level` | `smallint` | no | — |
 
 | Constraint or index | Kind | Definition |
 |---|---|---|
 | `pk_city_roads` | primary key | `city_id`, `x`, `y` |
 | `fk_city_roads_cities_city_id` | foreign key | `city_id` → `cities` (`id`), on delete `Cascade` |
+| `ck_city_roads_kind` | check | `kind in ('road', 'bridge') and (kind = 'road' or level = 1)` |
 | `ck_city_roads_level` | check | `level >= 1` |
 | `ck_city_roads_x` | check | `x >= 0` |
 | `ck_city_roads_y` | check | `y >= 0` |
@@ -360,3 +362,4 @@ In the order they apply (`server/src/CityBuilder.Infrastructure/Persistence/Migr
 | 9 | `20261117143301_TripWaitingLeg` |
 | 10 | `20261117184547_AddPlayerEvents` |
 | 11 | `20261123215944_AddBuilderQueue` |
+| 12 | `20261124155710_MapRoadKindAndReset` |
