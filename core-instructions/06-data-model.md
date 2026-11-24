@@ -56,7 +56,7 @@ labor, city totals, a building's project.
 | Table / column | Key columns | Constraints / notes |
 |---|---|---|
 | `cities` + `last_seen_unix bigint` (built) | — | the server second of the last request that settled the city (not a replay), on the same clock as `last_settled_unix`; it never decreases; migration `AddLastSeen` sets it to `last_settled_unix` for stored cities |
-| `city_roads` (built) | `(city_id, x, y) pk`, `x smallint`, `y smallint`, `level smallint` | `x, y >= 0`, `level >= 1`; never on a building's tile (the engine checks it on load); FK to `cities`, cascade; a removed road's row is deleted |
+| `city_roads` (built) | `(city_id, x, y) pk`, `x smallint`, `y smallint`, `level smallint`, `kind text` (`road` or `bridge`; M1-03, migration `MapRoadKindAndReset`, default `road`) | `x, y >= 0`, `level >= 1`, `kind in ('road', 'bridge') and (kind = 'road' or level = 1)` (a bridge has one level); never on a building's tile (the engine checks it on load); FK to `cities`, cascade; a removed road's row is deleted |
 | `city_couriers` (built) | `(city_id, station_id, slot) pk`, `state text`, `to_stop smallint`, `departed_at bigint null`, `arrives_at bigint null`, `stamina_seconds bigint` | `slot >= 1`, `to_stop >= 0`, `stamina_seconds >= 0`, a walk has both times (`departed_at >= 0`, `arrives_at > departed_at`) or neither; `state` is the API's spelling; the times are set exactly while walking or returning; FK `(city_id, station_id)` to `city_buildings`, cascade |
 | `city_courier_loads` (built) | `(city_id, station_id, slot, item_id, from_building_id) pk`, `quantity bigint` | `quantity > 0`; FK to `city_couriers`, cascade; `from_building_id` gets the goods back when the courier is stopped (no FK; the engine checks it names a building of the city) |
 | `city_delivery_lines` (built, amendment 1) | `(city_id, station_id, slot, line_id) pk`, `source_id int`, `target_id int`, `item_id text`, `quantity bigint` | `quantity > 0`, `source_id <> target_id`, `slot >= 1`; `line_id` is unique in the city (given out by `cities.next_line_id`; no index of its own checks it); FK `(city_id, station_id, slot)` to `city_couriers`, cascade (the key's first columns, so no index of its own); a courier runs its lines in `line_id` order; the row goes when the line ends or is cancelled; `cities.next_line_id int` (default 1, `>= 1`) gives the ids (migration `AddDeliveryLines`) |
@@ -71,7 +71,9 @@ labor, city totals, a building's project.
   all three on the stored rows (no settle, no write; `docs/testing/README.md`). `DEV_ADJUST` rows count like any other.
 - **The reset migration (CR-0008 D10, built in part E as `LogisticsStoresTripsAndReset`):** it deletes every player and everything of theirs (cities and their rows, receipts,
   ledger rows) on the database it runs on, so each dev name logs in to a new starting city; the content numbers stay in the content file.
-  It is the one migration that deletes data; the owner approved it (G-Destructive, OD-14).
+  The owner approved it (G-Destructive, OD-14).
+- **The map reset (M1-03, `MapRoadKindAndReset`):** the same deletes, so every city starts on the map of `29`; the owner chose it over keeping
+  old cities as all grass (build log BL-20261124-01, decision 1). These two are the migrations that delete data.
 - **Mapping (CR-0008, built):** a construction site is `Constructing` with `phase_started_at` and `phase_ends_at` null and need rows; an upgrade
   waiting for goods is `Idle` or `Producing` with need rows; every other phase as below.
 

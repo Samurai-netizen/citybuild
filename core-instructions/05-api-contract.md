@@ -111,7 +111,7 @@ There is no "claim" command, because production and research complete on their o
 - **Refusal:** Problem Details with the code's status from the table below, `code`, and `requestId` when the request had one. A rule's
   refusal commits the settlement of the elapsed time but stores no receipt (Idempotency rules).
 - `place-building` (`{ requestId, buildingTypeId, x, y }`) checks in the order of `04` §8: `UNKNOWN_BUILDING_TYPE`, `BUILDING_LOCKED`,
-  `OUT_OF_BOUNDS` (past the grid's width or height; a negative coordinate is `INVALID_ARGUMENT`), `TILE_OCCUPIED`, `NO_FREE_BUILDER`, `INSUFFICIENT_RESOURCE`. It pays the type's cost (`COST_PLACE` ledger rows) and
+  `OUT_OF_BOUNDS` (past the grid's width or height; a negative coordinate is `INVALID_ARGUMENT`), `TERRAIN_BLOCKED`, `NEEDS_FOREST` / `NEEDS_ROCK` / `NEEDS_FERTILE_SOIL` (the type's site), `LAND_CLOSED` (M1-03, `04` §17), `TILE_OCCUPIED`, `NO_FREE_BUILDER`, `INSUFFICIENT_RESOURCE`. It pays the type's cost (`COST_PLACE` ledger rows) and
   the building appears with the next id, level 1, `Constructing` until the clock plus the type's build seconds. With every builder busy
   and room in the builder queue (CR-0013) it still pays and the building is `Queued` instead; `NO_FREE_BUILDER` then means the queue is full too.
 - `upgrade-building` (`{ requestId, buildingId }`) checks in the order of `04` §8: `BUILDING_NOT_FOUND` (the id is looked up in **your**
@@ -152,14 +152,15 @@ There is no "claim" command, because production and research complete on their o
   unknown preset id is `INVALID_ARGUMENT` from the rule; a mode the city hasn't researched is `AMOUNT_MODE_LOCKED`.
 - `place-roads`, `upgrade-roads`, `remove-roads` (`{ requestId, tiles: [{ x, y }] }`, CR-0008-T1 part D): 1 to 64 tiles, each once,
   coordinates ≥ 0, else `INVALID_ARGUMENT` before the lock (a JSON `null` tile or list too). All or nothing, each check over the whole list
-  in the order of `04` §8: placing checks `OUT_OF_BOUNDS`, `TILE_OCCUPIED` (a building or a road), `INSUFFICIENT_RESOURCE` (the coins of
-  level 1 per tile; `COST_ROAD` ledger rows); upgrading `ROAD_NOT_FOUND` (also past the grid's edge), `MAX_LEVEL`, `INSUFFICIENT_RESOURCE`
+  in the order of `04` §8: placing checks `OUT_OF_BOUNDS`, `TERRAIN_BLOCKED` (forest, rock), `LAND_CLOSED`, `BRIDGE_LOCKED` (a water tile
+  before the bridge's research: a road on water is a bridge, M1-03), `TILE_OCCUPIED` (a building or a road), `INSUFFICIENT_RESOURCE` (the coins of
+  level 1 per tile, the bridge's per water tile; `COST_ROAD` ledger rows); upgrading `ROAD_NOT_FOUND` (also past the grid's edge), `MAX_LEVEL`, `INSUFFICIENT_RESOURCE`
   (each tile's next level's coins; `COST_ROAD` rows); removing `ROAD_NOT_FOUND`, and refunds nothing (no ledger rows). No builder slot, and
   the roads are there in the same response. The tiles' order is part of the payload: a retry sends them in the same order.
 - `start-trip` (`{ requestId, sourceId, targetId, itemId, amount }`, CR-0008-T1 part E): ids ≥ 1 and different, an item id of the
   content-id form, an amount as above, else `INVALID_ARGUMENT` before the lock. Then `BUILDING_NOT_FOUND`, `UNKNOWN_ITEM`,
-  `INVALID_ARGUMENT` (the currency, an unknown preset), `AMOUNT_MODE_LOCKED`, `ITEM_NOT_ACCEPTED`, then with a built courier station
-  `NO_FREE_COURIER` (every courier has a route), without one `INSUFFICIENT_WORKERS`, then `NOTHING_TO_CARRY`, `DELIVERY_QUEUE_FULL`. The
+  `INVALID_ARGUMENT` (the currency, an unknown preset), `AMOUNT_MODE_LOCKED`, `ITEM_NOT_ACCEPTED`, `NO_PATH` (no walk joins source and target, M1-03), then with
+  a built courier station `NO_FREE_COURIER` (every courier has a route; `NO_PATH` when only cut-off couriers are free), without one `INSUFFICIENT_WORKERS`, then `NOTHING_TO_CARRY`, `DELIVERY_QUEUE_FULL`. The
   amount is counted at the send (amendment 1, `04` §18): with a built courier station the engine picks a free courier and the delivery
   appears as its lines in `deliveryLines` (of at most its station level's `carryLimit`; nothing leaves the store yet); without one a free
   worker takes the first load (at most `tripCarryLimit`) and shuttles, shown in `trips` until the last load is delivered. It writes no
@@ -169,7 +170,7 @@ There is no "claim" command, because production and research complete on their o
   `INVALID_ARGUMENT` before the lock. Then `BUILDING_NOT_FOUND`, `INVALID_ARGUMENT` (not a courier station; the currency; an unknown
   preset), `INVALID_ROUTE` (slot above the station level's courier limit, 1 stop or more than `maxRouteStops`, more than `maxStopActions`, two
   consecutive stops at one building), `UNKNOWN_ITEM`, `AMOUNT_MODE_LOCKED`, then with 1 or more stops `ROUTES_LOCKED` (no built
-  `routeBuilding`, the Scriptorium) and `COURIER_BUSY` (the slot's courier has delivery lines). 0 stops clears the route; a missing `stops` (`null`) is
+  `routeBuilding`, the Scriptorium) and `COURIER_BUSY` (the slot's courier has delivery lines), `NO_PATH` (a leg no walk joins, M1-03). 0 stops clears the route; a missing `stops` (`null`) is
   `INVALID_ARGUMENT`. A slot may have a route without a courier. A new or cleared route stops the slot's courier: its load goes back to
   the buildings it came from and it stands at its station (a resting one keeps resting); the command's closing advance sends a courier
   at its station off to the first stop at once. It writes no ledger rows.
@@ -311,6 +312,13 @@ There is no "claim" command, because production and research complete on their o
 | `ROUTES_LOCKED` | 422 | A route before the city has built the `routeBuilding`, the Scriptorium (CR-0008 D15) |
 | `COURIER_BUSY` | 422 | A route for a courier that still has delivery lines (CR-0008 D19); fewer station workers while a removed courier carries goods its store can't take back (M0-C-3) |
 | `DELIVERY_NOT_FOUND` | 422 | The line to cancel is not one of that courier's (CR-0008 D18) |
+| `TERRAIN_BLOCKED` | 422 | A building or road on water, forest or rock (M1-03; a road on water is a bridge, `BRIDGE_LOCKED`) |
+| `LAND_CLOSED` | 422 | A building or road on land still under mist: no research has opened its area (M1-03) |
+| `NEEDS_FOREST` | 422 | A Woodcutter's Hut (a type with the site `nearForest`) without forest beside its tile (M1-03) |
+| `NEEDS_ROCK` | 422 | A Quarry (site `nearRock`) without rock beside its tile (M1-03) |
+| `NEEDS_FERTILE_SOIL` | 422 | A Farm (site `fertileSoil`) off fertile soil (M1-03) |
+| `BRIDGE_LOCKED` | 422 | A road on water before the research that unlocks the bridge (M1-03) |
+| `NO_PATH` | 422 | A trip, delivery or route between buildings no walk joins: water without a bridge or land under mist between them (M1-03) |
 | `IDEMPOTENCY_CONFLICT` | 409 | Same `requestId`, different payload |
 | `RATE_LIMITED` | 429 | Too many requests |
 | `CONCURRENCY_CONFLICT` | 409 | Lock timeout or version mismatch; safe to retry |

@@ -129,15 +129,15 @@ once per advance and kept (§17).
 ## 8. Mutations (all happen at `city.Clock`, after settling)
 | Mutation | Checks (error code) | Effect |
 |---|---|---|
-| PlaceBuilding | type known (`UNKNOWN_BUILDING_TYPE`), of the city's era or earlier and unlocked (`BUILDING_LOCKED`), in bounds (`OUT_OF_BOUNDS`), tile free of buildings and roads (`TILE_OCCUPIED`), below the type's `maxPerCity` (`BUILDING_LIMIT`), free builder or room in the builder queue (`NO_FREE_BUILDER`), the cost's coins (`INSUFFICIENT_RESOURCE`) | pay the coins, `Id = NextBuildingId++`, `Constructing`; its project needs the cost's goods (§16); with none, the timer runs from now for the build seconds. With no free builder: `Queued` with `QueuedOrder = NextQueuedOrder++` (CR-0013) |
+| PlaceBuilding | type known (`UNKNOWN_BUILDING_TYPE`), of the city's era or earlier and unlocked (`BUILDING_LOCKED`), in bounds (`OUT_OF_BOUNDS`), on grass or fertile soil (`TERRAIN_BLOCKED`) with the type's site met (`NEEDS_FOREST`, `NEEDS_ROCK`, `NEEDS_FERTILE_SOIL`; M1-03, §17), on open land (`LAND_CLOSED`), tile free of buildings and roads (`TILE_OCCUPIED`), below the type's `maxPerCity` (`BUILDING_LIMIT`), free builder or room in the builder queue (`NO_FREE_BUILDER`), the cost's coins (`INSUFFICIENT_RESOURCE`) | pay the coins, `Id = NextBuildingId++`, `Constructing`; its project needs the cost's goods (§16); with none, the timer runs from now for the build seconds. With no free builder: `Queued` with `QueuedOrder = NextQueuedOrder++` (CR-0013) |
 | UpgradeBuilding | exists (`BUILDING_NOT_FOUND`), Idle/Producing without a waiting or queued upgrade (`BUILDING_BUSY`), level < the type's max level now (`MAX_LEVEL`; base max level + completed `MaxLevelBonus`, §5), free builder or room in the builder queue (`NO_FREE_BUILDER`), the next level's coins (`INSUFFICIENT_RESOURCE`) | pay the coins; with no goods in the upgrade cost the upgrade starts now (below); otherwise the building keeps working with an upgrade waiting for those goods (§16). With no free builder the upgrade is queued (`QueuedOrder = NextQueuedOrder++`, CR-0013) and the building keeps working |
 | AssignWorkers | exists (`BUILDING_NOT_FOUND`), a producer or courier station (`INVALID_ARGUMENT`), not Constructing or Queued (`BUILDING_BUSY`), `0 ≤ n ≤ MaxWorkers` of the current level, also while upgrading (`WORKER_LIMIT`), the increase `n − assigned` ≤ free (`INSUFFICIENT_WORKERS`); a station's removed couriers' loads all fit back into their stores (`COURIER_BUSY`, M0-C-3) | set `n`; a producer gets the labor segment update (§3); a station gains couriers at its station or loses its highest slots (§19) |
 | StartResearch | known (`UNKNOWN_RESEARCH`), not done (`RESEARCH_COMPLETED`), slot free (`RESEARCH_IN_PROGRESS`), prerequisites + current era (`RESEARCH_LOCKED`), a completed science building (`NO_SCIENCE_BUILDING`), the coins (`INSUFFICIENT_RESOURCE`) | pay the coins, fill the slot; the goods are delivered to the science building, then the timer runs (§5) |
-| PlaceRoads(tiles) | every tile in bounds (`OUT_OF_BOUNDS`), without a building or road (`TILE_OCCUPIED`), the coins of level 1 for every tile (`INSUFFICIENT_RESOURCE`) | pay, a level-1 road on every tile (§17) |
-| UpgradeRoads(tiles) | every tile has a road (`ROAD_NOT_FOUND`) below the last road level (`MAX_LEVEL`), the coins of every next level (`INSUFFICIENT_RESOURCE`) | pay, every road one level up |
-| RemoveRoads(tiles) | every tile has a road (`ROAD_NOT_FOUND`) | remove them; nothing is refunded |
-| StartTrip(source, target, item, amount) | both buildings exist (`BUILDING_NOT_FOUND`), item known (`UNKNOWN_ITEM`) and not the currency (`INVALID_ARGUMENT`), amount allowed (§19: `INVALID_ARGUMENT` for an unknown preset, `AMOUNT_MODE_LOCKED`), the target accepts the item (`ITEM_NOT_ACCEPTED`: its waiting project needs it or its store holds it); with a built courier station a free courier (`NO_FREE_COURIER`), else a free worker (`INSUFFICIENT_WORKERS`); the amount gives at least 1 (`NOTHING_TO_CARRY`); the courier's queue has room for the lines (`DELIVERY_QUEUE_FULL`) | a courier gets the delivery's lines, or a worker takes the first load and walks (§18) |
-| SetRoute(station, slot, stops) | station exists (`BUILDING_NOT_FOUND`) and is a courier station (`INVALID_ARGUMENT`), slot 1..MaxWorkers of its level, 0 or 2..`maxRouteStops` stops, 1..`maxStopActions` actions per stop, no two consecutive stops (last and first included) at one building (`INVALID_ROUTE`), every stop's building exists (`BUILDING_NOT_FOUND`), every item known (`UNKNOWN_ITEM`) and not the currency (`INVALID_ARGUMENT`), every amount allowed (as StartTrip); with 1 or more stops: a built `routeBuilding` (`ROUTES_LOCKED`) and no delivery lines on the slot's courier (`COURIER_BUSY`) | replace the slot's route (0 stops clears it); the slot's courier, if any, returns its load and starts again from its station (§19) |
+| PlaceRoads(tiles) | every tile in bounds (`OUT_OF_BOUNDS`), none on forest or rock (`TERRAIN_BLOCKED`), every tile on open land (`LAND_CLOSED`), a water tile only once the bridge is unlocked (`BRIDGE_LOCKED`; M1-03), without a building or road (`TILE_OCCUPIED`), the coins of level 1 for every tile, of the bridge for a water tile (`INSUFFICIENT_RESOURCE`) | pay, a level-1 road on every tile, a bridge on a water tile (§17) |
+| UpgradeRoads(tiles) | every tile has a road (`ROAD_NOT_FOUND`) below the last road level (`MAX_LEVEL`; a bridge has one level), the coins of every next level (`INSUFFICIENT_RESOURCE`) | pay, every road one level up |
+| RemoveRoads(tiles) | every tile has a road (`ROAD_NOT_FOUND`) | remove them, bridges too; nothing is refunded (a walker left without a path waits, §17) |
+| StartTrip(source, target, item, amount) | both buildings exist (`BUILDING_NOT_FOUND`), item known (`UNKNOWN_ITEM`) and not the currency (`INVALID_ARGUMENT`), amount allowed (§19: `INVALID_ARGUMENT` for an unknown preset, `AMOUNT_MODE_LOCKED`), the target accepts the item (`ITEM_NOT_ACCEPTED`: its waiting project needs it or its store holds it), a walk joins source and target (`NO_PATH`, M1-03); with a built courier station a free courier a walk joins to the source (`NO_PATH` when only cut-off couriers are free, else `NO_FREE_COURIER`), else a free worker (`INSUFFICIENT_WORKERS`); the amount gives at least 1 (`NOTHING_TO_CARRY`); the courier's queue has room for the lines (`DELIVERY_QUEUE_FULL`) | a courier gets the delivery's lines, or a worker takes the first load and walks (§18) |
+| SetRoute(station, slot, stops) | station exists (`BUILDING_NOT_FOUND`) and is a courier station (`INVALID_ARGUMENT`), slot 1..MaxWorkers of its level, 0 or 2..`maxRouteStops` stops, 1..`maxStopActions` actions per stop, no two consecutive stops (last and first included) at one building (`INVALID_ROUTE`), every stop's building exists (`BUILDING_NOT_FOUND`), every item known (`UNKNOWN_ITEM`) and not the currency (`INVALID_ARGUMENT`), every amount allowed (as StartTrip); with 1 or more stops: a built `routeBuilding` (`ROUTES_LOCKED`) and no delivery lines on the slot's courier (`COURIER_BUSY`), a walk for every leg, station to first stop to … to station (`NO_PATH`, M1-03) | replace the slot's route (0 stops clears it); the slot's courier, if any, returns its load and starts again from its station (§19) |
 | CancelDelivery(station, slot, line or all) | station exists (`BUILDING_NOT_FOUND`) and is a courier station (`INVALID_ARGUMENT`), the slot has a courier (`INVALID_ARGUMENT`), the line is one of its lines (`DELIVERY_NOT_FOUND`); "all" always applies | remove the line, or every line and the route; a courier whose running line or route went returns its load and starts again from its station (§19) |
 | SetPaused(building, paused) | exists (`BUILDING_NOT_FOUND`), a producer or courier station (`INVALID_ARGUMENT`), not Constructing or Queued (`BUILDING_BUSY`) | set the flag (the same value again changes nothing); a running cycle runs on; a station's couriers act as §19 says |
 | ReenergizeCouriers | — | every courier's stamina is its station level's; resting couriers are at their station again, ready to leave (§19) |
@@ -188,6 +188,8 @@ frozen cycle counts as running (its inputs are refunded). Workers on a house, a 
     station never leaves its station (D23, D24).
 17. At most `builderQueueLength` orders are queued; after every advance no builder is free while an order is queued; queued orders start
     in the order they were made (CR-0013).
+18. Buildings stand only on open grass or fertile soil with their type's site met; roads only on open grass or soil, bridges only on
+    water; no walk steps onto water without a bridge or onto land under mist (M1-03).
 
 Which tests hold each invariant, error code and threat: `docs/testing/COVERAGE-MATRIX.md` (M0-81).
 
@@ -207,7 +209,7 @@ Worst case (CR-0008): an 8×8 city of 26 houses at level 2 (156 workers) and 38 
 every route between two adjacent buildings, Sturdy Boots done (4 s walks): one settlement after a long absence covers the grace and the
 stamina, about 7,300 arrivals per courier, ≈ 1.1 M events. Producers add less per tile than couriers (a 10 s cycle at best). Target:
 < 500 ms on a dev machine in Release (CI uses a generous limit: 2 s in Release). Measured in CR-0008-T1 part I: 1,105,952 arrivals in one
-settlement, **308 ms** median in Release (Apple A18 Pro); the producer case (64 producers, 8 h) 47 ms. Era I (M1-02): all 13 types at their highest level on the 8×8 map, 18 producers and 108 couriers on the three chains, 191 ms for 8 h away and 106 ms for 7 days after it. Above the target: the 005 fallback
+settlement, **308 ms** median in Release (Apple A18 Pro); the producer case (64 producers, 8 h) 47 ms. Era I (M1-02): all 13 types at their highest level on the 8×8 map, 18 producers and 108 couriers on the three chains, 191 ms for 8 h away and 106 ms for 7 days after it. On the 18×14 map (M1-03: the same 64 buildings where the map lets them stand, every area open, a bridge on every river tile): 242 ms and 155 ms. Above the target: the 005 fallback
 in `12`. The test and the measured numbers: `docs/modules/CityBuilder.Simulation.md` → Tests → `Performance/`.
 
 ## 13. Planned extension — external deliveries (not in M0)
@@ -249,6 +251,11 @@ quantities, durations, milliseconds and labor ≤ 10¹²; grid size and worker c
 13a. **Level caps** (M1-02): a type's `baseMaxLevel` (absent: its last level) is 1..its last level, and the `MaxLevelBonus`es of all research
     never raise it past the last level (`LevelCapMismatch`); a `MaxLevelBonus` names a type with a level above its base max level
     (`InvalidEffectTarget`); a `MaxLevelBonus` or `BuilderSlots` amount is > 0.
+13b. **The map** (M1-03): optional; when given, its `tiles` and `areas` have the grid's rows and columns (`MapMismatch`), letters `.FRSW` and
+    capital letters (`InvalidValue`); the start area and every `OpenLand` area are areas of the map (`UnknownReference`), no `OpenLand`
+    opens the start area (`InvalidEffectTarget`); `roughTileMillis` > 0; a `site` or an `OpenLand` needs a map (`MissingValue` at `map`).
+13c. **The bridge** (M1-03): an `UnlockBridge` needs a `bridge` (`MissingValue`) and a `bridge` an `UnlockBridge` (`BuildingUnreachable`);
+    its tile time is above 0 and below the ground time (`RoadNotFaster`); it costs the currency only (`InvalidCurrencyUse`), like a road.
 
 The **graph rules** (M0-70) run only when every rule above passed, so they never repeat an error already reported:
 
@@ -309,6 +316,14 @@ is sent or stored. All values are integers, rounded down: seconds, permille (0..
   **Tie rule:** among those, the first in step order, comparing steps one by one in the order x+1, y+1, x−1, y−1 (computed by a search from
   the end, then choosing from the start the first direction that stays on a best path). Every building can be reached.
 - A walk keeps the time it started with; the map only changes between advances, and a change applies from the next walk.
+- **Terrain (M1-03):** with a map in the content (`29` → Map) every tile is grass, forest, rock, fertile soil or water, and belongs to an
+  area. **Open land** is the start area and every area an `OpenLand` of completed research names, from its completion second (derived,
+  never stored). A building stands on open grass or soil with its type's `site` met: `nearForest` / `nearRock` a forest / rock tile beside
+  it in the four directions (that tile may lie under mist), `fertileSoil` on soil. A road stands on open grass or soil; on water it is a
+  **bridge** (one level, `UnlockBridge` research, the bridge's cost and tile time). Forest and rock take `roughTileMillis` to cross; a walk
+  never steps onto water without a bridge or onto land under mist. Content without a map is all grass and open.
+- **No path (M1-03):** when nothing joins two buildings, a new trip, line or route is refused (`NO_PATH`, §8). A walker whose next walk has
+  no path because a bridge was removed waits where it is (§18–§19, M1-03 part A2).
 
 ## 18. Deliveries and trips (CR-0008, amendment 1: D14–D21)
 - `StartTrip` (§8) counts `Q` = the amount (§19) of the source store's stock **at the send**, at most the stock. Who carries it:

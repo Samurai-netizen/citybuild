@@ -5,7 +5,7 @@ using System.Linq;
 namespace CityBuilder.Simulation.Content
 {
     /// <summary>
-    /// The content rules of the map and the bridge (<c>04</c> section 14, rules 17 and 18; M1-03): a site or an area to open needs a map; the
+    /// The content rules of the map and the bridge (<c>04</c> section 14, rules 13b and 13c; M1-03): a site or an area to open needs a map; the
     /// start area and every area an <see cref="OpenLandEffect"/> opens is one of the map's, and no effect opens the start area; forest and
     /// rock take time to cross; the bridge and <see cref="UnlockBridgeEffect"/> come together; the bridge is faster than the ground and
     /// costs the currency only, as a road does (rule 11).
@@ -19,7 +19,7 @@ namespace CityBuilder.Simulation.Content
             CheckBridge(draft, errors);
         }
 
-        /// <summary>Rule 17: the map's own values, and every site and area to open against it.</summary>
+        /// <summary>Rule 13b: the map's own values, and every site and area to open against it.</summary>
         private static void CheckMap(ContentDraft draft, ContentErrorList errors)
         {
             MapDefinition? map = draft.Map;
@@ -67,7 +67,7 @@ namespace CityBuilder.Simulation.Content
             }
         }
 
-        /// <summary>Rule 18: the bridge and its unlock come together; the bridge is faster than the ground and costs the currency only.</summary>
+        /// <summary>Rule 13c: the bridge and its unlock come together; the bridge is faster than the ground and costs the currency only.</summary>
         private static void CheckBridge(ContentDraft draft, ContentErrorList errors)
         {
             bool unlocked = draft.Research.Any(node => node.Effects.OfType<UnlockBridgeEffect>().Any());
