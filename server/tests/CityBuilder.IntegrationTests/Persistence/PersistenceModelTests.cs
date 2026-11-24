@@ -70,7 +70,7 @@ public sealed partial class PersistenceModelTests
             ("action_index", "smallint", false), ("building_id", "integer", false), ("kind", "text", false), ("item_id", "text", false),
             ("amount", "text", false),
         ],
-        ["city_roads"] = [("city_id", "uuid", false), ("x", "smallint", false), ("y", "smallint", false), ("level", "smallint", false)],
+        ["city_roads"] = [("city_id", "uuid", false), ("x", "smallint", false), ("y", "smallint", false), ("level", "smallint", false), ("kind", "text", false)],
         ["command_receipts"] =
         [
             ("player_id", "uuid", false), ("request_id", "uuid", false), ("command_type", "text", false), ("payload_hash", "bytea", false),
@@ -220,6 +220,7 @@ public sealed partial class PersistenceModelTests
                 ("city_delivery_lines", "ck_city_delivery_lines_slot", "slot >= 1"),
                 ("city_project_needs", "ck_city_project_needs_quantity", "quantity > 0"),
                 ("city_research_needs", "ck_city_research_needs_quantity", "quantity > 0"),
+                ("city_roads", "ck_city_roads_kind", "kind in ('road', 'bridge') and (kind = 'road' or level = 1)"),
                 ("city_roads", "ck_city_roads_level", "level >= 1"),
                 ("city_roads", "ck_city_roads_x", "x >= 0"),
                 ("city_roads", "ck_city_roads_y", "y >= 0"),

@@ -166,6 +166,20 @@ public sealed class CityMappingTests
             rows.Roads.Select(row => (row.CityId, row.X, row.Y, row.Level)));
     }
 
+    /// <summary>Every road of the engine is a <c>road</c> row; a bridge row comes back as a bridge and is written back as one (M1-03).</summary>
+    [Fact]
+    public void ToAggregate_BridgeRow_LoadsABridgeAndWritesItBack()
+    {
+        CityRows rows = CityMapping.ToRows(Full());
+        Assert.All(rows.Roads, row => Assert.Equal("road", row.Kind));
+        rows.Roads[0].Kind = "bridge";
+
+        CityAggregate loaded = CityMapping.ToAggregate(rows);
+
+        Assert.Contains(new RoadTile(2, 1, 1, isBridge: true), loaded.State.Roads);
+        Assert.Equal("bridge", CityMapping.ToRows(loaded).Roads.Single(row => (row.X, row.Y) == (2, 1)).Kind);
+    }
+
     /// <summary>
     /// Each phase's row: a column is null exactly when the phase doesn't use it, and a cycle started at clock 0 stores 0, not null; a
     /// construction site has no start and no end (CR-0008). Columns: phase, start, end, target level, cycle labor, labor remaining, segment
